@@ -1,0 +1,3554 @@
+{
+ "banks": [
+  {
+   "bank": "a/c/aco_e_m.zsm",
+   "sounds": 11,
+   "tracks": 0,
+   "bytes": 118792,
+   "collides_with_xml2": false,
+   "used_by": [
+    "char:npcstat:AcolyteEnergy",
+    "char:npcstat:AcolyteEnergy_B",
+    "char:npcstat:AcolyteLeader",
+    "char:npcstat:AcolyteLeader_B"
+   ]
+  },
+  {
+   "bank": "a/c/aco_me_m.zsm",
+   "sounds": 13,
+   "tracks": 0,
+   "bytes": 142300,
+   "collides_with_xml2": false,
+   "used_by": [
+    "char:npcstat:AcolyteMental",
+    "char:npcstat:AcolyteMental_B"
+   ]
+  },
+  {
+   "bank": "a/c/aco_s_m.zsm",
+   "sounds": 11,
+   "tracks": 0,
+   "bytes": 103388,
+   "collides_with_xml2": false,
+   "used_by": [
+    "char:npcstat:AcolyteSmash",
+    "char:npcstat:AcolyteSmash_B"
+   ]
+  },
+  {
+   "bank": "a/r/arbext_a.zss",
+   "sounds": 1,
+   "tracks": 0,
+   "bytes": 4385120,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/arbiter/arb_fd1",
+    "zone:maps/arbiter/arb_fd2",
+    "zone:maps/arbiter/deck/arb_fd1",
+    "zone:maps/arbiter/deck/arb_fd2",
+    "zone:maps/astroid_m/visit1/arb_fd1",
+    "zone:maps/astroid_m/visit1/arb_fd2"
+   ]
+  },
+  {
+   "bank": "a/r/arbext_c.zss",
+   "sounds": 1,
+   "tracks": 0,
+   "bytes": 8771936,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/arbiter/arb_fd1",
+    "zone:maps/arbiter/arb_fd2",
+    "zone:maps/arbiter/deck/arb_fd1",
+    "zone:maps/arbiter/deck/arb_fd2",
+    "zone:maps/astroid_m/visit1/arb_fd1",
+    "zone:maps/astroid_m/visit1/arb_fd2"
+   ]
+  },
+  {
+   "bank": "a/r/arbext_d.zsm",
+   "sounds": 33,
+   "tracks": 10,
+   "bytes": 201000,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/arbiter/arb_fd1",
+    "zone:maps/arbiter/arb_fd2",
+    "zone:maps/arbiter/deck/arb_fd1",
+    "zone:maps/arbiter/deck/arb_fd2",
+    "zone:maps/astroid_m/visit1/arb_fd1",
+    "zone:maps/astroid_m/visit1/arb_fd2"
+   ]
+  },
+  {
+   "bank": "a/r/arbext_m.zsm",
+   "sounds": 24,
+   "tracks": 0,
+   "bytes": 526400,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/arbiter/arb_fd1",
+    "zone:maps/arbiter/arb_fd2",
+    "zone:maps/arbiter/deck/arb_fd1",
+    "zone:maps/arbiter/deck/arb_fd2",
+    "zone:maps/astroid_m/visit1/arb_fd1",
+    "zone:maps/astroid_m/visit1/arb_fd2"
+   ]
+  },
+  {
+   "bank": "a/r/arbext_v.zss",
+   "sounds": 1,
+   "tracks": 0,
+   "bytes": 111236,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/arbiter/arb_fd1",
+    "zone:maps/arbiter/arb_fd2",
+    "zone:maps/arbiter/deck/arb_fd1",
+    "zone:maps/arbiter/deck/arb_fd2",
+    "zone:maps/astroid_m/visit1/arb_fd1",
+    "zone:maps/astroid_m/visit1/arb_fd2"
+   ]
+  },
+  {
+   "bank": "a/r/arbfld_a.zss",
+   "sounds": 1,
+   "tracks": 0,
+   "bytes": 2936840,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/arbiter/a_int/arb3_1",
+    "zone:maps/arbiter/a_int/arb3_2",
+    "zone:maps/arbiter/a_int/arb3_3",
+    "zone:maps/arbiter/a_int/arb3_4"
+   ]
+  },
+  {
+   "bank": "a/r/arbfld_c.zss",
+   "sounds": 1,
+   "tracks": 0,
+   "bytes": 11690816,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/arbiter/a_int/arb3_1",
+    "zone:maps/arbiter/a_int/arb3_2",
+    "zone:maps/arbiter/a_int/arb3_3",
+    "zone:maps/arbiter/a_int/arb3_4"
+   ]
+  },
+  {
+   "bank": "a/r/arbfld_d.zsm",
+   "sounds": 48,
+   "tracks": 15,
+   "bytes": 311596,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/arbiter/a_int/arb3_1",
+    "zone:maps/arbiter/a_int/arb3_2",
+    "zone:maps/arbiter/a_int/arb3_3",
+    "zone:maps/arbiter/a_int/arb3_4"
+   ]
+  },
+  {
+   "bank": "a/r/arbfld_m.zsm",
+   "sounds": 56,
+   "tracks": 0,
+   "bytes": 840220,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/arbiter/a_int/arb3_1",
+    "zone:maps/arbiter/a_int/arb3_2",
+    "zone:maps/arbiter/a_int/arb3_3",
+    "zone:maps/arbiter/a_int/arb3_4"
+   ]
+  },
+  {
+   "bank": "a/r/arbfld_v.zss",
+   "sounds": 18,
+   "tracks": 0,
+   "bytes": 697428,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/arbiter/a_int/arb3_1",
+    "zone:maps/arbiter/a_int/arb3_2",
+    "zone:maps/arbiter/a_int/arb3_3",
+    "zone:maps/arbiter/a_int/arb3_4"
+   ]
+  },
+  {
+   "bank": "a/r/arbint_a.zss",
+   "sounds": 1,
+   "tracks": 0,
+   "bytes": 4070408,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/arbiter/a_int/arb2_1",
+    "zone:maps/arbiter/a_int/arb2_2",
+    "zone:maps/arbiter/a_int/arb2_3",
+    "zone:maps/arbiter/a_int/arb2_4",
+    "zone:maps/arena/arena_arb1",
+    "zone:maps/arena/arena_arb2"
+   ]
+  },
+  {
+   "bank": "a/r/arbint_c.zss",
+   "sounds": 1,
+   "tracks": 0,
+   "bytes": 11927624,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/arbiter/a_int/arb2_1",
+    "zone:maps/arbiter/a_int/arb2_2",
+    "zone:maps/arbiter/a_int/arb2_3",
+    "zone:maps/arbiter/a_int/arb2_4",
+    "zone:maps/arena/arena_arb1",
+    "zone:maps/arena/arena_arb2"
+   ]
+  },
+  {
+   "bank": "a/r/arbint_d.zsm",
+   "sounds": 45,
+   "tracks": 14,
+   "bytes": 287020,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/arbiter/a_int/arb2_1",
+    "zone:maps/arbiter/a_int/arb2_2",
+    "zone:maps/arbiter/a_int/arb2_3",
+    "zone:maps/arbiter/a_int/arb2_4",
+    "zone:maps/arena/arena_arb1",
+    "zone:maps/arena/arena_arb2"
+   ]
+  },
+  {
+   "bank": "a/r/arbint_m.zsm",
+   "sounds": 40,
+   "tracks": 0,
+   "bytes": 614464,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/arbiter/a_int/arb2_1",
+    "zone:maps/arbiter/a_int/arb2_2",
+    "zone:maps/arbiter/a_int/arb2_3",
+    "zone:maps/arbiter/a_int/arb2_4",
+    "zone:maps/arena/arena_arb1",
+    "zone:maps/arena/arena_arb2"
+   ]
+  },
+  {
+   "bank": "a/r/arbint_v.zss",
+   "sounds": 1,
+   "tracks": 0,
+   "bytes": 56156,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/arbiter/a_int/arb2_1",
+    "zone:maps/arbiter/a_int/arb2_2",
+    "zone:maps/arbiter/a_int/arb2_3",
+    "zone:maps/arbiter/a_int/arb2_4",
+    "zone:maps/arena/arena_arb1",
+    "zone:maps/arena/arena_arb2"
+   ]
+  },
+  {
+   "bank": "a/r/archan_m.zsm",
+   "sounds": 0,
+   "tracks": 0,
+   "bytes": 100,
+   "collides_with_xml2": false,
+   "used_by": []
+  },
+  {
+   "bank": "a/s/astint_a.zss",
+   "sounds": 1,
+   "tracks": 0,
+   "bytes": 1034744,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/arena/arena_astm1",
+    "zone:maps/astroid_m/visit1/asteroid1_3",
+    "zone:maps/astroid_m/visit1/asteroid2_1",
+    "zone:maps/astroid_m/visit1/asteroid2_2",
+    "zone:maps/astroid_m/visit1/asteroid2_3",
+    "zone:maps/mastermold/mastermold1",
+    "zone:maps/mastermold/mastermold2",
+    "zone:maps/nyc/riots/nyc3_2_2"
+   ]
+  },
+  {
+   "bank": "a/s/astint_c.zss",
+   "sounds": 1,
+   "tracks": 0,
+   "bytes": 8309552,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/arena/arena_astm1",
+    "zone:maps/astroid_m/visit1/asteroid1_3",
+    "zone:maps/astroid_m/visit1/asteroid2_1",
+    "zone:maps/astroid_m/visit1/asteroid2_2",
+    "zone:maps/astroid_m/visit1/asteroid2_3",
+    "zone:maps/mastermold/mastermold1",
+    "zone:maps/mastermold/mastermold2",
+    "zone:maps/nyc/riots/nyc3_2_2"
+   ]
+  },
+  {
+   "bank": "a/s/astint_d.zsm",
+   "sounds": 34,
+   "tracks": 11,
+   "bytes": 212420,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/arena/arena_astm1",
+    "zone:maps/astroid_m/visit1/asteroid1_3",
+    "zone:maps/astroid_m/visit1/asteroid2_1",
+    "zone:maps/astroid_m/visit1/asteroid2_2",
+    "zone:maps/astroid_m/visit1/asteroid2_3",
+    "zone:maps/mastermold/mastermold1",
+    "zone:maps/mastermold/mastermold2",
+    "zone:maps/nyc/riots/nyc3_2_2"
+   ]
+  },
+  {
+   "bank": "a/s/astint_m.zsm",
+   "sounds": 30,
+   "tracks": 0,
+   "bytes": 470020,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/arena/arena_astm1",
+    "zone:maps/astroid_m/visit1/asteroid1_3",
+    "zone:maps/astroid_m/visit1/asteroid2_1",
+    "zone:maps/astroid_m/visit1/asteroid2_2",
+    "zone:maps/astroid_m/visit1/asteroid2_3",
+    "zone:maps/mastermold/mastermold1",
+    "zone:maps/mastermold/mastermold2",
+    "zone:maps/nyc/riots/nyc3_2_2"
+   ]
+  },
+  {
+   "bank": "a/s/astint_v.zss",
+   "sounds": 24,
+   "tracks": 0,
+   "bytes": 2164988,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/arena/arena_astm1",
+    "zone:maps/astroid_m/visit1/asteroid1_3",
+    "zone:maps/astroid_m/visit1/asteroid2_1",
+    "zone:maps/astroid_m/visit1/asteroid2_2",
+    "zone:maps/astroid_m/visit1/asteroid2_3",
+    "zone:maps/mastermold/mastermold1",
+    "zone:maps/mastermold/mastermold2",
+    "zone:maps/nyc/riots/nyc3_2_2"
+   ]
+  },
+  {
+   "bank": "a/s/astral_a.zss",
+   "sounds": 1,
+   "tracks": 0,
+   "bytes": 4821872,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/arena/arena_astral1",
+    "zone:maps/arena/arena_astral2",
+    "zone:maps/astral/ast1/astral1_1",
+    "zone:maps/astral/ast1/astral1_2",
+    "zone:maps/astral/ast1/astral1_3",
+    "zone:maps/astral/ast1/astral4_3",
+    "zone:maps/astral/ast3/astral3_2",
+    "zone:maps/astral/ast3/astral3_3",
+    "zone:maps/astral/ast3/astral3_4",
+    "zone:maps/astral/ast3/astral3_5",
+    "zone:maps/astral/savepx/astral2_1",
+    "zone:maps/astral/savepx/astral2_2",
+    "zone:maps/astral/savepx/astral2_3"
+   ]
+  },
+  {
+   "bank": "a/s/astral_c.zss",
+   "sounds": 1,
+   "tracks": 0,
+   "bytes": 11125256,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/arena/arena_astral1",
+    "zone:maps/arena/arena_astral2",
+    "zone:maps/astral/ast1/astral1_1",
+    "zone:maps/astral/ast1/astral1_2",
+    "zone:maps/astral/ast1/astral1_3",
+    "zone:maps/astral/ast1/astral4_3",
+    "zone:maps/astral/ast3/astral3_2",
+    "zone:maps/astral/ast3/astral3_3",
+    "zone:maps/astral/ast3/astral3_4",
+    "zone:maps/astral/ast3/astral3_5",
+    "zone:maps/astral/savepx/astral2_1",
+    "zone:maps/astral/savepx/astral2_2",
+    "zone:maps/astral/savepx/astral2_3"
+   ]
+  },
+  {
+   "bank": "a/s/astral_d.zsm",
+   "sounds": 43,
+   "tracks": 12,
+   "bytes": 247888,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/arena/arena_astral1",
+    "zone:maps/arena/arena_astral2",
+    "zone:maps/astral/ast1/astral1_1",
+    "zone:maps/astral/ast1/astral1_2",
+    "zone:maps/astral/ast1/astral1_3",
+    "zone:maps/astral/ast1/astral4_3",
+    "zone:maps/astral/ast3/astral3_2",
+    "zone:maps/astral/ast3/astral3_3",
+    "zone:maps/astral/ast3/astral3_4",
+    "zone:maps/astral/ast3/astral3_5",
+    "zone:maps/astral/savepx/astral2_1",
+    "zone:maps/astral/savepx/astral2_2",
+    "zone:maps/astral/savepx/astral2_3"
+   ]
+  },
+  {
+   "bank": "a/s/astral_m.zsm",
+   "sounds": 19,
+   "tracks": 0,
+   "bytes": 335700,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/arena/arena_astral1",
+    "zone:maps/arena/arena_astral2",
+    "zone:maps/astral/ast1/astral1_1",
+    "zone:maps/astral/ast1/astral1_2",
+    "zone:maps/astral/ast1/astral1_3",
+    "zone:maps/astral/ast1/astral4_3",
+    "zone:maps/astral/ast3/astral3_2",
+    "zone:maps/astral/ast3/astral3_3",
+    "zone:maps/astral/ast3/astral3_4",
+    "zone:maps/astral/ast3/astral3_5",
+    "zone:maps/astral/savepx/astral2_1",
+    "zone:maps/astral/savepx/astral2_2",
+    "zone:maps/astral/savepx/astral2_3"
+   ]
+  },
+  {
+   "bank": "a/s/astral_v.zss",
+   "sounds": 21,
+   "tracks": 0,
+   "bytes": 1078652,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/arena/arena_astral1",
+    "zone:maps/arena/arena_astral2",
+    "zone:maps/astral/ast1/astral1_1",
+    "zone:maps/astral/ast1/astral1_2",
+    "zone:maps/astral/ast1/astral1_3",
+    "zone:maps/astral/ast1/astral4_3",
+    "zone:maps/astral/ast3/astral3_2",
+    "zone:maps/astral/ast3/astral3_3",
+    "zone:maps/astral/ast3/astral3_4",
+    "zone:maps/astral/ast3/astral3_5",
+    "zone:maps/astral/savepx/astral2_1",
+    "zone:maps/astral/savepx/astral2_2",
+    "zone:maps/astral/savepx/astral2_3"
+   ]
+  },
+  {
+   "bank": "a/s/astrb4_a.zss",
+   "sounds": 1,
+   "tracks": 0,
+   "bytes": 2885936,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/astral/savepx/final_astral"
+   ]
+  },
+  {
+   "bank": "a/s/astrb4_c.zss",
+   "sounds": 1,
+   "tracks": 0,
+   "bytes": 13021736,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/astral/savepx/final_astral"
+   ]
+  },
+  {
+   "bank": "a/s/astrb4_d.zsm",
+   "sounds": 16,
+   "tracks": 4,
+   "bytes": 103476,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/astral/savepx/final_astral"
+   ]
+  },
+  {
+   "bank": "a/s/astrb4_m.zsm",
+   "sounds": 1,
+   "tracks": 0,
+   "bytes": 32288,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/astral/savepx/final_astral"
+   ]
+  },
+  {
+   "bank": "a/s/astrb4_v.zsm",
+   "sounds": 0,
+   "tracks": 0,
+   "bytes": 100,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/astral/savepx/final_astral"
+   ]
+  },
+  {
+   "bank": "a/s/astrb4_v.zss",
+   "sounds": 0,
+   "tracks": 0,
+   "bytes": 100,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/astral/savepx/final_astral"
+   ]
+  },
+  {
+   "bank": "a/s/asttun_a.zss",
+   "sounds": 1,
+   "tracks": 0,
+   "bytes": 5672120,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/astroid_m/visit1/asteroid1_1",
+    "zone:maps/astroid_m/visit1/asteroid1_2"
+   ]
+  },
+  {
+   "bank": "a/s/asttun_c.zss",
+   "sounds": 1,
+   "tracks": 0,
+   "bytes": 8681864,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/astroid_m/visit1/asteroid1_1",
+    "zone:maps/astroid_m/visit1/asteroid1_2"
+   ]
+  },
+  {
+   "bank": "a/s/asttun_d.zsm",
+   "sounds": 24,
+   "tracks": 8,
+   "bytes": 165392,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/astroid_m/visit1/asteroid1_1",
+    "zone:maps/astroid_m/visit1/asteroid1_2"
+   ]
+  },
+  {
+   "bank": "a/s/asttun_m.zsm",
+   "sounds": 14,
+   "tracks": 0,
+   "bytes": 201732,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/astroid_m/visit1/asteroid1_1",
+    "zone:maps/astroid_m/visit1/asteroid1_2"
+   ]
+  },
+  {
+   "bank": "a/s/asttun_v.zss",
+   "sounds": 6,
+   "tracks": 0,
+   "bytes": 693500,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/astroid_m/visit1/asteroid1_1",
+    "zone:maps/astroid_m/visit1/asteroid1_2"
+   ]
+  },
+  {
+   "bank": "a/v/avalan_m.zsm",
+   "sounds": 17,
+   "tracks": 0,
+   "bytes": 270180,
+   "collides_with_xml2": false,
+   "used_by": [
+    "char:npcstat:AvalancheAct2",
+    "char:npcstat:AvalancheAct4",
+    "char:npcstat:AvalancheScripted",
+    "char:npcstat:avalanchelite"
+   ]
+  },
+  {
+   "bank": "b/a/badcag_m.zsm",
+   "sounds": 1,
+   "tracks": 0,
+   "bytes": 7664,
+   "collides_with_xml2": false,
+   "used_by": []
+  },
+  {
+   "bank": "b/e/beast_m.zsm",
+   "sounds": 12,
+   "tracks": 0,
+   "bytes": 198712,
+   "collides_with_xml2": true,
+   "used_by": [
+    "char:herostat:Beast"
+   ]
+  },
+  {
+   "bank": "b/i/bishop_m.zsm",
+   "sounds": 0,
+   "tracks": 0,
+   "bytes": 100,
+   "collides_with_xml2": true,
+   "used_by": []
+  },
+  {
+   "bank": "b/l/blob_m.zsm",
+   "sounds": 16,
+   "tracks": 0,
+   "bytes": 222632,
+   "collides_with_xml2": true,
+   "used_by": [
+    "char:npcstat:BlobAct1a",
+    "char:npcstat:BlobAct2",
+    "char:npcstat:BlobAct4"
+   ]
+  },
+  {
+   "bank": "b/o/bots_m.zsm",
+   "sounds": 13,
+   "tracks": 0,
+   "bytes": 160620,
+   "collides_with_xml2": false,
+   "used_by": [
+    "char:npcstat:ShockerBot",
+    "char:npcstat:StealthBot",
+    "char:npcstat:SuicideBot"
+   ]
+  },
+  {
+   "bank": "b/r/bro_e_m.zsm",
+   "sounds": 12,
+   "tracks": 0,
+   "bytes": 120720,
+   "collides_with_xml2": false,
+   "used_by": [
+    "char:npcstat:BrotherHoodEnergy",
+    "char:npcstat:BrotherHoodEnergyLite",
+    "char:npcstat:BrotherHoodLeader"
+   ]
+  },
+  {
+   "bank": "b/r/bro_me_m.zsm",
+   "sounds": 15,
+   "tracks": 0,
+   "bytes": 158648,
+   "collides_with_xml2": false,
+   "used_by": [
+    "char:npcstat:BrotherHoodMental"
+   ]
+  },
+  {
+   "bank": "b/r/bro_s_m.zsm",
+   "sounds": 12,
+   "tracks": 0,
+   "bytes": 103352,
+   "collides_with_xml2": false,
+   "used_by": [
+    "char:npcstat:BrotherHoodLite",
+    "char:npcstat:BrotherHoodSmash"
+   ]
+  },
+  {
+   "bank": "c/o/colos_a.zss",
+   "sounds": 1,
+   "tracks": 0,
+   "bytes": 3016328,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/astral/ast3/colosseum"
+   ]
+  },
+  {
+   "bank": "c/o/colos_c.zss",
+   "sounds": 1,
+   "tracks": 0,
+   "bytes": 11125328,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/astral/ast3/colosseum"
+   ]
+  },
+  {
+   "bank": "c/o/colos_d.zsm",
+   "sounds": 9,
+   "tracks": 3,
+   "bytes": 73728,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/astral/ast3/colosseum"
+   ]
+  },
+  {
+   "bank": "c/o/colos_m.zsm",
+   "sounds": 0,
+   "tracks": 0,
+   "bytes": 100,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/astral/ast3/colosseum"
+   ]
+  },
+  {
+   "bank": "c/o/colos_v.zsm",
+   "sounds": 14,
+   "tracks": 0,
+   "bytes": 961832,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/astral/ast3/colosseum"
+   ]
+  },
+  {
+   "bank": "c/o/colos_v.zss",
+   "sounds": 14,
+   "tracks": 0,
+   "bytes": 961832,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/astral/ast3/colosseum"
+   ]
+  },
+  {
+   "bank": "c/o/coloss_m.zsm",
+   "sounds": 14,
+   "tracks": 0,
+   "bytes": 214756,
+   "collides_with_xml2": true,
+   "used_by": [
+    "char:herostat:Colossus",
+    "char:npcstat:colossusdopple",
+    "char:npcstat:colossusflesh"
+   ]
+  },
+  {
+   "bank": "c/y/cyclop_m.zsm",
+   "sounds": 38,
+   "tracks": 3,
+   "bytes": 175752,
+   "collides_with_xml2": true,
+   "used_by": [
+    "char:herostat:Cyclops",
+    "char:npcstat:Kincaid",
+    "char:npcstat:cyclopsdopple"
+   ]
+  },
+  {
+   "bank": "d/a/danger_m.zsm",
+   "sounds": 4,
+   "tracks": 0,
+   "bytes": 72960,
+   "collides_with_xml2": true,
+   "used_by": [
+    "char:npcstat:DangerRoomRobot",
+    "char:npcstat:DangerRoomRobotLeader"
+   ]
+  },
+  {
+   "bank": "e/m/emmaf_m.zsm",
+   "sounds": 12,
+   "tracks": 0,
+   "bytes": 205068,
+   "collides_with_xml2": false,
+   "used_by": [
+    "char:herostat:Frost"
+   ]
+  },
+  {
+   "bank": "f/e/female_m.zsm",
+   "sounds": 4,
+   "tracks": 0,
+   "bytes": 142880,
+   "collides_with_xml2": false,
+   "used_by": []
+  },
+  {
+   "bank": "g/a/gambit_m.zsm",
+   "sounds": 37,
+   "tracks": 4,
+   "bytes": 203992,
+   "collides_with_xml2": false,
+   "used_by": [
+    "char:herostat:Gambit"
+   ]
+  },
+  {
+   "bank": "g/r/grso_m.zsm",
+   "sounds": 44,
+   "tracks": 0,
+   "bytes": 362512,
+   "collides_with_xml2": false,
+   "used_by": [
+    "char:npcstat:GRSO_commander",
+    "char:npcstat:GRSO_mp5",
+    "char:npcstat:HAARPFlamethrower",
+    "char:npcstat:HAARPLeader",
+    "char:npcstat:HAARPSoldier",
+    "char:npcstat:HAARPSoldierMelee",
+    "char:npcstat:NukeGuard",
+    "char:npcstat:NukeGuardMelee",
+    "char:npcstat:Police",
+    "char:npcstat:WeapXGuard",
+    "char:npcstat:WeapXGuardLeader",
+    "char:npcstat:WeapXGuardMelee",
+    "char:npcstat:grso_captain",
+    "char:npcstat:grso_captain_b",
+    "char:npcstat:grso_flamethrower",
+    "char:npcstat:grso_flamethrowerb",
+    "char:npcstat:grso_laser",
+    "char:npcstat:grso_laserb",
+    "char:npcstat:grso_officer",
+    "char:npcstat:grso_officerb",
+    "char:npcstat:grso_powerbaton",
+    "char:npcstat:grso_powergloves",
+    "char:npcstat:grso_powerglovesb",
+    "char:npcstat:grso_riot",
+    "char:npcstat:grso_stealth",
+    "char:npcstat:grso_superlaser",
+    "char:npcstat:grso_superlaserb",
+    "char:npcstat:grso_superpowergloves"
+   ]
+  },
+  {
+   "bank": "g/r/grsoel_m.zsm",
+   "sounds": 14,
+   "tracks": 0,
+   "bytes": 123872,
+   "collides_with_xml2": false,
+   "used_by": [
+    "char:npcstat:GRSOElite"
+   ]
+  },
+  {
+   "bank": "h/a/harext_a.zss",
+   "sounds": 1,
+   "tracks": 0,
+   "bytes": 4331984,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/arena/arena_snow1",
+    "zone:maps/demo/ext/haarp_ext_boss",
+    "zone:maps/haarp/ext/haarp_ext01",
+    "zone:maps/haarp/ext/haarp_ext02",
+    "zone:maps/haarp/ext/haarp_ext03",
+    "zone:maps/haarp/ext/haarp_ext04",
+    "zone:maps/haarp/ext/haarp_ext_boss"
+   ]
+  },
+  {
+   "bank": "h/a/harext_c.zss",
+   "sounds": 1,
+   "tracks": 0,
+   "bytes": 8681936,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/arena/arena_snow1",
+    "zone:maps/demo/ext/haarp_ext_boss",
+    "zone:maps/haarp/ext/haarp_ext01",
+    "zone:maps/haarp/ext/haarp_ext02",
+    "zone:maps/haarp/ext/haarp_ext03",
+    "zone:maps/haarp/ext/haarp_ext04",
+    "zone:maps/haarp/ext/haarp_ext_boss"
+   ]
+  },
+  {
+   "bank": "h/a/harext_d.zsm",
+   "sounds": 66,
+   "tracks": 22,
+   "bytes": 413200,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/arena/arena_snow1",
+    "zone:maps/demo/ext/haarp_ext_boss",
+    "zone:maps/haarp/ext/haarp_ext01",
+    "zone:maps/haarp/ext/haarp_ext02",
+    "zone:maps/haarp/ext/haarp_ext03",
+    "zone:maps/haarp/ext/haarp_ext04",
+    "zone:maps/haarp/ext/haarp_ext_boss"
+   ]
+  },
+  {
+   "bank": "h/a/harext_m.zsm",
+   "sounds": 33,
+   "tracks": 0,
+   "bytes": 404536,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/arena/arena_snow1",
+    "zone:maps/demo/ext/haarp_ext_boss",
+    "zone:maps/haarp/ext/haarp_ext01",
+    "zone:maps/haarp/ext/haarp_ext02",
+    "zone:maps/haarp/ext/haarp_ext03",
+    "zone:maps/haarp/ext/haarp_ext04",
+    "zone:maps/haarp/ext/haarp_ext_boss"
+   ]
+  },
+  {
+   "bank": "h/a/harext_v.zss",
+   "sounds": 11,
+   "tracks": 0,
+   "bytes": 997652,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/arena/arena_snow1",
+    "zone:maps/demo/ext/haarp_ext_boss",
+    "zone:maps/haarp/ext/haarp_ext01",
+    "zone:maps/haarp/ext/haarp_ext02",
+    "zone:maps/haarp/ext/haarp_ext03",
+    "zone:maps/haarp/ext/haarp_ext04",
+    "zone:maps/haarp/ext/haarp_ext_boss"
+   ]
+  },
+  {
+   "bank": "h/a/harint_a.zss",
+   "sounds": 1,
+   "tracks": 0,
+   "bytes": 4331912,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/arena/arena_haarp1",
+    "zone:maps/arena/arena_haarpint1",
+    "zone:maps/haarp/int/haarp2_1",
+    "zone:maps/haarp/int/haarp2_2",
+    "zone:maps/haarp/int/haarp2_3",
+    "zone:maps/haarp/int/haarp2_6"
+   ]
+  },
+  {
+   "bank": "h/a/harint_c.zss",
+   "sounds": 1,
+   "tracks": 0,
+   "bytes": 12146576,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/arena/arena_haarp1",
+    "zone:maps/arena/arena_haarpint1",
+    "zone:maps/haarp/int/haarp2_1",
+    "zone:maps/haarp/int/haarp2_2",
+    "zone:maps/haarp/int/haarp2_3",
+    "zone:maps/haarp/int/haarp2_6"
+   ]
+  },
+  {
+   "bank": "h/a/harint_d.zsm",
+   "sounds": 58,
+   "tracks": 18,
+   "bytes": 357368,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/arena/arena_haarp1",
+    "zone:maps/arena/arena_haarpint1",
+    "zone:maps/haarp/int/haarp2_1",
+    "zone:maps/haarp/int/haarp2_2",
+    "zone:maps/haarp/int/haarp2_3",
+    "zone:maps/haarp/int/haarp2_6"
+   ]
+  },
+  {
+   "bank": "h/a/harint_m.zsm",
+   "sounds": 38,
+   "tracks": 0,
+   "bytes": 567168,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/arena/arena_haarp1",
+    "zone:maps/arena/arena_haarpint1",
+    "zone:maps/haarp/int/haarp2_1",
+    "zone:maps/haarp/int/haarp2_2",
+    "zone:maps/haarp/int/haarp2_3",
+    "zone:maps/haarp/int/haarp2_6"
+   ]
+  },
+  {
+   "bank": "h/a/harint_v.zss",
+   "sounds": 5,
+   "tracks": 0,
+   "bytes": 280508,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/arena/arena_haarp1",
+    "zone:maps/arena/arena_haarpint1",
+    "zone:maps/haarp/int/haarp2_1",
+    "zone:maps/haarp/int/haarp2_2",
+    "zone:maps/haarp/int/haarp2_3",
+    "zone:maps/haarp/int/haarp2_6"
+   ]
+  },
+  {
+   "bank": "h/a/havok_m.zsm",
+   "sounds": 12,
+   "tracks": 0,
+   "bytes": 121836,
+   "collides_with_xml2": false,
+   "used_by": [
+    "char:npcstat:HavokAct2",
+    "char:npcstat:HavokBoss"
+   ]
+  },
+  {
+   "bank": "h/i/hivext_a.zss",
+   "sounds": 1,
+   "tracks": 0,
+   "bytes": 5683784,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/hive/h_ext/hive1_1_1"
+   ]
+  },
+  {
+   "bank": "h/i/hivext_c.zss",
+   "sounds": 1,
+   "tracks": 0,
+   "bytes": 15683432,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/hive/h_ext/hive1_1_1"
+   ]
+  },
+  {
+   "bank": "h/i/hivext_d.zsm",
+   "sounds": 34,
+   "tracks": 12,
+   "bytes": 199812,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/hive/h_ext/hive1_1_1"
+   ]
+  },
+  {
+   "bank": "h/i/hivext_m.zsm",
+   "sounds": 21,
+   "tracks": 0,
+   "bytes": 140344,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/hive/h_ext/hive1_1_1"
+   ]
+  },
+  {
+   "bank": "h/i/hivext_v.zss",
+   "sounds": 0,
+   "tracks": 0,
+   "bytes": 100,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/hive/h_ext/hive1_1_1"
+   ]
+  },
+  {
+   "bank": "h/i/hivint_a.zss",
+   "sounds": 1,
+   "tracks": 0,
+   "bytes": 3495200,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/hive/h_int/hive1_2_1",
+    "zone:maps/hive/h_int/hive1_2_2",
+    "zone:maps/hive/h_int/hive1_2_3",
+    "zone:maps/hive/h_int/hive1_3_1",
+    "zone:maps/hive/h_int/hive1_3_2",
+    "zone:maps/hive/h_int/hive1_3_3"
+   ]
+  },
+  {
+   "bank": "h/i/hivint_c.zss",
+   "sounds": 1,
+   "tracks": 0,
+   "bytes": 15683360,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/hive/h_int/hive1_2_1",
+    "zone:maps/hive/h_int/hive1_2_2",
+    "zone:maps/hive/h_int/hive1_2_3",
+    "zone:maps/hive/h_int/hive1_3_1",
+    "zone:maps/hive/h_int/hive1_3_2",
+    "zone:maps/hive/h_int/hive1_3_3"
+   ]
+  },
+  {
+   "bank": "h/i/hivint_d.zsm",
+   "sounds": 48,
+   "tracks": 16,
+   "bytes": 279864,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/hive/h_int/hive1_2_1",
+    "zone:maps/hive/h_int/hive1_2_2",
+    "zone:maps/hive/h_int/hive1_2_3",
+    "zone:maps/hive/h_int/hive1_3_1",
+    "zone:maps/hive/h_int/hive1_3_2",
+    "zone:maps/hive/h_int/hive1_3_3"
+   ]
+  },
+  {
+   "bank": "h/i/hivint_m.zsm",
+   "sounds": 27,
+   "tracks": 0,
+   "bytes": 693388,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/hive/h_int/hive1_2_1",
+    "zone:maps/hive/h_int/hive1_2_2",
+    "zone:maps/hive/h_int/hive1_2_3",
+    "zone:maps/hive/h_int/hive1_3_1",
+    "zone:maps/hive/h_int/hive1_3_2",
+    "zone:maps/hive/h_int/hive1_3_3"
+   ]
+  },
+  {
+   "bank": "h/i/hivint_v.zss",
+   "sounds": 11,
+   "tracks": 0,
+   "bytes": 614504,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/hive/h_int/hive1_2_1",
+    "zone:maps/hive/h_int/hive1_2_2",
+    "zone:maps/hive/h_int/hive1_2_3",
+    "zone:maps/hive/h_int/hive1_3_1",
+    "zone:maps/hive/h_int/hive1_3_2",
+    "zone:maps/hive/h_int/hive1_3_3"
+   ]
+  },
+  {
+   "bank": "h/i/hivlab_a.zss",
+   "sounds": 1,
+   "tracks": 0,
+   "bytes": 2158448,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/hive/h_int/hive2_2_1",
+    "zone:maps/hive/h_int/hive2_2_2",
+    "zone:maps/hive/h_int/hive2_2_3",
+    "zone:maps/hive/h_int/hive2_2_4",
+    "zone:maps/hive/h_int/hive2_2_5"
+   ]
+  },
+  {
+   "bank": "h/i/hivlab_c.zss",
+   "sounds": 1,
+   "tracks": 0,
+   "bytes": 11927840,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/hive/h_int/hive2_2_1",
+    "zone:maps/hive/h_int/hive2_2_2",
+    "zone:maps/hive/h_int/hive2_2_3",
+    "zone:maps/hive/h_int/hive2_2_4",
+    "zone:maps/hive/h_int/hive2_2_5"
+   ]
+  },
+  {
+   "bank": "h/i/hivlab_d.zsm",
+   "sounds": 53,
+   "tracks": 17,
+   "bytes": 290860,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/hive/h_int/hive2_2_1",
+    "zone:maps/hive/h_int/hive2_2_2",
+    "zone:maps/hive/h_int/hive2_2_3",
+    "zone:maps/hive/h_int/hive2_2_4",
+    "zone:maps/hive/h_int/hive2_2_5"
+   ]
+  },
+  {
+   "bank": "h/i/hivlab_m.zsm",
+   "sounds": 16,
+   "tracks": 0,
+   "bytes": 255844,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/hive/h_int/hive2_2_1",
+    "zone:maps/hive/h_int/hive2_2_2",
+    "zone:maps/hive/h_int/hive2_2_3",
+    "zone:maps/hive/h_int/hive2_2_4",
+    "zone:maps/hive/h_int/hive2_2_5"
+   ]
+  },
+  {
+   "bank": "h/i/hivlab_v.zss",
+   "sounds": 11,
+   "tracks": 0,
+   "bytes": 986752,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/hive/h_int/hive2_2_1",
+    "zone:maps/hive/h_int/hive2_2_2",
+    "zone:maps/hive/h_int/hive2_2_3",
+    "zone:maps/hive/h_int/hive2_2_4",
+    "zone:maps/hive/h_int/hive2_2_5"
+   ]
+  },
+  {
+   "bank": "i/c/iceint_a.zss",
+   "sounds": 1,
+   "tracks": 0,
+   "bytes": 1692968,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/haarp/int/icetunnel1",
+    "zone:maps/haarp/int/icetunnel2"
+   ]
+  },
+  {
+   "bank": "i/c/iceint_c.zss",
+   "sounds": 1,
+   "tracks": 0,
+   "bytes": 8681864,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/haarp/int/icetunnel1",
+    "zone:maps/haarp/int/icetunnel2"
+   ]
+  },
+  {
+   "bank": "i/c/iceint_d.zsm",
+   "sounds": 50,
+   "tracks": 16,
+   "bytes": 309580,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/haarp/int/icetunnel1",
+    "zone:maps/haarp/int/icetunnel2"
+   ]
+  },
+  {
+   "bank": "i/c/iceint_m.zsm",
+   "sounds": 4,
+   "tracks": 0,
+   "bytes": 59264,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/haarp/int/icetunnel1",
+    "zone:maps/haarp/int/icetunnel2"
+   ]
+  },
+  {
+   "bank": "i/c/iceint_v.zss",
+   "sounds": 36,
+   "tracks": 0,
+   "bytes": 2505932,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/haarp/int/icetunnel1",
+    "zone:maps/haarp/int/icetunnel2"
+   ]
+  },
+  {
+   "bank": "i/c/iceman_m.zsm",
+   "sounds": 53,
+   "tracks": 6,
+   "bytes": 241468,
+   "collides_with_xml2": true,
+   "used_by": [
+    "char:herostat:Iceman",
+    "char:npcstat:icemanflesh"
+   ]
+  },
+  {
+   "bank": "j/a/janus_m.zsm",
+   "sounds": 0,
+   "tracks": 0,
+   "bytes": 100,
+   "collides_with_xml2": false,
+   "used_by": []
+  },
+  {
+   "bank": "j/u/jubile_m.zsm",
+   "sounds": 16,
+   "tracks": 0,
+   "bytes": 226520,
+   "collides_with_xml2": false,
+   "used_by": [
+    "char:herostat:Jubilee"
+   ]
+  },
+  {
+   "bank": "j/u/jugger_m.zsm",
+   "sounds": 17,
+   "tracks": 0,
+   "bytes": 186852,
+   "collides_with_xml2": false,
+   "used_by": [
+    "char:npcstat:JuggernautAct3",
+    "char:npcstat:JuggernautFlashback"
+   ]
+  },
+  {
+   "bank": "m/a/magma_m.zsm",
+   "sounds": 15,
+   "tracks": 0,
+   "bytes": 207412,
+   "collides_with_xml2": false,
+   "used_by": [
+    "char:herostat:Magma"
+   ]
+  },
+  {
+   "bank": "m/a/magnet_m.zsm",
+   "sounds": 12,
+   "tracks": 0,
+   "bytes": 161488,
+   "collides_with_xml2": true,
+   "used_by": [
+    "char:npcstat:MagnetoAct2",
+    "char:npcstat:MagnetoBoss"
+   ]
+  },
+  {
+   "bank": "m/a/male_m.zsm",
+   "sounds": 4,
+   "tracks": 0,
+   "bytes": 58000,
+   "collides_with_xml2": false,
+   "used_by": []
+  },
+  {
+   "bank": "m/a/manbs1_a.zss",
+   "sounds": 1,
+   "tracks": 0,
+   "bytes": 1593392,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/mansion/jugrnt/jugrnt01",
+    "zone:maps/mocap/mocap2/briefing_1_2_41"
+   ]
+  },
+  {
+   "bank": "m/a/manbs1_c.zss",
+   "sounds": 1,
+   "tracks": 0,
+   "bytes": 6384416,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/mansion/jugrnt/jugrnt01",
+    "zone:maps/mocap/mocap2/briefing_1_2_41"
+   ]
+  },
+  {
+   "bank": "m/a/manbs1_d.zsm",
+   "sounds": 58,
+   "tracks": 19,
+   "bytes": 299592,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/mansion/jugrnt/jugrnt01",
+    "zone:maps/mocap/mocap2/briefing_1_2_41"
+   ]
+  },
+  {
+   "bank": "m/a/manbs1_m.zsm",
+   "sounds": 1,
+   "tracks": 0,
+   "bytes": 12992,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/mansion/jugrnt/jugrnt01",
+    "zone:maps/mocap/mocap2/briefing_1_2_41"
+   ]
+  },
+  {
+   "bank": "m/a/manbs1_v.zss",
+   "sounds": 16,
+   "tracks": 0,
+   "bytes": 1651932,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/mansion/jugrnt/jugrnt01",
+    "zone:maps/mocap/mocap2/briefing_1_2_41"
+   ]
+  },
+  {
+   "bank": "m/a/manbst_a.zss",
+   "sounds": 1,
+   "tracks": 0,
+   "bytes": 1292432,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/mansion/man1a/hangar1a",
+    "zone:maps/mansion/man1a/subbasement1a",
+    "zone:maps/mansion/man2/subbasement2",
+    "zone:maps/mansion/man3/danger_room",
+    "zone:maps/mansion/man3/hangar3",
+    "zone:maps/mansion/man3/subbasement3b",
+    "zone:maps/mansion/man4/grso_debriefing",
+    "zone:maps/mansion/man4/subbasement4",
+    "zone:maps/mansion/man5/subbasement5",
+    "zone:maps/mansion/man5/subbasement5b",
+    "zone:maps/mansion/man6/subbasement6",
+    "zone:maps/mansion/man7/status_meeting",
+    "zone:maps/mansion/man7/subbasement7",
+    "zone:maps/mansion/man8/hangar8",
+    "zone:maps/mansion/man8/subbasement8",
+    "zone:maps/mansion/man8/subbasement8b",
+    "zone:maps/mocap/mocap1/briefing_1_1_6_5",
+    "zone:maps/mocap/mocap10/briefing_3_6_6",
+    "zone:maps/mocap/mocap11/briefing_3_6_7",
+    "zone:maps/mocap/mocap12/briefing_3_9_0",
+    "zone:maps/mocap/mocap13/briefing_3_9_8",
+    "zone:maps/mocap/mocap3/briefing_1_4_13",
+    "zone:maps/mocap/mocap4/briefing_1_7_1",
+    "zone:maps/mocap/mocap5/briefing_2_1_16",
+    "zone:maps/mocap/mocap6/briefing_2_5_5",
+    "zone:maps/mocap/mocap7/briefing_2_5_14_7",
+    "zone:maps/mocap/mocap8/briefing_2_5_22",
+    "zone:maps/mocap/mocap9/briefing_3_1_8"
+   ]
+  },
+  {
+   "bank": "m/a/manbst_c.zss",
+   "sounds": 1,
+   "tracks": 0,
+   "bytes": 8681864,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/mansion/man1a/hangar1a",
+    "zone:maps/mansion/man1a/subbasement1a",
+    "zone:maps/mansion/man2/subbasement2",
+    "zone:maps/mansion/man3/danger_room",
+    "zone:maps/mansion/man3/hangar3",
+    "zone:maps/mansion/man3/subbasement3b",
+    "zone:maps/mansion/man4/grso_debriefing",
+    "zone:maps/mansion/man4/subbasement4",
+    "zone:maps/mansion/man5/subbasement5",
+    "zone:maps/mansion/man5/subbasement5b",
+    "zone:maps/mansion/man6/subbasement6",
+    "zone:maps/mansion/man7/status_meeting",
+    "zone:maps/mansion/man7/subbasement7",
+    "zone:maps/mansion/man8/hangar8",
+    "zone:maps/mansion/man8/subbasement8",
+    "zone:maps/mansion/man8/subbasement8b",
+    "zone:maps/mocap/mocap1/briefing_1_1_6_5",
+    "zone:maps/mocap/mocap10/briefing_3_6_6",
+    "zone:maps/mocap/mocap11/briefing_3_6_7",
+    "zone:maps/mocap/mocap12/briefing_3_9_0",
+    "zone:maps/mocap/mocap13/briefing_3_9_8",
+    "zone:maps/mocap/mocap3/briefing_1_4_13",
+    "zone:maps/mocap/mocap4/briefing_1_7_1",
+    "zone:maps/mocap/mocap5/briefing_2_1_16",
+    "zone:maps/mocap/mocap6/briefing_2_5_5",
+    "zone:maps/mocap/mocap7/briefing_2_5_14_7",
+    "zone:maps/mocap/mocap8/briefing_2_5_22",
+    "zone:maps/mocap/mocap9/briefing_3_1_8"
+   ]
+  },
+  {
+   "bank": "m/a/manbst_d.zsm",
+   "sounds": 47,
+   "tracks": 16,
+   "bytes": 266464,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/mansion/man1a/hangar1a",
+    "zone:maps/mansion/man1a/subbasement1a",
+    "zone:maps/mansion/man2/subbasement2",
+    "zone:maps/mansion/man3/danger_room",
+    "zone:maps/mansion/man3/hangar3",
+    "zone:maps/mansion/man3/subbasement3b",
+    "zone:maps/mansion/man4/grso_debriefing",
+    "zone:maps/mansion/man4/subbasement4",
+    "zone:maps/mansion/man5/subbasement5",
+    "zone:maps/mansion/man5/subbasement5b",
+    "zone:maps/mansion/man6/subbasement6",
+    "zone:maps/mansion/man7/status_meeting",
+    "zone:maps/mansion/man7/subbasement7",
+    "zone:maps/mansion/man8/hangar8",
+    "zone:maps/mansion/man8/subbasement8",
+    "zone:maps/mansion/man8/subbasement8b",
+    "zone:maps/mocap/mocap1/briefing_1_1_6_5",
+    "zone:maps/mocap/mocap10/briefing_3_6_6",
+    "zone:maps/mocap/mocap11/briefing_3_6_7",
+    "zone:maps/mocap/mocap12/briefing_3_9_0",
+    "zone:maps/mocap/mocap13/briefing_3_9_8",
+    "zone:maps/mocap/mocap3/briefing_1_4_13",
+    "zone:maps/mocap/mocap4/briefing_1_7_1",
+    "zone:maps/mocap/mocap5/briefing_2_1_16",
+    "zone:maps/mocap/mocap6/briefing_2_5_5",
+    "zone:maps/mocap/mocap7/briefing_2_5_14_7",
+    "zone:maps/mocap/mocap8/briefing_2_5_22",
+    "zone:maps/mocap/mocap9/briefing_3_1_8"
+   ]
+  },
+  {
+   "bank": "m/a/manbst_m.zsm",
+   "sounds": 20,
+   "tracks": 0,
+   "bytes": 258216,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/mansion/man1a/hangar1a",
+    "zone:maps/mansion/man1a/subbasement1a",
+    "zone:maps/mansion/man2/subbasement2",
+    "zone:maps/mansion/man3/danger_room",
+    "zone:maps/mansion/man3/hangar3",
+    "zone:maps/mansion/man3/subbasement3b",
+    "zone:maps/mansion/man4/grso_debriefing",
+    "zone:maps/mansion/man4/subbasement4",
+    "zone:maps/mansion/man5/subbasement5",
+    "zone:maps/mansion/man5/subbasement5b",
+    "zone:maps/mansion/man6/subbasement6",
+    "zone:maps/mansion/man7/status_meeting",
+    "zone:maps/mansion/man7/subbasement7",
+    "zone:maps/mansion/man8/hangar8",
+    "zone:maps/mansion/man8/subbasement8",
+    "zone:maps/mansion/man8/subbasement8b",
+    "zone:maps/mocap/mocap1/briefing_1_1_6_5",
+    "zone:maps/mocap/mocap10/briefing_3_6_6",
+    "zone:maps/mocap/mocap11/briefing_3_6_7",
+    "zone:maps/mocap/mocap12/briefing_3_9_0",
+    "zone:maps/mocap/mocap13/briefing_3_9_8",
+    "zone:maps/mocap/mocap3/briefing_1_4_13",
+    "zone:maps/mocap/mocap4/briefing_1_7_1",
+    "zone:maps/mocap/mocap5/briefing_2_1_16",
+    "zone:maps/mocap/mocap6/briefing_2_5_5",
+    "zone:maps/mocap/mocap7/briefing_2_5_14_7",
+    "zone:maps/mocap/mocap8/briefing_2_5_22",
+    "zone:maps/mocap/mocap9/briefing_3_1_8"
+   ]
+  },
+  {
+   "bank": "m/a/manbst_v.zss",
+   "sounds": 702,
+   "tracks": 0,
+   "bytes": 48131156,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/mansion/man1a/hangar1a",
+    "zone:maps/mansion/man1a/subbasement1a",
+    "zone:maps/mansion/man2/subbasement2",
+    "zone:maps/mansion/man3/danger_room",
+    "zone:maps/mansion/man3/hangar3",
+    "zone:maps/mansion/man3/subbasement3b",
+    "zone:maps/mansion/man4/grso_debriefing",
+    "zone:maps/mansion/man4/subbasement4",
+    "zone:maps/mansion/man5/subbasement5",
+    "zone:maps/mansion/man5/subbasement5b",
+    "zone:maps/mansion/man6/subbasement6",
+    "zone:maps/mansion/man7/status_meeting",
+    "zone:maps/mansion/man7/subbasement7",
+    "zone:maps/mansion/man8/hangar8",
+    "zone:maps/mansion/man8/subbasement8",
+    "zone:maps/mansion/man8/subbasement8b",
+    "zone:maps/mocap/mocap1/briefing_1_1_6_5",
+    "zone:maps/mocap/mocap10/briefing_3_6_6",
+    "zone:maps/mocap/mocap11/briefing_3_6_7",
+    "zone:maps/mocap/mocap12/briefing_3_9_0",
+    "zone:maps/mocap/mocap13/briefing_3_9_8",
+    "zone:maps/mocap/mocap3/briefing_1_4_13",
+    "zone:maps/mocap/mocap4/briefing_1_7_1",
+    "zone:maps/mocap/mocap5/briefing_2_1_16",
+    "zone:maps/mocap/mocap6/briefing_2_5_5",
+    "zone:maps/mocap/mocap7/briefing_2_5_14_7",
+    "zone:maps/mocap/mocap8/briefing_2_5_22",
+    "zone:maps/mocap/mocap9/briefing_3_1_8"
+   ]
+  },
+  {
+   "bank": "m/a/mandgr_a.zss",
+   "sounds": 1,
+   "tracks": 0,
+   "bytes": 1866632,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/arena/arena_dr",
+    "zone:maps/mansion/dr_mag/dr_mag01",
+    "zone:maps/mansion/dr_mag/dr_mag03"
+   ]
+  },
+  {
+   "bank": "m/a/mandgr_c.zss",
+   "sounds": 1,
+   "tracks": 0,
+   "bytes": 17464568,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/arena/arena_dr",
+    "zone:maps/mansion/dr_mag/dr_mag01",
+    "zone:maps/mansion/dr_mag/dr_mag03"
+   ]
+  },
+  {
+   "bank": "m/a/mandgr_d.zsm",
+   "sounds": 3,
+   "tracks": 1,
+   "bytes": 16972,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/arena/arena_dr",
+    "zone:maps/mansion/dr_mag/dr_mag01",
+    "zone:maps/mansion/dr_mag/dr_mag03"
+   ]
+  },
+  {
+   "bank": "m/a/mandgr_m.zsm",
+   "sounds": 3,
+   "tracks": 0,
+   "bytes": 39152,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/arena/arena_dr",
+    "zone:maps/mansion/dr_mag/dr_mag01",
+    "zone:maps/mansion/dr_mag/dr_mag03"
+   ]
+  },
+  {
+   "bank": "m/a/mandgr_v.zss",
+   "sounds": 3,
+   "tracks": 0,
+   "bytes": 135808,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/arena/arena_dr",
+    "zone:maps/mansion/dr_mag/dr_mag01",
+    "zone:maps/mansion/dr_mag/dr_mag03"
+   ]
+  },
+  {
+   "bank": "m/a/manext_a.zss",
+   "sounds": 1,
+   "tracks": 0,
+   "bytes": 4951112,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/mansion/man2/mansion_back2",
+    "zone:maps/mansion/man4/mansion_back4",
+    "zone:maps/mansion/man4/mansion_back4_grso",
+    "zone:maps/mansion/man4/mansion_front4_grso",
+    "zone:maps/mansion/man5/mansion_front5"
+   ]
+  },
+  {
+   "bank": "m/a/manext_c.zss",
+   "sounds": 1,
+   "tracks": 0,
+   "bytes": 8771864,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/mansion/man2/mansion_back2",
+    "zone:maps/mansion/man4/mansion_back4",
+    "zone:maps/mansion/man4/mansion_back4_grso",
+    "zone:maps/mansion/man4/mansion_front4_grso",
+    "zone:maps/mansion/man5/mansion_front5"
+   ]
+  },
+  {
+   "bank": "m/a/manext_d.zsm",
+   "sounds": 24,
+   "tracks": 8,
+   "bytes": 117000,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/mansion/man2/mansion_back2",
+    "zone:maps/mansion/man4/mansion_back4",
+    "zone:maps/mansion/man4/mansion_back4_grso",
+    "zone:maps/mansion/man4/mansion_front4_grso",
+    "zone:maps/mansion/man5/mansion_front5"
+   ]
+  },
+  {
+   "bank": "m/a/manext_m.zsm",
+   "sounds": 0,
+   "tracks": 0,
+   "bytes": 100,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/mansion/man2/mansion_back2",
+    "zone:maps/mansion/man4/mansion_back4",
+    "zone:maps/mansion/man4/mansion_back4_grso",
+    "zone:maps/mansion/man4/mansion_front4_grso",
+    "zone:maps/mansion/man5/mansion_front5"
+   ]
+  },
+  {
+   "bank": "m/a/manext_v.zss",
+   "sounds": 101,
+   "tracks": 0,
+   "bytes": 6041684,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/mansion/man2/mansion_back2",
+    "zone:maps/mansion/man4/mansion_back4",
+    "zone:maps/mansion/man4/mansion_back4_grso",
+    "zone:maps/mansion/man4/mansion_front4_grso",
+    "zone:maps/mansion/man5/mansion_front5"
+   ]
+  },
+  {
+   "bank": "m/a/manint_a.zss",
+   "sounds": 1,
+   "tracks": 0,
+   "bytes": 1593392,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/arena/arena_mansion1",
+    "zone:maps/mansion/man1a/mansion1a_1",
+    "zone:maps/mansion/man1a/mansion1a_2",
+    "zone:maps/mansion/man2/mansion2_1",
+    "zone:maps/mansion/man2/mansion2_2",
+    "zone:maps/mansion/man3/mansion3_1",
+    "zone:maps/mansion/man3/mansion3_2",
+    "zone:maps/mansion/man4/mansion4_1",
+    "zone:maps/mansion/man4/mansion4_2",
+    "zone:maps/mansion/man5/mansion5_1",
+    "zone:maps/mansion/man5/mansion5_2",
+    "zone:maps/mansion/man6/mansion6_1",
+    "zone:maps/mansion/man6/mansion6_2",
+    "zone:maps/mansion/man7/mansion7_1",
+    "zone:maps/mansion/man7/mansion7_2",
+    "zone:maps/mansion/man8/mansion8_1",
+    "zone:maps/mansion/man8/mansion8_2"
+   ]
+  },
+  {
+   "bank": "m/a/manint_c.zss",
+   "sounds": 1,
+   "tracks": 0,
+   "bytes": 11690816,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/arena/arena_mansion1",
+    "zone:maps/mansion/man1a/mansion1a_1",
+    "zone:maps/mansion/man1a/mansion1a_2",
+    "zone:maps/mansion/man2/mansion2_1",
+    "zone:maps/mansion/man2/mansion2_2",
+    "zone:maps/mansion/man3/mansion3_1",
+    "zone:maps/mansion/man3/mansion3_2",
+    "zone:maps/mansion/man4/mansion4_1",
+    "zone:maps/mansion/man4/mansion4_2",
+    "zone:maps/mansion/man5/mansion5_1",
+    "zone:maps/mansion/man5/mansion5_2",
+    "zone:maps/mansion/man6/mansion6_1",
+    "zone:maps/mansion/man6/mansion6_2",
+    "zone:maps/mansion/man7/mansion7_1",
+    "zone:maps/mansion/man7/mansion7_2",
+    "zone:maps/mansion/man8/mansion8_1",
+    "zone:maps/mansion/man8/mansion8_2"
+   ]
+  },
+  {
+   "bank": "m/a/manint_d.zsm",
+   "sounds": 65,
+   "tracks": 21,
+   "bytes": 310724,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/arena/arena_mansion1",
+    "zone:maps/mansion/man1a/mansion1a_1",
+    "zone:maps/mansion/man1a/mansion1a_2",
+    "zone:maps/mansion/man2/mansion2_1",
+    "zone:maps/mansion/man2/mansion2_2",
+    "zone:maps/mansion/man3/mansion3_1",
+    "zone:maps/mansion/man3/mansion3_2",
+    "zone:maps/mansion/man4/mansion4_1",
+    "zone:maps/mansion/man4/mansion4_2",
+    "zone:maps/mansion/man5/mansion5_1",
+    "zone:maps/mansion/man5/mansion5_2",
+    "zone:maps/mansion/man6/mansion6_1",
+    "zone:maps/mansion/man6/mansion6_2",
+    "zone:maps/mansion/man7/mansion7_1",
+    "zone:maps/mansion/man7/mansion7_2",
+    "zone:maps/mansion/man8/mansion8_1",
+    "zone:maps/mansion/man8/mansion8_2"
+   ]
+  },
+  {
+   "bank": "m/a/manint_m.zsm",
+   "sounds": 26,
+   "tracks": 0,
+   "bytes": 382844,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/arena/arena_mansion1",
+    "zone:maps/mansion/man1a/mansion1a_1",
+    "zone:maps/mansion/man1a/mansion1a_2",
+    "zone:maps/mansion/man2/mansion2_1",
+    "zone:maps/mansion/man2/mansion2_2",
+    "zone:maps/mansion/man3/mansion3_1",
+    "zone:maps/mansion/man3/mansion3_2",
+    "zone:maps/mansion/man4/mansion4_1",
+    "zone:maps/mansion/man4/mansion4_2",
+    "zone:maps/mansion/man5/mansion5_1",
+    "zone:maps/mansion/man5/mansion5_2",
+    "zone:maps/mansion/man6/mansion6_1",
+    "zone:maps/mansion/man6/mansion6_2",
+    "zone:maps/mansion/man7/mansion7_1",
+    "zone:maps/mansion/man7/mansion7_2",
+    "zone:maps/mansion/man8/mansion8_1",
+    "zone:maps/mansion/man8/mansion8_2"
+   ]
+  },
+  {
+   "bank": "m/a/manint_v.zss",
+   "sounds": 361,
+   "tracks": 0,
+   "bytes": 22342020,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/arena/arena_mansion1",
+    "zone:maps/mansion/man1a/mansion1a_1",
+    "zone:maps/mansion/man1a/mansion1a_2",
+    "zone:maps/mansion/man2/mansion2_1",
+    "zone:maps/mansion/man2/mansion2_2",
+    "zone:maps/mansion/man3/mansion3_1",
+    "zone:maps/mansion/man3/mansion3_2",
+    "zone:maps/mansion/man4/mansion4_1",
+    "zone:maps/mansion/man4/mansion4_2",
+    "zone:maps/mansion/man5/mansion5_1",
+    "zone:maps/mansion/man5/mansion5_2",
+    "zone:maps/mansion/man6/mansion6_1",
+    "zone:maps/mansion/man6/mansion6_2",
+    "zone:maps/mansion/man7/mansion7_1",
+    "zone:maps/mansion/man7/mansion7_2",
+    "zone:maps/mansion/man8/mansion8_1",
+    "zone:maps/mansion/man8/mansion8_2"
+   ]
+  },
+  {
+   "bank": "m/a/marrow_m.zsm",
+   "sounds": 41,
+   "tracks": 5,
+   "bytes": 170112,
+   "collides_with_xml2": false,
+   "used_by": [
+    "char:npcstat:MarrowAct1",
+    "char:npcstat:MarrowAct3"
+   ]
+  },
+  {
+   "bank": "m/a/master_m.zsm",
+   "sounds": 11,
+   "tracks": 0,
+   "bytes": 266044,
+   "collides_with_xml2": false,
+   "used_by": [
+    "char:npcstat:mastermoldone"
+   ]
+  },
+  {
+   "bank": "m/e/menu_a.zss",
+   "sounds": 1,
+   "tracks": 0,
+   "bytes": 1114376,
+   "collides_with_xml2": true,
+   "used_by": [
+    "zone:maps/menu/main_back",
+    "menus (music/menu_a)"
+   ]
+  },
+  {
+   "bank": "m/e/menu_c.zss",
+   "sounds": 1,
+   "tracks": 0,
+   "bytes": 1114376,
+   "collides_with_xml2": true,
+   "used_by": [
+    "zone:maps/menu/main_back",
+    "menus (music/menu_a)"
+   ]
+  },
+  {
+   "bank": "m/o/morl_c_m.zsm",
+   "sounds": 21,
+   "tracks": 2,
+   "bytes": 110092,
+   "collides_with_xml2": true,
+   "used_by": [
+    "char:npcstat:MorlockClawA",
+    "char:npcstat:MorlockClawB",
+    "char:npcstat:MorlockClawC"
+   ]
+  },
+  {
+   "bank": "m/o/morl_p_m.zsm",
+   "sounds": 37,
+   "tracks": 4,
+   "bytes": 158668,
+   "collides_with_xml2": true,
+   "used_by": [
+    "char:npcstat:MarrowsLieutenant",
+    "char:npcstat:MorlockLeader",
+    "char:npcstat:MorlockPsionic",
+    "char:npcstat:MorlockPsionicC"
+   ]
+  },
+  {
+   "bank": "m/o/morl_t_m.zsm",
+   "sounds": 13,
+   "tracks": 0,
+   "bytes": 147936,
+   "collides_with_xml2": false,
+   "used_by": [
+    "char:npcstat:MorlockBruiserA",
+    "char:npcstat:MorlockBruiserB",
+    "char:npcstat:MorlockBruiserC"
+   ]
+  },
+  {
+   "bank": "m/o/mount_a.zss",
+   "sounds": 1,
+   "tracks": 0,
+   "bytes": 4098776,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/mount/mount/mount",
+    "zone:maps/mount/mount/mount2"
+   ]
+  },
+  {
+   "bank": "m/o/mount_c.zss",
+   "sounds": 1,
+   "tracks": 0,
+   "bytes": 10833368,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/mount/mount/mount",
+    "zone:maps/mount/mount/mount2"
+   ]
+  },
+  {
+   "bank": "m/o/mount_d.zsm",
+   "sounds": 25,
+   "tracks": 8,
+   "bytes": 145848,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/mount/mount/mount",
+    "zone:maps/mount/mount/mount2"
+   ]
+  },
+  {
+   "bank": "m/o/mount_m.zsm",
+   "sounds": 11,
+   "tracks": 0,
+   "bytes": 277724,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/mount/mount/mount",
+    "zone:maps/mount/mount/mount2"
+   ]
+  },
+  {
+   "bank": "m/o/mount_v.zss",
+   "sounds": 7,
+   "tracks": 0,
+   "bytes": 432388,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/mount/mount/mount",
+    "zone:maps/mount/mount/mount2"
+   ]
+  },
+  {
+   "bank": "m/u/muirex_a.zss",
+   "sounds": 1,
+   "tracks": 0,
+   "bytes": 2333624,
+   "collides_with_xml2": false,
+   "used_by": []
+  },
+  {
+   "bank": "m/u/muirex_c.zss",
+   "sounds": 0,
+   "tracks": 0,
+   "bytes": 100,
+   "collides_with_xml2": false,
+   "used_by": []
+  },
+  {
+   "bank": "m/u/muirex_d.zsm",
+   "sounds": 0,
+   "tracks": 0,
+   "bytes": 100,
+   "collides_with_xml2": false,
+   "used_by": []
+  },
+  {
+   "bank": "m/u/muirex_m.zsm",
+   "sounds": 0,
+   "tracks": 0,
+   "bytes": 100,
+   "collides_with_xml2": false,
+   "used_by": []
+  },
+  {
+   "bank": "m/u/muirex_v.zss",
+   "sounds": 8,
+   "tracks": 0,
+   "bytes": 583296,
+   "collides_with_xml2": false,
+   "used_by": []
+  },
+  {
+   "bank": "m/u/muirin_a.zss",
+   "sounds": 1,
+   "tracks": 0,
+   "bytes": 6064016,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/muir_is/muir2/mui_comcore",
+    "zone:maps/muir_is/muir2/muir_in2",
+    "zone:maps/muir_is/muir3/muir_in3"
+   ]
+  },
+  {
+   "bank": "m/u/muirin_c.zss",
+   "sounds": 1,
+   "tracks": 0,
+   "bytes": 12146576,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/muir_is/muir2/mui_comcore",
+    "zone:maps/muir_is/muir2/muir_in2",
+    "zone:maps/muir_is/muir3/muir_in3"
+   ]
+  },
+  {
+   "bank": "m/u/muirin_d.zsm",
+   "sounds": 66,
+   "tracks": 21,
+   "bytes": 367856,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/muir_is/muir2/mui_comcore",
+    "zone:maps/muir_is/muir2/muir_in2",
+    "zone:maps/muir_is/muir3/muir_in3"
+   ]
+  },
+  {
+   "bank": "m/u/muirin_m.zsm",
+   "sounds": 21,
+   "tracks": 0,
+   "bytes": 210684,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/muir_is/muir2/mui_comcore",
+    "zone:maps/muir_is/muir2/muir_in2",
+    "zone:maps/muir_is/muir3/muir_in3"
+   ]
+  },
+  {
+   "bank": "m/u/muirin_v.zss",
+   "sounds": 175,
+   "tracks": 0,
+   "bytes": 9752236,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/muir_is/muir2/mui_comcore",
+    "zone:maps/muir_is/muir2/muir_in2",
+    "zone:maps/muir_is/muir3/muir_in3"
+   ]
+  },
+  {
+   "bank": "m/u/multip_m.zsm",
+   "sounds": 21,
+   "tracks": 2,
+   "bytes": 113576,
+   "collides_with_xml2": false,
+   "used_by": [
+    "char:npcstat:MultipleMan",
+    "char:npcstat:MultipleManDividing"
+   ]
+  },
+  {
+   "bank": "m/y/mystiq_m.zsm",
+   "sounds": 14,
+   "tracks": 0,
+   "bytes": 155216,
+   "collides_with_xml2": true,
+   "used_by": [
+    "char:npcstat:MystiqueAct1",
+    "char:npcstat:MystiqueAct2sim",
+    "char:npcstat:MystiqueAct3"
+   ]
+  },
+  {
+   "bank": "n/i/night_m.zsm",
+   "sounds": 11,
+   "tracks": 0,
+   "bytes": 100768,
+   "collides_with_xml2": true,
+   "used_by": [
+    "char:herostat:Nightcrawler"
+   ]
+  },
+  {
+   "bank": "n/u/nuke_a.zss",
+   "sounds": 1,
+   "tracks": 0,
+   "bytes": 2370488,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/arena/arena_nuke1",
+    "zone:maps/nuke_plant/nuke/nuke1_1",
+    "zone:maps/nuke_plant/nuke/nuke1_2",
+    "zone:maps/nuke_plant/nuke/nuke1_3",
+    "zone:maps/nuke_plant/nuke/nuke1_4",
+    "zone:maps/nuke_plant/nuke/nuke2_2",
+    "zone:maps/nuke_plant/nuke/nuke2_2a",
+    "zone:maps/nuke_plant/nuke/nuke2_3"
+   ]
+  },
+  {
+   "bank": "n/u/nuke_c.zss",
+   "sounds": 1,
+   "tracks": 0,
+   "bytes": 22539992,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/arena/arena_nuke1",
+    "zone:maps/nuke_plant/nuke/nuke1_1",
+    "zone:maps/nuke_plant/nuke/nuke1_2",
+    "zone:maps/nuke_plant/nuke/nuke1_3",
+    "zone:maps/nuke_plant/nuke/nuke1_4",
+    "zone:maps/nuke_plant/nuke/nuke2_2",
+    "zone:maps/nuke_plant/nuke/nuke2_2a",
+    "zone:maps/nuke_plant/nuke/nuke2_3"
+   ]
+  },
+  {
+   "bank": "n/u/nuke_d.zsm",
+   "sounds": 37,
+   "tracks": 11,
+   "bytes": 241752,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/arena/arena_nuke1",
+    "zone:maps/nuke_plant/nuke/nuke1_1",
+    "zone:maps/nuke_plant/nuke/nuke1_2",
+    "zone:maps/nuke_plant/nuke/nuke1_3",
+    "zone:maps/nuke_plant/nuke/nuke1_4",
+    "zone:maps/nuke_plant/nuke/nuke2_2",
+    "zone:maps/nuke_plant/nuke/nuke2_2a",
+    "zone:maps/nuke_plant/nuke/nuke2_3"
+   ]
+  },
+  {
+   "bank": "n/u/nuke_m.zsm",
+   "sounds": 46,
+   "tracks": 0,
+   "bytes": 664912,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/arena/arena_nuke1",
+    "zone:maps/nuke_plant/nuke/nuke1_1",
+    "zone:maps/nuke_plant/nuke/nuke1_2",
+    "zone:maps/nuke_plant/nuke/nuke1_3",
+    "zone:maps/nuke_plant/nuke/nuke1_4",
+    "zone:maps/nuke_plant/nuke/nuke2_2",
+    "zone:maps/nuke_plant/nuke/nuke2_2a",
+    "zone:maps/nuke_plant/nuke/nuke2_3"
+   ]
+  },
+  {
+   "bank": "n/u/nuke_v.zss",
+   "sounds": 14,
+   "tracks": 0,
+   "bytes": 1109616,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/arena/arena_nuke1",
+    "zone:maps/nuke_plant/nuke/nuke1_1",
+    "zone:maps/nuke_plant/nuke/nuke1_2",
+    "zone:maps/nuke_plant/nuke/nuke1_3",
+    "zone:maps/nuke_plant/nuke/nuke1_4",
+    "zone:maps/nuke_plant/nuke/nuke2_2",
+    "zone:maps/nuke_plant/nuke/nuke2_2a",
+    "zone:maps/nuke_plant/nuke/nuke2_3"
+   ]
+  },
+  {
+   "bank": "n/y/nyc1_a.zss",
+   "sounds": 1,
+   "tracks": 0,
+   "bytes": 4627904,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/arena/arena_nyc1",
+    "zone:maps/nyc/alison/nyc1_1_1",
+    "zone:maps/nyc/alison/nyc1_1_2",
+    "zone:maps/nyc/alison/nyc1_1_2b",
+    "zone:maps/nyc/alison/nyc1_1_3",
+    "zone:maps/nyc/alison/nyc1_1_4",
+    "zone:maps/nyc/alison/nyc1_1_5"
+   ]
+  },
+  {
+   "bank": "n/y/nyc1_c.zss",
+   "sounds": 1,
+   "tracks": 0,
+   "bytes": 9272768,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/arena/arena_nyc1",
+    "zone:maps/nyc/alison/nyc1_1_1",
+    "zone:maps/nyc/alison/nyc1_1_2",
+    "zone:maps/nyc/alison/nyc1_1_2b",
+    "zone:maps/nyc/alison/nyc1_1_3",
+    "zone:maps/nyc/alison/nyc1_1_4",
+    "zone:maps/nyc/alison/nyc1_1_5"
+   ]
+  },
+  {
+   "bank": "n/y/nyc1_d.zsm",
+   "sounds": 90,
+   "tracks": 30,
+   "bytes": 460228,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/arena/arena_nyc1",
+    "zone:maps/nyc/alison/nyc1_1_1",
+    "zone:maps/nyc/alison/nyc1_1_2",
+    "zone:maps/nyc/alison/nyc1_1_2b",
+    "zone:maps/nyc/alison/nyc1_1_3",
+    "zone:maps/nyc/alison/nyc1_1_4",
+    "zone:maps/nyc/alison/nyc1_1_5"
+   ]
+  },
+  {
+   "bank": "n/y/nyc1_m.zsm",
+   "sounds": 32,
+   "tracks": 0,
+   "bytes": 575428,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/arena/arena_nyc1",
+    "zone:maps/nyc/alison/nyc1_1_1",
+    "zone:maps/nyc/alison/nyc1_1_2",
+    "zone:maps/nyc/alison/nyc1_1_2b",
+    "zone:maps/nyc/alison/nyc1_1_3",
+    "zone:maps/nyc/alison/nyc1_1_4",
+    "zone:maps/nyc/alison/nyc1_1_5"
+   ]
+  },
+  {
+   "bank": "n/y/nyc1_v.zss",
+   "sounds": 72,
+   "tracks": 0,
+   "bytes": 2603648,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/arena/arena_nyc1",
+    "zone:maps/nyc/alison/nyc1_1_1",
+    "zone:maps/nyc/alison/nyc1_1_2",
+    "zone:maps/nyc/alison/nyc1_1_2b",
+    "zone:maps/nyc/alison/nyc1_1_3",
+    "zone:maps/nyc/alison/nyc1_1_4",
+    "zone:maps/nyc/alison/nyc1_1_5"
+   ]
+  },
+  {
+   "bank": "n/y/nyc2_a.zss",
+   "sounds": 1,
+   "tracks": 0,
+   "bytes": 5835776,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/arena/arena_nyc2",
+    "zone:maps/mansion/dr_mag2/mag_nyc1",
+    "zone:maps/mansion/dr_mag2/mag_nyc2",
+    "zone:maps/mansion/dr_mag2/mag_nyc3",
+    "zone:maps/mansion/dr_mag2/mag_nyc4",
+    "zone:maps/nyc/fb/nyc_fb1",
+    "zone:maps/nyc/fb/nyc_fb2",
+    "zone:maps/nyc/fb/nyc_fb3",
+    "zone:maps/nyc/fb/nyc_fb4"
+   ]
+  },
+  {
+   "bank": "n/y/nyc2_c.zss",
+   "sounds": 1,
+   "tracks": 0,
+   "bytes": 9211496,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/arena/arena_nyc2",
+    "zone:maps/mansion/dr_mag2/mag_nyc1",
+    "zone:maps/mansion/dr_mag2/mag_nyc2",
+    "zone:maps/mansion/dr_mag2/mag_nyc3",
+    "zone:maps/mansion/dr_mag2/mag_nyc4",
+    "zone:maps/nyc/fb/nyc_fb1",
+    "zone:maps/nyc/fb/nyc_fb2",
+    "zone:maps/nyc/fb/nyc_fb3",
+    "zone:maps/nyc/fb/nyc_fb4"
+   ]
+  },
+  {
+   "bank": "n/y/nyc2_d.zsm",
+   "sounds": 87,
+   "tracks": 29,
+   "bytes": 427860,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/arena/arena_nyc2",
+    "zone:maps/mansion/dr_mag2/mag_nyc1",
+    "zone:maps/mansion/dr_mag2/mag_nyc2",
+    "zone:maps/mansion/dr_mag2/mag_nyc3",
+    "zone:maps/mansion/dr_mag2/mag_nyc4",
+    "zone:maps/nyc/fb/nyc_fb1",
+    "zone:maps/nyc/fb/nyc_fb2",
+    "zone:maps/nyc/fb/nyc_fb3",
+    "zone:maps/nyc/fb/nyc_fb4"
+   ]
+  },
+  {
+   "bank": "n/y/nyc2_m.zsm",
+   "sounds": 25,
+   "tracks": 0,
+   "bytes": 523884,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/arena/arena_nyc2",
+    "zone:maps/mansion/dr_mag2/mag_nyc1",
+    "zone:maps/mansion/dr_mag2/mag_nyc2",
+    "zone:maps/mansion/dr_mag2/mag_nyc3",
+    "zone:maps/mansion/dr_mag2/mag_nyc4",
+    "zone:maps/nyc/fb/nyc_fb1",
+    "zone:maps/nyc/fb/nyc_fb2",
+    "zone:maps/nyc/fb/nyc_fb3",
+    "zone:maps/nyc/fb/nyc_fb4"
+   ]
+  },
+  {
+   "bank": "n/y/nyc2_v.zss",
+   "sounds": 35,
+   "tracks": 0,
+   "bytes": 1372820,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/arena/arena_nyc2",
+    "zone:maps/mansion/dr_mag2/mag_nyc1",
+    "zone:maps/mansion/dr_mag2/mag_nyc2",
+    "zone:maps/mansion/dr_mag2/mag_nyc3",
+    "zone:maps/mansion/dr_mag2/mag_nyc4",
+    "zone:maps/nyc/fb/nyc_fb1",
+    "zone:maps/nyc/fb/nyc_fb2",
+    "zone:maps/nyc/fb/nyc_fb3",
+    "zone:maps/nyc/fb/nyc_fb4"
+   ]
+  },
+  {
+   "bank": "n/y/nycrio_a.zss",
+   "sounds": 1,
+   "tracks": 0,
+   "bytes": 5780336,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/nyc/riots/nyc3_1_1",
+    "zone:maps/nyc/riots/nyc3_1_2",
+    "zone:maps/nyc/riots/nyc3_1_3",
+    "zone:maps/nyc/riots/nyc3_2_1"
+   ]
+  },
+  {
+   "bank": "n/y/nycrio_c.zss",
+   "sounds": 1,
+   "tracks": 0,
+   "bytes": 10387112,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/nyc/riots/nyc3_1_1",
+    "zone:maps/nyc/riots/nyc3_1_2",
+    "zone:maps/nyc/riots/nyc3_1_3",
+    "zone:maps/nyc/riots/nyc3_2_1"
+   ]
+  },
+  {
+   "bank": "n/y/nycrio_d.zsm",
+   "sounds": 69,
+   "tracks": 22,
+   "bytes": 356440,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/nyc/riots/nyc3_1_1",
+    "zone:maps/nyc/riots/nyc3_1_2",
+    "zone:maps/nyc/riots/nyc3_1_3",
+    "zone:maps/nyc/riots/nyc3_2_1"
+   ]
+  },
+  {
+   "bank": "n/y/nycrio_m.zsm",
+   "sounds": 7,
+   "tracks": 0,
+   "bytes": 170020,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/nyc/riots/nyc3_1_1",
+    "zone:maps/nyc/riots/nyc3_1_2",
+    "zone:maps/nyc/riots/nyc3_1_3",
+    "zone:maps/nyc/riots/nyc3_2_1"
+   ]
+  },
+  {
+   "bank": "n/y/nycrio_v.zss",
+   "sounds": 28,
+   "tracks": 0,
+   "bytes": 1735608,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/nyc/riots/nyc3_1_1",
+    "zone:maps/nyc/riots/nyc3_1_2",
+    "zone:maps/nyc/riots/nyc3_1_3",
+    "zone:maps/nyc/riots/nyc3_2_1"
+   ]
+  },
+  {
+   "bank": "p/h/phoen_m.zsm",
+   "sounds": 15,
+   "tracks": 0,
+   "bytes": 199544,
+   "collides_with_xml2": false,
+   "used_by": [
+    "char:herostat:Phoenix",
+    "char:npcstat:phoenixdopple"
+   ]
+  },
+  {
+   "bank": "p/r/profes_m.zsm",
+   "sounds": 3,
+   "tracks": 0,
+   "bytes": 30916,
+   "collides_with_xml2": false,
+   "used_by": [
+    "char:npcstat:ProfX",
+    "char:npcstat:ProfXComa"
+   ]
+  },
+  {
+   "bank": "p/r/profxa_m.zsm",
+   "sounds": 12,
+   "tracks": 0,
+   "bytes": 186212,
+   "collides_with_xml2": false,
+   "used_by": [
+    "char:herostat:ProfXAstral",
+    "char:npcstat:profxgladiator"
+   ]
+  },
+  {
+   "bank": "p/s/psyloc_m.zsm",
+   "sounds": 12,
+   "tracks": 0,
+   "bytes": 100224,
+   "collides_with_xml2": false,
+   "used_by": [
+    "char:herostat:Psylocke"
+   ]
+  },
+  {
+   "bank": "p/y/pyro_m.zsm",
+   "sounds": 14,
+   "tracks": 0,
+   "bytes": 233492,
+   "collides_with_xml2": true,
+   "used_by": [
+    "char:npcstat:PyroAct1",
+    "char:npcstat:Vulcan",
+    "char:npcstat:pyrolite"
+   ]
+  },
+  {
+   "bank": "r/o/rogue_m.zsm",
+   "sounds": 43,
+   "tracks": 5,
+   "bytes": 212600,
+   "collides_with_xml2": false,
+   "used_by": [
+    "char:herostat:Rogue",
+    "char:npcstat:roguemocap"
+   ]
+  },
+  {
+   "bank": "s/a/sabret_m.zsm",
+   "sounds": 20,
+   "tracks": 2,
+   "bytes": 105528,
+   "collides_with_xml2": false,
+   "used_by": [
+    "char:npcstat:SabretoothAct1",
+    "char:npcstat:SabretoothAct2",
+    "char:npcstat:SabretoothAct3"
+   ]
+  },
+  {
+   "bank": "s/e/sentad_m.zsm",
+   "sounds": 5,
+   "tracks": 0,
+   "bytes": 110676,
+   "collides_with_xml2": false,
+   "used_by": [
+    "char:npcstat:SentinelAdvanced",
+    "char:npcstat:SentinelAdvanced_b"
+   ]
+  },
+  {
+   "bank": "s/e/sentin_m.zsm",
+   "sounds": 19,
+   "tracks": 0,
+   "bytes": 349280,
+   "collides_with_xml2": false,
+   "used_by": [
+    "char:npcstat:Sentinel",
+    "char:npcstat:SentinelB",
+    "char:npcstat:SentinelFlashback",
+    "char:npcstat:SentinelLeader",
+    "char:npcstat:sentinelleaderb"
+   ]
+  },
+  {
+   "bank": "s/e/sentsp_m.zsm",
+   "sounds": 6,
+   "tracks": 0,
+   "bytes": 119436,
+   "collides_with_xml2": false,
+   "used_by": [
+    "char:npcstat:SentinelSpider",
+    "char:npcstat:SentinelSpider_b"
+   ]
+  },
+  {
+   "bank": "s/e/sewer1_a.zss",
+   "sounds": 1,
+   "tracks": 0,
+   "bytes": 5189216,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/arbiter/arena_sewers1",
+    "zone:maps/arena/arena_sewers1",
+    "zone:maps/sewers/grso/sewers3_1_1",
+    "zone:maps/sewers/grso/sewers3_1_2",
+    "zone:maps/sewers/grso/sewers3_1_3",
+    "zone:maps/sewers/grso/sewers_marrow",
+    "zone:maps/sewers/healer/sewers_hub2",
+    "zone:maps/sewers/hub/sewers1_1_1",
+    "zone:maps/sewers/hub/sewers1_1_2",
+    "zone:maps/sewers/hub/sewers1_1_3",
+    "zone:maps/sewers/hub/sewers1_1_4",
+    "zone:maps/sewers/hub/sewers1_2_1",
+    "zone:maps/sewers/hub/sewers1_2_3",
+    "zone:maps/sewers/hub/sewers_hub"
+   ]
+  },
+  {
+   "bank": "s/e/sewer1_c.zss",
+   "sounds": 1,
+   "tracks": 0,
+   "bytes": 10387112,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/arbiter/arena_sewers1",
+    "zone:maps/arena/arena_sewers1",
+    "zone:maps/sewers/grso/sewers3_1_1",
+    "zone:maps/sewers/grso/sewers3_1_2",
+    "zone:maps/sewers/grso/sewers3_1_3",
+    "zone:maps/sewers/grso/sewers_marrow",
+    "zone:maps/sewers/healer/sewers_hub2",
+    "zone:maps/sewers/hub/sewers1_1_1",
+    "zone:maps/sewers/hub/sewers1_1_2",
+    "zone:maps/sewers/hub/sewers1_1_3",
+    "zone:maps/sewers/hub/sewers1_1_4",
+    "zone:maps/sewers/hub/sewers1_2_1",
+    "zone:maps/sewers/hub/sewers1_2_3",
+    "zone:maps/sewers/hub/sewers_hub"
+   ]
+  },
+  {
+   "bank": "s/e/sewer1_d.zsm",
+   "sounds": 51,
+   "tracks": 18,
+   "bytes": 283064,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/arbiter/arena_sewers1",
+    "zone:maps/arena/arena_sewers1",
+    "zone:maps/sewers/grso/sewers3_1_1",
+    "zone:maps/sewers/grso/sewers3_1_2",
+    "zone:maps/sewers/grso/sewers3_1_3",
+    "zone:maps/sewers/grso/sewers_marrow",
+    "zone:maps/sewers/healer/sewers_hub2",
+    "zone:maps/sewers/hub/sewers1_1_1",
+    "zone:maps/sewers/hub/sewers1_1_2",
+    "zone:maps/sewers/hub/sewers1_1_3",
+    "zone:maps/sewers/hub/sewers1_1_4",
+    "zone:maps/sewers/hub/sewers1_2_1",
+    "zone:maps/sewers/hub/sewers1_2_3",
+    "zone:maps/sewers/hub/sewers_hub"
+   ]
+  },
+  {
+   "bank": "s/e/sewer1_m.zsm",
+   "sounds": 30,
+   "tracks": 0,
+   "bytes": 428228,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/arbiter/arena_sewers1",
+    "zone:maps/arena/arena_sewers1",
+    "zone:maps/sewers/grso/sewers3_1_1",
+    "zone:maps/sewers/grso/sewers3_1_2",
+    "zone:maps/sewers/grso/sewers3_1_3",
+    "zone:maps/sewers/grso/sewers_marrow",
+    "zone:maps/sewers/healer/sewers_hub2",
+    "zone:maps/sewers/hub/sewers1_1_1",
+    "zone:maps/sewers/hub/sewers1_1_2",
+    "zone:maps/sewers/hub/sewers1_1_3",
+    "zone:maps/sewers/hub/sewers1_1_4",
+    "zone:maps/sewers/hub/sewers1_2_1",
+    "zone:maps/sewers/hub/sewers1_2_3",
+    "zone:maps/sewers/hub/sewers_hub"
+   ]
+  },
+  {
+   "bank": "s/e/sewer1_v.zss",
+   "sounds": 48,
+   "tracks": 0,
+   "bytes": 4070248,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/arbiter/arena_sewers1",
+    "zone:maps/arena/arena_sewers1",
+    "zone:maps/sewers/grso/sewers3_1_1",
+    "zone:maps/sewers/grso/sewers3_1_2",
+    "zone:maps/sewers/grso/sewers3_1_3",
+    "zone:maps/sewers/grso/sewers_marrow",
+    "zone:maps/sewers/healer/sewers_hub2",
+    "zone:maps/sewers/hub/sewers1_1_1",
+    "zone:maps/sewers/hub/sewers1_1_2",
+    "zone:maps/sewers/hub/sewers1_1_3",
+    "zone:maps/sewers/hub/sewers1_1_4",
+    "zone:maps/sewers/hub/sewers1_2_1",
+    "zone:maps/sewers/hub/sewers1_2_3",
+    "zone:maps/sewers/hub/sewers_hub"
+   ]
+  },
+  {
+   "bank": "s/e/sewer2_a.zss",
+   "sounds": 1,
+   "tracks": 0,
+   "bytes": 2928056,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/sewers/healer/sewers2_1_1",
+    "zone:maps/sewers/healer/sewers2_1_2",
+    "zone:maps/sewers/healer/sewers2_1_3",
+    "zone:maps/sewers/healer/sewers2_1_4",
+    "zone:maps/sewers/hub/sewers1_2_4"
+   ]
+  },
+  {
+   "bank": "s/e/sewer2_c.zss",
+   "sounds": 1,
+   "tracks": 0,
+   "bytes": 11125544,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/sewers/healer/sewers2_1_1",
+    "zone:maps/sewers/healer/sewers2_1_2",
+    "zone:maps/sewers/healer/sewers2_1_3",
+    "zone:maps/sewers/healer/sewers2_1_4",
+    "zone:maps/sewers/hub/sewers1_2_4"
+   ]
+  },
+  {
+   "bank": "s/e/sewer2_d.zsm",
+   "sounds": 46,
+   "tracks": 16,
+   "bytes": 259600,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/sewers/healer/sewers2_1_1",
+    "zone:maps/sewers/healer/sewers2_1_2",
+    "zone:maps/sewers/healer/sewers2_1_3",
+    "zone:maps/sewers/healer/sewers2_1_4",
+    "zone:maps/sewers/hub/sewers1_2_4"
+   ]
+  },
+  {
+   "bank": "s/e/sewer2_m.zsm",
+   "sounds": 22,
+   "tracks": 0,
+   "bytes": 331280,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/sewers/healer/sewers2_1_1",
+    "zone:maps/sewers/healer/sewers2_1_2",
+    "zone:maps/sewers/healer/sewers2_1_3",
+    "zone:maps/sewers/healer/sewers2_1_4",
+    "zone:maps/sewers/hub/sewers1_2_4"
+   ]
+  },
+  {
+   "bank": "s/e/sewer2_v.zss",
+   "sounds": 16,
+   "tracks": 0,
+   "bytes": 1312288,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/sewers/healer/sewers2_1_1",
+    "zone:maps/sewers/healer/sewers2_1_2",
+    "zone:maps/sewers/healer/sewers2_1_3",
+    "zone:maps/sewers/healer/sewers2_1_4",
+    "zone:maps/sewers/hub/sewers1_2_4"
+   ]
+  },
+  {
+   "bank": "s/h/shadow_m.zsm",
+   "sounds": 13,
+   "tracks": 0,
+   "bytes": 201160,
+   "collides_with_xml2": false,
+   "used_by": [
+    "char:npcstat:Shades",
+    "char:npcstat:ShadesB",
+    "char:npcstat:ShadesLeader",
+    "char:npcstat:ShadesLeaderB",
+    "char:npcstat:SuperShades",
+    "char:npcstat:shadesking",
+    "char:npcstat:supershadesb"
+   ]
+  },
+  {
+   "bank": "s/h/shd_nw_m.zsm",
+   "sounds": 9,
+   "tracks": 0,
+   "bytes": 179884,
+   "collides_with_xml2": false,
+   "used_by": [
+    "char:npcstat:ShadesWingless",
+    "char:npcstat:ShadesWinglessB",
+    "char:npcstat:ShadesWinglessLeader",
+    "char:npcstat:ShadesWinglessLeaderB"
+   ]
+  },
+  {
+   "bank": "s/h/shdwkg_m.zsm",
+   "sounds": 8,
+   "tracks": 0,
+   "bytes": 128752,
+   "collides_with_xml2": false,
+   "used_by": [
+    "char:npcstat:shadowkingtwo"
+   ]
+  },
+  {
+   "bank": "s/h/shdwtn_m.zsm",
+   "sounds": 9,
+   "tracks": 0,
+   "bytes": 122608,
+   "collides_with_xml2": false,
+   "used_by": [
+    "char:npcstat:shadowking"
+   ]
+  },
+  {
+   "bank": "s/h/shock_m.zsm",
+   "sounds": 0,
+   "tracks": 0,
+   "bytes": 100,
+   "collides_with_xml2": false,
+   "used_by": []
+  },
+  {
+   "bank": "s/p/spipod_m.zsm",
+   "sounds": 3,
+   "tracks": 0,
+   "bytes": 41824,
+   "collides_with_xml2": false,
+   "used_by": []
+  },
+  {
+   "bank": "s/t/stealt_m.zsm",
+   "sounds": 1,
+   "tracks": 0,
+   "bytes": 19472,
+   "collides_with_xml2": false,
+   "used_by": []
+  },
+  {
+   "bank": "s/t/storm_m.zsm",
+   "sounds": 17,
+   "tracks": 0,
+   "bytes": 249184,
+   "collides_with_xml2": true,
+   "used_by": [
+    "char:herostat:Storm"
+   ]
+  },
+  {
+   "bank": "s/u/suicid_m.zsm",
+   "sounds": 0,
+   "tracks": 0,
+   "bytes": 100,
+   "collides_with_xml2": false,
+   "used_by": []
+  },
+  {
+   "bank": "t/o/toad_m.zsm",
+   "sounds": 33,
+   "tracks": 2,
+   "bytes": 224396,
+   "collides_with_xml2": true,
+   "used_by": [
+    "char:npcstat:ToadAct1"
+   ]
+  },
+  {
+   "bank": "u/l/ultima_m.zsm",
+   "sounds": 0,
+   "tracks": 0,
+   "bytes": 100,
+   "collides_with_xml2": false,
+   "used_by": []
+  },
+  {
+   "bank": "w/e/weapx_m.zsm",
+   "sounds": 0,
+   "tracks": 0,
+   "bytes": 100,
+   "collides_with_xml2": false,
+   "used_by": []
+  },
+  {
+   "bank": "w/o/wolver_m.zsm",
+   "sounds": 68,
+   "tracks": 8,
+   "bytes": 266296,
+   "collides_with_xml2": false,
+   "used_by": [
+    "char:herostat:Wolverine",
+    "char:npcstat:wolverinedopple",
+    "char:npcstat:wolverinemocap"
+   ]
+  },
+  {
+   "bank": "w/p/wpxnew_a.zss",
+   "sounds": 1,
+   "tracks": 0,
+   "bytes": 2450696,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/arbiter/arena_weapx1",
+    "zone:maps/arena/arena_weapx1",
+    "zone:maps/weapon_x/secret/wx3_1",
+    "zone:maps/weapon_x/secret/wx3_2",
+    "zone:maps/weapon_x/secret/wx3_3",
+    "zone:maps/weapon_x/wfb/wx1_1",
+    "zone:maps/weapon_x/wfb/wx1_2",
+    "zone:maps/weapon_x/wfb/wx1_3"
+   ]
+  },
+  {
+   "bank": "w/p/wpxnew_c.zss",
+   "sounds": 1,
+   "tracks": 0,
+   "bytes": 10833368,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/arbiter/arena_weapx1",
+    "zone:maps/arena/arena_weapx1",
+    "zone:maps/weapon_x/secret/wx3_1",
+    "zone:maps/weapon_x/secret/wx3_2",
+    "zone:maps/weapon_x/secret/wx3_3",
+    "zone:maps/weapon_x/wfb/wx1_1",
+    "zone:maps/weapon_x/wfb/wx1_2",
+    "zone:maps/weapon_x/wfb/wx1_3"
+   ]
+  },
+  {
+   "bank": "w/p/wpxnew_d.zsm",
+   "sounds": 46,
+   "tracks": 14,
+   "bytes": 284972,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/arbiter/arena_weapx1",
+    "zone:maps/arena/arena_weapx1",
+    "zone:maps/weapon_x/secret/wx3_1",
+    "zone:maps/weapon_x/secret/wx3_2",
+    "zone:maps/weapon_x/secret/wx3_3",
+    "zone:maps/weapon_x/wfb/wx1_1",
+    "zone:maps/weapon_x/wfb/wx1_2",
+    "zone:maps/weapon_x/wfb/wx1_3"
+   ]
+  },
+  {
+   "bank": "w/p/wpxnew_m.zsm",
+   "sounds": 26,
+   "tracks": 0,
+   "bytes": 389792,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/arbiter/arena_weapx1",
+    "zone:maps/arena/arena_weapx1",
+    "zone:maps/weapon_x/secret/wx3_1",
+    "zone:maps/weapon_x/secret/wx3_2",
+    "zone:maps/weapon_x/secret/wx3_3",
+    "zone:maps/weapon_x/wfb/wx1_1",
+    "zone:maps/weapon_x/wfb/wx1_2",
+    "zone:maps/weapon_x/wfb/wx1_3"
+   ]
+  },
+  {
+   "bank": "w/p/wpxnew_v.zss",
+   "sounds": 40,
+   "tracks": 0,
+   "bytes": 2412620,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/arbiter/arena_weapx1",
+    "zone:maps/arena/arena_weapx1",
+    "zone:maps/weapon_x/secret/wx3_1",
+    "zone:maps/weapon_x/secret/wx3_2",
+    "zone:maps/weapon_x/secret/wx3_3",
+    "zone:maps/weapon_x/wfb/wx1_1",
+    "zone:maps/weapon_x/wfb/wx1_2",
+    "zone:maps/weapon_x/wfb/wx1_3"
+   ]
+  },
+  {
+   "bank": "w/p/wpxold_a.zss",
+   "sounds": 1,
+   "tracks": 0,
+   "bytes": 2849216,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/weapon_x/old/wx2_1",
+    "zone:maps/weapon_x/old/wx2_2"
+   ]
+  },
+  {
+   "bank": "w/p/wpxold_c.zss",
+   "sounds": 1,
+   "tracks": 0,
+   "bytes": 12146504,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/weapon_x/old/wx2_1",
+    "zone:maps/weapon_x/old/wx2_2"
+   ]
+  },
+  {
+   "bank": "w/p/wpxold_d.zsm",
+   "sounds": 36,
+   "tracks": 11,
+   "bytes": 233772,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/weapon_x/old/wx2_1",
+    "zone:maps/weapon_x/old/wx2_2"
+   ]
+  },
+  {
+   "bank": "w/p/wpxold_m.zsm",
+   "sounds": 12,
+   "tracks": 0,
+   "bytes": 191136,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/weapon_x/old/wx2_1",
+    "zone:maps/weapon_x/old/wx2_2"
+   ]
+  },
+  {
+   "bank": "w/p/wpxold_v.zss",
+   "sounds": 30,
+   "tracks": 0,
+   "bytes": 1389888,
+   "collides_with_xml2": false,
+   "used_by": [
+    "zone:maps/weapon_x/old/wx2_1",
+    "zone:maps/weapon_x/old/wx2_2"
+   ]
+  },
+  {
+   "bank": "x/_/x_common.zsm",
+   "sounds": 114,
+   "tracks": 0,
+   "bytes": 759380,
+   "collides_with_xml2": true,
+   "used_by": [
+    "GLOBAL (engine: x_common.zsd / x_voice.zsd)"
+   ]
+  },
+  {
+   "bank": "x/_/x_voice.zss",
+   "sounds": 1716,
+   "tracks": 0,
+   "bytes": 41002196,
+   "collides_with_xml2": true,
+   "used_by": [
+    "GLOBAL (engine: x_common.zsd / x_voice.zsd)"
+   ]
+  }
+ ],
+ "soundfile_values": {
+  "zone_shared/effects/drip": [
+   "effects/ambient/drip"
+  ],
+  "character/toad_m/power3": [
+   "effects/misc/toadstep"
+  ],
+  "character/wolver_m/power3b": [
+   "effects/powers/wolv_growl"
+  ],
+  "character/wolver_m/power3a": [
+   "effects/powers/wolv_slash"
+  ],
+  "arbext": [
+   "maps/arbiter/arb_fd1",
+   "maps/arbiter/arb_fd2",
+   "maps/arbiter/deck/arb_fd1",
+   "maps/arbiter/deck/arb_fd2",
+   "maps/astroid_m/visit1/arb_fd1",
+   "maps/astroid_m/visit1/arb_fd2"
+  ],
+  "sewer1": [
+   "maps/arbiter/arena_sewers1",
+   "maps/arena/arena_sewers1",
+   "maps/sewers/grso/sewers3_1_1",
+   "maps/sewers/grso/sewers3_1_2",
+   "maps/sewers/grso/sewers3_1_3",
+   "maps/sewers/grso/sewers_marrow",
+   "maps/sewers/healer/sewers_hub2",
+   "maps/sewers/hub/sewers1_1_1",
+   "maps/sewers/hub/sewers1_1_2",
+   "maps/sewers/hub/sewers1_1_3",
+   "maps/sewers/hub/sewers1_1_4",
+   "maps/sewers/hub/sewers1_2_1",
+   "maps/sewers/hub/sewers1_2_3",
+   "maps/sewers/hub/sewers_hub"
+  ],
+  "wpxnew": [
+   "maps/arbiter/arena_weapx1",
+   "maps/arena/arena_weapx1",
+   "maps/weapon_x/secret/wx3_1",
+   "maps/weapon_x/secret/wx3_2",
+   "maps/weapon_x/secret/wx3_3",
+   "maps/weapon_x/wfb/wx1_1",
+   "maps/weapon_x/wfb/wx1_2",
+   "maps/weapon_x/wfb/wx1_3"
+  ],
+  "arbint": [
+   "maps/arbiter/a_int/arb2_1",
+   "maps/arbiter/a_int/arb2_2",
+   "maps/arbiter/a_int/arb2_3",
+   "maps/arbiter/a_int/arb2_4",
+   "maps/arena/arena_arb1",
+   "maps/arena/arena_arb2"
+  ],
+  "arbfld": [
+   "maps/arbiter/a_int/arb3_1",
+   "maps/arbiter/a_int/arb3_2",
+   "maps/arbiter/a_int/arb3_3",
+   "maps/arbiter/a_int/arb3_4"
+  ],
+  "astint": [
+   "maps/arena/arena_astm1",
+   "maps/astroid_m/visit1/asteroid1_3",
+   "maps/astroid_m/visit1/asteroid2_1",
+   "maps/astroid_m/visit1/asteroid2_2",
+   "maps/astroid_m/visit1/asteroid2_3",
+   "maps/mastermold/mastermold1",
+   "maps/mastermold/mastermold2",
+   "maps/nyc/riots/nyc3_2_2"
+  ],
+  "astral": [
+   "maps/arena/arena_astral1",
+   "maps/arena/arena_astral2",
+   "maps/astral/ast1/astral1_1",
+   "maps/astral/ast1/astral1_2",
+   "maps/astral/ast1/astral1_3",
+   "maps/astral/ast1/astral4_3",
+   "maps/astral/ast3/astral3_2",
+   "maps/astral/ast3/astral3_3",
+   "maps/astral/ast3/astral3_4",
+   "maps/astral/ast3/astral3_5",
+   "maps/astral/savepx/astral2_1",
+   "maps/astral/savepx/astral2_2",
+   "maps/astral/savepx/astral2_3"
+  ],
+  "mandgr": [
+   "maps/arena/arena_dr",
+   "maps/mansion/dr_mag/dr_mag01",
+   "maps/mansion/dr_mag/dr_mag03"
+  ],
+  "harint": [
+   "maps/arena/arena_haarp1",
+   "maps/arena/arena_haarpint1",
+   "maps/haarp/int/haarp2_1",
+   "maps/haarp/int/haarp2_2",
+   "maps/haarp/int/haarp2_3",
+   "maps/haarp/int/haarp2_6"
+  ],
+  "manint": [
+   "maps/arena/arena_mansion1",
+   "maps/mansion/man1a/mansion1a_1",
+   "maps/mansion/man1a/mansion1a_2",
+   "maps/mansion/man2/mansion2_1",
+   "maps/mansion/man2/mansion2_2",
+   "maps/mansion/man3/mansion3_1",
+   "maps/mansion/man3/mansion3_2",
+   "maps/mansion/man4/mansion4_1",
+   "maps/mansion/man4/mansion4_2",
+   "maps/mansion/man5/mansion5_1",
+   "maps/mansion/man5/mansion5_2",
+   "maps/mansion/man6/mansion6_1",
+   "maps/mansion/man6/mansion6_2",
+   "maps/mansion/man7/mansion7_1",
+   "maps/mansion/man7/mansion7_2",
+   "maps/mansion/man8/mansion8_1",
+   "maps/mansion/man8/mansion8_2"
+  ],
+  "nuke": [
+   "maps/arena/arena_nuke1",
+   "maps/nuke_plant/nuke/nuke1_1",
+   "maps/nuke_plant/nuke/nuke1_2",
+   "maps/nuke_plant/nuke/nuke1_3",
+   "maps/nuke_plant/nuke/nuke1_4",
+   "maps/nuke_plant/nuke/nuke2_2",
+   "maps/nuke_plant/nuke/nuke2_2a",
+   "maps/nuke_plant/nuke/nuke2_3"
+  ],
+  "nyc1": [
+   "maps/arena/arena_nyc1",
+   "maps/nyc/alison/nyc1_1_1",
+   "maps/nyc/alison/nyc1_1_2",
+   "maps/nyc/alison/nyc1_1_2b",
+   "maps/nyc/alison/nyc1_1_3",
+   "maps/nyc/alison/nyc1_1_4",
+   "maps/nyc/alison/nyc1_1_5"
+  ],
+  "nyc2": [
+   "maps/arena/arena_nyc2",
+   "maps/mansion/dr_mag2/mag_nyc1",
+   "maps/mansion/dr_mag2/mag_nyc2",
+   "maps/mansion/dr_mag2/mag_nyc3",
+   "maps/mansion/dr_mag2/mag_nyc4",
+   "maps/nyc/fb/nyc_fb1",
+   "maps/nyc/fb/nyc_fb2",
+   "maps/nyc/fb/nyc_fb3",
+   "maps/nyc/fb/nyc_fb4"
+  ],
+  "harext": [
+   "maps/arena/arena_snow1",
+   "maps/demo/ext/haarp_ext_boss",
+   "maps/haarp/ext/haarp_ext01",
+   "maps/haarp/ext/haarp_ext02",
+   "maps/haarp/ext/haarp_ext03",
+   "maps/haarp/ext/haarp_ext04",
+   "maps/haarp/ext/haarp_ext_boss"
+  ],
+  "colos": [
+   "maps/astral/ast3/colosseum"
+  ],
+  "astrb4": [
+   "maps/astral/savepx/final_astral"
+  ],
+  "asttun": [
+   "maps/astroid_m/visit1/asteroid1_1",
+   "maps/astroid_m/visit1/asteroid1_2"
+  ],
+  "a_int": [
+   "maps/demo/a_int/arb3_1",
+   "maps/demo/a_int/arb3_2"
+  ],
+  "deck": [
+   "maps/demo/deck/arb_fd1"
+  ],
+  "hub": [
+   "maps/demo/hub/sewers1_1_1",
+   "maps/demo/hub/sewers1_1_2"
+  ],
+  "man1b": [
+   "maps/demo/jugrnt/jugrnt01"
+  ],
+  "iceint": [
+   "maps/haarp/int/icetunnel1",
+   "maps/haarp/int/icetunnel2"
+  ],
+  "hivext": [
+   "maps/hive/h_ext/hive1_1_1"
+  ],
+  "hivint": [
+   "maps/hive/h_int/hive1_2_1",
+   "maps/hive/h_int/hive1_2_2",
+   "maps/hive/h_int/hive1_2_3",
+   "maps/hive/h_int/hive1_3_1",
+   "maps/hive/h_int/hive1_3_2",
+   "maps/hive/h_int/hive1_3_3"
+  ],
+  "hivlab": [
+   "maps/hive/h_int/hive2_2_1",
+   "maps/hive/h_int/hive2_2_2",
+   "maps/hive/h_int/hive2_2_3",
+   "maps/hive/h_int/hive2_2_4",
+   "maps/hive/h_int/hive2_2_5"
+  ],
+  "manbs1": [
+   "maps/mansion/jugrnt/jugrnt01",
+   "maps/mocap/mocap2/briefing_1_2_41"
+  ],
+  "manbst": [
+   "maps/mansion/man1a/hangar1a",
+   "maps/mansion/man1a/subbasement1a",
+   "maps/mansion/man2/subbasement2",
+   "maps/mansion/man3/danger_room",
+   "maps/mansion/man3/hangar3",
+   "maps/mansion/man3/subbasement3b",
+   "maps/mansion/man4/grso_debriefing",
+   "maps/mansion/man4/subbasement4",
+   "maps/mansion/man5/subbasement5",
+   "maps/mansion/man5/subbasement5b",
+   "maps/mansion/man6/subbasement6",
+   "maps/mansion/man7/status_meeting",
+   "maps/mansion/man7/subbasement7",
+   "maps/mansion/man8/hangar8",
+   "maps/mansion/man8/subbasement8",
+   "maps/mansion/man8/subbasement8b",
+   "maps/mocap/mocap1/briefing_1_1_6_5",
+   "maps/mocap/mocap10/briefing_3_6_6",
+   "maps/mocap/mocap11/briefing_3_6_7",
+   "maps/mocap/mocap12/briefing_3_9_0",
+   "maps/mocap/mocap13/briefing_3_9_8",
+   "maps/mocap/mocap3/briefing_1_4_13",
+   "maps/mocap/mocap4/briefing_1_7_1",
+   "maps/mocap/mocap5/briefing_2_1_16",
+   "maps/mocap/mocap6/briefing_2_5_5",
+   "maps/mocap/mocap7/briefing_2_5_14_7",
+   "maps/mocap/mocap8/briefing_2_5_22",
+   "maps/mocap/mocap9/briefing_3_1_8"
+  ],
+  "manext": [
+   "maps/mansion/man2/mansion_back2",
+   "maps/mansion/man4/mansion_back4",
+   "maps/mansion/man4/mansion_back4_grso",
+   "maps/mansion/man4/mansion_front4_grso",
+   "maps/mansion/man5/mansion_front5"
+  ],
+  "main": [
+   "maps/mansion/man5/subbasement4"
+  ],
+  "menu": [
+   "maps/menu/main_back"
+  ],
+  "mount": [
+   "maps/mount/mount/mount",
+   "maps/mount/mount/mount2"
+  ],
+  "muirin": [
+   "maps/muir_is/muir2/mui_comcore",
+   "maps/muir_is/muir2/muir_in2",
+   "maps/muir_is/muir3/muir_in3"
+  ],
+  "nycrio": [
+   "maps/nyc/riots/nyc3_1_1",
+   "maps/nyc/riots/nyc3_1_2",
+   "maps/nyc/riots/nyc3_1_3",
+   "maps/nyc/riots/nyc3_2_1"
+  ],
+  "sewer2": [
+   "maps/sewers/healer/sewers2_1_1",
+   "maps/sewers/healer/sewers2_1_2",
+   "maps/sewers/healer/sewers2_1_3",
+   "maps/sewers/healer/sewers2_1_4",
+   "maps/sewers/hub/sewers1_2_4"
+  ],
+  "wpxold": [
+   "maps/weapon_x/old/wx2_1",
+   "maps/weapon_x/old/wx2_2"
+  ]
+ },
+ "sounddir_values": {
+  "beast_m": [
+   "herostat:Beast"
+  ],
+  "coloss_m": [
+   "herostat:Colossus",
+   "npcstat:colossusdopple",
+   "npcstat:colossusflesh"
+  ],
+  "cyclop_m": [
+   "herostat:Cyclops",
+   "npcstat:Kincaid",
+   "npcstat:cyclopsdopple"
+  ],
+  "emmaf_m": [
+   "herostat:Frost"
+  ],
+  "gambit_m": [
+   "herostat:Gambit"
+  ],
+  "iceman_m": [
+   "herostat:Iceman",
+   "npcstat:icemanflesh"
+  ],
+  "jubile_m": [
+   "herostat:Jubilee"
+  ],
+  "magma_m": [
+   "herostat:Magma"
+  ],
+  "night_m": [
+   "herostat:Nightcrawler"
+  ],
+  "phoen_m": [
+   "herostat:Phoenix",
+   "npcstat:phoenixdopple"
+  ],
+  "profxa_m": [
+   "herostat:ProfXAstral",
+   "npcstat:profxgladiator"
+  ],
+  "psyloc_m": [
+   "herostat:Psylocke"
+  ],
+  "rogue_m": [
+   "herostat:Rogue",
+   "npcstat:roguemocap"
+  ],
+  "storm_m": [
+   "herostat:Storm"
+  ],
+  "wolver_m": [
+   "herostat:Wolverine",
+   "npcstat:wolverinedopple",
+   "npcstat:wolverinemocap"
+  ],
+  "aco_e_m": [
+   "npcstat:AcolyteEnergy",
+   "npcstat:AcolyteEnergy_B",
+   "npcstat:AcolyteLeader",
+   "npcstat:AcolyteLeader_B"
+  ],
+  "aco_me_m": [
+   "npcstat:AcolyteMental",
+   "npcstat:AcolyteMental_B"
+  ],
+  "aco_s_m": [
+   "npcstat:AcolyteSmash",
+   "npcstat:AcolyteSmash_B"
+  ],
+  "avalan_m": [
+   "npcstat:AvalancheAct2",
+   "npcstat:AvalancheAct4",
+   "npcstat:AvalancheScripted",
+   "npcstat:avalanchelite"
+  ],
+  "blob_m": [
+   "npcstat:BlobAct1a",
+   "npcstat:BlobAct2",
+   "npcstat:BlobAct4"
+  ],
+  "bro_s_m": [
+   "npcstat:BrotherHoodLite",
+   "npcstat:BrotherHoodSmash"
+  ],
+  "bro_e_m": [
+   "npcstat:BrotherHoodEnergy",
+   "npcstat:BrotherHoodEnergyLite",
+   "npcstat:BrotherHoodLeader"
+  ],
+  "bro_me_m": [
+   "npcstat:BrotherHoodMental"
+  ],
+  "danger_m": [
+   "npcstat:DangerRoomRobot",
+   "npcstat:DangerRoomRobotLeader"
+  ],
+  "firdem_m": [
+   "npcstat:FireDemon"
+  ],
+  "grso_m": [
+   "npcstat:GRSO_commander",
+   "npcstat:GRSO_mp5",
+   "npcstat:HAARPFlamethrower",
+   "npcstat:HAARPLeader",
+   "npcstat:HAARPSoldier",
+   "npcstat:HAARPSoldierMelee",
+   "npcstat:NukeGuard",
+   "npcstat:NukeGuardMelee",
+   "npcstat:Police",
+   "npcstat:WeapXGuard",
+   "npcstat:WeapXGuardLeader",
+   "npcstat:WeapXGuardMelee",
+   "npcstat:grso_captain",
+   "npcstat:grso_captain_b",
+   "npcstat:grso_flamethrower",
+   "npcstat:grso_flamethrowerb",
+   "npcstat:grso_laser",
+   "npcstat:grso_laserb",
+   "npcstat:grso_officer",
+   "npcstat:grso_officerb",
+   "npcstat:grso_powerbaton",
+   "npcstat:grso_powergloves",
+   "npcstat:grso_powerglovesb",
+   "npcstat:grso_riot",
+   "npcstat:grso_stealth",
+   "npcstat:grso_superlaser",
+   "npcstat:grso_superlaserb",
+   "npcstat:grso_superpowergloves"
+  ],
+  "grsoel_m": [
+   "npcstat:GRSOElite"
+  ],
+  "havok_m": [
+   "npcstat:HavokAct2",
+   "npcstat:HavokBoss"
+  ],
+  "jugger_m": [
+   "npcstat:JuggernautAct3",
+   "npcstat:JuggernautFlashback"
+  ],
+  "magnet_m": [
+   "npcstat:MagnetoAct2",
+   "npcstat:MagnetoBoss"
+  ],
+  "marrow_m": [
+   "npcstat:MarrowAct1",
+   "npcstat:MarrowAct3"
+  ],
+  "master_m": [
+   "npcstat:mastermoldone"
+  ],
+  "morl_c_m": [
+   "npcstat:MorlockClawA",
+   "npcstat:MorlockClawB",
+   "npcstat:MorlockClawC"
+  ],
+  "morl_t_m": [
+   "npcstat:MorlockBruiserA",
+   "npcstat:MorlockBruiserB",
+   "npcstat:MorlockBruiserC"
+  ],
+  "morl_p_m": [
+   "npcstat:MarrowsLieutenant",
+   "npcstat:MorlockLeader",
+   "npcstat:MorlockPsionic",
+   "npcstat:MorlockPsionicC"
+  ],
+  "healer_m": [
+   "npcstat:Healer"
+  ],
+  "multip_m": [
+   "npcstat:MultipleMan",
+   "npcstat:MultipleManDividing"
+  ],
+  "mystiq_m": [
+   "npcstat:MystiqueAct1",
+   "npcstat:MystiqueAct2sim",
+   "npcstat:MystiqueAct3"
+  ],
+  "profes_m": [
+   "npcstat:ProfX",
+   "npcstat:ProfXComa"
+  ],
+  "pyro_m": [
+   "npcstat:PyroAct1",
+   "npcstat:Vulcan",
+   "npcstat:pyrolite"
+  ],
+  "sabret_m": [
+   "npcstat:SabretoothAct1",
+   "npcstat:SabretoothAct2",
+   "npcstat:SabretoothAct3"
+  ],
+  "sentin_m": [
+   "npcstat:Sentinel",
+   "npcstat:SentinelB",
+   "npcstat:SentinelFlashback",
+   "npcstat:SentinelLeader",
+   "npcstat:sentinelleaderb"
+  ],
+  "sentad_m": [
+   "npcstat:SentinelAdvanced",
+   "npcstat:SentinelAdvanced_b"
+  ],
+  "sentsp_m": [
+   "npcstat:SentinelSpider",
+   "npcstat:SentinelSpider_b"
+  ],
+  "shadow_m": [
+   "npcstat:Shades",
+   "npcstat:ShadesB",
+   "npcstat:ShadesLeader",
+   "npcstat:ShadesLeaderB",
+   "npcstat:SuperShades",
+   "npcstat:shadesking",
+   "npcstat:supershadesb"
+  ],
+  "shd_nw_m": [
+   "npcstat:ShadesWingless",
+   "npcstat:ShadesWinglessB",
+   "npcstat:ShadesWinglessLeader",
+   "npcstat:ShadesWinglessLeaderB"
+  ],
+  "shdwtn_m": [
+   "npcstat:shadowking"
+  ],
+  "shdwkg_m": [
+   "npcstat:shadowkingtwo"
+  ],
+  "bots_m": [
+   "npcstat:ShockerBot",
+   "npcstat:StealthBot",
+   "npcstat:SuicideBot"
+  ],
+  "toad_m": [
+   "npcstat:ToadAct1"
+  ]
+ },
+ "soundfile_without_bank": {
+  "zone_shared/effects/drip": [
+   "effects/ambient/drip"
+  ],
+  "character/toad_m/power3": [
+   "effects/misc/toadstep"
+  ],
+  "character/wolver_m/power3b": [
+   "effects/powers/wolv_growl"
+  ],
+  "character/wolver_m/power3a": [
+   "effects/powers/wolv_slash"
+  ],
+  "a_int": [
+   "maps/demo/a_int/arb3_1",
+   "maps/demo/a_int/arb3_2"
+  ],
+  "deck": [
+   "maps/demo/deck/arb_fd1"
+  ],
+  "hub": [
+   "maps/demo/hub/sewers1_1_1",
+   "maps/demo/hub/sewers1_1_2"
+  ],
+  "man1b": [
+   "maps/demo/jugrnt/jugrnt01"
+  ],
+  "main": [
+   "maps/mansion/man5/subbasement4"
+  ]
+ },
+ "sounddir_without_bank": {
+  "firdem_m": [
+   "npcstat:FireDemon"
+  ],
+  "healer_m": [
+   "npcstat:Healer"
+  ]
+ }
+}

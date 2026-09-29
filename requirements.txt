@@ -1,0 +1,3 @@
+# Runtime dependencies of the builder and the pipeline (BUILDER_DESIGN.md 3.1): the standard library + numpy.
+# Pinned: the fixed music banks are byte-reproducible only with the same numpy build (BUILDER_DESIGN.md 1.5 fact 2).
+numpy==2.5.3

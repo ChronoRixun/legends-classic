@@ -1,0 +1,2429 @@
+{
+ "arbiter/a_int/arb2_1": {
+  "chr_characters": [
+   "grso_officer",
+   "grso_mp5",
+   "grso_powerbaton"
+  ],
+  "spawner_characters": [
+   "grso_mp5",
+   "grso_officer",
+   "grso_powerbaton"
+  ]
+ },
+ "arbiter/a_int/arb2_2": {
+  "chr_characters": [
+   "grso_mp5",
+   "grso_officer",
+   "grso_powerbaton",
+   "sentinel"
+  ],
+  "spawner_characters": [
+   "grso_mp5",
+   "grso_officer",
+   "grso_powerbaton",
+   "sentinel"
+  ]
+ },
+ "arbiter/a_int/arb2_3": {
+  "chr_characters": [
+   "grso_officer",
+   "grso_powerbaton",
+   "grso_mp5",
+   "sentinel"
+  ],
+  "spawner_characters": [
+   "grso_mp5",
+   "grso_officer",
+   "grso_powerbaton",
+   "sentinel"
+  ]
+ },
+ "arbiter/a_int/arb2_4": {
+  "chr_characters": [
+   "grso_officer",
+   "grso_powerbaton",
+   "grso_mp5",
+   "sentinel"
+  ],
+  "spawner_characters": [
+   "grso_mp5",
+   "grso_officer",
+   "grso_powerbaton",
+   "sentinel"
+  ]
+ },
+ "arbiter/a_int/arb3_1": {
+  "chr_characters": [
+   "grso_mp5",
+   "grso_officer",
+   "grso_powerbaton",
+   "crewman"
+  ],
+  "spawner_characters": [
+   "crewman",
+   "grso_mp5",
+   "grso_officer",
+   "grso_powerbaton"
+  ]
+ },
+ "arbiter/a_int/arb3_2": {
+  "chr_characters": [
+   "grso_officer",
+   "grso_mp5",
+   "grso_powerbaton",
+   "crewman"
+  ],
+  "spawner_characters": [
+   "crewman",
+   "grso_mp5",
+   "grso_officer",
+   "grso_powerbaton"
+  ]
+ },
+ "arbiter/a_int/arb3_3": {
+  "chr_characters": [
+   "grso_officer",
+   "grso_powerbaton",
+   "grso_mp5",
+   "crewman"
+  ],
+  "spawner_characters": [
+   "crewman",
+   "grso_mp5",
+   "grso_officer",
+   "grso_powerbaton"
+  ]
+ },
+ "arbiter/a_int/arb3_4": {
+  "chr_characters": [
+   "grso_officer",
+   "grso_powerbaton",
+   "grso_mp5",
+   "crewman"
+  ],
+  "spawner_characters": [
+   "crewman",
+   "grso_mp5",
+   "grso_officer",
+   "grso_powerbaton"
+  ]
+ },
+ "arbiter/arb_fd1": {
+  "chr_characters": [
+   "grso_mp5",
+   "sentinel"
+  ],
+  "spawner_characters": [
+   "grso_mp5",
+   "sentinel"
+  ]
+ },
+ "arbiter/arb_fd2": {
+  "chr_characters": [
+   "grso_mp5",
+   "grso_powerbaton",
+   "sentinelleader",
+   "BlobScripted"
+  ],
+  "spawner_characters": [
+   "BlobScripted",
+   "grso_mp5",
+   "grso_powerbaton",
+   "sentinelleader"
+  ]
+ },
+ "arbiter/arena_sewers1": {
+  "chr_characters": [],
+  "spawner_characters": []
+ },
+ "arbiter/arena_weapx1": {
+  "chr_characters": [],
+  "spawner_characters": []
+ },
+ "arbiter/deck/arb_fd1": {
+  "chr_characters": [
+   "grso_mp5",
+   "sentinel"
+  ],
+  "spawner_characters": [
+   "grso_mp5",
+   "sentinel"
+  ]
+ },
+ "arbiter/deck/arb_fd2": {
+  "chr_characters": [
+   "grso_mp5",
+   "grso_powerbaton",
+   "sentinelleader",
+   "BlobScripted"
+  ],
+  "spawner_characters": [
+   "BlobScripted",
+   "grso_mp5",
+   "grso_powerbaton",
+   "sentinelleader"
+  ]
+ },
+ "arena/arena_arb1": {
+  "chr_characters": [],
+  "spawner_characters": []
+ },
+ "arena/arena_arb2": {
+  "chr_characters": [],
+  "spawner_characters": []
+ },
+ "arena/arena_astm1": {
+  "chr_characters": [],
+  "spawner_characters": []
+ },
+ "arena/arena_astral1": {
+  "chr_characters": [],
+  "spawner_characters": []
+ },
+ "arena/arena_astral2": {
+  "chr_characters": [],
+  "spawner_characters": []
+ },
+ "arena/arena_dr": {
+  "chr_characters": [],
+  "spawner_characters": []
+ },
+ "arena/arena_haarp1": {
+  "chr_characters": [],
+  "spawner_characters": []
+ },
+ "arena/arena_haarpint1": {
+  "chr_characters": [],
+  "spawner_characters": []
+ },
+ "arena/arena_mansion1": {
+  "chr_characters": [],
+  "spawner_characters": []
+ },
+ "arena/arena_nuke1": {
+  "chr_characters": [],
+  "spawner_characters": []
+ },
+ "arena/arena_nyc1": {
+  "chr_characters": [],
+  "spawner_characters": []
+ },
+ "arena/arena_nyc2": {
+  "chr_characters": [],
+  "spawner_characters": []
+ },
+ "arena/arena_sewers1": {
+  "chr_characters": [],
+  "spawner_characters": []
+ },
+ "arena/arena_snow1": {
+  "chr_characters": [],
+  "spawner_characters": []
+ },
+ "arena/arena_weapx1": {
+  "chr_characters": [],
+  "spawner_characters": []
+ },
+ "astral/ast1/astral1_1": {
+  "chr_characters": [
+   "shades",
+   "shadeswingless"
+  ],
+  "spawner_characters": [
+   "shades",
+   "shadeswingless"
+  ]
+ },
+ "astral/ast1/astral1_2": {
+  "chr_characters": [
+   "shades",
+   "shadesleader",
+   "shadeswingless",
+   "shadeswinglessleader"
+  ],
+  "spawner_characters": [
+   "shades",
+   "shadesleader",
+   "shadeswingless",
+   "shadeswinglessleader"
+  ]
+ },
+ "astral/ast1/astral1_3": {
+  "chr_characters": [
+   "suicideastral_s",
+   "spiderpod",
+   "shades",
+   "shadesleader",
+   "shadeswingless",
+   "shadeswinglessleader",
+   "supershades"
+  ],
+  "spawner_characters": [
+   "shades",
+   "shadesleader",
+   "shadeswingless",
+   "shadeswinglessleader",
+   "spiderpod",
+   "suicideastral_s",
+   "supershades"
+  ]
+ },
+ "astral/ast1/astral4_3": {
+  "chr_characters": [
+   "suicideastral_s",
+   "spiderpod",
+   "shades",
+   "shadesleader",
+   "shadeswingless",
+   "shadeswinglessleader",
+   "supershades",
+   "illyana"
+  ],
+  "spawner_characters": [
+   "illyana",
+   "shades",
+   "shadesleader",
+   "shadeswingless",
+   "shadeswinglessleader",
+   "spiderpod",
+   "suicideastral_s",
+   "supershades"
+  ]
+ },
+ "astral/ast3/astral3_2": {
+  "chr_characters": [],
+  "spawner_characters": []
+ },
+ "astral/ast3/astral3_3": {
+  "chr_characters": [
+   "Vulcan",
+   "firedemon",
+   "shades",
+   "shadesleader",
+   "shadeswingless",
+   "shadeswinglessleader"
+  ],
+  "spawner_characters": [
+   "Vulcan",
+   "firedemon",
+   "shades",
+   "shadesleader",
+   "shadeswingless",
+   "shadeswinglessleader"
+  ]
+ },
+ "astral/ast3/astral3_4": {
+  "chr_characters": [
+   "suicideastral_s",
+   "spiderpod",
+   "AvalancheAct4",
+   "shades",
+   "shadesleader",
+   "shadeswingless",
+   "shadeswinglessleader",
+   "supershades"
+  ],
+  "spawner_characters": [
+   "AvalancheAct4",
+   "shades",
+   "shadesleader",
+   "shadeswingless",
+   "shadeswinglessleader",
+   "spiderpod",
+   "suicideastral_s",
+   "supershades"
+  ]
+ },
+ "astral/ast3/astral3_5": {
+  "chr_characters": [
+   "BlobAct4",
+   "shades",
+   "shadesleader",
+   "shadeswingless",
+   "shadeswinglessleader"
+  ],
+  "spawner_characters": [
+   "BlobAct4",
+   "shades",
+   "shadesleader",
+   "shadeswingless",
+   "shadeswinglessleader"
+  ]
+ },
+ "astral/ast3/colosseum": {
+  "chr_characters": [
+   "colossusdopple",
+   "cyclopsdopple",
+   "phoenixdopple",
+   "wolverinedopple",
+   "shadeswingless",
+   "profxastralscripted",
+   "shadowkingscripted"
+  ],
+  "spawner_characters": [
+   "colossusdopple",
+   "cyclopsdopple",
+   "phoenixdopple",
+   "profxastralscripted",
+   "shadeswingless",
+   "shadowkingscripted",
+   "wolverinedopple"
+  ]
+ },
+ "astral/savepx/astral1_1": {
+  "chr_characters": [],
+  "spawner_characters": []
+ },
+ "astral/savepx/astral1_3": {
+  "chr_characters": [],
+  "spawner_characters": []
+ },
+ "astral/savepx/astral2_1": {
+  "chr_characters": [
+   "shadesleaderb",
+   "shadeswinglessleaderb",
+   "shadeswinglessb",
+   "shadesb"
+  ],
+  "spawner_characters": [
+   "shadesb",
+   "shadesleaderb",
+   "shadeswinglessb",
+   "shadeswinglessleaderb"
+  ]
+ },
+ "astral/savepx/astral2_2": {
+  "chr_characters": [
+   "shadesleaderb",
+   "shadeswinglessleaderb",
+   "shadeswinglessb",
+   "shadesb",
+   "supershadesb"
+  ],
+  "spawner_characters": [
+   "shadesb",
+   "shadesleaderb",
+   "shadeswinglessb",
+   "shadeswinglessleaderb",
+   "supershadesb"
+  ]
+ },
+ "astral/savepx/astral2_3": {
+  "chr_characters": [
+   "shadesleaderb",
+   "shadeswinglessleaderb",
+   "shadeswinglessb",
+   "shadesb",
+   "profxastralscripted"
+  ],
+  "spawner_characters": [
+   "profxastralscripted",
+   "shadesb",
+   "shadesleaderb",
+   "shadeswinglessb",
+   "shadeswinglessleaderb"
+  ]
+ },
+ "astral/savepx/final_astral": {
+  "chr_characters": [
+   "shadowkingtwo",
+   "shadowking",
+   "shadesking"
+  ],
+  "spawner_characters": [
+   "shadesking",
+   "shadowking",
+   "shadowkingtwo"
+  ]
+ },
+ "astroid_m/visit1/arb_fd1": {
+  "chr_characters": [
+   "grso_mp5",
+   "sentinel"
+  ],
+  "spawner_characters": [
+   "grso_mp5",
+   "sentinel"
+  ]
+ },
+ "astroid_m/visit1/arb_fd2": {
+  "chr_characters": [
+   "grso_mp5",
+   "grso_powerbaton",
+   "sentinelleader",
+   "BlobScripted"
+  ],
+  "spawner_characters": [
+   "BlobScripted",
+   "grso_mp5",
+   "grso_powerbaton",
+   "sentinelleader"
+  ]
+ },
+ "astroid_m/visit1/asteroid1_1": {
+  "chr_characters": [
+   "acolyteenergy_b",
+   "acolyteleader_b",
+   "acolytemental_b",
+   "acolytesmash_b",
+   "morlockcivfemale",
+   "ToadScripted"
+  ],
+  "spawner_characters": [
+   "ToadScripted",
+   "acolyteenergy_b",
+   "acolyteleader_b",
+   "acolytemental_b",
+   "acolytesmash_b",
+   "morlockcivfemale"
+  ]
+ },
+ "astroid_m/visit1/asteroid1_2": {
+  "chr_characters": [
+   "acolyteenergy_b",
+   "acolyteleader_b",
+   "acolytemental_b",
+   "acolytesmash_b",
+   "morlockcivmale",
+   "MystiqueScripted"
+  ],
+  "spawner_characters": [
+   "MystiqueScripted",
+   "acolyteenergy_b",
+   "acolyteleader_b",
+   "acolytemental_b",
+   "acolytesmash_b",
+   "morlockcivmale"
+  ]
+ },
+ "astroid_m/visit1/asteroid1_3": {
+  "chr_characters": [
+   "acolyteenergy_b",
+   "acolyteleader_b",
+   "acolytemental_b",
+   "acolytesmash_b"
+  ],
+  "spawner_characters": [
+   "acolyteenergy_b",
+   "acolyteleader_b",
+   "acolytemental_b",
+   "acolytesmash_b"
+  ]
+ },
+ "astroid_m/visit1/asteroid2_1": {
+  "chr_characters": [
+   "acolyteenergy_b",
+   "acolyteleader_b",
+   "magnetoboss",
+   "mystiqueAct3",
+   "sabretoothAct3"
+  ],
+  "spawner_characters": [
+   "acolyteenergy_b",
+   "acolyteleader_b",
+   "magnetoboss",
+   "mystiqueAct3",
+   "sabretoothAct3"
+  ]
+ },
+ "astroid_m/visit1/asteroid2_2": {
+  "chr_characters": [
+   "sentineladvanced_b",
+   "HavokScripted"
+  ],
+  "spawner_characters": [
+   "HavokScripted",
+   "sentineladvanced_b"
+  ]
+ },
+ "astroid_m/visit1/asteroid2_3": {
+  "chr_characters": [
+   "acolyteenergy_b",
+   "acolyteleader_b",
+   "sentineladvanced_b"
+  ],
+  "spawner_characters": [
+   "acolyteenergy_b",
+   "acolyteleader_b",
+   "sentineladvanced_b"
+  ]
+ },
+ "cinematics/beastlab2_cine": {
+  "chr_characters": [],
+  "spawner_characters": []
+ },
+ "demo/a_int/arb3_1": {
+  "chr_characters": [
+   "grso_captain",
+   "grso_mp5",
+   "grso_powergloves",
+   "crewman"
+  ],
+  "spawner_characters": [
+   "crewman",
+   "grso_captain",
+   "grso_mp5",
+   "grso_powergloves"
+  ]
+ },
+ "demo/a_int/arb3_2": {
+  "chr_characters": [
+   "grso_captain",
+   "grso_commander",
+   "grso_mp5",
+   "grso_powergloves",
+   "crewman"
+  ],
+  "spawner_characters": [
+   "crewman",
+   "grso_captain",
+   "grso_commander",
+   "grso_mp5",
+   "grso_powergloves"
+  ]
+ },
+ "demo/deck/arb_fd1": {
+  "chr_characters": [
+   "brotherhoodsmash",
+   "sentinel"
+  ],
+  "spawner_characters": [
+   "brotherhoodsmash",
+   "sentinel"
+  ]
+ },
+ "demo/ext/haarp_ext_boss": {
+  "chr_characters": [
+   "HAARPLeader",
+   "HAARPSoldier",
+   "HAARPSoldierMelee",
+   "ToadAct1"
+  ],
+  "spawner_characters": [
+   "HAARPLeader",
+   "HAARPSoldier",
+   "HAARPSoldierMelee",
+   "ToadAct1"
+  ]
+ },
+ "demo/hub/sewers1_1_1": {
+  "chr_characters": [
+   "morlockbruiserA",
+   "morlockBruiserB",
+   "morlockclawA"
+  ],
+  "spawner_characters": [
+   "morlockBruiserB",
+   "morlockbruiserA",
+   "morlockclawA"
+  ]
+ },
+ "demo/hub/sewers1_1_2": {
+  "chr_characters": [
+   "morlockclawA",
+   "morlockbruiserA",
+   "morlockbruiserB"
+  ],
+  "spawner_characters": [
+   "morlockbruiserA",
+   "morlockbruiserB",
+   "morlockclawA"
+  ]
+ },
+ "demo/jugrnt/jugrnt01": {
+  "chr_characters": [
+   "JuggernautFlashback"
+  ],
+  "spawner_characters": [
+   "JuggernautFlashback"
+  ]
+ },
+ "haarp/ext/haarp_ext01": {
+  "chr_characters": [
+   "HAARPSoldier",
+   "HAARPFlamethrower",
+   "HAARPSoldierMelee"
+  ],
+  "spawner_characters": [
+   "HAARPFlamethrower",
+   "HAARPSoldier",
+   "HAARPSoldierMelee"
+  ]
+ },
+ "haarp/ext/haarp_ext02": {
+  "chr_characters": [
+   "HAARPSoldier",
+   "HAARPSoldierMelee"
+  ],
+  "spawner_characters": [
+   "HAARPSoldier",
+   "HAARPSoldierMelee"
+  ]
+ },
+ "haarp/ext/haarp_ext03": {
+  "chr_characters": [
+   "HAARPSoldier",
+   "HAARPSoldierMelee"
+  ],
+  "spawner_characters": [
+   "HAARPSoldier",
+   "HAARPSoldierMelee"
+  ]
+ },
+ "haarp/ext/haarp_ext04": {
+  "chr_characters": [
+   "HAARPSoldier",
+   "HAARPFlamethrower",
+   "HAARPSoldierMelee"
+  ],
+  "spawner_characters": [
+   "HAARPFlamethrower",
+   "HAARPSoldier",
+   "HAARPSoldierMelee"
+  ]
+ },
+ "haarp/ext/haarp_ext_boss": {
+  "chr_characters": [
+   "HAARPLeader",
+   "HAARPSoldier",
+   "HAARPSoldierMelee",
+   "ToadAct1"
+  ],
+  "spawner_characters": [
+   "HAARPLeader",
+   "HAARPSoldier",
+   "HAARPSoldierMelee",
+   "ToadAct1"
+  ]
+ },
+ "haarp/int/haarp2_1": {
+  "chr_characters": [
+   "HAARPFlamethrower",
+   "HAARPSoldierMelee",
+   "HAARPLeader",
+   "HAARPSoldier"
+  ],
+  "spawner_characters": [
+   "HAARPFlamethrower",
+   "HAARPLeader",
+   "HAARPSoldier",
+   "HAARPSoldierMelee"
+  ]
+ },
+ "haarp/int/haarp2_2": {
+  "chr_characters": [
+   "HAARPFlamethrower",
+   "HAARPSoldierMelee",
+   "HAARPLeader",
+   "HAARPSoldier"
+  ],
+  "spawner_characters": [
+   "HAARPFlamethrower",
+   "HAARPLeader",
+   "HAARPSoldier",
+   "HAARPSoldierMelee"
+  ]
+ },
+ "haarp/int/haarp2_3": {
+  "chr_characters": [
+   "HAARPFlamethrower",
+   "HAARPSoldierMelee",
+   "HAARPLeader",
+   "HAARPSoldier"
+  ],
+  "spawner_characters": [
+   "HAARPFlamethrower",
+   "HAARPLeader",
+   "HAARPSoldier",
+   "HAARPSoldierMelee"
+  ]
+ },
+ "haarp/int/haarp2_6": {
+  "chr_characters": [
+   "brotherhoodsmash",
+   "PyroAct1",
+   "firedemon",
+   "HAARPSoldier",
+   "labtechscripted",
+   "MystiqueScripted",
+   "ToadScripted"
+  ],
+  "spawner_characters": [
+   "HAARPSoldier",
+   "MystiqueScripted",
+   "PyroAct1",
+   "ToadScripted",
+   "brotherhoodsmash",
+   "firedemon",
+   "labtechscripted"
+  ]
+ },
+ "haarp/int/icetunnel1": {
+  "chr_characters": [
+   "brotherhoodenergy",
+   "brotherhoodleader",
+   "brotherhoodsmash"
+  ],
+  "spawner_characters": [
+   "brotherhoodenergy",
+   "brotherhoodleader",
+   "brotherhoodsmash"
+  ]
+ },
+ "haarp/int/icetunnel2": {
+  "chr_characters": [
+   "brotherhoodenergy",
+   "brotherhoodleader",
+   "brotherhoodsmash"
+  ],
+  "spawner_characters": [
+   "brotherhoodenergy",
+   "brotherhoodleader",
+   "brotherhoodsmash"
+  ]
+ },
+ "hive/h_ext/hive1_1_1": {
+  "chr_characters": [
+   "shockerbot",
+   "grso_captain",
+   "grso_laserb"
+  ],
+  "spawner_characters": [
+   "grso_captain",
+   "grso_laserb",
+   "shockerbot"
+  ]
+ },
+ "hive/h_int/hive1_2_1": {
+  "chr_characters": [
+   "grso_captain_b",
+   "grso_flamethrowerb",
+   "GRSOElite",
+   "grso_superpowergloves"
+  ],
+  "spawner_characters": [
+   "GRSOElite",
+   "grso_captain_b",
+   "grso_flamethrowerb",
+   "grso_superpowergloves"
+  ]
+ },
+ "hive/h_int/hive1_2_2": {
+  "chr_characters": [
+   "grso_captain_b",
+   "grso_flamethrowerb",
+   "grso_superpowergloves",
+   "GRSOElite",
+   "labtechyellow"
+  ],
+  "spawner_characters": [
+   "GRSOElite",
+   "grso_captain_b",
+   "grso_flamethrowerb",
+   "grso_superpowergloves",
+   "labtechyellow"
+  ]
+ },
+ "hive/h_int/hive1_2_3": {
+  "chr_characters": [
+   "grso_captain_b",
+   "grso_superpowergloves",
+   "GRSOElite",
+   "labtechyellow",
+   "grso_flamethrowerb"
+  ],
+  "spawner_characters": [
+   "GRSOElite",
+   "grso_captain_b",
+   "grso_flamethrowerb",
+   "grso_superpowergloves",
+   "labtechyellow"
+  ]
+ },
+ "hive/h_int/hive1_3_1": {
+  "chr_characters": [
+   "grso_captain_b",
+   "grso_flamethrowerb",
+   "GRSOElite",
+   "labtechyellow",
+   "sentinelb"
+  ],
+  "spawner_characters": [
+   "GRSOElite",
+   "grso_captain_b",
+   "grso_flamethrowerb",
+   "labtechyellow",
+   "sentinelb"
+  ]
+ },
+ "hive/h_int/hive1_3_2": {
+  "chr_characters": [
+   "grso_captain_b",
+   "GRSOElite",
+   "labtechyellow",
+   "sentinelb"
+  ],
+  "spawner_characters": [
+   "GRSOElite",
+   "grso_captain_b",
+   "labtechyellow",
+   "sentinelb"
+  ]
+ },
+ "hive/h_int/hive1_3_3": {
+  "chr_characters": [
+   "GRSOElite",
+   "labtechyellow",
+   "sentineladvanced",
+   "sentinelb"
+  ],
+  "spawner_characters": [
+   "GRSOElite",
+   "labtechyellow",
+   "sentineladvanced",
+   "sentinelb"
+  ]
+ },
+ "hive/h_int/hive2_2_1": {
+  "chr_characters": [
+   "GRSOElite",
+   "sentineladvanced",
+   "sentinelspider_b"
+  ],
+  "spawner_characters": [
+   "GRSOElite",
+   "sentineladvanced",
+   "sentinelspider_b"
+  ]
+ },
+ "hive/h_int/hive2_2_2": {
+  "chr_characters": [
+   "GRSOElite",
+   "sentineladvanced"
+  ],
+  "spawner_characters": [
+   "GRSOElite",
+   "sentineladvanced"
+  ]
+ },
+ "hive/h_int/hive2_2_3": {
+  "chr_characters": [
+   "GRSOElite",
+   "sentineladvanced",
+   "sentinelspider_b"
+  ],
+  "spawner_characters": [
+   "GRSOElite",
+   "sentineladvanced",
+   "sentinelspider_b"
+  ]
+ },
+ "hive/h_int/hive2_2_4": {
+  "chr_characters": [
+   "sentineladvanced",
+   "Kincaid",
+   "GRSOElite",
+   "gateway",
+   "morlockcivmale"
+  ],
+  "spawner_characters": [
+   "GRSOElite",
+   "Kincaid",
+   "gateway",
+   "morlockcivmale",
+   "sentineladvanced"
+  ]
+ },
+ "hive/h_int/hive2_2_5": {
+  "chr_characters": [
+   "Kincaid",
+   "GRSOElite",
+   "sentineladvanced"
+  ],
+  "spawner_characters": [
+   "GRSOElite",
+   "Kincaid",
+   "sentineladvanced"
+  ]
+ },
+ "mansion/dr_mag/dr_mag01": {
+  "chr_characters": [
+   "dangerroomrobot",
+   "dangerroomrobotleader",
+   "profx"
+  ],
+  "spawner_characters": [
+   "dangerroomrobot",
+   "dangerroomrobotleader",
+   "profx"
+  ]
+ },
+ "mansion/dr_mag/dr_mag03": {
+  "chr_characters": [
+   "dangerroomrobot",
+   "dangerroomrobotleader",
+   "profx",
+   "cyclopsscripted",
+   "wolverinescripted"
+  ],
+  "spawner_characters": [
+   "cyclopsscripted",
+   "dangerroomrobot",
+   "dangerroomrobotleader",
+   "profx",
+   "wolverinescripted"
+  ]
+ },
+ "mansion/dr_mag2/mag_nyc1": {
+  "chr_characters": [
+   "grso_riot"
+  ],
+  "spawner_characters": [
+   "grso_riot"
+  ]
+ },
+ "mansion/dr_mag2/mag_nyc2": {
+  "chr_characters": [
+   "grso_riot",
+   "avalanchelite"
+  ],
+  "spawner_characters": [
+   "avalanchelite",
+   "grso_riot"
+  ]
+ },
+ "mansion/dr_mag2/mag_nyc3": {
+  "chr_characters": [
+   "mystiqueAct1",
+   "brotherhoodlite",
+   "pyrolite",
+   "cyclops"
+  ],
+  "spawner_characters": [
+   "brotherhoodlite",
+   "cyclops",
+   "mystiqueAct1",
+   "pyrolite"
+  ]
+ },
+ "mansion/dr_mag2/mag_nyc4": {
+  "chr_characters": [
+   "BlobAct2",
+   "brotherhoodlite",
+   "cyclops",
+   "magma"
+  ],
+  "spawner_characters": [
+   "BlobAct2",
+   "brotherhoodlite",
+   "cyclops",
+   "magma"
+  ]
+ },
+ "mansion/jugrnt/jugrnt01": {
+  "chr_characters": [
+   "JuggernautFlashback"
+  ],
+  "spawner_characters": [
+   "JuggernautFlashback"
+  ]
+ },
+ "mansion/man1a/hangar1a": {
+  "chr_characters": [
+   "profx"
+  ],
+  "spawner_characters": [
+   "profx"
+  ]
+ },
+ "mansion/man1a/mansion1a_1": {
+  "chr_characters": [
+   "phoenix",
+   "profx",
+   "rogue",
+   "icemanflesh"
+  ],
+  "spawner_characters": [
+   "icemanflesh",
+   "phoenix",
+   "profx",
+   "rogue"
+  ]
+ },
+ "mansion/man1a/mansion1a_2": {
+  "chr_characters": [
+   "phoenix",
+   "storm"
+  ],
+  "spawner_characters": [
+   "phoenix",
+   "storm"
+  ]
+ },
+ "mansion/man1a/subbasement1a": {
+  "chr_characters": [
+   "beastscripted",
+   "profx",
+   "phoenixscripted"
+  ],
+  "spawner_characters": [
+   "beastscripted",
+   "phoenixscripted",
+   "profx"
+  ]
+ },
+ "mansion/man2/mansion2_1": {
+  "chr_characters": [
+   "civilianmale",
+   "nightcrawler"
+  ],
+  "spawner_characters": [
+   "civilianmale",
+   "nightcrawler"
+  ]
+ },
+ "mansion/man2/mansion2_2": {
+  "chr_characters": [
+   "civilianmale"
+  ],
+  "spawner_characters": [
+   "civilianmale"
+  ]
+ },
+ "mansion/man2/mansion_back2": {
+  "chr_characters": [
+   "jubilee",
+   "civilianmale",
+   "icemanflesh"
+  ],
+  "spawner_characters": [
+   "civilianmale",
+   "icemanflesh",
+   "jubilee"
+  ]
+ },
+ "mansion/man2/subbasement2": {
+  "chr_characters": [
+   "toadscripted",
+   "profx",
+   "beast",
+   "cyclops"
+  ],
+  "spawner_characters": [
+   "beast",
+   "cyclops",
+   "profx",
+   "toadscripted"
+  ]
+ },
+ "mansion/man3/danger_room": {
+  "chr_characters": [
+   "cyclopsscripted",
+   "profx",
+   "stormscripted",
+   "wolverinescripted"
+  ],
+  "spawner_characters": [
+   "cyclopsscripted",
+   "profx",
+   "stormscripted",
+   "wolverinescripted"
+  ]
+ },
+ "mansion/man3/hangar3": {
+  "chr_characters": [
+   "wolverine"
+  ],
+  "spawner_characters": [
+   "wolverine"
+  ]
+ },
+ "mansion/man3/mansion3_1": {
+  "chr_characters": [
+   "jubilee",
+   "nightcrawler",
+   "civilianmale",
+   "icemanflesh"
+  ],
+  "spawner_characters": [
+   "civilianmale",
+   "icemanflesh",
+   "jubilee",
+   "nightcrawler"
+  ]
+ },
+ "mansion/man3/mansion3_2": {
+  "chr_characters": [
+   "civilianmale"
+  ],
+  "spawner_characters": [
+   "civilianmale"
+  ]
+ },
+ "mansion/man3/subbasement3b": {
+  "chr_characters": [
+   "beastscripted",
+   "phoenix",
+   "StormNoAnims",
+   "storm",
+   "WolverineNoAnims",
+   "ToadScripted"
+  ],
+  "spawner_characters": [
+   "StormNoAnims",
+   "ToadScripted",
+   "WolverineNoAnims",
+   "beastscripted",
+   "phoenix",
+   "storm"
+  ]
+ },
+ "mansion/man4/grso_debriefing": {
+  "chr_characters": [
+   "BeastNoAnims",
+   "CyclopsNoAnims",
+   "NightcrawlerNoAnims",
+   "profx",
+   "StormNoAnims",
+   "WolverineNoAnims"
+  ],
+  "spawner_characters": [
+   "BeastNoAnims",
+   "CyclopsNoAnims",
+   "NightcrawlerNoAnims",
+   "StormNoAnims",
+   "WolverineNoAnims",
+   "profx"
+  ]
+ },
+ "mansion/man4/mansion4_1": {
+  "chr_characters": [
+   "frost",
+   "gambit",
+   "profx",
+   "rogue",
+   "civilianmale",
+   "cyclopsscripted"
+  ],
+  "spawner_characters": [
+   "civilianmale",
+   "cyclopsscripted",
+   "frost",
+   "gambit",
+   "profx",
+   "rogue"
+  ]
+ },
+ "mansion/man4/mansion4_2": {
+  "chr_characters": [
+   "civilianmale"
+  ],
+  "spawner_characters": [
+   "civilianmale"
+  ]
+ },
+ "mansion/man4/mansion_back4": {
+  "chr_characters": [
+   "colossus",
+   "civilianmale"
+  ],
+  "spawner_characters": [
+   "civilianmale",
+   "colossus"
+  ]
+ },
+ "mansion/man4/mansion_back4_grso": {
+  "chr_characters": [
+   "grso_stealth",
+   "stealthbot"
+  ],
+  "spawner_characters": [
+   "grso_stealth",
+   "stealthbot"
+  ]
+ },
+ "mansion/man4/mansion_front4_grso": {
+  "chr_characters": [
+   "grso_stealth",
+   "stealthbot"
+  ],
+  "spawner_characters": [
+   "grso_stealth",
+   "stealthbot"
+  ]
+ },
+ "mansion/man4/subbasement4": {
+  "chr_characters": [
+   "BeastNoAnims",
+   "CyclopsNoAnims",
+   "NightcrawlerNoAnims",
+   "PhoenixNoAnims",
+   "profx",
+   "ToadNoAnims"
+  ],
+  "spawner_characters": [
+   "BeastNoAnims",
+   "CyclopsNoAnims",
+   "NightcrawlerNoAnims",
+   "PhoenixNoAnims",
+   "ToadNoAnims",
+   "profx"
+  ]
+ },
+ "mansion/man5/dfdsafsd": {
+  "chr_characters": [],
+  "spawner_characters": []
+ },
+ "mansion/man5/dgdfsgfs": {
+  "chr_characters": [],
+  "spawner_characters": []
+ },
+ "mansion/man5/lkjdsfjasdlfsd": {
+  "chr_characters": [],
+  "spawner_characters": []
+ },
+ "mansion/man5/mansion5_1": {
+  "chr_characters": [
+   "wolverine",
+   "civilianmale"
+  ],
+  "spawner_characters": [
+   "civilianmale",
+   "wolverine"
+  ]
+ },
+ "mansion/man5/mansion5_2": {
+  "chr_characters": [
+   "civilianmale"
+  ],
+  "spawner_characters": [
+   "civilianmale"
+  ]
+ },
+ "mansion/man5/mansion_front5": {
+  "chr_characters": [
+   "magnetoact2",
+   "brotherhoodleader",
+   "sentinel",
+   "havokact2",
+   "ToadScripted"
+  ],
+  "spawner_characters": [
+   "ToadScripted",
+   "brotherhoodleader",
+   "havokact2",
+   "magnetoact2",
+   "sentinel"
+  ]
+ },
+ "mansion/man5/sdafasdfasd": {
+  "chr_characters": [],
+  "spawner_characters": []
+ },
+ "mansion/man5/subbasement4": {
+  "chr_characters": [],
+  "spawner_characters": []
+ },
+ "mansion/man5/subbasement5": {
+  "chr_characters": [
+   "BeastNoAnims",
+   "CyclopsNoAnims",
+   "FrostNoAnims",
+   "PhoenixNoAnims",
+   "StormNoAnims",
+   "ColossusNoAnims",
+   "illyana",
+   "profxcoma"
+  ],
+  "spawner_characters": [
+   "BeastNoAnims",
+   "ColossusNoAnims",
+   "CyclopsNoAnims",
+   "FrostNoAnims",
+   "PhoenixNoAnims",
+   "StormNoAnims",
+   "illyana",
+   "profxcoma"
+  ]
+ },
+ "mansion/man5/subbasement5b": {
+  "chr_characters": [
+   "cyclopsscripted",
+   "frostscripted",
+   "phoenixscripted",
+   "wolverinescripted"
+  ],
+  "spawner_characters": [
+   "cyclopsscripted",
+   "frostscripted",
+   "phoenixscripted",
+   "wolverinescripted"
+  ]
+ },
+ "mansion/man5/test": {
+  "chr_characters": [],
+  "spawner_characters": []
+ },
+ "mansion/man5/zz": {
+  "chr_characters": [],
+  "spawner_characters": []
+ },
+ "mansion/man5/zzz": {
+  "chr_characters": [],
+  "spawner_characters": []
+ },
+ "mansion/man5/zzzzzzzz": {
+  "chr_characters": [],
+  "spawner_characters": []
+ },
+ "mansion/man5/zzzzzzzzzzz": {
+  "chr_characters": [],
+  "spawner_characters": []
+ },
+ "mansion/man6/mansion6_1": {
+  "chr_characters": [
+   "civilianmale"
+  ],
+  "spawner_characters": [
+   "civilianmale"
+  ]
+ },
+ "mansion/man6/mansion6_2": {
+  "chr_characters": [
+   "civilianmale"
+  ],
+  "spawner_characters": [
+   "civilianmale"
+  ]
+ },
+ "mansion/man6/subbasement6": {
+  "chr_characters": [
+   "BeastNoAnims",
+   "frostscripted",
+   "PhoenixNoAnims",
+   "WolverineNoAnims",
+   "profxcoma"
+  ],
+  "spawner_characters": [
+   "BeastNoAnims",
+   "PhoenixNoAnims",
+   "WolverineNoAnims",
+   "frostscripted",
+   "profxcoma"
+  ]
+ },
+ "mansion/man7/mansion7_1": {
+  "chr_characters": [
+   "civilianmale",
+   "psylocke"
+  ],
+  "spawner_characters": [
+   "civilianmale",
+   "psylocke"
+  ]
+ },
+ "mansion/man7/mansion7_2": {
+  "chr_characters": [
+   "civilianmale"
+  ],
+  "spawner_characters": [
+   "civilianmale"
+  ]
+ },
+ "mansion/man7/status_meeting": {
+  "chr_characters": [
+   "colossusflesh",
+   "beastscripted",
+   "cyclopsscripted",
+   "phoenixscripted",
+   "stormscripted"
+  ],
+  "spawner_characters": [
+   "beastscripted",
+   "colossusflesh",
+   "cyclopsscripted",
+   "phoenixscripted",
+   "stormscripted"
+  ]
+ },
+ "mansion/man7/subbasement7": {
+  "chr_characters": [
+   "frostscripted",
+   "profxcoma",
+   "beastscripted",
+   "phoenixscripted"
+  ],
+  "spawner_characters": [
+   "beastscripted",
+   "frostscripted",
+   "phoenixscripted",
+   "profxcoma"
+  ]
+ },
+ "mansion/man8/hangar8": {
+  "chr_characters": [
+   "beastscripted",
+   "wolverinescripted"
+  ],
+  "spawner_characters": [
+   "beastscripted",
+   "wolverinescripted"
+  ]
+ },
+ "mansion/man8/mansion8_1": {
+  "chr_characters": [
+   "civilianmale"
+  ],
+  "spawner_characters": [
+   "civilianmale"
+  ]
+ },
+ "mansion/man8/mansion8_2": {
+  "chr_characters": [
+   "civilianmale"
+  ],
+  "spawner_characters": [
+   "civilianmale"
+  ]
+ },
+ "mansion/man8/subbasement8": {
+  "chr_characters": [
+   "profxcoma",
+   "cyclopsscripted",
+   "gambitscripted",
+   "phoenixscripted"
+  ],
+  "spawner_characters": [
+   "cyclopsscripted",
+   "gambitscripted",
+   "phoenixscripted",
+   "profxcoma"
+  ]
+ },
+ "mansion/man8/subbasement8b": {
+  "chr_characters": [
+   "cyclopsscripted",
+   "phoenixscripted",
+   "wolverinescripted",
+   "icemanflesh"
+  ],
+  "spawner_characters": [
+   "cyclopsscripted",
+   "icemanflesh",
+   "phoenixscripted",
+   "wolverinescripted"
+  ]
+ },
+ "mastermold/mastermold1": {
+  "chr_characters": [
+   "sentineladvanced",
+   "sentineladvanced_b",
+   "sentinelspider",
+   "sentinelspider_b"
+  ],
+  "spawner_characters": [
+   "sentineladvanced",
+   "sentineladvanced_b",
+   "sentinelspider",
+   "sentinelspider_b"
+  ]
+ },
+ "mastermold/mastermold2": {
+  "chr_characters": [
+   "suicidespider",
+   "mastermoldone",
+   "sentinelleader"
+  ],
+  "spawner_characters": [
+   "mastermoldone",
+   "sentinelleader",
+   "suicidespider"
+  ]
+ },
+ "menu/main_back": {
+  "chr_characters": [],
+  "spawner_characters": []
+ },
+ "mocap/mocap1/briefing_1_1_6_5": {
+  "chr_characters": [
+   "roguemocap",
+   "wolverinemocap"
+  ],
+  "spawner_characters": [
+   "roguemocap",
+   "wolverinemocap"
+  ]
+ },
+ "mocap/mocap10/briefing_3_6_6": {
+  "chr_characters": [
+   "roguemocap",
+   "wolverinemocap"
+  ],
+  "spawner_characters": [
+   "roguemocap",
+   "wolverinemocap"
+  ]
+ },
+ "mocap/mocap11/briefing_3_6_7": {
+  "chr_characters": [
+   "roguemocap",
+   "wolverinemocap"
+  ],
+  "spawner_characters": [
+   "roguemocap",
+   "wolverinemocap"
+  ]
+ },
+ "mocap/mocap12/briefing_3_9_0": {
+  "chr_characters": [
+   "roguemocap",
+   "wolverinemocap"
+  ],
+  "spawner_characters": [
+   "roguemocap",
+   "wolverinemocap"
+  ]
+ },
+ "mocap/mocap13/briefing_3_9_8": {
+  "chr_characters": [
+   "roguemocap",
+   "wolverinemocap"
+  ],
+  "spawner_characters": [
+   "roguemocap",
+   "wolverinemocap"
+  ]
+ },
+ "mocap/mocap2/briefing_1_2_41": {
+  "chr_characters": [
+   "wolverinemocap",
+   "roguemocap"
+  ],
+  "spawner_characters": [
+   "roguemocap",
+   "wolverinemocap"
+  ]
+ },
+ "mocap/mocap3/briefing_1_4_13": {
+  "chr_characters": [
+   "roguemocap",
+   "wolverinemocap"
+  ],
+  "spawner_characters": [
+   "roguemocap",
+   "wolverinemocap"
+  ]
+ },
+ "mocap/mocap4/briefing_1_7_1": {
+  "chr_characters": [
+   "wolverinemocap",
+   "roguemocap"
+  ],
+  "spawner_characters": [
+   "roguemocap",
+   "wolverinemocap"
+  ]
+ },
+ "mocap/mocap5/briefing_2_1_16": {
+  "chr_characters": [
+   "wolverinemocap",
+   "roguemocap"
+  ],
+  "spawner_characters": [
+   "roguemocap",
+   "wolverinemocap"
+  ]
+ },
+ "mocap/mocap6/briefing_2_5_5": {
+  "chr_characters": [
+   "roguemocap",
+   "wolverinemocap"
+  ],
+  "spawner_characters": [
+   "roguemocap",
+   "wolverinemocap"
+  ]
+ },
+ "mocap/mocap7/briefing_2_5_14_7": {
+  "chr_characters": [
+   "roguemocap",
+   "wolverinemocap"
+  ],
+  "spawner_characters": [
+   "roguemocap",
+   "wolverinemocap"
+  ]
+ },
+ "mocap/mocap8/briefing_2_5_22": {
+  "chr_characters": [
+   "roguemocap",
+   "wolverinemocap"
+  ],
+  "spawner_characters": [
+   "roguemocap",
+   "wolverinemocap"
+  ]
+ },
+ "mocap/mocap9/briefing_3_1_8": {
+  "chr_characters": [
+   "roguemocap",
+   "wolverinemocap"
+  ],
+  "spawner_characters": [
+   "roguemocap",
+   "wolverinemocap"
+  ]
+ },
+ "mount/mount/mount": {
+  "chr_characters": [
+   "acolyteenergy",
+   "acolytemental",
+   "acolyteleader",
+   "acolytesmash"
+  ],
+  "spawner_characters": [
+   "acolyteenergy",
+   "acolyteleader",
+   "acolytemental",
+   "acolytesmash"
+  ]
+ },
+ "mount/mount/mount2": {
+  "chr_characters": [
+   "AvalancheAct2",
+   "sabretoothAct2"
+  ],
+  "spawner_characters": [
+   "AvalancheAct2",
+   "sabretoothAct2"
+  ]
+ },
+ "muir_is/muir2/mui_comcore": {
+  "chr_characters": [
+   "dangerroomrobotleader"
+  ],
+  "spawner_characters": [
+   "dangerroomrobotleader"
+  ]
+ },
+ "muir_is/muir2/muir_brig": {
+  "chr_characters": [
+   "JuggernautAct3"
+  ],
+  "spawner_characters": [
+   "JuggernautAct3"
+  ]
+ },
+ "muir_is/muir2/muir_comcore": {
+  "chr_characters": [
+   "dangerroomrobot",
+   "forge"
+  ],
+  "spawner_characters": []
+ },
+ "muir_is/muir2/muir_in2": {
+  "chr_characters": [
+   "colossusscripted",
+   "cyclopsscripted",
+   "colossus",
+   "cyclops",
+   "multipleman",
+   "forge",
+   "illyana",
+   "moira",
+   "stormscripted"
+  ],
+  "spawner_characters": [
+   "colossus",
+   "colossusscripted",
+   "cyclops",
+   "cyclopsscripted",
+   "forge",
+   "illyana",
+   "moira",
+   "multipleman",
+   "stormscripted"
+  ]
+ },
+ "muir_is/muir3/muir_brig": {
+  "chr_characters": [
+   "JuggernautAct3",
+   "magma",
+   "forge",
+   "moira",
+   "MultipleManScripted"
+  ],
+  "spawner_characters": [
+   "JuggernautAct3",
+   "MultipleManScripted",
+   "forge",
+   "magma",
+   "moira"
+  ]
+ },
+ "muir_is/muir3/muir_in3": {
+  "chr_characters": [
+   "JuggernautAct3",
+   "forge"
+  ],
+  "spawner_characters": [
+   "JuggernautAct3",
+   "forge"
+  ]
+ },
+ "nuke_plant/nuke/nuke1_1": {
+  "chr_characters": [
+   "NukeGuard",
+   "NukeGuardMelee",
+   "labtechorange"
+  ],
+  "spawner_characters": [
+   "NukeGuard",
+   "NukeGuardMelee",
+   "labtechorange"
+  ]
+ },
+ "nuke_plant/nuke/nuke1_2": {
+  "chr_characters": [
+   "NukeGuard",
+   "NukeGuardMelee"
+  ],
+  "spawner_characters": [
+   "NukeGuard",
+   "NukeGuardMelee"
+  ]
+ },
+ "nuke_plant/nuke/nuke1_3": {
+  "chr_characters": [
+   "acolyteenergy",
+   "acolytemental",
+   "NukeGuard",
+   "acolytesmash",
+   "labtechorange"
+  ],
+  "spawner_characters": [
+   "NukeGuard",
+   "acolyteenergy",
+   "acolytemental",
+   "acolytesmash",
+   "labtechorange"
+  ]
+ },
+ "nuke_plant/nuke/nuke1_4": {
+  "chr_characters": [
+   "acolyteleader",
+   "acolytemental",
+   "NukeGuard",
+   "acolyteenergy",
+   "acolytesmash"
+  ],
+  "spawner_characters": [
+   "NukeGuard",
+   "acolyteenergy",
+   "acolyteleader",
+   "acolytemental",
+   "acolytesmash"
+  ]
+ },
+ "nuke_plant/nuke/nuke2_2": {
+  "chr_characters": [
+   "colossus"
+  ],
+  "spawner_characters": [
+   "colossus"
+  ]
+ },
+ "nuke_plant/nuke/nuke2_2a": {
+  "chr_characters": [
+   "acolytemental",
+   "acolyteenergy",
+   "acolyteleader",
+   "acolytesmash",
+   "labtechorange"
+  ],
+  "spawner_characters": [
+   "acolyteenergy",
+   "acolyteleader",
+   "acolytemental",
+   "acolytesmash",
+   "labtechorange"
+  ]
+ },
+ "nuke_plant/nuke/nuke2_3": {
+  "chr_characters": [
+   "acolyteenergy",
+   "acolyteleader",
+   "acolytemental",
+   "acolytesmash"
+  ],
+  "spawner_characters": [
+   "acolyteenergy",
+   "acolyteleader",
+   "acolytemental",
+   "acolytesmash"
+  ]
+ },
+ "nyc/alison/blackbird": {
+  "chr_characters": [
+   "phoenix",
+   "default"
+  ],
+  "spawner_characters": [
+   "default",
+   "phoenix"
+  ]
+ },
+ "nyc/alison/nyc1_1_1": {
+  "chr_characters": [
+   "grso_riot"
+  ],
+  "spawner_characters": [
+   "grso_riot"
+  ]
+ },
+ "nyc/alison/nyc1_1_2": {
+  "chr_characters": [
+   "grso_riot",
+   "avalanchelite"
+  ],
+  "spawner_characters": [
+   "avalanchelite",
+   "grso_riot"
+  ]
+ },
+ "nyc/alison/nyc1_1_2b": {
+  "chr_characters": [
+   "mystiqueAct1",
+   "brotherhoodlite",
+   "pyrolite",
+   "cyclops"
+  ],
+  "spawner_characters": [
+   "brotherhoodlite",
+   "cyclops",
+   "mystiqueAct1",
+   "pyrolite"
+  ]
+ },
+ "nyc/alison/nyc1_1_3": {
+  "chr_characters": [
+   "BlobAct1a",
+   "brotherhoodlite",
+   "cyclops",
+   "magma"
+  ],
+  "spawner_characters": [
+   "BlobAct1a",
+   "brotherhoodlite",
+   "cyclops",
+   "magma"
+  ]
+ },
+ "nyc/alison/nyc1_1_4": {
+  "chr_characters": [
+   "brotherhoodlite",
+   "brotherhoodenergylite",
+   "magma"
+  ],
+  "spawner_characters": [
+   "brotherhoodenergylite",
+   "brotherhoodlite",
+   "magma"
+  ]
+ },
+ "nyc/alison/nyc1_1_5": {
+  "chr_characters": [
+   "brotherhoodlite",
+   "brotherhoodenergylite",
+   "magma"
+  ],
+  "spawner_characters": [
+   "brotherhoodenergylite",
+   "brotherhoodlite",
+   "magma"
+  ]
+ },
+ "nyc/fb/nyc_fb1": {
+  "chr_characters": [
+   "sentinelflashback",
+   "civilianFemale"
+  ],
+  "spawner_characters": [
+   "civilianFemale",
+   "sentinelflashback"
+  ]
+ },
+ "nyc/fb/nyc_fb2": {
+  "chr_characters": [
+   "civilianFemale",
+   "civilianmale",
+   "police",
+   "sentinelflashback"
+  ],
+  "spawner_characters": [
+   "civilianFemale",
+   "civilianmale",
+   "police",
+   "sentinelflashback"
+  ]
+ },
+ "nyc/fb/nyc_fb3": {
+  "chr_characters": [
+   "sentinelflashback",
+   "civilianFemale",
+   "police"
+  ],
+  "spawner_characters": [
+   "civilianFemale",
+   "police",
+   "sentinelflashback"
+  ]
+ },
+ "nyc/fb/nyc_fb4": {
+  "chr_characters": [
+   "sentinelflashback",
+   "civilianMale"
+  ],
+  "spawner_characters": [
+   "civilianMale",
+   "sentinelflashback"
+  ]
+ },
+ "nyc/riots/nyc3_1_1": {
+  "chr_characters": [
+   "sentinelb",
+   "civilianFemale",
+   "civilianmale"
+  ],
+  "spawner_characters": [
+   "civilianFemale",
+   "civilianmale",
+   "sentinelb"
+  ]
+ },
+ "nyc/riots/nyc3_1_2": {
+  "chr_characters": [
+   "sentinelb",
+   "sentinel",
+   "psylocke",
+   "civilianFemale",
+   "civilianmale"
+  ],
+  "spawner_characters": [
+   "civilianFemale",
+   "civilianmale",
+   "psylocke",
+   "sentinel",
+   "sentinelb"
+  ]
+ },
+ "nyc/riots/nyc3_1_3": {
+  "chr_characters": [
+   "sentinel",
+   "sentinelb",
+   "sentinelspider",
+   "civilianFemale",
+   "civilianmale"
+  ],
+  "spawner_characters": [
+   "civilianFemale",
+   "civilianmale",
+   "sentinel",
+   "sentinelb",
+   "sentinelspider"
+  ]
+ },
+ "nyc/riots/nyc3_2_1": {
+  "chr_characters": [
+   "sentinelb",
+   "bishopKid",
+   "civilianFemale",
+   "civilianmale"
+  ],
+  "spawner_characters": [
+   "bishopKid",
+   "civilianFemale",
+   "civilianmale",
+   "sentinelb"
+  ]
+ },
+ "nyc/riots/nyc3_2_2": {
+  "chr_characters": [
+   "sentineladvanced_b",
+   "HavokScripted"
+  ],
+  "spawner_characters": [
+   "HavokScripted",
+   "sentineladvanced_b"
+  ]
+ },
+ "sewers/grso/sewers3_1_1": {
+  "chr_characters": [
+   "grso_captain",
+   "grso_mp5",
+   "grso_powergloves",
+   "grso_powerbaton",
+   "healer"
+  ],
+  "spawner_characters": [
+   "grso_captain",
+   "grso_mp5",
+   "grso_powerbaton",
+   "grso_powergloves",
+   "healer"
+  ]
+ },
+ "sewers/grso/sewers3_1_2": {
+  "chr_characters": [
+   "grso_commander",
+   "grso_mp5",
+   "grso_officer",
+   "grso_powerbaton",
+   "grso_powergloves",
+   "grso_flamethrower"
+  ],
+  "spawner_characters": [
+   "grso_commander",
+   "grso_flamethrower",
+   "grso_mp5",
+   "grso_officer",
+   "grso_powerbaton",
+   "grso_powergloves"
+  ]
+ },
+ "sewers/grso/sewers3_1_3": {
+  "chr_characters": [
+   "grso_captain",
+   "grso_commander",
+   "grso_mp5",
+   "grso_officer",
+   "grso_flamethrower",
+   "grso_superpowergloves",
+   "healer"
+  ],
+  "spawner_characters": [
+   "grso_captain",
+   "grso_commander",
+   "grso_flamethrower",
+   "grso_mp5",
+   "grso_officer",
+   "grso_superpowergloves",
+   "healer"
+  ]
+ },
+ "sewers/grso/sewers_marrow": {
+  "chr_characters": [
+   "marrowact3",
+   "marrowslieutenant",
+   "morlockbruiserC"
+  ],
+  "spawner_characters": [
+   "marrowact3",
+   "marrowslieutenant",
+   "morlockbruiserC"
+  ]
+ },
+ "sewers/healer/sewers2_1_1": {
+  "chr_characters": [
+   "morlockpsionic",
+   "morlockbruiserA",
+   "morlockclawA"
+  ],
+  "spawner_characters": [
+   "morlockbruiserA",
+   "morlockclawA",
+   "morlockpsionic"
+  ]
+ },
+ "sewers/healer/sewers2_1_2": {
+  "chr_characters": [
+   "morlockleader",
+   "morlockbruiserB",
+   "morlockbruiserA",
+   "morlockclawa",
+   "morlockclawB",
+   "morlockpsionic"
+  ],
+  "spawner_characters": [
+   "morlockbruiserA",
+   "morlockbruiserB",
+   "morlockclawB",
+   "morlockclawa",
+   "morlockleader",
+   "morlockpsionic"
+  ]
+ },
+ "sewers/healer/sewers2_1_3": {
+  "chr_characters": [
+   "morlockbruiserB",
+   "morlockclawB",
+   "morlockpsionic"
+  ],
+  "spawner_characters": [
+   "morlockbruiserB",
+   "morlockclawB",
+   "morlockpsionic"
+  ]
+ },
+ "sewers/healer/sewers2_1_4": {
+  "chr_characters": [
+   "morlockpsionic",
+   "morlockbruiserB",
+   "morlockclawB",
+   "gateway",
+   "healer"
+  ],
+  "spawner_characters": [
+   "gateway",
+   "healer",
+   "morlockbruiserB",
+   "morlockclawB",
+   "morlockpsionic"
+  ]
+ },
+ "sewers/healer/sewers_hub2": {
+  "chr_characters": [
+   "morlockbruiserB",
+   "morlockcivfemale",
+   "morlockcivmale"
+  ],
+  "spawner_characters": [
+   "morlockbruiserB",
+   "morlockcivfemale",
+   "morlockcivmale"
+  ]
+ },
+ "sewers/hub/sewers1_1_1": {
+  "chr_characters": [
+   "morlockbruiserA",
+   "morlockBruiserB",
+   "morlockclawA"
+  ],
+  "spawner_characters": [
+   "morlockBruiserB",
+   "morlockbruiserA",
+   "morlockclawA"
+  ]
+ },
+ "sewers/hub/sewers1_1_2": {
+  "chr_characters": [
+   "morlockclawA",
+   "morlockbruiserA",
+   "morlockbruiserB"
+  ],
+  "spawner_characters": [
+   "morlockbruiserA",
+   "morlockbruiserB",
+   "morlockclawA"
+  ]
+ },
+ "sewers/hub/sewers1_1_3": {
+  "chr_characters": [
+   "morlockclawA",
+   "morlockbruiserA"
+  ],
+  "spawner_characters": [
+   "morlockbruiserA",
+   "morlockclawA"
+  ]
+ },
+ "sewers/hub/sewers1_1_4": {
+  "chr_characters": [
+   "morlockclawA",
+   "morlockbruiserB",
+   "morlockbruiserA"
+  ],
+  "spawner_characters": [
+   "morlockbruiserA",
+   "morlockbruiserB",
+   "morlockclawA"
+  ]
+ },
+ "sewers/hub/sewers1_2_1": {
+  "chr_characters": [
+   "morlockclawA",
+   "morlockpsionic",
+   "morlockbruiserA"
+  ],
+  "spawner_characters": [
+   "morlockbruiserA",
+   "morlockclawA",
+   "morlockpsionic"
+  ]
+ },
+ "sewers/hub/sewers1_2_3": {
+  "chr_characters": [
+   "morlockclawA",
+   "morlockpsionic",
+   "morlockbruiserA"
+  ],
+  "spawner_characters": [
+   "morlockbruiserA",
+   "morlockclawA",
+   "morlockpsionic"
+  ]
+ },
+ "sewers/hub/sewers1_2_4": {
+  "chr_characters": [
+   "marrowact1",
+   "gambit"
+  ],
+  "spawner_characters": [
+   "gambit",
+   "marrowact1"
+  ]
+ },
+ "sewers/hub/sewers_hub": {
+  "chr_characters": [
+   "healer",
+   "morlockcivfemale",
+   "morlockcivmale",
+   "MarrowScripted"
+  ],
+  "spawner_characters": [
+   "MarrowScripted",
+   "healer",
+   "morlockcivfemale",
+   "morlockcivmale"
+  ]
+ },
+ "weapon_x/old/wx2_1": {
+  "chr_characters": [
+   "shockerbot"
+  ],
+  "spawner_characters": [
+   "shockerbot"
+  ]
+ },
+ "weapon_x/old/wx2_2": {
+  "chr_characters": [
+   "shockerbot",
+   "havokboss",
+   "havokact2",
+   "wolverine"
+  ],
+  "spawner_characters": [
+   "havokact2",
+   "havokboss",
+   "shockerbot",
+   "wolverine"
+  ]
+ },
+ "weapon_x/secret/wx3_1": {
+  "chr_characters": [
+   "grso_commander",
+   "grso_laserb",
+   "grso_officerb",
+   "grso_powergloves",
+   "shockerbot",
+   "havokact2"
+  ],
+  "spawner_characters": [
+   "grso_commander",
+   "grso_laserb",
+   "grso_officerb",
+   "grso_powergloves",
+   "havokact2",
+   "shockerbot"
+  ]
+ },
+ "weapon_x/secret/wx3_2": {
+  "chr_characters": [
+   "grso_officerb",
+   "grso_powergloves",
+   "grso_superlaserb",
+   "shockerbot",
+   "havokact2",
+   "grso_commander",
+   "labtechgeneric"
+  ],
+  "spawner_characters": [
+   "grso_commander",
+   "grso_officerb",
+   "grso_powergloves",
+   "grso_superlaserb",
+   "havokact2",
+   "labtechgeneric",
+   "shockerbot"
+  ]
+ },
+ "weapon_x/secret/wx3_3": {
+  "chr_characters": [
+   "grso_laserb",
+   "grso_officer",
+   "grso_officerb",
+   "havokact2",
+   "grso_powergloves",
+   "morlockcivfemale",
+   "morlockcivmale"
+  ],
+  "spawner_characters": [
+   "grso_laserb",
+   "grso_officer",
+   "grso_officerb",
+   "grso_powergloves",
+   "havokact2",
+   "morlockcivfemale",
+   "morlockcivmale"
+  ]
+ },
+ "weapon_x/wfb/wx1_1": {
+  "chr_characters": [
+   "WeapXGuardLeader",
+   "WeapXGuardMelee",
+   "DirectorWeapX",
+   "labtechgeneric"
+  ],
+  "spawner_characters": [
+   "DirectorWeapX",
+   "WeapXGuardLeader",
+   "WeapXGuardMelee",
+   "labtechgeneric"
+  ]
+ },
+ "weapon_x/wfb/wx1_2": {
+  "chr_characters": [
+   "WeapXGuard",
+   "WeapXGuardLeader",
+   "WeapXGuardMelee",
+   "DirectorWeapX",
+   "labtechgeneric"
+  ],
+  "spawner_characters": [
+   "DirectorWeapX",
+   "WeapXGuard",
+   "WeapXGuardLeader",
+   "WeapXGuardMelee",
+   "labtechgeneric"
+  ]
+ },
+ "weapon_x/wfb/wx1_3": {
+  "chr_characters": [
+   "WeapXGuardMelee",
+   "DirectorWeapX",
+   "labtechgeneric"
+  ],
+  "spawner_characters": [
+   "DirectorWeapX",
+   "WeapXGuardMelee",
+   "labtechgeneric"
+  ]
+ },
+ "xjet/blackbird_arbiter": {
+  "chr_characters": [
+   "cyclops",
+   "storm",
+   "phoenix",
+   "wolverine",
+   "profx"
+  ],
+  "spawner_characters": [
+   "cyclops",
+   "phoenix",
+   "profx",
+   "storm",
+   "wolverine"
+  ]
+ }
+}

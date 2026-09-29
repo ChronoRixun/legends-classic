@@ -1,0 +1,165 @@
+== <stats> attributes (count in XML1 / XML2, XML2 parser handles?)
+  aiclasstype              x1=   7 x2=  19 handled=yes        
+  aiforceranged            x1=   0 x2=  93 handled=yes        
+  ailevel                  x1=  11 x2=  12 handled=yes        
+  aimaxcoverheight         x1=   0 x2=   3 handled=yes        
+  ainocover                x1=   0 x2=   4 handled=yes        
+  ainomelee                x1=   0 x2=  12 handled=yes        
+  ainostraffe              x1=   0 x2=  43 handled=yes        
+  alertradius              x1=   6 x2=   3 handled=yes        
+  attackrange              x1=   2 x2=   0 handled=yes          <-- XML1-only  e.g. ('JuggernautFlashback', '150')
+  autospend                x1=   0 x2=  21 handled=yes        
+  body                     x1= 137 x2= 213 handled=yes        
+  canbeallythrown          x1=   1 x2=   1 handled=yes        
+  canfly                   x1=   1 x2=  28 handled=yes        
+  canseestealthed          x1=   7 x2=   1 handled=yes        
+  canthrowally             x1=   3 x2=   3 handled=yes        
+  characteranims           x1= 201 x2= 285 handled=yes        
+  charactername            x1= 206 x2= 292 handled=yes        
+  combolevel               x1=   0 x2=  76 handled=yes        
+  counter                  x1=   6 x2=   0 handled=yes          <-- XML1-only  e.g. ('MagnetoBoss', '4')
+  dangerrating             x1=  81 x2=  52 handled=yes        
+  deathnode                x1=   1 x2=   0 handled=yes          <-- XML1-only  e.g. ('StealthBot', 'botdeath')
+  effect_skin_aoa          x1=   0 x2=   1 handled=yes(costume ok) 
+  fleedistance             x1=   7 x2=   0 handled=yes          <-- XML1-only  e.g. ('Crewman', '60')
+  footstepfx               x1=  13 x2=   3 handled=yes        
+  heaviness                x1=  23 x2=   9 handled=yes        
+  ignoreboundsscaling      x1=   1 x2=   9 handled=yes        
+  large                    x1=  15 x2=  11 handled=yes        
+  leader                   x1=  21 x2=   0 handled=NO           <-- XML1-only  e.g. ('AcolyteLeader', 'true')
+  leadername               x1=   0 x2= 158 handled=yes        
+  leaderskin               x1=   0 x2= 157 handled=yes        
+  level                    x1= 137 x2= 213 handled=yes        
+  material                 x1=  14 x2=  10 handled=yes        
+  meleetimeroffset         x1=   2 x2=   0 handled=yes          <-- XML1-only  e.g. ('JuggernautFlashback', '0.8')
+  meleetimerrandomadd      x1=   2 x2=   0 handled=yes          <-- XML1-only  e.g. ('JuggernautFlashback', '1.2')
+  mind                     x1= 137 x2= 213 handled=yes        
+  moveset1                 x1=  50 x2=  14 handled=yes        
+  mutantskin               x1=   0 x2= 152 handled=yes        
+  mutatechance             x1=   0 x2= 158 handled=yes        
+  name                     x1= 206 x2= 296 handled=yes        
+  nonhumanoidskeleton      x1=   0 x2=  50 handled=yes        
+  npchealthscale           x1=  67 x2=  10 handled=yes        
+  pickupthrowchance        x1=  11 x2=   3 handled=yes        
+  platform                 x1=   0 x2=   2 handled=yes        
+  playable                 x1= 101 x2=  80 handled=yes        
+  power1                   x1=   0 x2=  28 handled=yes        
+  power2                   x1=   0 x2=  27 handled=yes        
+  power3                   x1=   0 x2=  24 handled=yes        
+  power4                   x1=   0 x2=  23 handled=yes        
+  powerstyle               x1= 140 x2= 214 handled=yes        
+  ratingdurability         x1=  17 x2=   0 handled=NO           <-- XML1-only  e.g. ('default', '0.25')
+  ratingmelee              x1=  17 x2=   0 handled=NO           <-- XML1-only  e.g. ('default', '0.25')
+  ratingranged             x1=  17 x2=   0 handled=NO           <-- XML1-only  e.g. ('default', '0.25')
+  ratingsupport            x1=  17 x2=   0 handled=NO           <-- XML1-only  e.g. ('default', '0.25')
+  resurrect                x1=  22 x2=  36 handled=yes        
+  scale_factor             x1=  20 x2=  45 handled=yes        
+  scaleattacks             x1=   0 x2=   1 handled=yes        
+  scriptlevel              x1=  18 x2=  20 handled=yes        
+  size                     x1=   9 x2=   6 handled=yes        
+  skin                     x1= 206 x2= 292 handled=yes        
+  skin_60s                 x1=   5 x2=   2 handled=yes(costume ok) 
+  skin_70s                 x1=   5 x2=   7 handled=yes(costume ok) 
+  skin_aoa                 x1=   0 x2=  18 handled=yes(costume ok) 
+  skin_astonishing         x1=   0 x2=  17 handled=yes(costume ok) 
+  skin_civilian            x1=   2 x2=   3 handled=yes(costume ok) 
+  skin_future              x1=  10 x2=   5 handled=yes(costume ok) 
+  skin_magmacivilian       x1=   1 x2=   0 handled=NO(costume name not in XML2 table)   <-- XML1-only  e.g. ('Magma', '03')
+  skin_weaponx             x1=   1 x2=   2 handled=yes(costume ok) 
+  skin_winter              x1=   0 x2=   5 handled=yes(costume ok) 
+  skirmish_boost           x1=   0 x2=   3 handled=yes        
+  sounddir                 x1= 137 x2= 217 handled=yes        
+  specific_attack          x1=   0 x2= 168 handled=yes        
+  specific_defense         x1=   0 x2= 168 handled=yes        
+  specific_health          x1=   0 x2= 183 handled=yes        
+  speed                    x1= 137 x2= 213 handled=yes        
+  strength                 x1= 137 x2= 213 handled=yes        
+  targetheight             x1=   0 x2=   8 handled=yes        
+  team                     x1= 177 x2= 291 handled=yes        
+  teleportpathfail         x1=  16 x2=   0 handled=yes          <-- XML1-only  e.g. ('BlobAct1a', 'false')
+  textureicon              x1=   0 x2=  76 handled=yes        
+  throwally                x1=   1 x2=   0 handled=NO           <-- XML1-only  e.g. ('colossusdopple', 'throwally')
+  weapon                   x1=  28 x2=   0 handled=yes          <-- XML1-only  e.g. ('GRSO_mp5', 'wp_mp5')
+  willflee                 x1=  10 x2=   0 handled=yes          <-- XML1-only  e.g. ('Crewman', 'true')
+  xpaward                  x1=  23 x2=   0 handled=yes          <-- XML1-only  e.g. ('BlobAct1a', '30')
+  xpexempt                 x1=   1 x2=   0 handled=yes          <-- XML1-only  e.g. ('ProfXAstral', 'true')
+
+== child elements under <stats> (all depths)
+  activepowerup        x1=  289 x2=    0  <-- XML1-only
+  bolton               x1=   27 x2=   35
+  flyeffect            x1=    8 x2=   14
+  level                x1=  624 x2=    0  <-- XML1-only
+  multipart            x1=   13 x2=   14
+  race                 x1=  208 x2=  274
+  require              x1=  573 x2=    0  <-- XML1-only
+  scope                x1=    5 x2=    0  <-- XML1-only
+  talent               x1=  565 x2=  738
+
+== child element attributes
+  activepowerup.affect_type          x1=  137 x2=    0  <-- XML1-only  e.g. ('Iceman', 'scale')
+  activepowerup.damagetype           x1=   44 x2=    0  <-- XML1-only  e.g. ('Frost', 'dmg_mental')
+  activepowerup.effect_cust1         x1=   44 x2=    0  <-- XML1-only  e.g. ('Frost', 'powerups/frost_elemental')
+  activepowerup.func_attempt_hit     x1=   44 x2=    0  <-- XML1-only  e.g. ('Frost', 'DamageAddAttack')
+  activepowerup.func_damage          x1=    3 x2=    0  <-- XML1-only  e.g. ('Wolverine', 'damageaddbleed')
+  activepowerup.func_hurt            x1=    1 x2=    0  <-- XML1-only  e.g. ('MultipleManDividing', 'MultipleMan_Hurt')
+  activepowerup.func_trail           x1=   44 x2=    0  <-- XML1-only  e.g. ('Frost', 'elemtrail')
+  activepowerup.level                x1=  231 x2=    0  <-- XML1-only  e.g. ('Frost', 'L3')
+  activepowerup.life                 x1=  289 x2=    0  <-- XML1-only  e.g. ('Frost', '-1')
+  activepowerup.powerup              x1=  289 x2=    0  <-- XML1-only  e.g. ('Frost', 'reflect_damage')
+  activepowerup.scope_attack         x1=   13 x2=    0  <-- XML1-only  e.g. ('Wolverine', 'punch')
+  activepowerup.scope_damage         x1=   58 x2=    0  <-- XML1-only  e.g. ('Frost', 'dmg_physical')
+  activepowerup.scope_node           x1=    5 x2=    0  <-- XML1-only  e.g. ('Psylocke', 'psylocke_power')
+  activepowerup.user1                x1=   52 x2=    0  <-- XML1-only  e.g. ('Frost', '10')
+  activepowerup.user2                x1=   43 x2=    0  <-- XML1-only  e.g. ('Frost', '29')
+  bolton.anim                        x1=   12 x2=   16
+  bolton.bolt                        x1=   21 x2=   35
+  bolton.group                       x1=    0 x2=    3  (XML2-only)
+  bolton.menuonly                    x1=    0 x2=    2  (XML2-only)
+  bolton.model                       x1=   27 x2=   35
+  bolton.onlyprecache                x1=    6 x2=    0  <-- XML1-only  e.g. ('MorlockPsionic', 'true')
+  bolton.slot                        x1=   21 x2=   35
+  flyeffect.bolt                     x1=    7 x2=   13
+  flyeffect.effect                   x1=    8 x2=   14
+  level.cost                         x1=  119 x2=    0  <-- XML1-only  e.g. ('Beast', '2')
+  level.descname                     x1=   92 x2=    0  <-- XML1-only  e.g. ('Beast', 'Cannon Ball')
+  level.description                  x1=  572 x2=    0  <-- XML1-only  e.g. ('Beast', '^L3 Damage. ^P1 Energy per roll.')
+  multipart.bone                     x1=   13 x2=    0  <-- XML1-only  e.g. ('JuggernautScripted', 'Bip01 Head')
+  multipart.effectbone               x1=   13 x2=    0  <-- XML1-only  e.g. ('JuggernautScripted', 'Bip01 Head')
+  multipart.effectondeath            x1=   13 x2=    0  <-- XML1-only  e.g. ('JuggernautScripted', 'explode/JuggernautHelmet')
+  multipart.health                   x1=   13 x2=   14
+  multipart.healthmul                x1=   10 x2=    0  <-- XML1-only  e.g. ('SentinelFlashback', '2')
+  multipart.hideskin                 x1=   13 x2=   13
+  multipart.hideskin2                x1=   10 x2=    0  <-- XML1-only  e.g. ('SentinelFlashback', '5501_r_upperarm')
+  multipart.linktopower              x1=   10 x2=    0  <-- XML1-only  e.g. ('SentinelFlashback', 'powerSmash powerAction')
+  multipart.loopeffect               x1=   10 x2=    0  <-- XML1-only  e.g. ('SentinelFlashback', 'explode/SentinelArmLoop')
+  multipart.nonmenuonly              x1=    0 x2=    2  (XML2-only)
+  multipart.showskin                 x1=    3 x2=    1
+  multipart.starthide                x1=    3 x2=    0  <-- XML1-only  e.g. ('JuggernautScripted', '3401_head')
+  race.name                          x1=  208 x2=  274
+  require.cat                        x1=  573 x2=    0  <-- XML1-only  e.g. ('Beast', 'level')
+  require.degree                     x1=   28 x2=    0  <-- XML1-only  e.g. ('Beast', 'see')
+  require.item                       x1=    2 x2=    0  <-- XML1-only  e.g. ('Psylocke', 'blademaster')
+  require.level                      x1=  573 x2=    0  <-- XML1-only  e.g. ('Beast', '3')
+  scope.scope_node                   x1=    5 x2=    0  <-- XML1-only  e.g. ('Gambit', 'gambit_staff')
+  talent.cost                        x1=    5 x2=    0  <-- XML1-only  e.g. ('Frost', '2')
+  talent.descname                    x1=   89 x2=    0  <-- XML1-only  e.g. ('Beast', 'PinBall')
+  talent.description                 x1=   89 x2=    0  <-- XML1-only  e.g. ('Beast', '<description>')
+  talent.hidden                      x1=    1 x2=    0  <-- XML1-only  e.g. ('Iceman', 'true')
+  talent.icon                        x1=   64 x2=    0  <-- XML1-only  e.g. ('Beast', '1')
+  talent.icon_texture                x1=   64 x2=    0  <-- XML1-only  e.g. ('Beast', 'textures/ui/beast_all.png')
+  talent.level                       x1=  565 x2=  693
+  talent.limit                       x1=    0 x2=    2  (XML2-only)
+  talent.name                        x1=  565 x2=  738
+  talent.power                       x1=   87 x2=    0  <-- XML1-only  e.g. ('Beast', '0')
+
+== powerstyles: XML1 93 files, XML2 111 files
+  XML1-only tags: []
+  XML2-only tags: ['affecter', 'affector', 'bolton', 'functionevent', 'powerup', 'scope', 'special_fx']
+  XML1-only tag.attr (68): ['event.angoffset(3)', 'event.character(2)', 'event.limit(2)', 'event.powerup_tag(1)', 'event.spawneffect(1)', 'event.startnode(2)', 'event.weapon(2)', 'fightmove.noblendanim(4)', 'fightmove.noflying(3)', 'powerstyle.exclusive(15)', 'powerstyle.iconcolumns(16)', 'powerstyle.iconrows(16)', 'require.entity(1)', 'require.only_looped(4)', 'trigger.affect_type(47)', 'trigger.alpha(11)', 'trigger.bolton(4)', 'trigger.character(9)', 'trigger.closerange(2)', 'trigger.copy_counter(1)', 'trigger.damagemod(1)', 'trigger.dashbolt(2)', 'trigger.dasheffect(6)', 'trigger.effect_cust2(5)', 'trigger.facespawner(2)', 'trigger.footstepfx(1)', 'trigger.func_activate(34)', 'trigger.func_attempt_hit(2)', 'trigger.func_damage(5)', 'trigger.func_deactivate(49)', 'trigger.func_death(22)', 'trigger.func_hurt(25)', 'trigger.func_think(6)', 'trigger.func_touch(6)', 'trigger.func_trail(1)', 'trigger.fx_bolt(11)', 'trigger.hitenemyeffect(4)', 'trigger.intervalrandom(1)', 'trigger.level(379)', 'trigger.level_max(11)', 'trigger.life_max(33)', 'trigger.limit(4)', 'trigger.matchorigin(4)', 'trigger.motor(1)', 'trigger.nopushback(22)', 'trigger.onlynoenemypitch(3)', 'trigger.powerup(141)', 'trigger.removecurrent(1)', 'trigger.rgba(6)', 'trigger.scale(1)', 'trigger.scope_attack(6)', 'trigger.scope_damage(13)', 'trigger.scope_node(1)', 'trigger.scope_race(1)', 'trigger.setbeam(12)', 'trigger.skin_swap(1)', 'trigger.solid(12)', 'trigger.startnode(9)', 'trigger.targetdot(22)', 'trigger.team(5)', 'trigger.timebased(5)', 'trigger.timeinterval(1)', 'trigger.tint(12)', 'trigger.usedamageasexplodeonly(3)', 'trigger.useownerteam(1)', 'trigger.vibrate(1)', 'trigger.weapon(2)', 'trigger.zverticalrange(2)']
+
+== fightstyles: XML1 20 files, XML2 20 files
+  XML1-only tags: ['trigger2']
+  XML2-only tags: []
+  XML1-only tag.attr (35): ['event.arc(1)', 'event.attacktype(1)', 'event.damagelevel(1)', 'event.powerattack(1)', 'event.verticalrange(1)', 'fightingstyle.description(15)', 'fightmove.nodamage(3)', 'trigger.allynodename(6)', 'trigger.attackerface(1)', 'trigger.attacktype(1)', 'trigger.chargespeed(1)', 'trigger.chargetime(1)', 'trigger.forwarddistance(1)', 'trigger.forwardvelocity(1)', 'trigger.func_activate(1)', 'trigger.func_deactivate(1)', 'trigger.func_death(1)', 'trigger.func_hurt(1)', 'trigger.no_shadow(1)', 'trigger.no_stack(1)', 'trigger.nodename(6)', 'trigger.npcnodename(2)', 'trigger.ownertime(1)', 'trigger.powerattack(4)', 'trigger.powerup(1)', 'trigger.remove(1)', 'trigger.updistance(1)', 'trigger.velocityup(1)', 'trigger.verticaloffset(4)', 'trigger.verticalrange(1)', 'trigger.victimface(1)', 'trigger2.forward(1)', 'trigger2.name(1)', 'trigger2.time(1)', 'trigger2.type(1)']
+
+== values: XML1 112 entries, missing in XML2: ['A1', 'A2', 'A3', 'A4', 'A5', 'A6', 'A7', 'A8', 'A9', 'A10', 'XTL1', 'XTL2', 'XTL3', 'XTL4', 'XTL5', 'XTL6'], different: ['P0+', 'P1', 'P1+', 'P2', 'P2+', 'P3', 'P3+', 'P4', 'P4+', 'P5', 'P5+', 'P6', 'P6+', 'P7', 'P7+', 'P8', 'P8+', 'P9', 'P9+', 'P10']

@@ -1,0 +1,70 @@
+61 banks ok, 0 failed/skipped
+bank          flags rate  sec   layer==_a pad0 joins      v0 SNR  v0 err near/else dBFS  v0clk  v1 SNR  mix SNR mixclk hold(min/med/max)
+arbext_a.zss  0x2   44100   88.3  plain stereo                       49.17
+arbext_c.zss  0x22  44100   88.3 True      0    [0.96, 0.94]  49.97   -79.5/ -72.0           0.97   20.97   24.26  2.68  8/17/45
+arbfld_a.zss  0x2   44100   59.1  plain stereo                       56.46
+arbfld_c.zss  0x22  44100  117.5 False     0    [1.07, 1.0]  54.92   -83.8/ -76.7           0.93   21.82   23.92  2.31  8/21/49
+arbint_a.zss  0x2   44100   82.0  plain stereo                       61.07
+arbint_c.zss  0x22  44100  120.0 False     0    [1.02, 0.91]  54.73   -83.9/ -76.0           0.97   20.06   23.29  2.54  8/25/52
+astint_a.zss  0x2   44100   20.8  plain stereo                       63.89
+astint_c.zss  0x22  44100   83.5 False     0    [1.03, 0.95]  56.96   -87.3/ -80.0           0.99   21.03   23.56  2.53  8/25/49
+astral_a.zss  0x2   44100   97.2  plain stereo                       60.05
+astral_c.zss  0x22  44100  112.0 False     0    [0.9, 1.14]  55.24   -83.9/ -76.6           0.96   20.82   23.23  1.46  8/27/58
+astrb4_a.zss  0x2   44100   58.1  plain stereo                       62.25
+astrb4_c.zss  0x22  44100  130.9 False     0    [0.98, 1.0]  58.11   -93.8/ -88.4           1.03   21.77   22.16  1.22  8/38/59
+asttun_a.zss  0x2   44100  114.3  plain stereo                       56.45
+asttun_c.zss  0x22  44100   87.3 False     0    [1.01, 0.87]  55.67   -86.5/ -80.0           0.94   21.52   23.84  2.64  8/19/47
+colos_a.zss   0x2   44100   60.8  plain stereo                       66.72
+colos_c.zss   0x22  44100  112.0 False     0    [0.99, 1.0]  67.03   -93.5/ -87.9           0.99   18.76   22.08  1.81  8/38/61
+harext_a.zss  0x2   44100   87.3  plain stereo                       49.82
+harext_c.zss  0x22  44100   87.3 True      0    [0.98, 0.88]  49.00   -81.0/ -73.3           0.94   23.17   24.23  1.81  8/17/42
+harint_a.zss  0x2   44100   87.3  plain stereo                       59.33
+harint_c.zss  0x22  44100  122.2 False     0    [1.05, 1.15]  57.02   -85.7/ -78.8           0.95   19.95   23.92  2.72  8/21/49
+hivext_a.zss  0x2   44100  114.5  plain stereo                       26.26
+hivext_c.zss  0x22  44100  157.8 False     0    [0.89, 0.97]  33.01   -78.6/ -71.0           1.01   24.93   25.07  0.87  8/13/33
+hivint_a.zss  0x2   44100   70.4  plain stereo                       52.30
+hivint_c.zss  0x22  44100  157.8 False     0    [1.01, 0.97]  51.12   -82.9/ -75.6           0.96   21.42   24.11  1.58  8/21/46
+hivlab_a.zss  0x2   44100   43.5  plain stereo                       57.08
+hivlab_c.zss  0x22  44100  120.0 False     0    [1.01, 0.91]  51.94   -83.2/ -75.4           0.96   21.18   23.41  2.06  8/23/46
+iceint_a.zss  0x2   44100   34.1  plain stereo                       54.20
+iceint_c.zss  0x22  44100   87.3 False     0    [1.03, 0.85]  51.88   -83.7/ -76.4           0.92   22.51   24.37  1.84  8/17/43
+manbs1_a.zss  0x2   44100   32.1  plain stereo                       59.03
+manbs1_c.zss  0x22  44100   64.0 False     0    [0.91, 0.94]  60.71   -98.9/ -97.4           1.21   20.95   21.05  0.74  20/45/64
+manbst_a.zss  0x2   44100   26.0  plain stereo                       63.14
+manbst_c.zss  0x22  44100   87.3 False     0    [1.0, 0.88]  52.96   -85.3/ -79.1           0.96   22.77   23.49  1.85  8/23/50
+mandgr_a.zss  0x2   44100   37.6  plain stereo                       67.48
+mandgr_c.zss  0x22  44100  175.9 False     0    [1.02, 0.92]  70.15   -94.1/ -89.4           1.12   17.46   21.79  3.66  13/42/62
+manext_a.zss  0x2   44100   99.8  plain stereo                       30.50
+manext_c.zss  0x22  44100   88.3 False     0    [1.11, 0.94]  43.64   -81.0/ -73.8           0.92   22.94   23.23  0.84  8/25/49
+manint_a.zss  0x2   44100   32.1  plain stereo                       59.03
+manint_c.zss  0x22  44100  117.5 False     0    [1.07, 1.03]  50.51   -87.4/ -80.1           0.96   22.77   23.30  1.21  8/27/57
+menu_a.zss    0x2   44100   22.4  plain stereo                       54.13
+menu_c.zss    0x2   44100   22.4  plain stereo                       54.13
+mount_a.zss   0x2   44100   82.6  plain stereo                       44.79
+mount_c.zss   0x22  44100  109.1 False     0    [1.13, 1.04]  43.90   -73.7/ -66.8           0.99   23.31   25.58  3.41  8/9/45
+muirex_a.zss  0x2   44100   47.0  plain stereo                       38.22
+muirin_a.zss  0x2   44100  122.2  plain stereo                       63.03
+muirin_c.zss  0x22  44100  122.2 True      0    [1.12, 1.15]  59.54   -90.0/ -83.5           0.99   20.30   23.04  1.98  8/27/55
+nuke_a.zss    0x2   44100   47.7  plain stereo                       56.50
+nuke_c.zss    0x22  44100  226.9 False     0    [1.02, 0.99]  51.22   -84.6/ -77.1           0.95   22.73   23.95  2.19  8/20/44
+nyc1_a.zss    0x2   44100   93.2  plain stereo                       44.50
+nyc1_c.zss    0x22  44100   93.2 True      0    [0.91, 1.02]  45.74   -77.1/ -70.5           0.95   22.12   24.86  2.36  8/13/42
+nyc2_a.zss    0x2   44100  117.6  plain stereo                       44.23
+nyc2_c.zss    0x22  44100   92.8 False     0    [1.0, 1.05]  47.02   -79.6/ -71.7           0.97   22.96   24.22  1.58  8/17/40
+nycrio_a.zss  0x2   44100  116.5  plain stereo                       44.33
+nycrio_c.zss  0x22  44100  104.6 False     0    [1.05, 1.26]  48.90   -78.1/ -70.8           0.96   20.35   24.12  2.17  8/16/41
+sewer1_a.zss  0x2   44100  104.5  plain stereo                       54.51
+sewer1_c.zss  0x22  44100  104.6 False     0    [1.06, 1.26]  53.21   -84.7/ -76.8           0.94   20.73   23.15  1.37  8/25/53
+sewer2_a.zss  0x2   44100   59.0  plain stereo                       53.89
+sewer2_c.zss  0x22  44100  112.0 False     0    [0.96, 1.02]  53.83   -84.9/ -77.3           0.91   20.94   23.24  2.24  8/25/50
+wpxnew_a.zss  0x2   44100   49.4  plain stereo                       60.35
+wpxnew_c.zss  0x22  44100  109.1 False     0    [1.06, 1.05]  52.69   -84.3/ -77.3           0.98   22.11   23.52  2.84  8/21/53
+wpxold_a.zss  0x2   44100   57.4  plain stereo                       60.57
+wpxold_c.zss  0x22  44100  122.2 False     0    [1.01, 1.13]  56.67   -90.6/ -83.5           0.96   21.48   22.84  1.79  8/28/59
+v0_near_minus_else_db    min   -7.90  median   -7.30  max   -1.50  (n=29)
+v0_click                 min    0.91  median    0.96  max    1.21  (n=29)
+mix_click                min    0.74  median    1.98  max    3.66  (n=29)
+v0_snr                   min   33.01  median   52.96  max   70.15  (n=29)
+v1_snr                   min   17.46  median   21.48  max   24.93  (n=29)
+mix_snr                  min   21.05  median   23.52  max   25.58  (n=29)
+plain_snr                min   26.26  median   56.45  max   67.48  (n=32)

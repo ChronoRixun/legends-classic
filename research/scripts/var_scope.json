@@ -1,0 +1,4862 @@
+{
+ "1_3_7a": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "xml1_loose/conversations/haarp/ext/1_3_7_end_x_men_meet_toad.eng (inline)",
+   "xml1_assets/packages/generated/maps/demo/ext/haarp_ext_boss.fb (inline)",
+   "xml1_assets/packages/generated/maps/demo/ext/haarp_ext_boss.fb (inline)",
+   "xml1_assets/packages/generated/maps/demo/ext/haarp_ext_boss.fb (inline)",
+   "xml1_assets/packages/generated/maps/haarp/ext/haarp_ext_boss.fb (inline)",
+   "xml1_assets/packages/generated/maps/haarp/ext/haarp_ext_boss.fb (inline)",
+   "xml1_assets/packages/generated/maps/haarp/ext/haarp_ext_boss.fb (inline)"
+  ],
+  "gets": [
+   "xml1_loose/conversations/haarp/ext/1_3_7_end_x_men_meet_toad.eng (inline)",
+   "xml1_assets/packages/generated/maps/demo/ext/haarp_ext_boss.fb (inline)",
+   "xml1_assets/packages/generated/maps/demo/ext/haarp_ext_boss.fb (inline)",
+   "xml1_assets/packages/generated/maps/demo/ext/haarp_ext_boss.fb (inline)",
+   "xml1_assets/packages/generated/maps/haarp/ext/haarp_ext_boss.fb (inline)",
+   "xml1_assets/packages/generated/maps/haarp/ext/haarp_ext_boss.fb (inline)",
+   "xml1_assets/packages/generated/maps/haarp/ext/haarp_ext_boss.fb (inline)"
+  ],
+  "set_dirs": [
+   "xml1_assets/packages",
+   "xml1_loose/conversations"
+  ],
+  "get_dirs": [
+   "xml1_assets/packages",
+   "xml1_loose/conversations"
+  ],
+  "cross_dir": true,
+  "len": 6,
+  "values": {},
+  "bits": {}
+ },
+ "1_3_7b": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "xml1_loose/conversations/haarp/ext/1_3_7_end_x_men_meet_toad.eng (inline)",
+   "xml1_assets/packages/generated/maps/demo/ext/haarp_ext_boss.fb (inline)",
+   "xml1_assets/packages/generated/maps/demo/ext/haarp_ext_boss.fb (inline)",
+   "xml1_assets/packages/generated/maps/demo/ext/haarp_ext_boss.fb (inline)",
+   "xml1_assets/packages/generated/maps/haarp/ext/haarp_ext_boss.fb (inline)",
+   "xml1_assets/packages/generated/maps/haarp/ext/haarp_ext_boss.fb (inline)",
+   "xml1_assets/packages/generated/maps/haarp/ext/haarp_ext_boss.fb (inline)"
+  ],
+  "gets": [
+   "xml1_loose/conversations/haarp/ext/1_3_7_end_x_men_meet_toad.eng (inline)",
+   "xml1_assets/packages/generated/maps/demo/ext/haarp_ext_boss.fb (inline)",
+   "xml1_assets/packages/generated/maps/demo/ext/haarp_ext_boss.fb (inline)",
+   "xml1_assets/packages/generated/maps/demo/ext/haarp_ext_boss.fb (inline)",
+   "xml1_assets/packages/generated/maps/haarp/ext/haarp_ext_boss.fb (inline)",
+   "xml1_assets/packages/generated/maps/haarp/ext/haarp_ext_boss.fb (inline)",
+   "xml1_assets/packages/generated/maps/haarp/ext/haarp_ext_boss.fb (inline)"
+  ],
+  "set_dirs": [
+   "xml1_assets/packages",
+   "xml1_loose/conversations"
+  ],
+  "get_dirs": [
+   "xml1_assets/packages",
+   "xml1_loose/conversations"
+  ],
+  "cross_dir": true,
+  "len": 6,
+  "values": {},
+  "bits": {}
+ },
+ "1_3_7c": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "xml1_loose/conversations/haarp/ext/1_3_7_end_x_men_meet_toad.eng (inline)",
+   "xml1_assets/packages/generated/maps/demo/ext/haarp_ext_boss.fb (inline)",
+   "xml1_assets/packages/generated/maps/demo/ext/haarp_ext_boss.fb (inline)",
+   "xml1_assets/packages/generated/maps/demo/ext/haarp_ext_boss.fb (inline)",
+   "xml1_assets/packages/generated/maps/haarp/ext/haarp_ext_boss.fb (inline)",
+   "xml1_assets/packages/generated/maps/haarp/ext/haarp_ext_boss.fb (inline)",
+   "xml1_assets/packages/generated/maps/haarp/ext/haarp_ext_boss.fb (inline)"
+  ],
+  "gets": [
+   "xml1_loose/conversations/haarp/ext/1_3_7_end_x_men_meet_toad.eng (inline)",
+   "xml1_assets/packages/generated/maps/demo/ext/haarp_ext_boss.fb (inline)",
+   "xml1_assets/packages/generated/maps/demo/ext/haarp_ext_boss.fb (inline)",
+   "xml1_assets/packages/generated/maps/demo/ext/haarp_ext_boss.fb (inline)",
+   "xml1_assets/packages/generated/maps/haarp/ext/haarp_ext_boss.fb (inline)",
+   "xml1_assets/packages/generated/maps/haarp/ext/haarp_ext_boss.fb (inline)",
+   "xml1_assets/packages/generated/maps/haarp/ext/haarp_ext_boss.fb (inline)"
+  ],
+  "set_dirs": [
+   "xml1_assets/packages",
+   "xml1_loose/conversations"
+  ],
+  "get_dirs": [
+   "xml1_assets/packages",
+   "xml1_loose/conversations"
+  ],
+  "cross_dir": true,
+  "len": 6,
+  "values": {},
+  "bits": {}
+ },
+ "1_4_2a": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "xml1_loose/conversations/mansion/man2/1_4_2.eng (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man2/mansion_back2.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man2/mansion_back2.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man2/mansion_back2.fb (inline)"
+  ],
+  "gets": [],
+  "set_dirs": [
+   "xml1_assets/packages",
+   "xml1_loose/conversations"
+  ],
+  "get_dirs": [],
+  "cross_dir": true,
+  "len": 6,
+  "values": {},
+  "bits": {}
+ },
+ "1_4_3a": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "xml1_loose/conversations/mansion/man2/1_4_3.eng (inline)",
+   "xml1_loose/conversations/mansion/man2/1_4_3_2.eng (inline)",
+   "xml1_loose/conversations/mansion/man2/1_4_3_4.eng (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man2/mansion_back2.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man2/mansion_back2.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man2/mansion_back2.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man2/mansion_back2.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man2/mansion_back2.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man2/mansion_back2.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man2/mansion_back2.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man2/mansion_back2.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man2/mansion_back2.fb (inline)"
+  ],
+  "gets": [],
+  "set_dirs": [
+   "xml1_assets/packages",
+   "xml1_loose/conversations"
+  ],
+  "get_dirs": [],
+  "cross_dir": true,
+  "len": 6,
+  "values": {},
+  "bits": {}
+ },
+ "1_4_7b": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "mansion/man2/1_4_7_cam_start.py:5",
+   "mansion/man2/var_1_4_7b.py:2"
+  ],
+  "gets": [
+   "mansion/man2/1_4_8_cam_start.py:5"
+  ],
+  "set_dirs": [
+   "mansion/man2"
+  ],
+  "get_dirs": [
+   "mansion/man2"
+  ],
+  "cross_dir": false,
+  "len": 6,
+  "values": {
+   "1": 2
+  },
+  "bits": {}
+ },
+ "1_4_9a": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "xml1_loose/conversations/mansion/man2/1_4_9.eng (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man2/subbasement2.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man2/subbasement2.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man2/subbasement2.fb (inline)"
+  ],
+  "gets": [],
+  "set_dirs": [
+   "xml1_assets/packages",
+   "xml1_loose/conversations"
+  ],
+  "get_dirs": [],
+  "cross_dir": true,
+  "len": 6,
+  "values": {},
+  "bits": {}
+ },
+ "1_4_9b": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "xml1_loose/conversations/mansion/man2/1_4_9.eng (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man2/subbasement2.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man2/subbasement2.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man2/subbasement2.fb (inline)"
+  ],
+  "gets": [],
+  "set_dirs": [
+   "xml1_assets/packages",
+   "xml1_loose/conversations"
+  ],
+  "get_dirs": [],
+  "cross_dir": true,
+  "len": 6,
+  "values": {},
+  "bits": {}
+ },
+ "2_4_5a": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "xml1_loose/conversations/muir_is/muir2/2_4_5.eng (inline)",
+   "xml1_assets/packages/generated/maps/muir_is/muir2/muir_in2.fb (inline)",
+   "xml1_assets/packages/generated/maps/muir_is/muir2/muir_in2.fb (inline)",
+   "xml1_assets/packages/generated/maps/muir_is/muir2/muir_in2.fb (inline)"
+  ],
+  "gets": [],
+  "set_dirs": [
+   "xml1_assets/packages",
+   "xml1_loose/conversations"
+  ],
+  "get_dirs": [],
+  "cross_dir": true,
+  "len": 6,
+  "values": {},
+  "bits": {}
+ },
+ "2_5_13a": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "xml1_loose/conversations/mansion/man4/2_5_13.eng (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man4/mansion4_1.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man4/mansion4_1.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man4/mansion4_1.fb (inline)"
+  ],
+  "gets": [],
+  "set_dirs": [
+   "xml1_assets/packages",
+   "xml1_loose/conversations"
+  ],
+  "get_dirs": [],
+  "cross_dir": true,
+  "len": 7,
+  "values": {},
+  "bits": {}
+ },
+ "2_5_3a": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "xml1_loose/conversations/mansion/man4/2_5_3.eng (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man4/mansion4_1.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man4/mansion4_1.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man4/mansion4_1.fb (inline)"
+  ],
+  "gets": [],
+  "set_dirs": [
+   "xml1_assets/packages",
+   "xml1_loose/conversations"
+  ],
+  "get_dirs": [],
+  "cross_dir": true,
+  "len": 6,
+  "values": {},
+  "bits": {}
+ },
+ "2started": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "arbiter/a_int/arb2_1.py:8"
+  ],
+  "gets": [
+   "arbiter/a_int/arb2_1.py:3"
+  ],
+  "set_dirs": [
+   "arbiter/a_int"
+  ],
+  "get_dirs": [
+   "arbiter/a_int"
+  ],
+  "cross_dir": false,
+  "len": 8,
+  "values": {
+   "1": 1
+  },
+  "bits": {}
+ },
+ "385hidA": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "xml1_loose/conversations/hive/h_int/3_8_5.eng (inline)",
+   "xml1_assets/packages/generated/maps/hive/h_int/hive1_2_2.fb (inline)",
+   "xml1_assets/packages/generated/maps/hive/h_int/hive1_2_2.fb (inline)",
+   "xml1_assets/packages/generated/maps/hive/h_int/hive1_2_2.fb (inline)"
+  ],
+  "gets": [],
+  "set_dirs": [
+   "xml1_assets/packages",
+   "xml1_loose/conversations"
+  ],
+  "get_dirs": [],
+  "cross_dir": true,
+  "len": 7,
+  "values": {},
+  "bits": {}
+ },
+ "385hidB": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "xml1_loose/conversations/hive/h_int/3_8_5.eng (inline)",
+   "xml1_assets/packages/generated/maps/hive/h_int/hive1_2_2.fb (inline)",
+   "xml1_assets/packages/generated/maps/hive/h_int/hive1_2_2.fb (inline)",
+   "xml1_assets/packages/generated/maps/hive/h_int/hive1_2_2.fb (inline)"
+  ],
+  "gets": [],
+  "set_dirs": [
+   "xml1_assets/packages",
+   "xml1_loose/conversations"
+  ],
+  "get_dirs": [],
+  "cross_dir": true,
+  "len": 7,
+  "values": {},
+  "bits": {}
+ },
+ "4a": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "xml1_loose/conversations/nyc/alison/1_1_1.eng (inline)",
+   "xml1_assets/packages/generated/maps/nyc/alison/nyc1_1_2b.fb (inline)",
+   "xml1_assets/packages/generated/maps/nyc/alison/nyc1_1_2b.fb (inline)",
+   "xml1_assets/packages/generated/maps/nyc/alison/nyc1_1_2b.fb (inline)"
+  ],
+  "gets": [],
+  "set_dirs": [
+   "xml1_assets/packages",
+   "xml1_loose/conversations"
+  ],
+  "get_dirs": [],
+  "cross_dir": true,
+  "len": 2,
+  "values": {},
+  "bits": {}
+ },
+ "<ident:rescuee>": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "hive/h_int/hive_trigger_rescue.py:8"
+  ],
+  "gets": [
+   "hive/h_int/hive_trigger_rescue.py:4"
+  ],
+  "set_dirs": [
+   "hive/h_int"
+  ],
+  "get_dirs": [
+   "hive/h_int"
+  ],
+  "cross_dir": false,
+  "len": 15,
+  "values": {
+   "1": 1
+  },
+  "bits": {}
+ },
+ "a_w_q": {
+  "kinds": [
+   "gvar"
+  ],
+  "sets": [
+   "common/astral_or_wx.py:16"
+  ],
+  "gets": [
+   "common/astral_or_wx.py:6"
+  ],
+  "set_dirs": [
+   "common/astral_or_wx.py"
+  ],
+  "get_dirs": [
+   "common/astral_or_wx.py"
+  ],
+  "cross_dir": false,
+  "len": 5,
+  "values": {
+   "1": 1
+  },
+  "bits": {}
+ },
+ "act3mssn": {
+  "kinds": [
+   "gvar"
+  ],
+  "sets": [
+   "muir_is/muir3/endmuir3mission.py:19",
+   "nyc/riots/check2_1objectives.py:21",
+   "nyc/riots/checkriotsobjective.py:25",
+   "sewers/grso/endgrsomission.py:19"
+  ],
+  "gets": [
+   "muir_is/muir3/endmuir3mission.py:5",
+   "nyc/riots/check2_1objectives.py:7",
+   "nyc/riots/checkriotsobjective.py:11",
+   "nyc/riots/chooseact3mission.py:3",
+   "sewers/grso/endgrsomission.py:5"
+  ],
+  "set_dirs": [
+   "muir_is/muir3",
+   "nyc/riots",
+   "sewers/grso"
+  ],
+  "get_dirs": [
+   "muir_is/muir3",
+   "nyc/riots",
+   "sewers/grso"
+  ],
+  "cross_dir": true,
+  "len": 8,
+  "values": {
+   "<var>": 4
+  },
+  "bits": {}
+ },
+ "actor_c": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "mansion/dr_mag/force_field_c.py:8"
+  ],
+  "gets": [
+   "mansion/dr_mag/ff_c_remove.py:3"
+  ],
+  "set_dirs": [
+   "mansion/dr_mag"
+  ],
+  "get_dirs": [
+   "mansion/dr_mag"
+  ],
+  "cross_dir": false,
+  "len": 7,
+  "values": {
+   "<var>": 1
+  },
+  "bits": {}
+ },
+ "actor_d": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [],
+  "gets": [
+   "mansion/dr_mag/ff_d_remove.py:3"
+  ],
+  "set_dirs": [],
+  "get_dirs": [
+   "mansion/dr_mag"
+  ],
+  "cross_dir": false,
+  "len": 7,
+  "values": {},
+  "bits": {}
+ },
+ "actor_e": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "mansion/dr_mag/force_field_e.py:8"
+  ],
+  "gets": [
+   "mansion/dr_mag/ff_e_remove.py:3"
+  ],
+  "set_dirs": [
+   "mansion/dr_mag"
+  ],
+  "get_dirs": [
+   "mansion/dr_mag"
+  ],
+  "cross_dir": false,
+  "len": 7,
+  "values": {
+   "<var>": 1
+  },
+  "bits": {}
+ },
+ "actor_f": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "mansion/dr_mag/force_field_f.py:8"
+  ],
+  "gets": [
+   "mansion/dr_mag/ff_f_remove.py:3"
+  ],
+  "set_dirs": [
+   "mansion/dr_mag"
+  ],
+  "get_dirs": [
+   "mansion/dr_mag"
+  ],
+  "cross_dir": false,
+  "len": 7,
+  "values": {
+   "<var>": 1
+  },
+  "bits": {}
+ },
+ "actor_g": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "mansion/dr_mag/force_field_g.py:8"
+  ],
+  "gets": [
+   "mansion/dr_mag/ff_g_remove.py:3"
+  ],
+  "set_dirs": [
+   "mansion/dr_mag"
+  ],
+  "get_dirs": [
+   "mansion/dr_mag"
+  ],
+  "cross_dir": false,
+  "len": 7,
+  "values": {
+   "<var>": 1
+  },
+  "bits": {}
+ },
+ "aligned": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "muir_is/muir2/alignthings.py:5",
+   "muir_is/muir2/mui_comcore.py:3"
+  ],
+  "gets": [
+   "muir_is/muir2/alignthings.py:3",
+   "muir_is/muir2/primarycontrolpanel.py:3"
+  ],
+  "set_dirs": [
+   "muir_is/muir2"
+  ],
+  "get_dirs": [
+   "muir_is/muir2"
+  ],
+  "cross_dir": false,
+  "len": 7,
+  "values": {
+   "<var>": 1,
+   "0": 1
+  },
+  "bits": {}
+ },
+ "alison": {
+  "kinds": [
+   "gvar"
+  ],
+  "sets": [
+   "nyc/alison/blackbird_brief1.py:3"
+  ],
+  "gets": [],
+  "set_dirs": [
+   "nyc/alison"
+  ],
+  "get_dirs": [],
+  "cross_dir": false,
+  "len": 6,
+  "values": {
+   "1": 1
+  },
+  "bits": {}
+ },
+ "ast_int2": {
+  "kinds": [
+   "mflag"
+  ],
+  "sets": [
+   "asteroid_m/start2_3.py:38"
+  ],
+  "gets": [
+   "asteroid_m/start2_3.py:3"
+  ],
+  "set_dirs": [
+   "asteroid_m/start2_3.py"
+  ],
+  "get_dirs": [
+   "asteroid_m/start2_3.py"
+  ],
+  "cross_dir": false,
+  "len": 8,
+  "values": {
+   "1": 1
+  },
+  "bits": {
+   "1": 2
+  }
+ },
+ "ast_rock": {
+  "kinds": [
+   "mflag"
+  ],
+  "sets": [
+   "asteroid_m/start_asteroid_m.py:13"
+  ],
+  "gets": [
+   "asteroid_m/start_asteroid_m.py:3"
+  ],
+  "set_dirs": [
+   "asteroid_m/start_asteroid_m.py"
+  ],
+  "get_dirs": [
+   "asteroid_m/start_asteroid_m.py"
+  ],
+  "cross_dir": false,
+  "len": 8,
+  "values": {
+   "1": 1
+  },
+  "bits": {
+   "1": 2
+  }
+ },
+ "astral": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "mansion/man4/astral_legwork.py:21"
+  ],
+  "gets": [
+   "mansion/man4/subbasement4.py:4"
+  ],
+  "set_dirs": [
+   "mansion/man4"
+  ],
+  "get_dirs": [
+   "mansion/man4"
+  ],
+  "cross_dir": false,
+  "len": 6,
+  "values": {
+   "1": 1
+  },
+  "bits": {}
+ },
+ "astral1": {
+  "kinds": [
+   "mflag",
+   "mvar"
+  ],
+  "sets": [
+   "astral/ast1/1_3plat2.py:7",
+   "astral/ast1/astral1_1.py:23",
+   "astral/ast1/lever_1_1.py:26",
+   "astral/ast1/lever_1_3.py:26",
+   "astral/ast1/lever_left.py:27",
+   "astral/ast1/lever_right.py:29",
+   "astral/ast1/supershades_defeated.py:3"
+  ],
+  "gets": [
+   "astral/ast1/astral1_1.py:4",
+   "astral/ast1/astral1_1.py:8",
+   "astral/ast1/astral1_1.py:12",
+   "astral/ast1/astral1_3.py:4",
+   "astral/ast1/astral1_3.py:10",
+   "common/astral_or_wx.py:8"
+  ],
+  "set_dirs": [
+   "astral/ast1"
+  ],
+  "get_dirs": [
+   "astral/ast1",
+   "common/astral_or_wx.py"
+  ],
+  "cross_dir": true,
+  "len": 7,
+  "values": {
+   "1": 7
+  },
+  "bits": {
+   "1": 2,
+   "2": 2,
+   "3": 2,
+   "4": 2,
+   "5": 2
+  }
+ },
+ "astral2": {
+  "kinds": [
+   "mflag"
+  ],
+  "sets": [
+   "astral/ast3/3_4plat1.py:7",
+   "astral/ast3/3_4plat2.py:7",
+   "astral/ast3/acquire_honor.py:4",
+   "astral/ast3/acquire_knowledge.py:5",
+   "astral/ast3/acquire_wisdom.py:4",
+   "astral/ast3/placeobject.py:11",
+   "astral/ast3/placeobject.py:17",
+   "astral/ast3/placeobject.py:23"
+  ],
+  "gets": [
+   "astral/ast3/astral3_2.py:19",
+   "astral/ast3/astral3_2.py:20",
+   "astral/ast3/astral3_2.py:21",
+   "astral/ast3/astral3_4.py:4",
+   "astral/ast3/astral3_4.py:8",
+   "astral/ast3/placeobject.py:3",
+   "astral/ast3/placeobject.py:4",
+   "astral/ast3/placeobject.py:5",
+   "astral/ast3/placeobject.py:6",
+   "astral/ast3/placeobject.py:7",
+   "astral/ast3/placeobject.py:8",
+   "astral/ast3/placeobject.py:27",
+   "astral/ast3/placeobject.py:28",
+   "astral/ast3/placeobject.py:29"
+  ],
+  "set_dirs": [
+   "astral/ast3"
+  ],
+  "get_dirs": [
+   "astral/ast3"
+  ],
+  "cross_dir": false,
+  "len": 7,
+  "values": {
+   "1": 8
+  },
+  "bits": {
+   "7": 2,
+   "8": 2,
+   "2": 2,
+   "1": 2,
+   "3": 2,
+   "4": 4,
+   "5": 4,
+   "6": 4
+  }
+ },
+ "astral3": {
+  "kinds": [
+   "mflag"
+  ],
+  "sets": [
+   "astral/savepx/lever_2_2.py:26"
+  ],
+  "gets": [
+   "astral/savepx/astral2_2.py:3"
+  ],
+  "set_dirs": [
+   "astral/savepx"
+  ],
+  "get_dirs": [
+   "astral/savepx"
+  ],
+  "cross_dir": false,
+  "len": 7,
+  "values": {
+   "1": 1
+  },
+  "bits": {
+   "1": 2
+  }
+ },
+ "atkforge": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "muir_is/muir3/forgepain.py:10",
+   "muir_is/muir3/juggypain.py:46"
+  ],
+  "gets": [
+   "muir_is/muir3/juggypain.py:3"
+  ],
+  "set_dirs": [
+   "muir_is/muir3"
+  ],
+  "get_dirs": [
+   "muir_is/muir3"
+  ],
+  "cross_dir": false,
+  "len": 8,
+  "values": {
+   "0": 1,
+   "1": 1
+  },
+  "bits": {}
+ },
+ "base": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "mastermold/catwalka1death.py:5",
+   "mastermold/catwalkb1death.py:5",
+   "mastermold/catwalkc1death.py:5",
+   "mastermold/catwalkd1death.py:5",
+   "mastermold/catwalke1death.py:5",
+   "mastermold/catwalkf1death.py:5"
+  ],
+  "gets": [
+   "mastermold/breakitup.py:3",
+   "mastermold/breakitupt.py:4"
+  ],
+  "set_dirs": [
+   "mastermold/catwalka1death.py",
+   "mastermold/catwalkb1death.py",
+   "mastermold/catwalkc1death.py",
+   "mastermold/catwalkd1death.py",
+   "mastermold/catwalke1death.py",
+   "mastermold/catwalkf1death.py"
+  ],
+  "get_dirs": [
+   "mastermold/breakitup.py",
+   "mastermold/breakitupt.py"
+  ],
+  "cross_dir": true,
+  "len": 4,
+  "values": {
+   "<var>": 6
+  },
+  "bits": {}
+ },
+ "bbot": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "mansion/man4/grso_found.py:18",
+   "mansion/man4/grso_found.py:20",
+   "mansion/man4/grso_found.py:22",
+   "mansion/man4/grso_found.py:42"
+  ],
+  "gets": [
+   "mansion/man4/grso_found.py:27"
+  ],
+  "set_dirs": [
+   "mansion/man4"
+  ],
+  "get_dirs": [
+   "mansion/man4"
+  ],
+  "cross_dir": false,
+  "len": 4,
+  "values": {
+   "1": 3,
+   "0": 1
+  },
+  "bits": {}
+ },
+ "been_nuke": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "nuke_plant/nuke/nuke1_1.py:5"
+  ],
+  "gets": [
+   "nuke_plant/nuke/nuke1_1.py:3"
+  ],
+  "set_dirs": [
+   "nuke_plant/nuke"
+  ],
+  "get_dirs": [
+   "nuke_plant/nuke"
+  ],
+  "cross_dir": false,
+  "len": 9,
+  "values": {
+   "1": 1
+  },
+  "bits": {}
+ },
+ "beenhub": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "sewers/healer/sewers_hub2.py:5"
+  ],
+  "gets": [
+   "sewers/healer/sewers_hub2.py:3"
+  ],
+  "set_dirs": [
+   "sewers/healer"
+  ],
+  "get_dirs": [
+   "sewers/healer"
+  ],
+  "cross_dir": false,
+  "len": 7,
+  "values": {
+   "1": 1
+  },
+  "bits": {}
+ },
+ "bguys": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "nyc/alison/nyc1_1_3.py:8"
+  ],
+  "gets": [],
+  "set_dirs": [
+   "nyc/alison"
+  ],
+  "get_dirs": [],
+  "cross_dir": false,
+  "len": 5,
+  "values": {
+   "2": 1
+  },
+  "bits": {}
+ },
+ "bridge": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "muir_is/muir2/bridgecleared.py:3"
+  ],
+  "gets": [
+   "muir_is/muir2/raisebridge.py:3"
+  ],
+  "set_dirs": [
+   "muir_is/muir2"
+  ],
+  "get_dirs": [
+   "muir_is/muir2"
+  ],
+  "cross_dir": false,
+  "len": 6,
+  "values": {
+   "1": 1
+  },
+  "bits": {}
+ },
+ "byard2": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "mansion/man2/mansion_back2.py:5"
+  ],
+  "gets": [
+   "mansion/man2/mansion_back2.py:3"
+  ],
+  "set_dirs": [
+   "mansion/man2"
+  ],
+  "get_dirs": [
+   "mansion/man2"
+  ],
+  "cross_dir": false,
+  "len": 6,
+  "values": {
+   "1": 1
+  },
+  "bits": {}
+ },
+ "checkpart1": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "mastermold/catwalkd1death.py:9",
+   "mastermold/catwalke1death.py:9",
+   "mastermold/catwalkf1death.py:9"
+  ],
+  "gets": [
+   "mastermold/breakitupt.py:8"
+  ],
+  "set_dirs": [
+   "mastermold/catwalkd1death.py",
+   "mastermold/catwalke1death.py",
+   "mastermold/catwalkf1death.py"
+  ],
+  "get_dirs": [
+   "mastermold/breakitupt.py"
+  ],
+  "cross_dir": true,
+  "len": 10,
+  "values": {
+   "<var>": 3
+  },
+  "bits": {}
+ },
+ "checkpart2": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "mastermold/catwalkd1death.py:13",
+   "mastermold/catwalke1death.py:13",
+   "mastermold/catwalkf1death.py:13"
+  ],
+  "gets": [
+   "mastermold/breakitupt.py:21"
+  ],
+  "set_dirs": [
+   "mastermold/catwalkd1death.py",
+   "mastermold/catwalke1death.py",
+   "mastermold/catwalkf1death.py"
+  ],
+  "get_dirs": [
+   "mastermold/breakitupt.py"
+  ],
+  "cross_dir": true,
+  "len": 10,
+  "values": {
+   "<var>": 3
+  },
+  "bits": {}
+ },
+ "convdone": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "astral/ast3/pyro_start.py:3"
+  ],
+  "gets": [
+   "astral/ast3/pyrocam2.py:11"
+  ],
+  "set_dirs": [
+   "astral/ast3"
+  ],
+  "get_dirs": [
+   "astral/ast3"
+  ],
+  "cross_dir": false,
+  "len": 8,
+  "values": {
+   "1": 1
+  },
+  "bits": {}
+ },
+ "corecount": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "mastermold/core_off1.py:25",
+   "mastermold/core_off2.py:21",
+   "mastermold/core_off3.py:21",
+   "mastermold/core_on1.py:25",
+   "mastermold/core_on2.py:25",
+   "mastermold/core_on3.py:25"
+  ],
+  "gets": [
+   "mastermold/checkcore.py:4",
+   "mastermold/core_off1.py:23",
+   "mastermold/core_off2.py:19",
+   "mastermold/core_off3.py:19",
+   "mastermold/core_on1.py:23",
+   "mastermold/core_on2.py:23",
+   "mastermold/core_on3.py:23"
+  ],
+  "set_dirs": [
+   "mastermold/core_off1.py",
+   "mastermold/core_off2.py",
+   "mastermold/core_off3.py",
+   "mastermold/core_on1.py",
+   "mastermold/core_on2.py",
+   "mastermold/core_on3.py"
+  ],
+  "get_dirs": [
+   "mastermold/checkcore.py",
+   "mastermold/core_off1.py",
+   "mastermold/core_off2.py",
+   "mastermold/core_off3.py",
+   "mastermold/core_on1.py",
+   "mastermold/core_on2.py",
+   "mastermold/core_on3.py"
+  ],
+  "cross_dir": true,
+  "len": 9,
+  "values": {
+   "<var>": 6
+  },
+  "bits": {}
+ },
+ "coreon1": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "mastermold/core_on1.py:22"
+  ],
+  "gets": [
+   "mastermold/coredeath1.py:3"
+  ],
+  "set_dirs": [
+   "mastermold/core_on1.py"
+  ],
+  "get_dirs": [
+   "mastermold/coredeath1.py"
+  ],
+  "cross_dir": true,
+  "len": 7,
+  "values": {
+   "1": 1
+  },
+  "bits": {}
+ },
+ "coreon2": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "mastermold/core_on2.py:22"
+  ],
+  "gets": [
+   "mastermold/coredeath2.py:3"
+  ],
+  "set_dirs": [
+   "mastermold/core_on2.py"
+  ],
+  "get_dirs": [
+   "mastermold/coredeath2.py"
+  ],
+  "cross_dir": true,
+  "len": 7,
+  "values": {
+   "1": 1
+  },
+  "bits": {}
+ },
+ "coreon3": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "mastermold/core_on3.py:22"
+  ],
+  "gets": [
+   "mastermold/coredeath3.py:3"
+  ],
+  "set_dirs": [
+   "mastermold/core_on3.py"
+  ],
+  "get_dirs": [
+   "mastermold/coredeath3.py"
+  ],
+  "cross_dir": true,
+  "len": 7,
+  "values": {
+   "1": 1
+  },
+  "bits": {}
+ },
+ "coresgone": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "mastermold/coredeath1.py:15",
+   "mastermold/coredeath2.py:15",
+   "mastermold/coredeath3.py:15"
+  ],
+  "gets": [
+   "mastermold/checkcore.py:3",
+   "mastermold/coredeath1.py:13",
+   "mastermold/coredeath2.py:13",
+   "mastermold/coredeath3.py:13"
+  ],
+  "set_dirs": [
+   "mastermold/coredeath1.py",
+   "mastermold/coredeath2.py",
+   "mastermold/coredeath3.py"
+  ],
+  "get_dirs": [
+   "mastermold/checkcore.py",
+   "mastermold/coredeath1.py",
+   "mastermold/coredeath2.py",
+   "mastermold/coredeath3.py"
+  ],
+  "cross_dir": true,
+  "len": 9,
+  "values": {
+   "<var>": 3
+  },
+  "bits": {}
+ },
+ "cur_bots": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "mansion/man5/mansion_front5.py:8",
+   "mansion/man5/sentinel_count.py:15",
+   "mansion/man5/sentinel_count.py:19",
+   "mansion/man5/sentinel_count.py:23",
+   "mansion/man5/sentinel_count.py:27"
+  ],
+  "gets": [
+   "mansion/man5/sentinel_count.py:6"
+  ],
+  "set_dirs": [
+   "mansion/man5"
+  ],
+  "get_dirs": [
+   "mansion/man5"
+  ],
+  "cross_dir": false,
+  "len": 8,
+  "values": {
+   "0": 1,
+   "<var>": 4
+  },
+  "bits": {}
+ },
+ "deadbots": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "mansion/dr_mag/botdeath.py:5"
+  ],
+  "gets": [
+   "mansion/dr_mag/botdeath.py:3"
+  ],
+  "set_dirs": [
+   "mansion/dr_mag"
+  ],
+  "get_dirs": [
+   "mansion/dr_mag"
+  ],
+  "cross_dir": false,
+  "len": 8,
+  "values": {
+   "<var>": 1
+  },
+  "bits": {}
+ },
+ "deadbots3": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "mansion/dr_mag/botspawn2.py:6"
+  ],
+  "gets": [
+   "mansion/dr_mag/botspawn2.py:4"
+  ],
+  "set_dirs": [
+   "mansion/dr_mag"
+  ],
+  "get_dirs": [
+   "mansion/dr_mag"
+  ],
+  "cross_dir": false,
+  "len": 9,
+  "values": {
+   "<var>": 1
+  },
+  "bits": {}
+ },
+ "deaddmns": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "astral/ast3/firedemondeath.py:5",
+   "astral/ast3/spawnfiredemons.py:7"
+  ],
+  "gets": [
+   "astral/ast3/firedemondeath.py:3",
+   "astral/ast3/spawnfiredemons.py:3"
+  ],
+  "set_dirs": [
+   "astral/ast3"
+  ],
+  "get_dirs": [
+   "astral/ast3"
+  ],
+  "cross_dir": false,
+  "len": 8,
+  "values": {
+   "<var>": 1,
+   "0": 1
+  },
+  "bits": {}
+ },
+ "deadgrunts": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "nyc/alison/grunt1death.py:5",
+   "nyc/alison/mystique_pain.py:26"
+  ],
+  "gets": [
+   "nyc/alison/grunt1death.py:3",
+   "nyc/alison/mystiquetoilet.py:4"
+  ],
+  "set_dirs": [
+   "nyc/alison"
+  ],
+  "get_dirs": [
+   "nyc/alison"
+  ],
+  "cross_dir": false,
+  "len": 10,
+  "values": {
+   "<var>": 1,
+   "0": 1
+  },
+  "bits": {}
+ },
+ "deadgrunts2": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "nyc/alison/grunt2death.py:5",
+   "nyc/alison/mystique_pain.py:33"
+  ],
+  "gets": [
+   "nyc/alison/grunt2death.py:3"
+  ],
+  "set_dirs": [
+   "nyc/alison"
+  ],
+  "get_dirs": [
+   "nyc/alison"
+  ],
+  "cross_dir": false,
+  "len": 11,
+  "values": {
+   "<var>": 1,
+   "0": 1
+  },
+  "bits": {}
+ },
+ "deadguys": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "astral/ast3/dopple_death.py:10",
+   "astral/ast3/dopple_death.py:15",
+   "astral/ast3/wolvressurrect.py:8"
+  ],
+  "gets": [
+   "astral/ast3/dopple_death.py:3",
+   "astral/ast3/wolvressurrect.py:4"
+  ],
+  "set_dirs": [
+   "astral/ast3"
+  ],
+  "get_dirs": [
+   "astral/ast3"
+  ],
+  "cross_dir": false,
+  "len": 8,
+  "values": {
+   "<var>": 3
+  },
+  "bits": {}
+ },
+ "deadres": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "sewers/grso/killres.py:13"
+  ],
+  "gets": [
+   "sewers/grso/killres.py:11",
+   "sewers/grso/marrow_deathscript.py:3",
+   "sewers/grso/ressurect_marrow.py:3"
+  ],
+  "set_dirs": [
+   "sewers/grso"
+  ],
+  "get_dirs": [
+   "sewers/grso"
+  ],
+  "cross_dir": false,
+  "len": 7,
+  "values": {
+   "<var>": 1
+  },
+  "bits": {}
+ },
+ "deadsks": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "astral/savepx/shadowking_defeated.py:5"
+  ],
+  "gets": [
+   "astral/savepx/shadowking_defeated.py:3"
+  ],
+  "set_dirs": [
+   "astral/savepx"
+  ],
+  "get_dirs": [
+   "astral/savepx"
+  ],
+  "cross_dir": false,
+  "len": 7,
+  "values": {
+   "<var>": 1
+  },
+  "bits": {}
+ },
+ "donthurt": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "muir_is/muir3/forgepain.py:68",
+   "muir_is/muir3/juggypain.py:48",
+   "muir_is/muir3/muir_in3.py:4"
+  ],
+  "gets": [
+   "muir_is/muir3/forgepain.py:3"
+  ],
+  "set_dirs": [
+   "muir_is/muir3"
+  ],
+  "get_dirs": [
+   "muir_is/muir3"
+  ],
+  "cross_dir": false,
+  "len": 8,
+  "values": {
+   "1": 2,
+   "0": 1
+  },
+  "bits": {}
+ },
+ "dooropen": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "sewers/hub/mor_stealing2.py:13"
+  ],
+  "gets": [
+   "sewers/hub/mor_stealing2.py:11"
+  ],
+  "set_dirs": [
+   "sewers/hub"
+  ],
+  "get_dirs": [
+   "sewers/hub"
+  ],
+  "cross_dir": false,
+  "len": 8,
+  "values": {
+   "1": 1
+  },
+  "bits": {}
+ },
+ "dr_mag1": {
+  "kinds": [
+   "gvar",
+   "mvar"
+  ],
+  "sets": [
+   "mansion/dr_mag/botspawn2.py:23",
+   "mansion/dr_mag/check_magma_health.py:6",
+   "mansion/dr_mag/fmvexit.py:6",
+   "mansion/man2/subbasement2.py:23"
+  ],
+  "gets": [
+   "mansion/man2/subbasement2.py:4"
+  ],
+  "set_dirs": [
+   "mansion/dr_mag",
+   "mansion/man2"
+  ],
+  "get_dirs": [
+   "mansion/man2"
+  ],
+  "cross_dir": true,
+  "len": 7,
+  "values": {
+   "1": 3,
+   "2": 1
+  },
+  "bits": {}
+ },
+ "drone": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "missions/drones.py:6"
+  ],
+  "gets": [
+   "mansion/man4/mansion_back4.py:3"
+  ],
+  "set_dirs": [
+   "missions/drones.py"
+  ],
+  "get_dirs": [
+   "mansion/man4"
+  ],
+  "cross_dir": true,
+  "len": 5,
+  "values": {
+   "1": 1
+  },
+  "bits": {}
+ },
+ "emma": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "mansion/man4/profx_disapears.py:16",
+   "mansion/man4/profx_disapears.py:26",
+   "mansion/man4/profx_disapears.py:32"
+  ],
+  "gets": [
+   "mansion/man4/astral_legwork.py:5"
+  ],
+  "set_dirs": [
+   "mansion/man4"
+  ],
+  "get_dirs": [
+   "mansion/man4"
+  ],
+  "cross_dir": false,
+  "len": 4,
+  "values": {
+   "1": 3
+  },
+  "bits": {}
+ },
+ "fb_sent": {
+  "kinds": [
+   "gvar"
+  ],
+  "sets": [
+   "nyc/fb/nycfb4_finish.py:17"
+  ],
+  "gets": [
+   "mansion/man2/mansion2_1.py:3",
+   "mansion/man2/offersentinelflashback.py:4"
+  ],
+  "set_dirs": [
+   "nyc/fb"
+  ],
+  "get_dirs": [
+   "mansion/man2"
+  ],
+  "cross_dir": true,
+  "len": 7,
+  "values": {
+   "1": 1
+  },
+  "bits": {}
+ },
+ "ffield": {
+  "kinds": [
+   "mflag"
+  ],
+  "sets": [
+   "mansion/dr_mag/ff_a_remove.py:4",
+   "mansion/dr_mag/ff_b_remove.py:4",
+   "mansion/dr_mag/ff_c_remove.py:12",
+   "mansion/dr_mag/ff_d_remove.py:11",
+   "mansion/dr_mag/ff_e_remove.py:11",
+   "mansion/dr_mag/ff_f_remove.py:11",
+   "mansion/dr_mag/ff_g_remove.py:11",
+   "mansion/dr_mag/force_field_a.py:7",
+   "mansion/dr_mag/force_field_b.py:7",
+   "mansion/dr_mag/force_field_c.py:9",
+   "mansion/dr_mag/force_field_d.py:7",
+   "mansion/dr_mag/force_field_e.py:9",
+   "mansion/dr_mag/force_field_f.py:9",
+   "mansion/dr_mag/force_field_g.py:9"
+  ],
+  "gets": [
+   "mansion/dr_mag/force_field_a.py:3",
+   "mansion/dr_mag/force_field_b.py:3",
+   "mansion/dr_mag/force_field_c.py:3",
+   "mansion/dr_mag/force_field_d.py:3",
+   "mansion/dr_mag/force_field_e.py:3",
+   "mansion/dr_mag/force_field_f.py:3",
+   "mansion/dr_mag/force_field_g.py:3"
+  ],
+  "set_dirs": [
+   "mansion/dr_mag"
+  ],
+  "get_dirs": [
+   "mansion/dr_mag"
+  ],
+  "cross_dir": false,
+  "len": 6,
+  "values": {
+   "0": 7,
+   "1": 7
+  },
+  "bits": {
+   "1": 3,
+   "2": 3,
+   "3": 3,
+   "4": 3,
+   "5": 1,
+   "6": 3,
+   "7": 3,
+   "10": 2
+  }
+ },
+ "fhaarp": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "haarp/ext/haarp_ext01.py:4",
+   "haarp/ext/haarp_ext02.py:4",
+   "haarp/ext/haarp_ext03.py:4"
+  ],
+  "gets": [
+   "haarp/ext/fence_obj.py:6"
+  ],
+  "set_dirs": [
+   "haarp/ext"
+  ],
+  "get_dirs": [
+   "haarp/ext"
+  ],
+  "cross_dir": false,
+  "len": 6,
+  "values": {
+   "0": 1,
+   "1": 2
+  },
+  "bits": {}
+ },
+ "fightable": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "haarp/ext/podiumdown_new.py:4",
+   "haarp/ext/toadpain_new.py:16",
+   "haarp/ext/toadpain_new.py:44"
+  ],
+  "gets": [
+   "haarp/ext/toadpain_new.py:14"
+  ],
+  "set_dirs": [
+   "haarp/ext"
+  ],
+  "get_dirs": [
+   "haarp/ext"
+  ],
+  "cross_dir": false,
+  "len": 9,
+  "values": {
+   "1": 2,
+   "0": 1
+  },
+  "bits": {}
+ },
+ "fighting": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "weapon_x/old/havokbeginroom1.py:8"
+  ],
+  "gets": [
+   "weapon_x/old/havokpain.py:3"
+  ],
+  "set_dirs": [
+   "weapon_x/old"
+  ],
+  "get_dirs": [
+   "weapon_x/old"
+  ],
+  "cross_dir": false,
+  "len": 8,
+  "values": {
+   "1": 1
+  },
+  "bits": {}
+ },
+ "forge": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [],
+  "gets": [
+   "muir_is/muir2/control_alsion.py:13"
+  ],
+  "set_dirs": [],
+  "get_dirs": [
+   "muir_is/muir2"
+  ],
+  "cross_dir": false,
+  "len": 5,
+  "values": {},
+  "bits": {}
+ },
+ "front_yd": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "mansion/man5/mansion5_1.py:3",
+   "mansion/man5/mansion_front5.py:6"
+  ],
+  "gets": [
+   "mansion/man5/mansion_front5.py:3"
+  ],
+  "set_dirs": [
+   "mansion/man5"
+  ],
+  "get_dirs": [
+   "mansion/man5"
+  ],
+  "cross_dir": false,
+  "len": 8,
+  "values": {
+   "1": 2
+  },
+  "bits": {}
+ },
+ "ftalk": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "common/hint_forgeshop.py:6"
+  ],
+  "gets": [
+   "common/hint_forgeshop.py:4"
+  ],
+  "set_dirs": [
+   "common/hint_forgeshop.py"
+  ],
+  "get_dirs": [
+   "common/hint_forgeshop.py"
+  ],
+  "cross_dir": false,
+  "len": 5,
+  "values": {
+   "1": 1
+  },
+  "bits": {}
+ },
+ "g_r_talk": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "mansion/man4/2_5_3b_cam_start.py:5"
+  ],
+  "gets": [
+   "mansion/man4/2_5_3b_cam_start.py:3"
+  ],
+  "set_dirs": [
+   "mansion/man4"
+  ],
+  "get_dirs": [
+   "mansion/man4"
+  ],
+  "cross_dir": false,
+  "len": 8,
+  "values": {
+   "1": 1
+  },
+  "bits": {}
+ },
+ "glasses": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "xml1_loose/conversations/mansion/man1a/1_2_35.eng (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man1a/subbasement1a.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man1a/subbasement1a.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man1a/subbasement1a.fb (inline)"
+  ],
+  "gets": [],
+  "set_dirs": [
+   "xml1_assets/packages",
+   "xml1_loose/conversations"
+  ],
+  "get_dirs": [],
+  "cross_dir": true,
+  "len": 7,
+  "values": {},
+  "bits": {}
+ },
+ "grsos": {
+  "kinds": [
+   "gvar",
+   "mvar"
+  ],
+  "sets": [
+   "mansion/man4/grso_debriefing.py:7",
+   "mansion/man4/grso_defeated2.py:9",
+   "mansion/man4/grso_defeated2.py:12",
+   "mansion/man4/mansion_back4_grso.py:7",
+   "mansion/man4/mansion_front4_grso.py:7",
+   "mansion/man4/subbasement4.py:12",
+   "missions/mansion4_grso_done.py:3"
+  ],
+  "gets": [
+   "mansion/man4/grso_defeated2.py:7",
+   "mansion/man4/mansion_back4_grso.py:4",
+   "mansion/man4/mansion_front4_grso.py:4",
+   "mansion/man4/subbasement4.py:2"
+  ],
+  "set_dirs": [
+   "mansion/man4",
+   "missions/mansion4_grso_done.py"
+  ],
+  "get_dirs": [
+   "mansion/man4"
+  ],
+  "cross_dir": true,
+  "len": 5,
+  "values": {
+   "1": 3,
+   "<var>": 1,
+   "10": 2,
+   "2": 1
+  },
+  "bits": {}
+ },
+ "haarp": {
+  "kinds": [
+   "mflag"
+  ],
+  "sets": [
+   "haarp/ext/tank_reveal.py:8",
+   "haarp/ext/tank_reveal.py:9",
+   "haarp/ext/tank_reveal.py:10",
+   "haarp/ext/tank_reveal2.py:7",
+   "haarp/ext/tank_reveal2.py:8",
+   "haarp/ext/tank_reveal2.py:9"
+  ],
+  "gets": [
+   "haarp/ext/tankbase_setup1.py:3",
+   "haarp/ext/tankbase_setup2.py:3",
+   "haarp/ext/tankturret_setup1.py:3",
+   "haarp/ext/tankturret_setup2.py:3",
+   "haarp/ext/tank_setup.py:3"
+  ],
+  "set_dirs": [
+   "haarp/ext"
+  ],
+  "get_dirs": [
+   "haarp/ext"
+  ],
+  "cross_dir": false,
+  "len": 5,
+  "values": {
+   "1": 6
+  },
+  "bits": {
+   "1": 2,
+   "4": 2,
+   "2": 2,
+   "5": 2,
+   "3": 3
+  }
+ },
+ "haarp3": {
+  "kinds": [
+   "mflag"
+  ],
+  "sets": [
+   "xml1_loose/maps/haarp/ext/haarp_ext04.eng (inline)",
+   "xml1_assets/packages/generated/maps/haarp/ext/haarp_ext04.fb (inline)",
+   "xml1_assets/packages/generated/maps/haarp/ext/haarp_ext04.fb (inline)",
+   "xml1_assets/packages/generated/maps/haarp/ext/haarp_ext04.fb (inline)"
+  ],
+  "gets": [
+   "haarp/ext/tank_destroyed_again.py:3"
+  ],
+  "set_dirs": [
+   "xml1_assets/packages",
+   "xml1_loose/maps"
+  ],
+  "get_dirs": [
+   "haarp/ext"
+  ],
+  "cross_dir": true,
+  "len": 6,
+  "values": {},
+  "bits": {
+   "1": 1
+  }
+ },
+ "havokhit": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "weapon_x/old/havokbeginattacking2.py:14"
+  ],
+  "gets": [
+   "weapon_x/old/checkhavokhit.py:3"
+  ],
+  "set_dirs": [
+   "weapon_x/old"
+  ],
+  "get_dirs": [
+   "weapon_x/old"
+  ],
+  "cross_dir": false,
+  "len": 8,
+  "values": {
+   "0": 1
+  },
+  "bits": {}
+ },
+ "hive": {
+  "kinds": [
+   "mflag"
+  ],
+  "sets": [
+   "xml1_loose/conversations/hive/h_int/3_8_5.eng (inline)",
+   "xml1_loose/conversations/hive/h_int/3_8_5.eng (inline)",
+   "xml1_assets/packages/generated/maps/hive/h_int/hive1_2_2.fb (inline)",
+   "xml1_assets/packages/generated/maps/hive/h_int/hive1_2_2.fb (inline)",
+   "xml1_assets/packages/generated/maps/hive/h_int/hive1_2_2.fb (inline)",
+   "xml1_assets/packages/generated/maps/hive/h_int/hive1_2_2.fb (inline)",
+   "xml1_assets/packages/generated/maps/hive/h_int/hive1_2_2.fb (inline)",
+   "xml1_assets/packages/generated/maps/hive/h_int/hive1_2_2.fb (inline)"
+  ],
+  "gets": [],
+  "set_dirs": [
+   "xml1_assets/packages",
+   "xml1_loose/conversations"
+  ],
+  "get_dirs": [],
+  "cross_dir": true,
+  "len": 4,
+  "values": {},
+  "bits": {}
+ },
+ "hive1": {
+  "kinds": [
+   "mflag"
+  ],
+  "sets": [
+   "hive/h_ext/hive1_1_1.py:5"
+  ],
+  "gets": [
+   "hive/h_ext/hive1_1_1.py:3"
+  ],
+  "set_dirs": [
+   "hive/h_ext"
+  ],
+  "get_dirs": [
+   "hive/h_ext"
+  ],
+  "cross_dir": false,
+  "len": 5,
+  "values": {
+   "1": 1
+  },
+  "bits": {
+   "1": 2
+  }
+ },
+ "intro3": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "xml1_loose/conversations/mansion/man1a/1_2_1_2.eng (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man1a/mansion1a_1.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man1a/mansion1a_1.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man1a/mansion1a_1.fb (inline)"
+  ],
+  "gets": [],
+  "set_dirs": [
+   "xml1_assets/packages",
+   "xml1_loose/conversations"
+  ],
+  "get_dirs": [],
+  "cross_dir": true,
+  "len": 6,
+  "values": {},
+  "bits": {}
+ },
+ "intro4": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "xml1_loose/conversations/mansion/man1a/1_2_1_2.eng (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man1a/mansion1a_1.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man1a/mansion1a_1.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man1a/mansion1a_1.fb (inline)"
+  ],
+  "gets": [],
+  "set_dirs": [
+   "xml1_assets/packages",
+   "xml1_loose/conversations"
+  ],
+  "get_dirs": [],
+  "cross_dir": true,
+  "len": 6,
+  "values": {},
+  "bits": {}
+ },
+ "ivisit": {
+  "kinds": [
+   "mflag",
+   "mvar"
+  ],
+  "sets": [
+   "haarp/ext/haarp_ext03.py:7",
+   "mansion/man7/status_meeting.py:10",
+   "mansion/man7/subbasement7.py:5"
+  ],
+  "gets": [
+   "haarp/ext/haarp_ext03.py:3",
+   "mansion/man7/subbasement7.py:3"
+  ],
+  "set_dirs": [
+   "haarp/ext",
+   "mansion/man7"
+  ],
+  "get_dirs": [
+   "haarp/ext",
+   "mansion/man7"
+  ],
+  "cross_dir": true,
+  "len": 6,
+  "values": {
+   "1": 3
+  },
+  "bits": {
+   "3": 2
+  }
+ },
+ "jean": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "xml1_loose/conversations/mansion/man4/2_5_14.eng (inline)",
+   "xml1_loose/conversations/mansion/man4/2_5_14.eng (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man4/subbasement4.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man4/subbasement4.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man4/subbasement4.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man4/subbasement4.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man4/subbasement4.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man4/subbasement4.fb (inline)"
+  ],
+  "gets": [
+   "mansion/man4/astral_legwork.py:6"
+  ],
+  "set_dirs": [
+   "xml1_assets/packages",
+   "xml1_loose/conversations"
+  ],
+  "get_dirs": [
+   "mansion/man4"
+  ],
+  "cross_dir": true,
+  "len": 4,
+  "values": {},
+  "bits": {}
+ },
+ "jug_fb": {
+  "kinds": [
+   "gvar"
+  ],
+  "sets": [
+   "mansion/jugrnt/jugdead.py:3",
+   "mansion/man2/subbasement2.py:38"
+  ],
+  "gets": [
+   "mansion/man1b/offerjuggernautflashback.py:5",
+   "mansion/man2/subbasement2.py:5"
+  ],
+  "set_dirs": [
+   "mansion/jugrnt",
+   "mansion/man2"
+  ],
+  "get_dirs": [
+   "mansion/man1b",
+   "mansion/man2"
+  ],
+  "cross_dir": true,
+  "len": 6,
+  "values": {
+   "1": 1,
+   "2": 1
+  },
+  "bits": {}
+ },
+ "jugg_fb": {
+  "kinds": [
+   "gvar"
+  ],
+  "sets": [
+   "missions/jug_done.py:3"
+  ],
+  "gets": [],
+  "set_dirs": [
+   "missions/jug_done.py"
+  ],
+  "get_dirs": [],
+  "cross_dir": false,
+  "len": 7,
+  "values": {
+   "1": 1
+  },
+  "bits": {}
+ },
+ "juggy_fb": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "mansion/man1b/unlockjuggernautflashback.py:5"
+  ],
+  "gets": [
+   "mansion/man1b/unlockjuggernautflashback.py:3"
+  ],
+  "set_dirs": [
+   "mansion/man1b"
+  ],
+  "get_dirs": [
+   "mansion/man1b"
+  ],
+  "cross_dir": false,
+  "len": 8,
+  "values": {
+   "<var>": 1
+  },
+  "bits": {}
+ },
+ "lasthealth": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "astral/savepx/dropshield.py:10",
+   "astral/savepx/sk1pain.py:13",
+   "astral/savepx/sk1pain.py:29"
+  ],
+  "gets": [
+   "astral/savepx/sk1pain.py:9"
+  ],
+  "set_dirs": [
+   "astral/savepx"
+  ],
+  "get_dirs": [
+   "astral/savepx"
+  ],
+  "cross_dir": false,
+  "len": 10,
+  "values": {
+   "<var>": 3
+  },
+  "bits": {}
+ },
+ "LASTID": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "arbiter/rescue_complete.py:18",
+   "arbiter/rescue_complete.py:37"
+  ],
+  "gets": [
+   "arbiter/a_int/reenable.py:5"
+  ],
+  "set_dirs": [
+   "arbiter/rescue_complete.py"
+  ],
+  "get_dirs": [
+   "arbiter/a_int"
+  ],
+  "cross_dir": true,
+  "len": 6,
+  "values": {
+   "<var>": 2
+  },
+  "bits": {}
+ },
+ "lastroom": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "mansion/jugrnt/jugpain.py:21",
+   "mansion/jugrnt/sittingroom.py:11"
+  ],
+  "gets": [
+   "mansion/jugrnt/jugpain.py:7"
+  ],
+  "set_dirs": [
+   "mansion/jugrnt"
+  ],
+  "get_dirs": [
+   "mansion/jugrnt"
+  ],
+  "cross_dir": false,
+  "len": 8,
+  "values": {
+   "2": 1,
+   "1": 1
+  },
+  "bits": {}
+ },
+ "left": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "mansion/man4/emma_talk.py:22"
+  ],
+  "gets": [
+   "mansion/man4/profx_apears.py:5",
+   "mansion/man4/profx_disapears.py:5"
+  ],
+  "set_dirs": [
+   "mansion/man4"
+  ],
+  "get_dirs": [
+   "mansion/man4"
+  ],
+  "cross_dir": false,
+  "len": 4,
+  "values": {
+   "1": 1
+  },
+  "bits": {}
+ },
+ "leftarm": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "nuke_plant/nuke/leftarm2.py:2"
+  ],
+  "gets": [
+   "nuke_plant/nuke/rightarm2.py:3"
+  ],
+  "set_dirs": [
+   "nuke_plant/nuke"
+  ],
+  "get_dirs": [
+   "nuke_plant/nuke"
+  ],
+  "cross_dir": false,
+  "len": 7,
+  "values": {
+   "1": 1
+  },
+  "bits": {}
+ },
+ "man1a": {
+  "kinds": [
+   "mflag"
+  ],
+  "sets": [
+   "mansion/man1a/mansion1a_1.py:26",
+   "mansion/man1a/mansion1a_1.py:36",
+   "mansion/man1a/mansion1a_2.py:25",
+   "mansion/man1a/mansion1a_2.py:44"
+  ],
+  "gets": [
+   "mansion/man1a/mansion1a_1.py:3",
+   "mansion/man1a/mansion1a_2.py:3"
+  ],
+  "set_dirs": [
+   "mansion/man1a"
+  ],
+  "get_dirs": [
+   "mansion/man1a"
+  ],
+  "cross_dir": false,
+  "len": 5,
+  "values": {
+   "1": 4
+  },
+  "bits": {
+   "1": 3,
+   "2": 3
+  }
+ },
+ "man3_2": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "mansion/man3/mansion3_1.py:4",
+   "mansion/man3/mansion3_2.py:7",
+   "mansion/man3/mansion3_2.py:21"
+  ],
+  "gets": [
+   "mansion/man3/mansion3_2.py:8",
+   "mansion/man3/mansion3_2.py:10"
+  ],
+  "set_dirs": [
+   "mansion/man3"
+  ],
+  "get_dirs": [
+   "mansion/man3"
+  ],
+  "cross_dir": false,
+  "len": 6,
+  "values": {
+   "1": 2,
+   "2": 1
+  },
+  "bits": {}
+ },
+ "man4_1": {
+  "kinds": [
+   "gvar"
+  ],
+  "sets": [
+   "mansion/man4/mansion4_1.py:4",
+   "mansion/man4/mansion4_1.py:31"
+  ],
+  "gets": [
+   "mansion/man4/mansion4_1.py:2"
+  ],
+  "set_dirs": [
+   "mansion/man4"
+  ],
+  "get_dirs": [
+   "mansion/man4"
+  ],
+  "cross_dir": false,
+  "len": 6,
+  "values": {
+   "1": 1,
+   "2": 1
+  },
+  "bits": {}
+ },
+ "man6_2": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "mansion/man6/mansion6_2.py:16"
+  ],
+  "gets": [
+   "mansion/man6/mansion6_2.py:3"
+  ],
+  "set_dirs": [
+   "mansion/man6"
+  ],
+  "get_dirs": [
+   "mansion/man6"
+  ],
+  "cross_dir": false,
+  "len": 6,
+  "values": {
+   "1": 1
+  },
+  "bits": {}
+ },
+ "mansion1": {
+  "kinds": [
+   "mflag"
+  ],
+  "sets": [
+   "mansion/man1a/begin_subbasement.py:3",
+   "mansion/man1a/endfirsttour.py:3",
+   "mansion/man1a/endtour.py:9",
+   "mansion/man1a/endtour.py:11",
+   "mansion/man1a/hangar1a.py:9",
+   "mansion/man1a/mansion1a_1.py:19",
+   "mansion/man1a/mansion1a_1.py:27",
+   "mansion/man1a/subbasement1a.py:7",
+   "mansion/man1a/tourfirstfloor.py:2",
+   "mansion/man1a/tourfirstfloor.py:3",
+   "mansion/man1a/var_1_2_1_1_mansion1_1.py:2",
+   "mansion/man1a/var_1_2_1_1_mansion1_2.py:2",
+   "mansion/man1a/var_1_2_24_1_mansion1_4.py:2",
+   "mansion/man1a/var_1_2_35_mansion1_6.py:2",
+   "mansion/man1a/var_1_2_36_mansion1_11.py:3",
+   "mansion/man1a/var_1_2_38_mansion1_9.py:3",
+   "mansion/man1a/var_1_2_3_mansion1_3.py:2",
+   "xml1_loose/conversations/mansion/man1a/1_2_31_5.eng (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man1a/subbasement1a.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man1a/subbasement1a.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man1a/subbasement1a.fb (inline)"
+  ],
+  "gets": [
+   "mansion/man1a/conv_1_2_11.py:2",
+   "mansion/man1a/conv_1_2_12.py:2",
+   "mansion/man1a/conv_1_2_13.py:2",
+   "mansion/man1a/conv_1_2_14.py:2",
+   "mansion/man1a/conv_1_2_15.py:2",
+   "mansion/man1a/conv_1_2_16.py:2",
+   "mansion/man1a/conv_1_2_17.py:2",
+   "mansion/man1a/conv_1_2_19.py:2",
+   "mansion/man1a/conv_1_2_1_2.py:2",
+   "mansion/man1a/conv_1_2_20.py:2",
+   "mansion/man1a/conv_1_2_24.py:2",
+   "mansion/man1a/conv_1_2_24.py:3",
+   "mansion/man1a/conv_1_2_24_5.py:2",
+   "mansion/man1a/conv_1_2_24_5.py:3",
+   "mansion/man1a/conv_1_2_27.py:2",
+   "mansion/man1a/conv_1_2_27.py:3",
+   "mansion/man1a/conv_1_2_28.py:2",
+   "mansion/man1a/conv_1_2_28.py:3",
+   "mansion/man1a/conv_1_2_29_5.py:2",
+   "mansion/man1a/conv_1_2_29_5.py:3",
+   "mansion/man1a/conv_1_2_2_1.py:2",
+   "mansion/man1a/conv_1_2_2_4.py:2",
+   "mansion/man1a/conv_1_2_30.py:2",
+   "mansion/man1a/conv_1_2_30.py:3",
+   "mansion/man1a/conv_1_2_31.py:2",
+   "mansion/man1a/conv_1_2_31.py:3",
+   "mansion/man1a/conv_1_2_4.py:2",
+   "mansion/man1a/conv_1_2_5.py:2",
+   "mansion/man1a/conv_1_2_6.py:2",
+   "mansion/man1a/conv_1_2_7.py:2",
+   "mansion/man1a/conv_1_2_8.py:2",
+   "mansion/man1a/hangar1a.py:3",
+   "mansion/man1a/hangar1a.py:4",
+   "mansion/man1a/hangar1a.py:5",
+   "mansion/man1a/mansion1a_1.py:5",
+   "mansion/man1a/mansion1a_1.py:6",
+   "mansion/man1a/mansion1a_1.py:41",
+   "mansion/man1a/mansion1a_2.py:4",
+   "mansion/man1a/mansion1a_2.py:5",
+   "mansion/man1a/subbasement1a.py:4",
+   "mansion/man1a/subbasement1a.py:5"
+  ],
+  "set_dirs": [
+   "mansion/man1a",
+   "xml1_assets/packages",
+   "xml1_loose/conversations"
+  ],
+  "get_dirs": [
+   "mansion/man1a"
+  ],
+  "cross_dir": true,
+  "len": 8,
+  "values": {
+   "0": 2,
+   "1": 15
+  },
+  "bits": {
+   "8": 11,
+   "5": 20,
+   "4": 9,
+   "10": 4,
+   "7": 3,
+   "12": 2,
+   "11": 4,
+   "1": 1,
+   "2": 1,
+   "6": 1,
+   "9": 1,
+   "3": 1
+  }
+ },
+ "mansion2": {
+  "kinds": [
+   "mflag"
+  ],
+  "sets": [
+   "mansion/man2/subbasement2.py:22",
+   "mansion/man2/subbasement2.py:34",
+   "mansion/man2/var_1_4_12a.py:2",
+   "mansion/man2/var_1_4_12b.py:2",
+   "mansion/man2/var_1_4_2a.py:2",
+   "mansion/man2/var_1_4_3a.py:2",
+   "mansion/man2/var_1_4_4a.py:2",
+   "mansion/man2/var_1_4_7a.py:2",
+   "mansion/man2/var_1_4_8_mansion2_6.py:2",
+   "mansion/man2/var_1_4_9_mansion2_7.py:2",
+   "xml1_loose/conversations/mansion/man2/1_4_2_5.eng (inline)",
+   "xml1_loose/conversations/mansion/man2/1_4_2_5.eng (inline)",
+   "xml1_loose/conversations/mansion/man2/1_4_4.eng (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man2/mansion2_1.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man2/mansion2_1.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man2/mansion2_1.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man2/mansion_back2.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man2/mansion_back2.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man2/mansion_back2.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man2/mansion_back2.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man2/mansion_back2.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man2/mansion_back2.fb (inline)"
+  ],
+  "gets": [],
+  "set_dirs": [
+   "mansion/man2",
+   "xml1_assets/packages",
+   "xml1_loose/conversations"
+  ],
+  "get_dirs": [],
+  "cross_dir": true,
+  "len": 8,
+  "values": {
+   "1": 9,
+   "0": 1
+  },
+  "bits": {
+   "8": 2,
+   "9": 1,
+   "10": 1,
+   "2": 1,
+   "1": 1,
+   "3": 1,
+   "5": 1,
+   "6": 1,
+   "7": 1
+  }
+ },
+ "mansion3": {
+  "kinds": [
+   "mflag"
+  ],
+  "sets": [
+   "mansion/man3/2_1_11first.py:10",
+   "mansion/man3/2_1_11first.py:21",
+   "mansion/man3/2_1_12_5first.py:10",
+   "mansion/man3/2_1_12_5first.py:21",
+   "mansion/man3/2_1_14first.py:10",
+   "mansion/man3/2_1_14first.py:21",
+   "mansion/man3/2_1_4first.py:10",
+   "mansion/man3/2_1_4first.py:21",
+   "mansion/man3/2_1_5first.py:10",
+   "mansion/man3/2_1_5first.py:21",
+   "mansion/man3/var_2_1_12_mansion3_4.py:2",
+   "xml1_loose/conversations/mansion/man3/2_1_12_5main.eng (inline)",
+   "xml1_loose/conversations/mansion/man3/2_1_13_meet_storm.eng (inline)",
+   "xml1_loose/conversations/mansion/man3/2_1_13_meet_storm.eng (inline)",
+   "xml1_loose/conversations/mansion/man3/2_1_14main.eng (inline)",
+   "xml1_loose/conversations/mansion/man3/2_1_14main.eng (inline)",
+   "xml1_loose/conversations/mansion/man3/2_1_15_meet_wolverine.eng (inline)",
+   "xml1_loose/conversations/mansion/man3/2_1_5main.eng (inline)",
+   "xml1_loose/conversations/mansion/man3/2_1_5main.eng (inline)",
+   "xml1_loose/conversations/mansion/man3/2_1_6.eng (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man3/hangar3.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man3/hangar3.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man3/hangar3.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man3/mansion3_1.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man3/mansion3_1.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man3/mansion3_1.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man3/mansion3_1.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man3/mansion3_1.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man3/mansion3_1.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man3/mansion3_1.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man3/mansion3_1.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man3/mansion3_1.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man3/subbasement3b.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man3/subbasement3b.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man3/subbasement3b.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man3/subbasement3b.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man3/subbasement3b.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man3/subbasement3b.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man3/subbasement3b.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man3/subbasement3b.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man3/subbasement3b.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man3/subbasement3b.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man3/subbasement3b.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man3/subbasement3b.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man3/subbasement3b.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man3/subbasement3b.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man3/subbasement3b.fb (inline)"
+  ],
+  "gets": [
+   "mansion/man3/2_1_11first.py:6",
+   "mansion/man3/2_1_11first.py:17",
+   "mansion/man3/2_1_12_5first.py:6",
+   "mansion/man3/2_1_12_5first.py:17",
+   "mansion/man3/2_1_14first.py:6",
+   "mansion/man3/2_1_14first.py:17",
+   "mansion/man3/2_1_4first.py:6",
+   "mansion/man3/2_1_4first.py:17",
+   "mansion/man3/2_1_5first.py:6",
+   "mansion/man3/2_1_5first.py:17"
+  ],
+  "set_dirs": [
+   "mansion/man3",
+   "xml1_assets/packages",
+   "xml1_loose/conversations"
+  ],
+  "get_dirs": [
+   "mansion/man3"
+  ],
+  "cross_dir": true,
+  "len": 8,
+  "values": {
+   "1": 11
+  },
+  "bits": {
+   "13": 2,
+   "14": 2,
+   "15": 4,
+   "16": 4,
+   "17": 2,
+   "18": 2,
+   "11": 2,
+   "12": 2,
+   "4": 1
+  }
+ },
+ "mansion4": {
+  "kinds": [
+   "mflag"
+  ],
+  "sets": [
+   "mansion/man4/var_2_5_2_mansion4_5.py:2",
+   "xml1_loose/conversations/mansion/man4/2_5_13.eng (inline)",
+   "xml1_loose/conversations/mansion/man4/2_5_13.eng (inline)",
+   "xml1_loose/conversations/mansion/man4/2_5_2_5.eng (inline)",
+   "xml1_loose/conversations/mansion/man4/2_5_2_5.eng (inline)",
+   "xml1_loose/conversations/mansion/man4/2_5_4.eng (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man4/mansion4_1.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man4/mansion4_1.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man4/mansion4_1.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man4/mansion4_1.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man4/mansion4_1.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man4/mansion4_1.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man4/mansion_back4.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man4/mansion_back4.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man4/mansion_back4.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man4/subbasement4.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man4/subbasement4.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man4/subbasement4.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man4/subbasement4.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man4/subbasement4.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man4/subbasement4.fb (inline)"
+  ],
+  "gets": [],
+  "set_dirs": [
+   "mansion/man4",
+   "xml1_assets/packages",
+   "xml1_loose/conversations"
+  ],
+  "get_dirs": [],
+  "cross_dir": true,
+  "len": 8,
+  "values": {
+   "1": 1
+  },
+  "bits": {
+   "5": 1
+  }
+ },
+ "mansion5": {
+  "kinds": [
+   "mflag"
+  ],
+  "sets": [
+   "xml1_loose/conversations/mansion/man5/2_5_19.eng (inline)",
+   "xml1_loose/conversations/mansion/man5/2_5_19.eng (inline)",
+   "xml1_loose/conversations/mansion/man5/2_5_20.eng (inline)",
+   "xml1_loose/conversations/mansion/man5/2_5_20_1.eng (inline)",
+   "xml1_loose/conversations/mansion/man5/2_5_20_1.eng (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man5/subbasement5.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man5/subbasement5.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man5/subbasement5.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man5/subbasement5.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man5/subbasement5.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man5/subbasement5.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man5/subbasement5.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man5/subbasement5.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man5/subbasement5.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man5/subbasement5.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man5/subbasement5.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man5/subbasement5.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man5/subbasement5.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man5/subbasement5.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man5/subbasement5.fb (inline)"
+  ],
+  "gets": [],
+  "set_dirs": [
+   "xml1_assets/packages",
+   "xml1_loose/conversations"
+  ],
+  "get_dirs": [],
+  "cross_dir": true,
+  "len": 8,
+  "values": {},
+  "bits": {}
+ },
+ "mansion6": {
+  "kinds": [
+   "mflag"
+  ],
+  "sets": [
+   "xml1_loose/conversations/mansion/man6/3_1_3.eng (inline)",
+   "xml1_loose/conversations/mansion/man6/3_1_6.eng (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man6/subbasement6.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man6/subbasement6.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man6/subbasement6.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man6/subbasement6.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man6/subbasement6.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man6/subbasement6.fb (inline)"
+  ],
+  "gets": [],
+  "set_dirs": [
+   "xml1_assets/packages",
+   "xml1_loose/conversations"
+  ],
+  "get_dirs": [],
+  "cross_dir": true,
+  "len": 8,
+  "values": {},
+  "bits": {}
+ },
+ "mansion7": {
+  "kinds": [
+   "mflag"
+  ],
+  "sets": [
+   "mansion/man7/3_6_2_end.py:15",
+   "xml1_loose/conversations/mansion/man7/3_6_3.eng (inline)",
+   "xml1_loose/conversations/mansion/man7/3_6_4.eng (inline)",
+   "xml1_loose/conversations/mansion/man7/3_6_5.eng (inline)",
+   "xml1_loose/conversations/mansion/man7/3_6_5.eng (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man7/mansion7_1.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man7/mansion7_1.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man7/mansion7_1.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man7/subbasement7.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man7/subbasement7.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man7/subbasement7.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man7/subbasement7.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man7/subbasement7.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man7/subbasement7.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man7/subbasement7.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man7/subbasement7.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man7/subbasement7.fb (inline)"
+  ],
+  "gets": [
+   "mansion/man7/3_6_2_cam_start.py:3",
+   "mansion/man7/3_6_2_end.py:3"
+  ],
+  "set_dirs": [
+   "mansion/man7",
+   "xml1_assets/packages",
+   "xml1_loose/conversations"
+  ],
+  "get_dirs": [
+   "mansion/man7"
+  ],
+  "cross_dir": true,
+  "len": 8,
+  "values": {
+   "1": 1
+  },
+  "bits": {
+   "5": 1,
+   "6": 2
+  }
+ },
+ "mansion8": {
+  "kinds": [
+   "mflag"
+  ],
+  "sets": [
+   "xml1_loose/conversations/mansion/man8/3_9_2.eng (inline)",
+   "xml1_loose/conversations/mansion/man8/3_9_3.eng (inline)",
+   "xml1_loose/conversations/mansion/man8/3_9_3.eng (inline)",
+   "xml1_loose/conversations/mansion/man8/3_9_6.eng (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man8/hangar8.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man8/hangar8.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man8/hangar8.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man8/hangar8.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man8/hangar8.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man8/hangar8.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man8/hangar8.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man8/hangar8.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man8/hangar8.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man8/subbasement8.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man8/subbasement8.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man8/subbasement8.fb (inline)"
+  ],
+  "gets": [],
+  "set_dirs": [
+   "xml1_assets/packages",
+   "xml1_loose/conversations"
+  ],
+  "get_dirs": [],
+  "cross_dir": true,
+  "len": 8,
+  "values": {},
+  "bits": {}
+ },
+ "max_bots": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "mansion/man5/mansion_front5.py:7"
+  ],
+  "gets": [
+   "mansion/man5/sentinel_count.py:5"
+  ],
+  "set_dirs": [
+   "mansion/man5"
+  ],
+  "get_dirs": [
+   "mansion/man5"
+  ],
+  "cross_dir": false,
+  "len": 8,
+  "values": {
+   "12": 1
+  },
+  "bits": {}
+ },
+ "mdown": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "asteroid_m/mystiquepain.py:9"
+  ],
+  "gets": [
+   "asteroid_m/mystiquepain.py:3"
+  ],
+  "set_dirs": [
+   "asteroid_m/mystiquepain.py"
+  ],
+  "get_dirs": [
+   "asteroid_m/mystiquepain.py"
+  ],
+  "cross_dir": false,
+  "len": 5,
+  "values": {
+   "1": 1
+  },
+  "bits": {}
+ },
+ "muir": {
+  "kinds": [
+   "mflag"
+  ],
+  "sets": [
+   "muir_is/muir1/spokewithforge.py:3",
+   "muir_is/muir1/var_1_6_4a.py:2"
+  ],
+  "gets": [
+   "muir_is/muir1/spokewithforge.py:4"
+  ],
+  "set_dirs": [
+   "muir_is/muir1"
+  ],
+  "get_dirs": [
+   "muir_is/muir1"
+  ],
+  "cross_dir": false,
+  "len": 4,
+  "values": {
+   "1": 2
+  },
+  "bits": {
+   "3": 1,
+   "2": 1,
+   "1": 1
+  }
+ },
+ "muir2": {
+  "kinds": [
+   "mflag"
+  ],
+  "sets": [
+   "muir_is/muir2/muir_in2.py:9",
+   "muir_is/muir2/muir_in2.py:13",
+   "muir_is/muir2/muir_in2.py:14",
+   "muir_is/muir2/muir_in2.py:15",
+   "muir_is/muir2/muir_in2.py:28",
+   "muir_is/muir2/muir_in2.py:29",
+   "muir_is/muir2/muir_in2.py:30",
+   "muir_is/muir2/power_quest_check.py:11",
+   "muir_is/muir2/power_quest_check.py:12",
+   "muir_is/muir2/power_quest_check.py:13",
+   "muir_is/muir2/power_quest_check.py:16",
+   "muir_is/muir2/power_quest_check.py:17",
+   "muir_is/muir2/power_quest_check.py:18",
+   "muir_is/muir2/var_2_4_5_muir2_1.py:2",
+   "muir_is/muir2/var_2_4_7_muir2_2.py:2",
+   "xml1_loose/conversations/muir_is/muir2/2_4_7.eng (inline)",
+   "xml1_assets/packages/generated/maps/muir_is/muir2/muir_in2.fb (inline)",
+   "xml1_assets/packages/generated/maps/muir_is/muir2/muir_in2.fb (inline)",
+   "xml1_assets/packages/generated/maps/muir_is/muir2/muir_in2.fb (inline)"
+  ],
+  "gets": [
+   "muir_is/muir2/muir_in2.py:3"
+  ],
+  "set_dirs": [
+   "muir_is/muir2",
+   "xml1_assets/packages",
+   "xml1_loose/conversations"
+  ],
+  "get_dirs": [
+   "muir_is/muir2"
+  ],
+  "cross_dir": true,
+  "len": 5,
+  "values": {
+   "1": 7,
+   "0": 8
+  },
+  "bits": {
+   "6": 2,
+   "3": 4,
+   "4": 4,
+   "2": 5,
+   "1": 1
+  }
+ },
+ "muir3": {
+  "kinds": [
+   "mflag"
+  ],
+  "sets": [
+   "xml1_loose/conversations/muir_is/muir3/3_5_2.eng (inline)",
+   "xml1_loose/conversations/muir_is/muir3/3_5_4_2.eng (inline)",
+   "xml1_loose/conversations/muir_is/muir3/3_5_4_2.eng (inline)",
+   "xml1_loose/conversations/muir_is/muir3/3_5_4_2.eng (inline)",
+   "xml1_loose/conversations/muir_is/muir3/3_5_5.eng (inline)",
+   "xml1_loose/conversations/muir_is/muir3/3_5_6.eng (inline)",
+   "xml1_assets/packages/generated/maps/muir_is/muir3/muir_brig.fb (inline)",
+   "xml1_assets/packages/generated/maps/muir_is/muir3/muir_brig.fb (inline)",
+   "xml1_assets/packages/generated/maps/muir_is/muir3/muir_brig.fb (inline)",
+   "xml1_assets/packages/generated/maps/muir_is/muir3/muir_brig.fb (inline)",
+   "xml1_assets/packages/generated/maps/muir_is/muir3/muir_brig.fb (inline)",
+   "xml1_assets/packages/generated/maps/muir_is/muir3/muir_brig.fb (inline)",
+   "xml1_assets/packages/generated/maps/muir_is/muir3/muir_brig.fb (inline)",
+   "xml1_assets/packages/generated/maps/muir_is/muir3/muir_brig.fb (inline)",
+   "xml1_assets/packages/generated/maps/muir_is/muir3/muir_brig.fb (inline)",
+   "xml1_assets/packages/generated/maps/muir_is/muir3/muir_brig.fb (inline)",
+   "xml1_assets/packages/generated/maps/muir_is/muir3/muir_brig.fb (inline)",
+   "xml1_assets/packages/generated/maps/muir_is/muir3/muir_brig.fb (inline)",
+   "xml1_assets/packages/generated/maps/muir_is/muir3/muir_brig.fb (inline)",
+   "xml1_assets/packages/generated/maps/muir_is/muir3/muir_brig.fb (inline)",
+   "xml1_assets/packages/generated/maps/muir_is/muir3/muir_brig.fb (inline)",
+   "xml1_assets/packages/generated/maps/muir_is/muir3/muir_in3.fb (inline)",
+   "xml1_assets/packages/generated/maps/muir_is/muir3/muir_in3.fb (inline)",
+   "xml1_assets/packages/generated/maps/muir_is/muir3/muir_in3.fb (inline)"
+  ],
+  "gets": [],
+  "set_dirs": [
+   "xml1_assets/packages",
+   "xml1_loose/conversations"
+  ],
+  "get_dirs": [],
+  "cross_dir": true,
+  "len": 5,
+  "values": {},
+  "bits": {}
+ },
+ "my_var": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "astral/ast1/astral1_1.py:19",
+   "astral/ast3/astral3_2.py:6",
+   "astral/savepx/astral2_1.py:6"
+  ],
+  "gets": [
+   "astral/ast1/astral1_1.py:16",
+   "astral/ast3/astral3_2.py:3",
+   "astral/savepx/astral2_1.py:3"
+  ],
+  "set_dirs": [
+   "astral/ast1",
+   "astral/ast3",
+   "astral/savepx"
+  ],
+  "get_dirs": [
+   "astral/ast1",
+   "astral/ast3",
+   "astral/savepx"
+  ],
+  "cross_dir": true,
+  "len": 6,
+  "values": {
+   "1": 3
+  },
+  "bits": {}
+ },
+ "newspot": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "weapon_x/old/gettonextspot.py:6",
+   "weapon_x/old/havokbeginattacking1.py:6",
+   "weapon_x/old/havokbeginattacking2.py:11",
+   "weapon_x/old/havokbeginattacking3.py:11",
+   "weapon_x/old/havokbeginattacking4.py:3",
+   "weapon_x/old/havokpain.py:9"
+  ],
+  "gets": [
+   "weapon_x/old/havokpain.py:5"
+  ],
+  "set_dirs": [
+   "weapon_x/old"
+  ],
+  "get_dirs": [
+   "weapon_x/old"
+  ],
+  "cross_dir": false,
+  "len": 7,
+  "values": {
+   "1": 1,
+   "0": 5
+  },
+  "bits": {}
+ },
+ "nextroom": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "weapon_x/old/endroom1.py:12",
+   "weapon_x/old/endroom2.py:11",
+   "weapon_x/old/endroom3.py:11",
+   "weapon_x/old/havokbeginroom1.py:10",
+   "weapon_x/old/havokpain.py:29"
+  ],
+  "gets": [
+   "weapon_x/old/gettonextspot.py:3",
+   "weapon_x/old/havokbeginattacking2.py:3",
+   "weapon_x/old/havokbeginattacking3.py:3",
+   "weapon_x/old/havokpain.py:32"
+  ],
+  "set_dirs": [
+   "weapon_x/old"
+  ],
+  "get_dirs": [
+   "weapon_x/old"
+  ],
+  "cross_dir": false,
+  "len": 8,
+  "values": {
+   "2": 1,
+   "3": 1,
+   "4": 1,
+   "1": 1,
+   "<var>": 1
+  },
+  "bits": {}
+ },
+ "noMagma": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "asteroid_m/alisoncheck.py:4",
+   "asteroid_m/alisoncheck.py:14",
+   "asteroid_m/start2_3.py:13",
+   "asteroid_m/start2_3.py:23"
+  ],
+  "gets": [
+   "asteroid_m/alisoncheck.py:19",
+   "asteroid_m/start2_3.py:28"
+  ],
+  "set_dirs": [
+   "asteroid_m/alisoncheck.py",
+   "asteroid_m/start2_3.py"
+  ],
+  "get_dirs": [
+   "asteroid_m/alisoncheck.py",
+   "asteroid_m/start2_3.py"
+  ],
+  "cross_dir": true,
+  "len": 7,
+  "values": {
+   "0": 2,
+   "1": 2
+  },
+  "bits": {}
+ },
+ "nuke": {
+  "kinds": [
+   "mflag"
+  ],
+  "sets": [
+   "nuke_plant/nuke/pumpswitch02.py:7",
+   "nuke_plant/nuke/var_2_3_2_nuke_1.py:2",
+   "nuke_plant/nuke/var_2_3_2_nuke_2.py:2"
+  ],
+  "gets": [],
+  "set_dirs": [
+   "nuke_plant/nuke"
+  ],
+  "get_dirs": [],
+  "cross_dir": false,
+  "len": 4,
+  "values": {
+   "1": 3
+  },
+  "bits": {
+   "3": 1,
+   "1": 1,
+   "2": 1
+  }
+ },
+ "nyc_alison": {
+  "kinds": [
+   "mflag"
+  ],
+  "sets": [
+   "xml1_loose/conversations/nyc/alison/1_1_1.eng (inline)",
+   "xml1_assets/packages/generated/maps/nyc/alison/nyc1_1_2b.fb (inline)",
+   "xml1_assets/packages/generated/maps/nyc/alison/nyc1_1_2b.fb (inline)",
+   "xml1_assets/packages/generated/maps/nyc/alison/nyc1_1_2b.fb (inline)"
+  ],
+  "gets": [],
+  "set_dirs": [
+   "xml1_assets/packages",
+   "xml1_loose/conversations"
+  ],
+  "get_dirs": [],
+  "cross_dir": true,
+  "len": 10,
+  "values": {},
+  "bits": {}
+ },
+ "nyc_fb": {
+  "kinds": [
+   "mflag"
+  ],
+  "sets": [
+   "nyc/fb/nycfb2_finish.py:7",
+   "nyc/fb/nycfb4_finish.py:22",
+   "nyc/fb/nycfb4_finish.py:45"
+  ],
+  "gets": [
+   "nyc/fb/nycfb2_finish.py:5",
+   "nyc/fb/nycfb4_finish.py:9"
+  ],
+  "set_dirs": [
+   "nyc/fb"
+  ],
+  "get_dirs": [
+   "nyc/fb"
+  ],
+  "cross_dir": false,
+  "len": 6,
+  "values": {
+   "1": 2,
+   "0": 1
+  },
+  "bits": {
+   "2": 2,
+   "4": 3
+  }
+ },
+ "obj_g": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "xml1_loose/conversations/nuke_plant/nuke/2_3_3_1.eng (inline)",
+   "xml1_assets/packages/generated/maps/nuke_plant/nuke/nuke2_2a.fb (inline)",
+   "xml1_assets/packages/generated/maps/nuke_plant/nuke/nuke2_2a.fb (inline)",
+   "xml1_assets/packages/generated/maps/nuke_plant/nuke/nuke2_2a.fb (inline)"
+  ],
+  "gets": [],
+  "set_dirs": [
+   "xml1_assets/packages",
+   "xml1_loose/conversations"
+  ],
+  "get_dirs": [],
+  "cross_dir": true,
+  "len": 5,
+  "values": {},
+  "bits": {}
+ },
+ "part1": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "mastermold/catwalka1death.py:7",
+   "mastermold/catwalkb1death.py:7",
+   "mastermold/catwalkc1death.py:7",
+   "mastermold/catwalkd1death.py:7",
+   "mastermold/catwalke1death.py:7",
+   "mastermold/catwalkf1death.py:7"
+  ],
+  "gets": [
+   "mastermold/breakitup.py:4",
+   "mastermold/breakitupt.py:5"
+  ],
+  "set_dirs": [
+   "mastermold/catwalka1death.py",
+   "mastermold/catwalkb1death.py",
+   "mastermold/catwalkc1death.py",
+   "mastermold/catwalkd1death.py",
+   "mastermold/catwalke1death.py",
+   "mastermold/catwalkf1death.py"
+  ],
+  "get_dirs": [
+   "mastermold/breakitup.py",
+   "mastermold/breakitupt.py"
+  ],
+  "cross_dir": true,
+  "len": 5,
+  "values": {
+   "<var>": 6
+  },
+  "bits": {}
+ },
+ "part2": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "mastermold/catwalka1death.py:9",
+   "mastermold/catwalkb1death.py:9",
+   "mastermold/catwalkc1death.py:9",
+   "mastermold/catwalkd1death.py:11",
+   "mastermold/catwalke1death.py:11",
+   "mastermold/catwalkf1death.py:11"
+  ],
+  "gets": [
+   "mastermold/breakitup.py:10",
+   "mastermold/breakitupt.py:18"
+  ],
+  "set_dirs": [
+   "mastermold/catwalka1death.py",
+   "mastermold/catwalkb1death.py",
+   "mastermold/catwalkc1death.py",
+   "mastermold/catwalkd1death.py",
+   "mastermold/catwalke1death.py",
+   "mastermold/catwalkf1death.py"
+  ],
+  "get_dirs": [
+   "mastermold/breakitup.py",
+   "mastermold/breakitupt.py"
+  ],
+  "cross_dir": true,
+  "len": 5,
+  "values": {
+   "<var>": 6
+  },
+  "bits": {}
+ },
+ "part3": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "mastermold/catwalka1death.py:10",
+   "mastermold/catwalkb1death.py:10",
+   "mastermold/catwalkc1death.py:10",
+   "mastermold/catwalkd1death.py:15",
+   "mastermold/catwalke1death.py:15",
+   "mastermold/catwalkf1death.py:15"
+  ],
+  "gets": [
+   "mastermold/breakitupt.py:31"
+  ],
+  "set_dirs": [
+   "mastermold/catwalka1death.py",
+   "mastermold/catwalkb1death.py",
+   "mastermold/catwalkc1death.py",
+   "mastermold/catwalkd1death.py",
+   "mastermold/catwalke1death.py",
+   "mastermold/catwalkf1death.py"
+  ],
+  "get_dirs": [
+   "mastermold/breakitupt.py"
+  ],
+  "cross_dir": true,
+  "len": 5,
+  "values": {
+   "0": 3,
+   "<var>": 3
+  },
+  "bits": {}
+ },
+ "pbroke": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "haarp/ext/podiumdown_new.py:9"
+  ],
+  "gets": [
+   "haarp/ext/podiumdown_new.py:7",
+   "haarp/ext/toadpain_new.py:4"
+  ],
+  "set_dirs": [
+   "haarp/ext"
+  ],
+  "get_dirs": [
+   "haarp/ext"
+  ],
+  "cross_dir": false,
+  "len": 6,
+  "values": {
+   "<var>": 1
+  },
+  "bits": {}
+ },
+ "portalfx": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "astral/ast3/conv3_7_2_1b.py:35"
+  ],
+  "gets": [
+   "astral/ast3/astral3_2.py:10"
+  ],
+  "set_dirs": [
+   "astral/ast3"
+  ],
+  "get_dirs": [
+   "astral/ast3"
+  ],
+  "cross_dir": false,
+  "len": 8,
+  "values": {
+   "1": 1
+  },
+  "bits": {}
+ },
+ "ported": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "hive/h_int/telespot.py:22"
+  ],
+  "gets": [
+   "hive/h_int/telespot.py:4"
+  ],
+  "set_dirs": [
+   "hive/h_int"
+  ],
+  "get_dirs": [
+   "hive/h_int"
+  ],
+  "cross_dir": false,
+  "len": 6,
+  "values": {
+   "<var>": 1
+  },
+  "bits": {}
+ },
+ "pstatus": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "sewers/hub/sewers1_1_3_pump.py:5",
+   "sewers/hub/sewers1_1_4_pump.py:5"
+  ],
+  "gets": [
+   "sewers/hub/sewers1_1_2.py:3",
+   "sewers/hub/sewers1_1_3_pump.py:3",
+   "sewers/hub/sewers1_1_4_pump.py:3"
+  ],
+  "set_dirs": [
+   "sewers/hub"
+  ],
+  "get_dirs": [
+   "sewers/hub"
+  ],
+  "cross_dir": false,
+  "len": 7,
+  "values": {
+   "<var>": 2
+  },
+  "bits": {}
+ },
+ "psylocke": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "nyc/riots/end_psy_convo.py:3"
+  ],
+  "gets": [
+   "nyc/riots/check1_2objectives.py:7"
+  ],
+  "set_dirs": [
+   "nyc/riots"
+  ],
+  "get_dirs": [
+   "nyc/riots"
+  ],
+  "cross_dir": false,
+  "len": 8,
+  "values": {
+   "1": 1
+  },
+  "bits": {}
+ },
+ "pumps": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "nuke_plant/nuke/pumpswitch02.py:5"
+  ],
+  "gets": [
+   "nuke_plant/nuke/controlpanel.py:2",
+   "nuke_plant/nuke/pumpswitch02.py:3"
+  ],
+  "set_dirs": [
+   "nuke_plant/nuke"
+  ],
+  "get_dirs": [
+   "nuke_plant/nuke"
+  ],
+  "cross_dir": false,
+  "len": 5,
+  "values": {
+   "<var>": 1
+  },
+  "bits": {}
+ },
+ "puzzle1": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "nuke_plant/nuke/controlpanel.py:4"
+  ],
+  "gets": [
+   "nuke_plant/nuke/check_puzzle1.py:3"
+  ],
+  "set_dirs": [
+   "nuke_plant/nuke"
+  ],
+  "get_dirs": [
+   "nuke_plant/nuke"
+  ],
+  "cross_dir": false,
+  "len": 7,
+  "values": {
+   "2": 1
+  },
+  "bits": {}
+ },
+ "rebooted": {
+  "kinds": [
+   "gvar"
+  ],
+  "sets": [
+   "muir_is/muir2/endreboot.py:3",
+   "muir_is/muir2/muir_in2.py:8"
+  ],
+  "gets": [
+   "muir_is/muir2/muir_in2.py:4",
+   "muir_is/muir2/power_quest_check.py:5"
+  ],
+  "set_dirs": [
+   "muir_is/muir2"
+  ],
+  "get_dirs": [
+   "muir_is/muir2"
+  ],
+  "cross_dir": false,
+  "len": 8,
+  "values": {
+   "1": 1,
+   "0": 1
+  },
+  "bits": {}
+ },
+ "rescue": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "nyc/riots/rescue_complete.py:10",
+   "nyc/riots/rescue_complete2.py:10",
+   "nyc/riots/rescue_complete3.py:10",
+   "nyc/riots/rescue_complete4.py:10"
+  ],
+  "gets": [
+   "nyc/riots/rescue_complete.py:8",
+   "nyc/riots/rescue_complete2.py:8",
+   "nyc/riots/rescue_complete3.py:8",
+   "nyc/riots/rescue_complete4.py:8"
+  ],
+  "set_dirs": [
+   "nyc/riots"
+  ],
+  "get_dirs": [
+   "nyc/riots"
+  ],
+  "cross_dir": false,
+  "len": 6,
+  "values": {
+   "<var>": 4
+  },
+  "bits": {}
+ },
+ "right": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "mansion/man4/emma_talk.py:44"
+  ],
+  "gets": [
+   "mansion/man4/profx_apears.py:6",
+   "mansion/man4/profx_disapears.py:6"
+  ],
+  "set_dirs": [
+   "mansion/man4"
+  ],
+  "get_dirs": [
+   "mansion/man4"
+  ],
+  "cross_dir": false,
+  "len": 5,
+  "values": {
+   "1": 1
+  },
+  "bits": {}
+ },
+ "rightarm": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "nuke_plant/nuke/rightarm2.py:2"
+  ],
+  "gets": [
+   "nuke_plant/nuke/leftarm2.py:3"
+  ],
+  "set_dirs": [
+   "nuke_plant/nuke"
+  ],
+  "get_dirs": [
+   "nuke_plant/nuke"
+  ],
+  "cross_dir": false,
+  "len": 8,
+  "values": {
+   "1": 1
+  },
+  "bits": {}
+ },
+ "ro1b": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "xml1_loose/conversations/mansion/man1a/1_2_37.eng (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man1a/mansion1a_1.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man1a/mansion1a_1.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man1a/mansion1a_1.fb (inline)"
+  ],
+  "gets": [
+   "xml1_loose/conversations/mansion/man1a/1_2_37.eng (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man1a/mansion1a_1.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man1a/mansion1a_1.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man1a/mansion1a_1.fb (inline)"
+  ],
+  "set_dirs": [
+   "xml1_assets/packages",
+   "xml1_loose/conversations"
+  ],
+  "get_dirs": [
+   "xml1_assets/packages",
+   "xml1_loose/conversations"
+  ],
+  "cross_dir": true,
+  "len": 4,
+  "values": {},
+  "bits": {}
+ },
+ "roomnum": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "mansion/jugrnt/classroom.py:4",
+   "mansion/jugrnt/jugrnt01.py:13",
+   "mansion/jugrnt/library.py:4",
+   "mansion/jugrnt/poolroom.py:4",
+   "mansion/jugrnt/profxroom.py:4",
+   "mansion/jugrnt/sittingroom.py:4"
+  ],
+  "gets": [
+   "mansion/jugrnt/jugpain.py:6"
+  ],
+  "set_dirs": [
+   "mansion/jugrnt"
+  ],
+  "get_dirs": [
+   "mansion/jugrnt"
+  ],
+  "cross_dir": false,
+  "len": 7,
+  "values": {
+   "4": 1,
+   "1": 1,
+   "5": 1,
+   "2": 1,
+   "6": 1,
+   "3": 1
+  },
+  "bits": {}
+ },
+ "roomtime": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "mansion/jugrnt/jugrnt01.py:12"
+  ],
+  "gets": [
+   "mansion/jugrnt/classroom.py:10",
+   "mansion/jugrnt/library.py:10",
+   "mansion/jugrnt/poolroom.py:10",
+   "mansion/jugrnt/profxroom.py:10",
+   "mansion/jugrnt/sittingroom.py:12",
+   "mansion/jugrnt/start.py:13"
+  ],
+  "set_dirs": [
+   "mansion/jugrnt"
+  ],
+  "get_dirs": [
+   "mansion/jugrnt"
+  ],
+  "cross_dir": false,
+  "len": 8,
+  "values": {
+   "30": 1
+  },
+  "bits": {}
+ },
+ "s_fb_intro": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "nyc/fb/nyc_fb1.py:6"
+  ],
+  "gets": [
+   "nyc/fb/nyc_fb1.py:3"
+  ],
+  "set_dirs": [
+   "nyc/fb"
+  ],
+  "get_dirs": [
+   "nyc/fb"
+  ],
+  "cross_dir": false,
+  "len": 10,
+  "values": {
+   "1": 1
+  },
+  "bits": {}
+ },
+ "s_m_q": {
+  "kinds": [
+   "gvar"
+  ],
+  "sets": [
+   "muir_is/muir1/spokewithforge.py:11"
+  ],
+  "gets": [
+   "muir_is/muir1/spokewithforge.py:8"
+  ],
+  "set_dirs": [
+   "muir_is/muir1"
+  ],
+  "get_dirs": [
+   "muir_is/muir1"
+  ],
+  "cross_dir": false,
+  "len": 5,
+  "values": {
+   "<var>": 1
+  },
+  "bits": {}
+ },
+ "sabredead": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "asteroid_m/sabretoothdeath.py:3",
+   "asteroid_m/stage4.py:7",
+   "mount/sabreressurrect.py:4",
+   "mount/sabretoothdeath.py:3"
+  ],
+  "gets": [
+   "mount/mountoutro.py:7"
+  ],
+  "set_dirs": [
+   "asteroid_m/sabretoothdeath.py",
+   "asteroid_m/stage4.py",
+   "mount/sabreressurrect.py",
+   "mount/sabretoothdeath.py"
+  ],
+  "get_dirs": [
+   "mount/mountoutro.py"
+  ],
+  "cross_dir": true,
+  "len": 9,
+  "values": {
+   "1": 2,
+   "0": 2
+  },
+  "bits": {}
+ },
+ "sawgate": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [],
+  "gets": [
+   "haarp/ext/haarp_ext02.py:3"
+  ],
+  "set_dirs": [],
+  "get_dirs": [
+   "haarp/ext"
+  ],
+  "cross_dir": false,
+  "len": 7,
+  "values": {},
+  "bits": {}
+ },
+ "sawintro": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "haarp/ext/haarp_ext01.py:8",
+   "mastermold/mastermold1.py:5"
+  ],
+  "gets": [
+   "haarp/ext/haarp_ext01.py:3",
+   "mastermold/mastermold1.py:3"
+  ],
+  "set_dirs": [
+   "haarp/ext",
+   "mastermold/mastermold1.py"
+  ],
+  "get_dirs": [
+   "haarp/ext",
+   "mastermold/mastermold1.py"
+  ],
+  "cross_dir": true,
+  "len": 8,
+  "values": {
+   "1": 2
+  },
+  "bits": {}
+ },
+ "scott": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "muir_is/muir2/control_alsion.py:12"
+  ],
+  "gets": [],
+  "set_dirs": [
+   "muir_is/muir2"
+  ],
+  "get_dirs": [],
+  "cross_dir": false,
+  "len": 5,
+  "values": {
+   "1": 1
+  },
+  "bits": {}
+ },
+ "sec_wx": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "weapon_x/secret/wx3_1.py:10"
+  ],
+  "gets": [
+   "common/astral_or_wx.py:11"
+  ],
+  "set_dirs": [
+   "weapon_x/secret"
+  ],
+  "get_dirs": [
+   "common/astral_or_wx.py"
+  ],
+  "cross_dir": true,
+  "len": 6,
+  "values": {
+   "1": 1
+  },
+  "bits": {}
+ },
+ "sent_fb": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "mansion/man2/unlocksentinelflashback.py:3"
+  ],
+  "gets": [],
+  "set_dirs": [
+   "mansion/man2"
+  ],
+  "get_dirs": [],
+  "cross_dir": false,
+  "len": 7,
+  "values": {
+   "1": 1
+  },
+  "bits": {}
+ },
+ "shieldup": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "astral/savepx/dropshield.py:8",
+   "astral/savepx/sk1pain.py:12",
+   "astral/savepx/sk1pain.py:28"
+  ],
+  "gets": [
+   "astral/savepx/dropshield.py:4",
+   "astral/savepx/sk1pain.py:6"
+  ],
+  "set_dirs": [
+   "astral/savepx"
+  ],
+  "get_dirs": [
+   "astral/savepx"
+  ],
+  "cross_dir": false,
+  "len": 8,
+  "values": {
+   "0": 2,
+   "1": 1
+  },
+  "bits": {}
+ },
+ "shop": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "sewers/hub/healer_obj.py:8",
+   "sewers/hub/healer_obj2.py:8"
+  ],
+  "gets": [
+   "sewers/hub/healer_obj.py:5",
+   "sewers/hub/healer_obj2.py:5"
+  ],
+  "set_dirs": [
+   "sewers/hub"
+  ],
+  "get_dirs": [
+   "sewers/hub"
+  ],
+  "cross_dir": false,
+  "len": 4,
+  "values": {
+   "1": 2
+  },
+  "bits": {}
+ },
+ "showdem": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "haarp/ext/elevator1.py:23"
+  ],
+  "gets": [
+   "haarp/ext/elevator1.py:3"
+  ],
+  "set_dirs": [
+   "haarp/ext"
+  ],
+  "get_dirs": [
+   "haarp/ext"
+  ],
+  "cross_dir": false,
+  "len": 7,
+  "values": {
+   "1": 1
+  },
+  "bits": {}
+ },
+ "sk_defeated": {
+  "kinds": [
+   "gvar"
+  ],
+  "sets": [
+   "astral/savepx/shadowking_defeated.py:7"
+  ],
+  "gets": [
+   "astral/savepx/astral2_3.py:3"
+  ],
+  "set_dirs": [
+   "astral/savepx"
+  ],
+  "get_dirs": [
+   "astral/savepx"
+  ],
+  "cross_dir": false,
+  "len": 11,
+  "values": {
+   "1": 1
+  },
+  "bits": {}
+ },
+ "stage": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "asteroid_m/2_1_fight_magneto.py:8",
+   "asteroid_m/magneto_pain.py:13",
+   "astral/ast3/avalanche_pain.py:13",
+   "astral/ast3/avalanche_start.py:4",
+   "astral/ast3/blobintro.py:10",
+   "astral/ast3/blobpain.py:48",
+   "astral/ast3/blobspawn.py:4",
+   "astral/ast3/pyrocam.py:10",
+   "astral/ast3/spawnfiredemons.py:10",
+   "astral/savepx/final_astral.py:3",
+   "astral/savepx/sk1pain.py:27",
+   "astral/savepx/sk2pain.py:17",
+   "astral/savepx/spawnsk2.py:5",
+   "haarp/int/pyropain.py:9",
+   "haarp/int/pyropain.py:14",
+   "haarp/int/pyropain.py:21",
+   "haarp/int/pyropain.py:27",
+   "haarp/int/pyrospawn.py:4",
+   "mansion/dr_mag2/2_2_1_b_end.py:15",
+   "mastermold/checkcore.py:9",
+   "mastermold/mmpain.py:16",
+   "mastermold/mmspawn.py:7",
+   "mount/avalanchepain.py:14",
+   "mount/avalanchepain.py:23",
+   "mount/avalanchepain.py:30",
+   "mount/avalanchepain.py:39",
+   "mount/avalanchepain.py:46",
+   "mount/avalanchepain.py:55",
+   "mount/avalanchepain.py:62",
+   "mount/avalanchepain.py:71",
+   "nyc/alison/mystiquetoilet.py:12",
+   "nyc/alison/mystique_fight_start.py:38",
+   "nyc/alison/mystique_pain.py:14",
+   "nyc/alison/mystique_pain.py:18",
+   "nyc/alison/mystique_pain.py:23"
+  ],
+  "gets": [
+   "asteroid_m/magneto_pain.py:3",
+   "astral/ast3/avalanche_pain.py:4",
+   "astral/ast3/blobpain.py:4",
+   "astral/ast3/blob_pillar_death.py:4",
+   "astral/ast3/pyropain.py:4",
+   "astral/ast3/spawnfiredemons.py:4",
+   "astral/savepx/sk1pain.py:4",
+   "astral/savepx/sk2pain.py:4",
+   "haarp/int/pyropain.py:6",
+   "mastermold/mmpain.py:4",
+   "mastermold/mmspawn.py:5",
+   "mount/avalanchepain.py:6",
+   "nyc/alison/mystique_pain.py:3"
+  ],
+  "set_dirs": [
+   "asteroid_m/2_1_fight_magneto.py",
+   "asteroid_m/magneto_pain.py",
+   "astral/ast3",
+   "astral/savepx",
+   "haarp/int",
+   "mansion/dr_mag2",
+   "mastermold/checkcore.py",
+   "mastermold/mmpain.py",
+   "mastermold/mmspawn.py",
+   "mount/avalanchepain.py",
+   "nyc/alison"
+  ],
+  "get_dirs": [
+   "asteroid_m/magneto_pain.py",
+   "astral/ast3",
+   "astral/savepx",
+   "haarp/int",
+   "mastermold/mmpain.py",
+   "mastermold/mmspawn.py",
+   "mount/avalanchepain.py",
+   "nyc/alison"
+  ],
+  "cross_dir": true,
+  "len": 5,
+  "values": {
+   "1": 13,
+   "<var>": 8,
+   "3": 3,
+   "2": 3,
+   "0": 1,
+   "-1": 1,
+   "4": 2,
+   "5": 1,
+   "6": 1,
+   "7": 1,
+   "8": 1
+  },
+  "bits": {}
+ },
+ "start": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "arbiter/deck/sentinel_landing.py:25",
+   "nyc/riots/start_riots.py:16"
+  ],
+  "gets": [
+   "arbiter/deck/sentinel_landing.py:3",
+   "nyc/riots/start_riots.py:3"
+  ],
+  "set_dirs": [
+   "arbiter/deck",
+   "nyc/riots"
+  ],
+  "get_dirs": [
+   "arbiter/deck",
+   "nyc/riots"
+  ],
+  "cross_dir": true,
+  "len": 5,
+  "values": {
+   "1": 2
+  },
+  "bits": {}
+ },
+ "start1": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "nyc/riots/intro_spider_sentinel.py:35"
+  ],
+  "gets": [
+   "nyc/riots/intro_spider_sentinel.py:7"
+  ],
+  "set_dirs": [
+   "nyc/riots"
+  ],
+  "get_dirs": [
+   "nyc/riots"
+  ],
+  "cross_dir": false,
+  "len": 6,
+  "values": {
+   "1": 1
+  },
+  "bits": {}
+ },
+ "started": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "arbiter/a_int/arb3_1.py:5"
+  ],
+  "gets": [
+   "arbiter/a_int/arb3_1.py:3"
+  ],
+  "set_dirs": [
+   "arbiter/a_int"
+  ],
+  "get_dirs": [
+   "arbiter/a_int"
+  ],
+  "cross_dir": false,
+  "len": 7,
+  "values": {
+   "1": 1
+  },
+  "bits": {}
+ },
+ "startfd1": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "arbiter/deck/arb_fd1.py:9"
+  ],
+  "gets": [
+   "arbiter/deck/arb_fd1.py:4"
+  ],
+  "set_dirs": [
+   "arbiter/deck"
+  ],
+  "get_dirs": [
+   "arbiter/deck"
+  ],
+  "cross_dir": false,
+  "len": 8,
+  "values": {
+   "1": 1
+  },
+  "bits": {}
+ },
+ "startfd2": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "arbiter/deck/arb_fd2.py:9"
+  ],
+  "gets": [
+   "arbiter/deck/arb_fd2.py:3"
+  ],
+  "set_dirs": [
+   "arbiter/deck"
+  ],
+  "get_dirs": [
+   "arbiter/deck"
+  ],
+  "cross_dir": false,
+  "len": 8,
+  "values": {
+   "1": 1
+  },
+  "bits": {}
+ },
+ "steamtime": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "sewers/hub/steamhurt1.py:3",
+   "sewers/quest/prep_spar.py:3"
+  ],
+  "gets": [
+   "sewers/hub/steamhurt1.py:9",
+   "sewers/hub/steamhurt2.py:8",
+   "sewers/hub/steamhurt3.py:8",
+   "sewers/hub/steamhurt4.py:8",
+   "sewers/hub/steamhurt5.py:11",
+   "sewers/hub/steamhurt6.py:11",
+   "sewers/hub/steamhurt7.py:8",
+   "sewers/hub/steamhurt8.py:8"
+  ],
+  "set_dirs": [
+   "sewers/hub",
+   "sewers/quest"
+  ],
+  "get_dirs": [
+   "sewers/hub"
+  ],
+  "cross_dir": true,
+  "len": 9,
+  "values": {
+   "3": 2
+  },
+  "bits": {}
+ },
+ "storm_f": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "xml1_loose/conversations/mansion/man1a/1_2_36.eng (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man1a/mansion1a_2.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man1a/mansion1a_2.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man1a/mansion1a_2.fb (inline)"
+  ],
+  "gets": [],
+  "set_dirs": [
+   "xml1_assets/packages",
+   "xml1_loose/conversations"
+  ],
+  "get_dirs": [],
+  "cross_dir": true,
+  "len": 7,
+  "values": {},
+  "bits": {}
+ },
+ "supers": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "haarp/ext/toadpain_new.py:54"
+  ],
+  "gets": [
+   "haarp/ext/toadpain_new.py:52"
+  ],
+  "set_dirs": [
+   "haarp/ext"
+  ],
+  "get_dirs": [
+   "haarp/ext"
+  ],
+  "cross_dir": false,
+  "len": 6,
+  "values": {
+   "1": 1
+  },
+  "bits": {}
+ },
+ "sw1State": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "astral/ast1/teleportswitch1.py:7",
+   "astral/ast1/teleportswitch1.py:14",
+   "astral/ast1/teleportswitch1.py:21"
+  ],
+  "gets": [
+   "astral/ast1/teleportswitch1.py:3"
+  ],
+  "set_dirs": [
+   "astral/ast1"
+  ],
+  "get_dirs": [
+   "astral/ast1"
+  ],
+  "cross_dir": false,
+  "len": 8,
+  "values": {
+   "<var>": 3
+  },
+  "bits": {}
+ },
+ "swrgrso1": {
+  "kinds": [
+   "mflag"
+  ],
+  "sets": [
+   "sewers/grso/conv_3_4_3.py:3",
+   "sewers/grso/sewers3_1_1.py:12",
+   "xml1_loose/conversations/sewers/grso/3_4_2.eng (inline)",
+   "xml1_loose/conversations/sewers/grso/3_4_3.eng (inline)",
+   "xml1_loose/conversations/sewers/grso/3_4_3.eng (inline)",
+   "xml1_loose/conversations/sewers/grso/3_4_5.eng (inline)",
+   "xml1_loose/conversations/sewers/grso/3_4_5.eng (inline)",
+   "xml1_loose/conversations/sewers/grso/3_4_5.eng (inline)",
+   "xml1_assets/packages/generated/maps/sewers/grso/sewers3_1_1.fb (inline)",
+   "xml1_assets/packages/generated/maps/sewers/grso/sewers3_1_1.fb (inline)",
+   "xml1_assets/packages/generated/maps/sewers/grso/sewers3_1_1.fb (inline)",
+   "xml1_assets/packages/generated/maps/sewers/grso/sewers3_1_3.fb (inline)",
+   "xml1_assets/packages/generated/maps/sewers/grso/sewers3_1_3.fb (inline)",
+   "xml1_assets/packages/generated/maps/sewers/grso/sewers3_1_3.fb (inline)",
+   "xml1_assets/packages/generated/maps/sewers/grso/sewers3_1_3.fb (inline)",
+   "xml1_assets/packages/generated/maps/sewers/grso/sewers3_1_3.fb (inline)",
+   "xml1_assets/packages/generated/maps/sewers/grso/sewers3_1_3.fb (inline)",
+   "xml1_assets/packages/generated/maps/sewers/grso/sewers_marrow.fb (inline)",
+   "xml1_assets/packages/generated/maps/sewers/grso/sewers_marrow.fb (inline)",
+   "xml1_assets/packages/generated/maps/sewers/grso/sewers_marrow.fb (inline)",
+   "xml1_assets/packages/generated/maps/sewers/grso/sewers_marrow.fb (inline)",
+   "xml1_assets/packages/generated/maps/sewers/grso/sewers_marrow.fb (inline)",
+   "xml1_assets/packages/generated/maps/sewers/grso/sewers_marrow.fb (inline)",
+   "xml1_assets/packages/generated/maps/sewers/grso/sewers_marrow.fb (inline)",
+   "xml1_assets/packages/generated/maps/sewers/grso/sewers_marrow.fb (inline)",
+   "xml1_assets/packages/generated/maps/sewers/grso/sewers_marrow.fb (inline)"
+  ],
+  "gets": [
+   "sewers/grso/sewers3_1_1.py:3"
+  ],
+  "set_dirs": [
+   "sewers/grso",
+   "xml1_assets/packages",
+   "xml1_loose/conversations"
+  ],
+  "get_dirs": [
+   "sewers/grso"
+  ],
+  "cross_dir": true,
+  "len": 8,
+  "values": {
+   "1": 2
+  },
+  "bits": {
+   "6": 1,
+   "10": 2
+  }
+ },
+ "swrhub1": {
+  "kinds": [
+   "mflag"
+  ],
+  "sets": [
+   "sewers/hub/sewers1_1_1.py:5",
+   "sewers/hub/var_1_5_1a.py:2",
+   "sewers/quest/var_1_5_4.py:2"
+  ],
+  "gets": [
+   "sewers/hub/sewers1_1_1.py:3"
+  ],
+  "set_dirs": [
+   "sewers/hub",
+   "sewers/quest"
+  ],
+  "get_dirs": [
+   "sewers/hub"
+  ],
+  "cross_dir": true,
+  "len": 7,
+  "values": {
+   "1": 2,
+   "2": 1
+  },
+  "bits": {
+   "1": 4
+  }
+ },
+ "swrhub2": {
+  "kinds": [
+   "mflag"
+  ],
+  "sets": [
+   "xml1_loose/conversations/sewers/hub/2_9_2.eng (inline)",
+   "xml1_loose/conversations/sewers/hub/2_9_2.eng (inline)",
+   "xml1_loose/conversations/sewers/hub/2_9_2.eng (inline)",
+   "xml1_assets/packages/generated/maps/sewers/healer/sewers_hub2.fb (inline)",
+   "xml1_assets/packages/generated/maps/sewers/healer/sewers_hub2.fb (inline)",
+   "xml1_assets/packages/generated/maps/sewers/healer/sewers_hub2.fb (inline)",
+   "xml1_assets/packages/generated/maps/sewers/healer/sewers_hub2.fb (inline)",
+   "xml1_assets/packages/generated/maps/sewers/healer/sewers_hub2.fb (inline)",
+   "xml1_assets/packages/generated/maps/sewers/healer/sewers_hub2.fb (inline)",
+   "xml1_assets/packages/generated/maps/sewers/healer/sewers_hub2.fb (inline)",
+   "xml1_assets/packages/generated/maps/sewers/healer/sewers_hub2.fb (inline)",
+   "xml1_assets/packages/generated/maps/sewers/healer/sewers_hub2.fb (inline)"
+  ],
+  "gets": [
+   "sewers/hub/mor_stealing2.py:6"
+  ],
+  "set_dirs": [
+   "xml1_assets/packages",
+   "xml1_loose/conversations"
+  ],
+  "get_dirs": [
+   "sewers/hub"
+  ],
+  "cross_dir": true,
+  "len": 7,
+  "values": {},
+  "bits": {
+   "3": 1
+  }
+ },
+ "tank": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "haarp/ext/fence_obj.py:15"
+  ],
+  "gets": [
+   "haarp/ext/trigger_tank.py:3"
+  ],
+  "set_dirs": [
+   "haarp/ext"
+  ],
+  "get_dirs": [
+   "haarp/ext"
+  ],
+  "cross_dir": false,
+  "len": 4,
+  "values": {
+   "1": 1
+  },
+  "bits": {}
+ },
+ "telenext": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "muir_is/muir3/juggypain.py:20",
+   "muir_is/muir3/juggypain.py:22",
+   "muir_is/muir3/juggypain.py:24",
+   "muir_is/muir3/startthefight.py:16"
+  ],
+  "gets": [
+   "muir_is/muir3/forgepain.py:6",
+   "muir_is/muir3/juggypain.py:26",
+   "muir_is/muir3/juggyreachedspot.py:7"
+  ],
+  "set_dirs": [
+   "muir_is/muir3"
+  ],
+  "get_dirs": [
+   "muir_is/muir3"
+  ],
+  "cross_dir": false,
+  "len": 8,
+  "values": {
+   "4": 1,
+   "3": 1,
+   "2": 1,
+   "1": 1
+  },
+  "bits": {}
+ },
+ "telespot": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "muir_is/muir3/forgepain.py:66",
+   "muir_is/muir3/startthefight.py:15"
+  ],
+  "gets": [
+   "muir_is/muir3/forgepain.py:5",
+   "muir_is/muir3/juggypain.py:5"
+  ],
+  "set_dirs": [
+   "muir_is/muir3"
+  ],
+  "get_dirs": [
+   "muir_is/muir3"
+  ],
+  "cross_dir": false,
+  "len": 8,
+  "values": {
+   "<var>": 1,
+   "1": 1
+  },
+  "bits": {}
+ },
+ "temp": {
+  "kinds": [
+   "mflag",
+   "mvar"
+  ],
+  "sets": [
+   "muir_is/muir3/endmuir3mission.py:9",
+   "muir_is/muir3/endmuir3mission.py:11",
+   "nyc/riots/check2_1objectives.py:11",
+   "nyc/riots/check2_1objectives.py:13",
+   "nyc/riots/checkriotsobjective.py:15",
+   "nyc/riots/checkriotsobjective.py:17",
+   "sewers/grso/endgrsomission.py:9",
+   "sewers/grso/endgrsomission.py:11"
+  ],
+  "gets": [
+   "muir_is/muir3/endmuir3mission.py:12",
+   "nyc/riots/check2_1objectives.py:14",
+   "nyc/riots/checkriotsobjective.py:18",
+   "sewers/grso/endgrsomission.py:12"
+  ],
+  "set_dirs": [
+   "muir_is/muir3",
+   "nyc/riots",
+   "sewers/grso"
+  ],
+  "get_dirs": [
+   "muir_is/muir3",
+   "nyc/riots",
+   "sewers/grso"
+  ],
+  "cross_dir": true,
+  "len": 4,
+  "values": {
+   "<var>": 4,
+   "1": 4
+  },
+  "bits": {
+   "3": 1,
+   "1": 2,
+   "2": 1
+  }
+ },
+ "thief": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "sewers/hub/mor_stealing2.py:23"
+  ],
+  "gets": [
+   "sewers/healer/sewers_hub2.py:8"
+  ],
+  "set_dirs": [
+   "sewers/hub"
+  ],
+  "get_dirs": [
+   "sewers/healer"
+  ],
+  "cross_dir": true,
+  "len": 5,
+  "values": {
+   "1": 1
+  },
+  "bits": {}
+ },
+ "thisroom": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "weapon_x/old/havokbeginattacking2.py:12",
+   "weapon_x/old/havokbeginattacking3.py:12",
+   "weapon_x/old/havokbeginattacking4.py:4",
+   "weapon_x/old/havokbeginroom1.py:9"
+  ],
+  "gets": [
+   "weapon_x/old/gettonextspot.py:4",
+   "weapon_x/old/havokpain.py:16"
+  ],
+  "set_dirs": [
+   "weapon_x/old"
+  ],
+  "get_dirs": [
+   "weapon_x/old"
+  ],
+  "cross_dir": false,
+  "len": 8,
+  "values": {
+   "2": 1,
+   "3": 1,
+   "4": 1,
+   "1": 1
+  },
+  "bits": {}
+ },
+ "timers": {
+  "kinds": [
+   "mflag"
+  ],
+  "sets": [
+   "arbiter/a_int/check_timer.py:8",
+   "arbiter/a_int/check_timer.py:15",
+   "arbiter/a_int/check_timer.py:22"
+  ],
+  "gets": [
+   "arbiter/a_int/check_timer.py:5",
+   "arbiter/a_int/check_timer.py:12",
+   "arbiter/a_int/check_timer.py:19"
+  ],
+  "set_dirs": [
+   "arbiter/a_int"
+  ],
+  "get_dirs": [
+   "arbiter/a_int"
+  ],
+  "cross_dir": false,
+  "len": 6,
+  "values": {
+   "1": 3
+  },
+  "bits": {
+   "1": 2,
+   "2": 2,
+   "3": 2
+  }
+ },
+ "triggerID": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "arbiter/rescue_complete.py:7",
+   "arbiter/rescue_complete.py:25"
+  ],
+  "gets": [],
+  "set_dirs": [
+   "arbiter/rescue_complete.py"
+  ],
+  "get_dirs": [],
+  "cross_dir": false,
+  "len": 9,
+  "values": {
+   "<var>": 2
+  },
+  "bits": {}
+ },
+ "triggerid": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [],
+  "gets": [
+   "arbiter/a_int/reenable.py:3"
+  ],
+  "set_dirs": [],
+  "get_dirs": [
+   "arbiter/a_int"
+  ],
+  "cross_dir": false,
+  "len": 9,
+  "values": {},
+  "bits": {}
+ },
+ "uniform": {
+  "kinds": [
+   "gvar"
+  ],
+  "sets": [
+   "mansion/dr_mag2/endsidemission.py:3",
+   "mansion/man3/danger_room.py:3",
+   "mansion/man3/man3_2_setup.py:5"
+  ],
+  "gets": [
+   "mansion/man3/2_1_11first.py:3",
+   "mansion/man3/2_1_12_5first.py:3",
+   "mansion/man3/2_1_14first.py:3",
+   "mansion/man3/2_1_4first.py:3",
+   "mansion/man3/2_1_5first.py:3",
+   "mansion/man3/conv2_1_12.py:3",
+   "mansion/man3/hangar3.py:7",
+   "mansion/man3/mansion3_2.py:3",
+   "mansion/man3/subbasement3b.py:4"
+  ],
+  "set_dirs": [
+   "mansion/dr_mag2",
+   "mansion/man3"
+  ],
+  "get_dirs": [
+   "mansion/man3"
+  ],
+  "cross_dir": true,
+  "len": 7,
+  "values": {
+   "1": 2,
+   "2": 1
+  },
+  "bits": {}
+ },
+ "visback": {
+  "kinds": [
+   "gvar"
+  ],
+  "sets": [
+   "mansion/man4/mansion_back4.py:20"
+  ],
+  "gets": [
+   "mansion/man4/mansion_back4.py:4"
+  ],
+  "set_dirs": [
+   "mansion/man4"
+  ],
+  "get_dirs": [
+   "mansion/man4"
+  ],
+  "cross_dir": false,
+  "len": 7,
+  "values": {
+   "1": 1
+  },
+  "bits": {}
+ },
+ "visit": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [],
+  "gets": [
+   "muir_is/muir2/muir_in2.py:2"
+  ],
+  "set_dirs": [],
+  "get_dirs": [
+   "muir_is/muir2"
+  ],
+  "cross_dir": false,
+  "len": 5,
+  "values": {},
+  "bits": {}
+ },
+ "weap_x": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "xml1_loose/conversations/mansion/man4/2_5_13.eng (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man4/mansion4_1.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man4/mansion4_1.fb (inline)",
+   "xml1_assets/packages/generated/maps/mansion/man4/mansion4_1.fb (inline)"
+  ],
+  "gets": [],
+  "set_dirs": [
+   "xml1_assets/packages",
+   "xml1_loose/conversations"
+  ],
+  "get_dirs": [],
+  "cross_dir": true,
+  "len": 6,
+  "values": {},
+  "bits": {}
+ },
+ "wolv_fb": {
+  "kinds": [
+   "gvar"
+  ],
+  "sets": [
+   "weapon_x/wfb/end_fb.py:3"
+  ],
+  "gets": [
+   "mansion/man3/hangar3.py:8"
+  ],
+  "set_dirs": [
+   "weapon_x/wfb"
+  ],
+  "get_dirs": [
+   "mansion/man3"
+  ],
+  "cross_dir": true,
+  "len": 7,
+  "values": {
+   "1": 1
+  },
+  "bits": {}
+ },
+ "wolvdead": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "astral/ast3/dopple_death.py:11",
+   "astral/ast3/wolvressurrect.py:10"
+  ],
+  "gets": [
+   "astral/ast3/dopple_death.py:7"
+  ],
+  "set_dirs": [
+   "astral/ast3"
+  ],
+  "get_dirs": [
+   "astral/ast3"
+  ],
+  "cross_dir": false,
+  "len": 8,
+  "values": {
+   "1": 1,
+   "0": 1
+  },
+  "bits": {}
+ },
+ "wpnxfb": {
+  "kinds": [
+   "mflag"
+  ],
+  "sets": [
+   "weapon_x/wfb/director_shot.py:11"
+  ],
+  "gets": [
+   "weapon_x/wfb/wx1_3.py:3"
+  ],
+  "set_dirs": [
+   "weapon_x/wfb"
+  ],
+  "get_dirs": [
+   "weapon_x/wfb"
+  ],
+  "cross_dir": false,
+  "len": 6,
+  "values": {
+   "1": 1
+  },
+  "bits": {
+   "1": 2
+  }
+ },
+ "wpxflash": {
+  "kinds": [
+   "gvar"
+  ],
+  "sets": [
+   "mansion/man3/hangar3.py:15"
+  ],
+  "gets": [],
+  "set_dirs": [
+   "mansion/man3"
+  ],
+  "get_dirs": [],
+  "cross_dir": false,
+  "len": 8,
+  "values": {
+   "2": 1
+  },
+  "bits": {}
+ },
+ "wx": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [],
+  "gets": [
+   "mansion/man4/subbasement4.py:5"
+  ],
+  "set_dirs": [],
+  "get_dirs": [
+   "mansion/man4"
+  ],
+  "cross_dir": false,
+  "len": 2,
+  "values": {},
+  "bits": {}
+ },
+ "xpips": {
+  "kinds": [
+   "mvar"
+  ],
+  "sets": [
+   "common/kingofhillxpip.py:5",
+   "common/kingofhillxpip.py:7"
+  ],
+  "gets": [
+   "common/kingofhillxpip.py:3"
+  ],
+  "set_dirs": [
+   "common/kingofhillxpip.py"
+  ],
+  "get_dirs": [
+   "common/kingofhillxpip.py"
+  ],
+  "cross_dir": false,
+  "len": 5,
+  "values": {
+   "<var>": 1,
+   "0": 1
+  },
+  "bits": {}
+ }
+}

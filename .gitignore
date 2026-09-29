@@ -1,0 +1,109 @@
+# Legends Classic holds our code and notes only - NEVER anything from the games. The content guard
+# (tools/check_no_game_content.py, pre-commit + CI) enforces it; this file keeps the usual suspects out of `git status`.
+
+# --- your own copies of the games and anything made from them (inputs, caches, builds)
+*.iso
+*.xiso
+*.cci
+*.cso
+xml1_xbox/
+xml1_assets/
+xml1_loose/
+xml2_test/
+xml2_copy/
+/build/
+/cache/
+**/out/
+research/**/banks*/
+research/**/wav/
+movies_backup/
+_build/
+
+# --- game file formats, at every level
+*.igb
+*.igz
+*.xmlb
+*.engb
+*.freb
+*.gerb
+*.itab
+*.spab
+*.chrb
+*.navb
+*.boyb
+*.pkgb
+*.fb
+*.zss
+*.zsm
+*.zsd
+*.zsnd
+*.sfd
+*.adx
+*.bnx
+*.xbe
+*.xpr
+*.eng
+*.fre
+*.ger
+*.ita
+*.spa
+*.wav
+*.bik
+*.sav
+*.save
+settings.dat
+
+# --- binaries: releases come from CI, never from git
+*.exe
+*.dll
+*.pdb
+*.pyd
+*.so
+*.dylib
+*.obj
+*.lib
+*.exp
+/dist/
+
+# --- disassembly / decompiler output and databases (describe code in prose with addresses instead)
+*.asm
+decomp*.c
+decomp*.txt
+*.gpr
+*.rep/
+*.idb
+*.i64
+*.bndb
+research/**/proj/
+research/**/*_txt/
+research/**/x2text/
+
+# --- research scratch: decoded dumps and verification outputs are regenerated, not committed
+research/**/tmp/
+research/**/verify/*.txt
+research/**/verify/rb_*/
+research/**/verify/rerun/
+research/**/verify/graphrun/
+
+# --- screenshots and captures (game imagery); README pictures live on the release page
+screenshots/
+*.png
+*.jpg
+*.jpeg
+*.bmp
+*.dds
+*.tga
+
+# --- local tooling
+*.log
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+.codegpt-game.json
+.vscode/
+.idea/
+
+# per-developer paths for the tools (tools/local_paths.py; see local_paths.example.json)
+local_paths.json

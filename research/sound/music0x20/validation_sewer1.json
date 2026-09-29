@@ -1,0 +1,329 @@
+{
+ "zone": "sewer1",
+ "xml1_source": {
+  "bank": "xml1_xbox/sounds/zsds/s/e/sewer1_c.zss",
+  "flags": "0x22",
+  "rate": 44100,
+  "frames": 9231168,
+  "layer_frames": [
+   4610880,
+   4610880
+  ],
+  "a_frames": 4610816,
+  "layer0_vs_a": {
+   "min": 0.564,
+   "median": 0.813,
+   "overall": 0.768
+  },
+  "layer1_vs_a": {
+   "min": -0.039,
+   "median": -0.001,
+   "overall": -0.003
+  },
+  "layer0_vs_layer1": {
+   "min": -0.049,
+   "median": 0.001,
+   "overall": -0.004
+  },
+  "layer_levels": [
+   {
+    "rms_dbfs": -23.6,
+    "peak_dbfs": -8.6
+   },
+   {
+    "rms_dbfs": -22.4,
+    "peak_dbfs": -9.4
+   }
+  ]
+ },
+ "fixed_bank": {
+  "bank": "research/sound/music0x20/banks/eng/s/e/sewer1_c.zss",
+  "flags": "0x22",
+  "rate": 44100,
+  "voice_frames": [
+   4610880,
+   4610880
+  ],
+  "voice0_vs_layer0": {
+   "min": 1.0,
+   "median": 1.0,
+   "overall": 1.0,
+   "snr_db": 53.21
+  },
+  "voice0_vs_layer1": {
+   "min": -0.049,
+   "median": 0.001,
+   "overall": -0.004,
+   "snr_db": -2.45
+  },
+  "voice1_vs_layer0": {
+   "min": -0.045,
+   "median": 0.004,
+   "overall": -0.001,
+   "snr_db": -3.66
+  },
+  "voice1_vs_layer1": {
+   "min": 0.994,
+   "median": 0.997,
+   "overall": 0.996,
+   "snr_db": 20.73
+  },
+  "mix_vs_layer0+1": {
+   "min": 0.996,
+   "median": 0.998,
+   "overall": 0.997,
+   "snr_db": 23.15
+  }
+ },
+ "old_bank": {
+  "bank": "research/sound/out/all_ima/eng/s/e/sewer1_c.zss",
+  "flags": "0x22",
+  "rate": 44100,
+  "voice_frames": [
+   4612096,
+   4612096
+  ],
+  "voice0_vs_layer0": {
+   "min": 0.102,
+   "median": 0.16,
+   "overall": 0.165,
+   "snr_db": -2.32
+  },
+  "voice0_vs_layer1": {
+   "min": -0.04,
+   "median": -0.005,
+   "overall": -0.011,
+   "snr_db": -2.78
+  },
+  "voice1_vs_layer0": {
+   "min": -0.082,
+   "median": -0.004,
+   "overall": -0.016,
+   "snr_db": -3.37
+  },
+  "voice1_vs_layer1": {
+   "min": 0.23,
+   "median": 0.298,
+   "overall": 0.295,
+   "snr_db": -1.36
+  },
+  "mix_vs_layer0+1": {
+   "min": 0.178,
+   "median": 0.233,
+   "overall": 0.229,
+   "snr_db": -1.79
+  }
+ },
+ "recordings_vs_old_bank": {},
+ "match_tool_selftest": {
+  "fixed_voice0_as_recording_vs_XML1_layer0": [
+   1.0,
+   1.0
+  ],
+  "old_voice0_as_recording_vs_XML1_layer0": [
+   0.129,
+   0.176
+  ]
+ },
+ "seams_levels_spectra": {
+  "xml1 layer0 (source)": {
+   "rms_dbfs": -23.6,
+   "peak_dbfs": -8.6,
+   "click_ratio_8192": 1.02,
+   "centroid_hz": 210,
+   "band_energy": {
+    "0-250": 0.7124,
+    "250-2000": 0.2858,
+    "2000-6000": 0.0018,
+    "6000-11025": 0.0,
+    "11025-22050": 0.0
+   }
+  },
+  "xml1 layer1 (source)": {
+   "rms_dbfs": -22.4,
+   "peak_dbfs": -9.4,
+   "click_ratio_8192": 0.98,
+   "centroid_hz": 699,
+   "band_energy": {
+    "0-250": 0.8018,
+    "250-2000": 0.1189,
+    "2000-6000": 0.0477,
+    "6000-11025": 0.0151,
+    "11025-22050": 0.0166
+   }
+  },
+  "xml1 layer0+1 (source)": {
+   "rms_dbfs": -20.0,
+   "peak_dbfs": -4.6,
+   "click_ratio_8192": 0.98,
+   "centroid_hz": 556,
+   "band_energy": {
+    "0-250": 0.7763,
+    "250-2000": 0.1672,
+    "2000-6000": 0.0341,
+    "6000-11025": 0.0107,
+    "11025-22050": 0.0117
+   }
+  },
+  "fixed voice0 (idle)": {
+   "rms_dbfs": -23.6,
+   "peak_dbfs": -8.6,
+   "click_ratio_8192": 0.94,
+   "centroid_hz": 210,
+   "band_energy": {
+    "0-250": 0.7124,
+    "250-2000": 0.2858,
+    "2000-6000": 0.0018,
+    "6000-11025": 0.0,
+    "11025-22050": 0.0
+   }
+  },
+  "fixed voice1": {
+   "rms_dbfs": -22.4,
+   "peak_dbfs": -9.3,
+   "click_ratio_8192": 1.37,
+   "centroid_hz": 694,
+   "band_energy": {
+    "0-250": 0.7999,
+    "250-2000": 0.1213,
+    "2000-6000": 0.0476,
+    "6000-11025": 0.0149,
+    "11025-22050": 0.0163
+   }
+  },
+  "fixed voice0+1 (combat)": {
+   "rms_dbfs": -20.0,
+   "peak_dbfs": -4.6,
+   "click_ratio_8192": 1.37,
+   "centroid_hz": 551,
+   "band_energy": {
+    "0-250": 0.7749,
+    "250-2000": 0.1691,
+    "2000-6000": 0.034,
+    "6000-11025": 0.0105,
+    "11025-22050": 0.0115
+   }
+  },
+  "old voice0 (what XML2 played)": {
+   "rms_dbfs": -23.0,
+   "peak_dbfs": -8.6,
+   "click_ratio_8192": 3.6,
+   "centroid_hz": 509,
+   "band_energy": {
+    "0-250": 0.79,
+    "250-2000": 0.1585,
+    "2000-6000": 0.0318,
+    "6000-11025": 0.0093,
+    "11025-22050": 0.0104
+   }
+  },
+  "XML2 abug_c voice0": {
+   "rms_dbfs": -28.4,
+   "peak_dbfs": -12.0,
+   "click_ratio_8192": 2.87,
+   "centroid_hz": 524,
+   "band_energy": {
+    "0-250": 0.5266,
+    "250-2000": 0.4156,
+    "2000-6000": 0.0532,
+    "6000-11025": 0.0046
+   }
+  },
+  "XML2 abug_c voice0+1": {
+   "rms_dbfs": -22.8,
+   "peak_dbfs": -7.8,
+   "click_ratio_8192": 1.58,
+   "centroid_hz": 653,
+   "band_energy": {
+    "0-250": 0.5071,
+    "250-2000": 0.3916,
+    "2000-6000": 0.0962,
+    "6000-11025": 0.005
+   }
+  },
+  "XML2 new_c voice0": {
+   "rms_dbfs": -24.2,
+   "peak_dbfs": -7.1,
+   "click_ratio_8192": 4.98,
+   "centroid_hz": 237,
+   "band_energy": {
+    "0-250": 0.8434,
+    "250-2000": 0.1395,
+    "2000-6000": 0.016,
+    "6000-11025": 0.0011
+   }
+  },
+  "XML2 new_c voice0+1": {
+   "rms_dbfs": -21.3,
+   "peak_dbfs": -4.6,
+   "click_ratio_8192": 2.44,
+   "centroid_hz": 453,
+   "band_energy": {
+    "0-250": 0.6568,
+    "250-2000": 0.2916,
+    "2000-6000": 0.0477,
+    "6000-11025": 0.0038
+   }
+  },
+  "XML2 sewer_c voice0": {
+   "rms_dbfs": -26.1,
+   "peak_dbfs": -10.2,
+   "click_ratio_8192": 16.27,
+   "centroid_hz": 218,
+   "band_energy": {
+    "0-250": 0.7376,
+    "250-2000": 0.2599,
+    "2000-6000": 0.0024,
+    "6000-11025": 0.0001
+   }
+  },
+  "XML2 sewer_c voice0+1": {
+   "rms_dbfs": -20.4,
+   "peak_dbfs": -5.8,
+   "click_ratio_8192": 3.94,
+   "centroid_hz": 212,
+   "band_energy": {
+    "0-250": 0.8083,
+    "250-2000": 0.1802,
+    "2000-6000": 0.0107,
+    "6000-11025": 0.0008
+   }
+  },
+  "XML2 boss1_c voice0": {
+   "rms_dbfs": -24.3,
+   "peak_dbfs": -9.1,
+   "click_ratio_8192": 15.44,
+   "centroid_hz": 211,
+   "band_energy": {
+    "0-250": 0.7952,
+    "250-2000": 0.2017,
+    "2000-6000": 0.003,
+    "6000-11025": 0.0001
+   }
+  },
+  "XML2 boss1_c voice0+1": {
+   "rms_dbfs": -19.7,
+   "peak_dbfs": -3.0,
+   "click_ratio_8192": 2.18,
+   "centroid_hz": 464,
+   "band_energy": {
+    "0-250": 0.6207,
+    "250-2000": 0.3248,
+    "2000-6000": 0.0511,
+    "6000-11025": 0.0034
+   }
+  },
+  "XML2 town1_c (plain, control)": {
+   "rms_dbfs": -25.2,
+   "peak_dbfs": -8.7,
+   "click_ratio_8192": 1.02,
+   "centroid_hz": 223,
+   "band_energy": {
+    "0-250": 0.6627,
+    "250-2000": 0.3325,
+    "2000-6000": 0.0047,
+    "6000-11025": 0.0001
+   }
+  }
+ }
+}

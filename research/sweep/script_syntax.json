@@ -1,0 +1,131 @@
+{
+ "xml1": {
+  "files": 1409,
+  "behaved_style_if_no_colon": 280,
+  "endif": 280,
+  "import": 50,
+  "first_code_line_indented": 7,
+  "tabs": 4,
+  "def": 56,
+  "colon_style_if": 49,
+  "semicolon_comment_lines": 1
+ },
+ "xml2": {
+  "files": 2045,
+  "behaved_style_if_no_colon": 598,
+  "endif": 598,
+  "def": 17,
+  "import": 7,
+  "colon_style_if": 5,
+  "first_code_line_indented": 1,
+  "tabs": 3
+ },
+ "xml1_examples": {
+  "behaved_style_if_no_colon": [
+   "arbiter/rescue_complete.py",
+   "arbiter/a_int/arb2_1.py",
+   "arbiter/a_int/arb3_1.py",
+   "arbiter/a_int/check_timer.py",
+   "arbiter/deck/arb_fd1.py",
+   "arbiter/deck/arb_fd2.py"
+  ],
+  "endif": [
+   "arbiter/rescue_complete.py",
+   "arbiter/a_int/arb2_1.py",
+   "arbiter/a_int/arb3_1.py",
+   "arbiter/a_int/check_timer.py",
+   "arbiter/deck/arb_fd1.py",
+   "arbiter/deck/arb_fd2.py"
+  ],
+  "import": [
+   "mansion/man2/missionstart_1_4_13.py",
+   "nyc/alison/nyc1_1_3.py",
+   "weapon_x/secret/wx3_1.py",
+   "missions/arbiter_flood.py",
+   "missions/arbiter_start.py",
+   "missions/arbiter_test.py"
+  ],
+  "first_code_line_indented": [
+   "mansion/man4/astral_legwork.py",
+   "muir_is/muir2/alison_walks.py",
+   "muir_is/muir2/check_leaving.py",
+   "muir_is/muir2/control_alsion.py",
+   "nyc/alison/blackbird.py",
+   "nyc/alison/nyc1_1_1.py"
+  ],
+  "tabs": [
+   "mansion/man4/astral_legwork.py",
+   "mansion/man4/emma_talk.py",
+   "mansion/man4/profx_apears.py",
+   "mansion/man4/profx_disapears.py"
+  ],
+  "def": [
+   "nyc/alison/nyc1_1_3.py",
+   "weapon_x/secret/wx3_1.py",
+   "missions/arbiter_flood.py",
+   "missions/arbiter_start.py",
+   "missions/arbiter_test.py",
+   "missions/astral1.py"
+  ],
+  "colon_style_if": [
+   "nyc/alison/nyc1_1_3.py",
+   "weapon_x/secret/wx3_1.py",
+   "missions/arbiter_flood.py",
+   "missions/arbiter_start.py",
+   "missions/arbiter_test.py",
+   "missions/astral1.py"
+  ],
+  "semicolon_comment_lines": [
+   "menus/intro_demo.py"
+  ]
+ },
+ "xml2_examples": {
+  "behaved_style_if_no_colon": [
+   "act0/tutorial/tutorial1/tutorial1.py",
+   "act1/codes_convo_1.py",
+   "act1/codes_convo_2.py",
+   "act1/codes_convo_3.py",
+   "act1/deadzone/deadzone1/deadzone1.py",
+   "act1/deadzone/deadzone1/enable_blink_portals.py"
+  ],
+  "endif": [
+   "act0/tutorial/tutorial1/tutorial1.py",
+   "act1/codes_convo_1.py",
+   "act1/codes_convo_2.py",
+   "act1/codes_convo_3.py",
+   "act1/deadzone/deadzone1/deadzone1.py",
+   "act1/deadzone/deadzone1/enable_blink_portals.py"
+  ],
+  "def": [
+   "common/destroytargetedentity.py",
+   "common/gethealth.py",
+   "common/set_give2000_hpts.py",
+   "common/sewers2_1_2.py",
+   "work/rdanz/blah.py",
+   "work/rdanz/test_anim.py"
+  ],
+  "import": [
+   "common/destroytargetedentity.py",
+   "common/gethealth.py",
+   "common/mission_branch.py",
+   "common/set_give2000_hpts.py",
+   "common/sewers2_1_2.py",
+   "work/rdanz/blah.py"
+  ],
+  "colon_style_if": [
+   "common/destroytargetedentity.py",
+   "common/gethealth.py",
+   "common/set_give2000_hpts.py",
+   "common/sewers2_1_2.py",
+   "work/rdanz/blah.py"
+  ],
+  "first_code_line_indented": [
+   "common/set_give4000_hpts.py"
+  ],
+  "tabs": [
+   "common/sewers_or_muir.py",
+   "common/puzzleents/blinkportal.py",
+   "common/puzzleents/blinkportalspawnscript.py"
+  ]
+ }
+}

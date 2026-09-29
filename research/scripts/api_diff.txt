@@ -1,0 +1,693 @@
+XML1 default.xbe: 213 registered script functions (main table 0x3d0b88, builtin/operator table 0x3d5620)
+XML2 XMen2.exe : 308 registered script functions (main table 0x68a908, builtin/operator table 0x6903d8)
+Entry layout both games: {void* func, char* name, char* ret_sig, char* arg_sig}; sig chars: n=none i=int f=float s=string a=any/entity? w=wait v=vector?
+
+== In XML1 but NOT in XML2 (31):
+  addHero                          n(s)
+  addPopupDialogOption             n(ss)
+  beginSideMission                 n(s)
+  canCancelDialog                  n(s)
+  createPopupDialog                n(s)
+  destroyMultipartPiece            n(ai)
+  displayEx                        n(sfsfs)
+  displayHelp                      n(s)
+  endSideMission                   n(s)
+  enterSoloMode                    n(a)
+  exitSoloMode                     n(a)
+  getBody                          i(a)
+  getCount                         i(as)
+  getGameVar                       i(s)
+  getMissionFlag                   i(si)
+  getMissionVar                    i(s)
+  levelUp                          n(ais)
+  magnetoBall                      n(as)
+  mission                          n(ss)
+  removeFromGroup                  n(a)
+  restartMission                   n()
+  screenFade                       n(ff)
+  setGameVar                       n(si)
+  setGroupLeader                   n(a)
+  setInCampaign                    n(ss)
+  setMissionFlag                   n(sii)
+  setMissionVar                    n(si)
+  setPowerStatus                   n(ass)
+  showPopupDialog                  n()
+  soloModeCheck                    i(a)
+  xtremeConversationLight          n(as)
+
+== Same name, different signature (2):
+  extractionPointLite              XML1 n(asssss)  ->  XML2 n(asss)
+  sound                            XML1 n(sass)  ->  XML2 n(ssas)
+
+== In XML2 but NOT in XML1 (126):
+  actSilent                        n(aa)
+  allowResponseOnGameVarCount      n(si)
+  amIAnXman                        i(a)
+  AnswerFriendRequest              n(ii)
+  AnswerGameInvite                 n(ii)
+  AreYouSure                       n(isss)
+  bootToDash                       n(i)
+  CancelGameInvite                 n(i)
+  cancelWaitingDialog              n()
+  causeTroubleForAutotest          n()
+  closeDangerRoom                  n(i)
+  closemenu                        n(s)
+  confirmKickPlayerDialog          n(i)
+  dangerRoomEndMission             n()
+  dataDiscReward                   n(s)
+  disallowResponse                 n()
+  disallowResponseOnObjective      n(ss)
+  extractionUnlock                 n(s)
+  fadeIn                           n(af)
+  fadeOut                          n(af)
+  getAIControlled                  i(a)
+  getBrotherhood                   i(a)
+  getConversationActive            i()
+  getDangerRoomActive              i()
+  getDistance                      f(aa)
+  getGameFlag                      i(si)
+  getGameVarBitCount               i(s)
+  getNearestMonsterSpawner         i(ai)
+  getOpened                        i(a)
+  getParentID                      i(a)
+  getZoneFlag                      i(si)
+  getZoneReset                     i()
+  getZoneVar                       i(s)
+  homingBeaconReward               n(si)
+  hudMessage                       n(ifs)
+  InviteConfirmation               n(s)
+  isActorOnTeam                    i(a)
+  isBlinkPortalActive              i()
+  isCharacterUnlocked              i(a)
+  isExtractionPointUnlocked        i()
+  isHardDifficultyUnlocked         i()
+  JoinFriendsGame                  n(i)
+  KickPlayer                       n(i)
+  kickPlayerDialog                 n()
+  killEntitySilent                 n(a)
+  LaunchFeedbackMenu               n(is)
+  LaunchFriendReqVoiceMenu         n(s)
+  LaunchGameInviteVoiceMenu        n(i)
+  LaunchReceiveVoiceMenu           n(i)
+  loadMapChooseTeam                n(s)
+  loadMapKeepTeam                  n(s)
+  loadNetworkConfig                n(i)
+  Logout                           n()
+  LogoutNoExit                     n()
+  mainMenuExitDialog               n()
+  moveHeroesToEnt                  n(a)
+  newMissionBriefing               n()
+  openWaitingDialog                n()
+  permanentStatBoost               n(as)
+  playBossSound                    n(sif)
+  playCombatNodeTrigger            n(asi)
+  recallZone                       n()
+  RemoveFriend                     n(i)
+  ReNegotiate                      n(i)
+  restorelastzone                  n(s)
+  reviewMenu                       n()
+  saveloadBootDeleteCorrupt        n()
+  saveloadDefaultCheck             n()
+  saveloadDefaultCheck2            n()
+  saveloadNoSpaceWarning           n(i)
+  SendFeedback                     n(iis)
+  SendFriendRequest                n(si)
+  SendFriendVoiceAttachmentPrompt  n(s)
+  SendGameInvite                   n(ii)
+  SendVoiceAttachmentPrompt        n(ss)
+  setActorHuge                     n(as)
+  setActorScaleTimed               n(aff)
+  setAlpha                         n(af)
+  setAmbientLightColor             n(s)
+  setAnimSpeed                     n(af)
+  setAutoEquip                     n(i)
+  setAutoSpend                     n(ii)
+  setBossPartyLightColor           n(s)
+  setBossPartyLightEntity          n(s)
+  setBossUndying                   n(as)
+  setCurrentAct                    n(i)
+  setDangerRoomFailed              n()
+  setDangerRoomSuccess             n()
+  setDifficultyLevel               n(i)
+  SetDontShowWarningOff            n()
+  setGameFlag                      n(sii)
+  setGameSpeed                     n(f)
+  SetGameType                      n(i)
+  SetMaxPlayers                    n(i)
+  setNoCollideNoTickle             n(as)
+  setNoGravity                     n(as)
+  SetNumInvites                    n(i)
+  setPartyLightRadiusScale         n(f)
+  setPathIgnore                    n(as)
+  SetPrefDifficulty                n(i)
+  SetPrefGameType                  n(i)
+  setRecallActive                  n(s)
+  setRotZ                          n(ai)
+  setSegmentVisible                n(ass)
+  setSkin                          n(as)
+  setTeamInvisible                 n(ss)
+  setupHost                        n()
+  setZoneFlag                      n(sii)
+  setZoneVar                       n(si)
+  showHealthBar                    n(as)
+  startCharConversation            n(sas)
+  startFirstMission                n()
+  startGameDiffDialog              n()
+  startMoviePreview                i(ss)
+  stashMenu                        n()
+  strcatint                        s(si)
+  strcatstr                        s(ss)
+  strveci                          s(iii)
+  swapInStump                      n(a)
+  titleUpdate                      n()
+  ToggleMute                       n(ii)
+  unlockCharacter                  n(sn)
+  unlockHardDifficulty             n()
+  useDefaultStats                  n()
+  useSavedStats                    n()
+  wanderNextZoneLink               n()
+
+== Full XML2 API:
+  !=                               i(aa)  func 0x4d8fb0
+  <                                i(aa)  func 0x4d8ff0
+  <=                               i(aa)  func 0x4d9070
+  ==                               i(aa)  func 0x4d8f70
+  >                                i(aa)  func 0x4d9030
+  >=                               i(aa)  func 0x4d90d0
+  act                              n(aa)  func 0x4a9010
+  actSilent                        n(aa)  func 0x4a90f0
+  addBolton                        n(asssd)  func 0x4a66b0
+  addXtremePip                     n()  func 0x4a0240
+  alive                            i(a)  func 0x4a8440
+  allowConversation                n(s)  func 0x49db10
+  allowResponseOnGameVarCount      n(si)  func 0x4a5d50
+  amIAnXman                        i(a)  func 0x4a2af0
+  AnswerFriendRequest              n(ii)  func 0x5aaff0
+  AnswerGameInvite                 n(ii)  func 0x5aaff0
+  AreYouSure                       n(isss)  func 0x4a0f90
+  attackEntityWithType             n(aass)  func 0x4a40a0
+  awardXPToPlayable                n(i)  func 0x49d9d0
+  beATeamPlayer                    n(as)  func 0x4a3ac0
+  beginMission                     n(s)  func 0x4a0af0
+  beginMissionHack                 n(s)  func 0x4a0b60
+  blackbirdMenu                    n(sss)  func 0x4a0640
+  bootToDash                       n(i)  func 0x5aaff0
+  cameraFade                       n(ff)  func 0x49df70
+  cameraFocusToEntity              n(affff)  func 0x4a5f80
+  cameraFocusToEntityYaw           n(affaf)  func 0x4a6060
+  cameraFollowMotionPath           n(sssss)  func 0x49e080
+  cameraFOV                        n(ff)  func 0x49dee0
+  cameraMove                       n(sf)  func 0x49dd80
+  cameraPan                        n(sfs)  func 0x49de20
+  cameraReset                      n()  func 0x49df40
+  cameraResetOldSchool             n()  func 0x49df50
+  cameraSetClipPlane               n(f)  func 0x4a0270
+  cameraShake                      n(ff)  func 0x49e020
+  cameraToEntityAngles             n(af)  func 0x4a62b0
+  cameraToLocationAngles           n(ssf)  func 0x49e6c0
+  CancelGameInvite                 n(i)  func 0x5aaff0
+  cancelWaitingDialog              n()  func 0x49fc10
+  causeTroubleForAutotest          n()  func 0x5aaff0
+  cinematicEnd                     n()  func 0x49e000
+  cinematicStart                   n(ss)  func 0x49dfc0
+  closeDangerRoom                  n(i)  func 0x49eb10
+  closemenu                        n(s)  func 0x4a0f20
+  codexMenu                        n(i)  func 0x49e250
+  confirmKickPlayerDialog          n(i)  func 0x49fcd0
+  controllersContinue              n()  func 0x49ef00
+  controlPlayerHeroWithAI          n(f)  func 0x4a4200
+  copyOriginAndAngles              n(aa)  func 0x4a27f0
+  createPopupDialogXml             n(s)  func 0x4a6890
+  createPopupDialogXmlFilter       n(ss)  func 0x4a68b0
+  damage                           n(aai)  func 0x4a91d0
+  dangerRoomEndMission             n()  func 0x49fc50
+  dangerRoomMenu                   n()  func 0x49e5d0
+  dataDiscReward                   n(s)  func 0x4a7560
+  debug                            n(s)  func 0x5aaff0
+  disallowResponse                 n()  func 0x49da10
+  disallowResponseOnObjective      n(ss)  func 0x49da20
+  disallowResponseOnVar            n(si)  func 0x49da90
+  display                          n(s)  func 0x5aaff0
+  endDRScenario                    n()  func 0x49f320
+  enemiesNoTarget                  n(s)  func 0x49f700
+  extractionPoint                  n(a)  func 0x4a6b50
+  extractionPointChange            n(ai)  func 0x4a7020
+  extractionPointLite              n(asss)  func 0x4a6d80
+  extractionUnlock                 n(s)  func 0x49f1e0
+  faceEntity                       n(aa)  func 0x4a4320
+  fadd                             f(ff)  func 0x4d91b0
+  fade                             n(affs)  func 0x4a3780
+  fadeIn                           n(af)  func 0x4a38e0
+  fadeOut                          n(af)  func 0x4a3970
+  fdiv                             f(ff)  func 0x4d92a0
+  fmul                             f(ff)  func 0x4d9250
+  fsub                             f(ff)  func 0x4d9200
+  gameover                         n(s)  func 0x4a7220
+  getAIControlled                  i(a)  func 0x4a3f10
+  getBrotherhood                   i(a)  func 0x4a3f90
+  getConversationActive            i()  func 0x49db50
+  getDangerRoomActive              i()  func 0x49ec80
+  getDistance                      f(aa)  func 0x4a68f0
+  getEnable                        i(a)  func 0x4a3e90
+  getGameFlag                      i(si)  func 0x4a5db0
+  getGameVarBitCount               i(s)  func 0x4a7c70
+  getHealth                        f(a)  func 0x4a36f0
+  getHealthMax                     f(a)  func 0x4a3660
+  getID                            i(a)  func 0x4a1e90
+  getIDString                      s(a)  func 0x4a1f00
+  getInventoryCount                i(s)  func 0x49edc0
+  getName                          s(a)  func 0x4a1fb0
+  getNearestMonsterSpawner         i(ai)  func 0x4a6980
+  getObjective                     i(ss)  func 0x4a03f0
+  getOpened                        i(a)  func 0x4a4020
+  getParentID                      i(a)  func 0x4a3bf0
+  getPosX                          i(a)  func 0x4a1980
+  getPosY                          i(a)  func 0x4a1a20
+  getPosZ                          i(a)  func 0x4a1ac0
+  getTimeRemaining                 f()  func 0x49dd30
+  getZoneFlag                      i(si)  func 0x49dc00
+  getZoneReset                     i()  func 0x4a0800
+  getZoneVar                       i(s)  func 0x49db80
+  hailToTheKing                    n(a)  func 0x4a6820
+  heroNoTarget                     n(s)  func 0x49f6d0
+  homingBeaconReward               n(si)  func 0x4a7a00
+  hudMessage                       n(ifs)  func 0x49eb60
+  iadd                             i(ii)  func 0x4d92f0
+  idiv                             i(ii)  func 0x4d93e0
+  imageViewer                      n(s)  func 0x49e440
+  immediateObjective               n(s)  func 0x4a06e0
+  imul                             i(ii)  func 0x4d9390
+  initHud                          n()  func 0x49e6b0
+  InviteConfirmation               n(s)  func 0x5aaff0
+  isActorOnTeam                    i(a)  func 0x4a5a70
+  isBlinkPortalActive              i()  func 0x49f220
+  isCharacterUnlocked              i(a)  func 0x49f610
+  isExtractionPointUnlocked        i()  func 0x49f1a0
+  isHardDifficultyUnlocked         i()  func 0x49f680
+  isub                             i(ii)  func 0x4d9340
+  JoinFriendsGame                  n(i)  func 0x5aaff0
+  KickPlayer                       n(i)  func 0x49fac0
+  kickPlayerDialog                 n()  func 0x4a14b0
+  killEntity                       n(a)  func 0x4a8ce0
+  killEntitySilent                 n(a)  func 0x4a8d60
+  LaunchFeedbackMenu               n(is)  func 0x5aaff0
+  LaunchFriendReqVoiceMenu         n(s)  func 0x5aaff0
+  LaunchGameInviteVoiceMenu        n(i)  func 0x5aaff0
+  LaunchReceiveVoiceMenu           n(i)  func 0x5aaff0
+  loadDangerRoomCourse             n(s)  func 0x4a72e0
+  loadMap                          n(s)  func 0x4a0c50
+  loadMapAddTeam                   n(s)  func 0x4a0bd0
+  loadMapChooseTeam                n(s)  func 0x4a0d30
+  loadMapKeepTeam                  n(s)  func 0x4a0cc0
+  loadNetworkConfig                n(i)  func 0x5aaff0
+  loadZone                         n(ss)  func 0x4a0da0
+  lockCombat                       n(s)  func 0x49f860
+  lockControls                     n(f)  func 0x49f8c0
+  Logout                           n()  func 0x49f960
+  LogoutNoExit                     n()  func 0x49f990
+  loopCombatNode                   n(ass)  func 0x4a4eb0
+  mainMenuExit                     n()  func 0x49fb00
+  mainMenuExitDialog               n()  func 0x49fb20
+  missionComplete                  n(s)  func 0x4a61b0
+  missionComplete2                 n()  func 0x49e190
+  moveHeroesToEnt                  n(a)  func 0x4a2560
+  moveToEntity                     n(as)  func 0x4a4690
+  newMissionBriefing               n()  func 0x49e230
+  objective                        n(ss)  func 0x49ee90
+  openmenu                         n(s)  func 0x4a0eb0
+  openWaitingDialog                n()  func 0x49fb40
+  overrideFocusToEntity            n(af)  func 0x4a6350
+  permanentStatBoost               n(as)  func 0x4a20d0
+  personalItem                     n(s)  func 0x49e570
+  playanim                         n(sass)  func 0x4a8a20
+  playBossSound                    n(sif)  func 0x49eab0
+  playCombatNodeTrigger            n(asi)  func 0x4a5010
+  randomInt                        i(ii)  func 0x49ee40
+  recallZone                       n()  func 0x4a74f0
+  remove                           n(aa)  func 0x4a9300
+  removeBolton                     n(ad)  func 0x4a6790
+  RemoveFriend                     n(i)  func 0x5aaff0
+  ReNegotiate                      n(i)  func 0x49fa10
+  restartZone                      n()  func 0x4a0870
+  restoreEnergy                    n(ai)  func 0x4a2c20
+  restoreHealth                    n(ai)  func 0x4a2dd0
+  restorelastzone                  n(s)  func 0x4a0760
+  resurrect                        n(a)  func 0x4a3b70
+  reviewCinematics                 n()  func 0x49e3b0
+  reviewComics                     n()  func 0x49e3e0
+  reviewConcept                    n()  func 0x49e410
+  reviewLoadScreens                n()  func 0x49e380
+  reviewMenu                       n()  func 0x49e310
+  saveloadAbort                    n()  func 0x49efc0
+  saveloadBootDeleteCorrupt        n()  func 0x5aaff0
+  saveloadChooseCorrupt            n()  func 0x49f130
+  saveloadChooseFile               n(i)  func 0x49f010
+  saveloadCleanUp                  n()  func 0x49efb0
+  saveloadCompleteLoad             n()  func 0x49f140
+  saveloadDefaultCheck             n()  func 0x5aaff0
+  saveloadDefaultCheck2            n()  func 0x5aaff0
+  saveloadDeleteCorrupt            n()  func 0x49f150
+  saveloadDeleteFile               n(i)  func 0x49f100
+  saveloadDeleteSuccess            n()  func 0x49ef90
+  saveloadFormat                   n()  func 0x49efa0
+  saveloadImageCheck               n()  func 0x49f160
+  saveloadLoadOptions              n()  func 0x49f0d0
+  saveloadLoseGameState            n(i)  func 0x49f070
+  saveloadNoSpaceWarning           n(i)  func 0x49f040
+  saveloadOverwrite                n(i)  func 0x49f0a0
+  saveloadOvrWriteOpts             n()  func 0x49f0f0
+  saveloadOvrWriteOptsAsk          n()  func 0x49f0e0
+  saveloadProcess                  n(i)  func 0x49ef60
+  saveloadSaveConfirmed            n(i)  func 0x49f170
+  saveloadSelectDevice             n(i)  func 0x49efe0
+  SendFeedback                     n(iis)  func 0x5aaff0
+  SendFriendRequest                n(si)  func 0x5aaff0
+  SendFriendVoiceAttachmentPrompt  n(s)  func 0x5aaff0
+  SendGameInvite                   n(ii)  func 0x5aaff0
+  SendVoiceAttachmentPrompt        n(ss)  func 0x5aaff0
+  setActorHuge                     n(as)  func 0x4a3060
+  setActorScaleTimed               n(aff)  func 0x4a8380
+  setAggression                    n(ai)  func 0x4a8710
+  setAIActive                      n(as)  func 0x4a50f0
+  setallaiactive                   n(s)  func 0x49ecc0
+  setAlpha                         n(af)  func 0x4a3850
+  setAmbientLightColor             n(s)  func 0x49ea00
+  setAngles                        n(as)  func 0x4a3450
+  setAnimSpeed                     n(af)  func 0x4a8280
+  setAutoEquip                     n(i)  func 0x4a0370
+  setAutoSpend                     n(ii)  func 0x4a02c0
+  setBossPartyLightColor           n(s)  func 0x49e8a0
+  setBossPartyLightEntity          n(s)  func 0x4a6460
+  setBossUndying                   n(as)  func 0x4a8860
+  setCanMove                       n(as)  func 0x4a4a60
+  setCombatNode                    n(as)  func 0x4a51a0
+  setCombatNodeOther               n(asa)  func 0x4a5260
+  setCurrentAct                    n(i)  func 0x49f440
+  setDangerLevel                   n(f)  func 0x49e160
+  setDangerRoomFailed              n()  func 0x49eca0
+  setDangerRoomSuccess             n()  func 0x49ecb0
+  setDefaultTarget                 n(a)  func 0x4a4e20
+  setDestroyObjects                n(as)  func 0x4a31c0
+  setDifficultyLevel               n(i)  func 0x4a0930
+  SetDontShowWarningOff            n()  func 0x49fe10
+  setEnable                        n(as)  func 0x4a84f0
+  setEngageEnemy                   n(as)  func 0x4a4c50
+  setFlee                          n(as)  func 0x4a4b00
+  setFollowingHero                 n(as)  func 0x4a48f0
+  setGameFlag                      n(sii)  func 0x4a5e10
+  setGameSpeed                     n(f)  func 0x49e9b0
+  SetGameType                      n(i)  func 0x49f8f0
+  setGoal                          n(a)  func 0x4a63f0
+  setHealth                        n(ai)  func 0x4a2440
+  setHealthMax                     n(ai)  func 0x4a24d0
+  setHintType                      n(as)  func 0x4a2b90
+  setHomingID                      n(aa)  func 0x4a45b0
+  setInventoryCount                n(si)  func 0x49ed40
+  setInvisible                     n(as)  func 0x4a8910
+  setInvulnerable                  n(as)  func 0x4a3110
+  SetMaxPlayers                    n(i)  func 0x49f9b0
+  setMotionPath                    n(as)  func 0x4a43a0
+  setName                          n(as)  func 0x4a2050
+  setNearestWaypointPath           n(as)  func 0x4a4d90
+  setNoClip                        n(as)  func 0x4a2a40
+  setNoCollide                     n(as)  func 0x4a3300
+  setNoCollideNoTickle             n(as)  func 0x4a33b0
+  setNoGravity                     n(as)  func 0x4a87b0
+  SetNumInvites                    n(i)  func 0x5aaff0
+  setOrigin                        n(as)  func 0x4a3550
+  setParent                        n(aa)  func 0x4a3c70
+  setPartyLightColor               n(sf)  func 0x49e7b0
+  setPartyLightRadiusScale         n(f)  func 0x49e950
+  setPathIgnore                    n(as)  func 0x4a85a0
+  setPatternSequence               n(as)  func 0x4a4830
+  setPosX                          n(ai)  func 0x4a1b60
+  setPosY                          n(ai)  func 0x4a1c10
+  setPosZ                          n(ai)  func 0x4a81d0
+  SetPrefDifficulty                n(i)  func 0x49fa70
+  SetPrefGameType                  n(i)  func 0x49fa40
+  setRadiusConfinement             n(afa)  func 0x4a4750
+  setReactToEnemies                n(as)  func 0x4a4bb0
+  setRecallActive                  n(s)  func 0x49ecf0
+  setRotZ                          n(ai)  func 0x4a1cc0
+  setScale                         n(af)  func 0x4a1d70
+  setSegmentVisible                n(ass)  func 0x4a5bd0
+  setSkin                          n(as)  func 0x4a3dc0
+  setStructure                     n(ai)  func 0x4a1e00
+  setteam                          n(sa)  func 0x4a3a00
+  setTeamInvisible                 n(ss)  func 0x4a04d0
+  setupHost                        n()  func 0x49faa0
+  setVelocity                      n(as)  func 0x4a2f80
+  setWaypointPath                  n(asi)  func 0x4a4cf0
+  setXP                            n(ai)  func 0x4a8660
+  setZoneFlag                      n(sii)  func 0x49dc70
+  setZoneVar                       n(si)  func 0x49dbc0
+  shopMenu                         n(s)  func 0x49e640
+  showHealthBar                    n(as)  func 0x4a3260
+  sound                            n(ssas)  func 0x4a7130
+  spawn                            i(assss)  func 0x4a4420
+  spawnEffect                      n(asss)  func 0x4a54c0
+  spawnEffectBone                  n(ass)  func 0x4a5360
+  startCharConversation            n(sas)  func 0x4a57b0
+  startConversation                n(s)  func 0x4a5660
+  startFirstMission                n()  func 0x4a7b10
+  startGameDiffDialog              n()  func 0x49f470
+  startMotionPath                  n(asss)  func 0x4a8f20
+  startMovie                       n(ss)  func 0x49f7e0
+  startMoviePreview                i(ss)  func 0x49f730
+  stashMenu                        n()  func 0x49e680
+  strcatint                        s(si)  func 0x4da6b0
+  strcatstr                        s(ss)  func 0x4da620
+  strveci                          s(iii)  func 0x4da730
+  swapInStump                      n(a)  func 0x4a8e70
+  timerAdd                         n(f)  func 0x49dd00
+  timerStart                       n(ffs)  func 0x4a5ec0
+  titleUpdate                      n()  func 0x5aaff0
+  ToggleMute                       n(ii)  func 0x5aaff0
+  triviaMenu                       n()  func 0x49e2a0
+  unlockCharacter                  n(sn)  func 0x49f520
+  unlockHardDifficulty             n()  func 0x49f6b0
+  use                              n(aa)  func 0x4a7cd0
+  useDefaultStats                  n()  func 0x49f4b0
+  useSavedStats                    n()  func 0x49f490
+  vibrate                          n(ssff)  func 0x4a64f0
+  viewSparringHighScores           n()  func 0x49f410
+  waitsignal                       w(s)  func 0x4d9180
+  waittimed                        w(f)  func 0x4d9130
+  walkToAndFace                    n(aass)  func 0x4a8c00
+  wanderNextZoneLink               n()  func 0x5aaff0
+  zoneLink                         n()  func 0x4a5e70
+
+== Full XML1 API:
+  !=                               i(aa)  func 0xcc870
+  <                                i(aa)  func 0xcc8b0
+  <=                               i(aa)  func 0xcc930
+  ==                               i(aa)  func 0xcc830
+  >                                i(aa)  func 0xcc8f0
+  >=                               i(aa)  func 0xcc990
+  act                              n(aa)  func 0xa05b0
+  addBolton                        n(asssd)  func 0x9ecb0
+  addHero                          n(s)  func 0x99a00
+  addPopupDialogOption             n(ss)  func 0x99390
+  addXtremePip                     n()  func 0x99e10
+  alive                            i(a)  func 0xa01d0
+  allowConversation                n(s)  func 0x98b70
+  attackEntityWithType             n(aass)  func 0x9cac0
+  awardXPToPlayable                n(i)  func 0x98ac0
+  beATeamPlayer                    n(as)  func 0x9c590
+  beginMission                     n(s)  func 0x9a770
+  beginMissionHack                 n(s)  func 0x9a7e0
+  beginSideMission                 n(s)  func 0x9a4f0
+  blackbirdMenu                    n(sss)  func 0x9a370
+  cameraFade                       n(ff)  func 0x98ec0
+  cameraFocusToEntity              n(affff)  func 0x9e630
+  cameraFocusToEntityYaw           n(affaf)  func 0x9e710
+  cameraFollowMotionPath           n(sssss)  func 0x98fd0
+  cameraFOV                        n(ff)  func 0x98e30
+  cameraMove                       n(sf)  func 0x99e40
+  cameraPan                        n(sfs)  func 0x99eb0
+  cameraReset                      n()  func 0x98e90
+  cameraResetOldSchool             n()  func 0x98ea0
+  cameraSetClipPlane               n(f)  func 0x99f50
+  cameraShake                      n(ff)  func 0x98f70
+  cameraToEntityAngles             n(af)  func 0x9e940
+  cameraToLocationAngles           n(ssf)  func 0x99fa0
+  canCancelDialog                  n(s)  func 0x99350
+  cinematicEnd                     n()  func 0x98f50
+  cinematicStart                   n(ss)  func 0x98f10
+  codexMenu                        n(i)  func 0x99180
+  controllersContinue              n()  func 0x99640
+  controlPlayerHeroWithAI          n(f)  func 0x9cc20
+  copyOriginAndAngles              n(aa)  func 0x9b8a0
+  createPopupDialog                n(s)  func 0x99300
+  createPopupDialogXml             n(s)  func 0x9ee90
+  createPopupDialogXmlFilter       n(ss)  func 0x9eeb0
+  damage                           n(aai)  func 0x9fd10
+  dangerRoomMenu                   n()  func 0x992d0
+  debug                            n(s)  func 0x2123a0
+  destroyMultipartPiece            n(ai)  func 0x9ce30
+  disallowResponseOnVar            n(si)  func 0x98b00
+  display                          n(s)  func 0x2123a0
+  displayEx                        n(sfsfs)  func 0x2123a0
+  displayHelp                      n(s)  func 0x9a410
+  endDRScenario                    n()  func 0x99890
+  endSideMission                   n(s)  func 0x9a590
+  enemiesNoTarget                  n(s)  func 0x999d0
+  enterSoloMode                    n(a)  func 0x9eef0
+  exitSoloMode                     n(a)  func 0x9ef70
+  extractionPoint                  n(a)  func 0x9f110
+  extractionPointChange            n(ai)  func 0x9f8f0
+  extractionPointLite              n(asssss)  func 0x9f4a0
+  faceEntity                       n(aa)  func 0x9cec0
+  fadd                             f(ff)  func 0xcca70
+  fade                             n(affs)  func 0x9c400
+  fdiv                             f(ff)  func 0xccb60
+  fmul                             f(ff)  func 0xccb10
+  fsub                             f(ff)  func 0xccac0
+  gameover                         n(s)  func 0x99830
+  getBody                          i(a)  func 0x9c260
+  getCount                         i(as)  func 0xa03c0
+  getEnable                        i(a)  func 0x9c890
+  getGameVar                       i(s)  func 0x98bb0
+  getHealth                        f(a)  func 0x9c370
+  getHealthMax                     f(a)  func 0x9c2e0
+  getID                            i(a)  func 0x9b540
+  getIDString                      s(a)  func 0x9b5b0
+  getInventoryCount                i(s)  func 0x99530
+  getMissionFlag                   i(si)  func 0x98cb0
+  getMissionVar                    i(s)  func 0x98c30
+  getName                          s(a)  func 0x9b660
+  getObjective                     i(ss)  func 0x9a0e0
+  getPosX                          i(a)  func 0x9b0c0
+  getPosY                          i(a)  func 0x9b140
+  getPosZ                          i(a)  func 0x9b1c0
+  getTimeRemaining                 f()  func 0x98de0
+  hailToTheKing                    n(a)  func 0x9ee20
+  heroNoTarget                     n(s)  func 0x999a0
+  iadd                             i(ii)  func 0xccbb0
+  idiv                             i(ii)  func 0xccca0
+  imageViewer                      n(s)  func 0x9a210
+  immediateObjective               n(s)  func 0x9a480
+  imul                             i(ii)  func 0xccc50
+  initHud                          n()  func 0x992f0
+  isub                             i(ii)  func 0xccc00
+  killEntity                       n(a)  func 0x9cf40
+  levelUp                          n(ais)  func 0xa0490
+  loadDangerRoomCourse             n(s)  func 0x9faf0
+  loadMap                          n(s)  func 0x9a850
+  loadMapAddTeam                   n(s)  func 0x9a8c0
+  loadZone                         n(ss)  func 0x9a930
+  lockCombat                       n(s)  func 0x99aa0
+  lockControls                     n(f)  func 0x99b00
+  loopCombatNode                   n(ass)  func 0x9dc40
+  magnetoBall                      n(as)  func 0x2123a0
+  mainMenuExit                     n()  func 0x99b30
+  mission                          n(ss)  func 0x99420
+  missionComplete                  n(s)  func 0x9e850
+  missionComplete2                 n()  func 0x990e0
+  moveToEntity                     n(as)  func 0x9d340
+  objective                        n(ss)  func 0x995d0
+  openmenu                         n(s)  func 0x9aa10
+  overrideFocusToEntity            n(af)  func 0x9e9e0
+  personalItem                     n(s)  func 0x99280
+  playanim                         n(sass)  func 0x9c910
+  randomInt                        i(ii)  func 0x99580
+  remove                           n(aa)  func 0xa0690
+  removeBolton                     n(ad)  func 0x9ed90
+  removeFromGroup                  n(a)  func 0x9fbd0
+  restartMission                   n()  func 0x9a6e0
+  restartZone                      n()  func 0x9a630
+  restoreEnergy                    n(ai)  func 0x9bcb0
+  restoreHealth                    n(ai)  func 0x9bd50
+  resurrect                        n(a)  func 0x9c640
+  reviewCinematics                 n()  func 0x99220
+  reviewComics                     n()  func 0x99240
+  reviewConcept                    n()  func 0x99260
+  reviewLoadScreens                n()  func 0x99200
+  saveloadAbort                    n()  func 0x996a0
+  saveloadChooseCorrupt            n()  func 0x997c0
+  saveloadChooseFile               n(i)  func 0x996d0
+  saveloadCleanUp                  n()  func 0x99690
+  saveloadCompleteLoad             n()  func 0x997d0
+  saveloadDeleteCorrupt            n()  func 0x997e0
+  saveloadDeleteFile               n(i)  func 0x99790
+  saveloadDeleteSuccess            n()  func 0x99680
+  saveloadFormat                   n()  func 0x2123a0
+  saveloadImageCheck               n()  func 0x997f0
+  saveloadLoadOptions              n()  func 0x99760
+  saveloadLoseGameState            n(i)  func 0x99700
+  saveloadOverwrite                n(i)  func 0x99730
+  saveloadOvrWriteOpts             n()  func 0x99780
+  saveloadOvrWriteOptsAsk          n()  func 0x99770
+  saveloadProcess                  n(i)  func 0x99650
+  saveloadSaveConfirmed            n(i)  func 0x99800
+  saveloadSelectDevice             n(i)  func 0x996b0
+  screenFade                       n(ff)  func 0x98ec0
+  setAggression                    n(ai)  func 0xa0320
+  setAIActive                      n(as)  func 0x9dd90
+  setallaiactive                   n(s)  func 0x993f0
+  setAngles                        n(as)  func 0x9c090
+  setCanMove                       n(as)  func 0x9d710
+  setCombatNode                    n(as)  func 0x9de40
+  setCombatNodeOther               n(asa)  func 0x9df00
+  setDangerLevel                   n(f)  func 0x990b0
+  setDefaultTarget                 n(a)  func 0x9dad0
+  setDestroyObjects                n(as)  func 0x9bf50
+  setEnable                        n(as)  func 0x9bb80
+  setEngageEnemy                   n(as)  func 0x9d900
+  setFlee                          n(as)  func 0x9d7b0
+  setFollowingHero                 n(as)  func 0x9d5a0
+  setGameVar                       n(si)  func 0x98bf0
+  setGoal                          n(a)  func 0x9ea80
+  setGroupLeader                   n(a)  func 0x9fcd0
+  setHealth                        n(ai)  func 0x9b780
+  setHealthMax                     n(ai)  func 0x9b810
+  setHintType                      n(as)  func 0x9bc20
+  setHomingID                      n(aa)  func 0x9d270
+  setInCampaign                    n(ss)  func 0x99460
+  setInventoryCount                n(si)  func 0x994d0
+  setInvisible                     n(as)  func 0x9c6b0
+  setInvulnerable                  n(as)  func 0x9bea0
+  setMissionFlag                   n(sii)  func 0x98d20
+  setMissionVar                    n(si)  func 0x98c70
+  setMotionPath                    n(as)  func 0x9cfb0
+  setName                          n(as)  func 0x9b700
+  setNearestWaypointPath           n(as)  func 0x9da40
+  setNoClip                        n(as)  func 0x9bae0
+  setNoCollide                     n(as)  func 0x9bff0
+  setOrigin                        n(as)  func 0x9c170
+  setParent                        n(aa)  func 0x9c780
+  setPartyLightColor               n(sf)  func 0x9a040
+  setPatternSequence               n(as)  func 0x9d4e0
+  setPosX                          n(ai)  func 0x9b240
+  setPosY                          n(ai)  func 0x9b2e0
+  setPosZ                          n(ai)  func 0x9b380
+  setPowerStatus                   n(ass)  func 0x9db60
+  setRadiusConfinement             n(afa)  func 0x9d400
+  setReactToEnemies                n(as)  func 0x9d860
+  setScale                         n(af)  func 0x9b420
+  setStructure                     n(ai)  func 0x9b4b0
+  setteam                          n(sa)  func 0x9c4d0
+  setVelocity                      n(as)  func 0x9bdf0
+  setWaypointPath                  n(asi)  func 0x9d9a0
+  setXP                            n(ai)  func 0xa0280
+  shopMenu                         n(s)  func 0x9a310
+  showPopupDialog                  n()  func 0x993e0
+  soloModeCheck                    i(a)  func 0x9eff0
+  sound                            n(sass)  func 0x9fa00
+  spawn                            i(assss)  func 0x9d100
+  spawnEffect                      n(asss)  func 0x9e180
+  spawnEffectBone                  n(ass)  func 0x9e000
+  startConversation                n(s)  func 0x9e3d0
+  startMotionPath                  n(asss)  func 0x9d030
+  startMovie                       n(ss)  func 0x99a30
+  timerAdd                         n(f)  func 0x98db0
+  timerStart                       n(ffs)  func 0x9e570
+  triviaMenu                       n()  func 0x991e0
+  use                              n(aa)  func 0x9fe40
+  vibrate                          n(ssff)  func 0x9eaf0
+  viewSparringHighScores           n()  func 0x99970
+  waitsignal                       w(s)  func 0xcca40
+  waittimed                        w(f)  func 0xcc9f0
+  walkToAndFace                    n(aass)  func 0x9cd50
+  xtremeConversationLight          n(as)  func 0x9e310
+  zoneLink                         n()  func 0x9e520

@@ -1,0 +1,1914 @@
+{
+ "stats_attrs": [
+  {
+   "attr": "aiclasstype",
+   "x1": 7,
+   "x2": 19,
+   "x2_handles": "yes",
+   "x1_example": [
+    "DangerRoomRobot",
+    "rangedenemy"
+   ],
+   "x2_example": [
+    "Mercenary_Guard",
+    "rangedenemy"
+   ]
+  },
+  {
+   "attr": "aiforceranged",
+   "x1": 0,
+   "x2": 93,
+   "x2_handles": "yes",
+   "x1_example": null,
+   "x2_example": [
+    "Pyro",
+    "true"
+   ]
+  },
+  {
+   "attr": "ailevel",
+   "x1": 11,
+   "x2": 12,
+   "x2_handles": "yes",
+   "x1_example": [
+    "Beast",
+    "2"
+   ],
+   "x2_example": [
+    "Bishop",
+    "2"
+   ]
+  },
+  {
+   "attr": "aimaxcoverheight",
+   "x1": 0,
+   "x2": 3,
+   "x2_handles": "yes",
+   "x1_example": null,
+   "x2_example": [
+    "ShockTroop_a",
+    "48"
+   ]
+  },
+  {
+   "attr": "ainocover",
+   "x1": 0,
+   "x2": 4,
+   "x2_handles": "yes",
+   "x1_example": null,
+   "x2_example": [
+    "ApocHolocaust",
+    "false"
+   ]
+  },
+  {
+   "attr": "ainomelee",
+   "x1": 0,
+   "x2": 12,
+   "x2_handles": "yes",
+   "x1_example": null,
+   "x2_example": [
+    "Cuckoo",
+    "true"
+   ]
+  },
+  {
+   "attr": "ainostraffe",
+   "x1": 0,
+   "x2": 43,
+   "x2_handles": "yes",
+   "x1_example": null,
+   "x2_example": [
+    "ApocHolocaust",
+    "true"
+   ]
+  },
+  {
+   "attr": "alertradius",
+   "x1": 6,
+   "x2": 3,
+   "x2_handles": "yes",
+   "x1_example": [
+    "mastermoldone",
+    "400"
+   ],
+   "x2_example": [
+    "Sentinel_a",
+    "400"
+   ]
+  },
+  {
+   "attr": "attackrange",
+   "x1": 2,
+   "x2": 0,
+   "x2_handles": "yes",
+   "x1_example": [
+    "JuggernautFlashback",
+    "150"
+   ],
+   "x2_example": null
+  },
+  {
+   "attr": "autospend",
+   "x1": 0,
+   "x2": 21,
+   "x2_handles": "yes",
+   "x1_example": null,
+   "x2_example": [
+    "default",
+    "support_heavy"
+   ]
+  },
+  {
+   "attr": "body",
+   "x1": 137,
+   "x2": 213,
+   "x2_handles": "yes",
+   "x1_example": [
+    "default",
+    "1"
+   ],
+   "x2_example": [
+    "default",
+    "1"
+   ]
+  },
+  {
+   "attr": "canbeallythrown",
+   "x1": 1,
+   "x2": 1,
+   "x2_handles": "yes",
+   "x1_example": [
+    "Wolverine",
+    "true"
+   ],
+   "x2_example": [
+    "Wolverine",
+    "true"
+   ]
+  },
+  {
+   "attr": "canfly",
+   "x1": 1,
+   "x2": 28,
+   "x2_handles": "yes",
+   "x1_example": [
+    "Storm",
+    "true"
+   ],
+   "x2_example": [
+    "ApocArchangel",
+    "true"
+   ]
+  },
+  {
+   "attr": "canseestealthed",
+   "x1": 7,
+   "x2": 1,
+   "x2_handles": "yes",
+   "x1_example": [
+    "Phoenix",
+    "true"
+   ],
+   "x2_example": [
+    "Phoenix",
+    "true"
+   ]
+  },
+  {
+   "attr": "canthrowally",
+   "x1": 3,
+   "x2": 3,
+   "x2_handles": "yes",
+   "x1_example": [
+    "Beast",
+    "true"
+   ],
+   "x2_example": [
+    "Colossus",
+    "true"
+   ]
+  },
+  {
+   "attr": "characteranims",
+   "x1": 201,
+   "x2": 285,
+   "x2_handles": "yes",
+   "x1_example": [
+    "default",
+    "00_testguy"
+   ],
+   "x2_example": [
+    "default",
+    "00_testguy"
+   ]
+  },
+  {
+   "attr": "charactername",
+   "x1": 206,
+   "x2": 292,
+   "x2_handles": "yes",
+   "x1_example": [
+    "default",
+    "defaultman"
+   ],
+   "x2_example": [
+    "default",
+    "defaultman"
+   ]
+  },
+  {
+   "attr": "combolevel",
+   "x1": 0,
+   "x2": 76,
+   "x2_handles": "yes",
+   "x1_example": null,
+   "x2_example": [
+    "Mik_Behemoth",
+    "easy"
+   ]
+  },
+  {
+   "attr": "counter",
+   "x1": 6,
+   "x2": 0,
+   "x2_handles": "yes",
+   "x1_example": [
+    "MagnetoBoss",
+    "4"
+   ],
+   "x2_example": null
+  },
+  {
+   "attr": "dangerrating",
+   "x1": 81,
+   "x2": 52,
+   "x2_handles": "yes",
+   "x1_example": [
+    "AvalancheAct2",
+    "25"
+   ],
+   "x2_example": [
+    "Abyss",
+    "25"
+   ]
+  },
+  {
+   "attr": "deathnode",
+   "x1": 1,
+   "x2": 0,
+   "x2_handles": "yes",
+   "x1_example": [
+    "StealthBot",
+    "botdeath"
+   ],
+   "x2_example": null
+  },
+  {
+   "attr": "effect_skin_aoa",
+   "x1": 0,
+   "x2": 1,
+   "x2_handles": "yes(costume ok)",
+   "x1_example": null,
+   "x2_example": [
+    "Sunfire",
+    "char/sun/special_burning"
+   ]
+  },
+  {
+   "attr": "fleedistance",
+   "x1": 7,
+   "x2": 0,
+   "x2_handles": "yes",
+   "x1_example": [
+    "Crewman",
+    "60"
+   ],
+   "x2_example": null
+  },
+  {
+   "attr": "footstepfx",
+   "x1": 13,
+   "x2": 3,
+   "x2_handles": "yes",
+   "x1_example": [
+    "BlobScripted",
+    "misc/blobstep"
+   ],
+   "x2_example": [
+    "Sentinel_a",
+    "char/sent/special_step"
+   ]
+  },
+  {
+   "attr": "heaviness",
+   "x1": 23,
+   "x2": 9,
+   "x2_handles": "yes",
+   "x1_example": [
+    "Colossus",
+    "2"
+   ],
+   "x2_example": [
+    "Mik_Behemoth",
+    "2"
+   ]
+  },
+  {
+   "attr": "ignoreboundsscaling",
+   "x1": 1,
+   "x2": 9,
+   "x2_handles": "yes",
+   "x1_example": [
+    "Colossus",
+    "true"
+   ],
+   "x2_example": [
+    "Colossus",
+    "true"
+   ]
+  },
+  {
+   "attr": "large",
+   "x1": 15,
+   "x2": 11,
+   "x2_handles": "yes",
+   "x1_example": [
+    "BlobScripted",
+    "true"
+   ],
+   "x2_example": [
+    "ApocHolocaust",
+    "true"
+   ]
+  },
+  {
+   "attr": "leader",
+   "x1": 21,
+   "x2": 0,
+   "x2_handles": "NO",
+   "x1_example": [
+    "AcolyteLeader",
+    "true"
+   ],
+   "x2_example": null
+  },
+  {
+   "attr": "leadername",
+   "x1": 0,
+   "x2": 158,
+   "x2_handles": "yes",
+   "x1_example": null,
+   "x2_example": [
+    "Mik_Behemoth",
+    "Titan"
+   ]
+  },
+  {
+   "attr": "leaderskin",
+   "x1": 0,
+   "x2": 157,
+   "x2_handles": "yes",
+   "x1_example": null,
+   "x2_example": [
+    "Mik_Behemoth",
+    "5404"
+   ]
+  },
+  {
+   "attr": "level",
+   "x1": 137,
+   "x2": 213,
+   "x2_handles": "yes",
+   "x1_example": [
+    "default",
+    "1"
+   ],
+   "x2_example": [
+    "default",
+    "1"
+   ]
+  },
+  {
+   "attr": "material",
+   "x1": 14,
+   "x2": 10,
+   "x2_handles": "yes",
+   "x1_example": [
+    "DangerRoomRobot",
+    "solidmetal"
+   ],
+   "x2_example": [
+    "SentryRobot_a",
+    "solidmetal"
+   ]
+  },
+  {
+   "attr": "meleetimeroffset",
+   "x1": 2,
+   "x2": 0,
+   "x2_handles": "yes",
+   "x1_example": [
+    "JuggernautFlashback",
+    "0.8"
+   ],
+   "x2_example": null
+  },
+  {
+   "attr": "meleetimerrandomadd",
+   "x1": 2,
+   "x2": 0,
+   "x2_handles": "yes",
+   "x1_example": [
+    "JuggernautFlashback",
+    "1.2"
+   ],
+   "x2_example": null
+  },
+  {
+   "attr": "mind",
+   "x1": 137,
+   "x2": 213,
+   "x2_handles": "yes",
+   "x1_example": [
+    "default",
+    "1"
+   ],
+   "x2_example": [
+    "default",
+    "1"
+   ]
+  },
+  {
+   "attr": "moveset1",
+   "x1": 50,
+   "x2": 14,
+   "x2_handles": "yes",
+   "x1_example": [
+    "Beast",
+    "moveset_acrobat"
+   ],
+   "x2_example": [
+    "Ironman",
+    "moveset_flying"
+   ]
+  },
+  {
+   "attr": "mutantskin",
+   "x1": 0,
+   "x2": 152,
+   "x2_handles": "yes",
+   "x1_example": null,
+   "x2_example": [
+    "Mik_Behemoth",
+    "5403"
+   ]
+  },
+  {
+   "attr": "mutatechance",
+   "x1": 0,
+   "x2": 158,
+   "x2_handles": "yes",
+   "x1_example": null,
+   "x2_example": [
+    "ShieldAgent",
+    "0"
+   ]
+  },
+  {
+   "attr": "name",
+   "x1": 206,
+   "x2": 296,
+   "x2_handles": "yes",
+   "x1_example": [
+    "default",
+    "default"
+   ],
+   "x2_example": [
+    "default",
+    "default"
+   ]
+  },
+  {
+   "attr": "nonhumanoidskeleton",
+   "x1": 0,
+   "x2": 50,
+   "x2_handles": "yes",
+   "x1_example": null,
+   "x2_example": [
+    "Mik_HellHound",
+    "true"
+   ]
+  },
+  {
+   "attr": "npchealthscale",
+   "x1": 67,
+   "x2": 10,
+   "x2_handles": "yes",
+   "x1_example": [
+    "AcolyteLeader",
+    "1"
+   ],
+   "x2_example": [
+    "ApocHolocaust",
+    "9"
+   ]
+  },
+  {
+   "attr": "pickupthrowchance",
+   "x1": 11,
+   "x2": 3,
+   "x2_handles": "yes",
+   "x1_example": [
+    "BlobAct1a",
+    "1"
+   ],
+   "x2_example": [
+    "Sentinel_a",
+    "0"
+   ]
+  },
+  {
+   "attr": "platform",
+   "x1": 0,
+   "x2": 2,
+   "x2_handles": "yes",
+   "x1_example": null,
+   "x2_example": [
+    "Pyro_hero",
+    "PC"
+   ]
+  },
+  {
+   "attr": "playable",
+   "x1": 101,
+   "x2": 80,
+   "x2_handles": "yes",
+   "x1_example": [
+    "Beast",
+    "true"
+   ],
+   "x2_example": [
+    "Bishop",
+    "true"
+   ]
+  },
+  {
+   "attr": "power1",
+   "x1": 0,
+   "x2": 28,
+   "x2_handles": "yes",
+   "x1_example": null,
+   "x2_example": [
+    "Bishop",
+    "power1"
+   ]
+  },
+  {
+   "attr": "power2",
+   "x1": 0,
+   "x2": 27,
+   "x2_handles": "yes",
+   "x1_example": null,
+   "x2_example": [
+    "Bishop",
+    "power5"
+   ]
+  },
+  {
+   "attr": "power3",
+   "x1": 0,
+   "x2": 24,
+   "x2_handles": "yes",
+   "x1_example": null,
+   "x2_example": [
+    "Bishop",
+    "power2"
+   ]
+  },
+  {
+   "attr": "power4",
+   "x1": 0,
+   "x2": 23,
+   "x2_handles": "yes",
+   "x1_example": null,
+   "x2_example": [
+    "Bishop",
+    "power9"
+   ]
+  },
+  {
+   "attr": "powerstyle",
+   "x1": 140,
+   "x2": 214,
+   "x2_handles": "yes",
+   "x1_example": [
+    "Beast",
+    "ps_beast"
+   ],
+   "x2_example": [
+    "Bishop",
+    "ps_bishop"
+   ]
+  },
+  {
+   "attr": "ratingdurability",
+   "x1": 17,
+   "x2": 0,
+   "x2_handles": "NO",
+   "x1_example": [
+    "default",
+    "0.25"
+   ],
+   "x2_example": null
+  },
+  {
+   "attr": "ratingmelee",
+   "x1": 17,
+   "x2": 0,
+   "x2_handles": "NO",
+   "x1_example": [
+    "default",
+    "0.25"
+   ],
+   "x2_example": null
+  },
+  {
+   "attr": "ratingranged",
+   "x1": 17,
+   "x2": 0,
+   "x2_handles": "NO",
+   "x1_example": [
+    "default",
+    "0.25"
+   ],
+   "x2_example": null
+  },
+  {
+   "attr": "ratingsupport",
+   "x1": 17,
+   "x2": 0,
+   "x2_handles": "NO",
+   "x1_example": [
+    "default",
+    "0.25"
+   ],
+   "x2_example": null
+  },
+  {
+   "attr": "resurrect",
+   "x1": 22,
+   "x2": 36,
+   "x2_handles": "yes",
+   "x1_example": [
+    "AcolyteEnergy",
+    "minion"
+   ],
+   "x2_example": [
+    "BeastBoss",
+    "minion"
+   ]
+  },
+  {
+   "attr": "scale_factor",
+   "x1": 20,
+   "x2": 45,
+   "x2_handles": "yes",
+   "x1_example": [
+    "Colossus",
+    "1.15"
+   ],
+   "x2_example": [
+    "Colossus",
+    "1.15"
+   ]
+  },
+  {
+   "attr": "scaleattacks",
+   "x1": 0,
+   "x2": 1,
+   "x2_handles": "yes",
+   "x1_example": null,
+   "x2_example": [
+    "Juggernaut",
+    "true"
+   ]
+  },
+  {
+   "attr": "scriptlevel",
+   "x1": 18,
+   "x2": 20,
+   "x2_handles": "yes",
+   "x1_example": [
+    "Beast",
+    "3"
+   ],
+   "x2_example": [
+    "Bishop",
+    "3"
+   ]
+  },
+  {
+   "attr": "size",
+   "x1": 9,
+   "x2": 6,
+   "x2_handles": "yes",
+   "x1_example": [
+    "colossusdopple",
+    "38 38 90"
+   ],
+   "x2_example": [
+    "Terror_a",
+    "60 80 55"
+   ]
+  },
+  {
+   "attr": "skin",
+   "x1": 206,
+   "x2": 292,
+   "x2_handles": "yes",
+   "x1_example": [
+    "default",
+    "0002"
+   ],
+   "x2_example": [
+    "default",
+    "0002"
+   ]
+  },
+  {
+   "attr": "skin_60s",
+   "x1": 5,
+   "x2": 2,
+   "x2_handles": "yes(costume ok)",
+   "x1_example": [
+    "Beast",
+    "02"
+   ],
+   "x2_example": [
+    "Cyclops",
+    "20"
+   ]
+  },
+  {
+   "attr": "skin_70s",
+   "x1": 5,
+   "x2": 7,
+   "x2_handles": "yes(costume ok)",
+   "x1_example": [
+    "Colossus",
+    "03"
+   ],
+   "x2_example": [
+    "Colossus",
+    "21"
+   ]
+  },
+  {
+   "attr": "skin_aoa",
+   "x1": 0,
+   "x2": 18,
+   "x2_handles": "yes(costume ok)",
+   "x1_example": null,
+   "x2_example": [
+    "Bishop",
+    "02"
+   ]
+  },
+  {
+   "attr": "skin_astonishing",
+   "x1": 0,
+   "x2": 17,
+   "x2_handles": "yes(costume ok)",
+   "x1_example": null,
+   "x2_example": [
+    "Bishop",
+    "03"
+   ]
+  },
+  {
+   "attr": "skin_civilian",
+   "x1": 2,
+   "x2": 3,
+   "x2_handles": "yes(costume ok)",
+   "x1_example": [
+    "Colossus",
+    "02"
+   ],
+   "x2_example": [
+    "Colossus",
+    "24"
+   ]
+  },
+  {
+   "attr": "skin_future",
+   "x1": 10,
+   "x2": 5,
+   "x2_handles": "yes(costume ok)",
+   "x1_example": [
+    "Beast",
+    "03"
+   ],
+   "x2_example": [
+    "Colossus",
+    "22"
+   ]
+  },
+  {
+   "attr": "skin_magmacivilian",
+   "x1": 1,
+   "x2": 0,
+   "x2_handles": "NO(costume name not in XML2 table)",
+   "x1_example": [
+    "Magma",
+    "03"
+   ],
+   "x2_example": null
+  },
+  {
+   "attr": "skin_weaponx",
+   "x1": 1,
+   "x2": 2,
+   "x2_handles": "yes(costume ok)",
+   "x1_example": [
+    "Wolverine",
+    "02"
+   ],
+   "x2_example": [
+    "Cyclops",
+    "24"
+   ]
+  },
+  {
+   "attr": "skin_winter",
+   "x1": 0,
+   "x2": 5,
+   "x2_handles": "yes(costume ok)",
+   "x1_example": null,
+   "x2_example": [
+    "Colossus",
+    "23"
+   ]
+  },
+  {
+   "attr": "skirmish_boost",
+   "x1": 0,
+   "x2": 3,
+   "x2_handles": "yes",
+   "x1_example": null,
+   "x2_example": [
+    "Juggernaut",
+    "-4"
+   ]
+  },
+  {
+   "attr": "sounddir",
+   "x1": 137,
+   "x2": 217,
+   "x2_handles": "yes",
+   "x1_example": [
+    "Beast",
+    "beast_m"
+   ],
+   "x2_example": [
+    "Bishop",
+    "bishop_m"
+   ]
+  },
+  {
+   "attr": "specific_attack",
+   "x1": 0,
+   "x2": 168,
+   "x2_handles": "yes",
+   "x1_example": null,
+   "x2_example": [
+    "ShieldAgent",
+    "1832"
+   ]
+  },
+  {
+   "attr": "specific_defense",
+   "x1": 0,
+   "x2": 168,
+   "x2_handles": "yes",
+   "x1_example": null,
+   "x2_example": [
+    "ShieldAgent",
+    "143"
+   ]
+  },
+  {
+   "attr": "specific_health",
+   "x1": 0,
+   "x2": 183,
+   "x2_handles": "yes",
+   "x1_example": null,
+   "x2_example": [
+    "Charlie",
+    "32000"
+   ]
+  },
+  {
+   "attr": "speed",
+   "x1": 137,
+   "x2": 213,
+   "x2_handles": "yes",
+   "x1_example": [
+    "default",
+    "1"
+   ],
+   "x2_example": [
+    "default",
+    "1"
+   ]
+  },
+  {
+   "attr": "strength",
+   "x1": 137,
+   "x2": 213,
+   "x2_handles": "yes",
+   "x1_example": [
+    "default",
+    "1"
+   ],
+   "x2_example": [
+    "default",
+    "1"
+   ]
+  },
+  {
+   "attr": "targetheight",
+   "x1": 0,
+   "x2": 8,
+   "x2_handles": "yes",
+   "x1_example": null,
+   "x2_example": [
+    "Mik_Brood",
+    "true"
+   ]
+  },
+  {
+   "attr": "team",
+   "x1": 177,
+   "x2": 291,
+   "x2_handles": "yes",
+   "x1_example": [
+    "Beast",
+    "hero"
+   ],
+   "x2_example": [
+    "Bishop",
+    "hero"
+   ]
+  },
+  {
+   "attr": "teleportpathfail",
+   "x1": 16,
+   "x2": 0,
+   "x2_handles": "yes",
+   "x1_example": [
+    "BlobAct1a",
+    "false"
+   ],
+   "x2_example": null
+  },
+  {
+   "attr": "textureicon",
+   "x1": 0,
+   "x2": 76,
+   "x2_handles": "yes",
+   "x1_example": null,
+   "x2_example": [
+    "Bishop",
+    "17"
+   ]
+  },
+  {
+   "attr": "throwally",
+   "x1": 1,
+   "x2": 0,
+   "x2_handles": "NO",
+   "x1_example": [
+    "colossusdopple",
+    "throwally"
+   ],
+   "x2_example": null
+  },
+  {
+   "attr": "weapon",
+   "x1": 28,
+   "x2": 0,
+   "x2_handles": "yes",
+   "x1_example": [
+    "GRSO_mp5",
+    "wp_mp5"
+   ],
+   "x2_example": null
+  },
+  {
+   "attr": "willflee",
+   "x1": 10,
+   "x2": 0,
+   "x2_handles": "yes",
+   "x1_example": [
+    "Crewman",
+    "true"
+   ],
+   "x2_example": null
+  },
+  {
+   "attr": "xpaward",
+   "x1": 23,
+   "x2": 0,
+   "x2_handles": "yes",
+   "x1_example": [
+    "BlobAct1a",
+    "30"
+   ],
+   "x2_example": null
+  },
+  {
+   "attr": "xpexempt",
+   "x1": 1,
+   "x2": 0,
+   "x2_handles": "yes",
+   "x1_example": [
+    "ProfXAstral",
+    "true"
+   ],
+   "x2_example": null
+  }
+ ],
+ "child_tags": [
+  {
+   "tag": "activepowerup",
+   "x1": 289,
+   "x2": 0
+  },
+  {
+   "tag": "bolton",
+   "x1": 27,
+   "x2": 35
+  },
+  {
+   "tag": "flyeffect",
+   "x1": 8,
+   "x2": 14
+  },
+  {
+   "tag": "level",
+   "x1": 624,
+   "x2": 0
+  },
+  {
+   "tag": "multipart",
+   "x1": 13,
+   "x2": 14
+  },
+  {
+   "tag": "race",
+   "x1": 208,
+   "x2": 274
+  },
+  {
+   "tag": "require",
+   "x1": 573,
+   "x2": 0
+  },
+  {
+   "tag": "scope",
+   "x1": 5,
+   "x2": 0
+  },
+  {
+   "tag": "talent",
+   "x1": 565,
+   "x2": 738
+  }
+ ],
+ "child_attrs": [
+  {
+   "tag": "activepowerup",
+   "attr": "affect_type",
+   "x1": 137,
+   "x2": 0,
+   "x1_example": [
+    "Iceman",
+    "scale"
+   ],
+   "x2_example": null
+  },
+  {
+   "tag": "activepowerup",
+   "attr": "damagetype",
+   "x1": 44,
+   "x2": 0,
+   "x1_example": [
+    "Frost",
+    "dmg_mental"
+   ],
+   "x2_example": null
+  },
+  {
+   "tag": "activepowerup",
+   "attr": "effect_cust1",
+   "x1": 44,
+   "x2": 0,
+   "x1_example": [
+    "Frost",
+    "powerups/frost_elemental"
+   ],
+   "x2_example": null
+  },
+  {
+   "tag": "activepowerup",
+   "attr": "func_attempt_hit",
+   "x1": 44,
+   "x2": 0,
+   "x1_example": [
+    "Frost",
+    "DamageAddAttack"
+   ],
+   "x2_example": null
+  },
+  {
+   "tag": "activepowerup",
+   "attr": "func_damage",
+   "x1": 3,
+   "x2": 0,
+   "x1_example": [
+    "Wolverine",
+    "damageaddbleed"
+   ],
+   "x2_example": null
+  },
+  {
+   "tag": "activepowerup",
+   "attr": "func_hurt",
+   "x1": 1,
+   "x2": 0,
+   "x1_example": [
+    "MultipleManDividing",
+    "MultipleMan_Hurt"
+   ],
+   "x2_example": null
+  },
+  {
+   "tag": "activepowerup",
+   "attr": "func_trail",
+   "x1": 44,
+   "x2": 0,
+   "x1_example": [
+    "Frost",
+    "elemtrail"
+   ],
+   "x2_example": null
+  },
+  {
+   "tag": "activepowerup",
+   "attr": "level",
+   "x1": 231,
+   "x2": 0,
+   "x1_example": [
+    "Frost",
+    "L3"
+   ],
+   "x2_example": null
+  },
+  {
+   "tag": "activepowerup",
+   "attr": "life",
+   "x1": 289,
+   "x2": 0,
+   "x1_example": [
+    "Frost",
+    "-1"
+   ],
+   "x2_example": null
+  },
+  {
+   "tag": "activepowerup",
+   "attr": "powerup",
+   "x1": 289,
+   "x2": 0,
+   "x1_example": [
+    "Frost",
+    "reflect_damage"
+   ],
+   "x2_example": null
+  },
+  {
+   "tag": "activepowerup",
+   "attr": "scope_attack",
+   "x1": 13,
+   "x2": 0,
+   "x1_example": [
+    "Wolverine",
+    "punch"
+   ],
+   "x2_example": null
+  },
+  {
+   "tag": "activepowerup",
+   "attr": "scope_damage",
+   "x1": 58,
+   "x2": 0,
+   "x1_example": [
+    "Frost",
+    "dmg_physical"
+   ],
+   "x2_example": null
+  },
+  {
+   "tag": "activepowerup",
+   "attr": "scope_node",
+   "x1": 5,
+   "x2": 0,
+   "x1_example": [
+    "Psylocke",
+    "psylocke_power"
+   ],
+   "x2_example": null
+  },
+  {
+   "tag": "activepowerup",
+   "attr": "user1",
+   "x1": 52,
+   "x2": 0,
+   "x1_example": [
+    "Frost",
+    "10"
+   ],
+   "x2_example": null
+  },
+  {
+   "tag": "activepowerup",
+   "attr": "user2",
+   "x1": 43,
+   "x2": 0,
+   "x1_example": [
+    "Frost",
+    "29"
+   ],
+   "x2_example": null
+  },
+  {
+   "tag": "bolton",
+   "attr": "anim",
+   "x1": 12,
+   "x2": 16,
+   "x1_example": [
+    "Nightcrawler",
+    "98_tail"
+   ],
+   "x2_example": [
+    "Nightcrawler",
+    "06_nightcrawler_tail"
+   ]
+  },
+  {
+   "tag": "bolton",
+   "attr": "bolt",
+   "x1": 21,
+   "x2": 35,
+   "x1_example": [
+    "Nightcrawler",
+    "Bip01 Pelvis"
+   ],
+   "x2_example": [
+    "Gambit",
+    "Bip01 R Hand"
+   ]
+  },
+  {
+   "tag": "bolton",
+   "attr": "group",
+   "x1": 0,
+   "x2": 3,
+   "x1_example": null,
+   "x2_example": [
+    "CoreGuard_a",
+    "1"
+   ]
+  },
+  {
+   "tag": "bolton",
+   "attr": "menuonly",
+   "x1": 0,
+   "x2": 2,
+   "x1_example": null,
+   "x2_example": [
+    "Gambit",
+    "true"
+   ]
+  },
+  {
+   "tag": "bolton",
+   "attr": "model",
+   "x1": 27,
+   "x2": 35,
+   "x1_example": [
+    "Nightcrawler",
+    "9801"
+   ],
+   "x2_example": [
+    "Gambit",
+    "models/bolton/gambit_staff_menu"
+   ]
+  },
+  {
+   "tag": "bolton",
+   "attr": "onlyprecache",
+   "x1": 6,
+   "x2": 0,
+   "x1_example": [
+    "MorlockPsionic",
+    "true"
+   ],
+   "x2_example": null
+  },
+  {
+   "tag": "bolton",
+   "attr": "slot",
+   "x1": 21,
+   "x2": 35,
+   "x1_example": [
+    "Nightcrawler",
+    "ebolton_tail"
+   ],
+   "x2_example": [
+    "Gambit",
+    "ebolton_clawright"
+   ]
+  },
+  {
+   "tag": "flyeffect",
+   "attr": "bolt",
+   "x1": 7,
+   "x2": 13,
+   "x1_example": [
+    "Phoenix",
+    "Bip01 L Hand"
+   ],
+   "x2_example": [
+    "Ironman",
+    "Bip01 L Toe0"
+   ]
+  },
+  {
+   "tag": "flyeffect",
+   "attr": "effect",
+   "x1": 8,
+   "x2": 14,
+   "x1_example": [
+    "Phoenix",
+    "powers/phoenix_fly_hands"
+   ],
+   "x2_example": [
+    "Ironman",
+    "char/iron/ability_fly_hand"
+   ]
+  },
+  {
+   "tag": "level",
+   "attr": "cost",
+   "x1": 119,
+   "x2": 0,
+   "x1_example": [
+    "Beast",
+    "2"
+   ],
+   "x2_example": null
+  },
+  {
+   "tag": "level",
+   "attr": "descname",
+   "x1": 92,
+   "x2": 0,
+   "x1_example": [
+    "Beast",
+    "Cannon Ball"
+   ],
+   "x2_example": null
+  },
+  {
+   "tag": "level",
+   "attr": "description",
+   "x1": 572,
+   "x2": 0,
+   "x1_example": [
+    "Beast",
+    "^L3 Damage. ^P1 Energy per roll."
+   ],
+   "x2_example": null
+  },
+  {
+   "tag": "multipart",
+   "attr": "bone",
+   "x1": 13,
+   "x2": 0,
+   "x1_example": [
+    "JuggernautScripted",
+    "Bip01 Head"
+   ],
+   "x2_example": null
+  },
+  {
+   "tag": "multipart",
+   "attr": "effectbone",
+   "x1": 13,
+   "x2": 0,
+   "x1_example": [
+    "JuggernautScripted",
+    "Bip01 Head"
+   ],
+   "x2_example": null
+  },
+  {
+   "tag": "multipart",
+   "attr": "effectondeath",
+   "x1": 13,
+   "x2": 0,
+   "x1_example": [
+    "JuggernautScripted",
+    "explode/JuggernautHelmet"
+   ],
+   "x2_example": null
+  },
+  {
+   "tag": "multipart",
+   "attr": "health",
+   "x1": 13,
+   "x2": 14,
+   "x1_example": [
+    "JuggernautScripted",
+    "400"
+   ],
+   "x2_example": [
+    "Bishop",
+    "0"
+   ]
+  },
+  {
+   "tag": "multipart",
+   "attr": "healthmul",
+   "x1": 10,
+   "x2": 0,
+   "x1_example": [
+    "SentinelFlashback",
+    "2"
+   ],
+   "x2_example": null
+  },
+  {
+   "tag": "multipart",
+   "attr": "hideskin",
+   "x1": 13,
+   "x2": 13,
+   "x1_example": [
+    "JuggernautScripted",
+    "3401_helmet"
+   ],
+   "x2_example": [
+    "Bishop",
+    "gun_left"
+   ]
+  },
+  {
+   "tag": "multipart",
+   "attr": "hideskin2",
+   "x1": 10,
+   "x2": 0,
+   "x1_example": [
+    "SentinelFlashback",
+    "5501_r_upperarm"
+   ],
+   "x2_example": null
+  },
+  {
+   "tag": "multipart",
+   "attr": "linktopower",
+   "x1": 10,
+   "x2": 0,
+   "x1_example": [
+    "SentinelFlashback",
+    "powerSmash powerAction"
+   ],
+   "x2_example": null
+  },
+  {
+   "tag": "multipart",
+   "attr": "loopeffect",
+   "x1": 10,
+   "x2": 0,
+   "x1_example": [
+    "SentinelFlashback",
+    "explode/SentinelArmLoop"
+   ],
+   "x2_example": null
+  },
+  {
+   "tag": "multipart",
+   "attr": "nonmenuonly",
+   "x1": 0,
+   "x2": 2,
+   "x1_example": null,
+   "x2_example": [
+    "Deadpool",
+    "true"
+   ]
+  },
+  {
+   "tag": "multipart",
+   "attr": "showskin",
+   "x1": 3,
+   "x2": 1,
+   "x1_example": [
+    "JuggernautScripted",
+    "3401_head"
+   ],
+   "x2_example": [
+    "Deadpool",
+    "sword_l_back"
+   ]
+  },
+  {
+   "tag": "multipart",
+   "attr": "starthide",
+   "x1": 3,
+   "x2": 0,
+   "x1_example": [
+    "JuggernautScripted",
+    "3401_head"
+   ],
+   "x2_example": null
+  },
+  {
+   "tag": "race",
+   "attr": "name",
+   "x1": 208,
+   "x2": 274,
+   "x1_example": [
+    "default",
+    "Mutant"
+   ],
+   "x2_example": [
+    "default",
+    "Mutant"
+   ]
+  },
+  {
+   "tag": "require",
+   "attr": "cat",
+   "x1": 573,
+   "x2": 0,
+   "x1_example": [
+    "Beast",
+    "level"
+   ],
+   "x2_example": null
+  },
+  {
+   "tag": "require",
+   "attr": "degree",
+   "x1": 28,
+   "x2": 0,
+   "x1_example": [
+    "Beast",
+    "see"
+   ],
+   "x2_example": null
+  },
+  {
+   "tag": "require",
+   "attr": "item",
+   "x1": 2,
+   "x2": 0,
+   "x1_example": [
+    "Psylocke",
+    "blademaster"
+   ],
+   "x2_example": null
+  },
+  {
+   "tag": "require",
+   "attr": "level",
+   "x1": 573,
+   "x2": 0,
+   "x1_example": [
+    "Beast",
+    "3"
+   ],
+   "x2_example": null
+  },
+  {
+   "tag": "scope",
+   "attr": "scope_node",
+   "x1": 5,
+   "x2": 0,
+   "x1_example": [
+    "Gambit",
+    "gambit_staff"
+   ],
+   "x2_example": null
+  },
+  {
+   "tag": "talent",
+   "attr": "cost",
+   "x1": 5,
+   "x2": 0,
+   "x1_example": [
+    "Frost",
+    "2"
+   ],
+   "x2_example": null
+  },
+  {
+   "tag": "talent",
+   "attr": "descname",
+   "x1": 89,
+   "x2": 0,
+   "x1_example": [
+    "Beast",
+    "PinBall"
+   ],
+   "x2_example": null
+  },
+  {
+   "tag": "talent",
+   "attr": "description",
+   "x1": 89,
+   "x2": 0,
+   "x1_example": [
+    "Beast",
+    "<description>"
+   ],
+   "x2_example": null
+  },
+  {
+   "tag": "talent",
+   "attr": "hidden",
+   "x1": 1,
+   "x2": 0,
+   "x1_example": [
+    "Iceman",
+    "true"
+   ],
+   "x2_example": null
+  },
+  {
+   "tag": "talent",
+   "attr": "icon",
+   "x1": 64,
+   "x2": 0,
+   "x1_example": [
+    "Beast",
+    "1"
+   ],
+   "x2_example": null
+  },
+  {
+   "tag": "talent",
+   "attr": "icon_texture",
+   "x1": 64,
+   "x2": 0,
+   "x1_example": [
+    "Beast",
+    "textures/ui/beast_all.png"
+   ],
+   "x2_example": null
+  },
+  {
+   "tag": "talent",
+   "attr": "level",
+   "x1": 565,
+   "x2": 693,
+   "x1_example": [
+    "default",
+    "1"
+   ],
+   "x2_example": [
+    "default",
+    "1"
+   ]
+  },
+  {
+   "tag": "talent",
+   "attr": "limit",
+   "x1": 0,
+   "x2": 2,
+   "x1_example": null,
+   "x2_example": [
+    "Wolverine",
+    "1"
+   ]
+  },
+  {
+   "tag": "talent",
+   "attr": "name",
+   "x1": 565,
+   "x2": 738,
+   "x1_example": [
+    "default",
+    "fightstyle_hero"
+   ],
+   "x2_example": [
+    "default",
+    "fightstyle_hero"
+   ]
+  },
+  {
+   "tag": "talent",
+   "attr": "power",
+   "x1": 87,
+   "x2": 0,
+   "x1_example": [
+    "Beast",
+    "0"
+   ],
+   "x2_example": null
+  }
+ ],
+ "powerstyles": {
+  "x1_only_tags": [],
+  "x2_only_tags": [
+   "affecter",
+   "affector",
+   "bolton",
+   "functionevent",
+   "powerup",
+   "scope",
+   "special_fx"
+  ],
+  "x1_only_attrs": [
+   "event.angoffset(3)",
+   "event.character(2)",
+   "event.limit(2)",
+   "event.powerup_tag(1)",
+   "event.spawneffect(1)",
+   "event.startnode(2)",
+   "event.weapon(2)",
+   "fightmove.noblendanim(4)",
+   "fightmove.noflying(3)",
+   "powerstyle.exclusive(15)",
+   "powerstyle.iconcolumns(16)",
+   "powerstyle.iconrows(16)",
+   "require.entity(1)",
+   "require.only_looped(4)",
+   "trigger.affect_type(47)",
+   "trigger.alpha(11)",
+   "trigger.bolton(4)",
+   "trigger.character(9)",
+   "trigger.closerange(2)",
+   "trigger.copy_counter(1)",
+   "trigger.damagemod(1)",
+   "trigger.dashbolt(2)",
+   "trigger.dasheffect(6)",
+   "trigger.effect_cust2(5)",
+   "trigger.facespawner(2)",
+   "trigger.footstepfx(1)",
+   "trigger.func_activate(34)",
+   "trigger.func_attempt_hit(2)",
+   "trigger.func_damage(5)",
+   "trigger.func_deactivate(49)",
+   "trigger.func_death(22)",
+   "trigger.func_hurt(25)",
+   "trigger.func_think(6)",
+   "trigger.func_touch(6)",
+   "trigger.func_trail(1)",
+   "trigger.fx_bolt(11)",
+   "trigger.hitenemyeffect(4)",
+   "trigger.intervalrandom(1)",
+   "trigger.level(379)",
+   "trigger.level_max(11)",
+   "trigger.life_max(33)",
+   "trigger.limit(4)",
+   "trigger.matchorigin(4)",
+   "trigger.motor(1)",
+   "trigger.nopushback(22)",
+   "trigger.onlynoenemypitch(3)",
+   "trigger.powerup(141)",
+   "trigger.removecurrent(1)",
+   "trigger.rgba(6)",
+   "trigger.scale(1)",
+   "trigger.scope_attack(6)",
+   "trigger.scope_damage(13)",
+   "trigger.scope_node(1)",
+   "trigger.scope_race(1)",
+   "trigger.setbeam(12)",
+   "trigger.skin_swap(1)",
+   "trigger.solid(12)",
+   "trigger.startnode(9)",
+   "trigger.targetdot(22)",
+   "trigger.team(5)",
+   "trigger.timebased(5)",
+   "trigger.timeinterval(1)",
+   "trigger.tint(12)",
+   "trigger.usedamageasexplodeonly(3)",
+   "trigger.useownerteam(1)",
+   "trigger.vibrate(1)",
+   "trigger.weapon(2)",
+   "trigger.zverticalrange(2)"
+  ]
+ },
+ "fightstyles": {
+  "x1_only_tags": [
+   "trigger2"
+  ],
+  "x2_only_tags": [],
+  "x1_only_attrs": [
+   "event.arc(1)",
+   "event.attacktype(1)",
+   "event.damagelevel(1)",
+   "event.powerattack(1)",
+   "event.verticalrange(1)",
+   "fightingstyle.description(15)",
+   "fightmove.nodamage(3)",
+   "trigger.allynodename(6)",
+   "trigger.attackerface(1)",
+   "trigger.attacktype(1)",
+   "trigger.chargespeed(1)",
+   "trigger.chargetime(1)",
+   "trigger.forwarddistance(1)",
+   "trigger.forwardvelocity(1)",
+   "trigger.func_activate(1)",
+   "trigger.func_deactivate(1)",
+   "trigger.func_death(1)",
+   "trigger.func_hurt(1)",
+   "trigger.no_shadow(1)",
+   "trigger.no_stack(1)",
+   "trigger.nodename(6)",
+   "trigger.npcnodename(2)",
+   "trigger.ownertime(1)",
+   "trigger.powerattack(4)",
+   "trigger.powerup(1)",
+   "trigger.remove(1)",
+   "trigger.updistance(1)",
+   "trigger.velocityup(1)",
+   "trigger.verticaloffset(4)",
+   "trigger.verticalrange(1)",
+   "trigger.victimface(1)",
+   "trigger2.forward(1)",
+   "trigger2.name(1)",
+   "trigger2.time(1)",
+   "trigger2.type(1)"
+  ]
+ },
+ "values": {
+  "x1": 112,
+  "missing_in_x2": [
+   "A1",
+   "A2",
+   "A3",
+   "A4",
+   "A5",
+   "A6",
+   "A7",
+   "A8",
+   "A9",
+   "A10",
+   "XTL1",
+   "XTL2",
+   "XTL3",
+   "XTL4",
+   "XTL5",
+   "XTL6"
+  ],
+  "different": [
+   "P0+",
+   "P1",
+   "P1+",
+   "P2",
+   "P2+",
+   "P3",
+   "P3+",
+   "P4",
+   "P4+",
+   "P5",
+   "P5+",
+   "P6",
+   "P6+",
+   "P7",
+   "P7+",
+   "P8",
+   "P8+",
+   "P9",
+   "P9+",
+   "P10",
+   "P10+",
+   "P11",
+   "P11+",
+   "P12",
+   "P12+",
+   "P13",
+   "P13+",
+   "P14",
+   "P14+",
+   "P15",
+   "P15+",
+   "P16",
+   "BST1",
+   "BST9"
+  ]
+ }
+}

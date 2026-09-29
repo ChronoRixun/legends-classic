@@ -1,0 +1,83 @@
+rewrite_scripts.py report
+scripts processed: 1408 (loose bundles 1318, assets-only 90); changed 720, unchanged 688
+lines XMen2.exe would drop if copied unchanged: loose 1595, assets 21
+lines XMen2.exe would drop after rewrite (validation): 14
+   scripts/menus/intro_demo.py:15: unknown function beginmissionhack
+   scripts/missions/mansion_start.py:4: unknown function begin
+   scripts/missions/muirisland_start.py:5: startMovie argc 1 != 2
+   scripts/missions/muirisland_start.py:7: unknown function depart
+   scripts/missions/nuke_start.py:5: startMovie argc 1 != 2
+   scripts/missions/nuke_start.py:7: unknown function depart
+   scripts/missions/sewers_intro.py:5: startMovie argc 1 != 2
+   scripts/missions/sewers_intro.py:7: unknown function begin
+   scripts/missions/sewers_start.py:5: startMovie argc 1 != 2
+   scripts/missions/sewers_start.py:8: startMovie argc 1 != 2
+   scripts/missions/sewers_start.py:10: unknown function depart
+   scripts/missions/testcollect_start.py:5: startMovie argc 1 != 2
+   scripts/missions/testcollect_start.py:7: unknown function depart
+   scripts/missions/wx_fb_start.py:4: unknown function depart
+generated dialogs: 92; helper scripts: 0; mission start scripts: 101
+inline data strings scanned: 1139; rewritten: 129
+XML2 game vars used: 41 of 100 (XMen2.exe itself uses 4: ['danv', 'r_d_disc', 'r_imarmor', 'r_t_station']); names >= 12 chars: []; temp var clashes with XML1 scripts: []
+packs: mission x1v* [32, 32, 32, 32, 32, 32, 12], game x1g* [28, 8]
+max XML2 zone vars needed in one zone: 7 (limit 32)
+
+== rule counts
+     353  dialog text $id resolved from XML1 strings.eng
+       2  drop canCancelDialog
+       1  drop displayEx
+      18  drop enterSoloMode
+       4  drop exitSoloMode
+       6  drop invalid statement
+     185  drop legacy python line
+      57  drop main
+       1  drop removeFromGroup
+       1  drop setPowerStatus
+       1  drop xtremeConversationLight
+     170  inline data strings rewritten
+       5  normalise line endings / final CRLF
+       2  rule addHero
+      47  rule beginMission
+      49  rule beginMission (inline -> x1/missions script)
+       1  rule beginMissionHack
+       3  rule beginSideMission
+       4  rule beginSideMission (inline -> x1/missions script)
+      50  rule blackbirdMenu code argument
+     103  rule createPopupDialog
+       2  rule destroyMultipartPiece
+       6  rule endSideMission
+      20  rule extractionPointLite 6->4 args
+      28  rule getGameVar
+     103  rule getMissionFlag
+     178  rule getMissionVar
+       2  rule literal assignment -> iadd
+     110  rule loadMap -> loadMapKeepTeam
+      10  rule mission
+     396  rule screenFade -> cameraFade
+      29  rule setGameVar
+      18  rule setInCampaign
+     171  rule setMissionFlag
+     276  rule setMissionVar
+      32  storage: 1:1 game var (flag name)
+       2  storage: XML2 zone var (per-zone entity id / health value)
+      23  storage: XML2 zone var (single-zone counter)
+       2  storage: packed game var (counter)
+      14  storage: packed game var (literal)
+      12  storage: packed mission var (counter)
+      90  storage: packed mission var (literal)
+       1  storage: signed (two's complement) packed var
+      80  strip game. prefix
+      73  zone script: setCurrentAct injected
+
+== items needing attention (6)
+  [2] addHero: XML2 cannot add a hero to the party from script; hero is unlocked and the team menu (extractionPointLite) is opened instead - verify in game
+        scripts/mansion/dr_mag2/blob/add_cyclops.py:6
+        scripts/nyc/alison/add_cyclops.py:6
+  [1] getMissionVar with runtime name rescuee -> getZoneVar (zone lifetime)
+        scripts/hive/h_int/hive_trigger_rescue.py:4
+  [1] setMissionVar with runtime name rescuee -> setZoneVar (zone lifetime)
+        scripts/hive/h_int/hive_trigger_rescue.py:8
+  [1] 49 zones have no zone script: setCurrentAct only comes from beginMission (give them zonescript=x1/zones/<zone> to be save/load safe): ['arbiter/a_int/arb2_2', 'arbiter/a_int/arb2_3', 'arbiter/a_int/arb2_4', 'astral/ast1/astral1_2', 'astral/ast1/astral4_3', 'astroid_m/visit1/asteroid2_1', 'astroid_m/visit1/asteroid2_2', 'demo/hub/sewers1_1_1']...
+        zones
+  [1] 22 zones belong to missions in different acts; no setCurrentAct injected: ['arbiter/a_int/arb2_1', 'arbiter/a_int/arb3_1', 'arbiter/a_int/arb3_2', 'arbiter/a_int/arb3_3', 'arbiter/a_int/arb3_4', 'astral/ast3/astral3_3', 'astral/ast3/astral3_5', 'demo/a_int/arb3_1', 'demo/a_int/arb3_2', 'demo/hub/sewers1_1_2', 'haarp/int/haarp2_6', 'haarp/int/icetunnel1', 'hive/h_int/hive2_2_1', 'mansion/man5/mansion5_2', 'mansion/man5/subbasement5', 'nuke_plant/nuke/nuke2_3', 'sewers/grso/sewers_marrow', 'sewers/hub/sewers1_1_1', 'sewers/hub/sewers1_1_2', 'sewers/hub/sewers_hub', 'weapon_x/old/wx2_1', 'weapon_x/old/wx2_2']
+        zones

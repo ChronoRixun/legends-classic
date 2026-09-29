@@ -1,0 +1,24 @@
+name: Rights holder concern
+description: For owners of the games' rights or trademarks who have a concern about this project.
+labels: [legal]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Legends Classic is an unofficial, non-commercial fan project that ships no game content (see LEGAL.md).
+        If you represent a rights holder and have a concern, tell us here and we will answer promptly and in good
+        faith. If you would rather not write publicly, say so in one line and how to reach you, and the maintainer
+        will get in touch.
+  - type: input
+    id: who
+    attributes:
+      label: Who you represent
+    validations:
+      required: true
+  - type: textarea
+    id: concern
+    attributes:
+      label: Your concern
+      description: Which files, text or behaviour of this repository or its releases it is about.
+    validations:
+      required: true

@@ -1,0 +1,207 @@
+file	name	name_in_xml2	team	skin	skin_xml2	skins_all	skin_actor_status	characteranims	anims_status	anims_xml2	powerstyle	ps_status	ps_xml2	moveset1	talents	undefined_talents	weapon	sounddir	x1_bank	xml2_bank_same_name	packages
+herostat	default	True		0002	14002	default:0002	collision	00_testguy	collision	x1_00_testguy					fightstyle_hero						2
+herostat	Beast	True	hero	0501	14501	default:0501 60s:0502 future:0503	collision	05_beast	collision	x1_05_beast	ps_beast	collision	x1_ps_beast	moveset_acrobat	beast_pinball beast_propeller beast_boost beast_xtreme fightstyle_wrestling might grappling acrobatics critical toughness mutantmastery	grappling acrobatics toughness mutantmastery		beast_m	True	True	7
+herostat	Colossus	True	hero	0901	14901	default:0901 70s:0903 civilian:0902 future:0906	collision	09_colossus	collision	x1_09_colossus	ps_colossus	collision	x1_ps_colossus		colossus_titanicsmash colossus_concslam colossus_steelskin colossus_xtreme colossus_charge fightstyle_wrestling might critical knockback toughness mutantmastery	knockback toughness mutantmastery		coloss_m	True	True	9
+herostat	Cyclops	True	hero	0101	14101	default:0101 60s:0102 70s:0103 future:0105	collision	01_cyclops	collision	x1_01_cyclops	ps_cyclops	collision	x1_ps_cyclops		cyclops_beam cyclops_sweep cyclops_tactics cyclops_xtreme fightstyle_hero accuracy critical leadership pointblank toughness mutantmastery	accuracy pointblank toughness mutantmastery		cyclop_m	True	True	9
+herostat	Frost	True	hero	1501	15501	default:1501 future:1502	collision	15_emmafrost	x1_only	15_emmafrost	ps_frost	collision	x1_ps_frost		frost_confuse frost_fear frost_shield frost_xtreme frost_hardness frost_might fightstyle_finesse1 fightstyle_psionic psi_fight_frost critical toughness mutantmastery	toughness mutantmastery		emmaf_m	True	False	5
+herostat	Gambit	True	hero	1301	15301	default:1301 future:1302	collision	13_gambit	collision	x1_13_gambit	ps_gambit	collision	x1_ps_gambit		charged_card staff_slam kinetic_boost gambit_xtreme overload kinetic_strike staff_master fightstyle_hero critical toughness mutantmastery	toughness mutantmastery		gambit_m	True	False	5
+herostat	Iceman	True	hero	0801	14801	default:0801 60s:0803 civilian:0802	collision	08_iceman	collision	x1_08_iceman	ps_iceman	collision	x1_ps_iceman		iceman_freeze iceman_spikes iceman_armor iceman_xtreme iceman_elemental ice_skating fightstyle_hero critical pointblank toughness mutantmastery ice_special	pointblank toughness mutantmastery		iceman_m	True	True	7
+herostat	Jubilee	False	hero	1601	15601	default:1601	collision	16_jubilee	x1_only	16_jubilee	ps_jubilee	x1_only	ps_jubilee		energy_burst photo_flash taunt jubilee_xtreme detonate fightstyle_hero accuracy critical pointblank toughness mutantmastery	accuracy pointblank toughness mutantmastery		jubile_m	True	False	3
+herostat	Magma	False	hero	1801	15801	default:1801 future:1804 magmacivilian:1803	collision	18_magma	x1_only	18_magma	ps_magma	x1_only	ps_magma		magma_blast lava_fissure magma_form magma_xtreme magma_elemental magma_skating magma_might critical fightstyle_hero toughness mutantmastery	toughness mutantmastery		magma_m	True	False	9
+herostat	Nightcrawler	True	hero	0601	14601	default:0601 70s:0602 future:0603	collision	06_nightcrawler	collision	x1_06_nightcrawler	ps_nightcrawler	collision	x1_ps_nightcrawler	moveset_acrobat	night_strike night_frenzy night_shadow night_xtreme night_faith sucker_punch fightstyle_finesse1 critical acrobatics toughness mutantmastery	acrobatics toughness mutantmastery		night_m	True	True	7
+herostat	Phoenix	True	hero	0201	14201	default:0201 60s:0202 70s:0203	collision	02_phoenix	x1_only	02_phoenix	ps_phoenix	collision	x1_ps_phoenix	moveset_flying	phoenix_telekinesis phoenix_shout phoenix_shield phoenix_xtreme phoenix_combat critical flight fightstyle_finesse1 fightstyle_psionic psi_fight_phoenix toughness mutantmastery	toughness mutantmastery		phoen_m	True	False	7
+herostat	ProfXAstral	False	hero	1104	15104	default:1104	collision	11_profxastral	x1_only	11_profxastral	ps_profxastral	x1_only	ps_profxastral		profx_psychicsmash profx_psychicburst profx_psychicdefense profx_xtreme profx_fighting fightstyle_wrestling might critical astralknockback leadership toughness mutantmastery	toughness mutantmastery		profxa_m	True	False	3
+herostat	Psylocke	False	hero	1201	15201	default:1201 future:1202	collision	12_psylocke	x1_only	12_psylocke	ps_psylocke	x1_only	ps_psylocke	moveset_acrobat	psylocke_slash psylocke_bolts psylocke_armor psylocke_xtreme blademaster fightstyle_finesse1 fightstyle_psionic psi_fight_psylocke critical toughness mutantmastery	toughness mutantmastery		psyloc_m	True	False	5
+herostat	Rogue	True	hero	0701	14701	default:0701	collision	07_rogue	collision	x1_07_rogue	ps_rogue	collision	x1_ps_rogue	moveset_flying	rogue_strike rogue_ability rogue_shield rogue_xtreme fightstyle_wrestling might flight grappling critical toughness mutantmastery	grappling toughness mutantmastery		rogue_m	True	False	3
+herostat	Storm	True	hero	0401	14401	default:0401 future:0402	collision	04_storm	collision	x1_04_storm	ps_storm	collision	x1_ps_storm	moveset_flying	storm_lnstrike storm_whirlwind storm_shield storm_xtreme storm_elemental fightstyle_finesse1 critical flight leadership toughness mutantmastery	toughness mutantmastery		storm_m	True	True	5
+herostat	Wolverine	True	hero	0301	14301	default:0301 60s:0303 70s:0303 future:0305 weaponx:0302	collision	03_wolverine	collision	x1_03_wolverine	ps_wolverine	collision	x1_ps_wolverine		wolv_slash wolv_frenzy wolv_berserk wolv_xtreme wolv_sharpness expertise healing_factor fightstyle_hero critical toughness mutantmastery	healing_factor toughness mutantmastery		wolver_m	True	False	9
+npcstat	AcolyteEnergy	False	enemy	4801	18801	default:4801	collision	48_acolyteenergy	x1_only	48_acolyteenergy	ps_acolyte_energy	x1_only	ps_acolyte_energy		might fightstyle_villain energy_resistant	fightstyle_villain		aco_e_m	True	False	2
+npcstat	AcolyteEnergy_B	False	enemy	4805	18805	default:4805	x1_only	48_acolyteenergy	x1_only	48_acolyteenergy	ps_acolyte_energy_b	x1_only	ps_acolyte_energy_b		might fightstyle_villain energy_resistant	fightstyle_villain		aco_e_m	True	False	2
+npcstat	AcolyteLeader	False	enemy	4804	18804	default:4804	x1_only	48_acolyteenergy	x1_only	48_acolyteenergy	ps_acolyte_energy	x1_only	ps_acolyte_energy		energy_resistant mental_resistant might fightstyle_villain	fightstyle_villain		aco_e_m	True	False	2
+npcstat	AcolyteLeader_B	False	enemy	4808	18808	default:4808	x1_only	48_acolyteenergy	x1_only	48_acolyteenergy	ps_acolyte_energy_b	x1_only	ps_acolyte_energy_b		energy_resistant mental_resistant might fightstyle_villain	fightstyle_villain		aco_e_m	True	False	2
+npcstat	AcolyteMental	False	enemy	4803	18803	default:4803	x1_only	48_acolytemental	x1_only	48_acolytemental	ps_acolyte_mental	x1_only	ps_acolyte_mental		might fightstyle_finesse1 mental_resistant			aco_me_m	True	False	2
+npcstat	AcolyteMental_B	False	enemy	4807	18807	default:4807	x1_only	48_acolytemental	x1_only	48_acolytemental	ps_acolyte_mental_b	x1_only	ps_acolyte_mental_b		might fightstyle_finesse1 mental_resistant			aco_me_m	True	False	2
+npcstat	AcolyteSmash	False	enemy	4802	18802	default:4802	x1_only	48_acolytesmash	x1_only	48_acolytesmash	ps_acolyte_smash	x1_only	ps_acolyte_smash		might fightstyle_wrestling physical_resistant			aco_s_m	True	False	2
+npcstat	AcolyteSmash_B	False	enemy	4806	18806	default:4806	x1_only	48_acolytesmash	x1_only	48_acolytesmash	ps_acolyte_smash_b	x1_only	ps_acolyte_smash_b		might fightstyle_wrestling physical_resistant			aco_s_m	True	False	2
+npcstat	Crewman	False		5805	19805	default:5805	x1_only	50_civilians_male	x1_only	50_civilians_male	ps_civilian	x1_only	ps_civilian		fightstyle_wrestling						2
+npcstat	AstralGhost	False	enemy	3705	17705	default:3705	x1_only	37_astralghost	x1_only	37_astralghost	ps_astral_ghost	x1_only	ps_astral_ghost		might fightstyle_finesse1 spawn_invis						2
+npcstat	AvalancheScripted	False	enemy	3101	17101	default:3101	collision	31_avalanche	x1_only	31_avalanche					fightstyle_villain avalanche_special physical_resistant	fightstyle_villain		avalan_m	True	False	2
+npcstat	avalanchelite	False	enemy	3101	17101	default:3101	collision	31_avalanche	x1_only	31_avalanche	ps_avalanche_lite	x1_only	ps_avalanche_lite		fightstyle_villain avalanche_special physical_resistant	fightstyle_villain		avalan_m	True	False	2
+npcstat	AvalancheAct2	False	enemy	3101	17101	default:3101	collision	31_avalanche	x1_only	31_avalanche	ps_avalanche	x1_only	ps_avalanche		might aval_crack aval_quake fightstyle_villain avalanche_special physical_resistant	aval_crack aval_quake fightstyle_villain		avalan_m	True	False	2
+npcstat	AvalancheAct4	False	enemy	3102	17102	default:3102	x1_only	31_avalanche	x1_only	31_avalanche	ps_avalanche	x1_only	ps_avalanche		aval_crack aval_quake might fightstyle_villain avalanche_special physical_resistant	aval_crack aval_quake fightstyle_villain		avalan_m	True	False	2
+npcstat	beastscripted	False	none	0501	14501	default:0501	collision	05_beast	collision	x1_05_beast					might fightstyle_wrestling						2
+npcstat	BishopKid	False		1702	15702	default:1702	collision	50_civilians_male	x1_only	50_civilians_male	ps_civilian	x1_only	ps_civilian		fightstyle_hero						2
+npcstat	BlobScripted	False		3001	17001	default:3001	collision	30_blob	collision	x1_30_blob					might blob_special physical_resistant						2
+npcstat	BlobAct1a	False	enemy	3001	17001	default:3001	collision	30_blob	collision	x1_30_blob	ps_blob	collision	x1_ps_blob		blob_butt blob_belly might blob_special physical_resistant	blob_butt blob_belly		blob_m	True	True	2
+npcstat	BlobAct2	False	enemy	3001	17001	default:3001	collision	30_blob	collision	x1_30_blob	ps_blob	collision	x1_ps_blob		blob_butt blob_belly might blob_special physical_resistant	blob_butt blob_belly		blob_m	True	True	2
+npcstat	BlobAct4	False	enemy	3002	17002	default:3002	collision	30_blob	collision	x1_30_blob	ps_blob	collision	x1_ps_blob		blob_butt blob_belly might blob_special physical_resistant	blob_butt blob_belly		blob_m	True	True	2
+npcstat	BrotherHoodLite	False	enemy	5702	19702	default:5702	x1_only	26_BrotherHoodSmash	MISSING_IN_XML1	26_BrotherHoodSmash					fightstyle_villain	fightstyle_villain		bro_s_m	True	False	2
+npcstat	BrotherHoodEnergyLite	False	enemy	2601	16601	default:2601	collision	26_BrotherHoodEnergy	MISSING_IN_XML1	26_BrotherHoodEnergy	ps_bh_energy	x1_only	ps_bh_energy		fightstyle_villain	fightstyle_villain		bro_e_m	True	False	2
+npcstat	BrotherHoodEnergy	False	enemy	2601	16601	default:2601	collision	26_BrotherHoodEnergy	MISSING_IN_XML1	26_BrotherHoodEnergy	ps_bh_energy	x1_only	ps_bh_energy		fightstyle_villain physical_resistant	fightstyle_villain		bro_e_m	True	False	2
+npcstat	BrotherHoodLeader	False	enemy	2604	16604	default:2604	x1_only	26_BrotherHoodEnergy	MISSING_IN_XML1	26_BrotherHoodEnergy	ps_bh_energy	x1_only	ps_bh_energy		fightstyle_villain physical_resistant	fightstyle_villain		bro_e_m	True	False	2
+npcstat	BrotherHoodMental	False	enemy	2602	16602	default:2602	x1_only	26_BrotherHoodMental	MISSING_IN_XML1	26_BrotherHoodMental	ps_bh_mental	x1_only	ps_bh_mental		fightstyle_finesse1 mental_resistant			bro_me_m	True	False	2
+npcstat	BrotherHoodSmash	False	enemy	2603	16603	default:2603	x1_only	26_BrotherHoodSmash	MISSING_IN_XML1	26_BrotherHoodSmash	ps_bh_smash	x1_only	ps_bh_smash		fightstyle_wrestling energy_resistant			bro_s_m	True	False	2
+npcstat	CivilianFemale	False		5102	19102	default:5102	collision	50_civilians_male	x1_only	50_civilians_male	ps_civilian	x1_only	ps_civilian		fightstyle_hero						2
+npcstat	CivilianKid	False		5001	19001	default:5001	collision	50_civilians_male	x1_only	50_civilians_male	ps_civilian	x1_only	ps_civilian								2
+npcstat	CivilianMale	False		5004	19004	default:5004	x1_only	50_civilians_male	x1_only	50_civilians_male	ps_civilian	x1_only	ps_civilian								2
+npcstat	CivilianMutant	False		5001	19001	default:5001	collision														2
+npcstat	colossusdopple	False	enemy	0904	14904	default:0904	collision	09_colossus	collision	x1_09_colossus	ps_colossus_dopple	x1_only	ps_colossus_dopple		fightstyle_wrestling might physical_resistant			coloss_m	True	True	2
+npcstat	colossusflesh	False	none	0902	14902	default:0902	collision	09_colossus	collision	x1_09_colossus					might fightstyle_wrestling			coloss_m	True	True	2
+npcstat	colossusscripted	False	none	0901	14901	default:0901	collision	09_colossus	collision	x1_09_colossus					might fightstyle_wrestling						2
+npcstat	Computer	False		7501	21501	default:7501	collision	50_civilians_male	x1_only	50_civilians_male											2
+npcstat	cyclopsdopple	False	enemy	0104	14104	default:0104	collision	01_cyclops	collision	x1_01_cyclops	ps_cyclops_dopple	x1_only	ps_cyclops_dopple		fightstyle_hero energy_resistant			cyclop_m	True	True	2
+npcstat	cyclopsscripted	False	none	0101	14101	default:0101	collision	01_cyclops	collision	x1_01_cyclops					fightstyle_hero						2
+npcstat	DangerRoomRobot	False	enemy	5403	19403	default:5403	collision	54_dangerroom	x1_only	54_dangerroom	ps_dangerroom_robot	x1_only	ps_dangerroom_robot		fightstyle_villain mental_resistant dr_stun spawn_invis	fightstyle_villain		danger_m	True	True	2
+npcstat	DangerRoomRobotLeader	False	enemy	5402	19402	default:5402	collision	54_dangerroom	x1_only	54_dangerroom	ps_dangerroom_robot_ldr	x1_only	ps_dangerroom_robot_ldr		fightstyle_villain mental_resistant dr_stun spawn_invis	fightstyle_villain		danger_m	True	True	2
+npcstat	DirectorWeapX	False		4401	18401	default:4401	collision	50_civilians_male	x1_only	50_civilians_male	ps_civilian	x1_only	ps_civilian		fightstyle_hero						2
+npcstat	FireDemon	False	enemy	3203	17203	default:3203	x1_only	70_firedemon	x1_only	70_firedemon	ps_firedemon	x1_only	ps_firedemon		might energy_resistant			firdem_m	False	False	3
+npcstat	Forge	True	hero	2201	16201	default:2201	collision	22_forge	collision	x1_22_forge					fightstyle_hero forge_special						2
+npcstat	FrostScripted	False	none	1501	15501	default:1501	collision	15_emmafrost	x1_only	15_emmafrost					fightstyle_finesse1						2
+npcstat	gambitscripted	False	none	1301	15301	default:1301	collision	13_gambit	collision	x1_13_gambit					fightstyle_hero						2
+npcstat	Gateway	False	none	4001	18001	default:4001	collision	40_gateway_standard	x1_only	40_gateway_standard					might fightstyle_hero						2
+npcstat	GRSO_mp5	False	enemy	5301	19301	default:5301	collision	53_grso	x1_only	53_grso	ps_grso	x1_only	ps_grso	moveset_grenade	might		wp_mp5	grso_m	True	False	2
+npcstat	grso_riot	False	enemy	5810	19810	default:5810	x1_only	53_grso	x1_only	53_grso	ps_def	identical	ps_def		might fightstyle_baton		wp_nightstick	grso_m	True	False	2
+npcstat	grso_flamethrower	False	enemy	5301	19301	default:5301	collision	53_grso	x1_only	53_grso	ps_flamethrower	x1_only	ps_flamethrower		might		wp_flamethrower	grso_m	True	False	2
+npcstat	grso_powerbaton	False	enemy	5301	19301	default:5301	collision	53_grso	x1_only	53_grso	ps_def	identical	ps_def		might fightstyle_baton		wp_powerbaton	grso_m	True	False	2
+npcstat	grso_laser	False	enemy	5301	19301	default:5301	collision	53_grso	x1_only	53_grso	ps_grso	x1_only	ps_grso	moveset_grenade	might		wp_laser_gun	grso_m	True	False	2
+npcstat	grso_officer	False	enemy	5304	19304	default:5304	collision	53_grso	x1_only	53_grso	ps_grso	x1_only	ps_grso	moveset_grenade	mental_resistant_share might		wp_m_nullifier	grso_m	True	False	2
+npcstat	grso_officerb	False	enemy	5304	19304	default:5304	collision	53_grso	x1_only	53_grso	ps_grso	x1_only	ps_grso	moveset_grenade	mental_resistant_share physical_resistant_share might		wp_m_nullifier	grso_m	True	False	2
+npcstat	grso_laserb	False	enemy	5304	19304	default:5304	collision	53_grso	x1_only	53_grso	ps_grso	x1_only	ps_grso	moveset_grenade	might		wp_laser_gun	grso_m	True	False	2
+npcstat	grso_powergloves	False	enemy	5304	19304	default:5304	collision	53_grso	x1_only	53_grso	ps_def	identical	ps_def		might fightstyle_villain	fightstyle_villain	wp_powergloves	grso_m	True	False	2
+npcstat	GRSO_commander	False	enemy	5310	19310	default:5310	x1_only	53_grso	x1_only	53_grso	ps_grso	x1_only	ps_grso	moveset_grenade	energy_resistant_share might		wp_lightning_gun	grso_m	True	False	2
+npcstat	grso_superlaser	False	enemy	5310	19310	default:5310	x1_only	53_grso	x1_only	53_grso	ps_grso	x1_only	ps_grso	moveset_grenade	might		wp_superlaser_gun	grso_m	True	False	2
+npcstat	grso_powerglovesb	False	enemy	5310	19310	default:5310	x1_only	53_grso	x1_only	53_grso	ps_def	identical	ps_def		might fightstyle_villain	fightstyle_villain	wp_powergloves	grso_m	True	False	2
+npcstat	grso_captain	False	enemy	5311	19311	default:5311	x1_only	53_grso	x1_only	53_grso	ps_grso	x1_only	ps_grso	moveset_grenade	physical_resistant_share might		wp_knockback_gun	grso_m	True	False	2
+npcstat	grso_superpowergloves	False	enemy	5305	19305	default:5305	collision	53_grso	x1_only	53_grso	ps_def	identical	ps_def		might fightstyle_villain	fightstyle_villain	wp_superpowergloves	grso_m	True	False	2
+npcstat	GRSOElite	False	enemy	5302	19302	default:5302	collision	53_grsoelite	x1_only	53_grsoelite	ps_grsoelite	x1_only	ps_grsoelite		might fightstyle_finesse1 energy_resistant			grsoel_m	True	False	3
+npcstat	grso_flamethrowerb	False	enemy	5305	19305	default:5305	collision	53_grso	x1_only	53_grso	ps_flamethrower	x1_only	ps_flamethrower		might		wp_flamethrower	grso_m	True	False	2
+npcstat	grso_superlaserb	False	enemy	5305	19305	default:5305	collision	53_grso	x1_only	53_grso	ps_grso	x1_only	ps_grso	moveset_grenade	might		wp_superlaser_gun	grso_m	True	False	2
+npcstat	grso_captain_b	False	enemy	5306	19306	default:5306	x1_only	53_grso	x1_only	53_grso	ps_grso	x1_only	ps_grso	moveset_grenade	physical_resistant_share mental_resistant_share might		wp_knockback_gun	grso_m	True	False	2
+npcstat	grso_stealth	False	enemy	5307	19307	default:5307	x1_only	53_grso	x1_only	53_grso				moveset_stealth	might spawn_invis		wp_laser_gun	grso_m	True	False	2
+npcstat	HAARPSoldier	False	enemy	5801	19801	default:5801	collision	53_grso	x1_only	53_grso	ps_grso	x1_only	ps_grso	moveset_grenade	might fightstyle_villain	fightstyle_villain	wp_mp5	grso_m	True	False	2
+npcstat	HAARPFlamethrower	False	enemy	5801	19801	default:5801	collision	53_grso	x1_only	53_grso	ps_flamethrower	x1_only	ps_flamethrower		might fightstyle_villain	fightstyle_villain	wp_flamethrower	grso_m	True	False	2
+npcstat	HAARPLeader	False	enemy	5809	19809	default:5809	x1_only	53_grso	x1_only	53_grso	ps_grso	x1_only	ps_grso	moveset_grenade	might fightstyle_villain physical_resistant_share	fightstyle_villain	wp_freeze_gun	grso_m	True	False	2
+npcstat	HAARPSoldierMelee	False	enemy	5801	19801	default:5801	collision	53_grso	x1_only	53_grso	ps_def	identical	ps_def		might fightstyle_baton		wp_baton	grso_m	True	False	2
+npcstat	HavokScripted	False	enemy	1901	15901	default:1901	collision	19_havok	collision	x1_19_havok					fightstyle_hero						2
+npcstat	HavokAct2	False	enemy	1901	15901	default:1901	collision	19_havok	collision	x1_19_havok	ps_havok	x1_only	ps_havok		havok_beam havok_nova fightstyle_hero	havok_beam havok_nova		havok_m	True	False	2
+npcstat	HavokBoss	False	enemy	1901	15901	default:1901	collision	19_havok	collision	x1_19_havok	ps_havok	x1_only	ps_havok		havok_special havok_beam havok_nova fightstyle_hero	havok_beam havok_nova		havok_m	True	False	2
+npcstat	icemanflesh	False	none	0802	14802	default:0802	collision	08_iceman	collision	x1_08_iceman					might fightstyle_hero			iceman_m	True	True	2
+npcstat	icemanscripted	False	none	0801	14801	default:0801	collision	08_iceman	collision	x1_08_iceman					might fightstyle_hero						2
+npcstat	Illyana	False		2302	16302	default:2302	x1_only	50_civilians_male	x1_only	50_civilians_male	ps_civilian	x1_only	ps_civilian		fightstyle_hero						2
+npcstat	IllyanaComa	False		2301	16301	default:2301	collision	50_civilians_male	x1_only	50_civilians_male	ps_civilian	x1_only	ps_civilian		fightstyle_hero						2
+npcstat	JuggernautScripted	False	enemy	3401	17401	default:3401	collision	34_juggernaut	collision	x1_34_juggernaut					mental_resistant might juggernaut_special						2
+npcstat	JuggernautFlashback	False	enemy	3401	17401	default:3401	collision	34_juggernaut	collision	x1_34_juggernaut	ps_juggernaut	collision	x1_ps_juggernaut		jug_punch jug_slam jug_armor jug_xtreme mental_resistant might juggernaut_special	jug_punch jug_armor jug_xtreme		jugger_m	True	False	2
+npcstat	JuggernautAct3	False	enemy	3401	17401	default:3401	collision	34_juggernaut	collision	x1_34_juggernaut	ps_juggernaut	collision	x1_ps_juggernaut		jug_punch jug_slam jug_armor jug_xtreme mental_resistant might juggernaut_special	jug_punch jug_armor jug_xtreme		jugger_m	True	False	2
+npcstat	KidDanny	False		5011	19011	default:5011	x1_only														2
+npcstat	KidDenise	False		5101	19101	default:5101	collision														2
+npcstat	KidJanice	False		5107	19107	default:5107	x1_only														2
+npcstat	KidSteve	False		5003	19003	default:5003	x1_only														2
+npcstat	Kincaid	False	none	4301	18301	default:4301	collision	50_civilians_male	x1_only	50_civilians_male								cyclop_m	True	True	2
+npcstat	labtechgeneric	False		5603	19603	default:5603	collision	50_civilians_male	x1_only	50_civilians_male											2
+npcstat	labtechorange	False		5601	19601	default:5601	collision	50_civilians_male	x1_only	50_civilians_male											2
+npcstat	labtechyellow	False		5604	19604	default:5604	collision	50_civilians_male	x1_only	50_civilians_male											2
+npcstat	LabTechScripted	False		5603	19603	default:5603	collision	50_civilians_male	x1_only	50_civilians_male					fightstyle_finesse1						2
+npcstat	MagnetoScripted	False	none	2501	16501	default:2501	collision	25_magneto	collision	x1_25_magneto											2
+npcstat	MagnetoAct2	False	none	2501	16501	default:2501	collision	25_magneto	collision	x1_25_magneto	ps_magneto	collision	x1_ps_magneto	moveset_flying				magnet_m	True	True	2
+npcstat	MagnetoBoss	False	enemy	2501	16501	default:2501	collision	25_magnetoboss	x1_only	25_magnetoboss	ps_magneto_boss	x1_only	ps_magneto_boss		might mental_resistant magnetoboss_special			magnet_m	True	True	2
+npcstat	MarrowScripted	False		1401	15401	default:1401	collision	14_marrow	x1_only	14_marrow					might fightstyle_wrestling						2
+npcstat	MarrowAct1	False	enemy	1401	15401	default:1401	collision	14_marrow	x1_only	14_marrow	ps_marrow	x1_only	ps_marrow		fightstyle_wrestling mental_resistant marrow_shards marrow_armor marrow_xtreme marrow_special might	marrow_shards marrow_armor marrow_xtreme		marrow_m	True	False	2
+npcstat	MarrowAct3	False	enemy	1401	15401	default:1401	collision	14_marrow	x1_only	14_marrow	ps_marrow	x1_only	ps_marrow		might marrow_shards marrow_armor marrow_xtreme fightstyle_wrestling mental_resistant marrow_special	marrow_shards marrow_armor marrow_xtreme		marrow_m	True	False	2
+npcstat	mastermoldone	False	enemy	5901	19901	default:5901	collision	59_master_mold	x1_only	59_master_mold	ps_mastermold_one	x1_only	ps_mastermold_one		might mastermold_special			master_m	True	False	2
+npcstat	Moira	True	enemy	2101	16101	default:2101	collision	21_moira	collision	x1_21_moira					might fightstyle_hero						2
+npcstat	MorlockClawA	False	enemy	4702	18702	default:4702	x1_only	47_morlockclaw	x1_only	47_morlockclaw	ps_clwmorlock	x1_only	ps_clwmorlock		might fightstyle_villain energy_resistant	fightstyle_villain		morl_c_m	True	True	2
+npcstat	MorlockClawB	False	enemy	4704	18704	default:4704	x1_only	47_morlockclaw	x1_only	47_morlockclaw	ps_clwmorlock_b	x1_only	ps_clwmorlock_b		might fightstyle_villain	fightstyle_villain		morl_c_m	True	True	2
+npcstat	MorlockClawC	False	enemy	4708	18708	default:4708	x1_only	47_morlockclaw	x1_only	47_morlockclaw	ps_clwmorlock_c	x1_only	ps_clwmorlock_c		might fightstyle_villain	fightstyle_villain		morl_c_m	True	True	2
+npcstat	MorlockBruiserA	False	enemy	4703	18703	default:4703	x1_only	47_morlockbruiser	x1_only	47_morlockbruiser	ps_lrgmorlock	x1_only	ps_lrgmorlock		might fightstyle_wrestling physical_resistant			morl_t_m	True	False	2
+npcstat	MorlockBruiserB	False	enemy	4705	18705	default:4705	x1_only	47_morlockbruiser	x1_only	47_morlockbruiser	ps_lrgmorlock_b	x1_only	ps_lrgmorlock_b		might fightstyle_wrestling physical_res			morl_t_m	True	False	2
+npcstat	MorlockBruiserC	False	enemy	4711	18711	default:4711	x1_only	47_morlockbruiser	x1_only	47_morlockbruiser	ps_lrgmorlock_c	x1_only	ps_lrgmorlock_c		might fightstyle_wrestling physical_res			morl_t_m	True	False	2
+npcstat	MorlockPsionic	False	enemy	4701	18701	default:4701	collision	47_morlockpsionic	x1_only	47_morlockpsionic	ps_femmorlock	x1_only	ps_femmorlock		fightstyle_villain mental_resistant	fightstyle_villain		morl_p_m	True	True	2
+npcstat	MorlockPsionicC	False	enemy	4707	18707	default:4707	x1_only	47_morlockpsionic	x1_only	47_morlockpsionic	ps_femmorlock	x1_only	ps_femmorlock		fightstyle_villain mental_resistant	fightstyle_villain		morl_p_m	True	True	2
+npcstat	MorlockLeader	False	enemy	4706	18706	default:4706	x1_only	47_morlockpsionic	x1_only	47_morlockpsionic	ps_femmorlock_ldr	x1_only	ps_femmorlock_ldr		fightstyle_villain mental_resistant	fightstyle_villain		morl_p_m	True	True	2
+npcstat	MarrowsLieutenant	False	enemy	4707	18707	default:4707	x1_only	47_morlockpsionic	x1_only	47_morlockpsionic	ps_femmorlock_ldr	x1_only	ps_femmorlock_ldr		fightstyle_villain mental_resistant	fightstyle_villain		morl_p_m	True	True	2
+npcstat	Healer	False	none	4601	18601	default:4601	collision	46_healer	x1_only	46_healer					might fightstyle_hero			healer_m	False	False	2
+npcstat	MorlockCivMale	False		5009	19009	default:5009	x1_only	50_civilians_male	x1_only	50_civilians_male	ps_civilian	x1_only	ps_civilian								2
+npcstat	MorlockCivFemale	False		5106	19106	default:5106	x1_only	50_civilians_male	x1_only	50_civilians_male	ps_civilian	x1_only	ps_civilian								2
+npcstat	MultipleManScripted	False		2001	16001	default:2001	collision	20_multipleman	x1_only	20_multipleman					might fightstyle_hero						2
+npcstat	MultipleMan	False	enemy	2001	16001	default:2001	collision	20_multipleman	x1_only	20_multipleman	ps_multipleman	x1_only	ps_multipleman		might fightstyle_hero			multip_m	True	False	3
+npcstat	MultipleManDividing	False	enemy	2001	16001	default:2001	collision	20_multipleman	x1_only	20_multipleman	ps_multipleman	x1_only	ps_multipleman		multipleman_special might fightstyle_hero			multip_m	True	False	2
+npcstat	MystiqueScripted	False	enemy	2801	16801	default:2801	collision	28_mystique	collision	x1_28_mystique					fightstyle_finesse1						2
+npcstat	MystiqueAct1	False	enemy	2801	16801	default:2801	collision	28_mystique	collision	x1_28_mystique	ps_mystique	collision	x1_ps_mystique		steal_form mystique_special fightstyle_finesse1	steal_form		mystiq_m	True	True	2
+npcstat	MystiqueAct2sim	False	enemy	2801	16801	default:2801	collision	28_mystique	collision	x1_28_mystique	ps_mystique	collision	x1_ps_mystique		steal_form energy_resistant mystique_special fightstyle_finesse1	steal_form		mystiq_m	True	True	2
+npcstat	MystiqueAct3	False	enemy	2801	16801	default:2801	collision	28_mystique	collision	x1_28_mystique	ps_mystique	collision	x1_ps_mystique		might steal_form energy_resistant mystique_special fightstyle_finesse1	steal_form		mystiq_m	True	True	2
+npcstat	nightcrawlerscripted	False	none	0601	14601	default:0601	collision	06_nightcrawler	collision	x1_06_nightcrawler					fightstyle_finesse1						2
+npcstat	NukeGuard	False	enemy	5807	19807	default:5807	x1_only	53_grso	x1_only	53_grso	ps_grso	x1_only	ps_grso		might fightstyle_villain	fightstyle_villain	wp_mp5	grso_m	True	False	2
+npcstat	NukeGuardMelee	False	enemy	5807	19807	default:5807	x1_only	53_grso	x1_only	53_grso	ps_grso	x1_only	ps_grso		might fightstyle_villain	fightstyle_villain	wp_baton	grso_m	True	False	2
+npcstat	phoenixdopple	False	enemy	0204	14204	default:0204	collision	02_phoenix	x1_only	02_phoenix	ps_phoenix_dopple	x1_only	ps_phoenix_dopple		fightstyle_psionic mental_resistant			phoen_m	True	False	2
+npcstat	phoenixscripted	False	none	0201	14201	default:0201	collision	02_phoenix	x1_only	02_phoenix					fightstyle_finesse1						2
+npcstat	Police	False	hero	5803	19803	default:5803	x1_only	58_police	x1_only	58_police	ps_pistol	x1_only	ps_pistol		fightstyle_villain	fightstyle_villain	wp_pistol	grso_m	True	False	2
+npcstat	PoliceSWAT	False	enemy	5804	19804	default:5804	x1_only	58_police	x1_only	58_police					fightstyle_villain	fightstyle_villain					2
+npcstat	ProfX	True	hero	1101	15101	default:1101	collision	11_professorx	collision	x1_11_professorx				moveset_profx_npc	flight			profes_m	True	False	2
+npcstat	ProfXComa	False	hero	1102	15102	default:1102	collision	11_professorx	collision	x1_11_professorx					flight			profes_m	True	False	2
+npcstat	profxastralscripted	False	none	1104	15104	default:1104	collision	11_profxastral	x1_only	11_profxastral					fightstyle_hero						2
+npcstat	profxgladiator	False	hero	1105	15105	default:1105	collision	11_profxgladiator	x1_only	11_profxgladiator	ps_profxgladiator	x1_only	ps_profxgladiator		profx_psychicsmash profx_psychicburst profx_psychicdefense profx_xtreme profx_fighting fightstyle_wrestling might			profxa_m	True	False	3
+npcstat	PsylockeScripted	False	none	1201	15201	default:1201	collision	12_psylocke	x1_only	12_psylocke					fightstyle_finesse1						2
+npcstat	PyroScripted	False		3201	17201	default:3201	collision	32_pyro	x1_only	32_pyro					fightstyle_villain	fightstyle_villain					2
+npcstat	pyrolite	False		3201	17201	default:3201	collision	32_pyro	x1_only	32_pyro	ps_pyro_lite	x1_only	ps_pyro_lite		fightstyle_villain	fightstyle_villain		pyro_m	True	True	2
+npcstat	PyroAct1	False	enemy	3201	17201	default:3201	collision	32_pyro	x1_only	32_pyro	ps_pyro	collision	x1_ps_pyro		might energy_resistant pyro_flame pyro_firering pyro_shield pyro_firebat pyro_special fightstyle_villain	pyro_flame pyro_firering pyro_shield pyro_firebat fightstyle_villain		pyro_m	True	True	2
+npcstat	Vulcan	False	enemy	3202	17202	default:3202	x1_only	32_pyro	x1_only	32_pyro	ps_pyro	collision	x1_ps_pyro		might pyro_flame pyro_firering pyro_shield pyro_firebat pyro_special energy_resistant fightstyle_villain	pyro_flame pyro_firering pyro_shield pyro_firebat fightstyle_villain		pyro_m	True	True	2
+npcstat	roguescripted	False	none	0701	14701	default:0701	collision	07_rogue	collision	x1_07_rogue					fightstyle_hero						2
+npcstat	SabretoothScripted	False	enemy	2901	16901	default:2901	collision	29_sabretooth	collision	x1_29_sabretooth					might fightstyle_wrestling						2
+npcstat	SabretoothAct1	False	enemy	2901	16901	default:2901	collision	29_sabretooth	collision	x1_29_sabretooth	ps_sabretooth	collision	x1_ps_sabretooth		sabretooth_special physical_resistant might fightstyle_wrestling			sabret_m	True	False	2
+npcstat	SabretoothAct2	False	enemy	2901	16901	default:2901	collision	29_sabretooth	collision	x1_29_sabretooth	ps_sabretooth	collision	x1_ps_sabretooth		might sabre_special sabre_spin sabre_claw sabretooth_special physical_resistant fightstyle_wrestling	sabre_spin sabre_claw		sabret_m	True	False	2
+npcstat	SabretoothAct3	False	enemy	2901	16901	default:2901	collision	29_sabretooth	collision	x1_29_sabretooth	ps_sabretooth	collision	x1_ps_sabretooth		might sabre_spin sabre_claw sabre_special sabretooth_special physical_resistant fightstyle_wrestling	sabre_spin sabre_claw		sabret_m	True	False	2
+npcstat	SentinelFlashback	False	enemy	5502	19502	default:5502	collision	55_sentinelflashback	x1_only	55_sentinelflashback	ps_sentinel_flashback	x1_only	ps_sentinel_flashback	moveset_sentinel	might sentinel_special mental_resistant			sentin_m	True	False	2
+npcstat	Sentinel	False	enemy	5501	19501	default:5501	collision	55_sentinel	x1_only	55_sentinel	ps_sentinel	collision	x1_ps_sentinel	moveset_sentinel	might sentinel_special mental_resistant			sentin_m	True	False	3
+npcstat	SentinelLeader	False	enemy	5505	19505	default:5505	collision	55_sentinel	x1_only	55_sentinel	ps_sentinel_leader	x1_only	ps_sentinel_leader	moveset_sentinel	sentinel_special might mental_resistant			sentin_m	True	False	2
+npcstat	SentinelB	False	enemy	5501	19501	default:5501	collision	55_sentinel	x1_only	55_sentinel	ps_sentinel	collision	x1_ps_sentinel	moveset_sentinel	might sentinel_special mental_resistant			sentin_m	True	False	2
+npcstat	sentinelleaderb	False	enemy	5505	19505	default:5505	collision	55_sentinel	x1_only	55_sentinel	ps_sentinel_leader	x1_only	ps_sentinel_leader	moveset_sentinel	sentinel_special might mental_resistant			sentin_m	True	False	2
+npcstat	SentinelAdvanced	False	enemy	5503	19503	default:5503	collision	55_sentineladvanced	x1_only	55_sentineladvanced	ps_sentinel_advanced	x1_only	ps_sentinel_advanced	moveset_sent_adv	might fightstyle_hero mental_resistant			sentad_m	True	False	2
+npcstat	SentinelAdvanced_b	False	enemy	5503	19503	default:5503	collision	55_sentineladvanced	x1_only	55_sentineladvanced	ps_sentinel_advanced_b	x1_only	ps_sentinel_advanced_b	moveset_sent_adv	might fightstyle_hero mental_resistant			sentad_m	True	False	2
+npcstat	SentinelSpider	False	enemy	5504	19504	default:5504	collision	55_sentinelspider	x1_only	55_sentinelspider	ps_sentinel_spider	x1_only	ps_sentinel_spider		might sentspider_special mental_resistant			sentsp_m	True	False	2
+npcstat	SentinelSpider_b	False	enemy	5504	19504	default:5504	collision	55_sentinelspider	x1_only	55_sentinelspider	ps_sentinel_spider	x1_only	ps_sentinel_spider		might sentspider_special mental_resistant			sentsp_m	True	False	2
+npcstat	Shades	False	enemy	3501	17501	default:3501	x1_only	35_shadowdemon	x1_only	35_shadowdemon	ps_shadowdemon	x1_only	ps_shadowdemon	moveset_shadowdemon	spawn_invis			shadow_m	True	False	2
+npcstat	ShadesB	False	enemy	3503	17503	default:3503	x1_only	35_shadowdemon	x1_only	35_shadowdemon	ps_shadowdemon_b	x1_only	ps_shadowdemon_b	moveset_shadowdemon	spawn_invis			shadow_m	True	False	2
+npcstat	shadesking	False	enemy	3501	17501	default:3501	x1_only	35_shadowdemon	x1_only	35_shadowdemon	ps_shadowdemon_king	x1_only	ps_shadowdemon_king	moveset_shadowdemon	spawn_invis			shadow_m	True	False	2
+npcstat	ShadesLeader	False	enemy	3511	17511	default:3511	x1_only	35_shadowdemon	x1_only	35_shadowdemon	ps_shadowdemon_ldr	x1_only	ps_shadowdemon_ldr	moveset_shadowdemon	energy_resistant_share spawn_invis			shadow_m	True	False	2
+npcstat	ShadesLeaderB	False	enemy	3513	17513	default:3513	x1_only	35_shadowdemon	x1_only	35_shadowdemon	ps_shadowdemon_ldr_b	x1_only	ps_shadowdemon_ldr_b	moveset_shadowdemon	energy_resistant_share physical_resistant_share spawn_invis			shadow_m	True	False	2
+npcstat	ShadesWingless	False	enemy	3502	17502	default:3502	x1_only	35_shadewingless	x1_only	35_shadewingless	ps_shade_wingless	x1_only	ps_shade_wingless	moveset_shade_wingless	might spawn_invis			shd_nw_m	True	False	2
+npcstat	ShadesWinglessB	False	enemy	3504	17504	default:3504	x1_only	35_shadewingless	x1_only	35_shadewingless	ps_shade_wingless	x1_only	ps_shade_wingless	moveset_shade_wingless	might spawn_invis			shd_nw_m	True	False	2
+npcstat	ShadesWinglessLeader	False	enemy	3512	17512	default:3512	x1_only	35_shadewingless	x1_only	35_shadewingless	ps_shade_wingless_ldr	x1_only	ps_shade_wingless_ldr	moveset_shade_wingless	might physical_resistant_share spawn_invis			shd_nw_m	True	False	2
+npcstat	ShadesWinglessLeaderB	False	enemy	3514	17514	default:3514	x1_only	35_shadewingless	x1_only	35_shadewingless	ps_shade_wingless_ldr_b	x1_only	ps_shade_wingless_ldr_b	moveset_shade_wingless	physical_resistant_share energy_resistant_share might spawn_invis			shd_nw_m	True	False	2
+npcstat	SuperShades	False	enemy	3511	17511	default:3511	x1_only	35_shadowdemon	x1_only	35_shadowdemon	ps_shadowdemon_ldr	x1_only	ps_shadowdemon_ldr	moveset_shadowdemon	shade_spawn energy_resistant_share mental_resistant spawn_invis	shade_spawn		shadow_m	True	False	2
+npcstat	supershadesb	False	enemy	3511	17511	default:3511	x1_only	35_shadowdemon	x1_only	35_shadowdemon	ps_shadowdemon_ldr	x1_only	ps_shadowdemon_ldr	moveset_shadowdemon	shade_spawn energy_resistant_share mental_resistant spawn_invis	shade_spawn		shadow_m	True	False	2
+npcstat	shadowking	False	enemy	4504	18504	default:4504	x1_only	45_shadowking	x1_only	45_shadowking	ps_shadowking_one	x1_only	ps_shadowking_one	moveset_shadowking	shadow_special			shdwtn_m	True	False	2
+npcstat	shadowkingtwo	False	enemy	4501	18501	default:4501	x1_only	45_shadowking	x1_only	45_shadowking	ps_shadowking_two	x1_only	ps_shadowking_two	moveset_shadowking	shadow_special2			shdwkg_m	True	False	2
+npcstat	shadowkingscripted	False		4501	18501	default:4501	x1_only	45_ShadowKing	MISSING_IN_XML1	45_ShadowKing					fightstyle_hero						2
+npcstat	SpiderPod	False	enemy	8100	22100	default:8100	x1_only	81_spiderpod	x1_only	81_spiderpod	ps_spiderpod	x1_only	ps_spiderpod		pod_special						3
+npcstat	suicideastral_s	False	enemy	8002	22002	default:8002	collision	80_spidermine	x1_only	80_spidermine	ps_astral_spider	x1_only	ps_astral_spider		as_special						2
+npcstat	ShockerBot	False	enemy	5401	19401	default:5401	collision	54_shockerbot	x1_only	54_shockerbot	ps_shockerbot	x1_only	ps_shockerbot		mental_resistant shocker_special			bots_m	True	False	3
+npcstat	stormscripted	False	none	0401	14401	default:0401	collision	04_storm	collision	x1_04_storm					fightstyle_finesse1						2
+npcstat	StealthBot	False	enemy	5404	19404	default:5404	collision	54_stealthbot	x1_only	54_stealthbot	ps_stealthbot	x1_only	ps_stealthbot		mental_resistant spawn_invis stealth_special			bots_m	True	False	3
+npcstat	SuicideBot	False	enemy	5405	19405	default:5405	x1_only	54_suicidebot	x1_only	54_suicidebot	ps_suicidebot	x1_only	ps_suicidebot		mental_resistant suicide_special			bots_m	True	False	3
+npcstat	suicidespider	False	enemy	8001	22001	default:8001	collision	80_spidermine	x1_only	80_spidermine	ps_suicide_spider	x1_only	ps_suicide_spider		mental_resistant spidermine_special						2
+npcstat	ToadScripted	False		3301	17301	default:3301	collision	33_toad	collision	x1_33_toad					fightstyle_finesse1						2
+npcstat	ToadAct1	False	enemy	3301	17301	default:3301	collision	33_toad	collision	x1_33_toad	ps_toad	collision	x1_ps_toad		fightstyle_finesse1 energy_resistant toad_special			toad_m	True	True	2
+npcstat	WeapXGuardMelee	False	enemy	5806	19806	default:5806	x1_only	53_grso	x1_only	53_grso	ps_def	identical	ps_def		might fightstyle_baton		wp_powerbaton	grso_m	True	False	2
+npcstat	WeapXGuard	False	enemy	5806	19806	default:5806	x1_only	53_grso	x1_only	53_grso	ps_grso	x1_only	ps_grso	moveset_grenade	might fightstyle_villain	fightstyle_villain	wp_mp5	grso_m	True	False	2
+npcstat	WeapXGuardLeader	False	enemy	5808	19808	default:5808	x1_only	53_grso	x1_only	53_grso	ps_grso	x1_only	ps_grso	moveset_grenade	might fightstyle_villain energy_resistant_share	fightstyle_villain	wp_lightning_gun	grso_m	True	False	2
+npcstat	wolverinedopple	False	enemy	3601	17601	default:3601	x1_only	03_wolverine	collision	x1_03_wolverine	ps_wolverine_dopple	x1_only	ps_wolverine_dopple	moveset_acrobat	fightstyle_hero physical_resistant acrobatics	acrobatics		wolver_m	True	False	2
+npcstat	wolverinescripted	False	none	0301	14301	default:0301	collision	03_wolverine	collision	x1_03_wolverine					fightstyle_hero						2
+npcstat	wolverinemocap	False	none	6301	20301	default:6301	collision	63_mocap	x1_only	63_mocap								wolver_m	True	False	2
+npcstat	roguemocap	False	none	6302	20302	default:6302	collision	63_mocap	x1_only	63_mocap								rogue_m	True	False	2
+npcstat	BeastNoAnims	False	hero	0501	14501	default:0501	collision	50_civilians_male	x1_only	50_civilians_male											2
+npcstat	ColossusNoAnims	False	hero	0901	14901	default:0901	collision	50_civilians_male	x1_only	50_civilians_male											2
+npcstat	CyclopsNoAnims	False	hero	0101	14101	default:0101	collision	50_civilians_male	x1_only	50_civilians_male											2
+npcstat	FrostNoAnims	False	hero	1501	15501	default:1501	collision	50_civilians_male	x1_only	50_civilians_male											2
+npcstat	GambitNoAnims	False	hero	1301	15301	default:1301	collision	50_civilians_male	x1_only	50_civilians_male											2
+npcstat	IcemanNoAnims	False	hero	0801	14801	default:0801	collision	50_civilians_male	x1_only	50_civilians_male											2
+npcstat	JubileeNoAnims	False	hero	1601	15601	default:1601	collision	50_civilians_male	x1_only	50_civilians_male											2
+npcstat	MagmaNoAnims	False	hero	1801	15801	default:1801	collision	50_civilians_male	x1_only	50_civilians_male											2
+npcstat	NightcrawlerNoAnims	False	hero	0601	14601	default:0601	collision	50_civilians_male	x1_only	50_civilians_male											2
+npcstat	PhoenixNoAnims	False	hero	0201	14201	default:0201	collision	50_civilians_male	x1_only	50_civilians_male											2
+npcstat	ProfXAstralNoAnims	False	hero	1104	15104	default:1104	collision	50_civilians_male	x1_only	50_civilians_male											2
+npcstat	PsylockeNoAnims	False	hero	1201	15201	default:1201	collision	50_civilians_male	x1_only	50_civilians_male											2
+npcstat	RogueNoAnims	False	hero	0701	14701	default:0701	collision	50_civilians_male	x1_only	50_civilians_male											2
+npcstat	StormNoAnims	False	hero	0401	14401	default:0401	collision	50_civilians_male	x1_only	50_civilians_male											2
+npcstat	WolverineNoAnims	False	hero	0301	14301	default:0301	collision	50_civilians_male	x1_only	50_civilians_male											2
+npcstat	ToadNoAnims	False		3301	17301	default:3301	collision	50_civilians_male	x1_only	50_civilians_male											2

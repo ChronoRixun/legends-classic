@@ -1,0 +1,1850 @@
+{
+ "!=": {
+  "args": "aa",
+  "func": "0x4d8fb0",
+  "ret": "i",
+  "table": "006903d8"
+ },
+ "<": {
+  "args": "aa",
+  "func": "0x4d8ff0",
+  "ret": "i",
+  "table": "006903d8"
+ },
+ "<=": {
+  "args": "aa",
+  "func": "0x4d9070",
+  "ret": "i",
+  "table": "006903d8"
+ },
+ "==": {
+  "args": "aa",
+  "func": "0x4d8f70",
+  "ret": "i",
+  "table": "006903d8"
+ },
+ ">": {
+  "args": "aa",
+  "func": "0x4d9030",
+  "ret": "i",
+  "table": "006903d8"
+ },
+ ">=": {
+  "args": "aa",
+  "func": "0x4d90d0",
+  "ret": "i",
+  "table": "006903d8"
+ },
+ "AnswerFriendRequest": {
+  "args": "ii",
+  "func": "0x5aaff0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "AnswerGameInvite": {
+  "args": "ii",
+  "func": "0x5aaff0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "AreYouSure": {
+  "args": "isss",
+  "func": "0x4a0f90",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "CancelGameInvite": {
+  "args": "i",
+  "func": "0x5aaff0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "InviteConfirmation": {
+  "args": "s",
+  "func": "0x5aaff0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "JoinFriendsGame": {
+  "args": "i",
+  "func": "0x5aaff0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "KickPlayer": {
+  "args": "i",
+  "func": "0x49fac0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "LaunchFeedbackMenu": {
+  "args": "is",
+  "func": "0x5aaff0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "LaunchFriendReqVoiceMenu": {
+  "args": "s",
+  "func": "0x5aaff0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "LaunchGameInviteVoiceMenu": {
+  "args": "i",
+  "func": "0x5aaff0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "LaunchReceiveVoiceMenu": {
+  "args": "i",
+  "func": "0x5aaff0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "Logout": {
+  "args": "",
+  "func": "0x49f960",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "LogoutNoExit": {
+  "args": "",
+  "func": "0x49f990",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "ReNegotiate": {
+  "args": "i",
+  "func": "0x49fa10",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "RemoveFriend": {
+  "args": "i",
+  "func": "0x5aaff0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "SendFeedback": {
+  "args": "iis",
+  "func": "0x5aaff0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "SendFriendRequest": {
+  "args": "si",
+  "func": "0x5aaff0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "SendFriendVoiceAttachmentPrompt": {
+  "args": "s",
+  "func": "0x5aaff0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "SendGameInvite": {
+  "args": "ii",
+  "func": "0x5aaff0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "SendVoiceAttachmentPrompt": {
+  "args": "ss",
+  "func": "0x5aaff0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "SetDontShowWarningOff": {
+  "args": "",
+  "func": "0x49fe10",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "SetGameType": {
+  "args": "i",
+  "func": "0x49f8f0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "SetMaxPlayers": {
+  "args": "i",
+  "func": "0x49f9b0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "SetNumInvites": {
+  "args": "i",
+  "func": "0x5aaff0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "SetPrefDifficulty": {
+  "args": "i",
+  "func": "0x49fa70",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "SetPrefGameType": {
+  "args": "i",
+  "func": "0x49fa40",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "ToggleMute": {
+  "args": "ii",
+  "func": "0x5aaff0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "act": {
+  "args": "aa",
+  "func": "0x4a9010",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "actSilent": {
+  "args": "aa",
+  "func": "0x4a90f0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "addBolton": {
+  "args": "asssd",
+  "func": "0x4a66b0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "addXtremePip": {
+  "args": "",
+  "func": "0x4a0240",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "alive": {
+  "args": "a",
+  "func": "0x4a8440",
+  "ret": "i",
+  "table": "0068a908"
+ },
+ "allowConversation": {
+  "args": "s",
+  "func": "0x49db10",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "allowResponseOnGameVarCount": {
+  "args": "si",
+  "func": "0x4a5d50",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "amIAnXman": {
+  "args": "a",
+  "func": "0x4a2af0",
+  "ret": "i",
+  "table": "0068a908"
+ },
+ "attackEntityWithType": {
+  "args": "aass",
+  "func": "0x4a40a0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "awardXPToPlayable": {
+  "args": "i",
+  "func": "0x49d9d0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "beATeamPlayer": {
+  "args": "as",
+  "func": "0x4a3ac0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "beginMission": {
+  "args": "s",
+  "func": "0x4a0af0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "beginMissionHack": {
+  "args": "s",
+  "func": "0x4a0b60",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "blackbirdMenu": {
+  "args": "sss",
+  "func": "0x4a0640",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "bootToDash": {
+  "args": "i",
+  "func": "0x5aaff0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "cameraFOV": {
+  "args": "ff",
+  "func": "0x49dee0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "cameraFade": {
+  "args": "ff",
+  "func": "0x49df70",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "cameraFocusToEntity": {
+  "args": "affff",
+  "func": "0x4a5f80",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "cameraFocusToEntityYaw": {
+  "args": "affaf",
+  "func": "0x4a6060",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "cameraFollowMotionPath": {
+  "args": "sssss",
+  "func": "0x49e080",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "cameraMove": {
+  "args": "sf",
+  "func": "0x49dd80",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "cameraPan": {
+  "args": "sfs",
+  "func": "0x49de20",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "cameraReset": {
+  "args": "",
+  "func": "0x49df40",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "cameraResetOldSchool": {
+  "args": "",
+  "func": "0x49df50",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "cameraSetClipPlane": {
+  "args": "f",
+  "func": "0x4a0270",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "cameraShake": {
+  "args": "ff",
+  "func": "0x49e020",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "cameraToEntityAngles": {
+  "args": "af",
+  "func": "0x4a62b0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "cameraToLocationAngles": {
+  "args": "ssf",
+  "func": "0x49e6c0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "cancelWaitingDialog": {
+  "args": "",
+  "func": "0x49fc10",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "causeTroubleForAutotest": {
+  "args": "",
+  "func": "0x5aaff0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "cinematicEnd": {
+  "args": "",
+  "func": "0x49e000",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "cinematicStart": {
+  "args": "ss",
+  "func": "0x49dfc0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "closeDangerRoom": {
+  "args": "i",
+  "func": "0x49eb10",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "closemenu": {
+  "args": "s",
+  "func": "0x4a0f20",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "codexMenu": {
+  "args": "i",
+  "func": "0x49e250",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "confirmKickPlayerDialog": {
+  "args": "i",
+  "func": "0x49fcd0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "controlPlayerHeroWithAI": {
+  "args": "f",
+  "func": "0x4a4200",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "controllersContinue": {
+  "args": "",
+  "func": "0x49ef00",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "copyOriginAndAngles": {
+  "args": "aa",
+  "func": "0x4a27f0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "createPopupDialogXml": {
+  "args": "s",
+  "func": "0x4a6890",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "createPopupDialogXmlFilter": {
+  "args": "ss",
+  "func": "0x4a68b0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "damage": {
+  "args": "aai",
+  "func": "0x4a91d0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "dangerRoomEndMission": {
+  "args": "",
+  "func": "0x49fc50",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "dangerRoomMenu": {
+  "args": "",
+  "func": "0x49e5d0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "dataDiscReward": {
+  "args": "s",
+  "func": "0x4a7560",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "debug": {
+  "args": "s",
+  "func": "0x5aaff0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "disallowResponse": {
+  "args": "",
+  "func": "0x49da10",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "disallowResponseOnObjective": {
+  "args": "ss",
+  "func": "0x49da20",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "disallowResponseOnVar": {
+  "args": "si",
+  "func": "0x49da90",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "display": {
+  "args": "s",
+  "func": "0x5aaff0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "endDRScenario": {
+  "args": "",
+  "func": "0x49f320",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "enemiesNoTarget": {
+  "args": "s",
+  "func": "0x49f700",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "extractionPoint": {
+  "args": "a",
+  "func": "0x4a6b50",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "extractionPointChange": {
+  "args": "ai",
+  "func": "0x4a7020",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "extractionPointLite": {
+  "args": "asss",
+  "func": "0x4a6d80",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "extractionUnlock": {
+  "args": "s",
+  "func": "0x49f1e0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "faceEntity": {
+  "args": "aa",
+  "func": "0x4a4320",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "fadd": {
+  "args": "ff",
+  "func": "0x4d91b0",
+  "ret": "f",
+  "table": "006903d8"
+ },
+ "fade": {
+  "args": "affs",
+  "func": "0x4a3780",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "fadeIn": {
+  "args": "af",
+  "func": "0x4a38e0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "fadeOut": {
+  "args": "af",
+  "func": "0x4a3970",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "fdiv": {
+  "args": "ff",
+  "func": "0x4d92a0",
+  "ret": "f",
+  "table": "006903d8"
+ },
+ "fmul": {
+  "args": "ff",
+  "func": "0x4d9250",
+  "ret": "f",
+  "table": "006903d8"
+ },
+ "fsub": {
+  "args": "ff",
+  "func": "0x4d9200",
+  "ret": "f",
+  "table": "006903d8"
+ },
+ "gameover": {
+  "args": "s",
+  "func": "0x4a7220",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "getAIControlled": {
+  "args": "a",
+  "func": "0x4a3f10",
+  "ret": "i",
+  "table": "0068a908"
+ },
+ "getBrotherhood": {
+  "args": "a",
+  "func": "0x4a3f90",
+  "ret": "i",
+  "table": "0068a908"
+ },
+ "getConversationActive": {
+  "args": "",
+  "func": "0x49db50",
+  "ret": "i",
+  "table": "0068a908"
+ },
+ "getDangerRoomActive": {
+  "args": "",
+  "func": "0x49ec80",
+  "ret": "i",
+  "table": "0068a908"
+ },
+ "getDistance": {
+  "args": "aa",
+  "func": "0x4a68f0",
+  "ret": "f",
+  "table": "0068a908"
+ },
+ "getEnable": {
+  "args": "a",
+  "func": "0x4a3e90",
+  "ret": "i",
+  "table": "0068a908"
+ },
+ "getGameFlag": {
+  "args": "si",
+  "func": "0x4a5db0",
+  "ret": "i",
+  "table": "0068a908"
+ },
+ "getGameVarBitCount": {
+  "args": "s",
+  "func": "0x4a7c70",
+  "ret": "i",
+  "table": "0068a908"
+ },
+ "getHealth": {
+  "args": "a",
+  "func": "0x4a36f0",
+  "ret": "f",
+  "table": "0068a908"
+ },
+ "getHealthMax": {
+  "args": "a",
+  "func": "0x4a3660",
+  "ret": "f",
+  "table": "0068a908"
+ },
+ "getID": {
+  "args": "a",
+  "func": "0x4a1e90",
+  "ret": "i",
+  "table": "0068a908"
+ },
+ "getIDString": {
+  "args": "a",
+  "func": "0x4a1f00",
+  "ret": "s",
+  "table": "0068a908"
+ },
+ "getInventoryCount": {
+  "args": "s",
+  "func": "0x49edc0",
+  "ret": "i",
+  "table": "0068a908"
+ },
+ "getName": {
+  "args": "a",
+  "func": "0x4a1fb0",
+  "ret": "s",
+  "table": "0068a908"
+ },
+ "getNearestMonsterSpawner": {
+  "args": "ai",
+  "func": "0x4a6980",
+  "ret": "i",
+  "table": "0068a908"
+ },
+ "getObjective": {
+  "args": "ss",
+  "func": "0x4a03f0",
+  "ret": "i",
+  "table": "0068a908"
+ },
+ "getOpened": {
+  "args": "a",
+  "func": "0x4a4020",
+  "ret": "i",
+  "table": "0068a908"
+ },
+ "getParentID": {
+  "args": "a",
+  "func": "0x4a3bf0",
+  "ret": "i",
+  "table": "0068a908"
+ },
+ "getPosX": {
+  "args": "a",
+  "func": "0x4a1980",
+  "ret": "i",
+  "table": "0068a908"
+ },
+ "getPosY": {
+  "args": "a",
+  "func": "0x4a1a20",
+  "ret": "i",
+  "table": "0068a908"
+ },
+ "getPosZ": {
+  "args": "a",
+  "func": "0x4a1ac0",
+  "ret": "i",
+  "table": "0068a908"
+ },
+ "getTimeRemaining": {
+  "args": "",
+  "func": "0x49dd30",
+  "ret": "f",
+  "table": "0068a908"
+ },
+ "getZoneFlag": {
+  "args": "si",
+  "func": "0x49dc00",
+  "ret": "i",
+  "table": "0068a908"
+ },
+ "getZoneReset": {
+  "args": "",
+  "func": "0x4a0800",
+  "ret": "i",
+  "table": "0068a908"
+ },
+ "getZoneVar": {
+  "args": "s",
+  "func": "0x49db80",
+  "ret": "i",
+  "table": "0068a908"
+ },
+ "hailToTheKing": {
+  "args": "a",
+  "func": "0x4a6820",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "heroNoTarget": {
+  "args": "s",
+  "func": "0x49f6d0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "homingBeaconReward": {
+  "args": "si",
+  "func": "0x4a7a00",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "hudMessage": {
+  "args": "ifs",
+  "func": "0x49eb60",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "iadd": {
+  "args": "ii",
+  "func": "0x4d92f0",
+  "ret": "i",
+  "table": "006903d8"
+ },
+ "idiv": {
+  "args": "ii",
+  "func": "0x4d93e0",
+  "ret": "i",
+  "table": "006903d8"
+ },
+ "imageViewer": {
+  "args": "s",
+  "func": "0x49e440",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "immediateObjective": {
+  "args": "s",
+  "func": "0x4a06e0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "imul": {
+  "args": "ii",
+  "func": "0x4d9390",
+  "ret": "i",
+  "table": "006903d8"
+ },
+ "initHud": {
+  "args": "",
+  "func": "0x49e6b0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "isActorOnTeam": {
+  "args": "a",
+  "func": "0x4a5a70",
+  "ret": "i",
+  "table": "0068a908"
+ },
+ "isBlinkPortalActive": {
+  "args": "",
+  "func": "0x49f220",
+  "ret": "i",
+  "table": "0068a908"
+ },
+ "isCharacterUnlocked": {
+  "args": "a",
+  "func": "0x49f610",
+  "ret": "i",
+  "table": "0068a908"
+ },
+ "isExtractionPointUnlocked": {
+  "args": "",
+  "func": "0x49f1a0",
+  "ret": "i",
+  "table": "0068a908"
+ },
+ "isHardDifficultyUnlocked": {
+  "args": "",
+  "func": "0x49f680",
+  "ret": "i",
+  "table": "0068a908"
+ },
+ "isub": {
+  "args": "ii",
+  "func": "0x4d9340",
+  "ret": "i",
+  "table": "006903d8"
+ },
+ "kickPlayerDialog": {
+  "args": "",
+  "func": "0x4a14b0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "killEntity": {
+  "args": "a",
+  "func": "0x4a8ce0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "killEntitySilent": {
+  "args": "a",
+  "func": "0x4a8d60",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "loadDangerRoomCourse": {
+  "args": "s",
+  "func": "0x4a72e0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "loadMap": {
+  "args": "s",
+  "func": "0x4a0c50",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "loadMapAddTeam": {
+  "args": "s",
+  "func": "0x4a0bd0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "loadMapChooseTeam": {
+  "args": "s",
+  "func": "0x4a0d30",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "loadMapKeepTeam": {
+  "args": "s",
+  "func": "0x4a0cc0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "loadNetworkConfig": {
+  "args": "i",
+  "func": "0x5aaff0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "loadZone": {
+  "args": "ss",
+  "func": "0x4a0da0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "lockCombat": {
+  "args": "s",
+  "func": "0x49f860",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "lockControls": {
+  "args": "f",
+  "func": "0x49f8c0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "loopCombatNode": {
+  "args": "ass",
+  "func": "0x4a4eb0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "mainMenuExit": {
+  "args": "",
+  "func": "0x49fb00",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "mainMenuExitDialog": {
+  "args": "",
+  "func": "0x49fb20",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "missionComplete": {
+  "args": "s",
+  "func": "0x4a61b0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "missionComplete2": {
+  "args": "",
+  "func": "0x49e190",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "moveHeroesToEnt": {
+  "args": "a",
+  "func": "0x4a2560",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "moveToEntity": {
+  "args": "as",
+  "func": "0x4a4690",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "newMissionBriefing": {
+  "args": "",
+  "func": "0x49e230",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "objective": {
+  "args": "ss",
+  "func": "0x49ee90",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "openWaitingDialog": {
+  "args": "",
+  "func": "0x49fb40",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "openmenu": {
+  "args": "s",
+  "func": "0x4a0eb0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "overrideFocusToEntity": {
+  "args": "af",
+  "func": "0x4a6350",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "permanentStatBoost": {
+  "args": "as",
+  "func": "0x4a20d0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "personalItem": {
+  "args": "s",
+  "func": "0x49e570",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "playBossSound": {
+  "args": "sif",
+  "func": "0x49eab0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "playCombatNodeTrigger": {
+  "args": "asi",
+  "func": "0x4a5010",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "playanim": {
+  "args": "sass",
+  "func": "0x4a8a20",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "randomInt": {
+  "args": "ii",
+  "func": "0x49ee40",
+  "ret": "i",
+  "table": "0068a908"
+ },
+ "recallZone": {
+  "args": "",
+  "func": "0x4a74f0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "remove": {
+  "args": "aa",
+  "func": "0x4a9300",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "removeBolton": {
+  "args": "ad",
+  "func": "0x4a6790",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "restartZone": {
+  "args": "",
+  "func": "0x4a0870",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "restoreEnergy": {
+  "args": "ai",
+  "func": "0x4a2c20",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "restoreHealth": {
+  "args": "ai",
+  "func": "0x4a2dd0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "restorelastzone": {
+  "args": "s",
+  "func": "0x4a0760",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "resurrect": {
+  "args": "a",
+  "func": "0x4a3b70",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "reviewCinematics": {
+  "args": "",
+  "func": "0x49e3b0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "reviewComics": {
+  "args": "",
+  "func": "0x49e3e0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "reviewConcept": {
+  "args": "",
+  "func": "0x49e410",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "reviewLoadScreens": {
+  "args": "",
+  "func": "0x49e380",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "reviewMenu": {
+  "args": "",
+  "func": "0x49e310",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "saveloadAbort": {
+  "args": "",
+  "func": "0x49efc0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "saveloadBootDeleteCorrupt": {
+  "args": "",
+  "func": "0x5aaff0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "saveloadChooseCorrupt": {
+  "args": "",
+  "func": "0x49f130",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "saveloadChooseFile": {
+  "args": "i",
+  "func": "0x49f010",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "saveloadCleanUp": {
+  "args": "",
+  "func": "0x49efb0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "saveloadCompleteLoad": {
+  "args": "",
+  "func": "0x49f140",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "saveloadDefaultCheck": {
+  "args": "",
+  "func": "0x5aaff0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "saveloadDefaultCheck2": {
+  "args": "",
+  "func": "0x5aaff0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "saveloadDeleteCorrupt": {
+  "args": "",
+  "func": "0x49f150",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "saveloadDeleteFile": {
+  "args": "i",
+  "func": "0x49f100",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "saveloadDeleteSuccess": {
+  "args": "",
+  "func": "0x49ef90",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "saveloadFormat": {
+  "args": "",
+  "func": "0x49efa0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "saveloadImageCheck": {
+  "args": "",
+  "func": "0x49f160",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "saveloadLoadOptions": {
+  "args": "",
+  "func": "0x49f0d0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "saveloadLoseGameState": {
+  "args": "i",
+  "func": "0x49f070",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "saveloadNoSpaceWarning": {
+  "args": "i",
+  "func": "0x49f040",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "saveloadOverwrite": {
+  "args": "i",
+  "func": "0x49f0a0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "saveloadOvrWriteOpts": {
+  "args": "",
+  "func": "0x49f0f0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "saveloadOvrWriteOptsAsk": {
+  "args": "",
+  "func": "0x49f0e0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "saveloadProcess": {
+  "args": "i",
+  "func": "0x49ef60",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "saveloadSaveConfirmed": {
+  "args": "i",
+  "func": "0x49f170",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "saveloadSelectDevice": {
+  "args": "i",
+  "func": "0x49efe0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "setAIActive": {
+  "args": "as",
+  "func": "0x4a50f0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "setActorHuge": {
+  "args": "as",
+  "func": "0x4a3060",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "setActorScaleTimed": {
+  "args": "aff",
+  "func": "0x4a8380",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "setAggression": {
+  "args": "ai",
+  "func": "0x4a8710",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "setAlpha": {
+  "args": "af",
+  "func": "0x4a3850",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "setAmbientLightColor": {
+  "args": "s",
+  "func": "0x49ea00",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "setAngles": {
+  "args": "as",
+  "func": "0x4a3450",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "setAnimSpeed": {
+  "args": "af",
+  "func": "0x4a8280",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "setAutoEquip": {
+  "args": "i",
+  "func": "0x4a0370",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "setAutoSpend": {
+  "args": "ii",
+  "func": "0x4a02c0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "setBossPartyLightColor": {
+  "args": "s",
+  "func": "0x49e8a0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "setBossPartyLightEntity": {
+  "args": "s",
+  "func": "0x4a6460",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "setBossUndying": {
+  "args": "as",
+  "func": "0x4a8860",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "setCanMove": {
+  "args": "as",
+  "func": "0x4a4a60",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "setCombatNode": {
+  "args": "as",
+  "func": "0x4a51a0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "setCombatNodeOther": {
+  "args": "asa",
+  "func": "0x4a5260",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "setCurrentAct": {
+  "args": "i",
+  "func": "0x49f440",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "setDangerLevel": {
+  "args": "f",
+  "func": "0x49e160",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "setDangerRoomFailed": {
+  "args": "",
+  "func": "0x49eca0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "setDangerRoomSuccess": {
+  "args": "",
+  "func": "0x49ecb0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "setDefaultTarget": {
+  "args": "a",
+  "func": "0x4a4e20",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "setDestroyObjects": {
+  "args": "as",
+  "func": "0x4a31c0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "setDifficultyLevel": {
+  "args": "i",
+  "func": "0x4a0930",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "setEnable": {
+  "args": "as",
+  "func": "0x4a84f0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "setEngageEnemy": {
+  "args": "as",
+  "func": "0x4a4c50",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "setFlee": {
+  "args": "as",
+  "func": "0x4a4b00",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "setFollowingHero": {
+  "args": "as",
+  "func": "0x4a48f0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "setGameFlag": {
+  "args": "sii",
+  "func": "0x4a5e10",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "setGameSpeed": {
+  "args": "f",
+  "func": "0x49e9b0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "setGoal": {
+  "args": "a",
+  "func": "0x4a63f0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "setHealth": {
+  "args": "ai",
+  "func": "0x4a2440",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "setHealthMax": {
+  "args": "ai",
+  "func": "0x4a24d0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "setHintType": {
+  "args": "as",
+  "func": "0x4a2b90",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "setHomingID": {
+  "args": "aa",
+  "func": "0x4a45b0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "setInventoryCount": {
+  "args": "si",
+  "func": "0x49ed40",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "setInvisible": {
+  "args": "as",
+  "func": "0x4a8910",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "setInvulnerable": {
+  "args": "as",
+  "func": "0x4a3110",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "setMotionPath": {
+  "args": "as",
+  "func": "0x4a43a0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "setName": {
+  "args": "as",
+  "func": "0x4a2050",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "setNearestWaypointPath": {
+  "args": "as",
+  "func": "0x4a4d90",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "setNoClip": {
+  "args": "as",
+  "func": "0x4a2a40",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "setNoCollide": {
+  "args": "as",
+  "func": "0x4a3300",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "setNoCollideNoTickle": {
+  "args": "as",
+  "func": "0x4a33b0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "setNoGravity": {
+  "args": "as",
+  "func": "0x4a87b0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "setOrigin": {
+  "args": "as",
+  "func": "0x4a3550",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "setParent": {
+  "args": "aa",
+  "func": "0x4a3c70",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "setPartyLightColor": {
+  "args": "sf",
+  "func": "0x49e7b0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "setPartyLightRadiusScale": {
+  "args": "f",
+  "func": "0x49e950",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "setPathIgnore": {
+  "args": "as",
+  "func": "0x4a85a0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "setPatternSequence": {
+  "args": "as",
+  "func": "0x4a4830",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "setPosX": {
+  "args": "ai",
+  "func": "0x4a1b60",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "setPosY": {
+  "args": "ai",
+  "func": "0x4a1c10",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "setPosZ": {
+  "args": "ai",
+  "func": "0x4a81d0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "setRadiusConfinement": {
+  "args": "afa",
+  "func": "0x4a4750",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "setReactToEnemies": {
+  "args": "as",
+  "func": "0x4a4bb0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "setRecallActive": {
+  "args": "s",
+  "func": "0x49ecf0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "setRotZ": {
+  "args": "ai",
+  "func": "0x4a1cc0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "setScale": {
+  "args": "af",
+  "func": "0x4a1d70",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "setSegmentVisible": {
+  "args": "ass",
+  "func": "0x4a5bd0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "setSkin": {
+  "args": "as",
+  "func": "0x4a3dc0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "setStructure": {
+  "args": "ai",
+  "func": "0x4a1e00",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "setTeamInvisible": {
+  "args": "ss",
+  "func": "0x4a04d0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "setVelocity": {
+  "args": "as",
+  "func": "0x4a2f80",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "setWaypointPath": {
+  "args": "asi",
+  "func": "0x4a4cf0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "setXP": {
+  "args": "ai",
+  "func": "0x4a8660",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "setZoneFlag": {
+  "args": "sii",
+  "func": "0x49dc70",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "setZoneVar": {
+  "args": "si",
+  "func": "0x49dbc0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "setallaiactive": {
+  "args": "s",
+  "func": "0x49ecc0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "setteam": {
+  "args": "sa",
+  "func": "0x4a3a00",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "setupHost": {
+  "args": "",
+  "func": "0x49faa0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "shopMenu": {
+  "args": "s",
+  "func": "0x49e640",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "showHealthBar": {
+  "args": "as",
+  "func": "0x4a3260",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "sound": {
+  "args": "ssas",
+  "func": "0x4a7130",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "spawn": {
+  "args": "assss",
+  "func": "0x4a4420",
+  "ret": "i",
+  "table": "0068a908"
+ },
+ "spawnEffect": {
+  "args": "asss",
+  "func": "0x4a54c0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "spawnEffectBone": {
+  "args": "ass",
+  "func": "0x4a5360",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "startCharConversation": {
+  "args": "sas",
+  "func": "0x4a57b0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "startConversation": {
+  "args": "s",
+  "func": "0x4a5660",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "startFirstMission": {
+  "args": "",
+  "func": "0x4a7b10",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "startGameDiffDialog": {
+  "args": "",
+  "func": "0x49f470",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "startMotionPath": {
+  "args": "asss",
+  "func": "0x4a8f20",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "startMovie": {
+  "args": "ss",
+  "func": "0x49f7e0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "startMoviePreview": {
+  "args": "ss",
+  "func": "0x49f730",
+  "ret": "i",
+  "table": "0068a908"
+ },
+ "stashMenu": {
+  "args": "",
+  "func": "0x49e680",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "strcatint": {
+  "args": "si",
+  "func": "0x4da6b0",
+  "ret": "s",
+  "table": "006903d8"
+ },
+ "strcatstr": {
+  "args": "ss",
+  "func": "0x4da620",
+  "ret": "s",
+  "table": "006903d8"
+ },
+ "strveci": {
+  "args": "iii",
+  "func": "0x4da730",
+  "ret": "s",
+  "table": "006903d8"
+ },
+ "swapInStump": {
+  "args": "a",
+  "func": "0x4a8e70",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "timerAdd": {
+  "args": "f",
+  "func": "0x49dd00",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "timerStart": {
+  "args": "ffs",
+  "func": "0x4a5ec0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "titleUpdate": {
+  "args": "",
+  "func": "0x5aaff0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "triviaMenu": {
+  "args": "",
+  "func": "0x49e2a0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "unlockCharacter": {
+  "args": "sn",
+  "func": "0x49f520",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "unlockHardDifficulty": {
+  "args": "",
+  "func": "0x49f6b0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "use": {
+  "args": "aa",
+  "func": "0x4a7cd0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "useDefaultStats": {
+  "args": "",
+  "func": "0x49f4b0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "useSavedStats": {
+  "args": "",
+  "func": "0x49f490",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "vibrate": {
+  "args": "ssff",
+  "func": "0x4a64f0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "viewSparringHighScores": {
+  "args": "",
+  "func": "0x49f410",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "waitsignal": {
+  "args": "s",
+  "func": "0x4d9180",
+  "ret": "w",
+  "table": "006903d8"
+ },
+ "waittimed": {
+  "args": "f",
+  "func": "0x4d9130",
+  "ret": "w",
+  "table": "006903d8"
+ },
+ "walkToAndFace": {
+  "args": "aass",
+  "func": "0x4a8c00",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "wanderNextZoneLink": {
+  "args": "",
+  "func": "0x5aaff0",
+  "ret": "n",
+  "table": "0068a908"
+ },
+ "zoneLink": {
+  "args": "",
+  "func": "0x4a5e70",
+  "ret": "n",
+  "table": "0068a908"
+ }
+}

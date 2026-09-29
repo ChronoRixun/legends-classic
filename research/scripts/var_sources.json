@@ -1,0 +1,125 @@
+{
+ "triggerID": {
+  "getID": 2
+ },
+ "LASTID": {
+  "getID": 2
+ },
+ "stage": {
+  "iadd": 8
+ },
+ "sw1State": {
+  "iadd": 3
+ },
+ "deadguys": {
+  "iadd": 2,
+  "isub": 1
+ },
+ "deaddmns": {
+  "iadd": 1
+ },
+ "lasthealth": {
+  "getHealth": 2,
+  "fmul": 1
+ },
+ "deadsks": {
+  "iadd": 1
+ },
+ "xpips": {
+  "iadd": 1
+ },
+ "pbroke": {
+  "iadd": 1
+ },
+ "ported": {
+  "iadd": 1
+ },
+ "deadbots": {
+  "iadd": 1
+ },
+ "deadbots3": {
+  "iadd": 1
+ },
+ "actor_c": {
+  "getID": 1
+ },
+ "actor_e": {
+  "getID": 1
+ },
+ "actor_f": {
+  "getID": 1
+ },
+ "actor_g": {
+  "getID": 1
+ },
+ "juggy_fb": {
+  "iadd": 1
+ },
+ "grsos": {
+  "iadd": 1
+ },
+ "cur_bots": {
+  "iadd": 4
+ },
+ "base": {
+  "getID": 6
+ },
+ "part1": {
+  "getID": 6
+ },
+ "part2": {
+  "getID": 6
+ },
+ "checkpart1": {
+  "getID": 3
+ },
+ "checkpart2": {
+  "getID": 3
+ },
+ "part3": {
+  "getID": 3
+ },
+ "coresgone": {
+  "iadd": 3
+ },
+ "corecount": {
+  "isub": 3,
+  "iadd": 3
+ },
+ "s_m_q": {
+  "iadd": 1
+ },
+ "aligned": {
+  "iadd": 1
+ },
+ "temp": {
+  "getGameVar": 4
+ },
+ "act3mssn": {
+  "getMissionVar": 4
+ },
+ "telespot": {
+  "getMissionVar": 1
+ },
+ "pumps": {
+  "iadd": 1
+ },
+ "deadgrunts": {
+  "iadd": 1
+ },
+ "deadgrunts2": {
+  "iadd": 1
+ },
+ "rescue": {
+  "iadd": 4
+ },
+ "deadres": {
+  "iadd": 1
+ },
+ "pstatus": {
+  "iadd": 2
+ },
+ "nextroom": {
+  "iadd": 1
+ }
+}

@@ -1,0 +1,988 @@
+{
+ "conversations": {
+  "xml1_files": 381,
+  "xml1_only_attrs": [
+   "startcondition.runwithoutuser"
+  ],
+  "xml1_only_tags": [],
+  "xml1_tags": {
+   "conversation": 381,
+   "line": 1875,
+   "participant": 525,
+   "response": 2142,
+   "startcondition": 525
+  },
+  "xml1_text_markers": {
+   "%ALISON%": 213,
+   "%BEAST%": 91,
+   "%BLANK%": 1274,
+   "%COLOSSUS%": 36,
+   "%CONTINUE%": 155,
+   "%CYCLOPS%": 94,
+   "%END%": 295,
+   "%FORGE%": 54,
+   "%FROST%": 41,
+   "%ICEMAN%": 35,
+   "%MAGMA%": 113,
+   "%MOIRA%": 30,
+   "%MORE%": 38,
+   "%MORLOCKCIVMALE%": 29,
+   "%NIGHTCRAWLER%": 37,
+   "%PHOENIX%": 146,
+   "%PROFX%": 91,
+   "%ROGUE%": 32,
+   "%WOLVERINE%": 55,
+   "%X-TEAM%": 247
+  },
+  "xml2_files": 603,
+  "xml2_only_attrs": [
+   "line.scriptcommand",
+   "line.soundtoplayb",
+   "line.textb",
+   "response.onlyif_brotherhood",
+   "response.onlyif_xman"
+  ],
+  "xml2_only_tags": [],
+  "xml2_tags": {
+   "conversation": 603,
+   "line": 2745,
+   "participant": 768,
+   "response": 3062,
+   "startcondition": 768
+  }
+ },
+ "data_tables": {
+  "both": [
+   "boltonactoranims",
+   "codex",
+   "colors",
+   "common_ents",
+   "credits",
+   "dangerroom",
+   "herostat",
+   "item_ents",
+   "items",
+   "npcstat",
+   "review_paths",
+   "shared_anims",
+   "shared_combat_events",
+   "shared_nodes",
+   "shared_sounds",
+   "shared_talents",
+   "stat_rules",
+   "strings",
+   "trivia",
+   "values",
+   "zoneinfo"
+  ],
+  "xml1_only": [],
+  "xml2_only": [
+   "autospend",
+   "loadpoint_list",
+   "shared_powerups",
+   "strings_svs",
+   "styles",
+   "team_bonus",
+   "xtraction_points"
+  ]
+ },
+ "dialogs": {
+  "xml1_files": 32,
+  "xml1_only_attrs": [
+   "dialog.debounce",
+   "dialog.hud",
+   "dialog.scriptcancel"
+  ],
+  "xml1_only_tags": [],
+  "xml1_tags": {
+   "dialog": 56,
+   "option": 26,
+   "xmlb_multiple_roots": 12
+  },
+  "xml2_files": 40,
+  "xml2_only_attrs": [
+   "dialog.scriptok"
+  ],
+  "xml2_only_tags": [
+   "dialog_def"
+  ],
+  "xml2_tags": {
+   "dialog": 79,
+   "dialog_def": 11,
+   "option": 32,
+   "xmlb_multiple_roots": 2
+  }
+ },
+ "fonts": {
+  "xml1_textures_fonts": [
+   "font_xmen_big.igb",
+   "font_xmen_big_gc.igb",
+   "font_xmen_big_hd.igb",
+   "font_xmen_big_ps2.igb",
+   "font_xmen_big_ws.igb",
+   "font_xmen_big_xbox.igb",
+   "font_xmen_big_xbox_hd.igb",
+   "font_xmen_big_xbox_ws.igb",
+   "font_xmen_digital.igb",
+   "font_xmen_digital_gc.igb",
+   "font_xmen_digital_hd.igb",
+   "font_xmen_digital_ps2.igb",
+   "font_xmen_digital_ws.igb",
+   "font_xmen_digital_xbox.igb",
+   "font_xmen_digital_xbox_hd.igb",
+   "font_xmen_digital_xbox_ws.igb",
+   "font_xmen_hud.igb",
+   "font_xmen_hud_gc.igb",
+   "font_xmen_hud_hd.igb",
+   "font_xmen_hud_ps2.igb",
+   "font_xmen_hud_ws.igb",
+   "font_xmen_hud_xbox.igb",
+   "font_xmen_hud_xbox_hd.igb",
+   "font_xmen_hud_xbox_ws.igb",
+   "font_xmen_med.igb",
+   "font_xmen_med_gc.igb",
+   "font_xmen_med_gc_new.igb",
+   "font_xmen_med_hd.igb",
+   "font_xmen_med_ps2.igb",
+   "font_xmen_med_ws.igb",
+   "font_xmen_med_xbox.igb",
+   "font_xmen_med_xbox_hd.igb",
+   "font_xmen_med_xbox_ws.igb"
+  ],
+  "xml1_ui_fonts": [
+   "font_xmen_big.xml",
+   "font_xmen_big_gc.xml",
+   "font_xmen_big_hd.xml",
+   "font_xmen_big_ps2.xml",
+   "font_xmen_big_ws.xml",
+   "font_xmen_big_xbox.xml",
+   "font_xmen_big_xbox_hd.xml",
+   "font_xmen_big_xbox_ws.xml",
+   "font_xmen_digital.xml",
+   "font_xmen_digital_gc.xml",
+   "font_xmen_digital_hd.xml",
+   "font_xmen_digital_ps2.xml",
+   "font_xmen_digital_ws.xml",
+   "font_xmen_digital_xbox.xml",
+   "font_xmen_digital_xbox_hd.xml",
+   "font_xmen_digital_xbox_ws.xml",
+   "font_xmen_hud.xml",
+   "font_xmen_hud_gc.xml",
+   "font_xmen_hud_hd.xml",
+   "font_xmen_hud_ps2.xml",
+   "font_xmen_hud_ws.xml",
+   "font_xmen_hud_xbox.xml",
+   "font_xmen_hud_xbox_hd.xml",
+   "font_xmen_hud_xbox_ws.xml",
+   "font_xmen_med.xml",
+   "font_xmen_med_gc.xml",
+   "font_xmen_med_hd.xml",
+   "font_xmen_med_ps2.xml",
+   "font_xmen_med_ws.xml",
+   "font_xmen_med_xbox.xml",
+   "font_xmen_med_xbox_hd.xml",
+   "font_xmen_med_xbox_ws.xml",
+   "fonts.xml",
+   "fonts_gc.xml",
+   "fonts_ps2.xml",
+   "fonts_xbox.xml"
+  ],
+  "xml2_ui_fonts": [
+   "font_xmen_big.xmlb",
+   "font_xmen_big_hd.xmlb",
+   "font_xmen_big_pc.xmlb",
+   "font_xmen_digital.xmlb",
+   "font_xmen_digital_hd.xmlb",
+   "font_xmen_digital_pc.xmlb",
+   "font_xmen_hud.xmlb",
+   "font_xmen_hud_hd.xmlb",
+   "font_xmen_hud_pc.xmlb",
+   "font_xmen_med.xmlb",
+   "font_xmen_med_hd.xmlb",
+   "font_xmen_med_pc.xmlb",
+   "font_xmen_thin.xmlb",
+   "font_xmen_thin_hd.xmlb",
+   "font_xmen_thin_pc.xmlb",
+   "fonts.xmlb",
+   "fonts_hd.xmlb",
+   "fonts_pc.xmlb",
+   "fonts_ws.xmlb",
+   "x2f_big.xmlb",
+   "x2f_big_hd.xmlb",
+   "x2f_big_pc.xmlb",
+   "x2f_hud.xmlb",
+   "x2f_hud_hd.xmlb",
+   "x2f_hud_pc.xmlb",
+   "x2f_med.xmlb",
+   "x2f_med_hd.xmlb",
+   "x2f_med_pc.xmlb",
+   "x2f_med_ws.xmlb",
+   "x2f_thin_hd.xmlb",
+   "x2f_thin_pc.xmlb",
+   "x2f_thin_ws.xmlb"
+  ]
+ },
+ "hud": {
+  "hud_head_pattern_xml1_exe": true,
+  "hud_head_pattern_xml2_exe": true,
+  "same_names": 40,
+  "ui_hud_characters_pattern_xml2_exe": true,
+  "ui_hud_same_names": 67,
+  "xml1_hud": 68,
+  "xml1_hud_sample": [
+   "hud_head_0101.igb",
+   "hud_head_0102.igb",
+   "hud_head_0103.igb",
+   "hud_head_0201.igb",
+   "hud_head_0202.igb",
+   "hud_head_0203.igb",
+   "hud_head_0301.igb",
+   "hud_head_0302.igb",
+   "hud_head_0303.igb",
+   "hud_head_0401.igb"
+  ],
+  "xml1_ui_hud": 79,
+  "xml2_hud": 116,
+  "xml2_hud_sample": [
+   "10201.igb",
+   "hud_head_0000.igb",
+   "hud_head_0101.igb",
+   "hud_head_0201.igb",
+   "hud_head_0301.igb",
+   "hud_head_0401.igb",
+   "hud_head_0501.igb",
+   "hud_head_0601.igb",
+   "hud_head_0701.igb",
+   "hud_head_0801.igb"
+  ],
+  "xml2_ui_hud": 197
+ },
+ "loading_screens": {
+  "name_collisions": [
+   "4701.igb",
+   "characters_menu.igb",
+   "x_jet.igb"
+  ],
+  "xml1_files": 67,
+  "xml1_refs_unresolved": [],
+  "xml1_zoneinfo_refs": 54,
+  "xml2_files": 76
+ },
+ "menu_packages": {
+  "blank": 2,
+  "characters": 32,
+  "characters_heads": 16,
+  "codex": 13,
+  "codex_enemy": 13,
+  "credits": 8,
+  "credits_end": 8,
+  "danger_room": 14,
+  "debug": 5,
+  "equip_shop": 12,
+  "image_viewer": 7,
+  "item_shop": 12,
+  "legal_gc": 8,
+  "legal_ps2": 8,
+  "legal_xbox": 8,
+  "load": 6,
+  "loading": 6,
+  "main": 7,
+  "mmlost": 5,
+  "movie": 5,
+  "objectives": 4,
+  "options": 8,
+  "options_controller": 7,
+  "options_controller_gc": 7,
+  "options_controller_xbox": 7,
+  "options_debug": 4,
+  "options_sound": 3,
+  "options_stats": 4,
+  "pause": 7,
+  "pause_dr": 7,
+  "pause_dr_training": 7,
+  "permanent": 110,
+  "permanent_fightstyles": 20,
+  "permanent_gc": 2,
+  "permanent_ps2": 2,
+  "permanent_xbox": 2,
+  "permanentnotfinal": 1,
+  "permanenttestfx": 10,
+  "personal": 7,
+  "players": 5,
+  "review": 7,
+  "review_cinematics": 10,
+  "review_comics": 10,
+  "review_concept": 10,
+  "review_loadscreens": 10,
+  "trivia": 8
+ },
+ "menus": {
+  "xml1_commands_missing_in_xml2_exe": [
+   "beginmissionhack",
+   "loadmapaddteam",
+   "optionscontroller"
+  ],
+  "xml1_item_types_missing_in_xml2_exe": [
+   "MENU_ITEM_CHARACTERS",
+   "MENU_ITEM_SLIDER"
+  ],
+  "xml1_menu_count": 44,
+  "xml1_menu_types": {
+   "": 9,
+   "BLACKBIRD_MENU": 1,
+   "CODEX_MENU": 2,
+   "CREDITS_MENU": 2,
+   "DANGER_ROOM_MENU": 1,
+   "DEBUG_MENU": 1,
+   "EQUIP_SHOP_MENU": 1,
+   "IMAGE_VIEWER_MENU": 5,
+   "ITEM_SHOP_MENU": 1,
+   "LOAD_MENU": 1,
+   "MAIN_MENU": 1,
+   "MMLOST_MENU": 1,
+   "MOVIE_MENU": 1,
+   "OBJECTIVES_MENU": 1,
+   "OPTIONS_CONTROLLER_MENU": 3,
+   "OPTIONS_DEBUG_MENU": 1,
+   "OPTIONS_MENU": 1,
+   "OPTIONS_STATS_MENU": 1,
+   "PAUSE_MENU": 3,
+   "PERSONAL_MENU": 1,
+   "PLAYERS_MENU": 1,
+   "REVIEW_PATHS_MENU": 4,
+   "TRIVIA_MENU": 1
+  },
+  "xml1_menu_types_missing_in_xml2_exe": [
+   "BLACKBIRD_MENU",
+   "DEBUG_MENU",
+   "EQUIP_SHOP_MENU",
+   "ITEM_SHOP_MENU",
+   "LOAD_MENU",
+   "MMLOST_MENU",
+   "OBJECTIVES_MENU",
+   "OPTIONS_DEBUG_MENU",
+   "OPTIONS_STATS_MENU",
+   "PAUSE_MENU",
+   "PLAYERS_MENU"
+  ],
+  "xml1_menus": {
+   "blank": {
+    "commands": [],
+    "igb": "menu_blank",
+    "igb_in_xml1": true,
+    "igb_in_xml2": true,
+    "type": "",
+    "type_in_xml2_exe": null,
+    "xml2_has_same_name": true
+   },
+   "characters": {
+    "commands": [],
+    "igb": "menu_characters",
+    "igb_in_xml1": true,
+    "igb_in_xml2": false,
+    "type": "BLACKBIRD_MENU",
+    "type_in_xml2_exe": false,
+    "xml2_has_same_name": false
+   },
+   "characters_back": {
+    "commands": [],
+    "igb": null,
+    "igb_in_xml1": false,
+    "igb_in_xml2": false,
+    "type": "",
+    "type_in_xml2_exe": null,
+    "xml2_has_same_name": false
+   },
+   "codex": {
+    "commands": [],
+    "igb": "menu_codex",
+    "igb_in_xml1": true,
+    "igb_in_xml2": true,
+    "type": "CODEX_MENU",
+    "type_in_xml2_exe": true,
+    "xml2_has_same_name": true
+   },
+   "codex_back": {
+    "commands": [],
+    "igb": null,
+    "igb_in_xml1": false,
+    "igb_in_xml2": false,
+    "type": "",
+    "type_in_xml2_exe": null,
+    "xml2_has_same_name": true
+   },
+   "codex_enemy": {
+    "commands": [],
+    "igb": "menu_codex",
+    "igb_in_xml1": true,
+    "igb_in_xml2": true,
+    "type": "CODEX_MENU",
+    "type_in_xml2_exe": true,
+    "xml2_has_same_name": false
+   },
+   "credits": {
+    "commands": [],
+    "igb": "menu_credits",
+    "igb_in_xml1": true,
+    "igb_in_xml2": true,
+    "type": "CREDITS_MENU",
+    "type_in_xml2_exe": true,
+    "xml2_has_same_name": true
+   },
+   "credits_end": {
+    "commands": [],
+    "igb": "menu_credits_end",
+    "igb_in_xml1": true,
+    "igb_in_xml2": true,
+    "type": "CREDITS_MENU",
+    "type_in_xml2_exe": true,
+    "xml2_has_same_name": true
+   },
+   "danger_room": {
+    "commands": [],
+    "igb": "menu_danger_room",
+    "igb_in_xml1": true,
+    "igb_in_xml2": true,
+    "type": "DANGER_ROOM_MENU",
+    "type_in_xml2_exe": true,
+    "xml2_has_same_name": true
+   },
+   "danger_room_back": {
+    "commands": [],
+    "igb": null,
+    "igb_in_xml1": false,
+    "igb_in_xml2": false,
+    "type": "",
+    "type_in_xml2_exe": null,
+    "xml2_has_same_name": false
+   },
+   "debug": {
+    "commands": [
+     "loadmapaddteam",
+     "mainmenuexit",
+     "openmenu",
+     "runscript"
+    ],
+    "igb": "menu_debug",
+    "igb_in_xml1": true,
+    "igb_in_xml2": false,
+    "type": "DEBUG_MENU",
+    "type_in_xml2_exe": false,
+    "xml2_has_same_name": true
+   },
+   "equip_shop": {
+    "commands": [],
+    "igb": "menu_shop",
+    "igb_in_xml1": true,
+    "igb_in_xml2": true,
+    "type": "EQUIP_SHOP_MENU",
+    "type_in_xml2_exe": false,
+    "xml2_has_same_name": false
+   },
+   "image_viewer": {
+    "commands": [],
+    "igb": "menu_image_viewer",
+    "igb_in_xml1": true,
+    "igb_in_xml2": true,
+    "type": "IMAGE_VIEWER_MENU",
+    "type_in_xml2_exe": true,
+    "xml2_has_same_name": true
+   },
+   "item_shop": {
+    "commands": [],
+    "igb": "menu_shop",
+    "igb_in_xml1": true,
+    "igb_in_xml2": true,
+    "type": "ITEM_SHOP_MENU",
+    "type_in_xml2_exe": false,
+    "xml2_has_same_name": false
+   },
+   "legal_gc": {
+    "commands": [],
+    "igb": "menu_legal",
+    "igb_in_xml1": true,
+    "igb_in_xml2": true,
+    "type": "IMAGE_VIEWER_MENU",
+    "type_in_xml2_exe": true,
+    "xml2_has_same_name": false
+   },
+   "legal_ps2": {
+    "commands": [],
+    "igb": "menu_legal",
+    "igb_in_xml1": true,
+    "igb_in_xml2": true,
+    "type": "IMAGE_VIEWER_MENU",
+    "type_in_xml2_exe": true,
+    "xml2_has_same_name": false
+   },
+   "legal_xbox": {
+    "commands": [],
+    "igb": "menu_legal",
+    "igb_in_xml1": true,
+    "igb_in_xml2": true,
+    "type": "IMAGE_VIEWER_MENU",
+    "type_in_xml2_exe": true,
+    "xml2_has_same_name": false
+   },
+   "list_view_back": {
+    "commands": [],
+    "igb": null,
+    "igb_in_xml1": false,
+    "igb_in_xml2": false,
+    "type": "",
+    "type_in_xml2_exe": null,
+    "xml2_has_same_name": true
+   },
+   "load": {
+    "commands": [
+     "beginmissionhack"
+    ],
+    "igb": "load",
+    "igb_in_xml1": true,
+    "igb_in_xml2": false,
+    "type": "LOAD_MENU",
+    "type_in_xml2_exe": false,
+    "xml2_has_same_name": false
+   },
+   "loading": {
+    "commands": [],
+    "igb": "menu_loading",
+    "igb_in_xml1": true,
+    "igb_in_xml2": true,
+    "type": "IMAGE_VIEWER_MENU",
+    "type_in_xml2_exe": true,
+    "xml2_has_same_name": true
+   },
+   "main": {
+    "commands": [
+     "newgame",
+     "openmenu",
+     "runscript"
+    ],
+    "igb": "menu_main",
+    "igb_in_xml1": true,
+    "igb_in_xml2": true,
+    "type": "MAIN_MENU",
+    "type_in_xml2_exe": true,
+    "xml2_has_same_name": true
+   },
+   "map_list": {
+    "commands": [],
+    "igb": null,
+    "igb_in_xml1": false,
+    "igb_in_xml2": false,
+    "type": "",
+    "type_in_xml2_exe": null,
+    "xml2_has_same_name": false
+   },
+   "mmlost": {
+    "commands": [],
+    "igb": "menu_credits_end",
+    "igb_in_xml1": true,
+    "igb_in_xml2": true,
+    "type": "MMLOST_MENU",
+    "type_in_xml2_exe": false,
+    "xml2_has_same_name": true
+   },
+   "movie": {
+    "commands": [],
+    "igb": "menu_movie",
+    "igb_in_xml1": true,
+    "igb_in_xml2": true,
+    "type": "MOVIE_MENU",
+    "type_in_xml2_exe": true,
+    "xml2_has_same_name": true
+   },
+   "objectives": {
+    "commands": [],
+    "igb": "menu_objectives",
+    "igb_in_xml1": true,
+    "igb_in_xml2": false,
+    "type": "OBJECTIVES_MENU",
+    "type_in_xml2_exe": false,
+    "xml2_has_same_name": false
+   },
+   "options": {
+    "commands": [
+     "optionscontroller",
+     "saveoptions"
+    ],
+    "igb": "menu_options",
+    "igb_in_xml1": true,
+    "igb_in_xml2": true,
+    "type": "OPTIONS_MENU",
+    "type_in_xml2_exe": true,
+    "xml2_has_same_name": true
+   },
+   "options_controller": {
+    "commands": [],
+    "igb": "menu_options_controller",
+    "igb_in_xml1": true,
+    "igb_in_xml2": true,
+    "type": "OPTIONS_CONTROLLER_MENU",
+    "type_in_xml2_exe": true,
+    "xml2_has_same_name": true
+   },
+   "options_controller_gc": {
+    "commands": [],
+    "igb": "menu_options_controller",
+    "igb_in_xml1": true,
+    "igb_in_xml2": true,
+    "type": "OPTIONS_CONTROLLER_MENU",
+    "type_in_xml2_exe": true,
+    "xml2_has_same_name": false
+   },
+   "options_controller_xbox": {
+    "commands": [],
+    "igb": "menu_options_controller",
+    "igb_in_xml1": true,
+    "igb_in_xml2": true,
+    "type": "OPTIONS_CONTROLLER_MENU",
+    "type_in_xml2_exe": true,
+    "xml2_has_same_name": false
+   },
+   "options_debug": {
+    "commands": [],
+    "igb": "options_debug",
+    "igb_in_xml1": true,
+    "igb_in_xml2": false,
+    "type": "OPTIONS_DEBUG_MENU",
+    "type_in_xml2_exe": false,
+    "xml2_has_same_name": false
+   },
+   "options_sound": {
+    "commands": [],
+    "igb": "options_sound",
+    "igb_in_xml1": true,
+    "igb_in_xml2": false,
+    "type": "",
+    "type_in_xml2_exe": null,
+    "xml2_has_same_name": false
+   },
+   "options_stats": {
+    "commands": [],
+    "igb": "options_stats",
+    "igb_in_xml1": true,
+    "igb_in_xml2": false,
+    "type": "OPTIONS_STATS_MENU",
+    "type_in_xml2_exe": false,
+    "xml2_has_same_name": false
+   },
+   "pause": {
+    "commands": [
+     "mainmenuexit",
+     "opencharactersmenu",
+     "openmenu",
+     "runscript"
+    ],
+    "igb": "menu_pause",
+    "igb_in_xml1": true,
+    "igb_in_xml2": false,
+    "type": "PAUSE_MENU",
+    "type_in_xml2_exe": false,
+    "xml2_has_same_name": true
+   },
+   "pause_dr": {
+    "commands": [
+     "openmenu",
+     "runscript"
+    ],
+    "igb": "menu_pause",
+    "igb_in_xml1": true,
+    "igb_in_xml2": false,
+    "type": "PAUSE_MENU",
+    "type_in_xml2_exe": false,
+    "xml2_has_same_name": true
+   },
+   "pause_dr_training": {
+    "commands": [
+     "opencharactersmenu",
+     "openmenu",
+     "runscript"
+    ],
+    "igb": "menu_pause",
+    "igb_in_xml1": true,
+    "igb_in_xml2": false,
+    "type": "PAUSE_MENU",
+    "type_in_xml2_exe": false,
+    "xml2_has_same_name": true
+   },
+   "personal": {
+    "commands": [],
+    "igb": "menu_personal",
+    "igb_in_xml1": true,
+    "igb_in_xml2": true,
+    "type": "PERSONAL_MENU",
+    "type_in_xml2_exe": true,
+    "xml2_has_same_name": true
+   },
+   "players": {
+    "commands": [],
+    "igb": "menu_players",
+    "igb_in_xml1": true,
+    "igb_in_xml2": false,
+    "type": "PLAYERS_MENU",
+    "type_in_xml2_exe": false,
+    "xml2_has_same_name": true
+   },
+   "review": {
+    "commands": [
+     "openmenu"
+    ],
+    "igb": "menu_review",
+    "igb_in_xml1": true,
+    "igb_in_xml2": true,
+    "type": "",
+    "type_in_xml2_exe": null,
+    "xml2_has_same_name": true
+   },
+   "review_cinematics": {
+    "commands": [],
+    "igb": "menu_list_view",
+    "igb_in_xml1": true,
+    "igb_in_xml2": true,
+    "type": "REVIEW_PATHS_MENU",
+    "type_in_xml2_exe": true,
+    "xml2_has_same_name": false
+   },
+   "review_comics": {
+    "commands": [],
+    "igb": "menu_list_view",
+    "igb_in_xml1": true,
+    "igb_in_xml2": true,
+    "type": "REVIEW_PATHS_MENU",
+    "type_in_xml2_exe": true,
+    "xml2_has_same_name": false
+   },
+   "review_concept": {
+    "commands": [],
+    "igb": "menu_list_view",
+    "igb_in_xml1": true,
+    "igb_in_xml2": true,
+    "type": "REVIEW_PATHS_MENU",
+    "type_in_xml2_exe": true,
+    "xml2_has_same_name": false
+   },
+   "review_loadscreens": {
+    "commands": [],
+    "igb": "menu_list_view",
+    "igb_in_xml1": true,
+    "igb_in_xml2": true,
+    "type": "REVIEW_PATHS_MENU",
+    "type_in_xml2_exe": true,
+    "xml2_has_same_name": false
+   },
+   "shop_back": {
+    "commands": [],
+    "igb": null,
+    "igb_in_xml1": false,
+    "igb_in_xml2": false,
+    "type": "",
+    "type_in_xml2_exe": null,
+    "xml2_has_same_name": false
+   },
+   "trivia": {
+    "commands": [],
+    "igb": "menu_trivia",
+    "igb_in_xml1": true,
+    "igb_in_xml2": true,
+    "type": "TRIVIA_MENU",
+    "type_in_xml2_exe": true,
+    "xml2_has_same_name": true
+   }
+  },
+  "xml2_menu_files": 96,
+  "xml2_menu_types": {
+   "": 6,
+   "AUTOMAP_MENU": 2,
+   "CAMPAIGN_LOBBY_MENU": 2,
+   "CODEX_MENU": 2,
+   "CREDITS_MENU": 2,
+   "DANGER_ROOM_MENU": 2,
+   "DEBUG_MENU": 2,
+   "GAMES_LIST_MENU": 2,
+   "GAME_OPTIONS_MENU": 2,
+   "HERO_LIST_MENU": 2,
+   "HOST_MENU": 2,
+   "IMAGE_VIEWER_MENU": 4,
+   "JOIN_MENU": 2,
+   "LIVE_ACCOUNTS_MENU": 2,
+   "LIVE_CONNECT_MENU": 2,
+   "LIVE_FEEDBACK_MENU": 1,
+   "LIVE_FRIENDS_LIST_MENU": 2,
+   "LIVE_GAME_TYPE_MENU": 2,
+   "LIVE_JOIN_BY_ID_MENU": 2,
+   "LIVE_OPTIMATCH_MENU": 2,
+   "LIVE_OPTIONS_MENU": 2,
+   "LIVE_PASSWORD_MENU": 2,
+   "LIVE_QUICKMATCH_MENU": 2,
+   "LIVE_VOICE_MESSAGE_MENU": 1,
+   "LOADING_MENU": 1,
+   "MAIN_MENU": 2,
+   "MMLOST_MENU": 1,
+   "MOVIE_MENU": 1,
+   "ONLINE_MENU": 2,
+   "OPTIONS_CONTROLLER_MENU": 2,
+   "OPTIONS_MENU": 2,
+   "PAUSE_MENU": 6,
+   "PDA_MENU": 2,
+   "PERSONAL_MENU": 2,
+   "PLAYERS_LIST_MENU": 2,
+   "PLAYERS_MENU": 2,
+   "PLAYER_GAME_OPTIONS_MENU": 2,
+   "REGION_MENU": 2,
+   "REVIEW_PATHS_MENU": 2,
+   "SEBAS_MENU": 1,
+   "SHOP_MENU": 4,
+   "TEAM_MENU": 2,
+   "TEXT_ENTRY_MENU": 2,
+   "TRIVIA_MENU": 2,
+   "WORLD_MAP_MENU": 2
+  }
+ },
+ "missions": {
+  "xml1_files": 136,
+  "xml1_only_attrs": [
+   "mission.charunlock",
+   "mission.descname",
+   "mission.description",
+   "mission.keepheroes",
+   "mission.location",
+   "mission.maploadblackbird",
+   "mission.maxheros",
+   "mission.minheros",
+   "mission.name",
+   "mission.remote",
+   "mission.scriptstart",
+   "mission.skinset",
+   "mission.teamselect",
+   "mustlivehero.name",
+   "objective.required",
+   "objective.updatedescription",
+   "recommendedhero.name",
+   "requiredhero.name",
+   "restrictedhero.name"
+  ],
+  "xml1_only_tags": [
+   "missions",
+   "mustlivehero",
+   "recommendedhero",
+   "requiredhero",
+   "restrictedhero"
+  ],
+  "xml1_tags": {
+   "mission": 234,
+   "missions": 1,
+   "mustlivehero": 1,
+   "objective": 271,
+   "recommendedhero": 114,
+   "requiredhero": 83,
+   "restrictedhero": 82
+  },
+  "xml2_files": 15,
+  "xml2_only_attrs": [
+   "mission.act",
+   "objective.major",
+   "objective.order",
+   "objective.parentname",
+   "objective.type",
+   "objective.zone"
+  ],
+  "xml2_only_tags": [],
+  "xml2_tags": {
+   "mission": 15,
+   "objective": 171
+  }
+ },
+ "movie_subtitles": {
+  "xml1_files": 27,
+  "xml1_only_attrs": [],
+  "xml1_only_tags": [],
+  "xml1_tags": {
+   "item": 220,
+   "subtitles": 27
+  },
+  "xml2_files": 7,
+  "xml2_only_attrs": [],
+  "xml2_only_tags": [],
+  "xml2_tags": {
+   "item": 61,
+   "subtitles": 7
+  }
+ },
+ "personal": {
+  "xml1_files": 36,
+  "xml1_only_attrs": [],
+  "xml1_only_tags": [],
+  "xml1_tags": {
+   "item": 36
+  },
+  "xml2_files": 1,
+  "xml2_only_attrs": [],
+  "xml2_only_tags": [],
+  "xml2_tags": {
+   "item": 1
+  }
+ },
+ "review": {
+  "xml1_comic": [
+   "beast_cov.igb",
+   "col_cov.igb",
+   "cyc_cov.igb",
+   "emma_cov.igb",
+   "gamb_cov.igb",
+   "ice_cov.igb",
+   "jub_cov.igb",
+   "magma_cov.igb",
+   "night_cov.igb",
+   "phoen_cov.igb",
+   "rogue_cov.igb",
+   "storm_cov.igb",
+   "wolv_cov.igb"
+  ],
+  "xml1_concept": 42,
+  "xml1_personal_textures": 39,
+  "xml2_comic": 15,
+  "xml2_concept": 115
+ },
+ "subtitles": {
+  "xml1_files": 13,
+  "xml1_only_attrs": [],
+  "xml1_only_tags": [],
+  "xml1_tags": {
+   "item": 205,
+   "subtitles": 13
+  },
+  "xml2_files": 29,
+  "xml2_only_attrs": [],
+  "xml2_only_tags": [],
+  "xml2_tags": {
+   "item": 477,
+   "subtitles": 29
+  }
+ },
+ "zoneinfo": {
+  "xml1_attrs": [
+   "loading",
+   "name",
+   "savename"
+  ],
+  "xml1_entries": 162,
+  "xml1_names_mixed_case": 9,
+  "xml1_names_use_backslash": 162,
+  "xml2_attrs": [
+   "act",
+   "build",
+   "description",
+   "extraction",
+   "loading",
+   "mapx",
+   "mapy",
+   "name",
+   "savename",
+   "state",
+   "towncenter"
+  ],
+  "xml2_entries": 100
+ }
+}

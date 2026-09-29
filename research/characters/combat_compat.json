@@ -1,0 +1,146 @@
+{
+ "handlers_xml1_only": [
+  "ch_air_grab_pickup",
+  "ch_air_grab_pickup_idle",
+  "ch_air_grab_pickup_throw",
+  "ch_air_grab_victim",
+  "ch_clingwallbackflip",
+  "ch_clingwalldecide",
+  "ch_clingwallidle",
+  "ch_fly_guard_decide",
+  "ch_grab_attack",
+  "ch_grenade",
+  "ch_roguedecide",
+  "ch_stun",
+  "ch_throw",
+  "ch_weapon_semi_auto"
+ ],
+ "unknown_handlers": {
+  "ch_weapon_semi_auto": [
+   "ps_flamethrower",
+   "ps_grso"
+  ],
+  "ch_throw": [
+   "ps_gambit",
+   "ps_jubilee"
+  ],
+  "ch_grab_attack": [
+   "ps_juggernaut"
+  ],
+  "ch_grenade": [
+   "moveset_grenade",
+   "moveset_stealth",
+   "ps_mystique",
+   "ps_shadowking_one"
+  ],
+  "ch_roguedecide": [
+   "ps_rogue"
+  ],
+  "ch_clingwallbackflip": [
+   "fightstyle_finesse1",
+   "moveset_acrobat"
+  ],
+  "ch_clingwalldecide": [
+   "moveset_acrobat"
+  ],
+  "ch_fly_guard_decide": [
+   "moveset_flying"
+  ],
+  "ch_air_grab_pickup": [
+   "moveset_flying"
+  ],
+  "ch_air_grab_pickup_idle": [
+   "moveset_flying"
+  ],
+  "ch_air_grab_pickup_throw": [
+   "moveset_flying"
+  ]
+ },
+ "unknown_triggers": {
+  "tintout": [
+   "ps_acolyte_mental",
+   "ps_acolyte_mental_b",
+   "ps_bh_mental",
+   "ps_grsoelite",
+   "ps_mp_mental",
+   "ps_mystique"
+  ],
+  "tintin": [
+   "ps_acolyte_mental",
+   "ps_acolyte_mental_b",
+   "ps_bh_mental",
+   "ps_grsoelite",
+   "ps_mp_mental",
+   "ps_mystique"
+  ],
+  "systemshock": [
+   "ps_acolyte_mental",
+   "ps_acolyte_mental_b",
+   "ps_bh_mental",
+   "ps_femmorlock",
+   "ps_femmorlock_c",
+   "ps_femmorlock_ldr",
+   "ps_mp_mental"
+  ],
+  "cage_victim": [
+   "ps_avalanche"
+  ],
+  "radial_cage": [
+   "ps_avalanche"
+  ],
+  "optic_blast": [
+   "ps_cyclops",
+   "ps_cyclops_dopple"
+  ],
+  "beamdata": [
+   "ps_flamethrower",
+   "ps_mastermold_one",
+   "ps_mastermold_two",
+   "ps_sentinel_advanced_b",
+   "ps_sentinel_flashback",
+   "ps_sentinel_leader"
+  ],
+  "freeze_fx": [
+   "ps_iceman"
+  ],
+  "icextreme_freeze": [
+   "ps_iceman"
+  ],
+  "icextreme_slow": [
+   "ps_iceman"
+  ],
+  "bait": [
+   "ps_jubilee"
+  ],
+  "pickup_sound": [
+   "ps_juggernaut"
+  ],
+  "metal_balls": [
+   "ps_magneto",
+   "ps_magneto_boss"
+  ],
+  "steal": [
+   "ps_mystique"
+  ],
+  "telekinesis_dmg": [
+   "ps_phoenix"
+  ],
+  "phoenixforce": [
+   "ps_phoenix",
+   "ps_phoenix_dopple"
+  ],
+  "fire_column": [
+   "ps_pyro"
+  ],
+  "shock_victim": [
+   "ps_shockerbot"
+  ],
+  "tongue_beam": [
+   "ps_toad"
+  ],
+  "grenade_projectile": [
+   "moveset_grenade",
+   "moveset_stealth"
+  ]
+ }
+}

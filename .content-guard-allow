@@ -1,0 +1,29 @@
+# Allowlist for tools/check_no_game_content.py.
+# Format:  RULE  GLOB  # reason (required)
+# Every entry is a deliberate exception that someone reviewed. Keep it short; `--all` warns about entries that
+# match nothing.
+
+# --- research reports that are ours (counts, names, addresses, measurements; no game text)
+RESEARCH_TXT  research/scripts/api_diff.txt                       # script-function names, signatures, table addresses
+RESEARCH_TXT  research/scripts/rewrite_report.txt                 # our rewrite statistics and messages
+RESEARCH_TXT  research/scripts/var_scope.txt                      # variable names and counts
+RESEARCH_TXT  research/scripts/var_zones.txt                      # variable names -> zone ids
+RESEARCH_TXT  research/scripts/xml1_console_cmds.txt              # console command names + handler addresses
+RESEARCH_TXT  research/scripts/xml2_console_cmds.txt              # console command names + handler addresses (the builder reads the names)
+RESEARCH_TXT  research/characters/schema_stats.txt                # attribute usage counts (the one example description replaced by a placeholder)
+RESEARCH_TXT  research/sound/music0x20/README.txt                 # our write-up of layered music
+RESEARCH_TXT  research/sound/music0x20/batch_summary.txt          # SNR / seam measurements of the music fix
+RESEARCH_TXT  research/sound/music0x20/validation_nyc1.txt        # measurements
+RESEARCH_TXT  research/sound/music0x20/validation_sewer1.txt      # measurements
+RESEARCH_TXT  research/sound/resolve_out.txt                      # sound-key resolution counts per bank
+RESEARCH_TXT  research/sound/resolve_xml1.txt                     # sound-key resolution counts per bank
+RESEARCH_TXT  research/sound/xml1_bank_usage.txt                  # bank names, sizes, users
+RESEARCH_TXT  research/sound/zone_coverage.txt                    # per-zone sound coverage counts
+
+# --- the builder's own data (tools/xml1builder/data; the frozen builder carries it as xml1builder/data)
+BINARY  *xml1builder/data/xml2_retail_files.json.gz               # gzip of the retail XML2 file list: names, sizes, sha1 (facts, no content)
+
+# --- synthetic test fixtures
+GAME_TEXT_ATTR  tests/unit/test_sources_tables.py                 # made-up mission names ("Find B & C") of a synthetic mission file (tests XML escaping)
+
+# --- nothing else is expected. In particular: no MEDIA entries (no screenshots in git), no SIZE entries.

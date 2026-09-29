@@ -1,0 +1,5725 @@
+{
+ "stats": {
+  "storage: 1:1 game var (flag name)": 32,
+  "storage: packed game var (literal)": 14,
+  "storage: packed mission var (literal)": 90,
+  "storage: packed mission var (counter)": 12,
+  "storage: XML2 zone var (per-zone entity id / health value)": 2,
+  "storage: XML2 zone var (single-zone counter)": 23,
+  "storage: signed (two's complement) packed var": 1,
+  "storage: packed game var (counter)": 2,
+  "rule getMissionVar": 178,
+  "rule setMissionVar": 276,
+  "rule screenFade -> cameraFade": 396,
+  "rule getMissionFlag": 103,
+  "rule setMissionFlag": 171,
+  "rule beginMission": 47,
+  "rule loadMap -> loadMapKeepTeam": 110,
+  "zone script: setCurrentAct injected": 73,
+  "drop exitSoloMode": 4,
+  "rule getGameVar": 28,
+  "rule setGameVar": 29,
+  "rule endSideMission": 6,
+  "rule beginSideMission": 3,
+  "rule createPopupDialog": 103,
+  "dialog text $id resolved from XML1 strings.eng": 353,
+  "rule beginMission (inline -> x1/missions script)": 49,
+  "drop xtremeConversationLight": 1,
+  "drop displayEx": 1,
+  "drop invalid statement": 6,
+  "normalise line endings / final CRLF": 5,
+  "drop setPowerStatus": 1,
+  "rule setInCampaign": 18,
+  "rule addHero": 2,
+  "rule destroyMultipartPiece": 2,
+  "rule literal assignment -> iadd": 2,
+  "rule blackbirdMenu code argument": 50,
+  "drop legacy python line": 185,
+  "strip game. prefix": 80,
+  "rule beginMissionHack": 1,
+  "drop main": 57,
+  "rule mission": 10,
+  "drop canCancelDialog": 2,
+  "drop removeFromGroup": 1,
+  "inline data strings rewritten": 170,
+  "rule beginSideMission (inline -> x1/missions script)": 4,
+  "drop enterSoloMode": 18,
+  "rule extractionPointLite 6->4 args": 20
+ },
+ "problems": [
+  [
+   "scripts/hive/h_int/hive_trigger_rescue.py:4",
+   "getMissionVar with runtime name rescuee -> getZoneVar (zone lifetime)"
+  ],
+  [
+   "scripts/hive/h_int/hive_trigger_rescue.py:8",
+   "setMissionVar with runtime name rescuee -> setZoneVar (zone lifetime)"
+  ],
+  [
+   "scripts/mansion/dr_mag2/blob/add_cyclops.py:6",
+   "addHero: XML2 cannot add a hero to the party from script; hero is unlocked and the team menu (extractionPointLite) is opened instead - verify in game"
+  ],
+  [
+   "scripts/nyc/alison/add_cyclops.py:6",
+   "addHero: XML2 cannot add a hero to the party from script; hero is unlocked and the team menu (extractionPointLite) is opened instead - verify in game"
+  ],
+  [
+   "zones",
+   "49 zones have no zone script: setCurrentAct only comes from beginMission (give them zonescript=x1/zones/<zone> to be save/load safe): ['arbiter/a_int/arb2_2', 'arbiter/a_int/arb2_3', 'arbiter/a_int/arb2_4', 'astral/ast1/astral1_2', 'astral/ast1/astral4_3', 'astroid_m/visit1/asteroid2_1', 'astroid_m/visit1/asteroid2_2', 'demo/hub/sewers1_1_1']..."
+  ],
+  [
+   "zones",
+   "22 zones belong to missions in different acts; no setCurrentAct injected: ['arbiter/a_int/arb2_1', 'arbiter/a_int/arb3_1', 'arbiter/a_int/arb3_2', 'arbiter/a_int/arb3_3', 'arbiter/a_int/arb3_4', 'astral/ast3/astral3_3', 'astral/ast3/astral3_5', 'demo/a_int/arb3_1', 'demo/a_int/arb3_2', 'demo/hub/sewers1_1_2', 'haarp/int/haarp2_6', 'haarp/int/icetunnel1', 'hive/h_int/hive2_2_1', 'mansion/man5/mansion5_2', 'mansion/man5/subbasement5', 'nuke_plant/nuke/nuke2_3', 'sewers/grso/sewers_marrow', 'sewers/hub/sewers1_1_1', 'sewers/hub/sewers1_1_2', 'sewers/hub/sewers_hub', 'weapon_x/old/wx2_1', 'weapon_x/old/wx2_2']"
+  ]
+ ],
+ "validation": [
+  "scripts/menus/intro_demo.py:15: unknown function beginmissionhack",
+  "scripts/missions/mansion_start.py:4: unknown function begin",
+  "scripts/missions/muirisland_start.py:5: startMovie argc 1 != 2",
+  "scripts/missions/muirisland_start.py:7: unknown function depart",
+  "scripts/missions/nuke_start.py:5: startMovie argc 1 != 2",
+  "scripts/missions/nuke_start.py:7: unknown function depart",
+  "scripts/missions/sewers_intro.py:5: startMovie argc 1 != 2",
+  "scripts/missions/sewers_intro.py:7: unknown function begin",
+  "scripts/missions/sewers_start.py:5: startMovie argc 1 != 2",
+  "scripts/missions/sewers_start.py:8: startMovie argc 1 != 2",
+  "scripts/missions/sewers_start.py:10: unknown function depart",
+  "scripts/missions/testcollect_start.py:5: startMovie argc 1 != 2",
+  "scripts/missions/testcollect_start.py:7: unknown function depart",
+  "scripts/missions/wx_fb_start.py:4: unknown function depart"
+ ],
+ "files": {
+  "arbiter/a_int/1_7_6_cam_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "arbiter/a_int/arb2_1": {
+   "origin": "loose",
+   "changed": true
+  },
+  "arbiter/a_int/arb3_1": {
+   "origin": "loose",
+   "changed": true
+  },
+  "arbiter/a_int/arb3_2": {
+   "origin": "loose",
+   "changed": false
+  },
+  "arbiter/a_int/arb3_3": {
+   "origin": "loose",
+   "changed": false
+  },
+  "arbiter/a_int/arb3_4": {
+   "origin": "loose",
+   "changed": false
+  },
+  "arbiter/a_int/check_timer": {
+   "origin": "loose",
+   "changed": true
+  },
+  "arbiter/a_int/exploding_wall_3_1fix": {
+   "origin": "loose",
+   "changed": true
+  },
+  "arbiter/a_int/exploding_wall_3_1new": {
+   "origin": "loose",
+   "changed": true
+  },
+  "arbiter/a_int/exploding_wall_3_2fix": {
+   "origin": "loose",
+   "changed": true
+  },
+  "arbiter/a_int/exploding_wall_3_2new": {
+   "origin": "loose",
+   "changed": true
+  },
+  "arbiter/a_int/exploding_wall_3_3fix": {
+   "origin": "loose",
+   "changed": true
+  },
+  "arbiter/a_int/exploding_wall_3_4fix": {
+   "origin": "loose",
+   "changed": true
+  },
+  "arbiter/a_int/exploding_wall_3_4new": {
+   "origin": "loose",
+   "changed": true
+  },
+  "arbiter/a_int/firewall_custom_remove": {
+   "origin": "loose",
+   "changed": false
+  },
+  "arbiter/a_int/game_over": {
+   "origin": "loose",
+   "changed": false
+  },
+  "arbiter/a_int/grso_ladder_down": {
+   "origin": "loose",
+   "changed": false
+  },
+  "arbiter/a_int/grso_ladder_down01": {
+   "origin": "loose",
+   "changed": false
+  },
+  "arbiter/a_int/hallway_spray01": {
+   "origin": "loose",
+   "changed": false
+  },
+  "arbiter/a_int/jean_stops_a_leak": {
+   "origin": "loose",
+   "changed": false
+  },
+  "arbiter/a_int/jeantimer": {
+   "origin": "loose",
+   "changed": false
+  },
+  "arbiter/a_int/play_movies": {
+   "origin": "loose",
+   "changed": true
+  },
+  "arbiter/a_int/psi_effect": {
+   "origin": "loose",
+   "changed": false
+  },
+  "arbiter/a_int/reenable": {
+   "origin": "loose",
+   "changed": true
+  },
+  "arbiter/a_int/seamen_cam3_1": {
+   "origin": "loose",
+   "changed": true
+  },
+  "arbiter/a_int/seamen_cam3_1b": {
+   "origin": "loose",
+   "changed": false
+  },
+  "arbiter/a_int/seamen_cam3_1final": {
+   "origin": "loose",
+   "changed": false
+  },
+  "arbiter/a_int/shake1": {
+   "origin": "loose",
+   "changed": false
+  },
+  "arbiter/a_int/shake2": {
+   "origin": "loose",
+   "changed": false
+  },
+  "arbiter/a_int/shake3": {
+   "origin": "loose",
+   "changed": false
+  },
+  "arbiter/a_int/shake4": {
+   "origin": "loose",
+   "changed": false
+  },
+  "arbiter/a_int/shipsink": {
+   "origin": "loose",
+   "changed": false
+  },
+  "arbiter/a_int/solo_remove": {
+   "origin": "loose",
+   "changed": false
+  },
+  "arbiter/a_int/weld_left": {
+   "origin": "loose",
+   "changed": false
+  },
+  "arbiter/a_int/weld_left_3_2": {
+   "origin": "loose",
+   "changed": false
+  },
+  "arbiter/a_int/weld_left_3_4": {
+   "origin": "loose",
+   "changed": false
+  },
+  "arbiter/a_int/weld_primary": {
+   "origin": "loose",
+   "changed": false
+  },
+  "arbiter/a_int/weld_primary3_3": {
+   "origin": "loose",
+   "changed": false
+  },
+  "arbiter/a_int/weld_right": {
+   "origin": "loose",
+   "changed": false
+  },
+  "arbiter/a_int/weld_right_3_2": {
+   "origin": "loose",
+   "changed": false
+  },
+  "arbiter/a_int/weld_right_3_4": {
+   "origin": "loose",
+   "changed": false
+  },
+  "arbiter/a_int/welder": {
+   "origin": "loose",
+   "changed": false
+  },
+  "arbiter/a_int/welder_alt": {
+   "origin": "loose",
+   "changed": false
+  },
+  "arbiter/a_int/you_win": {
+   "origin": "loose",
+   "changed": false
+  },
+  "arbiter/crane_drop": {
+   "origin": "loose",
+   "changed": false
+  },
+  "arbiter/crane_swingout": {
+   "origin": "loose",
+   "changed": false
+  },
+  "arbiter/deck/arb_fd1": {
+   "origin": "loose",
+   "changed": true
+  },
+  "arbiter/deck/arb_fd2": {
+   "origin": "loose",
+   "changed": true
+  },
+  "arbiter/deck/blob_gets_away": {
+   "origin": "loose",
+   "changed": false
+  },
+  "arbiter/deck/blob_gets_away2": {
+   "origin": "loose",
+   "changed": false
+  },
+  "arbiter/deck/cranedeath": {
+   "origin": "loose",
+   "changed": false
+  },
+  "arbiter/deck/firstsentinel": {
+   "origin": "loose",
+   "changed": false
+  },
+  "arbiter/deck/left_explosion_fires": {
+   "origin": "loose",
+   "changed": false
+  },
+  "arbiter/deck/objectivecheck": {
+   "origin": "loose",
+   "changed": false
+  },
+  "arbiter/deck/sentinel_landing": {
+   "origin": "loose",
+   "changed": true
+  },
+  "arbiter/firejet_remove": {
+   "origin": "loose",
+   "changed": true
+  },
+  "arbiter/firejet_timed": {
+   "origin": "loose",
+   "changed": false
+  },
+  "arbiter/firejet_timed01": {
+   "origin": "loose",
+   "changed": false
+  },
+  "arbiter/forcefield_remove": {
+   "origin": "loose",
+   "changed": false
+  },
+  "arbiter/forcefield_single2_remove": {
+   "origin": "loose",
+   "changed": false
+  },
+  "arbiter/forcefield_single_remove": {
+   "origin": "loose",
+   "changed": false
+  },
+  "arbiter/forcefield_single_remove02": {
+   "origin": "loose",
+   "changed": true
+  },
+  "arbiter/launchpointnext01": {
+   "origin": "loose",
+   "changed": false
+  },
+  "arbiter/prep_sailor": {
+   "origin": "loose",
+   "changed": false
+  },
+  "arbiter/rescue_complete": {
+   "origin": "loose",
+   "changed": true
+  },
+  "arbiter/s_a_01deathscript": {
+   "origin": "loose",
+   "changed": false
+  },
+  "arbiter/s_a_02deathscript": {
+   "origin": "loose",
+   "changed": false
+  },
+  "arbiter/s_a_03deathscript": {
+   "origin": "loose",
+   "changed": false
+  },
+  "arbiter/s_a_04deathscript": {
+   "origin": "loose",
+   "changed": false
+  },
+  "arbiter/sailor_rescue_all": {
+   "origin": "loose",
+   "changed": false
+  },
+  "arbiter/sentinel_blastoff": {
+   "origin": "loose",
+   "changed": false
+  },
+  "arbiter/sentinel_down01": {
+   "origin": "loose",
+   "changed": false
+  },
+  "arbiter/sentinel_launch01": {
+   "origin": "loose",
+   "changed": false
+  },
+  "arbiter/sentinel_launch02": {
+   "origin": "loose",
+   "changed": false
+  },
+  "asteroid_m/1st_mutie_question": {
+   "origin": "loose",
+   "changed": false
+  },
+  "asteroid_m/2_1_fight_magneto": {
+   "origin": "loose",
+   "changed": true
+  },
+  "asteroid_m/2_1_meet_magneto": {
+   "origin": "loose",
+   "changed": true
+  },
+  "asteroid_m/2nd_mutie_question": {
+   "origin": "loose",
+   "changed": false
+  },
+  "asteroid_m/alisoncheck": {
+   "origin": "loose",
+   "changed": true
+  },
+  "asteroid_m/blastoff": {
+   "origin": "loose",
+   "changed": false
+  },
+  "asteroid_m/blowmeupchair": {
+   "origin": "loose",
+   "changed": false
+  },
+  "asteroid_m/blowmeuplarge": {
+   "origin": "loose",
+   "changed": false
+  },
+  "asteroid_m/blowmeupmed": {
+   "origin": "loose",
+   "changed": false
+  },
+  "asteroid_m/blowmeupsmall": {
+   "origin": "loose",
+   "changed": false
+  },
+  "asteroid_m/bridge_extend_banana": {
+   "origin": "loose",
+   "changed": false
+  },
+  "asteroid_m/checkobjectiveinfo": {
+   "origin": "loose",
+   "changed": false
+  },
+  "asteroid_m/control_center_found": {
+   "origin": "loose",
+   "changed": false
+  },
+  "asteroid_m/control_toad": {
+   "origin": "loose",
+   "changed": false
+  },
+  "asteroid_m/control_toad2": {
+   "origin": "loose",
+   "changed": false
+  },
+  "asteroid_m/control_toad3": {
+   "origin": "loose",
+   "changed": false
+  },
+  "asteroid_m/defeat_magneto": {
+   "origin": "loose",
+   "changed": false
+  },
+  "asteroid_m/defeat_mystique": {
+   "origin": "loose",
+   "changed": false
+  },
+  "asteroid_m/end2_1movie": {
+   "origin": "loose",
+   "changed": true
+  },
+  "asteroid_m/end_control_toad": {
+   "origin": "loose",
+   "changed": false
+  },
+  "asteroid_m/end_goons_defeated": {
+   "origin": "loose",
+   "changed": false
+  },
+  "asteroid_m/endofbosspath": {
+   "origin": "loose",
+   "changed": false
+  },
+  "asteroid_m/enter_asteroidm": {
+   "origin": "loose",
+   "changed": true
+  },
+  "asteroid_m/enter_lastzone": {
+   "origin": "loose",
+   "changed": true
+  },
+  "asteroid_m/enter_mastermold": {
+   "origin": "loose",
+   "changed": true
+  },
+  "asteroid_m/firejet_timed": {
+   "origin": "loose",
+   "changed": false
+  },
+  "asteroid_m/firejet_timed2": {
+   "origin": "loose",
+   "changed": false
+  },
+  "asteroid_m/gathered_info": {
+   "origin": "loose",
+   "changed": false
+  },
+  "asteroid_m/gravitron_door_found": {
+   "origin": "loose",
+   "changed": false
+  },
+  "asteroid_m/homing_thing": {
+   "origin": "loose",
+   "changed": false
+  },
+  "asteroid_m/leader_drop_key": {
+   "origin": "loose",
+   "changed": false
+  },
+  "asteroid_m/magneto_pain": {
+   "origin": "loose",
+   "changed": true
+  },
+  "asteroid_m/meet_mystique": {
+   "origin": "loose",
+   "changed": true
+  },
+  "asteroid_m/meet_mystique_end": {
+   "origin": "loose",
+   "changed": false
+  },
+  "asteroid_m/mystique_leaving": {
+   "origin": "loose",
+   "changed": true
+  },
+  "asteroid_m/mystiquepain": {
+   "origin": "loose",
+   "changed": true
+  },
+  "asteroid_m/mystiquespawn": {
+   "origin": "loose",
+   "changed": false
+  },
+  "asteroid_m/open_airlock": {
+   "origin": "loose",
+   "changed": false
+  },
+  "asteroid_m/remove_havok": {
+   "origin": "loose",
+   "changed": false
+  },
+  "asteroid_m/remove_mystique": {
+   "origin": "loose",
+   "changed": true
+  },
+  "asteroid_m/sabretoothdeath": {
+   "origin": "loose",
+   "changed": true
+  },
+  "asteroid_m/sentinels_running": {
+   "origin": "loose",
+   "changed": false
+  },
+  "asteroid_m/shake1": {
+   "origin": "loose",
+   "changed": false
+  },
+  "asteroid_m/shake2": {
+   "origin": "loose",
+   "changed": false
+  },
+  "asteroid_m/shake3": {
+   "origin": "loose",
+   "changed": false
+  },
+  "asteroid_m/shake4": {
+   "origin": "loose",
+   "changed": false
+  },
+  "asteroid_m/stage2": {
+   "origin": "loose",
+   "changed": false
+  },
+  "asteroid_m/stage3": {
+   "origin": "loose",
+   "changed": false
+  },
+  "asteroid_m/stage4": {
+   "origin": "loose",
+   "changed": true
+  },
+  "asteroid_m/stage5": {
+   "origin": "loose",
+   "changed": false
+  },
+  "asteroid_m/start1_2": {
+   "origin": "loose",
+   "changed": true
+  },
+  "asteroid_m/start2_3": {
+   "origin": "loose",
+   "changed": true
+  },
+  "asteroid_m/start_asteroid_int": {
+   "origin": "loose",
+   "changed": true
+  },
+  "asteroid_m/start_asteroid_m": {
+   "origin": "loose",
+   "changed": true
+  },
+  "asteroid_m/start_havok": {
+   "origin": "loose",
+   "changed": false
+  },
+  "astral/ast1/1_3_fmv": {
+   "origin": "loose",
+   "changed": true
+  },
+  "astral/ast1/1_3plat2": {
+   "origin": "loose",
+   "changed": true
+  },
+  "astral/ast1/astral1_1": {
+   "origin": "loose",
+   "changed": true
+  },
+  "astral/ast1/astral1_3": {
+   "origin": "loose",
+   "changed": true
+  },
+  "astral/ast1/conv2_8_1end": {
+   "origin": "loose",
+   "changed": true
+  },
+  "astral/ast1/conv2_8_2_1": {
+   "origin": "loose",
+   "changed": true
+  },
+  "astral/ast1/conv2_8_2_1end": {
+   "origin": "loose",
+   "changed": true
+  },
+  "astral/ast1/conv2_8_2end": {
+   "origin": "loose",
+   "changed": true
+  },
+  "astral/ast1/conv2_8_4end": {
+   "origin": "loose",
+   "changed": true
+  },
+  "astral/ast1/lever_1_1": {
+   "origin": "loose",
+   "changed": true
+  },
+  "astral/ast1/lever_1_3": {
+   "origin": "loose",
+   "changed": true
+  },
+  "astral/ast1/lever_left": {
+   "origin": "loose",
+   "changed": true
+  },
+  "astral/ast1/lever_right": {
+   "origin": "loose",
+   "changed": true
+  },
+  "astral/ast1/missioncomplete": {
+   "origin": "loose",
+   "changed": false
+  },
+  "astral/ast1/prep_illyana": {
+   "origin": "loose",
+   "changed": false
+  },
+  "astral/ast1/prep_scarymonster": {
+   "origin": "loose",
+   "changed": false
+  },
+  "astral/ast1/shadespawn_conv": {
+   "origin": "loose",
+   "changed": true
+  },
+  "astral/ast1/snd2_8_0002_4": {
+   "origin": "loose",
+   "changed": false
+  },
+  "astral/ast1/snd2_8_0002_5": {
+   "origin": "loose",
+   "changed": false
+  },
+  "astral/ast1/snd2_8_0002_6": {
+   "origin": "loose",
+   "changed": false
+  },
+  "astral/ast1/snd2_8_0002_7": {
+   "origin": "loose",
+   "changed": false
+  },
+  "astral/ast1/start1_1": {
+   "origin": "loose",
+   "changed": true
+  },
+  "astral/ast1/supershades_defeated": {
+   "origin": "loose",
+   "changed": true
+  },
+  "astral/ast1/teleportswitch1": {
+   "origin": "loose",
+   "changed": true
+  },
+  "astral/ast3/3_4plat1": {
+   "origin": "loose",
+   "changed": true
+  },
+  "astral/ast3/3_4plat2": {
+   "origin": "loose",
+   "changed": true
+  },
+  "astral/ast3/3_7_2_2_1_cam_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "astral/ast3/3_7_2_3_1_cam_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "astral/ast3/3_7_2_4_1_cam_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "astral/ast3/acquire_honor": {
+   "origin": "loose",
+   "changed": true
+  },
+  "astral/ast3/acquire_knowledge": {
+   "origin": "loose",
+   "changed": true
+  },
+  "astral/ast3/acquire_wisdom": {
+   "origin": "loose",
+   "changed": true
+  },
+  "astral/ast3/astral3_2": {
+   "origin": "loose",
+   "changed": true
+  },
+  "astral/ast3/astral3_4": {
+   "origin": "loose",
+   "changed": true
+  },
+  "astral/ast3/avalanche_death": {
+   "origin": "loose",
+   "changed": false
+  },
+  "astral/ast3/avalanche_pain": {
+   "origin": "loose",
+   "changed": true
+  },
+  "astral/ast3/avalanche_start": {
+   "origin": "loose",
+   "changed": true
+  },
+  "astral/ast3/blob_pillar_death": {
+   "origin": "loose",
+   "changed": true
+  },
+  "astral/ast3/blobdeath": {
+   "origin": "loose",
+   "changed": false
+  },
+  "astral/ast3/blobintro": {
+   "origin": "loose",
+   "changed": true
+  },
+  "astral/ast3/blobpain": {
+   "origin": "loose",
+   "changed": true
+  },
+  "astral/ast3/blobs_pillar": {
+   "origin": "loose",
+   "changed": false
+  },
+  "astral/ast3/blobspawn": {
+   "origin": "loose",
+   "changed": true
+  },
+  "astral/ast3/colosseum": {
+   "origin": "loose",
+   "changed": false
+  },
+  "astral/ast3/colosseum_introcam2": {
+   "origin": "loose",
+   "changed": false
+  },
+  "astral/ast3/colosseum_introcam3": {
+   "origin": "loose",
+   "changed": false
+  },
+  "astral/ast3/conv3_7_1end": {
+   "origin": "loose",
+   "changed": true
+  },
+  "astral/ast3/conv3_7_2_1": {
+   "origin": "loose",
+   "changed": true
+  },
+  "astral/ast3/conv3_7_2_1b": {
+   "origin": "loose",
+   "changed": true
+  },
+  "astral/ast3/conv3_7_2_1bend": {
+   "origin": "loose",
+   "changed": true
+  },
+  "astral/ast3/conv3_7_4_1bend": {
+   "origin": "loose",
+   "changed": true
+  },
+  "astral/ast3/conv3_7_5end": {
+   "origin": "loose",
+   "changed": false
+  },
+  "astral/ast3/conv3_7_6": {
+   "origin": "loose",
+   "changed": true
+  },
+  "astral/ast3/do_cage": {
+   "origin": "loose",
+   "changed": false
+  },
+  "astral/ast3/dopple_death": {
+   "origin": "loose",
+   "changed": true
+  },
+  "astral/ast3/enable_avalanche": {
+   "origin": "loose",
+   "changed": false
+  },
+  "astral/ast3/enable_blob": {
+   "origin": "loose",
+   "changed": false
+  },
+  "astral/ast3/firedemondeath": {
+   "origin": "loose",
+   "changed": true
+  },
+  "astral/ast3/homing_thing": {
+   "origin": "loose",
+   "changed": false
+  },
+  "astral/ast3/next_stage": {
+   "origin": "loose",
+   "changed": false
+  },
+  "astral/ast3/pillarbreaka": {
+   "origin": "loose",
+   "changed": false
+  },
+  "astral/ast3/pillarbreakb": {
+   "origin": "loose",
+   "changed": false
+  },
+  "astral/ast3/pillarbreakc": {
+   "origin": "loose",
+   "changed": false
+  },
+  "astral/ast3/pillarbreakd": {
+   "origin": "loose",
+   "changed": false
+  },
+  "astral/ast3/pillarbreake": {
+   "origin": "loose",
+   "changed": false
+  },
+  "astral/ast3/pillarbreakf": {
+   "origin": "loose",
+   "changed": false
+  },
+  "astral/ast3/placeobject": {
+   "origin": "loose",
+   "changed": true
+  },
+  "astral/ast3/prep_sk": {
+   "origin": "loose",
+   "changed": false
+  },
+  "astral/ast3/prep_x": {
+   "origin": "loose",
+   "changed": false
+  },
+  "astral/ast3/pyro_start": {
+   "origin": "loose",
+   "changed": true
+  },
+  "astral/ast3/pyrocam": {
+   "origin": "loose",
+   "changed": true
+  },
+  "astral/ast3/pyrocam2": {
+   "origin": "loose",
+   "changed": true
+  },
+  "astral/ast3/pyrodeath": {
+   "origin": "loose",
+   "changed": false
+  },
+  "astral/ast3/pyropain": {
+   "origin": "loose",
+   "changed": true
+  },
+  "astral/ast3/shadowking_escapes": {
+   "origin": "loose",
+   "changed": true
+  },
+  "astral/ast3/spawnfiredemons": {
+   "origin": "loose",
+   "changed": true
+  },
+  "astral/ast3/start3_2": {
+   "origin": "loose",
+   "changed": true
+  },
+  "astral/ast3/wolvressurrect": {
+   "origin": "loose",
+   "changed": true
+  },
+  "astral/astralbridge_1inmap": {
+   "origin": "loose",
+   "changed": true
+  },
+  "astral/astralbridge_1inmap_camera": {
+   "origin": "loose",
+   "changed": true
+  },
+  "astral/astralbridge_2inmap_a": {
+   "origin": "loose",
+   "changed": true
+  },
+  "astral/astralbridge_2inmap_b": {
+   "origin": "loose",
+   "changed": true
+  },
+  "astral/path_stop": {
+   "origin": "loose",
+   "changed": false
+  },
+  "astral/savepx/astral2_1": {
+   "origin": "loose",
+   "changed": true
+  },
+  "astral/savepx/astral2_2": {
+   "origin": "loose",
+   "changed": true
+  },
+  "astral/savepx/astral2_3": {
+   "origin": "loose",
+   "changed": true
+  },
+  "astral/savepx/conv3_9_1end": {
+   "origin": "loose",
+   "changed": true
+  },
+  "astral/savepx/conv3_9_2": {
+   "origin": "loose",
+   "changed": true
+  },
+  "astral/savepx/conv3_9_2bend": {
+   "origin": "loose",
+   "changed": true
+  },
+  "astral/savepx/conv3_9_3_4": {
+   "origin": "loose",
+   "changed": true
+  },
+  "astral/savepx/dropshield": {
+   "origin": "loose",
+   "changed": true
+  },
+  "astral/savepx/final_astral": {
+   "origin": "loose",
+   "changed": true
+  },
+  "astral/savepx/lever_2_2": {
+   "origin": "loose",
+   "changed": true
+  },
+  "astral/savepx/mission_end": {
+   "origin": "loose",
+   "changed": true
+  },
+  "astral/savepx/missioncomplete": {
+   "origin": "loose",
+   "changed": false
+  },
+  "astral/savepx/prep_profx": {
+   "origin": "loose",
+   "changed": false
+  },
+  "astral/savepx/shadowking_defeated": {
+   "origin": "loose",
+   "changed": true
+  },
+  "astral/savepx/sk1pain": {
+   "origin": "loose",
+   "changed": true
+  },
+  "astral/savepx/sk2pain": {
+   "origin": "loose",
+   "changed": true
+  },
+  "astral/savepx/spawn_ossuary": {
+   "origin": "loose",
+   "changed": false
+  },
+  "astral/savepx/spawnsk2": {
+   "origin": "loose",
+   "changed": true
+  },
+  "astral/savepx/start2_1": {
+   "origin": "loose",
+   "changed": true
+  },
+  "astral/savepx/xcrystal_destroyed": {
+   "origin": "loose",
+   "changed": true
+  },
+  "astral/savepx/xcrystal_focus_camera": {
+   "origin": "loose",
+   "changed": false
+  },
+  "astral/savepx/xcrystal_spawnscript": {
+   "origin": "loose",
+   "changed": false
+  },
+  "astral/savepx/xcrystal_spawnshades": {
+   "origin": "loose",
+   "changed": false
+  },
+  "common/astral_or_wx": {
+   "origin": "loose",
+   "changed": true
+  },
+  "common/complete_obj": {
+   "origin": "loose",
+   "changed": true
+  },
+  "common/conversationlightoff": {
+   "origin": "loose",
+   "changed": true
+  },
+  "common/enemies_reveal": {
+   "origin": "loose",
+   "changed": false
+  },
+  "common/fadeandremove": {
+   "origin": "loose",
+   "changed": false
+  },
+  "common/force_visible": {
+   "origin": "loose",
+   "changed": false
+  },
+  "common/hint_forgeshop": {
+   "origin": "loose",
+   "changed": true
+  },
+  "common/kingofhillxpip": {
+   "origin": "loose",
+   "changed": true
+  },
+  "common/missioncomplete": {
+   "origin": "loose",
+   "changed": false
+  },
+  "common/objective_update": {
+   "origin": "loose",
+   "changed": true
+  },
+  "common/random_talking": {
+   "origin": "loose",
+   "changed": false
+  },
+  "common/review_comics": {
+   "origin": "loose",
+   "changed": false
+  },
+  "common/review_concept": {
+   "origin": "loose",
+   "changed": false
+  },
+  "common/review_dangerroom": {
+   "origin": "loose",
+   "changed": false
+  },
+  "common/review_enemies": {
+   "origin": "loose",
+   "changed": false
+  },
+  "common/review_heroes": {
+   "origin": "loose",
+   "changed": false
+  },
+  "common/review_loadscreens": {
+   "origin": "loose",
+   "changed": false
+  },
+  "common/review_trivia": {
+   "origin": "loose",
+   "changed": false
+  },
+  "common/sentinel_landing": {
+   "origin": "loose",
+   "changed": false
+  },
+  "common/targetingoff": {
+   "origin": "loose",
+   "changed": false
+  },
+  "common/targetingon": {
+   "origin": "loose",
+   "changed": false
+  },
+  "common/zone_cut": {
+   "origin": "loose",
+   "changed": true
+  },
+  "haarp/ext/1_3_1_cam_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "haarp/ext/1_3_6_cam_2": {
+   "origin": "loose",
+   "changed": false
+  },
+  "haarp/ext/1_3_6_cam_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "haarp/ext/boss_intro_done": {
+   "origin": "loose",
+   "changed": false
+  },
+  "haarp/ext/break_flamerthrow_anim": {
+   "origin": "loose",
+   "changed": false
+  },
+  "haarp/ext/break_flamerthrow_anim_a": {
+   "origin": "loose",
+   "changed": false
+  },
+  "haarp/ext/break_flamerthrow_anim_b": {
+   "origin": "loose",
+   "changed": false
+  },
+  "haarp/ext/break_flamerthrow_anim_c": {
+   "origin": "loose",
+   "changed": false
+  },
+  "haarp/ext/bridge_destroyed": {
+   "origin": "loose",
+   "changed": true
+  },
+  "haarp/ext/create_firewall1": {
+   "origin": "loose",
+   "changed": false
+  },
+  "haarp/ext/create_firewall1b": {
+   "origin": "loose",
+   "changed": false
+  },
+  "haarp/ext/create_firewall2": {
+   "origin": "loose",
+   "changed": false
+  },
+  "haarp/ext/create_firewall3": {
+   "origin": "loose",
+   "changed": false
+  },
+  "haarp/ext/create_firewall4": {
+   "origin": "loose",
+   "changed": false
+  },
+  "haarp/ext/create_firewall6": {
+   "origin": "loose",
+   "changed": false
+  },
+  "haarp/ext/elevator1": {
+   "origin": "loose",
+   "changed": true
+  },
+  "haarp/ext/elevator2": {
+   "origin": "loose",
+   "changed": false
+  },
+  "haarp/ext/elevatordown": {
+   "origin": "loose",
+   "changed": false
+  },
+  "haarp/ext/elevatorup": {
+   "origin": "loose",
+   "changed": false
+  },
+  "haarp/ext/enter_haarp": {
+   "origin": "loose",
+   "changed": true
+  },
+  "haarp/ext/fence_obj": {
+   "origin": "loose",
+   "changed": true
+  },
+  "haarp/ext/fire_jet": {
+   "origin": "loose",
+   "changed": false
+  },
+  "haarp/ext/fly_jet": {
+   "origin": "loose",
+   "changed": false
+  },
+  "haarp/ext/gate_obj": {
+   "origin": "loose",
+   "changed": false
+  },
+  "haarp/ext/gate_obj_finished": {
+   "origin": "loose",
+   "changed": false
+  },
+  "haarp/ext/haarp_ext01": {
+   "origin": "loose",
+   "changed": true
+  },
+  "haarp/ext/haarp_ext02": {
+   "origin": "loose",
+   "changed": true
+  },
+  "haarp/ext/haarp_ext03": {
+   "origin": "loose",
+   "changed": true
+  },
+  "haarp/ext/haarp_ext_boss": {
+   "origin": "loose",
+   "changed": false
+  },
+  "haarp/ext/load_haarp_int": {
+   "origin": "loose",
+   "changed": true
+  },
+  "haarp/ext/nextmission": {
+   "origin": "loose",
+   "changed": true
+  },
+  "haarp/ext/pillar01": {
+   "origin": "loose",
+   "changed": false
+  },
+  "haarp/ext/pillar02": {
+   "origin": "loose",
+   "changed": false
+  },
+  "haarp/ext/pillar03": {
+   "origin": "loose",
+   "changed": false
+  },
+  "haarp/ext/pillar04": {
+   "origin": "loose",
+   "changed": false
+  },
+  "haarp/ext/podiumdown_new": {
+   "origin": "loose",
+   "changed": true
+  },
+  "haarp/ext/release_flameguy_a": {
+   "origin": "loose",
+   "changed": false
+  },
+  "haarp/ext/release_flameguy_c": {
+   "origin": "loose",
+   "changed": false
+  },
+  "haarp/ext/reveal_firewall": {
+   "origin": "loose",
+   "changed": true
+  },
+  "haarp/ext/stoppedtoad": {
+   "origin": "loose",
+   "changed": false
+  },
+  "haarp/ext/tank_damage": {
+   "origin": "loose",
+   "changed": false
+  },
+  "haarp/ext/tank_death": {
+   "origin": "loose",
+   "changed": false
+  },
+  "haarp/ext/tank_destroyed": {
+   "origin": "loose",
+   "changed": false
+  },
+  "haarp/ext/tank_destroyed_again": {
+   "origin": "loose",
+   "changed": true
+  },
+  "haarp/ext/tank_ready": {
+   "origin": "loose",
+   "changed": true
+  },
+  "haarp/ext/tank_reveal": {
+   "origin": "loose",
+   "changed": true
+  },
+  "haarp/ext/tank_reveal2": {
+   "origin": "loose",
+   "changed": true
+  },
+  "haarp/ext/tank_setup": {
+   "origin": "loose",
+   "changed": true
+  },
+  "haarp/ext/tankbase_setup1": {
+   "origin": "loose",
+   "changed": true
+  },
+  "haarp/ext/tankbase_setup2": {
+   "origin": "loose",
+   "changed": true
+  },
+  "haarp/ext/tankturret_setup1": {
+   "origin": "loose",
+   "changed": true
+  },
+  "haarp/ext/tankturret_setup2": {
+   "origin": "loose",
+   "changed": true
+  },
+  "haarp/ext/toad_mid": {
+   "origin": "loose",
+   "changed": false
+  },
+  "haarp/ext/toad_mid2": {
+   "origin": "loose",
+   "changed": false
+  },
+  "haarp/ext/toaddeath": {
+   "origin": "loose",
+   "changed": false
+  },
+  "haarp/ext/toadpain_new": {
+   "origin": "loose",
+   "changed": true
+  },
+  "haarp/ext/trigger_tank": {
+   "origin": "loose",
+   "changed": true
+  },
+  "haarp/int/1_3_2_camera2": {
+   "origin": "loose",
+   "changed": false
+  },
+  "haarp/int/1_3_2_firstcamera": {
+   "origin": "loose",
+   "changed": false
+  },
+  "haarp/int/burndoor": {
+   "origin": "loose",
+   "changed": false
+  },
+  "haarp/int/exitmystiqueandtoad": {
+   "origin": "loose",
+   "changed": false
+  },
+  "haarp/int/haarp2_6": {
+   "origin": "loose",
+   "changed": false
+  },
+  "haarp/int/icetunnel1": {
+   "origin": "loose",
+   "changed": true
+  },
+  "haarp/int/int_objective": {
+   "origin": "loose",
+   "changed": false
+  },
+  "haarp/int/introducetoad": {
+   "origin": "loose",
+   "changed": false
+  },
+  "haarp/int/keycard_obj": {
+   "origin": "loose",
+   "changed": false
+  },
+  "haarp/int/kill_invis": {
+   "origin": "loose",
+   "changed": false
+  },
+  "haarp/int/labtechmorphstomystique": {
+   "origin": "loose",
+   "changed": false
+  },
+  "haarp/int/labtechpullsgun": {
+   "origin": "loose",
+   "changed": false
+  },
+  "haarp/int/laser_wall_remove": {
+   "origin": "loose",
+   "changed": false
+  },
+  "haarp/int/laser_wall_spawn": {
+   "origin": "loose",
+   "changed": false
+  },
+  "haarp/int/meetmystiqueandtoad": {
+   "origin": "loose",
+   "changed": false
+  },
+  "haarp/int/preptoadandmystique": {
+   "origin": "loose",
+   "changed": false
+  },
+  "haarp/int/pyro_intro": {
+   "origin": "loose",
+   "changed": false
+  },
+  "haarp/int/pyrodeath": {
+   "origin": "loose",
+   "changed": false
+  },
+  "haarp/int/pyropain": {
+   "origin": "loose",
+   "changed": true
+  },
+  "haarp/int/pyrospawn": {
+   "origin": "loose",
+   "changed": true
+  },
+  "haarp/int/solo_remove": {
+   "origin": "loose",
+   "changed": false
+  },
+  "hive/h_ext/1_1_1_zone": {
+   "origin": "loose",
+   "changed": true
+  },
+  "hive/h_ext/3_8_1_end": {
+   "origin": "loose",
+   "changed": true
+  },
+  "hive/h_ext/3_8_2_end": {
+   "origin": "loose",
+   "changed": true
+  },
+  "hive/h_ext/3_8_3_end": {
+   "origin": "loose",
+   "changed": true
+  },
+  "hive/h_ext/3_8_3_start": {
+   "origin": "loose",
+   "changed": true
+  },
+  "hive/h_ext/door": {
+   "origin": "loose",
+   "changed": false
+  },
+  "hive/h_ext/gate_open": {
+   "origin": "loose",
+   "changed": false
+  },
+  "hive/h_ext/hive1_1_1": {
+   "origin": "loose",
+   "changed": true
+  },
+  "hive/h_ext/inv_spawn": {
+   "origin": "loose",
+   "changed": false
+  },
+  "hive/h_ext/key_spawn": {
+   "origin": "loose",
+   "changed": false
+  },
+  "hive/h_ext/no_invis": {
+   "origin": "loose",
+   "changed": false
+  },
+  "hive/h_ext/tank1": {
+   "origin": "loose",
+   "changed": true
+  },
+  "hive/h_ext/tank2": {
+   "origin": "loose",
+   "changed": true
+  },
+  "hive/h_ext/tank2_harm": {
+   "origin": "loose",
+   "changed": false
+  },
+  "hive/h_ext/tank3": {
+   "origin": "loose",
+   "changed": true
+  },
+  "hive/h_ext/tank3_harm": {
+   "origin": "loose",
+   "changed": false
+  },
+  "hive/h_ext/tank4": {
+   "origin": "loose",
+   "changed": true
+  },
+  "hive/h_ext/tank4_harm": {
+   "origin": "loose",
+   "changed": false
+  },
+  "hive/h_ext/tankdamage1": {
+   "origin": "loose",
+   "changed": false
+  },
+  "hive/h_ext/tankdamage2": {
+   "origin": "loose",
+   "changed": false
+  },
+  "hive/h_ext/tankdamage3": {
+   "origin": "loose",
+   "changed": false
+  },
+  "hive/h_ext/tankdamage4": {
+   "origin": "loose",
+   "changed": false
+  },
+  "hive/h_ext/tankdeath1": {
+   "origin": "loose",
+   "changed": false
+  },
+  "hive/h_ext/tankdeath2": {
+   "origin": "loose",
+   "changed": false
+  },
+  "hive/h_ext/tankdeath3": {
+   "origin": "loose",
+   "changed": false
+  },
+  "hive/h_ext/tankdeath4": {
+   "origin": "loose",
+   "changed": false
+  },
+  "hive/h_ext/turret_death": {
+   "origin": "loose",
+   "changed": false
+  },
+  "hive/h_ext/wp_none": {
+   "origin": "loose",
+   "changed": false
+  },
+  "hive/h_int/1_2_1_zone": {
+   "origin": "loose",
+   "changed": true
+  },
+  "hive/h_int/1_2_2_zone": {
+   "origin": "loose",
+   "changed": true
+  },
+  "hive/h_int/1_2_3_zone": {
+   "origin": "loose",
+   "changed": true
+  },
+  "hive/h_int/1_3_1_zone": {
+   "origin": "loose",
+   "changed": true
+  },
+  "hive/h_int/1_3_2_zone": {
+   "origin": "loose",
+   "changed": true
+  },
+  "hive/h_int/1_3_3_zone": {
+   "origin": "loose",
+   "changed": true
+  },
+  "hive/h_int/3_8_4_end": {
+   "origin": "loose",
+   "changed": true
+  },
+  "hive/h_int/3_8_4_start": {
+   "origin": "loose",
+   "changed": true
+  },
+  "hive/h_int/3_8_5_cam_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "hive/h_int/3_8_5_end": {
+   "origin": "loose",
+   "changed": true
+  },
+  "hive/h_int/3_8_5_start": {
+   "origin": "loose",
+   "changed": true
+  },
+  "hive/h_int/3_8_6_end": {
+   "origin": "loose",
+   "changed": false
+  },
+  "hive/h_int/3_8_7_end": {
+   "origin": "loose",
+   "changed": false
+  },
+  "hive/h_int/3_8_7_script": {
+   "origin": "loose",
+   "changed": false
+  },
+  "hive/h_int/3_8_8_end": {
+   "origin": "loose",
+   "changed": false
+  },
+  "hive/h_int/3_8_9_1_end": {
+   "origin": "loose",
+   "changed": true
+  },
+  "hive/h_int/3_8_9_end": {
+   "origin": "loose",
+   "changed": false
+  },
+  "hive/h_int/3_9_1_start": {
+   "origin": "loose",
+   "changed": true
+  },
+  "hive/h_int/3_9_5_1_end": {
+   "origin": "loose",
+   "changed": true
+  },
+  "hive/h_int/3_9_5_2_end": {
+   "origin": "loose",
+   "changed": true
+  },
+  "hive/h_int/3_9_5_5_end": {
+   "origin": "loose",
+   "changed": true
+  },
+  "hive/h_int/3_9_6_end": {
+   "origin": "loose",
+   "changed": true
+  },
+  "hive/h_int/3_9_7_1_end": {
+   "origin": "loose",
+   "changed": true
+  },
+  "hive/h_int/ai_disable": {
+   "origin": "loose",
+   "changed": false
+  },
+  "hive/h_int/arm_disable_1": {
+   "origin": "loose",
+   "changed": true
+  },
+  "hive/h_int/arm_disable_2": {
+   "origin": "loose",
+   "changed": true
+  },
+  "hive/h_int/barrel_kicker": {
+   "origin": "loose",
+   "changed": false
+  },
+  "hive/h_int/battle_ready": {
+   "origin": "loose",
+   "changed": false
+  },
+  "hive/h_int/bio_spawner_1_reset": {
+   "origin": "loose",
+   "changed": false
+  },
+  "hive/h_int/bio_spawner_2_reset": {
+   "origin": "loose",
+   "changed": false
+  },
+  "hive/h_int/bio_spawner_3_reset": {
+   "origin": "loose",
+   "changed": false
+  },
+  "hive/h_int/bio_spawner_guts1": {
+   "origin": "loose",
+   "changed": false
+  },
+  "hive/h_int/bio_spawner_guts2": {
+   "origin": "loose",
+   "changed": false
+  },
+  "hive/h_int/bio_spawner_guts3": {
+   "origin": "loose",
+   "changed": false
+  },
+  "hive/h_int/bios_conversation": {
+   "origin": "loose",
+   "changed": true
+  },
+  "hive/h_int/bs1_dead": {
+   "origin": "loose",
+   "changed": false
+  },
+  "hive/h_int/bs2_dead": {
+   "origin": "loose",
+   "changed": false
+  },
+  "hive/h_int/bs3_dead": {
+   "origin": "loose",
+   "changed": false
+  },
+  "hive/h_int/cage_chat": {
+   "origin": "loose",
+   "changed": true
+  },
+  "hive/h_int/chambers_gone": {
+   "origin": "loose",
+   "changed": false
+  },
+  "hive/h_int/chatter1": {
+   "origin": "loose",
+   "changed": true
+  },
+  "hive/h_int/chatter2": {
+   "origin": "loose",
+   "changed": true
+  },
+  "hive/h_int/enable_1st_wave": {
+   "origin": "loose",
+   "changed": false
+  },
+  "hive/h_int/enable_2nd_wave": {
+   "origin": "loose",
+   "changed": false
+  },
+  "hive/h_int/enable_3rd_wave": {
+   "origin": "loose",
+   "changed": false
+  },
+  "hive/h_int/enable_4th_wave": {
+   "origin": "loose",
+   "changed": false
+  },
+  "hive/h_int/f_cell_gen10_down": {
+   "origin": "loose",
+   "changed": false
+  },
+  "hive/h_int/f_cell_gen11_down": {
+   "origin": "loose",
+   "changed": false
+  },
+  "hive/h_int/f_cell_gen12_down": {
+   "origin": "loose",
+   "changed": false
+  },
+  "hive/h_int/f_cell_gen13_down": {
+   "origin": "loose",
+   "changed": false
+  },
+  "hive/h_int/f_cell_gen1_down": {
+   "origin": "loose",
+   "changed": false
+  },
+  "hive/h_int/f_cell_gen2_down": {
+   "origin": "loose",
+   "changed": false
+  },
+  "hive/h_int/f_cell_gen3_down": {
+   "origin": "loose",
+   "changed": false
+  },
+  "hive/h_int/f_cell_gen4_down": {
+   "origin": "loose",
+   "changed": false
+  },
+  "hive/h_int/f_cell_gen5_down": {
+   "origin": "loose",
+   "changed": false
+  },
+  "hive/h_int/f_cell_gen6_down": {
+   "origin": "loose",
+   "changed": false
+  },
+  "hive/h_int/f_cell_gen7_down": {
+   "origin": "loose",
+   "changed": false
+  },
+  "hive/h_int/f_cell_gen8_down": {
+   "origin": "loose",
+   "changed": false
+  },
+  "hive/h_int/f_cell_gen9_down": {
+   "origin": "loose",
+   "changed": false
+  },
+  "hive/h_int/fire_guy_spawnscript": {
+   "origin": "loose",
+   "changed": false
+  },
+  "hive/h_int/gateway_set": {
+   "origin": "loose",
+   "changed": true
+  },
+  "hive/h_int/go_down_elev": {
+   "origin": "loose",
+   "changed": true
+  },
+  "hive/h_int/guidance_script": {
+   "origin": "loose",
+   "changed": true
+  },
+  "hive/h_int/hive1_2_1": {
+   "origin": "loose",
+   "changed": true
+  },
+  "hive/h_int/hive1_2_2": {
+   "origin": "loose",
+   "changed": true
+  },
+  "hive/h_int/hive1_2_3": {
+   "origin": "loose",
+   "changed": true
+  },
+  "hive/h_int/hive1_3_1": {
+   "origin": "loose",
+   "changed": true
+  },
+  "hive/h_int/hive1_3_2": {
+   "origin": "loose",
+   "changed": true
+  },
+  "hive/h_int/hive1_3_3": {
+   "origin": "loose",
+   "changed": true
+  },
+  "hive/h_int/hive2_2_1": {
+   "origin": "loose",
+   "changed": false
+  },
+  "hive/h_int/hive2_2_2": {
+   "origin": "loose",
+   "changed": true
+  },
+  "hive/h_int/hive2_2_3": {
+   "origin": "loose",
+   "changed": true
+  },
+  "hive/h_int/hive2_2_4": {
+   "origin": "loose",
+   "changed": true
+  },
+  "hive/h_int/hive2_2_5": {
+   "origin": "loose",
+   "changed": true
+  },
+  "hive/h_int/hive_end": {
+   "origin": "loose",
+   "changed": true
+  },
+  "hive/h_int/hive_trigger_rescue": {
+   "origin": "loose",
+   "changed": true
+  },
+  "hive/h_int/k_office": {
+   "origin": "loose",
+   "changed": true
+  },
+  "hive/h_int/kicker_guy_spawnscript": {
+   "origin": "loose",
+   "changed": false
+  },
+  "hive/h_int/killbios_increment": {
+   "origin": "loose",
+   "changed": false
+  },
+  "hive/h_int/kincaid_final": {
+   "origin": "loose",
+   "changed": true
+  },
+  "hive/h_int/kincaid_gate": {
+   "origin": "loose",
+   "changed": true
+  },
+  "hive/h_int/kincaid_leaves": {
+   "origin": "loose",
+   "changed": true
+  },
+  "hive/h_int/kincaid_out": {
+   "origin": "loose",
+   "changed": true
+  },
+  "hive/h_int/last_chatter": {
+   "origin": "loose",
+   "changed": true
+  },
+  "hive/h_int/leg_disable_1": {
+   "origin": "loose",
+   "changed": true
+  },
+  "hive/h_int/leg_disable_2": {
+   "origin": "loose",
+   "changed": true
+  },
+  "hive/h_int/mach_sounds/belt1": {
+   "origin": "loose",
+   "changed": false
+  },
+  "hive/h_int/navcontrol_script": {
+   "origin": "loose",
+   "changed": false
+  },
+  "hive/h_int/no_exit_yet": {
+   "origin": "loose",
+   "changed": false
+  },
+  "hive/h_int/no_flee": {
+   "origin": "loose",
+   "changed": false
+  },
+  "hive/h_int/platform_trig": {
+   "origin": "loose",
+   "changed": false
+  },
+  "hive/h_int/portal2": {
+   "origin": "loose",
+   "changed": true
+  },
+  "hive/h_int/pre_bio_spawn": {
+   "origin": "loose",
+   "changed": false
+  },
+  "hive/h_int/prisoner_spawn": {
+   "origin": "loose",
+   "changed": false
+  },
+  "hive/h_int/rem_elev_trig": {
+   "origin": "loose",
+   "changed": false
+  },
+  "hive/h_int/rem_trig_mag": {
+   "origin": "loose",
+   "changed": false
+  },
+  "hive/h_int/remove_arms": {
+   "origin": "loose",
+   "changed": false
+  },
+  "hive/h_int/remove_heads": {
+   "origin": "loose",
+   "changed": false
+  },
+  "hive/h_int/remove_legs": {
+   "origin": "loose",
+   "changed": false
+  },
+  "hive/h_int/sent_increment": {
+   "origin": "loose",
+   "changed": false
+  },
+  "hive/h_int/sent_spawner_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "hive/h_int/sent_spawner_start2": {
+   "origin": "loose",
+   "changed": false
+  },
+  "hive/h_int/sent_spawnscript": {
+   "origin": "loose",
+   "changed": false
+  },
+  "hive/h_int/sent_spawnscript2": {
+   "origin": "loose",
+   "changed": false
+  },
+  "hive/h_int/sent_weld": {
+   "origin": "loose",
+   "changed": false
+  },
+  "hive/h_int/sent_weld_2": {
+   "origin": "loose",
+   "changed": false
+  },
+  "hive/h_int/sent_wp_actscript": {
+   "origin": "loose",
+   "changed": false
+  },
+  "hive/h_int/sent_wp_actscript2": {
+   "origin": "loose",
+   "changed": false
+  },
+  "hive/h_int/sleeping_sent_painscript": {
+   "origin": "loose",
+   "changed": false
+  },
+  "hive/h_int/spawn_n_shoot": {
+   "origin": "loose",
+   "changed": false
+  },
+  "hive/h_int/spawnbridge1": {
+   "origin": "loose",
+   "changed": false
+  },
+  "hive/h_int/telespot": {
+   "origin": "loose",
+   "changed": true
+  },
+  "hive/h_int/use_rescuee": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/dr_mag/beginspawningbots": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/dr_mag/bot_reveal": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/dr_mag/botdeath": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/dr_mag/botspawn2": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/dr_mag/check_magma_health": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/dr_mag/dr_mag01": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/dr_mag/dr_mag03": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/dr_mag/ff_a_remove": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/dr_mag/ff_b_remove": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/dr_mag/ff_c_remove": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/dr_mag/ff_d_remove": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/dr_mag/ff_e_remove": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/dr_mag/ff_f_remove": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/dr_mag/ff_g_remove": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/dr_mag/fmvexit": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/dr_mag/force_field_a": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/dr_mag/force_field_b": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/dr_mag/force_field_c": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/dr_mag/force_field_d": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/dr_mag/force_field_e": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/dr_mag/force_field_f": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/dr_mag/force_field_g": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/dr_mag/loaddr_mag02": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/dr_mag/loaddr_mag03": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/dr_mag/pain_script": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/dr_mag/prep_test1": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/dr_mag/randombotspawn": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/dr_mag2/2_2_1_2_end": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/dr_mag2/2_2_1_2_start": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/dr_mag2/2_2_1_b_end": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/dr_mag2/2_2_1_end": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/dr_mag2/2_2_1_start": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/dr_mag2/2_2_2_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/dr_mag2/blob/2_2_1_3_new_end": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/dr_mag2/blob/2_2_1_3a_end": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/dr_mag2/blob/2_2_1_3a_start": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/dr_mag2/blob/2_2_1_3b_end": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/dr_mag2/blob/add_cyclops": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/dr_mag2/blob/blobspawn": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/dr_mag2/check_alison_health": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/dr_mag2/endsidemission": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/dr_mag2/mag_nyc1": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/dr_mag2/meet_avalanche_mag": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/dr_mag2/mystique/2_2_1_0_5_end": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/dr_mag2/mystique/2_2_1_0_5b_end": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/dr_mag2/mystique/cyc_wp1": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/dr_mag2/mystique/cyc_wp2": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/dr_mag2/mystique/meet_mystique": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/dr_mag2/mystique/meet_pyro": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/dr_mag2/mystique/mystique_fight_start": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/jugrnt/1_2_33_cam_2": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/jugrnt/classroom": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/jugrnt/jugdead": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/jugrnt/jugpain": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/jugrnt/jugrnt01": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/jugrnt/jugsmash": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/jugrnt/library": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/jugrnt/poolroom": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/jugrnt/profxroom": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/jugrnt/sittingroom": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/jugrnt/stage2": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/jugrnt/stage3": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/jugrnt/stage4": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/jugrnt/stage5": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/jugrnt/stage6": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/jugrnt/stage7": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/jugrnt/start": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man1a/1_2_11_cam_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man1a/1_2_12_cam_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man1a/1_2_13_cam_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man1a/1_2_15_cam_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man1a/1_2_16_cam_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man1a/1_2_17_cam_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man1a/1_2_19_cam_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man1a/1_2_1_1_cam_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man1a/1_2_1_2_cam_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man1a/1_2_20_cam_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man1a/1_2_24_1_cam_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man1a/1_2_24_5_cam_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man1a/1_2_24_cam_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man1a/1_2_25_cam_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man1a/1_2_27_cam_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man1a/1_2_28_cam_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man1a/1_2_29_5_cam_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man1a/1_2_29_cam_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man1a/1_2_2_1_cam_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man1a/1_2_2_3_cam_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man1a/1_2_2_4_cam_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man1a/1_2_31_5_cam_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man1a/1_2_31_cam_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man1a/1_2_32_cam_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man1a/1_2_35_cam_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man1a/1_2_4_cam_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man1a/1_2_5_cam_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man1a/1_2_6_cam_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man1a/1_2_7_cam_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man1a/1_2_8_cam_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man1a/begin_haarp": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man1a/begin_subbasement": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man1a/chose_mission": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man1a/conv_1_2_11": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man1a/conv_1_2_12": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man1a/conv_1_2_13": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man1a/conv_1_2_14": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man1a/conv_1_2_15": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man1a/conv_1_2_16": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man1a/conv_1_2_17": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man1a/conv_1_2_19": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man1a/conv_1_2_1_2": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man1a/conv_1_2_20": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man1a/conv_1_2_24": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man1a/conv_1_2_24_5": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man1a/conv_1_2_27": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man1a/conv_1_2_28": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man1a/conv_1_2_29_5": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man1a/conv_1_2_2_1": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man1a/conv_1_2_2_4": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man1a/conv_1_2_30": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man1a/conv_1_2_31": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man1a/conv_1_2_4": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man1a/conv_1_2_5": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man1a/conv_1_2_6": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man1a/conv_1_2_7": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man1a/conv_1_2_8": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man1a/elevator1": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man1a/elevator1_left": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man1a/elevator1_right": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man1a/elevator2": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man1a/elevator2_left": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man1a/elevator2_right": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man1a/elevator_sub": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man1a/elevator_sub_left": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man1a/elevator_sub_right": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man1a/endfirsttour": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man1a/endtour": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man1a/hangar1a": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man1a/jeanfollowalison": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man1a/mansion1a_1": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man1a/mansion1a_2": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man1a/show_forgeobj": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man1a/subbasement1a": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man1a/tourfirstfloor": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man1a/var_1_2_1_1_mansion1_1": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man1a/var_1_2_1_1_mansion1_2": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man1a/var_1_2_24_1_mansion1_4": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man1a/var_1_2_35_mansion1_6": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man1a/var_1_2_36_mansion1_11": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man1a/var_1_2_38_mansion1_9": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man1a/var_1_2_3_mansion1_3": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man1b/loadjuggernaut": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man1b/offerjuggernautflashback": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man1b/unlockjuggernautflashback": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man2/1_4_12_cam_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man2/1_4_1_cam_end": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man2/1_4_1_cam_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man2/1_4_2_cam_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man2/1_4_3_2_cam_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man2/1_4_3_4_cam_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man2/1_4_3_cam_end": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man2/1_4_4_cam_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man2/1_4_4_conversation_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man2/1_4_7_cam_start": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man2/1_4_8_cam_start": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man2/1_4_8_cam_startb": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man2/chose_mission": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man2/elevator1": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man2/elevator1_left": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man2/elevator1_right": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man2/elevator2": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man2/elevator2_left": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man2/elevator2_right": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man2/elevator_sub": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man2/elevator_sub_left": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man2/elevator_sub_right": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man2/from_backyard": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man2/loadsentinel": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man2/mansion2_1": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man2/mansion2_2": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man2/mansion_back2": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man2/missionstart_1_4_13": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man2/offersentinelflashback": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man2/random_talking2": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man2/regular_sitting2": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man2/subbasement2": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man2/to_backyard": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man2/unlocksentinelflashback": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man2/var_1_4_12a": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man2/var_1_4_12b": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man2/var_1_4_2a": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man2/var_1_4_3a": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man2/var_1_4_4a": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man2/var_1_4_7a": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man2/var_1_4_7b": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man2/var_1_4_8_mansion2_6": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man2/var_1_4_9_mansion2_7": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man3/2_1_11_cam_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man3/2_1_11first": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man3/2_1_12_5first": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man3/2_1_13_cam_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man3/2_1_14_cam_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man3/2_1_14first": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man3/2_1_15_cam_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man3/2_1_4_cam_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man3/2_1_4first": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man3/2_1_5_cam_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man3/2_1_5first": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man3/2_1_6_cam_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man3/chose_mission": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man3/classroom_sitting3": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man3/conv2_1_11main": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man3/conv2_1_12": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man3/conv2_1_14main": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man3/conv2_1_4main": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man3/conv2_1_5main": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man3/danger_room": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man3/elevator1": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man3/elevator1_left": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man3/elevator1_right": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man3/elevator2": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man3/elevator2_left": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man3/elevator2_right": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man3/elevator_sub": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man3/elevator_sub_left": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man3/elevator_sub_right": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man3/end_diary": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man3/hangar3": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man3/man3_2_setup": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man3/mansion3_1": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man3/mansion3_2": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man3/regular_sitting3": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man3/ss_nightcrawler": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man3/subbasement3b": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man3/var_2_1_12_mansion3_4": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man4/2_5_10right_cam_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man4/2_5_13_cam_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man4/2_5_14_cam_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man4/2_5_2_5_cam_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man4/2_5_2_cam_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man4/2_5_3_cam_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man4/2_5_3b_cam_start": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man4/2_5_4_cam_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man4/2_5_6_1_cam_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man4/astral_legwork": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man4/chose_mission1": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man4/chose_mission2": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man4/cyclops_leaving": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man4/cyclops_leaving_spawn": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man4/elevator1": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man4/elevator1_left": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man4/elevator1_right": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man4/elevator2": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man4/elevator2_left": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man4/elevator2_right": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man4/elevator_sub": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man4/elevator_sub_left": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man4/elevator_sub_right": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man4/emma_talk": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man4/end_diary": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man4/from_backyard": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man4/gambit_leaves": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man4/ground_sitting4": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man4/grso_debriefing": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man4/grso_defeated": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man4/grso_defeated2": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man4/grso_found": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man4/grso_reveal": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man4/mansion4_1": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man4/mansion4_2": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man4/mansion_back4": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man4/mansion_back4_grso": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man4/mansion_front4_grso": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man4/no_arm_sitting4": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man4/profx_apears": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man4/profx_disapears": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man4/profxconfronts": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man4/profxconfronts2": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man4/random_talking4": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man4/regular_sitting4": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man4/start_drone_mission": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man4/subbasement4": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man4/to_backyard": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man4/var_2_5_2_mansion4_5": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man5/2_5_15_cam_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man5/2_5_18_cam_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man5/2_5_19_cam_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man5/2_5_20_1_cam_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man5/2_5_20_cam_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man5/2_5_21_cam_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man5/chose_mission": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man5/elevator1": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man5/elevator1_left": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man5/elevator1_right": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man5/elevator2": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man5/elevator2_left": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man5/elevator2_right": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man5/elevator_sub": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man5/elevator_sub_left": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man5/elevator_sub_right": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man5/from_frontyard": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man5/mansion5_1": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man5/mansion5_2": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man5/mansion_front5": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man5/next_wave": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man5/regular_sitting5": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man5/sentinel_count": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man5/spawn_sentinels": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man5/subbasement5": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man5/subbasement5b": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man5/toadentrance": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man5/toadexit": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man5/toadremove": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man6/3_1_4_cam_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man6/3_1_5_cam_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man6/chose_mission": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man6/chose_mission2": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man6/elevator1": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man6/elevator1_left": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man6/elevator1_right": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man6/elevator2": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man6/elevator2_left": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man6/elevator2_right": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man6/elevator_sub": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man6/elevator_sub_left": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man6/elevator_sub_right": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man6/end_diary": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man6/mansion6_2": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man6/random_talking6": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man6/regular_sitting6": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man7/3_6_2_cam_start": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man7/3_6_2_end": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man7/3_6_3_cam_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man7/3_6_4_end": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man7/3_6_4_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man7/3_6_5_cam_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man7/astral_mission_briefing": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man7/beginmansion7mission": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man7/chose_mission": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man7/elevator1": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man7/elevator1_left": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man7/elevator1_right": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man7/elevator2": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man7/elevator2_left": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man7/elevator2_right": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man7/elevator_sub": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man7/elevator_sub_left": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man7/elevator_sub_right": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man7/ground_sitting7": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man7/jean_looks_profx": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man7/random_talking7": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man7/random_talking_warrom": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man7/regular_sitting7": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man7/status_meeting": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man7/subbasement7": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man8/3_9_2_cam_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man8/3_9_3_cam_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man8/3_9_4_cam_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man8/3_9_5_cam_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man8/3_9_6_cam_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mansion/man8/asteroid_announcement": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man8/chose_mission": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man8/elevator1": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man8/elevator1_left": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man8/elevator1_right": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man8/elevator2": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man8/elevator2_left": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man8/elevator2_right": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man8/elevator_sub": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man8/elevator_sub_left": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man8/elevator_sub_right": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mansion/man8/random_talking8": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mastermold/breakitup": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mastermold/breakitupt": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mastermold/catwalka1death": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mastermold/catwalkb1death": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mastermold/catwalkc1death": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mastermold/catwalkd1death": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mastermold/catwalke1death": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mastermold/catwalkf1death": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mastermold/checkcore": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mastermold/core_off1": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mastermold/core_off2": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mastermold/core_off3": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mastermold/core_on1": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mastermold/core_on2": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mastermold/core_on3": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mastermold/coredeath1": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mastermold/coredeath2": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mastermold/coredeath3": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mastermold/endpath": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mastermold/killallcatwalks": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mastermold/mastermold1": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mastermold/mmpain": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mastermold/mmspawn": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mastermold/sentineladvancespawn": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mastermold/sentinelspawn": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mastermold/sentpathend": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mastermold/spawnsentinels": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mastermold/spawnspiders": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mastermold/spiderspawn": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mastermold/stage3death": {
+   "origin": "loose",
+   "changed": false
+  },
+  "menus/intro_demo": {
+   "origin": "assets",
+   "changed": true
+  },
+  "menus/intro_e3": {
+   "origin": "assets",
+   "changed": true
+  },
+  "menus/intro_normal": {
+   "origin": "assets",
+   "changed": true
+  },
+  "menus/launchsentinel": {
+   "origin": "assets",
+   "changed": false
+  },
+  "menus/main_back_debug": {
+   "origin": "assets",
+   "changed": true
+  },
+  "menus/main_back_main": {
+   "origin": "loose",
+   "changed": true
+  },
+  "missions/alison": {
+   "origin": "assets",
+   "changed": true
+  },
+  "missions/arbiter": {
+   "origin": "assets",
+   "changed": true
+  },
+  "missions/arbiter_flood": {
+   "origin": "assets",
+   "changed": true
+  },
+  "missions/arbiter_int": {
+   "origin": "assets",
+   "changed": true
+  },
+  "missions/arbiter_start": {
+   "origin": "assets",
+   "changed": true
+  },
+  "missions/arbiter_test": {
+   "origin": "assets",
+   "changed": true
+  },
+  "missions/asteroid1_1": {
+   "origin": "assets",
+   "changed": true
+  },
+  "missions/asteroid2_3": {
+   "origin": "assets",
+   "changed": true
+  },
+  "missions/astral1": {
+   "origin": "assets",
+   "changed": true
+  },
+  "missions/astral1_end": {
+   "origin": "assets",
+   "changed": true
+  },
+  "missions/astral1b": {
+   "origin": "assets",
+   "changed": true
+  },
+  "missions/astral2": {
+   "origin": "assets",
+   "changed": true
+  },
+  "missions/demo": {
+   "origin": "assets",
+   "changed": true
+  },
+  "missions/demo_jug": {
+   "origin": "assets",
+   "changed": true
+  },
+  "missions/dr_mag1": {
+   "origin": "assets",
+   "changed": true
+  },
+  "missions/dr_mag2": {
+   "origin": "assets",
+   "changed": true
+  },
+  "missions/dr_mag2_done": {
+   "origin": "assets",
+   "changed": true
+  },
+  "missions/dr_team1": {
+   "origin": "assets",
+   "changed": true
+  },
+  "missions/drones": {
+   "origin": "assets",
+   "changed": true
+  },
+  "missions/grso_raid": {
+   "origin": "assets",
+   "changed": true
+  },
+  "missions/haarp": {
+   "origin": "assets",
+   "changed": true
+  },
+  "missions/haarp_int": {
+   "origin": "assets",
+   "changed": true
+  },
+  "missions/haarp_start": {
+   "origin": "assets",
+   "changed": true
+  },
+  "missions/hive1": {
+   "origin": "assets",
+   "changed": true
+  },
+  "missions/hive2": {
+   "origin": "assets",
+   "changed": true
+  },
+  "missions/ice_wolverine": {
+   "origin": "assets",
+   "changed": true
+  },
+  "missions/icetunnels": {
+   "origin": "assets",
+   "changed": true
+  },
+  "missions/jug_done": {
+   "origin": "assets",
+   "changed": true
+  },
+  "missions/jug_fb_start": {
+   "origin": "assets",
+   "changed": true
+  },
+  "missions/mansion1": {
+   "origin": "assets",
+   "changed": true
+  },
+  "missions/mansion2": {
+   "origin": "assets",
+   "changed": true
+  },
+  "missions/mansion3": {
+   "origin": "assets",
+   "changed": true
+  },
+  "missions/mansion4_grso_done": {
+   "origin": "assets",
+   "changed": true
+  },
+  "missions/mansion6": {
+   "origin": "assets",
+   "changed": false
+  },
+  "missions/mansion6_new": {
+   "origin": "assets",
+   "changed": true
+  },
+  "missions/mansion7": {
+   "origin": "assets",
+   "changed": false
+  },
+  "missions/mansion7_new": {
+   "origin": "assets",
+   "changed": true
+  },
+  "missions/mansion8": {
+   "origin": "assets",
+   "changed": false
+  },
+  "missions/mansion8_new": {
+   "origin": "assets",
+   "changed": true
+  },
+  "missions/mansion_start": {
+   "origin": "assets",
+   "changed": true
+  },
+  "missions/mastermold2": {
+   "origin": "assets",
+   "changed": true
+  },
+  "missions/mission_fmv_101": {
+   "origin": "assets",
+   "changed": true
+  },
+  "missions/mission_fmv_102": {
+   "origin": "assets",
+   "changed": true
+  },
+  "missions/mission_fmv_103": {
+   "origin": "assets",
+   "changed": true
+  },
+  "missions/mission_fmv_104": {
+   "origin": "assets",
+   "changed": true
+  },
+  "missions/mission_fmv_105": {
+   "origin": "assets",
+   "changed": true
+  },
+  "missions/mission_fmv_106": {
+   "origin": "assets",
+   "changed": true
+  },
+  "missions/mission_fmv_107": {
+   "origin": "assets",
+   "changed": true
+  },
+  "missions/mission_fmv_108": {
+   "origin": "assets",
+   "changed": true
+  },
+  "missions/mission_fmv_109": {
+   "origin": "assets",
+   "changed": true
+  },
+  "missions/mount": {
+   "origin": "assets",
+   "changed": true
+  },
+  "missions/muir": {
+   "origin": "assets",
+   "changed": true
+  },
+  "missions/muir2": {
+   "origin": "assets",
+   "changed": true
+  },
+  "missions/muir_int": {
+   "origin": "assets",
+   "changed": true
+  },
+  "missions/muirisland_start": {
+   "origin": "assets",
+   "changed": true
+  },
+  "missions/nuke": {
+   "origin": "assets",
+   "changed": true
+  },
+  "missions/nuke_start": {
+   "origin": "assets",
+   "changed": true
+  },
+  "missions/nyctest2": {
+   "origin": "assets",
+   "changed": true
+  },
+  "missions/rescue_healer": {
+   "origin": "assets",
+   "changed": true
+  },
+  "missions/rescue_start": {
+   "origin": "assets",
+   "changed": true
+  },
+  "missions/riots": {
+   "origin": "assets",
+   "changed": true
+  },
+  "missions/riots2": {
+   "origin": "assets",
+   "changed": true
+  },
+  "missions/sen_mansion": {
+   "origin": "assets",
+   "changed": true
+  },
+  "missions/sent_fb_start": {
+   "origin": "assets",
+   "changed": false
+  },
+  "missions/sentinel_fb_return": {
+   "origin": "assets",
+   "changed": true
+  },
+  "missions/sentinel_fb_return2": {
+   "origin": "assets",
+   "changed": true
+  },
+  "missions/sentinels_attack_mansion": {
+   "origin": "assets",
+   "changed": true
+  },
+  "missions/sewers1": {
+   "origin": "assets",
+   "changed": true
+  },
+  "missions/sewers2": {
+   "origin": "assets",
+   "changed": true
+  },
+  "missions/sewers3": {
+   "origin": "assets",
+   "changed": true
+  },
+  "missions/sewers4": {
+   "origin": "assets",
+   "changed": true
+  },
+  "missions/sewers_gambit": {
+   "origin": "assets",
+   "changed": true
+  },
+  "missions/sewers_hub": {
+   "origin": "assets",
+   "changed": true
+  },
+  "missions/sewers_hub2": {
+   "origin": "assets",
+   "changed": true
+  },
+  "missions/sewers_hub5": {
+   "origin": "assets",
+   "changed": true
+  },
+  "missions/sewers_intro": {
+   "origin": "assets",
+   "changed": true
+  },
+  "missions/sewers_start": {
+   "origin": "assets",
+   "changed": true
+  },
+  "missions/subbasement2_fb": {
+   "origin": "assets",
+   "changed": true
+  },
+  "missions/subbasement3": {
+   "origin": "assets",
+   "changed": true
+  },
+  "missions/subbasement3b": {
+   "origin": "assets",
+   "changed": true
+  },
+  "missions/subbasement_fb": {
+   "origin": "assets",
+   "changed": true
+  },
+  "missions/testcollect_start": {
+   "origin": "assets",
+   "changed": true
+  },
+  "missions/weaponx2": {
+   "origin": "assets",
+   "changed": true
+  },
+  "missions/weaponx3": {
+   "origin": "assets",
+   "changed": true
+  },
+  "missions/wx_fb_start": {
+   "origin": "assets",
+   "changed": true
+  },
+  "mocap/mocap1/briefing_1_1_6_5": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mocap/mocap1/briefing_1_1_6_5_cancel": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mocap/mocap10/briefing_3_6_6": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mocap/mocap10/briefing_3_6_6_cancel": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mocap/mocap11/briefing_3_6_7": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mocap/mocap11/briefing_3_6_7_cancel": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mocap/mocap12/briefing_3_9_0": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mocap/mocap12/briefing_3_9_0_cancel": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mocap/mocap13/briefing_3_9_8": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mocap/mocap13/briefing_3_9_8_cancel": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mocap/mocap2/briefing_1_2_41": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mocap/mocap2/briefing_1_2_41_cancel": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mocap/mocap3/briefing_1_4_13": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mocap/mocap3/briefing_1_4_13_cancel": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mocap/mocap4/briefing_1_7_1": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mocap/mocap4/briefing_1_7_1_cancel": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mocap/mocap5/briefing_2_1_16": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mocap/mocap5/briefing_2_1_16_cancel": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mocap/mocap6/briefing_2_5_5": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mocap/mocap6/briefing_2_5_5_cancel": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mocap/mocap7/briefing_2_5_14_7": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mocap/mocap7/briefing_2_5_14_7_cancel": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mocap/mocap8/briefing_2_5_22": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mocap/mocap8/briefing_2_5_22_cancel": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mocap/mocap9/briefing_3_1_8": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mocap/mocap9/briefing_3_1_8_cancel": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mount/2_10_1_cam_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mount/avalanche_reveal": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mount/avalanchepain": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mount/brotherhood_obj": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mount/camcut": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mount/drop_em": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mount/endscene": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mount/kill_invis": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mount/mount_door_cam": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mount/mountoutro": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mount/rock_drop": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mount/sabreressurrect": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mount/sabretoothdeath": {
+   "origin": "loose",
+   "changed": true
+  },
+  "mount/start_fight": {
+   "origin": "loose",
+   "changed": false
+  },
+  "mount/tele_out": {
+   "origin": "loose",
+   "changed": false
+  },
+  "muir_is/muir1/1_6_4_cam_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "muir_is/muir1/spokewithforge": {
+   "origin": "loose",
+   "changed": true
+  },
+  "muir_is/muir1/var_1_6_4a": {
+   "origin": "loose",
+   "changed": true
+  },
+  "muir_is/muir2/2_4_11_camera": {
+   "origin": "loose",
+   "changed": false
+  },
+  "muir_is/muir2/2_4_1_cleanup": {
+   "origin": "loose",
+   "changed": false
+  },
+  "muir_is/muir2/2_4_2_cam_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "muir_is/muir2/2_4_3_cam_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "muir_is/muir2/2_4_5_cam_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "muir_is/muir2/2_4_6_cam_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "muir_is/muir2/2_4_7_1_cam_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "muir_is/muir2/2_4_7_cam_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "muir_is/muir2/alignthings": {
+   "origin": "loose",
+   "changed": true
+  },
+  "muir_is/muir2/alison_walks": {
+   "origin": "loose",
+   "changed": false
+  },
+  "muir_is/muir2/bridgecleared": {
+   "origin": "loose",
+   "changed": true
+  },
+  "muir_is/muir2/bridgehasbeenraised": {
+   "origin": "loose",
+   "changed": false
+  },
+  "muir_is/muir2/check_leaving": {
+   "origin": "loose",
+   "changed": false
+  },
+  "muir_is/muir2/control_alsion": {
+   "origin": "loose",
+   "changed": true
+  },
+  "muir_is/muir2/cyclops_alex": {
+   "origin": "loose",
+   "changed": false
+  },
+  "muir_is/muir2/cyclops_face_alison": {
+   "origin": "loose",
+   "changed": false
+  },
+  "muir_is/muir2/endmuir2": {
+   "origin": "loose",
+   "changed": true
+  },
+  "muir_is/muir2/endreboot": {
+   "origin": "loose",
+   "changed": true
+  },
+  "muir_is/muir2/leavingmuir2": {
+   "origin": "loose",
+   "changed": false
+  },
+  "muir_is/muir2/maywego": {
+   "origin": "loose",
+   "changed": false
+  },
+  "muir_is/muir2/mui_comcore": {
+   "origin": "loose",
+   "changed": true
+  },
+  "muir_is/muir2/muir_in2": {
+   "origin": "loose",
+   "changed": true
+  },
+  "muir_is/muir2/power_quest_check": {
+   "origin": "loose",
+   "changed": true
+  },
+  "muir_is/muir2/primarycontrolpanel": {
+   "origin": "loose",
+   "changed": true
+  },
+  "muir_is/muir2/raisebridge": {
+   "origin": "loose",
+   "changed": true
+  },
+  "muir_is/muir2/var_2_4_5_muir2_1": {
+   "origin": "loose",
+   "changed": true
+  },
+  "muir_is/muir2/var_2_4_7_muir2_2": {
+   "origin": "loose",
+   "changed": true
+  },
+  "muir_is/muir3/3_5_4_2_cam_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "muir_is/muir3/3_5_5_cam_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "muir_is/muir3/3_5_6_cam_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "muir_is/muir3/3_5_7_cam_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "muir_is/muir3/attackforge": {
+   "origin": "loose",
+   "changed": false
+  },
+  "muir_is/muir3/beginmuir3mission": {
+   "origin": "loose",
+   "changed": true
+  },
+  "muir_is/muir3/chatwithforge": {
+   "origin": "loose",
+   "changed": false
+  },
+  "muir_is/muir3/conv3_5_2": {
+   "origin": "loose",
+   "changed": false
+  },
+  "muir_is/muir3/conv3_5_4_2": {
+   "origin": "loose",
+   "changed": false
+  },
+  "muir_is/muir3/endmuir3mission": {
+   "origin": "loose",
+   "changed": true
+  },
+  "muir_is/muir3/endmuirbrigintro": {
+   "origin": "loose",
+   "changed": false
+  },
+  "muir_is/muir3/forgedeath": {
+   "origin": "loose",
+   "changed": false
+  },
+  "muir_is/muir3/forgefacesjuggy": {
+   "origin": "loose",
+   "changed": false
+  },
+  "muir_is/muir3/forgepain": {
+   "origin": "loose",
+   "changed": true
+  },
+  "muir_is/muir3/forgespawn": {
+   "origin": "loose",
+   "changed": false
+  },
+  "muir_is/muir3/forgetauntsjuggy": {
+   "origin": "loose",
+   "changed": false
+  },
+  "muir_is/muir3/juggyattacksforge": {
+   "origin": "loose",
+   "changed": false
+  },
+  "muir_is/muir3/juggyfacesforge": {
+   "origin": "loose",
+   "changed": false
+  },
+  "muir_is/muir3/juggyinjail": {
+   "origin": "loose",
+   "changed": true
+  },
+  "muir_is/muir3/juggyjump": {
+   "origin": "loose",
+   "changed": false
+  },
+  "muir_is/muir3/juggyjumpcam": {
+   "origin": "loose",
+   "changed": false
+  },
+  "muir_is/muir3/juggypain": {
+   "origin": "loose",
+   "changed": true
+  },
+  "muir_is/muir3/juggyreachedspot": {
+   "origin": "loose",
+   "changed": true
+  },
+  "muir_is/muir3/juggytojumpspot": {
+   "origin": "loose",
+   "changed": false
+  },
+  "muir_is/muir3/juggytospot2": {
+   "origin": "loose",
+   "changed": false
+  },
+  "muir_is/muir3/juggytospot3": {
+   "origin": "loose",
+   "changed": false
+  },
+  "muir_is/muir3/muir_brig": {
+   "origin": "loose",
+   "changed": true
+  },
+  "muir_is/muir3/muir_in3": {
+   "origin": "loose",
+   "changed": true
+  },
+  "muir_is/muir3/reallyendmuir3": {
+   "origin": "loose",
+   "changed": true
+  },
+  "muir_is/muir3/startjuggyintro": {
+   "origin": "loose",
+   "changed": false
+  },
+  "muir_is/muir3/startthefight": {
+   "origin": "loose",
+   "changed": true
+  },
+  "muir_is/muir3/xmenarrive": {
+   "origin": "loose",
+   "changed": false
+  },
+  "muir_is/muir3/xmengreetjuggy": {
+   "origin": "loose",
+   "changed": false
+  },
+  "muir_is/reboot/end": {
+   "origin": "loose",
+   "changed": false
+  },
+  "nuke_plant/nuke/2_3_1_cam_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "nuke_plant/nuke/2_3_2_1_cam_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "nuke_plant/nuke/2_3_2_cam_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "nuke_plant/nuke/2_3_3_1_cam_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "nuke_plant/nuke/check_puzzle1": {
+   "origin": "loose",
+   "changed": true
+  },
+  "nuke_plant/nuke/colossus_dead": {
+   "origin": "loose",
+   "changed": false
+  },
+  "nuke_plant/nuke/colossus_holding": {
+   "origin": "loose",
+   "changed": false
+  },
+  "nuke_plant/nuke/colossus_obj": {
+   "origin": "loose",
+   "changed": false
+  },
+  "nuke_plant/nuke/controlpanel": {
+   "origin": "loose",
+   "changed": true
+  },
+  "nuke_plant/nuke/coolant_conversation": {
+   "origin": "loose",
+   "changed": false
+  },
+  "nuke_plant/nuke/firejet_remove": {
+   "origin": "loose",
+   "changed": false
+  },
+  "nuke_plant/nuke/firewall_remove": {
+   "origin": "loose",
+   "changed": false
+  },
+  "nuke_plant/nuke/forcefield_remove": {
+   "origin": "loose",
+   "changed": true
+  },
+  "nuke_plant/nuke/forcefield_remove02": {
+   "origin": "loose",
+   "changed": false
+  },
+  "nuke_plant/nuke/forcefield_remove1_2": {
+   "origin": "loose",
+   "changed": true
+  },
+  "nuke_plant/nuke/forcefield_remove1_3": {
+   "origin": "loose",
+   "changed": true
+  },
+  "nuke_plant/nuke/foundcolossus": {
+   "origin": "loose",
+   "changed": false
+  },
+  "nuke_plant/nuke/kill_invis": {
+   "origin": "loose",
+   "changed": false
+  },
+  "nuke_plant/nuke/leftarm2": {
+   "origin": "loose",
+   "changed": true
+  },
+  "nuke_plant/nuke/nuke1_1": {
+   "origin": "loose",
+   "changed": true
+  },
+  "nuke_plant/nuke/nuke2_2cam": {
+   "origin": "loose",
+   "changed": false
+  },
+  "nuke_plant/nuke/nuke2_3": {
+   "origin": "loose",
+   "changed": false
+  },
+  "nuke_plant/nuke/obj_puzzle1": {
+   "origin": "loose",
+   "changed": false
+  },
+  "nuke_plant/nuke/pumpswitch02": {
+   "origin": "loose",
+   "changed": true
+  },
+  "nuke_plant/nuke/rightarm2": {
+   "origin": "loose",
+   "changed": true
+  },
+  "nuke_plant/nuke/scientist_obj": {
+   "origin": "loose",
+   "changed": false
+  },
+  "nuke_plant/nuke/shocker01": {
+   "origin": "loose",
+   "changed": false
+  },
+  "nuke_plant/nuke/shocker02": {
+   "origin": "loose",
+   "changed": false
+  },
+  "nuke_plant/nuke/solo_remove": {
+   "origin": "loose",
+   "changed": false
+  },
+  "nuke_plant/nuke/solo_remove02": {
+   "origin": "loose",
+   "changed": false
+  },
+  "nuke_plant/nuke/solo_remove_multi": {
+   "origin": "loose",
+   "changed": false
+  },
+  "nuke_plant/nuke/var_2_3_2_nuke_1": {
+   "origin": "loose",
+   "changed": true
+  },
+  "nuke_plant/nuke/var_2_3_2_nuke_2": {
+   "origin": "loose",
+   "changed": true
+  },
+  "nuke_plant/nuke/weld_obj": {
+   "origin": "loose",
+   "changed": false
+  },
+  "nuke_plant/nuke/you_win": {
+   "origin": "loose",
+   "changed": true
+  },
+  "nyc/alison/1_1_09_end": {
+   "origin": "loose",
+   "changed": false
+  },
+  "nyc/alison/1_1_1_end": {
+   "origin": "loose",
+   "changed": true
+  },
+  "nyc/alison/1_1_1_start": {
+   "origin": "loose",
+   "changed": true
+  },
+  "nyc/alison/1_1_1a_end": {
+   "origin": "loose",
+   "changed": true
+  },
+  "nyc/alison/1_1_2b_zone": {
+   "origin": "loose",
+   "changed": true
+  },
+  "nyc/alison/1_1_3_zone": {
+   "origin": "loose",
+   "changed": true
+  },
+  "nyc/alison/1_1_5_1_end": {
+   "origin": "loose",
+   "changed": true
+  },
+  "nyc/alison/add_cyclops": {
+   "origin": "loose",
+   "changed": true
+  },
+  "nyc/alison/alison_follow": {
+   "origin": "loose",
+   "changed": false
+  },
+  "nyc/alison/alison_gets_away": {
+   "origin": "loose",
+   "changed": true
+  },
+  "nyc/alison/alison_gets_away_2": {
+   "origin": "loose",
+   "changed": true
+  },
+  "nyc/alison/alison_roof_spawn": {
+   "origin": "loose",
+   "changed": false
+  },
+  "nyc/alison/bench_fire_out": {
+   "origin": "loose",
+   "changed": false
+  },
+  "nyc/alison/blackbird": {
+   "origin": "loose",
+   "changed": true
+  },
+  "nyc/alison/blackbird_brief1": {
+   "origin": "loose",
+   "changed": true
+  },
+  "nyc/alison/blob_popup": {
+   "origin": "loose",
+   "changed": false
+  },
+  "nyc/alison/blobspawn": {
+   "origin": "loose",
+   "changed": false
+  },
+  "nyc/alison/car_script": {
+   "origin": "loose",
+   "changed": false
+  },
+  "nyc/alison/culvert_guy": {
+   "origin": "loose",
+   "changed": false
+  },
+  "nyc/alison/cyc_wp1": {
+   "origin": "loose",
+   "changed": false
+  },
+  "nyc/alison/cyc_wp2": {
+   "origin": "loose",
+   "changed": false
+  },
+  "nyc/alison/enter_xjet": {
+   "origin": "loose",
+   "changed": false
+  },
+  "nyc/alison/fly_away": {
+   "origin": "loose",
+   "changed": false
+  },
+  "nyc/alison/gate_grunt_wp": {
+   "origin": "loose",
+   "changed": false
+  },
+  "nyc/alison/grunt1death": {
+   "origin": "loose",
+   "changed": true
+  },
+  "nyc/alison/grunt2death": {
+   "origin": "loose",
+   "changed": true
+  },
+  "nyc/alison/grunt_wp_none": {
+   "origin": "loose",
+   "changed": false
+  },
+  "nyc/alison/invis_spawn": {
+   "origin": "loose",
+   "changed": false
+  },
+  "nyc/alison/mansion_load": {
+   "origin": "loose",
+   "changed": true
+  },
+  "nyc/alison/meet_avalanche": {
+   "origin": "loose",
+   "changed": true
+  },
+  "nyc/alison/meet_mystique": {
+   "origin": "loose",
+   "changed": true
+  },
+  "nyc/alison/meet_pyro": {
+   "origin": "loose",
+   "changed": true
+  },
+  "nyc/alison/morph": {
+   "origin": "loose",
+   "changed": false
+  },
+  "nyc/alison/myst_wp_none": {
+   "origin": "loose",
+   "changed": false
+  },
+  "nyc/alison/mystique_fight_start": {
+   "origin": "loose",
+   "changed": true
+  },
+  "nyc/alison/mystique_grunt_spawn": {
+   "origin": "loose",
+   "changed": false
+  },
+  "nyc/alison/mystique_pain": {
+   "origin": "loose",
+   "changed": true
+  },
+  "nyc/alison/mystiquespawn": {
+   "origin": "loose",
+   "changed": false
+  },
+  "nyc/alison/mystiquetoilet": {
+   "origin": "loose",
+   "changed": true
+  },
+  "nyc/alison/no_react": {
+   "origin": "loose",
+   "changed": false
+  },
+  "nyc/alison/nyc1_1_1": {
+   "origin": "loose",
+   "changed": true
+  },
+  "nyc/alison/nyc1_1_2": {
+   "origin": "loose",
+   "changed": true
+  },
+  "nyc/alison/nyc1_1_3": {
+   "origin": "loose",
+   "changed": true
+  },
+  "nyc/alison/nyc1_1_4": {
+   "origin": "loose",
+   "changed": true
+  },
+  "nyc/alison/pain_blob_popup": {
+   "origin": "loose",
+   "changed": false
+  },
+  "nyc/alison/random_subway": {
+   "origin": "loose",
+   "changed": false
+  },
+  "nyc/alison/raven_sign_fall": {
+   "origin": "loose",
+   "changed": false
+  },
+  "nyc/alison/spawn_mystique_on_bridge": {
+   "origin": "loose",
+   "changed": false
+  },
+  "nyc/alison/spawnscript": {
+   "origin": "loose",
+   "changed": false
+  },
+  "nyc/alison/spawnscript_morph": {
+   "origin": "loose",
+   "changed": false
+  },
+  "nyc/alison/subway1": {
+   "origin": "loose",
+   "changed": true
+  },
+  "nyc/alison/subway2": {
+   "origin": "loose",
+   "changed": true
+  },
+  "nyc/alison/subway3": {
+   "origin": "loose",
+   "changed": true
+  },
+  "nyc/alison/subway4": {
+   "origin": "loose",
+   "changed": true
+  },
+  "nyc/alison/subwaydowna": {
+   "origin": "loose",
+   "changed": true
+  },
+  "nyc/alison/subwaydownb": {
+   "origin": "loose",
+   "changed": true
+  },
+  "nyc/alison/subwayupa": {
+   "origin": "loose",
+   "changed": true
+  },
+  "nyc/alison/subwayupb": {
+   "origin": "loose",
+   "changed": true
+  },
+  "nyc/alison/tut1": {
+   "origin": "loose",
+   "changed": false
+  },
+  "nyc/alison/tut10": {
+   "origin": "loose",
+   "changed": false
+  },
+  "nyc/alison/tut11": {
+   "origin": "loose",
+   "changed": false
+  },
+  "nyc/alison/tut12": {
+   "origin": "loose",
+   "changed": false
+  },
+  "nyc/alison/tut13": {
+   "origin": "loose",
+   "changed": false
+  },
+  "nyc/alison/tut14": {
+   "origin": "loose",
+   "changed": false
+  },
+  "nyc/alison/tut2": {
+   "origin": "loose",
+   "changed": false
+  },
+  "nyc/alison/tut3": {
+   "origin": "loose",
+   "changed": false
+  },
+  "nyc/alison/tut4": {
+   "origin": "loose",
+   "changed": false
+  },
+  "nyc/alison/tut5": {
+   "origin": "loose",
+   "changed": false
+  },
+  "nyc/alison/tut6": {
+   "origin": "loose",
+   "changed": false
+  },
+  "nyc/alison/tut7": {
+   "origin": "loose",
+   "changed": false
+  },
+  "nyc/alison/tut8": {
+   "origin": "loose",
+   "changed": false
+  },
+  "nyc/alison/tut9": {
+   "origin": "loose",
+   "changed": false
+  },
+  "nyc/alison/wp_none": {
+   "origin": "loose",
+   "changed": false
+  },
+  "nyc/fb/1_4_5_cam_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "nyc/fb/camerahold": {
+   "origin": "loose",
+   "changed": false
+  },
+  "nyc/fb/cargoboom": {
+   "origin": "loose",
+   "changed": true
+  },
+  "nyc/fb/civ_spawn": {
+   "origin": "loose",
+   "changed": false
+  },
+  "nyc/fb/first_sentinel_spawn": {
+   "origin": "loose",
+   "changed": false
+  },
+  "nyc/fb/nyc_fb1": {
+   "origin": "loose",
+   "changed": true
+  },
+  "nyc/fb/nyc_fb2": {
+   "origin": "loose",
+   "changed": true
+  },
+  "nyc/fb/nyc_fb3": {
+   "origin": "loose",
+   "changed": true
+  },
+  "nyc/fb/nyc_fb4": {
+   "origin": "loose",
+   "changed": true
+  },
+  "nyc/fb/nycfb2_finish": {
+   "origin": "loose",
+   "changed": true
+  },
+  "nyc/fb/nycfb3_finish": {
+   "origin": "loose",
+   "changed": false
+  },
+  "nyc/fb/nycfb4_finish": {
+   "origin": "loose",
+   "changed": true
+  },
+  "nyc/fb/sentinel1_death": {
+   "origin": "loose",
+   "changed": false
+  },
+  "nyc/fb/sentinel_intro": {
+   "origin": "loose",
+   "changed": false
+  },
+  "nyc/riots/beginriotsmission": {
+   "origin": "loose",
+   "changed": true
+  },
+  "nyc/riots/check1_1objectives": {
+   "origin": "loose",
+   "changed": false
+  },
+  "nyc/riots/check1_2objectives": {
+   "origin": "loose",
+   "changed": true
+  },
+  "nyc/riots/check1_3objectives": {
+   "origin": "loose",
+   "changed": false
+  },
+  "nyc/riots/check2_1objectives": {
+   "origin": "loose",
+   "changed": true
+  },
+  "nyc/riots/checkriotsobjective": {
+   "origin": "loose",
+   "changed": true
+  },
+  "nyc/riots/chooseact3mission": {
+   "origin": "loose",
+   "changed": true
+  },
+  "nyc/riots/conv3_1_1end": {
+   "origin": "loose",
+   "changed": false
+  },
+  "nyc/riots/conv3_2_2": {
+   "origin": "loose",
+   "changed": true
+  },
+  "nyc/riots/conv3_2_3": {
+   "origin": "loose",
+   "changed": true
+  },
+  "nyc/riots/conv3_2_4": {
+   "origin": "loose",
+   "changed": true
+  },
+  "nyc/riots/conv3_2_5": {
+   "origin": "loose",
+   "changed": true
+  },
+  "nyc/riots/end_psy_convo": {
+   "origin": "loose",
+   "changed": true
+  },
+  "nyc/riots/intro_spider_sentinel": {
+   "origin": "loose",
+   "changed": true
+  },
+  "nyc/riots/meet_sentinels": {
+   "origin": "loose",
+   "changed": false
+  },
+  "nyc/riots/mutant_rescue": {
+   "origin": "loose",
+   "changed": false
+  },
+  "nyc/riots/prep_carry_tv": {
+   "origin": "loose",
+   "changed": false
+  },
+  "nyc/riots/prep_jump_smash": {
+   "origin": "loose",
+   "changed": false
+  },
+  "nyc/riots/prep_mutant": {
+   "origin": "loose",
+   "changed": false
+  },
+  "nyc/riots/prep_smash_down": {
+   "origin": "loose",
+   "changed": false
+  },
+  "nyc/riots/prep_smash_side": {
+   "origin": "loose",
+   "changed": false
+  },
+  "nyc/riots/prep_smash_side_pipe": {
+   "origin": "loose",
+   "changed": false
+  },
+  "nyc/riots/psy_sentinels": {
+   "origin": "loose",
+   "changed": false
+  },
+  "nyc/riots/remove_self": {
+   "origin": "loose",
+   "changed": false
+  },
+  "nyc/riots/rescue_complete": {
+   "origin": "loose",
+   "changed": true
+  },
+  "nyc/riots/rescue_complete2": {
+   "origin": "loose",
+   "changed": true
+  },
+  "nyc/riots/rescue_complete3": {
+   "origin": "loose",
+   "changed": true
+  },
+  "nyc/riots/rescue_complete4": {
+   "origin": "loose",
+   "changed": true
+  },
+  "nyc/riots/reset_intro_spider_sentinel": {
+   "origin": "loose",
+   "changed": false
+  },
+  "nyc/riots/sentinel_death1_1": {
+   "origin": "loose",
+   "changed": false
+  },
+  "nyc/riots/sentinel_death1_2": {
+   "origin": "loose",
+   "changed": false
+  },
+  "nyc/riots/sentinel_death1_3": {
+   "origin": "loose",
+   "changed": false
+  },
+  "nyc/riots/sentinel_death2_1": {
+   "origin": "loose",
+   "changed": false
+  },
+  "nyc/riots/sentinellanding": {
+   "origin": "loose",
+   "changed": false
+  },
+  "nyc/riots/show_objective2": {
+   "origin": "loose",
+   "changed": true
+  },
+  "nyc/riots/show_objective4": {
+   "origin": "loose",
+   "changed": false
+  },
+  "nyc/riots/start_riots": {
+   "origin": "loose",
+   "changed": true
+  },
+  "sewers/grso/3_4_2_end": {
+   "origin": "loose",
+   "changed": false
+  },
+  "sewers/grso/3_4_3_end": {
+   "origin": "loose",
+   "changed": false
+  },
+  "sewers/grso/begingrsomission": {
+   "origin": "loose",
+   "changed": true
+  },
+  "sewers/grso/conv_3_4_3": {
+   "origin": "loose",
+   "changed": true
+  },
+  "sewers/grso/endgrsomission": {
+   "origin": "loose",
+   "changed": true
+  },
+  "sewers/grso/fakedeath": {
+   "origin": "loose",
+   "changed": false
+  },
+  "sewers/grso/fakeresurrect": {
+   "origin": "loose",
+   "changed": false
+  },
+  "sewers/grso/grso_ladder_down": {
+   "origin": "loose",
+   "changed": false
+  },
+  "sewers/grso/grso_teleport1": {
+   "origin": "loose",
+   "changed": false
+  },
+  "sewers/grso/grso_teleport2": {
+   "origin": "loose",
+   "changed": false
+  },
+  "sewers/grso/grso_teleport3": {
+   "origin": "loose",
+   "changed": false
+  },
+  "sewers/grso/grso_teleport4": {
+   "origin": "loose",
+   "changed": false
+  },
+  "sewers/grso/helpers_leave": {
+   "origin": "loose",
+   "changed": false
+  },
+  "sewers/grso/intro": {
+   "origin": "loose",
+   "changed": false
+  },
+  "sewers/grso/intro_outro": {
+   "origin": "loose",
+   "changed": false
+  },
+  "sewers/grso/kill_invis": {
+   "origin": "loose",
+   "changed": false
+  },
+  "sewers/grso/killres": {
+   "origin": "loose",
+   "changed": true
+  },
+  "sewers/grso/ladderdeath": {
+   "origin": "loose",
+   "changed": false
+  },
+  "sewers/grso/ladderdeath2": {
+   "origin": "loose",
+   "changed": false
+  },
+  "sewers/grso/ladderdeath3": {
+   "origin": "loose",
+   "changed": false
+  },
+  "sewers/grso/marrow_deathscript": {
+   "origin": "loose",
+   "changed": true
+  },
+  "sewers/grso/marrow_reveal": {
+   "origin": "loose",
+   "changed": true
+  },
+  "sewers/grso/morlock_civ01": {
+   "origin": "loose",
+   "changed": false
+  },
+  "sewers/grso/morlock_civ02": {
+   "origin": "loose",
+   "changed": false
+  },
+  "sewers/grso/morlock_civ03": {
+   "origin": "loose",
+   "changed": false
+  },
+  "sewers/grso/morlock_civ04": {
+   "origin": "loose",
+   "changed": false
+  },
+  "sewers/grso/remove_dude01": {
+   "origin": "loose",
+   "changed": false
+  },
+  "sewers/grso/remove_dude02": {
+   "origin": "loose",
+   "changed": false
+  },
+  "sewers/grso/remove_dude03": {
+   "origin": "loose",
+   "changed": false
+  },
+  "sewers/grso/remove_dude04": {
+   "origin": "loose",
+   "changed": false
+  },
+  "sewers/grso/reset_obj": {
+   "origin": "loose",
+   "changed": false
+  },
+  "sewers/grso/reset_obj2": {
+   "origin": "loose",
+   "changed": false
+  },
+  "sewers/grso/ressurect_marrow": {
+   "origin": "loose",
+   "changed": true
+  },
+  "sewers/grso/sewers3_1_1": {
+   "origin": "loose",
+   "changed": true
+  },
+  "sewers/grso/solo_remove": {
+   "origin": "loose",
+   "changed": false
+  },
+  "sewers/grso/spawnres": {
+   "origin": "loose",
+   "changed": false
+  },
+  "sewers/grso/teleporterdeath": {
+   "origin": "loose",
+   "changed": false
+  },
+  "sewers/grso/teleporterdeath2": {
+   "origin": "loose",
+   "changed": false
+  },
+  "sewers/grso/teleporterdeath3": {
+   "origin": "loose",
+   "changed": false
+  },
+  "sewers/healer/boost_psiwhip": {
+   "origin": "loose",
+   "changed": false
+  },
+  "sewers/healer/check_who_alive": {
+   "origin": "loose",
+   "changed": false
+  },
+  "sewers/healer/force_healer_talk": {
+   "origin": "loose",
+   "changed": false
+  },
+  "sewers/healer/force_healer_talk2": {
+   "origin": "loose",
+   "changed": false
+  },
+  "sewers/healer/gateway1": {
+   "origin": "loose",
+   "changed": false
+  },
+  "sewers/healer/gateway2": {
+   "origin": "loose",
+   "changed": false
+  },
+  "sewers/healer/gateway3": {
+   "origin": "loose",
+   "changed": false
+  },
+  "sewers/healer/healer_rescue": {
+   "origin": "loose",
+   "changed": false
+  },
+  "sewers/healer/healer_rescued": {
+   "origin": "loose",
+   "changed": false
+  },
+  "sewers/healer/kill_invis": {
+   "origin": "loose",
+   "changed": false
+  },
+  "sewers/healer/portal": {
+   "origin": "loose",
+   "changed": true
+  },
+  "sewers/healer/sewers212_exit": {
+   "origin": "loose",
+   "changed": false
+  },
+  "sewers/healer/sewers213_exit": {
+   "origin": "loose",
+   "changed": false
+  },
+  "sewers/healer/sewers_hub2": {
+   "origin": "loose",
+   "changed": true
+  },
+  "sewers/hub/1_5_0_cam_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "sewers/hub/1_5_2_cam_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "sewers/hub/2_9_1_cam_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "sewers/hub/2_9_2_cam_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "sewers/hub/check_hub_obj": {
+   "origin": "loose",
+   "changed": false
+  },
+  "sewers/hub/hatch_spawner": {
+   "origin": "loose",
+   "changed": false
+  },
+  "sewers/hub/hatch_spawner_remove": {
+   "origin": "loose",
+   "changed": false
+  },
+  "sewers/hub/hatch_spawner_weld": {
+   "origin": "loose",
+   "changed": false
+  },
+  "sewers/hub/healer_obj": {
+   "origin": "loose",
+   "changed": true
+  },
+  "sewers/hub/healer_obj2": {
+   "origin": "loose",
+   "changed": true
+  },
+  "sewers/hub/hub_obj": {
+   "origin": "loose",
+   "changed": false
+  },
+  "sewers/hub/kill_invis": {
+   "origin": "loose",
+   "changed": false
+  },
+  "sewers/hub/laying_on_bench2": {
+   "origin": "loose",
+   "changed": false
+  },
+  "sewers/hub/marrow_obj": {
+   "origin": "loose",
+   "changed": false
+  },
+  "sewers/hub/mor_laying_down01": {
+   "origin": "loose",
+   "changed": false
+  },
+  "sewers/hub/mor_laying_down02": {
+   "origin": "loose",
+   "changed": false
+  },
+  "sewers/hub/mor_sitting01": {
+   "origin": "loose",
+   "changed": false
+  },
+  "sewers/hub/mor_stealing": {
+   "origin": "loose",
+   "changed": false
+  },
+  "sewers/hub/mor_stealing2": {
+   "origin": "loose",
+   "changed": true
+  },
+  "sewers/hub/mor_warming_hands": {
+   "origin": "loose",
+   "changed": false
+  },
+  "sewers/hub/pumps_obj": {
+   "origin": "loose",
+   "changed": false
+  },
+  "sewers/hub/sewers1_1_1": {
+   "origin": "loose",
+   "changed": true
+  },
+  "sewers/hub/sewers1_1_2": {
+   "origin": "loose",
+   "changed": true
+  },
+  "sewers/hub/sewers1_1_3_pump": {
+   "origin": "loose",
+   "changed": true
+  },
+  "sewers/hub/sewers1_1_4_pump": {
+   "origin": "loose",
+   "changed": true
+  },
+  "sewers/hub/sitting_in_chair": {
+   "origin": "loose",
+   "changed": false
+  },
+  "sewers/hub/sitting_on_bench": {
+   "origin": "loose",
+   "changed": false
+  },
+  "sewers/hub/solo_remove": {
+   "origin": "loose",
+   "changed": false
+  },
+  "sewers/hub/steamhurt1": {
+   "origin": "loose",
+   "changed": true
+  },
+  "sewers/hub/steamhurt2": {
+   "origin": "loose",
+   "changed": true
+  },
+  "sewers/hub/steamhurt3": {
+   "origin": "loose",
+   "changed": true
+  },
+  "sewers/hub/steamhurt4": {
+   "origin": "loose",
+   "changed": true
+  },
+  "sewers/hub/steamhurt5": {
+   "origin": "loose",
+   "changed": true
+  },
+  "sewers/hub/steamhurt6": {
+   "origin": "loose",
+   "changed": true
+  },
+  "sewers/hub/steamhurt7": {
+   "origin": "loose",
+   "changed": true
+  },
+  "sewers/hub/steamhurt8": {
+   "origin": "loose",
+   "changed": true
+  },
+  "sewers/hub/var_1_5_1a": {
+   "origin": "loose",
+   "changed": true
+  },
+  "sewers/quest/1_5_3_cam_2": {
+   "origin": "loose",
+   "changed": false
+  },
+  "sewers/quest/1_5_3_cam_start": {
+   "origin": "loose",
+   "changed": false
+  },
+  "sewers/quest/battle_commence": {
+   "origin": "loose",
+   "changed": false
+  },
+  "sewers/quest/conv1_5_4": {
+   "origin": "loose",
+   "changed": false
+  },
+  "sewers/quest/fadegambit": {
+   "origin": "loose",
+   "changed": true
+  },
+  "sewers/quest/gambit_free": {
+   "origin": "loose",
+   "changed": false
+  },
+  "sewers/quest/gambit_spawn": {
+   "origin": "loose",
+   "changed": false
+  },
+  "sewers/quest/marrow_flee": {
+   "origin": "loose",
+   "changed": false
+  },
+  "sewers/quest/prep_spar": {
+   "origin": "loose",
+   "changed": true
+  },
+  "sewers/quest/var_1_5_4": {
+   "origin": "loose",
+   "changed": true
+  },
+  "weapon_x/old/blockroom1": {
+   "origin": "loose",
+   "changed": false
+  },
+  "weapon_x/old/blockroom2": {
+   "origin": "loose",
+   "changed": false
+  },
+  "weapon_x/old/blockroom3": {
+   "origin": "loose",
+   "changed": false
+  },
+  "weapon_x/old/checkhavokhit": {
+   "origin": "loose",
+   "changed": true
+  },
+  "weapon_x/old/elevator_chat": {
+   "origin": "loose",
+   "changed": false
+  },
+  "weapon_x/old/endroom1": {
+   "origin": "loose",
+   "changed": true
+  },
+  "weapon_x/old/endroom2": {
+   "origin": "loose",
+   "changed": true
+  },
+  "weapon_x/old/endroom3": {
+   "origin": "loose",
+   "changed": true
+  },
+  "weapon_x/old/friend_spawn": {
+   "origin": "loose",
+   "changed": false
+  },
+  "weapon_x/old/gettonextspot": {
+   "origin": "loose",
+   "changed": true
+  },
+  "weapon_x/old/havok_defeated": {
+   "origin": "loose",
+   "changed": false
+  },
+  "weapon_x/old/havokbeginattacking1": {
+   "origin": "loose",
+   "changed": true
+  },
+  "weapon_x/old/havokbeginattacking2": {
+   "origin": "loose",
+   "changed": true
+  },
+  "weapon_x/old/havokbeginattacking3": {
+   "origin": "loose",
+   "changed": true
+  },
+  "weapon_x/old/havokbeginattacking4": {
+   "origin": "loose",
+   "changed": true
+  },
+  "weapon_x/old/havokbeginroom1": {
+   "origin": "loose",
+   "changed": true
+  },
+  "weapon_x/old/havokblastrailing": {
+   "origin": "loose",
+   "changed": false
+  },
+  "weapon_x/old/havoklands": {
+   "origin": "loose",
+   "changed": false
+  },
+  "weapon_x/old/havokpain": {
+   "origin": "loose",
+   "changed": true
+  },
+  "weapon_x/old/havokspawn": {
+   "origin": "loose",
+   "changed": false
+  },
+  "weapon_x/old/meet_havok": {
+   "origin": "loose",
+   "changed": false
+  },
+  "weapon_x/old/powerupcyclops": {
+   "origin": "loose",
+   "changed": false
+  },
+  "weapon_x/old/shooteachother": {
+   "origin": "loose",
+   "changed": false
+  },
+  "weapon_x/old/unlockcontrols": {
+   "origin": "loose",
+   "changed": false
+  },
+  "weapon_x/old/wolf_chat": {
+   "origin": "loose",
+   "changed": false
+  },
+  "weapon_x/old/wx2_1": {
+   "origin": "loose",
+   "changed": false
+  },
+  "weapon_x/old/zone_end": {
+   "origin": "loose",
+   "changed": true
+  },
+  "weapon_x/secret/2_7_5_1_end": {
+   "origin": "loose",
+   "changed": true
+  },
+  "weapon_x/secret/2_7_5_1_start": {
+   "origin": "loose",
+   "changed": true
+  },
+  "weapon_x/secret/2_7_5_end": {
+   "origin": "loose",
+   "changed": true
+  },
+  "weapon_x/secret/2_7_5_start": {
+   "origin": "loose",
+   "changed": true
+  },
+  "weapon_x/secret/2_7_6_enable": {
+   "origin": "loose",
+   "changed": false
+  },
+  "weapon_x/secret/2_7_6_end": {
+   "origin": "loose",
+   "changed": true
+  },
+  "weapon_x/secret/2_7_6_start": {
+   "origin": "loose",
+   "changed": true
+  },
+  "weapon_x/secret/disable_ai": {
+   "origin": "loose",
+   "changed": false
+  },
+  "weapon_x/secret/exithavok": {
+   "origin": "loose",
+   "changed": false
+  },
+  "weapon_x/secret/ff_disable": {
+   "origin": "loose",
+   "changed": true
+  },
+  "weapon_x/secret/flame1disable": {
+   "origin": "loose",
+   "changed": false
+  },
+  "weapon_x/secret/flame1enable": {
+   "origin": "loose",
+   "changed": false
+  },
+  "weapon_x/secret/flame2disable": {
+   "origin": "loose",
+   "changed": false
+  },
+  "weapon_x/secret/flame2enable": {
+   "origin": "loose",
+   "changed": false
+  },
+  "weapon_x/secret/free_muties": {
+   "origin": "loose",
+   "changed": true
+  },
+  "weapon_x/secret/havok_spawnscript": {
+   "origin": "loose",
+   "changed": false
+  },
+  "weapon_x/secret/key_spawn": {
+   "origin": "loose",
+   "changed": false
+  },
+  "weapon_x/secret/show_obj": {
+   "origin": "loose",
+   "changed": false
+  },
+  "weapon_x/secret/wx3_1": {
+   "origin": "loose",
+   "changed": true
+  },
+  "weapon_x/wfb/cam3_reset": {
+   "origin": "loose",
+   "changed": false
+  },
+  "weapon_x/wfb/cam_out": {
+   "origin": "loose",
+   "changed": true
+  },
+  "weapon_x/wfb/director2_gone": {
+   "origin": "loose",
+   "changed": false
+  },
+  "weapon_x/wfb/director_gone": {
+   "origin": "loose",
+   "changed": false
+  },
+  "weapon_x/wfb/director_runs": {
+   "origin": "loose",
+   "changed": false
+  },
+  "weapon_x/wfb/director_shot": {
+   "origin": "loose",
+   "changed": true
+  },
+  "weapon_x/wfb/director_spot2": {
+   "origin": "loose",
+   "changed": false
+  },
+  "weapon_x/wfb/end_fb": {
+   "origin": "loose",
+   "changed": true
+  },
+  "weapon_x/wfb/final_confrontation": {
+   "origin": "loose",
+   "changed": false
+  },
+  "weapon_x/wfb/firejet_timed": {
+   "origin": "loose",
+   "changed": false
+  },
+  "weapon_x/wfb/firejet_timed01": {
+   "origin": "loose",
+   "changed": false
+  },
+  "weapon_x/wfb/firejet_timed02": {
+   "origin": "loose",
+   "changed": false
+  },
+  "weapon_x/wfb/firejet_timed03": {
+   "origin": "loose",
+   "changed": false
+  },
+  "weapon_x/wfb/firejet_timed04": {
+   "origin": "loose",
+   "changed": false
+  },
+  "weapon_x/wfb/fissiongate_timed": {
+   "origin": "loose",
+   "changed": false
+  },
+  "weapon_x/wfb/force_field2_spawn": {
+   "origin": "loose",
+   "changed": false
+  },
+  "weapon_x/wfb/force_field3_spawn": {
+   "origin": "loose",
+   "changed": false
+  },
+  "weapon_x/wfb/guns_off": {
+   "origin": "loose",
+   "changed": true
+  },
+  "weapon_x/wfb/lackey_spawn": {
+   "origin": "loose",
+   "changed": false
+  },
+  "weapon_x/wfb/opening_done": {
+   "origin": "loose",
+   "changed": true
+  },
+  "weapon_x/wfb/opening_setup": {
+   "origin": "loose",
+   "changed": true
+  },
+  "weapon_x/wfb/scared_tech": {
+   "origin": "loose",
+   "changed": false
+  },
+  "weapon_x/wfb/sight_director1": {
+   "origin": "loose",
+   "changed": false
+  },
+  "weapon_x/wfb/sight_director2": {
+   "origin": "loose",
+   "changed": false
+  },
+  "weapon_x/wfb/sight_director3": {
+   "origin": "loose",
+   "changed": false
+  },
+  "weapon_x/wfb/sight_director4": {
+   "origin": "loose",
+   "changed": false
+  },
+  "weapon_x/wfb/visible": {
+   "origin": "loose",
+   "changed": false
+  },
+  "weapon_x/wfb/wolverine_wakes_up_miffed": {
+   "origin": "loose",
+   "changed": false
+  },
+  "weapon_x/wfb/wx1_3": {
+   "origin": "loose",
+   "changed": true
+  },
+  "work/dvondrak/cyctest": {
+   "origin": "loose",
+   "changed": false
+  },
+  "xjet/blackbird_arbiter": {
+   "origin": "loose",
+   "changed": false
+  }
+ }
+}

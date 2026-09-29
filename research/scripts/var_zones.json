@@ -1,0 +1,6834 @@
+{
+ "triggerID": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "arbiter/a_int/arb3_1",
+   "arbiter/a_int/arb3_2",
+   "arbiter/a_int/arb3_3",
+   "arbiter/a_int/arb3_4",
+   "demo/a_int/arb3_1",
+   "demo/a_int/arb3_2"
+  ],
+  "get_zones": [],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": true,
+  "missions": [
+   "",
+   "demo"
+  ],
+  "n_set": 12,
+  "n_get": 0,
+  "sites": {
+   "set": {
+    "arbiter/a_int/arb3_1": [
+     "scripts/arbiter/rescue_complete.py:7",
+     "scripts/arbiter/rescue_complete.py:25"
+    ],
+    "arbiter/a_int/arb3_2": [
+     "scripts/arbiter/rescue_complete.py:7",
+     "scripts/arbiter/rescue_complete.py:25"
+    ],
+    "arbiter/a_int/arb3_3": [
+     "scripts/arbiter/rescue_complete.py:7",
+     "scripts/arbiter/rescue_complete.py:25"
+    ],
+    "arbiter/a_int/arb3_4": [
+     "scripts/arbiter/rescue_complete.py:7",
+     "scripts/arbiter/rescue_complete.py:25"
+    ],
+    "demo/a_int/arb3_1": [
+     "scripts/arbiter/rescue_complete.py:7",
+     "scripts/arbiter/rescue_complete.py:25"
+    ],
+    "demo/a_int/arb3_2": [
+     "scripts/arbiter/rescue_complete.py:7",
+     "scripts/arbiter/rescue_complete.py:25"
+    ]
+   },
+   "get": {}
+  }
+ },
+ "LASTID": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "arbiter/a_int/arb3_1",
+   "arbiter/a_int/arb3_2",
+   "arbiter/a_int/arb3_3",
+   "arbiter/a_int/arb3_4",
+   "demo/a_int/arb3_1",
+   "demo/a_int/arb3_2"
+  ],
+  "get_zones": [
+   "arbiter/a_int/arb3_1",
+   "arbiter/a_int/arb3_2",
+   "arbiter/a_int/arb3_3",
+   "arbiter/a_int/arb3_4",
+   "demo/a_int/arb3_1",
+   "demo/a_int/arb3_2"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "",
+   "demo"
+  ],
+  "n_set": 12,
+  "n_get": 6,
+  "sites": {
+   "set": {
+    "arbiter/a_int/arb3_1": [
+     "scripts/arbiter/rescue_complete.py:18",
+     "scripts/arbiter/rescue_complete.py:37"
+    ],
+    "arbiter/a_int/arb3_2": [
+     "scripts/arbiter/rescue_complete.py:18",
+     "scripts/arbiter/rescue_complete.py:37"
+    ],
+    "arbiter/a_int/arb3_3": [
+     "scripts/arbiter/rescue_complete.py:18",
+     "scripts/arbiter/rescue_complete.py:37"
+    ],
+    "arbiter/a_int/arb3_4": [
+     "scripts/arbiter/rescue_complete.py:18",
+     "scripts/arbiter/rescue_complete.py:37"
+    ],
+    "demo/a_int/arb3_1": [
+     "scripts/arbiter/rescue_complete.py:18",
+     "scripts/arbiter/rescue_complete.py:37"
+    ],
+    "demo/a_int/arb3_2": [
+     "scripts/arbiter/rescue_complete.py:18",
+     "scripts/arbiter/rescue_complete.py:37"
+    ]
+   },
+   "get": {
+    "arbiter/a_int/arb3_1": [
+     "scripts/arbiter/a_int/reenable.py:5"
+    ],
+    "arbiter/a_int/arb3_2": [
+     "scripts/arbiter/a_int/reenable.py:5"
+    ],
+    "arbiter/a_int/arb3_3": [
+     "scripts/arbiter/a_int/reenable.py:5"
+    ],
+    "arbiter/a_int/arb3_4": [
+     "scripts/arbiter/a_int/reenable.py:5"
+    ],
+    "demo/a_int/arb3_1": [
+     "scripts/arbiter/a_int/reenable.py:5"
+    ],
+    "demo/a_int/arb3_2": [
+     "scripts/arbiter/a_int/reenable.py:5"
+    ]
+   }
+  }
+ },
+ "2started": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "arbiter/a_int/arb2_1"
+  ],
+  "get_zones": [
+   "arbiter/a_int/arb2_1"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   ""
+  ],
+  "n_set": 1,
+  "n_get": 1,
+  "sites": {
+   "set": {
+    "arbiter/a_int/arb2_1": [
+     "scripts/arbiter/a_int/arb2_1.py:8"
+    ]
+   },
+   "get": {
+    "arbiter/a_int/arb2_1": [
+     "scripts/arbiter/a_int/arb2_1.py:3"
+    ]
+   }
+  }
+ },
+ "started": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "arbiter/a_int/arb3_1",
+   "demo/a_int/arb3_1"
+  ],
+  "get_zones": [
+   "arbiter/a_int/arb3_1",
+   "demo/a_int/arb3_1"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "",
+   "demo"
+  ],
+  "n_set": 2,
+  "n_get": 2,
+  "sites": {
+   "set": {
+    "arbiter/a_int/arb3_1": [
+     "scripts/arbiter/a_int/arb3_1.py:5"
+    ],
+    "demo/a_int/arb3_1": [
+     "scripts/arbiter/a_int/arb3_1.py:5"
+    ]
+   },
+   "get": {
+    "arbiter/a_int/arb3_1": [
+     "scripts/arbiter/a_int/arb3_1.py:3"
+    ],
+    "demo/a_int/arb3_1": [
+     "scripts/arbiter/a_int/arb3_1.py:3"
+    ]
+   }
+  }
+ },
+ "timers": {
+  "kind": [
+   "mflag"
+  ],
+  "set_zones": [
+   "arbiter/a_int/arb3_1",
+   "arbiter/a_int/arb3_2",
+   "arbiter/a_int/arb3_3",
+   "arbiter/a_int/arb3_4"
+  ],
+  "get_zones": [
+   "arbiter/a_int/arb3_1",
+   "arbiter/a_int/arb3_2",
+   "arbiter/a_int/arb3_3",
+   "arbiter/a_int/arb3_4"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   ""
+  ],
+  "n_set": 12,
+  "n_get": 12,
+  "sites": {
+   "set": {
+    "arbiter/a_int/arb3_1": [
+     "scripts/arbiter/a_int/check_timer.py:8",
+     "scripts/arbiter/a_int/check_timer.py:15",
+     "scripts/arbiter/a_int/check_timer.py:22"
+    ],
+    "arbiter/a_int/arb3_2": [
+     "scripts/arbiter/a_int/check_timer.py:8",
+     "scripts/arbiter/a_int/check_timer.py:15",
+     "scripts/arbiter/a_int/check_timer.py:22"
+    ],
+    "arbiter/a_int/arb3_3": [
+     "scripts/arbiter/a_int/check_timer.py:8",
+     "scripts/arbiter/a_int/check_timer.py:15",
+     "scripts/arbiter/a_int/check_timer.py:22"
+    ],
+    "arbiter/a_int/arb3_4": [
+     "scripts/arbiter/a_int/check_timer.py:8",
+     "scripts/arbiter/a_int/check_timer.py:15",
+     "scripts/arbiter/a_int/check_timer.py:22"
+    ]
+   },
+   "get": {
+    "arbiter/a_int/arb3_1": [
+     "scripts/arbiter/a_int/check_timer.py:5",
+     "scripts/arbiter/a_int/check_timer.py:12",
+     "scripts/arbiter/a_int/check_timer.py:19"
+    ],
+    "arbiter/a_int/arb3_2": [
+     "scripts/arbiter/a_int/check_timer.py:5",
+     "scripts/arbiter/a_int/check_timer.py:12",
+     "scripts/arbiter/a_int/check_timer.py:19"
+    ],
+    "arbiter/a_int/arb3_3": [
+     "scripts/arbiter/a_int/check_timer.py:5",
+     "scripts/arbiter/a_int/check_timer.py:12",
+     "scripts/arbiter/a_int/check_timer.py:19"
+    ],
+    "arbiter/a_int/arb3_4": [
+     "scripts/arbiter/a_int/check_timer.py:5",
+     "scripts/arbiter/a_int/check_timer.py:12",
+     "scripts/arbiter/a_int/check_timer.py:19"
+    ]
+   }
+  }
+ },
+ "triggerid": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [],
+  "get_zones": [
+   "arbiter/a_int/arb3_1",
+   "arbiter/a_int/arb3_2",
+   "arbiter/a_int/arb3_3",
+   "arbiter/a_int/arb3_4",
+   "demo/a_int/arb3_1",
+   "demo/a_int/arb3_2"
+  ],
+  "read_without_local_set": [
+   "arbiter/a_int/arb3_1",
+   "arbiter/a_int/arb3_2",
+   "arbiter/a_int/arb3_3",
+   "arbiter/a_int/arb3_4",
+   "demo/a_int/arb3_1",
+   "demo/a_int/arb3_2"
+  ],
+  "needs_game_scope": false,
+  "never_set": true,
+  "never_read": false,
+  "missions": [
+   "",
+   "demo"
+  ],
+  "n_set": 0,
+  "n_get": 6,
+  "sites": {
+   "set": {},
+   "get": {
+    "arbiter/a_int/arb3_1": [
+     "scripts/arbiter/a_int/reenable.py:3"
+    ],
+    "arbiter/a_int/arb3_2": [
+     "scripts/arbiter/a_int/reenable.py:3"
+    ],
+    "arbiter/a_int/arb3_3": [
+     "scripts/arbiter/a_int/reenable.py:3"
+    ],
+    "arbiter/a_int/arb3_4": [
+     "scripts/arbiter/a_int/reenable.py:3"
+    ],
+    "demo/a_int/arb3_1": [
+     "scripts/arbiter/a_int/reenable.py:3"
+    ],
+    "demo/a_int/arb3_2": [
+     "scripts/arbiter/a_int/reenable.py:3"
+    ]
+   }
+  }
+ },
+ "startfd1": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "arbiter/arb_fd1",
+   "arbiter/deck/arb_fd1",
+   "astroid_m/visit1/arb_fd1",
+   "demo/deck/arb_fd1"
+  ],
+  "get_zones": [
+   "arbiter/arb_fd1",
+   "arbiter/deck/arb_fd1",
+   "astroid_m/visit1/arb_fd1",
+   "demo/deck/arb_fd1"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "arbiter"
+  ],
+  "n_set": 4,
+  "n_get": 4,
+  "sites": {
+   "set": {
+    "arbiter/arb_fd1": [
+     "scripts/arbiter/deck/arb_fd1.py:9"
+    ],
+    "arbiter/deck/arb_fd1": [
+     "scripts/arbiter/deck/arb_fd1.py:9"
+    ],
+    "astroid_m/visit1/arb_fd1": [
+     "scripts/arbiter/deck/arb_fd1.py:9"
+    ],
+    "demo/deck/arb_fd1": [
+     "scripts/arbiter/deck/arb_fd1.py:9"
+    ]
+   },
+   "get": {
+    "arbiter/arb_fd1": [
+     "scripts/arbiter/deck/arb_fd1.py:4"
+    ],
+    "arbiter/deck/arb_fd1": [
+     "scripts/arbiter/deck/arb_fd1.py:4"
+    ],
+    "astroid_m/visit1/arb_fd1": [
+     "scripts/arbiter/deck/arb_fd1.py:4"
+    ],
+    "demo/deck/arb_fd1": [
+     "scripts/arbiter/deck/arb_fd1.py:4"
+    ]
+   }
+  }
+ },
+ "startfd2": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "arbiter/arb_fd2",
+   "arbiter/deck/arb_fd2",
+   "astroid_m/visit1/arb_fd2"
+  ],
+  "get_zones": [
+   "arbiter/arb_fd2",
+   "arbiter/deck/arb_fd2",
+   "astroid_m/visit1/arb_fd2"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "arbiter"
+  ],
+  "n_set": 3,
+  "n_get": 3,
+  "sites": {
+   "set": {
+    "arbiter/arb_fd2": [
+     "scripts/arbiter/deck/arb_fd2.py:9"
+    ],
+    "arbiter/deck/arb_fd2": [
+     "scripts/arbiter/deck/arb_fd2.py:9"
+    ],
+    "astroid_m/visit1/arb_fd2": [
+     "scripts/arbiter/deck/arb_fd2.py:9"
+    ]
+   },
+   "get": {
+    "arbiter/arb_fd2": [
+     "scripts/arbiter/deck/arb_fd2.py:3"
+    ],
+    "arbiter/deck/arb_fd2": [
+     "scripts/arbiter/deck/arb_fd2.py:3"
+    ],
+    "astroid_m/visit1/arb_fd2": [
+     "scripts/arbiter/deck/arb_fd2.py:3"
+    ]
+   }
+  }
+ },
+ "start": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "arbiter/arb_fd2",
+   "arbiter/deck/arb_fd2",
+   "astroid_m/visit1/arb_fd2",
+   "nyc/riots/nyc3_1_1"
+  ],
+  "get_zones": [
+   "arbiter/arb_fd2",
+   "arbiter/deck/arb_fd2",
+   "astroid_m/visit1/arb_fd2",
+   "nyc/riots/nyc3_1_1"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "arbiter",
+   "riots"
+  ],
+  "n_set": 4,
+  "n_get": 4,
+  "sites": {
+   "set": {
+    "arbiter/arb_fd2": [
+     "scripts/arbiter/deck/sentinel_landing.py:25"
+    ],
+    "arbiter/deck/arb_fd2": [
+     "scripts/arbiter/deck/sentinel_landing.py:25"
+    ],
+    "astroid_m/visit1/arb_fd2": [
+     "scripts/arbiter/deck/sentinel_landing.py:25"
+    ],
+    "nyc/riots/nyc3_1_1": [
+     "scripts/nyc/riots/start_riots.py:16"
+    ]
+   },
+   "get": {
+    "arbiter/arb_fd2": [
+     "scripts/arbiter/deck/sentinel_landing.py:3"
+    ],
+    "arbiter/deck/arb_fd2": [
+     "scripts/arbiter/deck/sentinel_landing.py:3"
+    ],
+    "astroid_m/visit1/arb_fd2": [
+     "scripts/arbiter/deck/sentinel_landing.py:3"
+    ],
+    "nyc/riots/nyc3_1_1": [
+     "scripts/nyc/riots/start_riots.py:3"
+    ]
+   }
+  }
+ },
+ "stage": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "astral/ast3/astral3_3",
+   "astral/ast3/astral3_4",
+   "astral/ast3/astral3_5",
+   "astral/savepx/final_astral",
+   "astroid_m/visit1/asteroid2_1",
+   "haarp/int/haarp2_6",
+   "mansion/dr_mag2/mag_nyc3",
+   "mastermold/mastermold2",
+   "mount/mount/mount2",
+   "nyc/alison/nyc1_1_2b"
+  ],
+  "get_zones": [
+   "astral/ast3/astral3_3",
+   "astral/ast3/astral3_4",
+   "astral/ast3/astral3_5",
+   "astral/savepx/final_astral",
+   "astroid_m/visit1/asteroid2_1",
+   "haarp/int/haarp2_6",
+   "mansion/dr_mag2/mag_nyc3",
+   "mastermold/mastermold2",
+   "mount/mount/mount2",
+   "nyc/alison/nyc1_1_2b"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "",
+   "?",
+   "alison",
+   "asteroid_mm2",
+   "astral2",
+   "dr_mag2"
+  ],
+  "n_set": 39,
+  "n_get": 14,
+  "sites": {
+   "set": {
+    "astroid_m/visit1/asteroid2_1": [
+     "scripts/asteroid_m/2_1_fight_magneto.py:8",
+     "scripts/asteroid_m/magneto_pain.py:13"
+    ],
+    "astral/ast3/astral3_4": [
+     "scripts/astral/ast3/avalanche_pain.py:13",
+     "scripts/astral/ast3/avalanche_start.py:4"
+    ],
+    "astral/ast3/astral3_5": [
+     "scripts/astral/ast3/blobintro.py:10",
+     "scripts/astral/ast3/blobpain.py:48",
+     "scripts/astral/ast3/blobspawn.py:4"
+    ],
+    "astral/ast3/astral3_3": [
+     "scripts/astral/ast3/pyrocam.py:10",
+     "scripts/astral/ast3/spawnfiredemons.py:10"
+    ],
+    "astral/savepx/final_astral": [
+     "scripts/astral/savepx/final_astral.py:3",
+     "scripts/astral/savepx/sk1pain.py:27",
+     "scripts/astral/savepx/sk2pain.py:17",
+     "scripts/astral/savepx/spawnsk2.py:5"
+    ],
+    "haarp/int/haarp2_6": [
+     "scripts/haarp/int/pyropain.py:9",
+     "scripts/haarp/int/pyropain.py:14",
+     "scripts/haarp/int/pyropain.py:21",
+     "scripts/haarp/int/pyropain.py:27",
+     "scripts/haarp/int/pyrospawn.py:4"
+    ],
+    "mansion/dr_mag2/mag_nyc3": [
+     "scripts/mansion/dr_mag2/2_2_1_b_end.py:15",
+     "scripts/nyc/alison/mystiquetoilet.py:12",
+     "scripts/nyc/alison/mystique_pain.py:14",
+     "scripts/nyc/alison/mystique_pain.py:18",
+     "scripts/nyc/alison/mystique_pain.py:23"
+    ],
+    "mastermold/mastermold2": [
+     "scripts/mastermold/checkcore.py:9",
+     "scripts/mastermold/mmpain.py:16",
+     "scripts/mastermold/mmspawn.py:7"
+    ],
+    "mount/mount/mount2": [
+     "scripts/mount/avalanchepain.py:14",
+     "scripts/mount/avalanchepain.py:23",
+     "scripts/mount/avalanchepain.py:30",
+     "scripts/mount/avalanchepain.py:39",
+     "scripts/mount/avalanchepain.py:46",
+     "scripts/mount/avalanchepain.py:55",
+     "scripts/mount/avalanchepain.py:62",
+     "scripts/mount/avalanchepain.py:71"
+    ],
+    "nyc/alison/nyc1_1_2b": [
+     "scripts/nyc/alison/mystiquetoilet.py:12",
+     "scripts/nyc/alison/mystique_fight_start.py:38",
+     "scripts/nyc/alison/mystique_pain.py:14",
+     "scripts/nyc/alison/mystique_pain.py:18",
+     "scripts/nyc/alison/mystique_pain.py:23"
+    ]
+   },
+   "get": {
+    "astroid_m/visit1/asteroid2_1": [
+     "scripts/asteroid_m/magneto_pain.py:3"
+    ],
+    "astral/ast3/astral3_4": [
+     "scripts/astral/ast3/avalanche_pain.py:4"
+    ],
+    "astral/ast3/astral3_5": [
+     "scripts/astral/ast3/blobpain.py:4",
+     "scripts/astral/ast3/blob_pillar_death.py:4"
+    ],
+    "astral/ast3/astral3_3": [
+     "scripts/astral/ast3/pyropain.py:4",
+     "scripts/astral/ast3/spawnfiredemons.py:4"
+    ],
+    "astral/savepx/final_astral": [
+     "scripts/astral/savepx/sk1pain.py:4",
+     "scripts/astral/savepx/sk2pain.py:4"
+    ],
+    "haarp/int/haarp2_6": [
+     "scripts/haarp/int/pyropain.py:6"
+    ],
+    "mastermold/mastermold2": [
+     "scripts/mastermold/mmpain.py:4",
+     "scripts/mastermold/mmspawn.py:5"
+    ],
+    "mount/mount/mount2": [
+     "scripts/mount/avalanchepain.py:6"
+    ],
+    "mansion/dr_mag2/mag_nyc3": [
+     "scripts/nyc/alison/mystique_pain.py:3"
+    ],
+    "nyc/alison/nyc1_1_2b": [
+     "scripts/nyc/alison/mystique_pain.py:3"
+    ]
+   }
+  }
+ },
+ "noMagma": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "astroid_m/visit1/asteroid2_3"
+  ],
+  "get_zones": [
+   "astroid_m/visit1/asteroid2_3"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "asteroid_int2"
+  ],
+  "n_set": 4,
+  "n_get": 2,
+  "sites": {
+   "set": {
+    "astroid_m/visit1/asteroid2_3": [
+     "scripts/asteroid_m/alisoncheck.py:4",
+     "scripts/asteroid_m/alisoncheck.py:14",
+     "scripts/asteroid_m/start2_3.py:13",
+     "scripts/asteroid_m/start2_3.py:23"
+    ]
+   },
+   "get": {
+    "astroid_m/visit1/asteroid2_3": [
+     "scripts/asteroid_m/alisoncheck.py:19",
+     "scripts/asteroid_m/start2_3.py:28"
+    ]
+   }
+  }
+ },
+ "mdown": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "astroid_m/visit1/asteroid2_1"
+  ],
+  "get_zones": [
+   "astroid_m/visit1/asteroid2_1"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   ""
+  ],
+  "n_set": 1,
+  "n_get": 1,
+  "sites": {
+   "set": {
+    "astroid_m/visit1/asteroid2_1": [
+     "scripts/asteroid_m/mystiquepain.py:9"
+    ]
+   },
+   "get": {
+    "astroid_m/visit1/asteroid2_1": [
+     "scripts/asteroid_m/mystiquepain.py:3"
+    ]
+   }
+  }
+ },
+ "sabredead": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "astroid_m/visit1/asteroid2_1",
+   "mount/mount/mount2"
+  ],
+  "get_zones": [
+   "mount/mount/mount2"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "",
+   "?"
+  ],
+  "n_set": 4,
+  "n_get": 1,
+  "sites": {
+   "set": {
+    "astroid_m/visit1/asteroid2_1": [
+     "scripts/asteroid_m/sabretoothdeath.py:3",
+     "scripts/asteroid_m/stage4.py:7"
+    ],
+    "mount/mount/mount2": [
+     "scripts/mount/sabreressurrect.py:4",
+     "scripts/mount/sabretoothdeath.py:3"
+    ]
+   },
+   "get": {
+    "mount/mount/mount2": [
+     "scripts/mount/mountoutro.py:7"
+    ]
+   }
+  }
+ },
+ "ast_int2": {
+  "kind": [
+   "mflag"
+  ],
+  "set_zones": [
+   "astroid_m/visit1/asteroid2_3"
+  ],
+  "get_zones": [
+   "astroid_m/visit1/asteroid2_3"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "asteroid_int2"
+  ],
+  "n_set": 1,
+  "n_get": 1,
+  "sites": {
+   "set": {
+    "astroid_m/visit1/asteroid2_3": [
+     "scripts/asteroid_m/start2_3.py:38"
+    ]
+   },
+   "get": {
+    "astroid_m/visit1/asteroid2_3": [
+     "scripts/asteroid_m/start2_3.py:3"
+    ]
+   }
+  }
+ },
+ "ast_rock": {
+  "kind": [
+   "mflag"
+  ],
+  "set_zones": [
+   "astroid_m/visit1/asteroid1_1"
+  ],
+  "get_zones": [
+   "astroid_m/visit1/asteroid1_1"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "asteroid_rock"
+  ],
+  "n_set": 1,
+  "n_get": 1,
+  "sites": {
+   "set": {
+    "astroid_m/visit1/asteroid1_1": [
+     "scripts/asteroid_m/start_asteroid_m.py:13"
+    ]
+   },
+   "get": {
+    "astroid_m/visit1/asteroid1_1": [
+     "scripts/asteroid_m/start_asteroid_m.py:3"
+    ]
+   }
+  }
+ },
+ "astral1": {
+  "kind": [
+   "mflag",
+   "mvar"
+  ],
+  "set_zones": [
+   "astral/ast1/astral1_1",
+   "astral/ast1/astral1_3",
+   "astral/ast1/astral4_3",
+   "astral/savepx/astral1_1",
+   "astral/savepx/astral1_3"
+  ],
+  "get_zones": [
+   "astral/ast1/astral1_1",
+   "astral/ast1/astral1_3",
+   "astral/ast1/astral4_3",
+   "astral/savepx/astral1_1",
+   "astral/savepx/astral1_3",
+   "weapon_x/secret/wx3_3"
+  ],
+  "read_without_local_set": [
+   "weapon_x/secret/wx3_3"
+  ],
+  "needs_game_scope": true,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "?",
+   "astral1",
+   "astral1b",
+   "secret_wx"
+  ],
+  "n_set": 13,
+  "n_get": 12,
+  "sites": {
+   "set": {
+    "astral/ast1/astral1_3": [
+     "scripts/astral/ast1/1_3plat2.py:7",
+     "scripts/astral/ast1/lever_1_3.py:26"
+    ],
+    "astral/savepx/astral1_3": [
+     "scripts/astral/ast1/1_3plat2.py:7",
+     "scripts/astral/ast1/lever_1_3.py:26"
+    ],
+    "astral/ast1/astral1_1": [
+     "scripts/astral/ast1/astral1_1.py:23",
+     "scripts/astral/ast1/lever_1_1.py:26",
+     "scripts/astral/ast1/lever_left.py:27",
+     "scripts/astral/ast1/lever_right.py:29"
+    ],
+    "astral/savepx/astral1_1": [
+     "scripts/astral/ast1/astral1_1.py:23",
+     "scripts/astral/ast1/lever_1_1.py:26",
+     "scripts/astral/ast1/lever_left.py:27",
+     "scripts/astral/ast1/lever_right.py:29"
+    ],
+    "astral/ast1/astral4_3": [
+     "scripts/astral/ast1/supershades_defeated.py:3"
+    ]
+   },
+   "get": {
+    "astral/ast1/astral1_1": [
+     "scripts/astral/ast1/astral1_1.py:4",
+     "scripts/astral/ast1/astral1_1.py:8",
+     "scripts/astral/ast1/astral1_1.py:12"
+    ],
+    "astral/savepx/astral1_1": [
+     "scripts/astral/ast1/astral1_1.py:4",
+     "scripts/astral/ast1/astral1_1.py:8",
+     "scripts/astral/ast1/astral1_1.py:12"
+    ],
+    "astral/ast1/astral1_3": [
+     "scripts/astral/ast1/astral1_3.py:4",
+     "scripts/astral/ast1/astral1_3.py:10"
+    ],
+    "astral/savepx/astral1_3": [
+     "scripts/astral/ast1/astral1_3.py:4",
+     "scripts/astral/ast1/astral1_3.py:10"
+    ],
+    "astral/ast1/astral4_3": [
+     "scripts/common/astral_or_wx.py:8"
+    ],
+    "weapon_x/secret/wx3_3": [
+     "scripts/common/astral_or_wx.py:8"
+    ]
+   }
+  }
+ },
+ "my_var": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "astral/ast1/astral1_1",
+   "astral/ast3/astral3_2",
+   "astral/savepx/astral1_1",
+   "astral/savepx/astral2_1"
+  ],
+  "get_zones": [
+   "astral/ast1/astral1_1",
+   "astral/ast3/astral3_2",
+   "astral/savepx/astral1_1",
+   "astral/savepx/astral2_1"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "?",
+   "astral1",
+   "astral2",
+   "astral3"
+  ],
+  "n_set": 4,
+  "n_get": 4,
+  "sites": {
+   "set": {
+    "astral/ast1/astral1_1": [
+     "scripts/astral/ast1/astral1_1.py:19"
+    ],
+    "astral/savepx/astral1_1": [
+     "scripts/astral/ast1/astral1_1.py:19"
+    ],
+    "astral/ast3/astral3_2": [
+     "scripts/astral/ast3/astral3_2.py:6"
+    ],
+    "astral/savepx/astral2_1": [
+     "scripts/astral/savepx/astral2_1.py:6"
+    ]
+   },
+   "get": {
+    "astral/ast1/astral1_1": [
+     "scripts/astral/ast1/astral1_1.py:16"
+    ],
+    "astral/savepx/astral1_1": [
+     "scripts/astral/ast1/astral1_1.py:16"
+    ],
+    "astral/ast3/astral3_2": [
+     "scripts/astral/ast3/astral3_2.py:3"
+    ],
+    "astral/savepx/astral2_1": [
+     "scripts/astral/savepx/astral2_1.py:3"
+    ]
+   }
+  }
+ },
+ "sw1State": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "astral/ast1/astral1_1",
+   "astral/savepx/astral1_1"
+  ],
+  "get_zones": [
+   "astral/ast1/astral1_1",
+   "astral/savepx/astral1_1"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "?",
+   "astral1"
+  ],
+  "n_set": 6,
+  "n_get": 2,
+  "sites": {
+   "set": {
+    "astral/ast1/astral1_1": [
+     "scripts/astral/ast1/teleportswitch1.py:7",
+     "scripts/astral/ast1/teleportswitch1.py:14",
+     "scripts/astral/ast1/teleportswitch1.py:21"
+    ],
+    "astral/savepx/astral1_1": [
+     "scripts/astral/ast1/teleportswitch1.py:7",
+     "scripts/astral/ast1/teleportswitch1.py:14",
+     "scripts/astral/ast1/teleportswitch1.py:21"
+    ]
+   },
+   "get": {
+    "astral/ast1/astral1_1": [
+     "scripts/astral/ast1/teleportswitch1.py:3"
+    ],
+    "astral/savepx/astral1_1": [
+     "scripts/astral/ast1/teleportswitch1.py:3"
+    ]
+   }
+  }
+ },
+ "astral2": {
+  "kind": [
+   "mflag"
+  ],
+  "set_zones": [
+   "astral/ast3/astral3_2",
+   "astral/ast3/astral3_3",
+   "astral/ast3/astral3_4",
+   "astral/ast3/astral3_5"
+  ],
+  "get_zones": [
+   "astral/ast3/astral3_2",
+   "astral/ast3/astral3_4"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "astral2"
+  ],
+  "n_set": 8,
+  "n_get": 14,
+  "sites": {
+   "set": {
+    "astral/ast3/astral3_4": [
+     "scripts/astral/ast3/3_4plat1.py:7",
+     "scripts/astral/ast3/3_4plat2.py:7",
+     "scripts/astral/ast3/acquire_wisdom.py:4"
+    ],
+    "astral/ast3/astral3_5": [
+     "scripts/astral/ast3/acquire_honor.py:4"
+    ],
+    "astral/ast3/astral3_3": [
+     "scripts/astral/ast3/acquire_knowledge.py:5"
+    ],
+    "astral/ast3/astral3_2": [
+     "scripts/astral/ast3/placeobject.py:11",
+     "scripts/astral/ast3/placeobject.py:17",
+     "scripts/astral/ast3/placeobject.py:23"
+    ]
+   },
+   "get": {
+    "astral/ast3/astral3_2": [
+     "scripts/astral/ast3/astral3_2.py:19",
+     "scripts/astral/ast3/astral3_2.py:20",
+     "scripts/astral/ast3/astral3_2.py:21",
+     "scripts/astral/ast3/placeobject.py:3",
+     "scripts/astral/ast3/placeobject.py:4",
+     "scripts/astral/ast3/placeobject.py:5",
+     "scripts/astral/ast3/placeobject.py:6",
+     "scripts/astral/ast3/placeobject.py:7",
+     "scripts/astral/ast3/placeobject.py:8",
+     "scripts/astral/ast3/placeobject.py:27",
+     "scripts/astral/ast3/placeobject.py:28",
+     "scripts/astral/ast3/placeobject.py:29"
+    ],
+    "astral/ast3/astral3_4": [
+     "scripts/astral/ast3/astral3_4.py:4",
+     "scripts/astral/ast3/astral3_4.py:8"
+    ]
+   }
+  }
+ },
+ "portalfx": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "astral/ast3/astral3_2"
+  ],
+  "get_zones": [
+   "astral/ast3/astral3_2"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "astral2"
+  ],
+  "n_set": 1,
+  "n_get": 1,
+  "sites": {
+   "set": {
+    "astral/ast3/astral3_2": [
+     "scripts/astral/ast3/conv3_7_2_1b.py:35"
+    ]
+   },
+   "get": {
+    "astral/ast3/astral3_2": [
+     "scripts/astral/ast3/astral3_2.py:10"
+    ]
+   }
+  }
+ },
+ "deadguys": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "astral/ast3/colosseum"
+  ],
+  "get_zones": [
+   "astral/ast3/colosseum"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "?"
+  ],
+  "n_set": 3,
+  "n_get": 2,
+  "sites": {
+   "set": {
+    "astral/ast3/colosseum": [
+     "scripts/astral/ast3/dopple_death.py:10",
+     "scripts/astral/ast3/dopple_death.py:15",
+     "scripts/astral/ast3/wolvressurrect.py:8"
+    ]
+   },
+   "get": {
+    "astral/ast3/colosseum": [
+     "scripts/astral/ast3/dopple_death.py:3",
+     "scripts/astral/ast3/wolvressurrect.py:4"
+    ]
+   }
+  }
+ },
+ "wolvdead": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "astral/ast3/colosseum"
+  ],
+  "get_zones": [
+   "astral/ast3/colosseum"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "?"
+  ],
+  "n_set": 2,
+  "n_get": 1,
+  "sites": {
+   "set": {
+    "astral/ast3/colosseum": [
+     "scripts/astral/ast3/dopple_death.py:11",
+     "scripts/astral/ast3/wolvressurrect.py:10"
+    ]
+   },
+   "get": {
+    "astral/ast3/colosseum": [
+     "scripts/astral/ast3/dopple_death.py:7"
+    ]
+   }
+  }
+ },
+ "deaddmns": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "astral/ast3/astral3_3"
+  ],
+  "get_zones": [
+   "astral/ast3/astral3_3"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "astral2"
+  ],
+  "n_set": 2,
+  "n_get": 2,
+  "sites": {
+   "set": {
+    "astral/ast3/astral3_3": [
+     "scripts/astral/ast3/firedemondeath.py:5",
+     "scripts/astral/ast3/spawnfiredemons.py:7"
+    ]
+   },
+   "get": {
+    "astral/ast3/astral3_3": [
+     "scripts/astral/ast3/firedemondeath.py:3",
+     "scripts/astral/ast3/spawnfiredemons.py:3"
+    ]
+   }
+  }
+ },
+ "convdone": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "astral/ast3/astral3_3"
+  ],
+  "get_zones": [
+   "astral/ast3/astral3_3"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "astral2"
+  ],
+  "n_set": 1,
+  "n_get": 1,
+  "sites": {
+   "set": {
+    "astral/ast3/astral3_3": [
+     "scripts/astral/ast3/pyro_start.py:3"
+    ]
+   },
+   "get": {
+    "astral/ast3/astral3_3": [
+     "scripts/astral/ast3/pyrocam2.py:11"
+    ]
+   }
+  }
+ },
+ "astral3": {
+  "kind": [
+   "mflag"
+  ],
+  "set_zones": [
+   "astral/savepx/astral2_2"
+  ],
+  "get_zones": [
+   "astral/savepx/astral2_2"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "astral3"
+  ],
+  "n_set": 1,
+  "n_get": 1,
+  "sites": {
+   "set": {
+    "astral/savepx/astral2_2": [
+     "scripts/astral/savepx/lever_2_2.py:26"
+    ]
+   },
+   "get": {
+    "astral/savepx/astral2_2": [
+     "scripts/astral/savepx/astral2_2.py:3"
+    ]
+   }
+  }
+ },
+ "sk_defeated": {
+  "kind": [
+   "gvar"
+  ],
+  "set_zones": [
+   "astral/savepx/final_astral"
+  ],
+  "get_zones": [
+   "astral/savepx/astral2_3"
+  ],
+  "read_without_local_set": [
+   "astral/savepx/astral2_3"
+  ],
+  "needs_game_scope": true,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "?",
+   "astral3"
+  ],
+  "n_set": 1,
+  "n_get": 1,
+  "sites": {
+   "set": {
+    "astral/savepx/final_astral": [
+     "scripts/astral/savepx/shadowking_defeated.py:7"
+    ]
+   },
+   "get": {
+    "astral/savepx/astral2_3": [
+     "scripts/astral/savepx/astral2_3.py:3"
+    ]
+   }
+  }
+ },
+ "shieldup": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "astral/savepx/final_astral"
+  ],
+  "get_zones": [
+   "astral/savepx/final_astral"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "?"
+  ],
+  "n_set": 3,
+  "n_get": 2,
+  "sites": {
+   "set": {
+    "astral/savepx/final_astral": [
+     "scripts/astral/savepx/dropshield.py:8",
+     "scripts/astral/savepx/sk1pain.py:12",
+     "scripts/astral/savepx/sk1pain.py:28"
+    ]
+   },
+   "get": {
+    "astral/savepx/final_astral": [
+     "scripts/astral/savepx/dropshield.py:4",
+     "scripts/astral/savepx/sk1pain.py:6"
+    ]
+   }
+  }
+ },
+ "lasthealth": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "astral/savepx/final_astral"
+  ],
+  "get_zones": [
+   "astral/savepx/final_astral"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "?"
+  ],
+  "n_set": 3,
+  "n_get": 1,
+  "sites": {
+   "set": {
+    "astral/savepx/final_astral": [
+     "scripts/astral/savepx/dropshield.py:10",
+     "scripts/astral/savepx/sk1pain.py:13",
+     "scripts/astral/savepx/sk1pain.py:29"
+    ]
+   },
+   "get": {
+    "astral/savepx/final_astral": [
+     "scripts/astral/savepx/sk1pain.py:9"
+    ]
+   }
+  }
+ },
+ "deadsks": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "astral/savepx/final_astral"
+  ],
+  "get_zones": [
+   "astral/savepx/final_astral"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "?"
+  ],
+  "n_set": 1,
+  "n_get": 1,
+  "sites": {
+   "set": {
+    "astral/savepx/final_astral": [
+     "scripts/astral/savepx/shadowking_defeated.py:5"
+    ]
+   },
+   "get": {
+    "astral/savepx/final_astral": [
+     "scripts/astral/savepx/shadowking_defeated.py:3"
+    ]
+   }
+  }
+ },
+ "a_w_q": {
+  "kind": [
+   "gvar"
+  ],
+  "set_zones": [
+   "astral/ast1/astral4_3",
+   "weapon_x/secret/wx3_3"
+  ],
+  "get_zones": [
+   "astral/ast1/astral4_3",
+   "weapon_x/secret/wx3_3"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "astral1b",
+   "secret_wx"
+  ],
+  "n_set": 2,
+  "n_get": 2,
+  "sites": {
+   "set": {
+    "astral/ast1/astral4_3": [
+     "scripts/common/astral_or_wx.py:16"
+    ],
+    "weapon_x/secret/wx3_3": [
+     "scripts/common/astral_or_wx.py:16"
+    ]
+   },
+   "get": {
+    "astral/ast1/astral4_3": [
+     "scripts/common/astral_or_wx.py:6"
+    ],
+    "weapon_x/secret/wx3_3": [
+     "scripts/common/astral_or_wx.py:6"
+    ]
+   }
+  }
+ },
+ "sec_wx": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "weapon_x/secret/wx3_1"
+  ],
+  "get_zones": [
+   "astral/ast1/astral4_3",
+   "weapon_x/secret/wx3_3"
+  ],
+  "read_without_local_set": [
+   "astral/ast1/astral4_3",
+   "weapon_x/secret/wx3_3"
+  ],
+  "needs_game_scope": true,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "astral1b",
+   "secret_wx"
+  ],
+  "n_set": 1,
+  "n_get": 2,
+  "sites": {
+   "set": {
+    "weapon_x/secret/wx3_1": [
+     "scripts/weapon_x/secret/wx3_1.py:10"
+    ]
+   },
+   "get": {
+    "astral/ast1/astral4_3": [
+     "scripts/common/astral_or_wx.py:11"
+    ],
+    "weapon_x/secret/wx3_3": [
+     "scripts/common/astral_or_wx.py:11"
+    ]
+   }
+  }
+ },
+ "ftalk": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "mansion/man1a/subbasement1a"
+  ],
+  "get_zones": [
+   "mansion/man1a/subbasement1a"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "mansion1"
+  ],
+  "n_set": 1,
+  "n_get": 1,
+  "sites": {
+   "set": {
+    "mansion/man1a/subbasement1a": [
+     "scripts/common/hint_forgeshop.py:6"
+    ]
+   },
+   "get": {
+    "mansion/man1a/subbasement1a": [
+     "scripts/common/hint_forgeshop.py:4"
+    ]
+   }
+  }
+ },
+ "xpips": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "arbiter/arena_sewers1",
+   "arena/arena_arb1",
+   "arena/arena_arb2",
+   "arena/arena_dr",
+   "arena/arena_haarp1",
+   "arena/arena_mansion1",
+   "arena/arena_nuke1",
+   "arena/arena_nyc1",
+   "arena/arena_nyc2",
+   "arena/arena_sewers1",
+   "arena/arena_snow1"
+  ],
+  "get_zones": [
+   "arbiter/arena_sewers1",
+   "arena/arena_arb1",
+   "arena/arena_arb2",
+   "arena/arena_dr",
+   "arena/arena_haarp1",
+   "arena/arena_mansion1",
+   "arena/arena_nuke1",
+   "arena/arena_nyc1",
+   "arena/arena_nyc2",
+   "arena/arena_sewers1",
+   "arena/arena_snow1"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "?"
+  ],
+  "n_set": 22,
+  "n_get": 11,
+  "sites": {
+   "set": {
+    "arbiter/arena_sewers1": [
+     "scripts/common/kingofhillxpip.py:5",
+     "scripts/common/kingofhillxpip.py:7"
+    ],
+    "arena/arena_arb1": [
+     "scripts/common/kingofhillxpip.py:5",
+     "scripts/common/kingofhillxpip.py:7"
+    ],
+    "arena/arena_arb2": [
+     "scripts/common/kingofhillxpip.py:5",
+     "scripts/common/kingofhillxpip.py:7"
+    ],
+    "arena/arena_dr": [
+     "scripts/common/kingofhillxpip.py:5",
+     "scripts/common/kingofhillxpip.py:7"
+    ],
+    "arena/arena_haarp1": [
+     "scripts/common/kingofhillxpip.py:5",
+     "scripts/common/kingofhillxpip.py:7"
+    ],
+    "arena/arena_mansion1": [
+     "scripts/common/kingofhillxpip.py:5",
+     "scripts/common/kingofhillxpip.py:7"
+    ],
+    "arena/arena_nuke1": [
+     "scripts/common/kingofhillxpip.py:5",
+     "scripts/common/kingofhillxpip.py:7"
+    ],
+    "arena/arena_nyc1": [
+     "scripts/common/kingofhillxpip.py:5",
+     "scripts/common/kingofhillxpip.py:7"
+    ],
+    "arena/arena_nyc2": [
+     "scripts/common/kingofhillxpip.py:5",
+     "scripts/common/kingofhillxpip.py:7"
+    ],
+    "arena/arena_sewers1": [
+     "scripts/common/kingofhillxpip.py:5",
+     "scripts/common/kingofhillxpip.py:7"
+    ],
+    "arena/arena_snow1": [
+     "scripts/common/kingofhillxpip.py:5",
+     "scripts/common/kingofhillxpip.py:7"
+    ]
+   },
+   "get": {
+    "arbiter/arena_sewers1": [
+     "scripts/common/kingofhillxpip.py:3"
+    ],
+    "arena/arena_arb1": [
+     "scripts/common/kingofhillxpip.py:3"
+    ],
+    "arena/arena_arb2": [
+     "scripts/common/kingofhillxpip.py:3"
+    ],
+    "arena/arena_dr": [
+     "scripts/common/kingofhillxpip.py:3"
+    ],
+    "arena/arena_haarp1": [
+     "scripts/common/kingofhillxpip.py:3"
+    ],
+    "arena/arena_mansion1": [
+     "scripts/common/kingofhillxpip.py:3"
+    ],
+    "arena/arena_nuke1": [
+     "scripts/common/kingofhillxpip.py:3"
+    ],
+    "arena/arena_nyc1": [
+     "scripts/common/kingofhillxpip.py:3"
+    ],
+    "arena/arena_nyc2": [
+     "scripts/common/kingofhillxpip.py:3"
+    ],
+    "arena/arena_sewers1": [
+     "scripts/common/kingofhillxpip.py:3"
+    ],
+    "arena/arena_snow1": [
+     "scripts/common/kingofhillxpip.py:3"
+    ]
+   }
+  }
+ },
+ "showdem": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "demo/ext/haarp_ext_boss",
+   "haarp/ext/haarp_ext_boss"
+  ],
+  "get_zones": [
+   "demo/ext/haarp_ext_boss",
+   "haarp/ext/haarp_ext_boss"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "?"
+  ],
+  "n_set": 2,
+  "n_get": 2,
+  "sites": {
+   "set": {
+    "demo/ext/haarp_ext_boss": [
+     "scripts/haarp/ext/elevator1.py:23"
+    ],
+    "haarp/ext/haarp_ext_boss": [
+     "scripts/haarp/ext/elevator1.py:23"
+    ]
+   },
+   "get": {
+    "demo/ext/haarp_ext_boss": [
+     "scripts/haarp/ext/elevator1.py:3"
+    ],
+    "haarp/ext/haarp_ext_boss": [
+     "scripts/haarp/ext/elevator1.py:3"
+    ]
+   }
+  }
+ },
+ "fhaarp": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "haarp/ext/haarp_ext01",
+   "haarp/ext/haarp_ext02",
+   "haarp/ext/haarp_ext03"
+  ],
+  "get_zones": [
+   "haarp/ext/haarp_ext01",
+   "haarp/ext/haarp_ext02"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "haarp"
+  ],
+  "n_set": 3,
+  "n_get": 2,
+  "sites": {
+   "set": {
+    "haarp/ext/haarp_ext01": [
+     "scripts/haarp/ext/haarp_ext01.py:4"
+    ],
+    "haarp/ext/haarp_ext02": [
+     "scripts/haarp/ext/haarp_ext02.py:4"
+    ],
+    "haarp/ext/haarp_ext03": [
+     "scripts/haarp/ext/haarp_ext03.py:4"
+    ]
+   },
+   "get": {
+    "haarp/ext/haarp_ext01": [
+     "scripts/haarp/ext/fence_obj.py:6"
+    ],
+    "haarp/ext/haarp_ext02": [
+     "scripts/haarp/ext/fence_obj.py:6"
+    ]
+   }
+  }
+ },
+ "tank": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "haarp/ext/haarp_ext01",
+   "haarp/ext/haarp_ext02"
+  ],
+  "get_zones": [
+   "haarp/ext/haarp_ext02"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "haarp"
+  ],
+  "n_set": 2,
+  "n_get": 1,
+  "sites": {
+   "set": {
+    "haarp/ext/haarp_ext01": [
+     "scripts/haarp/ext/fence_obj.py:15"
+    ],
+    "haarp/ext/haarp_ext02": [
+     "scripts/haarp/ext/fence_obj.py:15"
+    ]
+   },
+   "get": {
+    "haarp/ext/haarp_ext02": [
+     "scripts/haarp/ext/trigger_tank.py:3"
+    ]
+   }
+  }
+ },
+ "sawintro": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "haarp/ext/haarp_ext01",
+   "mastermold/mastermold1"
+  ],
+  "get_zones": [
+   "haarp/ext/haarp_ext01",
+   "mastermold/mastermold1"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "asteroid_mm",
+   "haarp"
+  ],
+  "n_set": 2,
+  "n_get": 2,
+  "sites": {
+   "set": {
+    "haarp/ext/haarp_ext01": [
+     "scripts/haarp/ext/haarp_ext01.py:8"
+    ],
+    "mastermold/mastermold1": [
+     "scripts/mastermold/mastermold1.py:5"
+    ]
+   },
+   "get": {
+    "haarp/ext/haarp_ext01": [
+     "scripts/haarp/ext/haarp_ext01.py:3"
+    ],
+    "mastermold/mastermold1": [
+     "scripts/mastermold/mastermold1.py:3"
+    ]
+   }
+  }
+ },
+ "sawgate": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [],
+  "get_zones": [
+   "haarp/ext/haarp_ext02"
+  ],
+  "read_without_local_set": [
+   "haarp/ext/haarp_ext02"
+  ],
+  "needs_game_scope": false,
+  "never_set": true,
+  "never_read": false,
+  "missions": [
+   "haarp"
+  ],
+  "n_set": 0,
+  "n_get": 1,
+  "sites": {
+   "set": {},
+   "get": {
+    "haarp/ext/haarp_ext02": [
+     "scripts/haarp/ext/haarp_ext02.py:3"
+    ]
+   }
+  }
+ },
+ "ivisit": {
+  "kind": [
+   "mflag",
+   "mvar"
+  ],
+  "set_zones": [
+   "haarp/ext/haarp_ext03",
+   "mansion/man7/status_meeting",
+   "mansion/man7/subbasement7"
+  ],
+  "get_zones": [
+   "haarp/ext/haarp_ext03",
+   "mansion/man7/subbasement7"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "?",
+   "haarp",
+   "mansion7"
+  ],
+  "n_set": 3,
+  "n_get": 2,
+  "sites": {
+   "set": {
+    "haarp/ext/haarp_ext03": [
+     "scripts/haarp/ext/haarp_ext03.py:7"
+    ],
+    "mansion/man7/status_meeting": [
+     "scripts/mansion/man7/status_meeting.py:10"
+    ],
+    "mansion/man7/subbasement7": [
+     "scripts/mansion/man7/subbasement7.py:5"
+    ]
+   },
+   "get": {
+    "haarp/ext/haarp_ext03": [
+     "scripts/haarp/ext/haarp_ext03.py:3"
+    ],
+    "mansion/man7/subbasement7": [
+     "scripts/mansion/man7/subbasement7.py:3"
+    ]
+   }
+  }
+ },
+ "fightable": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "demo/ext/haarp_ext_boss",
+   "haarp/ext/haarp_ext_boss"
+  ],
+  "get_zones": [
+   "demo/ext/haarp_ext_boss",
+   "haarp/ext/haarp_ext_boss"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "?"
+  ],
+  "n_set": 6,
+  "n_get": 2,
+  "sites": {
+   "set": {
+    "demo/ext/haarp_ext_boss": [
+     "scripts/haarp/ext/podiumdown_new.py:4",
+     "scripts/haarp/ext/toadpain_new.py:16",
+     "scripts/haarp/ext/toadpain_new.py:44"
+    ],
+    "haarp/ext/haarp_ext_boss": [
+     "scripts/haarp/ext/podiumdown_new.py:4",
+     "scripts/haarp/ext/toadpain_new.py:16",
+     "scripts/haarp/ext/toadpain_new.py:44"
+    ]
+   },
+   "get": {
+    "demo/ext/haarp_ext_boss": [
+     "scripts/haarp/ext/toadpain_new.py:14"
+    ],
+    "haarp/ext/haarp_ext_boss": [
+     "scripts/haarp/ext/toadpain_new.py:14"
+    ]
+   }
+  }
+ },
+ "pbroke": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "demo/ext/haarp_ext_boss",
+   "haarp/ext/haarp_ext_boss"
+  ],
+  "get_zones": [
+   "demo/ext/haarp_ext_boss",
+   "haarp/ext/haarp_ext_boss"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "?"
+  ],
+  "n_set": 2,
+  "n_get": 4,
+  "sites": {
+   "set": {
+    "demo/ext/haarp_ext_boss": [
+     "scripts/haarp/ext/podiumdown_new.py:9"
+    ],
+    "haarp/ext/haarp_ext_boss": [
+     "scripts/haarp/ext/podiumdown_new.py:9"
+    ]
+   },
+   "get": {
+    "demo/ext/haarp_ext_boss": [
+     "scripts/haarp/ext/podiumdown_new.py:7",
+     "scripts/haarp/ext/toadpain_new.py:4"
+    ],
+    "haarp/ext/haarp_ext_boss": [
+     "scripts/haarp/ext/podiumdown_new.py:7",
+     "scripts/haarp/ext/toadpain_new.py:4"
+    ]
+   }
+  }
+ },
+ "haarp": {
+  "kind": [
+   "mflag"
+  ],
+  "set_zones": [
+   "haarp/ext/haarp_ext02",
+   "haarp/ext/haarp_ext04"
+  ],
+  "get_zones": [
+   "haarp/ext/haarp_ext02",
+   "haarp/ext/haarp_ext04"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "haarp"
+  ],
+  "n_set": 6,
+  "n_get": 6,
+  "sites": {
+   "set": {
+    "haarp/ext/haarp_ext02": [
+     "scripts/haarp/ext/tank_reveal.py:8",
+     "scripts/haarp/ext/tank_reveal.py:9",
+     "scripts/haarp/ext/tank_reveal.py:10"
+    ],
+    "haarp/ext/haarp_ext04": [
+     "scripts/haarp/ext/tank_reveal2.py:7",
+     "scripts/haarp/ext/tank_reveal2.py:8",
+     "scripts/haarp/ext/tank_reveal2.py:9"
+    ]
+   },
+   "get": {
+    "haarp/ext/haarp_ext02": [
+     "scripts/haarp/ext/tankbase_setup1.py:3",
+     "scripts/haarp/ext/tankturret_setup1.py:3",
+     "scripts/haarp/ext/tank_setup.py:3"
+    ],
+    "haarp/ext/haarp_ext04": [
+     "scripts/haarp/ext/tankbase_setup2.py:3",
+     "scripts/haarp/ext/tankturret_setup2.py:3",
+     "scripts/haarp/ext/tank_setup.py:3"
+    ]
+   }
+  }
+ },
+ "haarp3": {
+  "kind": [
+   "mflag"
+  ],
+  "set_zones": [
+   "haarp/ext/haarp_ext04"
+  ],
+  "get_zones": [
+   "haarp/ext/haarp_ext04"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "haarp"
+  ],
+  "n_set": 1,
+  "n_get": 1,
+  "sites": {
+   "set": {
+    "haarp/ext/haarp_ext04": [
+     "maps/haarp/ext/haarp_ext04.eng (inline)"
+    ]
+   },
+   "get": {
+    "haarp/ext/haarp_ext04": [
+     "scripts/haarp/ext/tank_destroyed_again.py:3"
+    ]
+   }
+  }
+ },
+ "supers": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "demo/ext/haarp_ext_boss",
+   "haarp/ext/haarp_ext_boss"
+  ],
+  "get_zones": [
+   "demo/ext/haarp_ext_boss",
+   "haarp/ext/haarp_ext_boss"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "?"
+  ],
+  "n_set": 2,
+  "n_get": 2,
+  "sites": {
+   "set": {
+    "demo/ext/haarp_ext_boss": [
+     "scripts/haarp/ext/toadpain_new.py:54"
+    ],
+    "haarp/ext/haarp_ext_boss": [
+     "scripts/haarp/ext/toadpain_new.py:54"
+    ]
+   },
+   "get": {
+    "demo/ext/haarp_ext_boss": [
+     "scripts/haarp/ext/toadpain_new.py:52"
+    ],
+    "haarp/ext/haarp_ext_boss": [
+     "scripts/haarp/ext/toadpain_new.py:52"
+    ]
+   }
+  }
+ },
+ "hive1": {
+  "kind": [
+   "mflag"
+  ],
+  "set_zones": [
+   "hive/h_ext/hive1_1_1"
+  ],
+  "get_zones": [
+   "hive/h_ext/hive1_1_1"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "hive1"
+  ],
+  "n_set": 1,
+  "n_get": 1,
+  "sites": {
+   "set": {
+    "hive/h_ext/hive1_1_1": [
+     "scripts/hive/h_ext/hive1_1_1.py:5"
+    ]
+   },
+   "get": {
+    "hive/h_ext/hive1_1_1": [
+     "scripts/hive/h_ext/hive1_1_1.py:3"
+    ]
+   }
+  }
+ },
+ "<rescuee>": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "hive/h_int/hive2_2_4"
+  ],
+  "get_zones": [
+   "hive/h_int/hive2_2_4"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "hive2"
+  ],
+  "n_set": 1,
+  "n_get": 1,
+  "sites": {
+   "set": {
+    "hive/h_int/hive2_2_4": [
+     "scripts/hive/h_int/hive_trigger_rescue.py:8"
+    ]
+   },
+   "get": {
+    "hive/h_int/hive2_2_4": [
+     "scripts/hive/h_int/hive_trigger_rescue.py:4"
+    ]
+   }
+  }
+ },
+ "ported": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "hive/h_int/hive2_2_4"
+  ],
+  "get_zones": [
+   "hive/h_int/hive2_2_4"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "hive2"
+  ],
+  "n_set": 1,
+  "n_get": 1,
+  "sites": {
+   "set": {
+    "hive/h_int/hive2_2_4": [
+     "scripts/hive/h_int/telespot.py:22"
+    ]
+   },
+   "get": {
+    "hive/h_int/hive2_2_4": [
+     "scripts/hive/h_int/telespot.py:4"
+    ]
+   }
+  }
+ },
+ "deadbots": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "mansion/dr_mag/dr_mag01"
+  ],
+  "get_zones": [
+   "mansion/dr_mag/dr_mag01"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "dr_mag1"
+  ],
+  "n_set": 1,
+  "n_get": 1,
+  "sites": {
+   "set": {
+    "mansion/dr_mag/dr_mag01": [
+     "scripts/mansion/dr_mag/botdeath.py:5"
+    ]
+   },
+   "get": {
+    "mansion/dr_mag/dr_mag01": [
+     "scripts/mansion/dr_mag/botdeath.py:3"
+    ]
+   }
+  }
+ },
+ "deadbots3": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "mansion/dr_mag/dr_mag03"
+  ],
+  "get_zones": [
+   "mansion/dr_mag/dr_mag03"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "?"
+  ],
+  "n_set": 1,
+  "n_get": 1,
+  "sites": {
+   "set": {
+    "mansion/dr_mag/dr_mag03": [
+     "scripts/mansion/dr_mag/botspawn2.py:6"
+    ]
+   },
+   "get": {
+    "mansion/dr_mag/dr_mag03": [
+     "scripts/mansion/dr_mag/botspawn2.py:4"
+    ]
+   }
+  }
+ },
+ "dr_mag1": {
+  "kind": [
+   "gvar",
+   "mvar"
+  ],
+  "set_zones": [
+   "mansion/dr_mag/dr_mag03",
+   "mansion/man2/subbasement2"
+  ],
+  "get_zones": [
+   "mansion/man2/subbasement2"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "?",
+   "mansion2"
+  ],
+  "n_set": 4,
+  "n_get": 1,
+  "sites": {
+   "set": {
+    "mansion/dr_mag/dr_mag03": [
+     "scripts/mansion/dr_mag/botspawn2.py:23",
+     "scripts/mansion/dr_mag/check_magma_health.py:6",
+     "scripts/mansion/dr_mag/fmvexit.py:6"
+    ],
+    "mansion/man2/subbasement2": [
+     "scripts/mansion/man2/subbasement2.py:23"
+    ]
+   },
+   "get": {
+    "mansion/man2/subbasement2": [
+     "scripts/mansion/man2/subbasement2.py:4"
+    ]
+   }
+  }
+ },
+ "ffield": {
+  "kind": [
+   "mflag"
+  ],
+  "set_zones": [
+   "mansion/dr_mag/dr_mag01"
+  ],
+  "get_zones": [
+   "mansion/dr_mag/dr_mag01"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "dr_mag1"
+  ],
+  "n_set": 14,
+  "n_get": 7,
+  "sites": {
+   "set": {
+    "mansion/dr_mag/dr_mag01": [
+     "scripts/mansion/dr_mag/ff_a_remove.py:4",
+     "scripts/mansion/dr_mag/ff_b_remove.py:4",
+     "scripts/mansion/dr_mag/ff_c_remove.py:12",
+     "scripts/mansion/dr_mag/ff_d_remove.py:11",
+     "scripts/mansion/dr_mag/ff_e_remove.py:11",
+     "scripts/mansion/dr_mag/ff_f_remove.py:11",
+     "scripts/mansion/dr_mag/ff_g_remove.py:11",
+     "scripts/mansion/dr_mag/force_field_a.py:7",
+     "scripts/mansion/dr_mag/force_field_b.py:7",
+     "scripts/mansion/dr_mag/force_field_c.py:9",
+     "scripts/mansion/dr_mag/force_field_d.py:7",
+     "scripts/mansion/dr_mag/force_field_e.py:9",
+     "scripts/mansion/dr_mag/force_field_f.py:9",
+     "scripts/mansion/dr_mag/force_field_g.py:9"
+    ]
+   },
+   "get": {
+    "mansion/dr_mag/dr_mag01": [
+     "scripts/mansion/dr_mag/force_field_a.py:3",
+     "scripts/mansion/dr_mag/force_field_b.py:3",
+     "scripts/mansion/dr_mag/force_field_c.py:3",
+     "scripts/mansion/dr_mag/force_field_d.py:3",
+     "scripts/mansion/dr_mag/force_field_e.py:3",
+     "scripts/mansion/dr_mag/force_field_f.py:3",
+     "scripts/mansion/dr_mag/force_field_g.py:3"
+    ]
+   }
+  }
+ },
+ "actor_c": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "mansion/dr_mag/dr_mag01"
+  ],
+  "get_zones": [
+   "mansion/dr_mag/dr_mag01"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "dr_mag1"
+  ],
+  "n_set": 1,
+  "n_get": 1,
+  "sites": {
+   "set": {
+    "mansion/dr_mag/dr_mag01": [
+     "scripts/mansion/dr_mag/force_field_c.py:8"
+    ]
+   },
+   "get": {
+    "mansion/dr_mag/dr_mag01": [
+     "scripts/mansion/dr_mag/ff_c_remove.py:3"
+    ]
+   }
+  }
+ },
+ "actor_d": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [],
+  "get_zones": [
+   "mansion/dr_mag/dr_mag01"
+  ],
+  "read_without_local_set": [
+   "mansion/dr_mag/dr_mag01"
+  ],
+  "needs_game_scope": false,
+  "never_set": true,
+  "never_read": false,
+  "missions": [
+   "dr_mag1"
+  ],
+  "n_set": 0,
+  "n_get": 1,
+  "sites": {
+   "set": {},
+   "get": {
+    "mansion/dr_mag/dr_mag01": [
+     "scripts/mansion/dr_mag/ff_d_remove.py:3"
+    ]
+   }
+  }
+ },
+ "actor_e": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "mansion/dr_mag/dr_mag01"
+  ],
+  "get_zones": [
+   "mansion/dr_mag/dr_mag01"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "dr_mag1"
+  ],
+  "n_set": 1,
+  "n_get": 1,
+  "sites": {
+   "set": {
+    "mansion/dr_mag/dr_mag01": [
+     "scripts/mansion/dr_mag/force_field_e.py:8"
+    ]
+   },
+   "get": {
+    "mansion/dr_mag/dr_mag01": [
+     "scripts/mansion/dr_mag/ff_e_remove.py:3"
+    ]
+   }
+  }
+ },
+ "actor_f": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "mansion/dr_mag/dr_mag01"
+  ],
+  "get_zones": [
+   "mansion/dr_mag/dr_mag01"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "dr_mag1"
+  ],
+  "n_set": 1,
+  "n_get": 1,
+  "sites": {
+   "set": {
+    "mansion/dr_mag/dr_mag01": [
+     "scripts/mansion/dr_mag/force_field_f.py:8"
+    ]
+   },
+   "get": {
+    "mansion/dr_mag/dr_mag01": [
+     "scripts/mansion/dr_mag/ff_f_remove.py:3"
+    ]
+   }
+  }
+ },
+ "actor_g": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "mansion/dr_mag/dr_mag01"
+  ],
+  "get_zones": [
+   "mansion/dr_mag/dr_mag01"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "dr_mag1"
+  ],
+  "n_set": 1,
+  "n_get": 1,
+  "sites": {
+   "set": {
+    "mansion/dr_mag/dr_mag01": [
+     "scripts/mansion/dr_mag/force_field_g.py:8"
+    ]
+   },
+   "get": {
+    "mansion/dr_mag/dr_mag01": [
+     "scripts/mansion/dr_mag/ff_g_remove.py:3"
+    ]
+   }
+  }
+ },
+ "uniform": {
+  "kind": [
+   "gvar"
+  ],
+  "set_zones": [
+   "mansion/dr_mag2/mag_nyc4",
+   "mansion/man3/danger_room",
+   "mansion/man3/subbasement3b"
+  ],
+  "get_zones": [
+   "mansion/man3/hangar3",
+   "mansion/man3/mansion3_1",
+   "mansion/man3/mansion3_2",
+   "mansion/man3/subbasement3b"
+  ],
+  "read_without_local_set": [
+   "mansion/man3/hangar3",
+   "mansion/man3/mansion3_1",
+   "mansion/man3/mansion3_2"
+  ],
+  "needs_game_scope": true,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "dr_mag2",
+   "mansion3",
+   "mansion3_dangerroom"
+  ],
+  "n_set": 4,
+  "n_get": 9,
+  "sites": {
+   "set": {
+    "mansion/dr_mag2/mag_nyc4": [
+     "scripts/mansion/dr_mag2/endsidemission.py:3"
+    ],
+    "mansion/man3/danger_room": [
+     "scripts/mansion/man3/danger_room.py:3",
+     "scripts/mansion/man3/man3_2_setup.py:5"
+    ],
+    "mansion/man3/subbasement3b": [
+     "scripts/mansion/man3/man3_2_setup.py:5"
+    ]
+   },
+   "get": {
+    "mansion/man3/mansion3_1": [
+     "scripts/mansion/man3/2_1_11first.py:3",
+     "scripts/mansion/man3/2_1_12_5first.py:3",
+     "scripts/mansion/man3/2_1_5first.py:3",
+     "scripts/mansion/man3/conv2_1_12.py:3"
+    ],
+    "mansion/man3/subbasement3b": [
+     "scripts/mansion/man3/2_1_14first.py:3",
+     "scripts/mansion/man3/2_1_4first.py:3",
+     "scripts/mansion/man3/subbasement3b.py:4"
+    ],
+    "mansion/man3/hangar3": [
+     "scripts/mansion/man3/hangar3.py:7"
+    ],
+    "mansion/man3/mansion3_2": [
+     "scripts/mansion/man3/mansion3_2.py:3"
+    ]
+   }
+  }
+ },
+ "roomnum": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "demo/jugrnt/jugrnt01",
+   "mansion/jugrnt/jugrnt01"
+  ],
+  "get_zones": [
+   "demo/jugrnt/jugrnt01",
+   "mansion/jugrnt/jugrnt01"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "?",
+   "jug_fb"
+  ],
+  "n_set": 12,
+  "n_get": 2,
+  "sites": {
+   "set": {
+    "demo/jugrnt/jugrnt01": [
+     "scripts/mansion/jugrnt/classroom.py:4",
+     "scripts/mansion/jugrnt/jugrnt01.py:13",
+     "scripts/mansion/jugrnt/library.py:4",
+     "scripts/mansion/jugrnt/poolroom.py:4",
+     "scripts/mansion/jugrnt/profxroom.py:4",
+     "scripts/mansion/jugrnt/sittingroom.py:4"
+    ],
+    "mansion/jugrnt/jugrnt01": [
+     "scripts/mansion/jugrnt/classroom.py:4",
+     "scripts/mansion/jugrnt/jugrnt01.py:13",
+     "scripts/mansion/jugrnt/library.py:4",
+     "scripts/mansion/jugrnt/poolroom.py:4",
+     "scripts/mansion/jugrnt/profxroom.py:4",
+     "scripts/mansion/jugrnt/sittingroom.py:4"
+    ]
+   },
+   "get": {
+    "demo/jugrnt/jugrnt01": [
+     "scripts/mansion/jugrnt/jugpain.py:6"
+    ],
+    "mansion/jugrnt/jugrnt01": [
+     "scripts/mansion/jugrnt/jugpain.py:6"
+    ]
+   }
+  }
+ },
+ "roomtime": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "demo/jugrnt/jugrnt01",
+   "mansion/jugrnt/jugrnt01"
+  ],
+  "get_zones": [
+   "demo/jugrnt/jugrnt01",
+   "mansion/jugrnt/jugrnt01"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "?",
+   "jug_fb"
+  ],
+  "n_set": 2,
+  "n_get": 12,
+  "sites": {
+   "set": {
+    "demo/jugrnt/jugrnt01": [
+     "scripts/mansion/jugrnt/jugrnt01.py:12"
+    ],
+    "mansion/jugrnt/jugrnt01": [
+     "scripts/mansion/jugrnt/jugrnt01.py:12"
+    ]
+   },
+   "get": {
+    "demo/jugrnt/jugrnt01": [
+     "scripts/mansion/jugrnt/classroom.py:10",
+     "scripts/mansion/jugrnt/library.py:10",
+     "scripts/mansion/jugrnt/poolroom.py:10",
+     "scripts/mansion/jugrnt/profxroom.py:10",
+     "scripts/mansion/jugrnt/sittingroom.py:12",
+     "scripts/mansion/jugrnt/start.py:13"
+    ],
+    "mansion/jugrnt/jugrnt01": [
+     "scripts/mansion/jugrnt/classroom.py:10",
+     "scripts/mansion/jugrnt/library.py:10",
+     "scripts/mansion/jugrnt/poolroom.py:10",
+     "scripts/mansion/jugrnt/profxroom.py:10",
+     "scripts/mansion/jugrnt/sittingroom.py:12",
+     "scripts/mansion/jugrnt/start.py:13"
+    ]
+   }
+  }
+ },
+ "jug_fb": {
+  "kind": [
+   "gvar"
+  ],
+  "set_zones": [
+   "demo/jugrnt/jugrnt01",
+   "mansion/jugrnt/jugrnt01",
+   "mansion/man2/subbasement2"
+  ],
+  "get_zones": [
+   "mansion/man2/subbasement2"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "?",
+   "jug_fb",
+   "mansion2"
+  ],
+  "n_set": 3,
+  "n_get": 2,
+  "sites": {
+   "set": {
+    "demo/jugrnt/jugrnt01": [
+     "scripts/mansion/jugrnt/jugdead.py:3"
+    ],
+    "mansion/jugrnt/jugrnt01": [
+     "scripts/mansion/jugrnt/jugdead.py:3"
+    ],
+    "mansion/man2/subbasement2": [
+     "scripts/mansion/man2/subbasement2.py:38"
+    ]
+   },
+   "get": {
+    "mansion/man2/subbasement2": [
+     "scripts/mansion/man1b/offerjuggernautflashback.py:5",
+     "scripts/mansion/man2/subbasement2.py:5"
+    ]
+   }
+  }
+ },
+ "lastroom": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "demo/jugrnt/jugrnt01",
+   "mansion/jugrnt/jugrnt01"
+  ],
+  "get_zones": [
+   "demo/jugrnt/jugrnt01",
+   "mansion/jugrnt/jugrnt01"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "?",
+   "jug_fb"
+  ],
+  "n_set": 4,
+  "n_get": 2,
+  "sites": {
+   "set": {
+    "demo/jugrnt/jugrnt01": [
+     "scripts/mansion/jugrnt/jugpain.py:21",
+     "scripts/mansion/jugrnt/sittingroom.py:11"
+    ],
+    "mansion/jugrnt/jugrnt01": [
+     "scripts/mansion/jugrnt/jugpain.py:21",
+     "scripts/mansion/jugrnt/sittingroom.py:11"
+    ]
+   },
+   "get": {
+    "demo/jugrnt/jugrnt01": [
+     "scripts/mansion/jugrnt/jugpain.py:7"
+    ],
+    "mansion/jugrnt/jugrnt01": [
+     "scripts/mansion/jugrnt/jugpain.py:7"
+    ]
+   }
+  }
+ },
+ "mansion1": {
+  "kind": [
+   "mflag"
+  ],
+  "set_zones": [
+   "mansion/man1a/hangar1a",
+   "mansion/man1a/mansion1a_1",
+   "mansion/man1a/mansion1a_2",
+   "mansion/man1a/subbasement1a"
+  ],
+  "get_zones": [
+   "mansion/man1a/hangar1a",
+   "mansion/man1a/mansion1a_1",
+   "mansion/man1a/mansion1a_2",
+   "mansion/man1a/subbasement1a"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "mansion1"
+  ],
+  "n_set": 20,
+  "n_get": 41,
+  "sites": {
+   "set": {
+    "mansion/man1a/mansion1a_1": [
+     "scripts/mansion/man1a/begin_subbasement.py:3",
+     "scripts/mansion/man1a/endfirsttour.py:3",
+     "scripts/mansion/man1a/mansion1a_1.py:19",
+     "scripts/mansion/man1a/mansion1a_1.py:27",
+     "scripts/mansion/man1a/tourfirstfloor.py:2",
+     "scripts/mansion/man1a/tourfirstfloor.py:3",
+     "scripts/mansion/man1a/var_1_2_1_1_mansion1_1.py:2",
+     "scripts/mansion/man1a/var_1_2_1_1_mansion1_2.py:2",
+     "scripts/mansion/man1a/var_1_2_38_mansion1_9.py:3",
+     "scripts/mansion/man1a/var_1_2_3_mansion1_3.py:2"
+    ],
+    "mansion/man1a/mansion1a_2": [
+     "scripts/mansion/man1a/endfirsttour.py:3",
+     "scripts/mansion/man1a/var_1_2_36_mansion1_11.py:3",
+     "scripts/mansion/man1a/var_1_2_3_mansion1_3.py:2"
+    ],
+    "mansion/man1a/subbasement1a": [
+     "scripts/mansion/man1a/endtour.py:9",
+     "scripts/mansion/man1a/endtour.py:11",
+     "scripts/mansion/man1a/subbasement1a.py:7",
+     "scripts/mansion/man1a/var_1_2_24_1_mansion1_4.py:2",
+     "scripts/mansion/man1a/var_1_2_35_mansion1_6.py:2",
+     "conversations/mansion/man1a/1_2_31_5.eng (inline)"
+    ],
+    "mansion/man1a/hangar1a": [
+     "scripts/mansion/man1a/hangar1a.py:9"
+    ]
+   },
+   "get": {
+    "mansion/man1a/mansion1a_2": [
+     "scripts/mansion/man1a/conv_1_2_11.py:2",
+     "scripts/mansion/man1a/conv_1_2_12.py:2",
+     "scripts/mansion/man1a/conv_1_2_13.py:2",
+     "scripts/mansion/man1a/conv_1_2_2_4.py:2",
+     "scripts/mansion/man1a/conv_1_2_4.py:2",
+     "scripts/mansion/man1a/conv_1_2_5.py:2",
+     "scripts/mansion/man1a/conv_1_2_6.py:2",
+     "scripts/mansion/man1a/conv_1_2_7.py:2",
+     "scripts/mansion/man1a/conv_1_2_8.py:2",
+     "scripts/mansion/man1a/mansion1a_2.py:4",
+     "scripts/mansion/man1a/mansion1a_2.py:5"
+    ],
+    "mansion/man1a/mansion1a_1": [
+     "scripts/mansion/man1a/conv_1_2_14.py:2",
+     "scripts/mansion/man1a/conv_1_2_15.py:2",
+     "scripts/mansion/man1a/conv_1_2_16.py:2",
+     "scripts/mansion/man1a/conv_1_2_17.py:2",
+     "scripts/mansion/man1a/conv_1_2_19.py:2",
+     "scripts/mansion/man1a/conv_1_2_1_2.py:2",
+     "scripts/mansion/man1a/conv_1_2_20.py:2",
+     "scripts/mansion/man1a/conv_1_2_2_1.py:2",
+     "scripts/mansion/man1a/mansion1a_1.py:5",
+     "scripts/mansion/man1a/mansion1a_1.py:6",
+     "scripts/mansion/man1a/mansion1a_1.py:41"
+    ],
+    "mansion/man1a/subbasement1a": [
+     "scripts/mansion/man1a/conv_1_2_24.py:2",
+     "scripts/mansion/man1a/conv_1_2_24.py:3",
+     "scripts/mansion/man1a/conv_1_2_24_5.py:2",
+     "scripts/mansion/man1a/conv_1_2_24_5.py:3",
+     "scripts/mansion/man1a/conv_1_2_27.py:2",
+     "scripts/mansion/man1a/conv_1_2_27.py:3",
+     "scripts/mansion/man1a/conv_1_2_28.py:2",
+     "scripts/mansion/man1a/conv_1_2_28.py:3",
+     "scripts/mansion/man1a/conv_1_2_29_5.py:2",
+     "scripts/mansion/man1a/conv_1_2_29_5.py:3",
+     "scripts/mansion/man1a/conv_1_2_30.py:2",
+     "scripts/mansion/man1a/conv_1_2_30.py:3",
+     "scripts/mansion/man1a/conv_1_2_31.py:2",
+     "scripts/mansion/man1a/conv_1_2_31.py:3",
+     "scripts/mansion/man1a/subbasement1a.py:4",
+     "scripts/mansion/man1a/subbasement1a.py:5"
+    ],
+    "mansion/man1a/hangar1a": [
+     "scripts/mansion/man1a/hangar1a.py:3",
+     "scripts/mansion/man1a/hangar1a.py:4",
+     "scripts/mansion/man1a/hangar1a.py:5"
+    ]
+   }
+  }
+ },
+ "man1a": {
+  "kind": [
+   "mflag"
+  ],
+  "set_zones": [
+   "mansion/man1a/mansion1a_1",
+   "mansion/man1a/mansion1a_2"
+  ],
+  "get_zones": [
+   "mansion/man1a/mansion1a_1",
+   "mansion/man1a/mansion1a_2"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "mansion1"
+  ],
+  "n_set": 4,
+  "n_get": 2,
+  "sites": {
+   "set": {
+    "mansion/man1a/mansion1a_1": [
+     "scripts/mansion/man1a/mansion1a_1.py:26",
+     "scripts/mansion/man1a/mansion1a_1.py:36"
+    ],
+    "mansion/man1a/mansion1a_2": [
+     "scripts/mansion/man1a/mansion1a_2.py:25",
+     "scripts/mansion/man1a/mansion1a_2.py:44"
+    ]
+   },
+   "get": {
+    "mansion/man1a/mansion1a_1": [
+     "scripts/mansion/man1a/mansion1a_1.py:3"
+    ],
+    "mansion/man1a/mansion1a_2": [
+     "scripts/mansion/man1a/mansion1a_2.py:3"
+    ]
+   }
+  }
+ },
+ "juggy_fb": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "mansion/man2/subbasement2"
+  ],
+  "get_zones": [
+   "mansion/man2/subbasement2"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "mansion2"
+  ],
+  "n_set": 1,
+  "n_get": 1,
+  "sites": {
+   "set": {
+    "mansion/man2/subbasement2": [
+     "scripts/mansion/man1b/unlockjuggernautflashback.py:5"
+    ]
+   },
+   "get": {
+    "mansion/man2/subbasement2": [
+     "scripts/mansion/man1b/unlockjuggernautflashback.py:3"
+    ]
+   }
+  }
+ },
+ "1_4_7b": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "mansion/man2/subbasement2"
+  ],
+  "get_zones": [
+   "mansion/man2/subbasement2"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "mansion2"
+  ],
+  "n_set": 2,
+  "n_get": 1,
+  "sites": {
+   "set": {
+    "mansion/man2/subbasement2": [
+     "scripts/mansion/man2/1_4_7_cam_start.py:5",
+     "scripts/mansion/man2/var_1_4_7b.py:2"
+    ]
+   },
+   "get": {
+    "mansion/man2/subbasement2": [
+     "scripts/mansion/man2/1_4_8_cam_start.py:5"
+    ]
+   }
+  }
+ },
+ "fb_sent": {
+  "kind": [
+   "gvar"
+  ],
+  "set_zones": [
+   "nyc/fb/nyc_fb4"
+  ],
+  "get_zones": [
+   "mansion/man2/mansion2_1"
+  ],
+  "read_without_local_set": [
+   "mansion/man2/mansion2_1"
+  ],
+  "needs_game_scope": true,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "",
+   "sent_fb"
+  ],
+  "n_set": 1,
+  "n_get": 2,
+  "sites": {
+   "set": {
+    "nyc/fb/nyc_fb4": [
+     "scripts/nyc/fb/nycfb4_finish.py:17"
+    ]
+   },
+   "get": {
+    "mansion/man2/mansion2_1": [
+     "scripts/mansion/man2/mansion2_1.py:3",
+     "scripts/mansion/man2/offersentinelflashback.py:4"
+    ]
+   }
+  }
+ },
+ "byard2": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "mansion/man2/mansion_back2"
+  ],
+  "get_zones": [
+   "mansion/man2/mansion_back2"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   ""
+  ],
+  "n_set": 1,
+  "n_get": 1,
+  "sites": {
+   "set": {
+    "mansion/man2/mansion_back2": [
+     "scripts/mansion/man2/mansion_back2.py:5"
+    ]
+   },
+   "get": {
+    "mansion/man2/mansion_back2": [
+     "scripts/mansion/man2/mansion_back2.py:3"
+    ]
+   }
+  }
+ },
+ "mansion2": {
+  "kind": [
+   "mflag"
+  ],
+  "set_zones": [
+   "mansion/man2/mansion2_1",
+   "mansion/man2/mansion_back2",
+   "mansion/man2/subbasement2"
+  ],
+  "get_zones": [],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": true,
+  "missions": [
+   "",
+   "mansion2"
+  ],
+  "n_set": 13,
+  "n_get": 0,
+  "sites": {
+   "set": {
+    "mansion/man2/subbasement2": [
+     "scripts/mansion/man2/subbasement2.py:22",
+     "scripts/mansion/man2/subbasement2.py:34",
+     "scripts/mansion/man2/var_1_4_12a.py:2",
+     "scripts/mansion/man2/var_1_4_12b.py:2",
+     "scripts/mansion/man2/var_1_4_7a.py:2",
+     "scripts/mansion/man2/var_1_4_8_mansion2_6.py:2",
+     "scripts/mansion/man2/var_1_4_9_mansion2_7.py:2"
+    ],
+    "mansion/man2/mansion_back2": [
+     "scripts/mansion/man2/var_1_4_2a.py:2",
+     "scripts/mansion/man2/var_1_4_3a.py:2",
+     "conversations/mansion/man2/1_4_2_5.eng (inline)",
+     "conversations/mansion/man2/1_4_2_5.eng (inline)"
+    ],
+    "mansion/man2/mansion2_1": [
+     "scripts/mansion/man2/var_1_4_4a.py:2",
+     "conversations/mansion/man2/1_4_4.eng (inline)"
+    ]
+   },
+   "get": {}
+  }
+ },
+ "sent_fb": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "mansion/man2/mansion2_1"
+  ],
+  "get_zones": [],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": true,
+  "missions": [
+   ""
+  ],
+  "n_set": 1,
+  "n_get": 0,
+  "sites": {
+   "set": {
+    "mansion/man2/mansion2_1": [
+     "scripts/mansion/man2/unlocksentinelflashback.py:3"
+    ]
+   },
+   "get": {}
+  }
+ },
+ "mansion3": {
+  "kind": [
+   "mflag"
+  ],
+  "set_zones": [
+   "mansion/man3/hangar3",
+   "mansion/man3/mansion3_1",
+   "mansion/man3/subbasement3b"
+  ],
+  "get_zones": [
+   "mansion/man3/mansion3_1",
+   "mansion/man3/subbasement3b"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "mansion3"
+  ],
+  "n_set": 20,
+  "n_get": 10,
+  "sites": {
+   "set": {
+    "mansion/man3/mansion3_1": [
+     "scripts/mansion/man3/2_1_11first.py:10",
+     "scripts/mansion/man3/2_1_11first.py:21",
+     "scripts/mansion/man3/2_1_12_5first.py:10",
+     "scripts/mansion/man3/2_1_12_5first.py:21",
+     "scripts/mansion/man3/2_1_5first.py:10",
+     "scripts/mansion/man3/2_1_5first.py:21",
+     "scripts/mansion/man3/var_2_1_12_mansion3_4.py:2",
+     "conversations/mansion/man3/2_1_12_5main.eng (inline)",
+     "conversations/mansion/man3/2_1_5main.eng (inline)",
+     "conversations/mansion/man3/2_1_5main.eng (inline)"
+    ],
+    "mansion/man3/subbasement3b": [
+     "scripts/mansion/man3/2_1_14first.py:10",
+     "scripts/mansion/man3/2_1_14first.py:21",
+     "scripts/mansion/man3/2_1_4first.py:10",
+     "scripts/mansion/man3/2_1_4first.py:21",
+     "conversations/mansion/man3/2_1_13_meet_storm.eng (inline)",
+     "conversations/mansion/man3/2_1_13_meet_storm.eng (inline)",
+     "conversations/mansion/man3/2_1_14main.eng (inline)",
+     "conversations/mansion/man3/2_1_14main.eng (inline)",
+     "conversations/mansion/man3/2_1_6.eng (inline)"
+    ],
+    "mansion/man3/hangar3": [
+     "conversations/mansion/man3/2_1_15_meet_wolverine.eng (inline)"
+    ]
+   },
+   "get": {
+    "mansion/man3/mansion3_1": [
+     "scripts/mansion/man3/2_1_11first.py:6",
+     "scripts/mansion/man3/2_1_11first.py:17",
+     "scripts/mansion/man3/2_1_12_5first.py:6",
+     "scripts/mansion/man3/2_1_12_5first.py:17",
+     "scripts/mansion/man3/2_1_5first.py:6",
+     "scripts/mansion/man3/2_1_5first.py:17"
+    ],
+    "mansion/man3/subbasement3b": [
+     "scripts/mansion/man3/2_1_14first.py:6",
+     "scripts/mansion/man3/2_1_14first.py:17",
+     "scripts/mansion/man3/2_1_4first.py:6",
+     "scripts/mansion/man3/2_1_4first.py:17"
+    ]
+   }
+  }
+ },
+ "wolv_fb": {
+  "kind": [
+   "gvar"
+  ],
+  "set_zones": [
+   "weapon_x/wfb/wx1_3"
+  ],
+  "get_zones": [
+   "mansion/man3/hangar3"
+  ],
+  "read_without_local_set": [
+   "mansion/man3/hangar3"
+  ],
+  "needs_game_scope": true,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "",
+   "mansion3"
+  ],
+  "n_set": 1,
+  "n_get": 1,
+  "sites": {
+   "set": {
+    "weapon_x/wfb/wx1_3": [
+     "scripts/weapon_x/wfb/end_fb.py:3"
+    ]
+   },
+   "get": {
+    "mansion/man3/hangar3": [
+     "scripts/mansion/man3/hangar3.py:8"
+    ]
+   }
+  }
+ },
+ "wpxflash": {
+  "kind": [
+   "gvar"
+  ],
+  "set_zones": [
+   "mansion/man3/hangar3"
+  ],
+  "get_zones": [],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": true,
+  "missions": [
+   "mansion3"
+  ],
+  "n_set": 1,
+  "n_get": 0,
+  "sites": {
+   "set": {
+    "mansion/man3/hangar3": [
+     "scripts/mansion/man3/hangar3.py:15"
+    ]
+   },
+   "get": {}
+  }
+ },
+ "man3_2": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "mansion/man3/mansion3_1",
+   "mansion/man3/mansion3_2"
+  ],
+  "get_zones": [
+   "mansion/man3/mansion3_2"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "mansion3"
+  ],
+  "n_set": 3,
+  "n_get": 2,
+  "sites": {
+   "set": {
+    "mansion/man3/mansion3_1": [
+     "scripts/mansion/man3/mansion3_1.py:4"
+    ],
+    "mansion/man3/mansion3_2": [
+     "scripts/mansion/man3/mansion3_2.py:7",
+     "scripts/mansion/man3/mansion3_2.py:21"
+    ]
+   },
+   "get": {
+    "mansion/man3/mansion3_2": [
+     "scripts/mansion/man3/mansion3_2.py:8",
+     "scripts/mansion/man3/mansion3_2.py:10"
+    ]
+   }
+  }
+ },
+ "g_r_talk": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "mansion/man4/mansion4_1"
+  ],
+  "get_zones": [
+   "mansion/man4/mansion4_1"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "mansion4"
+  ],
+  "n_set": 1,
+  "n_get": 1,
+  "sites": {
+   "set": {
+    "mansion/man4/mansion4_1": [
+     "scripts/mansion/man4/2_5_3b_cam_start.py:5"
+    ]
+   },
+   "get": {
+    "mansion/man4/mansion4_1": [
+     "scripts/mansion/man4/2_5_3b_cam_start.py:3"
+    ]
+   }
+  }
+ },
+ "emma": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "mansion/man4/mansion4_1"
+  ],
+  "get_zones": [
+   "mansion/man4/mansion4_1",
+   "mansion/man4/subbasement4"
+  ],
+  "read_without_local_set": [
+   "mansion/man4/subbasement4"
+  ],
+  "needs_game_scope": true,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "",
+   "mansion4"
+  ],
+  "n_set": 3,
+  "n_get": 2,
+  "sites": {
+   "set": {
+    "mansion/man4/mansion4_1": [
+     "scripts/mansion/man4/profx_disapears.py:16",
+     "scripts/mansion/man4/profx_disapears.py:26",
+     "scripts/mansion/man4/profx_disapears.py:32"
+    ]
+   },
+   "get": {
+    "mansion/man4/mansion4_1": [
+     "scripts/mansion/man4/astral_legwork.py:5"
+    ],
+    "mansion/man4/subbasement4": [
+     "scripts/mansion/man4/astral_legwork.py:5"
+    ]
+   }
+  }
+ },
+ "jean": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "mansion/man4/subbasement4"
+  ],
+  "get_zones": [
+   "mansion/man4/mansion4_1",
+   "mansion/man4/subbasement4"
+  ],
+  "read_without_local_set": [
+   "mansion/man4/mansion4_1"
+  ],
+  "needs_game_scope": true,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "",
+   "mansion4"
+  ],
+  "n_set": 2,
+  "n_get": 2,
+  "sites": {
+   "set": {
+    "mansion/man4/subbasement4": [
+     "conversations/mansion/man4/2_5_14.eng (inline)",
+     "conversations/mansion/man4/2_5_14.eng (inline)"
+    ]
+   },
+   "get": {
+    "mansion/man4/mansion4_1": [
+     "scripts/mansion/man4/astral_legwork.py:6"
+    ],
+    "mansion/man4/subbasement4": [
+     "scripts/mansion/man4/astral_legwork.py:6"
+    ]
+   }
+  }
+ },
+ "astral": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "mansion/man4/mansion4_1",
+   "mansion/man4/subbasement4"
+  ],
+  "get_zones": [
+   "mansion/man4/subbasement4"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "",
+   "mansion4"
+  ],
+  "n_set": 2,
+  "n_get": 1,
+  "sites": {
+   "set": {
+    "mansion/man4/mansion4_1": [
+     "scripts/mansion/man4/astral_legwork.py:21"
+    ],
+    "mansion/man4/subbasement4": [
+     "scripts/mansion/man4/astral_legwork.py:21"
+    ]
+   },
+   "get": {
+    "mansion/man4/subbasement4": [
+     "scripts/mansion/man4/subbasement4.py:4"
+    ]
+   }
+  }
+ },
+ "left": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "mansion/man4/mansion4_1"
+  ],
+  "get_zones": [
+   "mansion/man4/mansion4_1"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "mansion4"
+  ],
+  "n_set": 1,
+  "n_get": 2,
+  "sites": {
+   "set": {
+    "mansion/man4/mansion4_1": [
+     "scripts/mansion/man4/emma_talk.py:22"
+    ]
+   },
+   "get": {
+    "mansion/man4/mansion4_1": [
+     "scripts/mansion/man4/profx_apears.py:5",
+     "scripts/mansion/man4/profx_disapears.py:5"
+    ]
+   }
+  }
+ },
+ "right": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "mansion/man4/mansion4_1"
+  ],
+  "get_zones": [
+   "mansion/man4/mansion4_1"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "mansion4"
+  ],
+  "n_set": 1,
+  "n_get": 2,
+  "sites": {
+   "set": {
+    "mansion/man4/mansion4_1": [
+     "scripts/mansion/man4/emma_talk.py:44"
+    ]
+   },
+   "get": {
+    "mansion/man4/mansion4_1": [
+     "scripts/mansion/man4/profx_apears.py:6",
+     "scripts/mansion/man4/profx_disapears.py:6"
+    ]
+   }
+  }
+ },
+ "grsos": {
+  "kind": [
+   "gvar",
+   "mvar"
+  ],
+  "set_zones": [
+   "MISSIONSTART",
+   "mansion/man4/grso_debriefing",
+   "mansion/man4/mansion_back4_grso",
+   "mansion/man4/mansion_front4_grso",
+   "mansion/man4/subbasement4"
+  ],
+  "get_zones": [
+   "mansion/man4/mansion_back4_grso",
+   "mansion/man4/mansion_front4_grso",
+   "mansion/man4/subbasement4"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "",
+   "?",
+   "mansion4_grso"
+  ],
+  "n_set": 8,
+  "n_get": 5,
+  "sites": {
+   "set": {
+    "mansion/man4/grso_debriefing": [
+     "scripts/mansion/man4/grso_debriefing.py:7"
+    ],
+    "mansion/man4/mansion_front4_grso": [
+     "scripts/mansion/man4/grso_defeated2.py:9",
+     "scripts/mansion/man4/grso_defeated2.py:12",
+     "scripts/mansion/man4/mansion_back4_grso.py:7",
+     "scripts/mansion/man4/mansion_front4_grso.py:7"
+    ],
+    "mansion/man4/mansion_back4_grso": [
+     "scripts/mansion/man4/mansion_back4_grso.py:7"
+    ],
+    "mansion/man4/subbasement4": [
+     "scripts/mansion/man4/subbasement4.py:12"
+    ],
+    "MISSIONSTART": [
+     "scripts/missions/mansion4_grso_done.py:3"
+    ]
+   },
+   "get": {
+    "mansion/man4/mansion_front4_grso": [
+     "scripts/mansion/man4/grso_defeated2.py:7",
+     "scripts/mansion/man4/mansion_back4_grso.py:4",
+     "scripts/mansion/man4/mansion_front4_grso.py:4"
+    ],
+    "mansion/man4/mansion_back4_grso": [
+     "scripts/mansion/man4/mansion_back4_grso.py:4"
+    ],
+    "mansion/man4/subbasement4": [
+     "scripts/mansion/man4/subbasement4.py:2"
+    ]
+   }
+  }
+ },
+ "bbot": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "mansion/man4/mansion_back4_grso",
+   "mansion/man4/mansion_front4_grso"
+  ],
+  "get_zones": [
+   "mansion/man4/mansion_back4_grso",
+   "mansion/man4/mansion_front4_grso"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "mansion4_grso"
+  ],
+  "n_set": 8,
+  "n_get": 2,
+  "sites": {
+   "set": {
+    "mansion/man4/mansion_back4_grso": [
+     "scripts/mansion/man4/grso_found.py:18",
+     "scripts/mansion/man4/grso_found.py:20",
+     "scripts/mansion/man4/grso_found.py:22",
+     "scripts/mansion/man4/grso_found.py:42"
+    ],
+    "mansion/man4/mansion_front4_grso": [
+     "scripts/mansion/man4/grso_found.py:18",
+     "scripts/mansion/man4/grso_found.py:20",
+     "scripts/mansion/man4/grso_found.py:22",
+     "scripts/mansion/man4/grso_found.py:42"
+    ]
+   },
+   "get": {
+    "mansion/man4/mansion_back4_grso": [
+     "scripts/mansion/man4/grso_found.py:27"
+    ],
+    "mansion/man4/mansion_front4_grso": [
+     "scripts/mansion/man4/grso_found.py:27"
+    ]
+   }
+  }
+ },
+ "man4_1": {
+  "kind": [
+   "gvar"
+  ],
+  "set_zones": [
+   "mansion/man4/mansion4_1"
+  ],
+  "get_zones": [
+   "mansion/man4/mansion4_1"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "mansion4"
+  ],
+  "n_set": 2,
+  "n_get": 1,
+  "sites": {
+   "set": {
+    "mansion/man4/mansion4_1": [
+     "scripts/mansion/man4/mansion4_1.py:4",
+     "scripts/mansion/man4/mansion4_1.py:31"
+    ]
+   },
+   "get": {
+    "mansion/man4/mansion4_1": [
+     "scripts/mansion/man4/mansion4_1.py:2"
+    ]
+   }
+  }
+ },
+ "drone": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "MISSIONSTART"
+  ],
+  "get_zones": [
+   "mansion/man4/mansion_back4"
+  ],
+  "read_without_local_set": [
+   "mansion/man4/mansion_back4"
+  ],
+  "needs_game_scope": true,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "?",
+   "mansion4"
+  ],
+  "n_set": 1,
+  "n_get": 1,
+  "sites": {
+   "set": {
+    "MISSIONSTART": [
+     "scripts/missions/drones.py:6"
+    ]
+   },
+   "get": {
+    "mansion/man4/mansion_back4": [
+     "scripts/mansion/man4/mansion_back4.py:3"
+    ]
+   }
+  }
+ },
+ "visback": {
+  "kind": [
+   "gvar"
+  ],
+  "set_zones": [
+   "mansion/man4/mansion_back4"
+  ],
+  "get_zones": [
+   "mansion/man4/mansion_back4"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "mansion4"
+  ],
+  "n_set": 1,
+  "n_get": 1,
+  "sites": {
+   "set": {
+    "mansion/man4/mansion_back4": [
+     "scripts/mansion/man4/mansion_back4.py:20"
+    ]
+   },
+   "get": {
+    "mansion/man4/mansion_back4": [
+     "scripts/mansion/man4/mansion_back4.py:4"
+    ]
+   }
+  }
+ },
+ "wx": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [],
+  "get_zones": [
+   "mansion/man4/subbasement4"
+  ],
+  "read_without_local_set": [
+   "mansion/man4/subbasement4"
+  ],
+  "needs_game_scope": false,
+  "never_set": true,
+  "never_read": false,
+  "missions": [
+   ""
+  ],
+  "n_set": 0,
+  "n_get": 1,
+  "sites": {
+   "set": {},
+   "get": {
+    "mansion/man4/subbasement4": [
+     "scripts/mansion/man4/subbasement4.py:5"
+    ]
+   }
+  }
+ },
+ "mansion4": {
+  "kind": [
+   "mflag"
+  ],
+  "set_zones": [
+   "mansion/man4/mansion4_1",
+   "mansion/man4/mansion_back4",
+   "mansion/man4/subbasement4"
+  ],
+  "get_zones": [],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": true,
+  "missions": [
+   "",
+   "mansion4"
+  ],
+  "n_set": 6,
+  "n_get": 0,
+  "sites": {
+   "set": {
+    "mansion/man4/subbasement4": [
+     "scripts/mansion/man4/var_2_5_2_mansion4_5.py:2",
+     "conversations/mansion/man4/2_5_2_5.eng (inline)",
+     "conversations/mansion/man4/2_5_2_5.eng (inline)"
+    ],
+    "mansion/man4/mansion4_1": [
+     "conversations/mansion/man4/2_5_13.eng (inline)",
+     "conversations/mansion/man4/2_5_13.eng (inline)"
+    ],
+    "mansion/man4/mansion_back4": [
+     "conversations/mansion/man4/2_5_4.eng (inline)"
+    ]
+   },
+   "get": {}
+  }
+ },
+ "front_yd": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "mansion/man5/mansion5_1",
+   "mansion/man5/mansion_front5"
+  ],
+  "get_zones": [
+   "mansion/man5/mansion_front5"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "mansion5",
+   "sentinels_mansion"
+  ],
+  "n_set": 2,
+  "n_get": 1,
+  "sites": {
+   "set": {
+    "mansion/man5/mansion5_1": [
+     "scripts/mansion/man5/mansion5_1.py:3"
+    ],
+    "mansion/man5/mansion_front5": [
+     "scripts/mansion/man5/mansion_front5.py:6"
+    ]
+   },
+   "get": {
+    "mansion/man5/mansion_front5": [
+     "scripts/mansion/man5/mansion_front5.py:3"
+    ]
+   }
+  }
+ },
+ "max_bots": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "mansion/man5/mansion_front5"
+  ],
+  "get_zones": [
+   "mansion/man5/mansion_front5"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "sentinels_mansion"
+  ],
+  "n_set": 1,
+  "n_get": 1,
+  "sites": {
+   "set": {
+    "mansion/man5/mansion_front5": [
+     "scripts/mansion/man5/mansion_front5.py:7"
+    ]
+   },
+   "get": {
+    "mansion/man5/mansion_front5": [
+     "scripts/mansion/man5/sentinel_count.py:5"
+    ]
+   }
+  }
+ },
+ "cur_bots": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "mansion/man5/mansion_front5"
+  ],
+  "get_zones": [
+   "mansion/man5/mansion_front5"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "sentinels_mansion"
+  ],
+  "n_set": 5,
+  "n_get": 1,
+  "sites": {
+   "set": {
+    "mansion/man5/mansion_front5": [
+     "scripts/mansion/man5/mansion_front5.py:8",
+     "scripts/mansion/man5/sentinel_count.py:15",
+     "scripts/mansion/man5/sentinel_count.py:19",
+     "scripts/mansion/man5/sentinel_count.py:23",
+     "scripts/mansion/man5/sentinel_count.py:27"
+    ]
+   },
+   "get": {
+    "mansion/man5/mansion_front5": [
+     "scripts/mansion/man5/sentinel_count.py:6"
+    ]
+   }
+  }
+ },
+ "man6_2": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "mansion/man6/mansion6_2"
+  ],
+  "get_zones": [
+   "mansion/man6/mansion6_2"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "mansion6"
+  ],
+  "n_set": 1,
+  "n_get": 1,
+  "sites": {
+   "set": {
+    "mansion/man6/mansion6_2": [
+     "scripts/mansion/man6/mansion6_2.py:16"
+    ]
+   },
+   "get": {
+    "mansion/man6/mansion6_2": [
+     "scripts/mansion/man6/mansion6_2.py:3"
+    ]
+   }
+  }
+ },
+ "mansion7": {
+  "kind": [
+   "mflag"
+  ],
+  "set_zones": [
+   "mansion/man7/mansion7_1",
+   "mansion/man7/subbasement7"
+  ],
+  "get_zones": [
+   "mansion/man7/subbasement7"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "",
+   "mansion7"
+  ],
+  "n_set": 5,
+  "n_get": 2,
+  "sites": {
+   "set": {
+    "mansion/man7/subbasement7": [
+     "scripts/mansion/man7/3_6_2_end.py:15",
+     "conversations/mansion/man7/3_6_3.eng (inline)",
+     "conversations/mansion/man7/3_6_5.eng (inline)",
+     "conversations/mansion/man7/3_6_5.eng (inline)"
+    ],
+    "mansion/man7/mansion7_1": [
+     "conversations/mansion/man7/3_6_4.eng (inline)"
+    ]
+   },
+   "get": {
+    "mansion/man7/subbasement7": [
+     "scripts/mansion/man7/3_6_2_cam_start.py:3",
+     "scripts/mansion/man7/3_6_2_end.py:3"
+    ]
+   }
+  }
+ },
+ "base": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "mastermold/mastermold2"
+  ],
+  "get_zones": [
+   "mastermold/mastermold2"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "asteroid_mm2"
+  ],
+  "n_set": 6,
+  "n_get": 2,
+  "sites": {
+   "set": {
+    "mastermold/mastermold2": [
+     "scripts/mastermold/catwalka1death.py:5",
+     "scripts/mastermold/catwalkb1death.py:5",
+     "scripts/mastermold/catwalkc1death.py:5",
+     "scripts/mastermold/catwalkd1death.py:5",
+     "scripts/mastermold/catwalke1death.py:5",
+     "scripts/mastermold/catwalkf1death.py:5"
+    ]
+   },
+   "get": {
+    "mastermold/mastermold2": [
+     "scripts/mastermold/breakitup.py:3",
+     "scripts/mastermold/breakitupt.py:4"
+    ]
+   }
+  }
+ },
+ "part1": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "mastermold/mastermold2"
+  ],
+  "get_zones": [
+   "mastermold/mastermold2"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "asteroid_mm2"
+  ],
+  "n_set": 6,
+  "n_get": 2,
+  "sites": {
+   "set": {
+    "mastermold/mastermold2": [
+     "scripts/mastermold/catwalka1death.py:7",
+     "scripts/mastermold/catwalkb1death.py:7",
+     "scripts/mastermold/catwalkc1death.py:7",
+     "scripts/mastermold/catwalkd1death.py:7",
+     "scripts/mastermold/catwalke1death.py:7",
+     "scripts/mastermold/catwalkf1death.py:7"
+    ]
+   },
+   "get": {
+    "mastermold/mastermold2": [
+     "scripts/mastermold/breakitup.py:4",
+     "scripts/mastermold/breakitupt.py:5"
+    ]
+   }
+  }
+ },
+ "part2": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "mastermold/mastermold2"
+  ],
+  "get_zones": [
+   "mastermold/mastermold2"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "asteroid_mm2"
+  ],
+  "n_set": 6,
+  "n_get": 2,
+  "sites": {
+   "set": {
+    "mastermold/mastermold2": [
+     "scripts/mastermold/catwalka1death.py:9",
+     "scripts/mastermold/catwalkb1death.py:9",
+     "scripts/mastermold/catwalkc1death.py:9",
+     "scripts/mastermold/catwalkd1death.py:11",
+     "scripts/mastermold/catwalke1death.py:11",
+     "scripts/mastermold/catwalkf1death.py:11"
+    ]
+   },
+   "get": {
+    "mastermold/mastermold2": [
+     "scripts/mastermold/breakitup.py:10",
+     "scripts/mastermold/breakitupt.py:18"
+    ]
+   }
+  }
+ },
+ "checkpart1": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "mastermold/mastermold2"
+  ],
+  "get_zones": [
+   "mastermold/mastermold2"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "asteroid_mm2"
+  ],
+  "n_set": 3,
+  "n_get": 1,
+  "sites": {
+   "set": {
+    "mastermold/mastermold2": [
+     "scripts/mastermold/catwalkd1death.py:9",
+     "scripts/mastermold/catwalke1death.py:9",
+     "scripts/mastermold/catwalkf1death.py:9"
+    ]
+   },
+   "get": {
+    "mastermold/mastermold2": [
+     "scripts/mastermold/breakitupt.py:8"
+    ]
+   }
+  }
+ },
+ "checkpart2": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "mastermold/mastermold2"
+  ],
+  "get_zones": [
+   "mastermold/mastermold2"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "asteroid_mm2"
+  ],
+  "n_set": 3,
+  "n_get": 1,
+  "sites": {
+   "set": {
+    "mastermold/mastermold2": [
+     "scripts/mastermold/catwalkd1death.py:13",
+     "scripts/mastermold/catwalke1death.py:13",
+     "scripts/mastermold/catwalkf1death.py:13"
+    ]
+   },
+   "get": {
+    "mastermold/mastermold2": [
+     "scripts/mastermold/breakitupt.py:21"
+    ]
+   }
+  }
+ },
+ "part3": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "mastermold/mastermold2"
+  ],
+  "get_zones": [
+   "mastermold/mastermold2"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "asteroid_mm2"
+  ],
+  "n_set": 6,
+  "n_get": 1,
+  "sites": {
+   "set": {
+    "mastermold/mastermold2": [
+     "scripts/mastermold/catwalka1death.py:10",
+     "scripts/mastermold/catwalkb1death.py:10",
+     "scripts/mastermold/catwalkc1death.py:10",
+     "scripts/mastermold/catwalkd1death.py:15",
+     "scripts/mastermold/catwalke1death.py:15",
+     "scripts/mastermold/catwalkf1death.py:15"
+    ]
+   },
+   "get": {
+    "mastermold/mastermold2": [
+     "scripts/mastermold/breakitupt.py:31"
+    ]
+   }
+  }
+ },
+ "coresgone": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "mastermold/mastermold2"
+  ],
+  "get_zones": [
+   "mastermold/mastermold2"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "asteroid_mm2"
+  ],
+  "n_set": 3,
+  "n_get": 4,
+  "sites": {
+   "set": {
+    "mastermold/mastermold2": [
+     "scripts/mastermold/coredeath1.py:15",
+     "scripts/mastermold/coredeath2.py:15",
+     "scripts/mastermold/coredeath3.py:15"
+    ]
+   },
+   "get": {
+    "mastermold/mastermold2": [
+     "scripts/mastermold/checkcore.py:3",
+     "scripts/mastermold/coredeath1.py:13",
+     "scripts/mastermold/coredeath2.py:13",
+     "scripts/mastermold/coredeath3.py:13"
+    ]
+   }
+  }
+ },
+ "corecount": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "mastermold/mastermold1",
+   "mastermold/mastermold2"
+  ],
+  "get_zones": [
+   "mastermold/mastermold1",
+   "mastermold/mastermold2"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "asteroid_mm",
+   "asteroid_mm2"
+  ],
+  "n_set": 12,
+  "n_get": 13,
+  "sites": {
+   "set": {
+    "mastermold/mastermold1": [
+     "scripts/mastermold/core_off1.py:25",
+     "scripts/mastermold/core_off2.py:21",
+     "scripts/mastermold/core_off3.py:21",
+     "scripts/mastermold/core_on1.py:25",
+     "scripts/mastermold/core_on2.py:25",
+     "scripts/mastermold/core_on3.py:25"
+    ],
+    "mastermold/mastermold2": [
+     "scripts/mastermold/core_off1.py:25",
+     "scripts/mastermold/core_off2.py:21",
+     "scripts/mastermold/core_off3.py:21",
+     "scripts/mastermold/core_on1.py:25",
+     "scripts/mastermold/core_on2.py:25",
+     "scripts/mastermold/core_on3.py:25"
+    ]
+   },
+   "get": {
+    "mastermold/mastermold2": [
+     "scripts/mastermold/checkcore.py:4",
+     "scripts/mastermold/core_off1.py:23",
+     "scripts/mastermold/core_off2.py:19",
+     "scripts/mastermold/core_off3.py:19",
+     "scripts/mastermold/core_on1.py:23",
+     "scripts/mastermold/core_on2.py:23",
+     "scripts/mastermold/core_on3.py:23"
+    ],
+    "mastermold/mastermold1": [
+     "scripts/mastermold/core_off1.py:23",
+     "scripts/mastermold/core_off2.py:19",
+     "scripts/mastermold/core_off3.py:19",
+     "scripts/mastermold/core_on1.py:23",
+     "scripts/mastermold/core_on2.py:23",
+     "scripts/mastermold/core_on3.py:23"
+    ]
+   }
+  }
+ },
+ "coreon1": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "mastermold/mastermold1",
+   "mastermold/mastermold2"
+  ],
+  "get_zones": [
+   "mastermold/mastermold2"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "asteroid_mm",
+   "asteroid_mm2"
+  ],
+  "n_set": 2,
+  "n_get": 1,
+  "sites": {
+   "set": {
+    "mastermold/mastermold1": [
+     "scripts/mastermold/core_on1.py:22"
+    ],
+    "mastermold/mastermold2": [
+     "scripts/mastermold/core_on1.py:22"
+    ]
+   },
+   "get": {
+    "mastermold/mastermold2": [
+     "scripts/mastermold/coredeath1.py:3"
+    ]
+   }
+  }
+ },
+ "coreon2": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "mastermold/mastermold1",
+   "mastermold/mastermold2"
+  ],
+  "get_zones": [
+   "mastermold/mastermold2"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "asteroid_mm",
+   "asteroid_mm2"
+  ],
+  "n_set": 2,
+  "n_get": 1,
+  "sites": {
+   "set": {
+    "mastermold/mastermold1": [
+     "scripts/mastermold/core_on2.py:22"
+    ],
+    "mastermold/mastermold2": [
+     "scripts/mastermold/core_on2.py:22"
+    ]
+   },
+   "get": {
+    "mastermold/mastermold2": [
+     "scripts/mastermold/coredeath2.py:3"
+    ]
+   }
+  }
+ },
+ "coreon3": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "mastermold/mastermold1",
+   "mastermold/mastermold2"
+  ],
+  "get_zones": [
+   "mastermold/mastermold2"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "asteroid_mm",
+   "asteroid_mm2"
+  ],
+  "n_set": 2,
+  "n_get": 1,
+  "sites": {
+   "set": {
+    "mastermold/mastermold1": [
+     "scripts/mastermold/core_on3.py:22"
+    ],
+    "mastermold/mastermold2": [
+     "scripts/mastermold/core_on3.py:22"
+    ]
+   },
+   "get": {
+    "mastermold/mastermold2": [
+     "scripts/mastermold/coredeath3.py:3"
+    ]
+   }
+  }
+ },
+ "muir": {
+  "kind": [
+   "mflag"
+  ],
+  "set_zones": [
+   "mansion/man1a/subbasement1a"
+  ],
+  "get_zones": [
+   "mansion/man1a/subbasement1a"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "mansion1"
+  ],
+  "n_set": 2,
+  "n_get": 1,
+  "sites": {
+   "set": {
+    "mansion/man1a/subbasement1a": [
+     "scripts/muir_is/muir1/spokewithforge.py:3",
+     "scripts/muir_is/muir1/var_1_6_4a.py:2"
+    ]
+   },
+   "get": {
+    "mansion/man1a/subbasement1a": [
+     "scripts/muir_is/muir1/spokewithforge.py:4"
+    ]
+   }
+  }
+ },
+ "s_m_q": {
+  "kind": [
+   "gvar"
+  ],
+  "set_zones": [
+   "mansion/man1a/subbasement1a"
+  ],
+  "get_zones": [
+   "mansion/man1a/subbasement1a"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "mansion1"
+  ],
+  "n_set": 1,
+  "n_get": 1,
+  "sites": {
+   "set": {
+    "mansion/man1a/subbasement1a": [
+     "scripts/muir_is/muir1/spokewithforge.py:11"
+    ]
+   },
+   "get": {
+    "mansion/man1a/subbasement1a": [
+     "scripts/muir_is/muir1/spokewithforge.py:8"
+    ]
+   }
+  }
+ },
+ "aligned": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "muir_is/muir2/mui_comcore",
+   "muir_is/muir2/muir_comcore"
+  ],
+  "get_zones": [
+   "muir_is/muir2/mui_comcore",
+   "muir_is/muir2/muir_comcore"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "?",
+   "muir2_reboot"
+  ],
+  "n_set": 4,
+  "n_get": 4,
+  "sites": {
+   "set": {
+    "muir_is/muir2/mui_comcore": [
+     "scripts/muir_is/muir2/alignthings.py:5",
+     "scripts/muir_is/muir2/mui_comcore.py:3"
+    ],
+    "muir_is/muir2/muir_comcore": [
+     "scripts/muir_is/muir2/alignthings.py:5",
+     "scripts/muir_is/muir2/mui_comcore.py:3"
+    ]
+   },
+   "get": {
+    "muir_is/muir2/mui_comcore": [
+     "scripts/muir_is/muir2/alignthings.py:3",
+     "scripts/muir_is/muir2/primarycontrolpanel.py:3"
+    ],
+    "muir_is/muir2/muir_comcore": [
+     "scripts/muir_is/muir2/alignthings.py:3",
+     "scripts/muir_is/muir2/primarycontrolpanel.py:3"
+    ]
+   }
+  }
+ },
+ "bridge": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "muir_is/muir2/mui_comcore",
+   "muir_is/muir2/muir_comcore"
+  ],
+  "get_zones": [
+   "muir_is/muir2/mui_comcore",
+   "muir_is/muir2/muir_comcore"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "?",
+   "muir2_reboot"
+  ],
+  "n_set": 2,
+  "n_get": 2,
+  "sites": {
+   "set": {
+    "muir_is/muir2/mui_comcore": [
+     "scripts/muir_is/muir2/bridgecleared.py:3"
+    ],
+    "muir_is/muir2/muir_comcore": [
+     "scripts/muir_is/muir2/bridgecleared.py:3"
+    ]
+   },
+   "get": {
+    "muir_is/muir2/mui_comcore": [
+     "scripts/muir_is/muir2/raisebridge.py:3"
+    ],
+    "muir_is/muir2/muir_comcore": [
+     "scripts/muir_is/muir2/raisebridge.py:3"
+    ]
+   }
+  }
+ },
+ "scott": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "muir_is/muir2/muir_in2"
+  ],
+  "get_zones": [],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": true,
+  "missions": [
+   "muir2"
+  ],
+  "n_set": 1,
+  "n_get": 0,
+  "sites": {
+   "set": {
+    "muir_is/muir2/muir_in2": [
+     "scripts/muir_is/muir2/control_alsion.py:12"
+    ]
+   },
+   "get": {}
+  }
+ },
+ "forge": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [],
+  "get_zones": [
+   "muir_is/muir2/muir_in2"
+  ],
+  "read_without_local_set": [
+   "muir_is/muir2/muir_in2"
+  ],
+  "needs_game_scope": false,
+  "never_set": true,
+  "never_read": false,
+  "missions": [
+   "muir2"
+  ],
+  "n_set": 0,
+  "n_get": 1,
+  "sites": {
+   "set": {},
+   "get": {
+    "muir_is/muir2/muir_in2": [
+     "scripts/muir_is/muir2/control_alsion.py:13"
+    ]
+   }
+  }
+ },
+ "rebooted": {
+  "kind": [
+   "gvar"
+  ],
+  "set_zones": [
+   "muir_is/muir2/mui_comcore",
+   "muir_is/muir2/muir_comcore",
+   "muir_is/muir2/muir_in2"
+  ],
+  "get_zones": [
+   "muir_is/muir2/muir_in2"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "?",
+   "muir2",
+   "muir2_reboot"
+  ],
+  "n_set": 3,
+  "n_get": 2,
+  "sites": {
+   "set": {
+    "muir_is/muir2/mui_comcore": [
+     "scripts/muir_is/muir2/endreboot.py:3"
+    ],
+    "muir_is/muir2/muir_comcore": [
+     "scripts/muir_is/muir2/endreboot.py:3"
+    ],
+    "muir_is/muir2/muir_in2": [
+     "scripts/muir_is/muir2/muir_in2.py:8"
+    ]
+   },
+   "get": {
+    "muir_is/muir2/muir_in2": [
+     "scripts/muir_is/muir2/muir_in2.py:4",
+     "scripts/muir_is/muir2/power_quest_check.py:5"
+    ]
+   }
+  }
+ },
+ "visit": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [],
+  "get_zones": [
+   "muir_is/muir2/muir_in2"
+  ],
+  "read_without_local_set": [
+   "muir_is/muir2/muir_in2"
+  ],
+  "needs_game_scope": false,
+  "never_set": true,
+  "never_read": false,
+  "missions": [
+   "muir2"
+  ],
+  "n_set": 0,
+  "n_get": 1,
+  "sites": {
+   "set": {},
+   "get": {
+    "muir_is/muir2/muir_in2": [
+     "scripts/muir_is/muir2/muir_in2.py:2"
+    ]
+   }
+  }
+ },
+ "muir2": {
+  "kind": [
+   "mflag"
+  ],
+  "set_zones": [
+   "muir_is/muir2/muir_in2"
+  ],
+  "get_zones": [
+   "muir_is/muir2/muir_in2"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "muir2"
+  ],
+  "n_set": 16,
+  "n_get": 1,
+  "sites": {
+   "set": {
+    "muir_is/muir2/muir_in2": [
+     "scripts/muir_is/muir2/muir_in2.py:9",
+     "scripts/muir_is/muir2/muir_in2.py:13",
+     "scripts/muir_is/muir2/muir_in2.py:14",
+     "scripts/muir_is/muir2/muir_in2.py:15",
+     "scripts/muir_is/muir2/muir_in2.py:28",
+     "scripts/muir_is/muir2/muir_in2.py:29",
+     "scripts/muir_is/muir2/muir_in2.py:30",
+     "scripts/muir_is/muir2/power_quest_check.py:11",
+     "scripts/muir_is/muir2/power_quest_check.py:12",
+     "scripts/muir_is/muir2/power_quest_check.py:13",
+     "scripts/muir_is/muir2/power_quest_check.py:16",
+     "scripts/muir_is/muir2/power_quest_check.py:17",
+     "scripts/muir_is/muir2/power_quest_check.py:18",
+     "scripts/muir_is/muir2/var_2_4_5_muir2_1.py:2",
+     "scripts/muir_is/muir2/var_2_4_7_muir2_2.py:2",
+     "conversations/muir_is/muir2/2_4_7.eng (inline)"
+    ]
+   },
+   "get": {
+    "muir_is/muir2/muir_in2": [
+     "scripts/muir_is/muir2/muir_in2.py:3"
+    ]
+   }
+  }
+ },
+ "act3mssn": {
+  "kind": [
+   "gvar"
+  ],
+  "set_zones": [
+   "muir_is/muir3/muir_in3",
+   "nyc/riots/nyc3_2_1",
+   "sewers/grso/sewers_marrow"
+  ],
+  "get_zones": [
+   "muir_is/muir3/muir_brig",
+   "muir_is/muir3/muir_in3",
+   "nyc/riots/nyc3_1_3",
+   "nyc/riots/nyc3_2_1",
+   "sewers/grso/sewers_marrow"
+  ],
+  "read_without_local_set": [
+   "muir_is/muir3/muir_brig",
+   "nyc/riots/nyc3_1_3"
+  ],
+  "needs_game_scope": true,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "",
+   "?",
+   "muir3",
+   "muir3brig",
+   "riots"
+  ],
+  "n_set": 4,
+  "n_get": 9,
+  "sites": {
+   "set": {
+    "muir_is/muir3/muir_in3": [
+     "scripts/muir_is/muir3/endmuir3mission.py:19"
+    ],
+    "nyc/riots/nyc3_2_1": [
+     "scripts/nyc/riots/check2_1objectives.py:21",
+     "scripts/nyc/riots/checkriotsobjective.py:25"
+    ],
+    "sewers/grso/sewers_marrow": [
+     "scripts/sewers/grso/endgrsomission.py:19"
+    ]
+   },
+   "get": {
+    "muir_is/muir3/muir_in3": [
+     "scripts/muir_is/muir3/endmuir3mission.py:5",
+     "scripts/nyc/riots/chooseact3mission.py:3"
+    ],
+    "nyc/riots/nyc3_2_1": [
+     "scripts/nyc/riots/check2_1objectives.py:7",
+     "scripts/nyc/riots/checkriotsobjective.py:11",
+     "scripts/nyc/riots/chooseact3mission.py:3"
+    ],
+    "muir_is/muir3/muir_brig": [
+     "scripts/nyc/riots/chooseact3mission.py:3"
+    ],
+    "nyc/riots/nyc3_1_3": [
+     "scripts/nyc/riots/chooseact3mission.py:3"
+    ],
+    "sewers/grso/sewers_marrow": [
+     "scripts/nyc/riots/chooseact3mission.py:3",
+     "scripts/sewers/grso/endgrsomission.py:5"
+    ]
+   }
+  }
+ },
+ "temp": {
+  "kind": [
+   "mflag",
+   "mvar"
+  ],
+  "set_zones": [
+   "muir_is/muir3/muir_in3",
+   "nyc/riots/nyc3_2_1",
+   "sewers/grso/sewers_marrow"
+  ],
+  "get_zones": [
+   "muir_is/muir3/muir_in3",
+   "nyc/riots/nyc3_2_1",
+   "sewers/grso/sewers_marrow"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "",
+   "?",
+   "muir3"
+  ],
+  "n_set": 8,
+  "n_get": 4,
+  "sites": {
+   "set": {
+    "muir_is/muir3/muir_in3": [
+     "scripts/muir_is/muir3/endmuir3mission.py:9",
+     "scripts/muir_is/muir3/endmuir3mission.py:11"
+    ],
+    "nyc/riots/nyc3_2_1": [
+     "scripts/nyc/riots/check2_1objectives.py:11",
+     "scripts/nyc/riots/check2_1objectives.py:13",
+     "scripts/nyc/riots/checkriotsobjective.py:15",
+     "scripts/nyc/riots/checkriotsobjective.py:17"
+    ],
+    "sewers/grso/sewers_marrow": [
+     "scripts/sewers/grso/endgrsomission.py:9",
+     "scripts/sewers/grso/endgrsomission.py:11"
+    ]
+   },
+   "get": {
+    "muir_is/muir3/muir_in3": [
+     "scripts/muir_is/muir3/endmuir3mission.py:12"
+    ],
+    "nyc/riots/nyc3_2_1": [
+     "scripts/nyc/riots/check2_1objectives.py:14",
+     "scripts/nyc/riots/checkriotsobjective.py:18"
+    ],
+    "sewers/grso/sewers_marrow": [
+     "scripts/sewers/grso/endgrsomission.py:12"
+    ]
+   }
+  }
+ },
+ "donthurt": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "muir_is/muir3/muir_in3"
+  ],
+  "get_zones": [
+   "muir_is/muir3/muir_in3"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "muir3"
+  ],
+  "n_set": 3,
+  "n_get": 1,
+  "sites": {
+   "set": {
+    "muir_is/muir3/muir_in3": [
+     "scripts/muir_is/muir3/forgepain.py:68",
+     "scripts/muir_is/muir3/juggypain.py:48",
+     "scripts/muir_is/muir3/muir_in3.py:4"
+    ]
+   },
+   "get": {
+    "muir_is/muir3/muir_in3": [
+     "scripts/muir_is/muir3/forgepain.py:3"
+    ]
+   }
+  }
+ },
+ "telespot": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "muir_is/muir3/muir_in3"
+  ],
+  "get_zones": [
+   "muir_is/muir3/muir_in3"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "muir3"
+  ],
+  "n_set": 2,
+  "n_get": 2,
+  "sites": {
+   "set": {
+    "muir_is/muir3/muir_in3": [
+     "scripts/muir_is/muir3/forgepain.py:66",
+     "scripts/muir_is/muir3/startthefight.py:15"
+    ]
+   },
+   "get": {
+    "muir_is/muir3/muir_in3": [
+     "scripts/muir_is/muir3/forgepain.py:5",
+     "scripts/muir_is/muir3/juggypain.py:5"
+    ]
+   }
+  }
+ },
+ "telenext": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "muir_is/muir3/muir_in3"
+  ],
+  "get_zones": [
+   "muir_is/muir3/muir_in3"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "muir3"
+  ],
+  "n_set": 4,
+  "n_get": 3,
+  "sites": {
+   "set": {
+    "muir_is/muir3/muir_in3": [
+     "scripts/muir_is/muir3/juggypain.py:20",
+     "scripts/muir_is/muir3/juggypain.py:22",
+     "scripts/muir_is/muir3/juggypain.py:24",
+     "scripts/muir_is/muir3/startthefight.py:16"
+    ]
+   },
+   "get": {
+    "muir_is/muir3/muir_in3": [
+     "scripts/muir_is/muir3/forgepain.py:6",
+     "scripts/muir_is/muir3/juggypain.py:26",
+     "scripts/muir_is/muir3/juggyreachedspot.py:7"
+    ]
+   }
+  }
+ },
+ "atkforge": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "muir_is/muir3/muir_in3"
+  ],
+  "get_zones": [
+   "muir_is/muir3/muir_in3"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "muir3"
+  ],
+  "n_set": 2,
+  "n_get": 1,
+  "sites": {
+   "set": {
+    "muir_is/muir3/muir_in3": [
+     "scripts/muir_is/muir3/forgepain.py:10",
+     "scripts/muir_is/muir3/juggypain.py:46"
+    ]
+   },
+   "get": {
+    "muir_is/muir3/muir_in3": [
+     "scripts/muir_is/muir3/juggypain.py:3"
+    ]
+   }
+  }
+ },
+ "puzzle1": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "nuke_plant/nuke/nuke1_3"
+  ],
+  "get_zones": [
+   "nuke_plant/nuke/nuke1_3"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "nuke"
+  ],
+  "n_set": 1,
+  "n_get": 1,
+  "sites": {
+   "set": {
+    "nuke_plant/nuke/nuke1_3": [
+     "scripts/nuke_plant/nuke/controlpanel.py:4"
+    ]
+   },
+   "get": {
+    "nuke_plant/nuke/nuke1_3": [
+     "scripts/nuke_plant/nuke/check_puzzle1.py:3"
+    ]
+   }
+  }
+ },
+ "pumps": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "nuke_plant/nuke/nuke1_4"
+  ],
+  "get_zones": [
+   "nuke_plant/nuke/nuke1_3",
+   "nuke_plant/nuke/nuke1_4"
+  ],
+  "read_without_local_set": [
+   "nuke_plant/nuke/nuke1_3"
+  ],
+  "needs_game_scope": true,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "",
+   "nuke"
+  ],
+  "n_set": 1,
+  "n_get": 2,
+  "sites": {
+   "set": {
+    "nuke_plant/nuke/nuke1_4": [
+     "scripts/nuke_plant/nuke/pumpswitch02.py:5"
+    ]
+   },
+   "get": {
+    "nuke_plant/nuke/nuke1_3": [
+     "scripts/nuke_plant/nuke/controlpanel.py:2"
+    ],
+    "nuke_plant/nuke/nuke1_4": [
+     "scripts/nuke_plant/nuke/pumpswitch02.py:3"
+    ]
+   }
+  }
+ },
+ "leftarm": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "nuke_plant/nuke/nuke2_2"
+  ],
+  "get_zones": [
+   "nuke_plant/nuke/nuke2_2"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   ""
+  ],
+  "n_set": 1,
+  "n_get": 1,
+  "sites": {
+   "set": {
+    "nuke_plant/nuke/nuke2_2": [
+     "scripts/nuke_plant/nuke/leftarm2.py:2"
+    ]
+   },
+   "get": {
+    "nuke_plant/nuke/nuke2_2": [
+     "scripts/nuke_plant/nuke/rightarm2.py:3"
+    ]
+   }
+  }
+ },
+ "rightarm": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "nuke_plant/nuke/nuke2_2"
+  ],
+  "get_zones": [
+   "nuke_plant/nuke/nuke2_2"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   ""
+  ],
+  "n_set": 1,
+  "n_get": 1,
+  "sites": {
+   "set": {
+    "nuke_plant/nuke/nuke2_2": [
+     "scripts/nuke_plant/nuke/rightarm2.py:2"
+    ]
+   },
+   "get": {
+    "nuke_plant/nuke/nuke2_2": [
+     "scripts/nuke_plant/nuke/leftarm2.py:3"
+    ]
+   }
+  }
+ },
+ "been_nuke": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "nuke_plant/nuke/nuke1_1"
+  ],
+  "get_zones": [
+   "nuke_plant/nuke/nuke1_1"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "nuke"
+  ],
+  "n_set": 1,
+  "n_get": 1,
+  "sites": {
+   "set": {
+    "nuke_plant/nuke/nuke1_1": [
+     "scripts/nuke_plant/nuke/nuke1_1.py:5"
+    ]
+   },
+   "get": {
+    "nuke_plant/nuke/nuke1_1": [
+     "scripts/nuke_plant/nuke/nuke1_1.py:3"
+    ]
+   }
+  }
+ },
+ "nuke": {
+  "kind": [
+   "mflag"
+  ],
+  "set_zones": [
+   "nuke_plant/nuke/nuke1_1",
+   "nuke_plant/nuke/nuke1_4"
+  ],
+  "get_zones": [],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": true,
+  "missions": [
+   "",
+   "nuke"
+  ],
+  "n_set": 3,
+  "n_get": 0,
+  "sites": {
+   "set": {
+    "nuke_plant/nuke/nuke1_4": [
+     "scripts/nuke_plant/nuke/pumpswitch02.py:7"
+    ],
+    "nuke_plant/nuke/nuke1_1": [
+     "scripts/nuke_plant/nuke/var_2_3_2_nuke_1.py:2",
+     "scripts/nuke_plant/nuke/var_2_3_2_nuke_2.py:2"
+    ]
+   },
+   "get": {}
+  }
+ },
+ "alison": {
+  "kind": [
+   "gvar"
+  ],
+  "set_zones": [
+   "nyc/alison/nyc1_1_5"
+  ],
+  "get_zones": [],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": true,
+  "missions": [
+   "alison"
+  ],
+  "n_set": 1,
+  "n_get": 0,
+  "sites": {
+   "set": {
+    "nyc/alison/nyc1_1_5": [
+     "scripts/nyc/alison/blackbird_brief1.py:3"
+    ]
+   },
+   "get": {}
+  }
+ },
+ "deadgrunts": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "mansion/dr_mag2/mag_nyc3",
+   "nyc/alison/nyc1_1_2b"
+  ],
+  "get_zones": [
+   "mansion/dr_mag2/mag_nyc3",
+   "nyc/alison/nyc1_1_2b"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "alison",
+   "dr_mag2"
+  ],
+  "n_set": 4,
+  "n_get": 4,
+  "sites": {
+   "set": {
+    "mansion/dr_mag2/mag_nyc3": [
+     "scripts/nyc/alison/grunt1death.py:5",
+     "scripts/nyc/alison/mystique_pain.py:26"
+    ],
+    "nyc/alison/nyc1_1_2b": [
+     "scripts/nyc/alison/grunt1death.py:5",
+     "scripts/nyc/alison/mystique_pain.py:26"
+    ]
+   },
+   "get": {
+    "mansion/dr_mag2/mag_nyc3": [
+     "scripts/nyc/alison/grunt1death.py:3",
+     "scripts/nyc/alison/mystiquetoilet.py:4"
+    ],
+    "nyc/alison/nyc1_1_2b": [
+     "scripts/nyc/alison/grunt1death.py:3",
+     "scripts/nyc/alison/mystiquetoilet.py:4"
+    ]
+   }
+  }
+ },
+ "deadgrunts2": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "mansion/dr_mag2/mag_nyc3",
+   "nyc/alison/nyc1_1_2b"
+  ],
+  "get_zones": [
+   "mansion/dr_mag2/mag_nyc3",
+   "nyc/alison/nyc1_1_2b"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "alison",
+   "dr_mag2"
+  ],
+  "n_set": 4,
+  "n_get": 2,
+  "sites": {
+   "set": {
+    "mansion/dr_mag2/mag_nyc3": [
+     "scripts/nyc/alison/grunt2death.py:5",
+     "scripts/nyc/alison/mystique_pain.py:33"
+    ],
+    "nyc/alison/nyc1_1_2b": [
+     "scripts/nyc/alison/grunt2death.py:5",
+     "scripts/nyc/alison/mystique_pain.py:33"
+    ]
+   },
+   "get": {
+    "mansion/dr_mag2/mag_nyc3": [
+     "scripts/nyc/alison/grunt2death.py:3"
+    ],
+    "nyc/alison/nyc1_1_2b": [
+     "scripts/nyc/alison/grunt2death.py:3"
+    ]
+   }
+  }
+ },
+ "bguys": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "nyc/alison/nyc1_1_3"
+  ],
+  "get_zones": [],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": true,
+  "missions": [
+   "alison"
+  ],
+  "n_set": 1,
+  "n_get": 0,
+  "sites": {
+   "set": {
+    "nyc/alison/nyc1_1_3": [
+     "scripts/nyc/alison/nyc1_1_3.py:8"
+    ]
+   },
+   "get": {}
+  }
+ },
+ "nyc_fb": {
+  "kind": [
+   "mflag"
+  ],
+  "set_zones": [
+   "nyc/fb/nyc_fb2",
+   "nyc/fb/nyc_fb4"
+  ],
+  "get_zones": [
+   "nyc/fb/nyc_fb2",
+   "nyc/fb/nyc_fb4"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "",
+   "sent_fb"
+  ],
+  "n_set": 3,
+  "n_get": 2,
+  "sites": {
+   "set": {
+    "nyc/fb/nyc_fb2": [
+     "scripts/nyc/fb/nycfb2_finish.py:7"
+    ],
+    "nyc/fb/nyc_fb4": [
+     "scripts/nyc/fb/nycfb4_finish.py:22",
+     "scripts/nyc/fb/nycfb4_finish.py:45"
+    ]
+   },
+   "get": {
+    "nyc/fb/nyc_fb2": [
+     "scripts/nyc/fb/nycfb2_finish.py:5"
+    ],
+    "nyc/fb/nyc_fb4": [
+     "scripts/nyc/fb/nycfb4_finish.py:9"
+    ]
+   }
+  }
+ },
+ "s_fb_intro": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "nyc/fb/nyc_fb1"
+  ],
+  "get_zones": [
+   "nyc/fb/nyc_fb1"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "sent_fb"
+  ],
+  "n_set": 1,
+  "n_get": 1,
+  "sites": {
+   "set": {
+    "nyc/fb/nyc_fb1": [
+     "scripts/nyc/fb/nyc_fb1.py:6"
+    ]
+   },
+   "get": {
+    "nyc/fb/nyc_fb1": [
+     "scripts/nyc/fb/nyc_fb1.py:3"
+    ]
+   }
+  }
+ },
+ "psylocke": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "nyc/riots/nyc3_1_2"
+  ],
+  "get_zones": [
+   "nyc/riots/nyc3_1_2"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "riots"
+  ],
+  "n_set": 1,
+  "n_get": 1,
+  "sites": {
+   "set": {
+    "nyc/riots/nyc3_1_2": [
+     "scripts/nyc/riots/end_psy_convo.py:3"
+    ]
+   },
+   "get": {
+    "nyc/riots/nyc3_1_2": [
+     "scripts/nyc/riots/check1_2objectives.py:7"
+    ]
+   }
+  }
+ },
+ "start1": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "nyc/riots/nyc3_1_3"
+  ],
+  "get_zones": [
+   "nyc/riots/nyc3_1_3"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "riots"
+  ],
+  "n_set": 1,
+  "n_get": 1,
+  "sites": {
+   "set": {
+    "nyc/riots/nyc3_1_3": [
+     "scripts/nyc/riots/intro_spider_sentinel.py:35"
+    ]
+   },
+   "get": {
+    "nyc/riots/nyc3_1_3": [
+     "scripts/nyc/riots/intro_spider_sentinel.py:7"
+    ]
+   }
+  }
+ },
+ "rescue": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "nyc/riots/nyc3_1_1",
+   "nyc/riots/nyc3_1_2",
+   "nyc/riots/nyc3_1_3",
+   "nyc/riots/nyc3_2_1"
+  ],
+  "get_zones": [
+   "nyc/riots/nyc3_1_1",
+   "nyc/riots/nyc3_1_2",
+   "nyc/riots/nyc3_1_3",
+   "nyc/riots/nyc3_2_1"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "?",
+   "riots"
+  ],
+  "n_set": 4,
+  "n_get": 4,
+  "sites": {
+   "set": {
+    "nyc/riots/nyc3_1_1": [
+     "scripts/nyc/riots/rescue_complete.py:10"
+    ],
+    "nyc/riots/nyc3_1_2": [
+     "scripts/nyc/riots/rescue_complete2.py:10"
+    ],
+    "nyc/riots/nyc3_1_3": [
+     "scripts/nyc/riots/rescue_complete3.py:10"
+    ],
+    "nyc/riots/nyc3_2_1": [
+     "scripts/nyc/riots/rescue_complete4.py:10"
+    ]
+   },
+   "get": {
+    "nyc/riots/nyc3_1_1": [
+     "scripts/nyc/riots/rescue_complete.py:8"
+    ],
+    "nyc/riots/nyc3_1_2": [
+     "scripts/nyc/riots/rescue_complete2.py:8"
+    ],
+    "nyc/riots/nyc3_1_3": [
+     "scripts/nyc/riots/rescue_complete3.py:8"
+    ],
+    "nyc/riots/nyc3_2_1": [
+     "scripts/nyc/riots/rescue_complete4.py:8"
+    ]
+   }
+  }
+ },
+ "swrgrso1": {
+  "kind": [
+   "mflag"
+  ],
+  "set_zones": [
+   "sewers/grso/sewers3_1_1",
+   "sewers/grso/sewers3_1_3",
+   "sewers/grso/sewers_marrow"
+  ],
+  "get_zones": [
+   "sewers/grso/sewers3_1_1"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "",
+   "sewers_grso"
+  ],
+  "n_set": 8,
+  "n_get": 1,
+  "sites": {
+   "set": {
+    "sewers/grso/sewers3_1_3": [
+     "scripts/sewers/grso/conv_3_4_3.py:3",
+     "conversations/sewers/grso/3_4_3.eng (inline)",
+     "conversations/sewers/grso/3_4_3.eng (inline)"
+    ],
+    "sewers/grso/sewers3_1_1": [
+     "scripts/sewers/grso/sewers3_1_1.py:12",
+     "conversations/sewers/grso/3_4_2.eng (inline)"
+    ],
+    "sewers/grso/sewers_marrow": [
+     "conversations/sewers/grso/3_4_5.eng (inline)",
+     "conversations/sewers/grso/3_4_5.eng (inline)",
+     "conversations/sewers/grso/3_4_5.eng (inline)"
+    ]
+   },
+   "get": {
+    "sewers/grso/sewers3_1_1": [
+     "scripts/sewers/grso/sewers3_1_1.py:3"
+    ]
+   }
+  }
+ },
+ "deadres": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "sewers/grso/sewers_marrow"
+  ],
+  "get_zones": [
+   "sewers/grso/sewers_marrow"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   ""
+  ],
+  "n_set": 1,
+  "n_get": 3,
+  "sites": {
+   "set": {
+    "sewers/grso/sewers_marrow": [
+     "scripts/sewers/grso/killres.py:13"
+    ]
+   },
+   "get": {
+    "sewers/grso/sewers_marrow": [
+     "scripts/sewers/grso/killres.py:11",
+     "scripts/sewers/grso/marrow_deathscript.py:3",
+     "scripts/sewers/grso/ressurect_marrow.py:3"
+    ]
+   }
+  }
+ },
+ "beenhub": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "sewers/healer/sewers_hub2"
+  ],
+  "get_zones": [
+   "sewers/healer/sewers_hub2"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   ""
+  ],
+  "n_set": 1,
+  "n_get": 1,
+  "sites": {
+   "set": {
+    "sewers/healer/sewers_hub2": [
+     "scripts/sewers/healer/sewers_hub2.py:5"
+    ]
+   },
+   "get": {
+    "sewers/healer/sewers_hub2": [
+     "scripts/sewers/healer/sewers_hub2.py:3"
+    ]
+   }
+  }
+ },
+ "thief": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "sewers/healer/sewers_hub2"
+  ],
+  "get_zones": [
+   "sewers/healer/sewers_hub2"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   ""
+  ],
+  "n_set": 1,
+  "n_get": 1,
+  "sites": {
+   "set": {
+    "sewers/healer/sewers_hub2": [
+     "scripts/sewers/hub/mor_stealing2.py:23"
+    ]
+   },
+   "get": {
+    "sewers/healer/sewers_hub2": [
+     "scripts/sewers/healer/sewers_hub2.py:8"
+    ]
+   }
+  }
+ },
+ "shop": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "sewers/hub/sewers_hub"
+  ],
+  "get_zones": [
+   "sewers/hub/sewers_hub"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   ""
+  ],
+  "n_set": 2,
+  "n_get": 2,
+  "sites": {
+   "set": {
+    "sewers/hub/sewers_hub": [
+     "scripts/sewers/hub/healer_obj.py:8",
+     "scripts/sewers/hub/healer_obj2.py:8"
+    ]
+   },
+   "get": {
+    "sewers/hub/sewers_hub": [
+     "scripts/sewers/hub/healer_obj.py:5",
+     "scripts/sewers/hub/healer_obj2.py:5"
+    ]
+   }
+  }
+ },
+ "swrhub2": {
+  "kind": [
+   "mflag"
+  ],
+  "set_zones": [
+   "sewers/healer/sewers_hub2"
+  ],
+  "get_zones": [
+   "sewers/healer/sewers_hub2"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   ""
+  ],
+  "n_set": 3,
+  "n_get": 1,
+  "sites": {
+   "set": {
+    "sewers/healer/sewers_hub2": [
+     "conversations/sewers/hub/2_9_2.eng (inline)",
+     "conversations/sewers/hub/2_9_2.eng (inline)",
+     "conversations/sewers/hub/2_9_2.eng (inline)"
+    ]
+   },
+   "get": {
+    "sewers/healer/sewers_hub2": [
+     "scripts/sewers/hub/mor_stealing2.py:6"
+    ]
+   }
+  }
+ },
+ "dooropen": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "sewers/healer/sewers_hub2"
+  ],
+  "get_zones": [
+   "sewers/healer/sewers_hub2"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   ""
+  ],
+  "n_set": 1,
+  "n_get": 1,
+  "sites": {
+   "set": {
+    "sewers/healer/sewers_hub2": [
+     "scripts/sewers/hub/mor_stealing2.py:13"
+    ]
+   },
+   "get": {
+    "sewers/healer/sewers_hub2": [
+     "scripts/sewers/hub/mor_stealing2.py:11"
+    ]
+   }
+  }
+ },
+ "swrhub1": {
+  "kind": [
+   "mflag"
+  ],
+  "set_zones": [
+   "sewers/hub/sewers1_1_1",
+   "sewers/hub/sewers1_2_4",
+   "sewers/hub/sewers_hub"
+  ],
+  "get_zones": [
+   "sewers/hub/sewers1_1_1"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "",
+   "hub"
+  ],
+  "n_set": 3,
+  "n_get": 1,
+  "sites": {
+   "set": {
+    "sewers/hub/sewers1_1_1": [
+     "scripts/sewers/hub/sewers1_1_1.py:5"
+    ],
+    "sewers/hub/sewers_hub": [
+     "scripts/sewers/hub/var_1_5_1a.py:2"
+    ],
+    "sewers/hub/sewers1_2_4": [
+     "scripts/sewers/quest/var_1_5_4.py:2"
+    ]
+   },
+   "get": {
+    "sewers/hub/sewers1_1_1": [
+     "scripts/sewers/hub/sewers1_1_1.py:3"
+    ]
+   }
+  }
+ },
+ "pstatus": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "sewers/hub/sewers1_1_3",
+   "sewers/hub/sewers1_1_4"
+  ],
+  "get_zones": [
+   "demo/hub/sewers1_1_2",
+   "sewers/hub/sewers1_1_2",
+   "sewers/hub/sewers1_1_3",
+   "sewers/hub/sewers1_1_4"
+  ],
+  "read_without_local_set": [
+   "demo/hub/sewers1_1_2",
+   "sewers/hub/sewers1_1_2"
+  ],
+  "needs_game_scope": true,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   ""
+  ],
+  "n_set": 2,
+  "n_get": 4,
+  "sites": {
+   "set": {
+    "sewers/hub/sewers1_1_3": [
+     "scripts/sewers/hub/sewers1_1_3_pump.py:5"
+    ],
+    "sewers/hub/sewers1_1_4": [
+     "scripts/sewers/hub/sewers1_1_4_pump.py:5"
+    ]
+   },
+   "get": {
+    "demo/hub/sewers1_1_2": [
+     "scripts/sewers/hub/sewers1_1_2.py:3"
+    ],
+    "sewers/hub/sewers1_1_2": [
+     "scripts/sewers/hub/sewers1_1_2.py:3"
+    ],
+    "sewers/hub/sewers1_1_3": [
+     "scripts/sewers/hub/sewers1_1_3_pump.py:3"
+    ],
+    "sewers/hub/sewers1_1_4": [
+     "scripts/sewers/hub/sewers1_1_4_pump.py:3"
+    ]
+   }
+  }
+ },
+ "steamtime": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "sewers/hub/sewers1_2_4"
+  ],
+  "get_zones": [
+   "sewers/hub/sewers1_2_4"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   ""
+  ],
+  "n_set": 2,
+  "n_get": 8,
+  "sites": {
+   "set": {
+    "sewers/hub/sewers1_2_4": [
+     "scripts/sewers/hub/steamhurt1.py:3",
+     "scripts/sewers/quest/prep_spar.py:3"
+    ]
+   },
+   "get": {
+    "sewers/hub/sewers1_2_4": [
+     "scripts/sewers/hub/steamhurt1.py:9",
+     "scripts/sewers/hub/steamhurt2.py:8",
+     "scripts/sewers/hub/steamhurt3.py:8",
+     "scripts/sewers/hub/steamhurt4.py:8",
+     "scripts/sewers/hub/steamhurt5.py:11",
+     "scripts/sewers/hub/steamhurt6.py:11",
+     "scripts/sewers/hub/steamhurt7.py:8",
+     "scripts/sewers/hub/steamhurt8.py:8"
+    ]
+   }
+  }
+ },
+ "havokhit": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "weapon_x/old/wx2_2"
+  ],
+  "get_zones": [
+   "weapon_x/old/wx2_2"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   ""
+  ],
+  "n_set": 1,
+  "n_get": 1,
+  "sites": {
+   "set": {
+    "weapon_x/old/wx2_2": [
+     "scripts/weapon_x/old/havokbeginattacking2.py:14"
+    ]
+   },
+   "get": {
+    "weapon_x/old/wx2_2": [
+     "scripts/weapon_x/old/checkhavokhit.py:3"
+    ]
+   }
+  }
+ },
+ "nextroom": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "weapon_x/old/wx2_2"
+  ],
+  "get_zones": [
+   "weapon_x/old/wx2_2"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   ""
+  ],
+  "n_set": 5,
+  "n_get": 4,
+  "sites": {
+   "set": {
+    "weapon_x/old/wx2_2": [
+     "scripts/weapon_x/old/endroom1.py:12",
+     "scripts/weapon_x/old/endroom2.py:11",
+     "scripts/weapon_x/old/endroom3.py:11",
+     "scripts/weapon_x/old/havokbeginroom1.py:10",
+     "scripts/weapon_x/old/havokpain.py:29"
+    ]
+   },
+   "get": {
+    "weapon_x/old/wx2_2": [
+     "scripts/weapon_x/old/gettonextspot.py:3",
+     "scripts/weapon_x/old/havokbeginattacking2.py:3",
+     "scripts/weapon_x/old/havokbeginattacking3.py:3",
+     "scripts/weapon_x/old/havokpain.py:32"
+    ]
+   }
+  }
+ },
+ "thisroom": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "weapon_x/old/wx2_2"
+  ],
+  "get_zones": [
+   "weapon_x/old/wx2_2"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   ""
+  ],
+  "n_set": 4,
+  "n_get": 2,
+  "sites": {
+   "set": {
+    "weapon_x/old/wx2_2": [
+     "scripts/weapon_x/old/havokbeginattacking2.py:12",
+     "scripts/weapon_x/old/havokbeginattacking3.py:12",
+     "scripts/weapon_x/old/havokbeginattacking4.py:4",
+     "scripts/weapon_x/old/havokbeginroom1.py:9"
+    ]
+   },
+   "get": {
+    "weapon_x/old/wx2_2": [
+     "scripts/weapon_x/old/gettonextspot.py:4",
+     "scripts/weapon_x/old/havokpain.py:16"
+    ]
+   }
+  }
+ },
+ "newspot": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "weapon_x/old/wx2_2"
+  ],
+  "get_zones": [
+   "weapon_x/old/wx2_2"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   ""
+  ],
+  "n_set": 6,
+  "n_get": 1,
+  "sites": {
+   "set": {
+    "weapon_x/old/wx2_2": [
+     "scripts/weapon_x/old/gettonextspot.py:6",
+     "scripts/weapon_x/old/havokbeginattacking1.py:6",
+     "scripts/weapon_x/old/havokbeginattacking2.py:11",
+     "scripts/weapon_x/old/havokbeginattacking3.py:11",
+     "scripts/weapon_x/old/havokbeginattacking4.py:3",
+     "scripts/weapon_x/old/havokpain.py:9"
+    ]
+   },
+   "get": {
+    "weapon_x/old/wx2_2": [
+     "scripts/weapon_x/old/havokpain.py:5"
+    ]
+   }
+  }
+ },
+ "fighting": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "weapon_x/old/wx2_2"
+  ],
+  "get_zones": [
+   "weapon_x/old/wx2_2"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   ""
+  ],
+  "n_set": 1,
+  "n_get": 1,
+  "sites": {
+   "set": {
+    "weapon_x/old/wx2_2": [
+     "scripts/weapon_x/old/havokbeginroom1.py:8"
+    ]
+   },
+   "get": {
+    "weapon_x/old/wx2_2": [
+     "scripts/weapon_x/old/havokpain.py:3"
+    ]
+   }
+  }
+ },
+ "wpnxfb": {
+  "kind": [
+   "mflag"
+  ],
+  "set_zones": [
+   "weapon_x/wfb/wx1_3"
+  ],
+  "get_zones": [
+   "weapon_x/wfb/wx1_3"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   ""
+  ],
+  "n_set": 1,
+  "n_get": 1,
+  "sites": {
+   "set": {
+    "weapon_x/wfb/wx1_3": [
+     "scripts/weapon_x/wfb/director_shot.py:11"
+    ]
+   },
+   "get": {
+    "weapon_x/wfb/wx1_3": [
+     "scripts/weapon_x/wfb/wx1_3.py:3"
+    ]
+   }
+  }
+ },
+ "jugg_fb": {
+  "kind": [
+   "gvar"
+  ],
+  "set_zones": [
+   "MISSIONSTART"
+  ],
+  "get_zones": [],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": true,
+  "missions": [
+   "?"
+  ],
+  "n_set": 1,
+  "n_get": 0,
+  "sites": {
+   "set": {
+    "MISSIONSTART": [
+     "scripts/missions/jug_done.py:3"
+    ]
+   },
+   "get": {}
+  }
+ },
+ "1_3_7a": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "demo/ext/haarp_ext_boss",
+   "haarp/ext/haarp_ext_boss"
+  ],
+  "get_zones": [
+   "demo/ext/haarp_ext_boss",
+   "haarp/ext/haarp_ext_boss"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "?"
+  ],
+  "n_set": 2,
+  "n_get": 2,
+  "sites": {
+   "set": {
+    "demo/ext/haarp_ext_boss": [
+     "conversations/haarp/ext/1_3_7_end_x_men_meet_toad.eng (inline)"
+    ],
+    "haarp/ext/haarp_ext_boss": [
+     "conversations/haarp/ext/1_3_7_end_x_men_meet_toad.eng (inline)"
+    ]
+   },
+   "get": {
+    "demo/ext/haarp_ext_boss": [
+     "conversations/haarp/ext/1_3_7_end_x_men_meet_toad.eng (inline)"
+    ],
+    "haarp/ext/haarp_ext_boss": [
+     "conversations/haarp/ext/1_3_7_end_x_men_meet_toad.eng (inline)"
+    ]
+   }
+  }
+ },
+ "1_3_7b": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "demo/ext/haarp_ext_boss",
+   "haarp/ext/haarp_ext_boss"
+  ],
+  "get_zones": [
+   "demo/ext/haarp_ext_boss",
+   "haarp/ext/haarp_ext_boss"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "?"
+  ],
+  "n_set": 2,
+  "n_get": 2,
+  "sites": {
+   "set": {
+    "demo/ext/haarp_ext_boss": [
+     "conversations/haarp/ext/1_3_7_end_x_men_meet_toad.eng (inline)"
+    ],
+    "haarp/ext/haarp_ext_boss": [
+     "conversations/haarp/ext/1_3_7_end_x_men_meet_toad.eng (inline)"
+    ]
+   },
+   "get": {
+    "demo/ext/haarp_ext_boss": [
+     "conversations/haarp/ext/1_3_7_end_x_men_meet_toad.eng (inline)"
+    ],
+    "haarp/ext/haarp_ext_boss": [
+     "conversations/haarp/ext/1_3_7_end_x_men_meet_toad.eng (inline)"
+    ]
+   }
+  }
+ },
+ "1_3_7c": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "demo/ext/haarp_ext_boss",
+   "haarp/ext/haarp_ext_boss"
+  ],
+  "get_zones": [
+   "demo/ext/haarp_ext_boss",
+   "haarp/ext/haarp_ext_boss"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "?"
+  ],
+  "n_set": 2,
+  "n_get": 2,
+  "sites": {
+   "set": {
+    "demo/ext/haarp_ext_boss": [
+     "conversations/haarp/ext/1_3_7_end_x_men_meet_toad.eng (inline)"
+    ],
+    "haarp/ext/haarp_ext_boss": [
+     "conversations/haarp/ext/1_3_7_end_x_men_meet_toad.eng (inline)"
+    ]
+   },
+   "get": {
+    "demo/ext/haarp_ext_boss": [
+     "conversations/haarp/ext/1_3_7_end_x_men_meet_toad.eng (inline)"
+    ],
+    "haarp/ext/haarp_ext_boss": [
+     "conversations/haarp/ext/1_3_7_end_x_men_meet_toad.eng (inline)"
+    ]
+   }
+  }
+ },
+ "hive": {
+  "kind": [
+   "mflag"
+  ],
+  "set_zones": [
+   "hive/h_int/hive1_2_2"
+  ],
+  "get_zones": [],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": true,
+  "missions": [
+   "hive1"
+  ],
+  "n_set": 2,
+  "n_get": 0,
+  "sites": {
+   "set": {
+    "hive/h_int/hive1_2_2": [
+     "conversations/hive/h_int/3_8_5.eng (inline)",
+     "conversations/hive/h_int/3_8_5.eng (inline)"
+    ]
+   },
+   "get": {}
+  }
+ },
+ "385hidA": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "hive/h_int/hive1_2_2"
+  ],
+  "get_zones": [],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": true,
+  "missions": [
+   "hive1"
+  ],
+  "n_set": 1,
+  "n_get": 0,
+  "sites": {
+   "set": {
+    "hive/h_int/hive1_2_2": [
+     "conversations/hive/h_int/3_8_5.eng (inline)"
+    ]
+   },
+   "get": {}
+  }
+ },
+ "385hidB": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "hive/h_int/hive1_2_2"
+  ],
+  "get_zones": [],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": true,
+  "missions": [
+   "hive1"
+  ],
+  "n_set": 1,
+  "n_get": 0,
+  "sites": {
+   "set": {
+    "hive/h_int/hive1_2_2": [
+     "conversations/hive/h_int/3_8_5.eng (inline)"
+    ]
+   },
+   "get": {}
+  }
+ },
+ "intro3": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "mansion/man1a/mansion1a_1"
+  ],
+  "get_zones": [],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": true,
+  "missions": [
+   "mansion1"
+  ],
+  "n_set": 1,
+  "n_get": 0,
+  "sites": {
+   "set": {
+    "mansion/man1a/mansion1a_1": [
+     "conversations/mansion/man1a/1_2_1_2.eng (inline)"
+    ]
+   },
+   "get": {}
+  }
+ },
+ "intro4": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "mansion/man1a/mansion1a_1"
+  ],
+  "get_zones": [],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": true,
+  "missions": [
+   "mansion1"
+  ],
+  "n_set": 1,
+  "n_get": 0,
+  "sites": {
+   "set": {
+    "mansion/man1a/mansion1a_1": [
+     "conversations/mansion/man1a/1_2_1_2.eng (inline)"
+    ]
+   },
+   "get": {}
+  }
+ },
+ "glasses": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "mansion/man1a/subbasement1a"
+  ],
+  "get_zones": [],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": true,
+  "missions": [
+   "mansion1"
+  ],
+  "n_set": 1,
+  "n_get": 0,
+  "sites": {
+   "set": {
+    "mansion/man1a/subbasement1a": [
+     "conversations/mansion/man1a/1_2_35.eng (inline)"
+    ]
+   },
+   "get": {}
+  }
+ },
+ "storm_f": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "mansion/man1a/mansion1a_2"
+  ],
+  "get_zones": [],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": true,
+  "missions": [
+   "mansion1"
+  ],
+  "n_set": 1,
+  "n_get": 0,
+  "sites": {
+   "set": {
+    "mansion/man1a/mansion1a_2": [
+     "conversations/mansion/man1a/1_2_36.eng (inline)"
+    ]
+   },
+   "get": {}
+  }
+ },
+ "ro1b": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "mansion/man1a/mansion1a_1"
+  ],
+  "get_zones": [
+   "mansion/man1a/mansion1a_1"
+  ],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": false,
+  "missions": [
+   "mansion1"
+  ],
+  "n_set": 1,
+  "n_get": 1,
+  "sites": {
+   "set": {
+    "mansion/man1a/mansion1a_1": [
+     "conversations/mansion/man1a/1_2_37.eng (inline)"
+    ]
+   },
+   "get": {
+    "mansion/man1a/mansion1a_1": [
+     "conversations/mansion/man1a/1_2_37.eng (inline)"
+    ]
+   }
+  }
+ },
+ "1_4_2a": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "mansion/man2/mansion_back2"
+  ],
+  "get_zones": [],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": true,
+  "missions": [
+   ""
+  ],
+  "n_set": 1,
+  "n_get": 0,
+  "sites": {
+   "set": {
+    "mansion/man2/mansion_back2": [
+     "conversations/mansion/man2/1_4_2.eng (inline)"
+    ]
+   },
+   "get": {}
+  }
+ },
+ "1_4_3a": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "mansion/man2/mansion_back2"
+  ],
+  "get_zones": [],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": true,
+  "missions": [
+   ""
+  ],
+  "n_set": 3,
+  "n_get": 0,
+  "sites": {
+   "set": {
+    "mansion/man2/mansion_back2": [
+     "conversations/mansion/man2/1_4_3.eng (inline)",
+     "conversations/mansion/man2/1_4_3_2.eng (inline)",
+     "conversations/mansion/man2/1_4_3_4.eng (inline)"
+    ]
+   },
+   "get": {}
+  }
+ },
+ "1_4_9a": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "mansion/man2/subbasement2"
+  ],
+  "get_zones": [],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": true,
+  "missions": [
+   "mansion2"
+  ],
+  "n_set": 1,
+  "n_get": 0,
+  "sites": {
+   "set": {
+    "mansion/man2/subbasement2": [
+     "conversations/mansion/man2/1_4_9.eng (inline)"
+    ]
+   },
+   "get": {}
+  }
+ },
+ "1_4_9b": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "mansion/man2/subbasement2"
+  ],
+  "get_zones": [],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": true,
+  "missions": [
+   "mansion2"
+  ],
+  "n_set": 1,
+  "n_get": 0,
+  "sites": {
+   "set": {
+    "mansion/man2/subbasement2": [
+     "conversations/mansion/man2/1_4_9.eng (inline)"
+    ]
+   },
+   "get": {}
+  }
+ },
+ "2_5_13a": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "mansion/man4/mansion4_1"
+  ],
+  "get_zones": [],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": true,
+  "missions": [
+   "mansion4"
+  ],
+  "n_set": 1,
+  "n_get": 0,
+  "sites": {
+   "set": {
+    "mansion/man4/mansion4_1": [
+     "conversations/mansion/man4/2_5_13.eng (inline)"
+    ]
+   },
+   "get": {}
+  }
+ },
+ "weap_x": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "mansion/man4/mansion4_1"
+  ],
+  "get_zones": [],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": true,
+  "missions": [
+   "mansion4"
+  ],
+  "n_set": 1,
+  "n_get": 0,
+  "sites": {
+   "set": {
+    "mansion/man4/mansion4_1": [
+     "conversations/mansion/man4/2_5_13.eng (inline)"
+    ]
+   },
+   "get": {}
+  }
+ },
+ "2_5_3a": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "mansion/man4/mansion4_1"
+  ],
+  "get_zones": [],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": true,
+  "missions": [
+   "mansion4"
+  ],
+  "n_set": 1,
+  "n_get": 0,
+  "sites": {
+   "set": {
+    "mansion/man4/mansion4_1": [
+     "conversations/mansion/man4/2_5_3.eng (inline)"
+    ]
+   },
+   "get": {}
+  }
+ },
+ "mansion5": {
+  "kind": [
+   "mflag"
+  ],
+  "set_zones": [
+   "mansion/man5/subbasement5"
+  ],
+  "get_zones": [],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": true,
+  "missions": [
+   ""
+  ],
+  "n_set": 5,
+  "n_get": 0,
+  "sites": {
+   "set": {
+    "mansion/man5/subbasement5": [
+     "conversations/mansion/man5/2_5_19.eng (inline)",
+     "conversations/mansion/man5/2_5_19.eng (inline)",
+     "conversations/mansion/man5/2_5_20.eng (inline)",
+     "conversations/mansion/man5/2_5_20_1.eng (inline)",
+     "conversations/mansion/man5/2_5_20_1.eng (inline)"
+    ]
+   },
+   "get": {}
+  }
+ },
+ "mansion6": {
+  "kind": [
+   "mflag"
+  ],
+  "set_zones": [
+   "mansion/man6/subbasement6"
+  ],
+  "get_zones": [],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": true,
+  "missions": [
+   ""
+  ],
+  "n_set": 2,
+  "n_get": 0,
+  "sites": {
+   "set": {
+    "mansion/man6/subbasement6": [
+     "conversations/mansion/man6/3_1_3.eng (inline)",
+     "conversations/mansion/man6/3_1_6.eng (inline)"
+    ]
+   },
+   "get": {}
+  }
+ },
+ "mansion8": {
+  "kind": [
+   "mflag"
+  ],
+  "set_zones": [
+   "mansion/man8/hangar8",
+   "mansion/man8/subbasement8"
+  ],
+  "get_zones": [],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": true,
+  "missions": [
+   "",
+   "mansion8"
+  ],
+  "n_set": 4,
+  "n_get": 0,
+  "sites": {
+   "set": {
+    "mansion/man8/hangar8": [
+     "conversations/mansion/man8/3_9_2.eng (inline)",
+     "conversations/mansion/man8/3_9_3.eng (inline)",
+     "conversations/mansion/man8/3_9_3.eng (inline)"
+    ],
+    "mansion/man8/subbasement8": [
+     "conversations/mansion/man8/3_9_6.eng (inline)"
+    ]
+   },
+   "get": {}
+  }
+ },
+ "2_4_5a": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "muir_is/muir2/muir_in2"
+  ],
+  "get_zones": [],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": true,
+  "missions": [
+   "muir2"
+  ],
+  "n_set": 1,
+  "n_get": 0,
+  "sites": {
+   "set": {
+    "muir_is/muir2/muir_in2": [
+     "conversations/muir_is/muir2/2_4_5.eng (inline)"
+    ]
+   },
+   "get": {}
+  }
+ },
+ "muir3": {
+  "kind": [
+   "mflag"
+  ],
+  "set_zones": [
+   "muir_is/muir3/muir_brig",
+   "muir_is/muir3/muir_in3"
+  ],
+  "get_zones": [],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": true,
+  "missions": [
+   "muir3",
+   "muir3brig"
+  ],
+  "n_set": 6,
+  "n_get": 0,
+  "sites": {
+   "set": {
+    "muir_is/muir3/muir_in3": [
+     "conversations/muir_is/muir3/3_5_2.eng (inline)"
+    ],
+    "muir_is/muir3/muir_brig": [
+     "conversations/muir_is/muir3/3_5_4_2.eng (inline)",
+     "conversations/muir_is/muir3/3_5_4_2.eng (inline)",
+     "conversations/muir_is/muir3/3_5_4_2.eng (inline)",
+     "conversations/muir_is/muir3/3_5_5.eng (inline)",
+     "conversations/muir_is/muir3/3_5_6.eng (inline)"
+    ]
+   },
+   "get": {}
+  }
+ },
+ "obj_g": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "nuke_plant/nuke/nuke2_2a"
+  ],
+  "get_zones": [],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": true,
+  "missions": [
+   ""
+  ],
+  "n_set": 1,
+  "n_get": 0,
+  "sites": {
+   "set": {
+    "nuke_plant/nuke/nuke2_2a": [
+     "conversations/nuke_plant/nuke/2_3_3_1.eng (inline)"
+    ]
+   },
+   "get": {}
+  }
+ },
+ "4a": {
+  "kind": [
+   "mvar"
+  ],
+  "set_zones": [
+   "nyc/alison/nyc1_1_2b"
+  ],
+  "get_zones": [],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": true,
+  "missions": [
+   "alison"
+  ],
+  "n_set": 1,
+  "n_get": 0,
+  "sites": {
+   "set": {
+    "nyc/alison/nyc1_1_2b": [
+     "conversations/nyc/alison/1_1_1.eng (inline)"
+    ]
+   },
+   "get": {}
+  }
+ },
+ "nyc_alison": {
+  "kind": [
+   "mflag"
+  ],
+  "set_zones": [
+   "nyc/alison/nyc1_1_2b"
+  ],
+  "get_zones": [],
+  "read_without_local_set": [],
+  "needs_game_scope": false,
+  "never_set": false,
+  "never_read": true,
+  "missions": [
+   "alison"
+  ],
+  "n_set": 1,
+  "n_get": 0,
+  "sites": {
+   "set": {
+    "nyc/alison/nyc1_1_2b": [
+     "conversations/nyc/alison/1_1_1.eng (inline)"
+    ]
+   },
+   "get": {}
+  }
+ }
+}

@@ -1,0 +1,20 @@
+{
+ "format": 1,
+ "dumps": [
+  {
+   "id": "xml1-world-v1",
+   "title": "X-Men Legends (World) (Redump)",
+   "title_id": "0x4156001E",
+   "xbe_md5": "1e1a766ae4dc9f5f0151aa4ce029f362",
+   "zip_digest": "78bcd91b2ccd4ad6c4e1fa624f4b14357215ba50",
+   "listing_digest": "710fe7cd5636b7dc32b605c94160fb450ba3bb19",
+   "zip_members": 1888,
+   "images": [
+    {
+     "format": "redump-xgd1",
+     "size": 7825162240
+    }
+   ]
+  }
+ ]
+}

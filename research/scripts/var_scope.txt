@@ -1,0 +1,184 @@
+175 distinct variable names touched by XML1 scripts + inline data scripts
+inline (map/data) accesses: {'setMissionVar': 105, 'getMissionVar': 25, 'setMissionFlag': 212}
+by (kinds, used in >1 script directory): {(('mvar',), True): 43, (('mvar',), False): 84, (('gvar',), False): 9, (('gvar',), True): 5, (('mflag',), False): 13, (('mflag', 'mvar'), True): 3, (('gvar', 'mvar'), True): 2, (('mflag',), True): 16}
+names >= 12 chars (setter silently ignores them in BOTH engines: len check at XML1 0xcb7a1 / XML2 0x4d7081): ['<ident:rescuee>']
+names used with more than one store kind: ['astral1', 'dr_mag1', 'grsos', 'ivisit', 'temp']
+never set (always 0): ['actor_d', 'forge', 'sawgate', 'triggerid', 'visit', 'wx']
+set but never read: ['1_4_2a', '1_4_3a', '1_4_9a', '1_4_9b', '2_4_5a', '2_5_13a', '2_5_3a', '385hidA', '385hidB', '4a', 'alison', 'bguys', 'glasses', 'hive', 'intro3', 'intro4', 'jugg_fb', 'mansion2', 'mansion4', 'mansion5', 'mansion6', 'mansion8', 'muir3', 'nuke', 'nyc_alison', 'obj_g', 'scott', 'sent_fb', 'storm_f', 'triggerID', 'weap_x', 'wpxflash']
+
+name             kinds          cross  set-dirs -> get-dirs   values / bits
+a_w_q            gvar              common/astral_or_wx.py -> common/astral_or_wx.py   {'1': 1} 
+act3mssn         gvar           X  muir_is/muir3,nyc/riots,sewers/grso -> muir_is/muir3,nyc/riots,sewers/grso   {'<var>': 4} 
+alison           gvar              nyc/alison ->    {'1': 1} 
+fb_sent          gvar           X  nyc/fb -> mansion/man2   {'1': 1} 
+jug_fb           gvar           X  mansion/jugrnt,mansion/man2 -> mansion/man1b,mansion/man2   {'1': 1, '2': 1} 
+jugg_fb          gvar              missions/jug_done.py ->    {'1': 1} 
+man4_1           gvar              mansion/man4 -> mansion/man4   {'1': 1, '2': 1} 
+rebooted         gvar              muir_is/muir2 -> muir_is/muir2   {'1': 1, '0': 1} 
+s_m_q            gvar              muir_is/muir1 -> muir_is/muir1   {'<var>': 1} 
+sk_defeated      gvar              astral/savepx -> astral/savepx   {'1': 1} 
+uniform          gvar           X  mansion/dr_mag2,mansion/man3 -> mansion/man3   {'1': 2, '2': 1} 
+visback          gvar              mansion/man4 -> mansion/man4   {'1': 1} 
+wolv_fb          gvar           X  weapon_x/wfb -> mansion/man3   {'1': 1} 
+wpxflash         gvar              mansion/man3 ->    {'2': 1} 
+dr_mag1          gvar,mvar      X  mansion/dr_mag,mansion/man2 -> mansion/man2   {'1': 3, '2': 1} 
+grsos            gvar,mvar      X  mansion/man4,missions/mansion4_grso_done.py -> mansion/man4   {'1': 3, '<var>': 1, '10': 2, '2': 1} 
+ast_int2         mflag             asteroid_m/start2_3.py -> asteroid_m/start2_3.py   {'1': 1} {'1': 2}
+ast_rock         mflag             asteroid_m/start_asteroid_m.py -> asteroid_m/start_asteroid_m.py   {'1': 1} {'1': 2}
+astral2          mflag             astral/ast3 -> astral/ast3   {'1': 8} {'7': 2, '8': 2, '2': 2, '1': 2, '3': 2, '4': 4, '5': 4, '6': 4}
+astral3          mflag             astral/savepx -> astral/savepx   {'1': 1} {'1': 2}
+ffield           mflag             mansion/dr_mag -> mansion/dr_mag   {'0': 7, '1': 7} {'1': 3, '2': 3, '3': 3, '4': 3, '5': 1, '6': 3, '7': 3, '10': 2}
+haarp            mflag             haarp/ext -> haarp/ext   {'1': 6} {'1': 2, '4': 2, '2': 2, '5': 2, '3': 3}
+haarp3           mflag          X  xml1_assets/packages,xml1_loose/maps -> haarp/ext    {'1': 1}
+hive             mflag          X  xml1_assets/packages,xml1_loose/conversations ->     
+hive1            mflag             hive/h_ext -> hive/h_ext   {'1': 1} {'1': 2}
+man1a            mflag             mansion/man1a -> mansion/man1a   {'1': 4} {'1': 3, '2': 3}
+mansion1         mflag          X  mansion/man1a,xml1_assets/packages,xml1_loose/conversations -> mansion/man1a   {'0': 2, '1': 15} {'8': 11, '5': 20, '4': 9, '10': 4, '7': 3, '12': 2, '11': 4, '1': 1, '2': 1, '6': 1, '9': 1, '3': 1}
+mansion2         mflag          X  mansion/man2,xml1_assets/packages,xml1_loose/conversations ->    {'1': 9, '0': 1} {'8': 2, '9': 1, '10': 1, '2': 1, '1': 1, '3': 1, '5': 1, '6': 1, '7': 1}
+mansion3         mflag          X  mansion/man3,xml1_assets/packages,xml1_loose/conversations -> mansion/man3   {'1': 11} {'13': 2, '14': 2, '15': 4, '16': 4, '17': 2, '18': 2, '11': 2, '12': 2, '4': 1}
+mansion4         mflag          X  mansion/man4,xml1_assets/packages,xml1_loose/conversations ->    {'1': 1} {'5': 1}
+mansion5         mflag          X  xml1_assets/packages,xml1_loose/conversations ->     
+mansion6         mflag          X  xml1_assets/packages,xml1_loose/conversations ->     
+mansion7         mflag          X  mansion/man7,xml1_assets/packages,xml1_loose/conversations -> mansion/man7   {'1': 1} {'5': 1, '6': 2}
+mansion8         mflag          X  xml1_assets/packages,xml1_loose/conversations ->     
+muir             mflag             muir_is/muir1 -> muir_is/muir1   {'1': 2} {'3': 1, '2': 1, '1': 1}
+muir2            mflag          X  muir_is/muir2,xml1_assets/packages,xml1_loose/conversations -> muir_is/muir2   {'1': 7, '0': 8} {'6': 2, '3': 4, '4': 4, '2': 5, '1': 1}
+muir3            mflag          X  xml1_assets/packages,xml1_loose/conversations ->     
+nuke             mflag             nuke_plant/nuke ->    {'1': 3} {'3': 1, '1': 1, '2': 1}
+nyc_alison       mflag          X  xml1_assets/packages,xml1_loose/conversations ->     
+nyc_fb           mflag             nyc/fb -> nyc/fb   {'1': 2, '0': 1} {'2': 2, '4': 3}
+swrgrso1         mflag          X  sewers/grso,xml1_assets/packages,xml1_loose/conversations -> sewers/grso   {'1': 2} {'6': 1, '10': 2}
+swrhub1          mflag          X  sewers/hub,sewers/quest -> sewers/hub   {'1': 2, '2': 1} {'1': 4}
+swrhub2          mflag          X  xml1_assets/packages,xml1_loose/conversations -> sewers/hub    {'3': 1}
+timers           mflag             arbiter/a_int -> arbiter/a_int   {'1': 3} {'1': 2, '2': 2, '3': 2}
+wpnxfb           mflag             weapon_x/wfb -> weapon_x/wfb   {'1': 1} {'1': 2}
+astral1          mflag,mvar     X  astral/ast1 -> astral/ast1,common/astral_or_wx.py   {'1': 7} {'1': 2, '2': 2, '3': 2, '4': 2, '5': 2}
+ivisit           mflag,mvar     X  haarp/ext,mansion/man7 -> haarp/ext,mansion/man7   {'1': 3} {'3': 2}
+temp             mflag,mvar     X  muir_is/muir3,nyc/riots,sewers/grso -> muir_is/muir3,nyc/riots,sewers/grso   {'<var>': 4, '1': 4} {'3': 1, '1': 2, '2': 1}
+1_3_7a           mvar           X  xml1_assets/packages,xml1_loose/conversations -> xml1_assets/packages,xml1_loose/conversations    
+1_3_7b           mvar           X  xml1_assets/packages,xml1_loose/conversations -> xml1_assets/packages,xml1_loose/conversations    
+1_3_7c           mvar           X  xml1_assets/packages,xml1_loose/conversations -> xml1_assets/packages,xml1_loose/conversations    
+1_4_2a           mvar           X  xml1_assets/packages,xml1_loose/conversations ->     
+1_4_3a           mvar           X  xml1_assets/packages,xml1_loose/conversations ->     
+1_4_7b           mvar              mansion/man2 -> mansion/man2   {'1': 2} 
+1_4_9a           mvar           X  xml1_assets/packages,xml1_loose/conversations ->     
+1_4_9b           mvar           X  xml1_assets/packages,xml1_loose/conversations ->     
+2_4_5a           mvar           X  xml1_assets/packages,xml1_loose/conversations ->     
+2_5_13a          mvar           X  xml1_assets/packages,xml1_loose/conversations ->     
+2_5_3a           mvar           X  xml1_assets/packages,xml1_loose/conversations ->     
+2started         mvar              arbiter/a_int -> arbiter/a_int   {'1': 1} 
+385hidA          mvar           X  xml1_assets/packages,xml1_loose/conversations ->     
+385hidB          mvar           X  xml1_assets/packages,xml1_loose/conversations ->     
+4a               mvar           X  xml1_assets/packages,xml1_loose/conversations ->     
+<ident:rescuee>  mvar              hive/h_int -> hive/h_int   {'1': 1} 
+actor_c          mvar              mansion/dr_mag -> mansion/dr_mag   {'<var>': 1} 
+actor_d          mvar               -> mansion/dr_mag    
+actor_e          mvar              mansion/dr_mag -> mansion/dr_mag   {'<var>': 1} 
+actor_f          mvar              mansion/dr_mag -> mansion/dr_mag   {'<var>': 1} 
+actor_g          mvar              mansion/dr_mag -> mansion/dr_mag   {'<var>': 1} 
+aligned          mvar              muir_is/muir2 -> muir_is/muir2   {'<var>': 1, '0': 1} 
+astral           mvar              mansion/man4 -> mansion/man4   {'1': 1} 
+atkforge         mvar              muir_is/muir3 -> muir_is/muir3   {'0': 1, '1': 1} 
+base             mvar           X  mastermold/catwalka1death.py,mastermold/catwalkb1death.py,mastermold/catwalkc1death.py,mastermold/catwalkd1death.py,mastermold/catwalke1death.py,mastermold/catwalkf1death.py -> mastermold/breakitup.py,mastermold/breakitupt.py   {'<var>': 6} 
+bbot             mvar              mansion/man4 -> mansion/man4   {'1': 3, '0': 1} 
+been_nuke        mvar              nuke_plant/nuke -> nuke_plant/nuke   {'1': 1} 
+beenhub          mvar              sewers/healer -> sewers/healer   {'1': 1} 
+bguys            mvar              nyc/alison ->    {'2': 1} 
+bridge           mvar              muir_is/muir2 -> muir_is/muir2   {'1': 1} 
+byard2           mvar              mansion/man2 -> mansion/man2   {'1': 1} 
+checkpart1       mvar           X  mastermold/catwalkd1death.py,mastermold/catwalke1death.py,mastermold/catwalkf1death.py -> mastermold/breakitupt.py   {'<var>': 3} 
+checkpart2       mvar           X  mastermold/catwalkd1death.py,mastermold/catwalke1death.py,mastermold/catwalkf1death.py -> mastermold/breakitupt.py   {'<var>': 3} 
+convdone         mvar              astral/ast3 -> astral/ast3   {'1': 1} 
+corecount        mvar           X  mastermold/core_off1.py,mastermold/core_off2.py,mastermold/core_off3.py,mastermold/core_on1.py,mastermold/core_on2.py,mastermold/core_on3.py -> mastermold/checkcore.py,mastermold/core_off1.py,mastermold/core_off2.py,mastermold/core_off3.py,mastermold/core_on1.py,mastermold/core_on2.py,mastermold/core_on3.py   {'<var>': 6} 
+coreon1          mvar           X  mastermold/core_on1.py -> mastermold/coredeath1.py   {'1': 1} 
+coreon2          mvar           X  mastermold/core_on2.py -> mastermold/coredeath2.py   {'1': 1} 
+coreon3          mvar           X  mastermold/core_on3.py -> mastermold/coredeath3.py   {'1': 1} 
+coresgone        mvar           X  mastermold/coredeath1.py,mastermold/coredeath2.py,mastermold/coredeath3.py -> mastermold/checkcore.py,mastermold/coredeath1.py,mastermold/coredeath2.py,mastermold/coredeath3.py   {'<var>': 3} 
+cur_bots         mvar              mansion/man5 -> mansion/man5   {'0': 1, '<var>': 4} 
+deadbots         mvar              mansion/dr_mag -> mansion/dr_mag   {'<var>': 1} 
+deadbots3        mvar              mansion/dr_mag -> mansion/dr_mag   {'<var>': 1} 
+deaddmns         mvar              astral/ast3 -> astral/ast3   {'<var>': 1, '0': 1} 
+deadgrunts       mvar              nyc/alison -> nyc/alison   {'<var>': 1, '0': 1} 
+deadgrunts2      mvar              nyc/alison -> nyc/alison   {'<var>': 1, '0': 1} 
+deadguys         mvar              astral/ast3 -> astral/ast3   {'<var>': 3} 
+deadres          mvar              sewers/grso -> sewers/grso   {'<var>': 1} 
+deadsks          mvar              astral/savepx -> astral/savepx   {'<var>': 1} 
+donthurt         mvar              muir_is/muir3 -> muir_is/muir3   {'1': 2, '0': 1} 
+dooropen         mvar              sewers/hub -> sewers/hub   {'1': 1} 
+drone            mvar           X  missions/drones.py -> mansion/man4   {'1': 1} 
+emma             mvar              mansion/man4 -> mansion/man4   {'1': 3} 
+fhaarp           mvar              haarp/ext -> haarp/ext   {'0': 1, '1': 2} 
+fightable        mvar              haarp/ext -> haarp/ext   {'1': 2, '0': 1} 
+fighting         mvar              weapon_x/old -> weapon_x/old   {'1': 1} 
+forge            mvar               -> muir_is/muir2    
+front_yd         mvar              mansion/man5 -> mansion/man5   {'1': 2} 
+ftalk            mvar              common/hint_forgeshop.py -> common/hint_forgeshop.py   {'1': 1} 
+g_r_talk         mvar              mansion/man4 -> mansion/man4   {'1': 1} 
+glasses          mvar           X  xml1_assets/packages,xml1_loose/conversations ->     
+havokhit         mvar              weapon_x/old -> weapon_x/old   {'0': 1} 
+intro3           mvar           X  xml1_assets/packages,xml1_loose/conversations ->     
+intro4           mvar           X  xml1_assets/packages,xml1_loose/conversations ->     
+jean             mvar           X  xml1_assets/packages,xml1_loose/conversations -> mansion/man4    
+juggy_fb         mvar              mansion/man1b -> mansion/man1b   {'<var>': 1} 
+lasthealth       mvar              astral/savepx -> astral/savepx   {'<var>': 3} 
+LASTID           mvar           X  arbiter/rescue_complete.py -> arbiter/a_int   {'<var>': 2} 
+lastroom         mvar              mansion/jugrnt -> mansion/jugrnt   {'2': 1, '1': 1} 
+left             mvar              mansion/man4 -> mansion/man4   {'1': 1} 
+leftarm          mvar              nuke_plant/nuke -> nuke_plant/nuke   {'1': 1} 
+man3_2           mvar              mansion/man3 -> mansion/man3   {'1': 2, '2': 1} 
+man6_2           mvar              mansion/man6 -> mansion/man6   {'1': 1} 
+max_bots         mvar              mansion/man5 -> mansion/man5   {'12': 1} 
+mdown            mvar              asteroid_m/mystiquepain.py -> asteroid_m/mystiquepain.py   {'1': 1} 
+my_var           mvar           X  astral/ast1,astral/ast3,astral/savepx -> astral/ast1,astral/ast3,astral/savepx   {'1': 3} 
+newspot          mvar              weapon_x/old -> weapon_x/old   {'1': 1, '0': 5} 
+nextroom         mvar              weapon_x/old -> weapon_x/old   {'2': 1, '3': 1, '4': 1, '1': 1, '<var>': 1} 
+noMagma          mvar           X  asteroid_m/alisoncheck.py,asteroid_m/start2_3.py -> asteroid_m/alisoncheck.py,asteroid_m/start2_3.py   {'0': 2, '1': 2} 
+obj_g            mvar           X  xml1_assets/packages,xml1_loose/conversations ->     
+part1            mvar           X  mastermold/catwalka1death.py,mastermold/catwalkb1death.py,mastermold/catwalkc1death.py,mastermold/catwalkd1death.py,mastermold/catwalke1death.py,mastermold/catwalkf1death.py -> mastermold/breakitup.py,mastermold/breakitupt.py   {'<var>': 6} 
+part2            mvar           X  mastermold/catwalka1death.py,mastermold/catwalkb1death.py,mastermold/catwalkc1death.py,mastermold/catwalkd1death.py,mastermold/catwalke1death.py,mastermold/catwalkf1death.py -> mastermold/breakitup.py,mastermold/breakitupt.py   {'<var>': 6} 
+part3            mvar           X  mastermold/catwalka1death.py,mastermold/catwalkb1death.py,mastermold/catwalkc1death.py,mastermold/catwalkd1death.py,mastermold/catwalke1death.py,mastermold/catwalkf1death.py -> mastermold/breakitupt.py   {'0': 3, '<var>': 3} 
+pbroke           mvar              haarp/ext -> haarp/ext   {'<var>': 1} 
+portalfx         mvar              astral/ast3 -> astral/ast3   {'1': 1} 
+ported           mvar              hive/h_int -> hive/h_int   {'<var>': 1} 
+pstatus          mvar              sewers/hub -> sewers/hub   {'<var>': 2} 
+psylocke         mvar              nyc/riots -> nyc/riots   {'1': 1} 
+pumps            mvar              nuke_plant/nuke -> nuke_plant/nuke   {'<var>': 1} 
+puzzle1          mvar              nuke_plant/nuke -> nuke_plant/nuke   {'2': 1} 
+rescue           mvar              nyc/riots -> nyc/riots   {'<var>': 4} 
+right            mvar              mansion/man4 -> mansion/man4   {'1': 1} 
+rightarm         mvar              nuke_plant/nuke -> nuke_plant/nuke   {'1': 1} 
+ro1b             mvar           X  xml1_assets/packages,xml1_loose/conversations -> xml1_assets/packages,xml1_loose/conversations    
+roomnum          mvar              mansion/jugrnt -> mansion/jugrnt   {'4': 1, '1': 1, '5': 1, '2': 1, '6': 1, '3': 1} 
+roomtime         mvar              mansion/jugrnt -> mansion/jugrnt   {'30': 1} 
+s_fb_intro       mvar              nyc/fb -> nyc/fb   {'1': 1} 
+sabredead        mvar           X  asteroid_m/sabretoothdeath.py,asteroid_m/stage4.py,mount/sabreressurrect.py,mount/sabretoothdeath.py -> mount/mountoutro.py   {'1': 2, '0': 2} 
+sawgate          mvar               -> haarp/ext    
+sawintro         mvar           X  haarp/ext,mastermold/mastermold1.py -> haarp/ext,mastermold/mastermold1.py   {'1': 2} 
+scott            mvar              muir_is/muir2 ->    {'1': 1} 
+sec_wx           mvar           X  weapon_x/secret -> common/astral_or_wx.py   {'1': 1} 
+sent_fb          mvar              mansion/man2 ->    {'1': 1} 
+shieldup         mvar              astral/savepx -> astral/savepx   {'0': 2, '1': 1} 
+shop             mvar              sewers/hub -> sewers/hub   {'1': 2} 
+showdem          mvar              haarp/ext -> haarp/ext   {'1': 1} 
+stage            mvar           X  asteroid_m/2_1_fight_magneto.py,asteroid_m/magneto_pain.py,astral/ast3,astral/savepx,haarp/int,mansion/dr_mag2,mastermold/checkcore.py,mastermold/mmpain.py,mastermold/mmspawn.py,mount/avalanchepain.py,nyc/alison -> asteroid_m/magneto_pain.py,astral/ast3,astral/savepx,haarp/int,mastermold/mmpain.py,mastermold/mmspawn.py,mount/avalanchepain.py,nyc/alison   {'1': 13, '<var>': 8, '3': 3, '2': 3, '0': 1, '-1': 1, '4': 2, '5': 1, '6': 1, '7': 1, '8': 1} 
+start            mvar           X  arbiter/deck,nyc/riots -> arbiter/deck,nyc/riots   {'1': 2} 
+start1           mvar              nyc/riots -> nyc/riots   {'1': 1} 
+started          mvar              arbiter/a_int -> arbiter/a_int   {'1': 1} 
+startfd1         mvar              arbiter/deck -> arbiter/deck   {'1': 1} 
+startfd2         mvar              arbiter/deck -> arbiter/deck   {'1': 1} 
+steamtime        mvar           X  sewers/hub,sewers/quest -> sewers/hub   {'3': 2} 
+storm_f          mvar           X  xml1_assets/packages,xml1_loose/conversations ->     
+supers           mvar              haarp/ext -> haarp/ext   {'1': 1} 
+sw1State         mvar              astral/ast1 -> astral/ast1   {'<var>': 3} 
+tank             mvar              haarp/ext -> haarp/ext   {'1': 1} 
+telenext         mvar              muir_is/muir3 -> muir_is/muir3   {'4': 1, '3': 1, '2': 1, '1': 1} 
+telespot         mvar              muir_is/muir3 -> muir_is/muir3   {'<var>': 1, '1': 1} 
+thief            mvar           X  sewers/hub -> sewers/healer   {'1': 1} 
+thisroom         mvar              weapon_x/old -> weapon_x/old   {'2': 1, '3': 1, '4': 1, '1': 1} 
+triggerID        mvar              arbiter/rescue_complete.py ->    {'<var>': 2} 
+triggerid        mvar               -> arbiter/a_int    
+visit            mvar               -> muir_is/muir2    
+weap_x           mvar           X  xml1_assets/packages,xml1_loose/conversations ->     
+wolvdead         mvar              astral/ast3 -> astral/ast3   {'1': 1, '0': 1} 
+wx               mvar               -> mansion/man4    
+xpips            mvar              common/kingofhillxpip.py -> common/kingofhillxpip.py   {'<var>': 1, '0': 1} 

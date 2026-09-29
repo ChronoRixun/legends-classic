@@ -1,0 +1,234 @@
+{
+ "screenFade": {
+  "xml1_sig": "n(ff)",
+  "xml2_sig": null,
+  "xml1_script_calls": 396,
+  "xml1_inline_data_calls": 0,
+  "xml2_replacement": "cameraFade(a, b)",
+  "evidence": "XML1 registers screenFade and cameraFade to the same function (xbe 0x98ec0); XML2 cameraFade 0x49df70 has identical body"
+ },
+ "getMissionVar": {
+  "xml1_sig": "i(s)",
+  "xml2_sig": null,
+  "xml1_script_calls": 178,
+  "xml1_inline_data_calls": 0,
+  "xml2_replacement": "packed getGameFlag bits / getZoneVar (see var_storage.json)",
+  "evidence": "XML1 mission store == XML2 zone store (xbe 0xcac70/0xcb780 vs exe 0x4d6840/0x4d7060, 32 names, <12 chars) but XML2 clears it on every zone load (0x49fe70) while XML1 clears only on map-directory change (xbe 0x99b90 + dir compare 0x824c0)"
+ },
+ "setMissionVar": {
+  "xml1_sig": "n(si)",
+  "xml2_sig": null,
+  "xml1_script_calls": 252,
+  "xml1_inline_data_calls": 24,
+  "xml2_replacement": "packed setGameFlag bits / setZoneVar",
+  "evidence": "as getMissionVar; XML2 has no int game-var setter, game vars are only reachable bit-wise (setGameFlag 0x4a0120 -> 0x4d7130)"
+ },
+ "getMissionFlag": {
+  "xml1_sig": "i(si)",
+  "xml2_sig": null,
+  "xml1_script_calls": 103,
+  "xml1_inline_data_calls": 0,
+  "xml2_replacement": "getGameFlag(name, bit)",
+  "evidence": "identical bit code (xbe 0x98cb0 vs exe 0x4a0190: bit 1..32, returns 0/1); same name kept so conversation conditions disallowResponseOnVar(name,bit) keep working (exe 0x49da20 checks game store first)"
+ },
+ "setMissionFlag": {
+  "xml1_sig": "n(sii)",
+  "xml2_sig": null,
+  "xml1_script_calls": 118,
+  "xml1_inline_data_calls": 53,
+  "xml2_replacement": "setGameFlag(name, bit, value)",
+  "evidence": "identical bit code (xbe 0x98d20 vs exe 0x4a0120)"
+ },
+ "getGameVar": {
+  "xml1_sig": "i(s)",
+  "xml2_sig": null,
+  "xml1_script_calls": 28,
+  "xml1_inline_data_calls": 0,
+  "xml2_replacement": "packed getGameFlag bits in x1g* game vars",
+  "evidence": "XML1 game store (xbe 0xcacd0, 16 names) ~ XML2 game store (0x4d68a0, 100 names) but XML2 exposes it only through get/setGameFlag"
+ },
+ "setGameVar": {
+  "xml1_sig": "n(si)",
+  "xml2_sig": null,
+  "xml1_script_calls": 28,
+  "xml1_inline_data_calls": 0,
+  "xml2_replacement": "packed setGameFlag bits in x1g* game vars",
+  "evidence": "see getGameVar"
+ },
+ "createPopupDialog": {
+  "xml1_sig": "n(s)",
+  "xml2_sig": null,
+  "xml1_script_calls": 103,
+  "xml1_inline_data_calls": 0,
+  "xml2_replacement": "createPopupDialogXml(\"x1/pNNN\") + generated Dialogs/x1/pNNN.XMLB/.engb",
+  "evidence": "XML2 only has XML-file dialogs (createPopupDialogXml 0x4a6890); dialog XML schema identical in both exes (attrs text/cancancel/autohide/scriptok/scriptcancel/filter/hud, <option text script>)"
+ },
+ "addPopupDialogOption": {
+  "xml1_sig": "n(ss)",
+  "xml2_sig": null,
+  "xml1_script_calls": 254,
+  "xml1_inline_data_calls": 0,
+  "xml2_replacement": "<option text=.. script=..> in the generated dialog",
+  "evidence": "option scripts run as console \"runscript %s\" (xbe 0x1877e0, exe 0x5eb8e3) -> must be one whitespace-free token"
+ },
+ "canCancelDialog": {
+  "xml1_sig": "n(s)",
+  "xml2_sig": null,
+  "xml1_script_calls": 9,
+  "xml1_inline_data_calls": 0,
+  "xml2_replacement": "cancancel=\"true|false\" attribute",
+  "evidence": "xbe 0x99350 sets popup->vtbl+0x34(bool)"
+ },
+ "showPopupDialog": {
+  "xml1_sig": "n()",
+  "xml2_sig": null,
+  "xml1_script_calls": 103,
+  "xml1_inline_data_calls": 0,
+  "xml2_replacement": "(part of createPopupDialogXml)",
+  "evidence": ""
+ },
+ "beginMission": {
+  "xml1_sig": "n(s)",
+  "xml2_sig": "n(s)",
+  "xml1_script_calls": 47,
+  "xml1_inline_data_calls": 31,
+  "xml2_replacement": "setCurrentAct(act) + objective resets + scriptstart body / loadMapKeepTeam(mapload) (scripts/x1/missions/begin_<m>.py)",
+  "evidence": "XML2 beginMission (0x4a0af0) queues console \"beginmission %s\" but no such command is registered in XMen2.exe (only format string at 0x68d2e8); XML1 handler xbe 0x18da90 loads data/missions/<m> then runs scriptstart"
+ },
+ "beginMissionHack": {
+  "xml1_sig": "n(s)",
+  "xml2_sig": "n(s)",
+  "xml1_script_calls": 1,
+  "xml1_inline_data_calls": 0,
+  "xml2_replacement": "as beginMission",
+  "evidence": "same; console command not registered"
+ },
+ "beginSideMission": {
+  "xml1_sig": "n(s)",
+  "xml2_sig": null,
+  "xml1_script_calls": 3,
+  "xml1_inline_data_calls": 4,
+  "xml2_replacement": "begin block of the side mission",
+  "evidence": "XML1 \"beginsidemission\" = pushsidemission + beginmission (xbe 0x18dd70); XML2 only pushes via extractionPointChange (0x4a7020)"
+ },
+ "endSideMission": {
+  "xml1_sig": "n(s)",
+  "xml2_sig": null,
+  "xml1_script_calls": 5,
+  "xml1_inline_data_calls": 1,
+  "xml2_replacement": "setCurrentAct(parent act) + loadZone(caller zone, \"\")  (fallback restorelastzone)",
+  "evidence": "XML2 restorelastzone handler 0x5f4580 is the XML1 endsidemission handler (xbe 0x18df20) renamed; without a pushed side mission it has nothing to restore, so returns are resolved statically"
+ },
+ "setInCampaign": {
+  "xml1_sig": "n(ss)",
+  "xml2_sig": null,
+  "xml1_script_calls": 5,
+  "xml1_inline_data_calls": 13,
+  "xml2_replacement": "unlockCharacter(hero, \"\")",
+  "evidence": "XML1 0x99460 and XML2 0x49f520 both call registry->vtbl+0x2c(registry->vtbl+0x3c(name)); \"FALSE\" is a no-op in XML1"
+ },
+ "addHero": {
+  "xml1_sig": "n(s)",
+  "xml2_sig": null,
+  "xml1_script_calls": 2,
+  "xml1_inline_data_calls": 0,
+  "xml2_replacement": "unlockCharacter + extractionPointLite(_ACTIVE_HERO_,true,false,false) (team menu)",
+  "evidence": "XML1 0x99a00 game->vtbl+0x110(name); no XML2 script function reaches the party-add method"
+ },
+ "exitSoloMode": {
+  "xml1_sig": "n(a)",
+  "xml2_sig": null,
+  "xml1_script_calls": 4,
+  "xml1_inline_data_calls": 0,
+  "xml2_replacement": "removed",
+  "evidence": "no XML2 solo-mode script API (XML1 0x9ef70)"
+ },
+ "enterSoloMode": {
+  "xml1_sig": "n(a)",
+  "xml2_sig": null,
+  "xml1_script_calls": 0,
+  "xml1_inline_data_calls": 18,
+  "xml2_replacement": "removed (inline data only)",
+  "evidence": "no XML2 solo-mode script API (XML1 0x9eef0)"
+ },
+ "setPowerStatus": {
+  "xml1_sig": "n(ass)",
+  "xml2_sig": null,
+  "xml1_script_calls": 1,
+  "xml1_inline_data_calls": 0,
+  "xml2_replacement": "removed",
+  "evidence": "no XML2 per-power enable/disable (XML1 0x9db60)"
+ },
+ "removeFromGroup": {
+  "xml1_sig": "n(a)",
+  "xml2_sig": null,
+  "xml1_script_calls": 1,
+  "xml1_inline_data_calls": 0,
+  "xml2_replacement": "removed",
+  "evidence": "no XML2 equivalent (XML1 0x9fbd0)"
+ },
+ "destroyMultipartPiece": {
+  "xml1_sig": "n(ai)",
+  "xml2_sig": null,
+  "xml1_script_calls": 2,
+  "xml1_inline_data_calls": 0,
+  "xml2_replacement": "setSegmentVisible(e,hideSkin,\"0\"); setSegmentVisible(e,showSkin,\"1\"); spawnEffectBone(e,bone,effect)",
+  "evidence": "npcstat <Multipart> of Juggernaut: hideSkin 3401_helmet, showSkin 3401_head, effectOnDeath explode/JuggernautHelmet, bone Bip01 Head"
+ },
+ "xtremeConversationLight": {
+  "xml1_sig": "n(as)",
+  "xml2_sig": null,
+  "xml1_script_calls": 1,
+  "xml1_inline_data_calls": 0,
+  "xml2_replacement": "removed",
+  "evidence": "no XML2 equivalent (XML1 0x9e310)"
+ },
+ "displayEx": {
+  "xml1_sig": "n(sfsfs)",
+  "xml2_sig": null,
+  "xml1_script_calls": 1,
+  "xml1_inline_data_calls": 0,
+  "xml2_replacement": "removed",
+  "evidence": "XML1 stub: xbe 0x2123a0 = xor eax,eax; ret"
+ },
+ "magnetoBall": {
+  "xml1_sig": "n(as)",
+  "xml2_sig": null,
+  "xml1_script_calls": 0,
+  "xml1_inline_data_calls": 0,
+  "xml2_replacement": "removed",
+  "evidence": "XML1 stub: xbe 0x2123a0"
+ },
+ "mission": {
+  "xml1_sig": "n(ss)",
+  "xml2_sig": null,
+  "xml1_script_calls": 5,
+  "xml1_inline_data_calls": 5,
+  "xml2_replacement": "comment (blackbird-menu mission state)",
+  "evidence": "XML1 0x99420 -> mission manager vtbl+8(name,state); XML2 has no mission-list state"
+ },
+ "loadMap": {
+  "xml1_sig": "n(s)",
+  "xml2_sig": "n(s)",
+  "xml1_script_calls": 40,
+  "xml1_inline_data_calls": 1,
+  "xml2_replacement": "loadMapKeepTeam(map)",
+  "evidence": "XML1 loadMap sends \"loadmap %s\" (xbe 0x9a850, extra args default 0 0); XML2 loadMap sends \"loadmapaddteam %s\" (no such command registered) and loadMapKeepTeam sends \"loadmap %s 0 0\" (0x4a0cc0)"
+ },
+ "extractionPointLite": {
+  "xml1_sig": "n(asssss)",
+  "xml2_sig": "n(asss)",
+  "xml1_script_calls": 0,
+  "xml1_inline_data_calls": 20,
+  "xml2_replacement": "first 4 args kept",
+  "evidence": "XML1 sig asssss (xbe 0x9f4a0) vs XML2 asss (0x4a6d80); mapping of the flags unverified"
+ },
+ "restartMission": {
+  "xml1_sig": "n()",
+  "xml2_sig": null,
+  "xml1_script_calls": 0,
+  "xml1_inline_data_calls": 0,
+  "xml2_replacement": "(unused by XML1 content)",
+  "evidence": "XML1 0x9a6e0 clears mission vars + \"beginmission <current>\""
+ }
+}

@@ -1,0 +1,118 @@
+# Freeze the builder (BUILDER_DESIGN.md 3.2, 3.3, 4.5): compile the sound kernel with MSVC, run the unit tests on the
+# freezing Python, freeze xml1-builder.exe with PyInstaller (one folder, no UPX), zip it with the launcher's release
+# manifest (xml1-builder.json) and smoke-test the result - the frozen folder and the unpacked zip - without game data.
+# Every run uploads the zip + manifest as an artifact; a v* tag also publishes them as a GitHub release, which the
+# Ultimate Legends launcher reads from releases/latest/download/xml1-builder.json.
+name: builder release
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      bootloader:
+        description: "PyInstaller bootloader: wheel (the prebuilt one) or source (compiled here with MSVC)"
+        type: choice
+        options: [wheel, source]
+        default: wheel
+
+permissions:
+  contents: read
+
+jobs:
+  freeze:
+    runs-on: windows-latest
+    env:
+      # BUILDER_DESIGN.md 3.3 step 1 wants the bootloader built from source (the prebuilt one's hash is on AV lists).
+      # The wheel's bootloader is used until that is switched on for releases; the choice lands in build-info.json.
+      XML1_BOOTLOADER: ${{ inputs.bootloader || 'wheel' }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.14"
+          architecture: x64
+          cache: pip
+          cache-dependency-path: requirements-freeze.txt
+
+      - name: Install the freeze toolchain
+        run: python -m pip install -r requirements-freeze.txt
+
+      - name: Tag matches the builder version
+        if: github.ref_type == 'tag'
+        run: python tools/freeze_builder.py --check-tag "${{ github.ref_name }}"
+
+      - name: PyInstaller bootloader from source
+        if: env.XML1_BOOTLOADER == 'source'
+        shell: pwsh
+        env:
+          PYINSTALLER_COMPILE_BOOTLOADER: "1"
+        run: |
+          $pin = (Select-String -Path requirements-freeze.txt -Pattern '^pyinstaller==(\S+)').Matches[0].Groups[1].Value
+          python -m pip install --force-reinstall --no-deps --no-binary pyinstaller "pyinstaller==$pin"
+
+      - name: Unit tests (on the freezing Python)
+        run: python tests/unit/run.py
+
+      - name: Sound kernel (MSVC + self-check)
+        run: python tools/build_sound_kernel.py
+
+      - name: Freeze, zip, manifest, smoke tests
+        run: python tools/freeze_builder.py --smoke
+
+      - name: Smoke tests on the unpacked zip (what the launcher installs)
+        shell: pwsh
+        run: |
+          $zip = (Get-ChildItem dist/xml1-builder-*-win64.zip).FullName
+          $dest = Join-Path $env:RUNNER_TEMP 'xml1-builder-unzipped'
+          New-Item -ItemType Directory $dest -Force | Out-Null
+          & "$env:SystemRoot\System32\tar.exe" -xf $zip -C $dest     # the launcher unpacks with Windows' tar.exe
+          if ($LASTEXITCODE) { throw "tar failed ($LASTEXITCODE)" }
+          python tools/freeze_smoke.py $dest
+          if ($LASTEXITCODE) { throw "smoke tests failed on the unpacked zip" }
+          Get-Content dist/xml1-builder.json
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: xml1-builder
+          path: |
+            dist/xml1-builder-*-win64.zip
+            dist/xml1-builder.json
+            dist/SHA256SUMS.txt
+          if-no-files-found: error
+
+  publish:
+    if: github.ref_type == 'tag'
+    needs: freeze
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write           # only this job can create the release
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: xml1-builder
+          path: dist
+
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          content=$(jq -r .content_version dist/xml1-builder.json)
+          {
+            echo "Legends Classic builder $TAG (content version $content)."
+            echo
+            echo "The Ultimate Legends launcher installs and runs it for you. Standalone use: unzip, then run"
+            echo "\`xml1-builder.exe --help\`. It contains no game data: it builds X-Men Legends from your own Xbox disc"
+            echo "image and your own X-Men Legends II install, and makes no network calls."
+            echo
+            echo "SHA-256:"
+            echo '```'
+            cat dist/SHA256SUMS.txt
+            echo '```'
+          } > notes.md
+          gh release create "$TAG" dist/xml1-builder-*-win64.zip dist/xml1-builder.json dist/SHA256SUMS.txt \
+            --repo "$GITHUB_REPOSITORY" --title "xml1-builder $TAG" --notes-file notes.md

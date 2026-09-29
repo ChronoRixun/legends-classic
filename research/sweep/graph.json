@@ -1,0 +1,3500 @@
+{
+ "_packaged": "packaged by tools/freeze_builder.py without the fields descname, description (no game text in a release)",
+ "missing_nodes": [
+  "conv:common/game/complete",
+  "conv:mansion/dr_mag/dr_mag1_test1",
+  "conv:mansion/man4/2_5_10_introducing_emma_frost",
+  "conv:nyc/alison/cockpit_talk",
+  "conv:startconversation(",
+  "dialog:objectivesnotcomplete",
+  "script:arb/a_int/welder",
+  "script:arbiter/a_int/chec_timer",
+  "script:arbiter/a_int/seamen_cam3_1a",
+  "script:arbiter/allow1_7_6_1",
+  "script:arbiter/allow1_7_6_11",
+  "script:asteroid_m/3_10_1_2_1_cam_start",
+  "script:asteroid_m/3_10_1_2_2_cam_start",
+  "script:asteroid_m/3_10_1_2_3_cam_start",
+  "script:astral/ast3/astral3_3",
+  "script:astral/ast3/astral3_5",
+  "script:common/conversationlighton",
+  "script:enable_flameguy_a_trigger",
+  "script:false",
+  "script:forge",
+  "script:game./n/r",
+  "script:haarp/ext/1_3_7_cam_start",
+  "script:hive/h_int/2_2_1",
+  "script:hive/h_int/gateway_enters",
+  "script:hive/h_int/hive_final_move",
+  "script:hive/h_int/kincaid_in",
+  "script:man1a/1_2_10_cam_start",
+  "script:man2/1_4_3_3_cam_start",
+  "script:man2/1_4_3_cam_start",
+  "script:man2/1_4_9_cam_start",
+  "script:mansion/man1a/1_2_10_cam_start",
+  "script:mansion/man1a/1_2_14_cam_start",
+  "script:mansion/man1a/1_2_36_cam_start",
+  "script:mansion/man1a/1_2_37_cam_start",
+  "script:mansion/man1a/1_2_38_cam_start",
+  "script:mansion/man1a/hangar",
+  "script:mansion/man2/1_4_3_3_cam_start",
+  "script:mansion/man2/1_4_3_cam_start",
+  "script:mansion/man2/1_4_9_cam_start",
+  "script:mansion/man3/2_1_12_5_cam_start",
+  "script:mansion/man3/2_1_5_14_cam_start",
+  "script:mansion/man6/3_1_3_cam_start",
+  "script:mansion/man6/3_1_6_cam_start",
+  "script:missions/mansion1a",
+  "script:missions/mansion1b",
+  "script:missions/mansion3b",
+  "script:missions/mansion4",
+  "script:missions/rooftops",
+  "script:missions/sentinel_attack_mansion",
+  "script:mocap/mocap1/brief_me",
+  "script:nuke_plant/nuke/coolantvalves",
+  "script:nuke_plant/nuke/obj_puzzle2",
+  "script:nyc/fb/secondsentinel",
+  "script:nyc/riots/3_2_5_cam_start",
+  "script:object_ambi/sewers/grso_slide_down",
+  "script:release_flameguy_a",
+  "script:release_flameguy_c",
+  "script:sewers/grso/sewers_marrow",
+  "script:sewers/healer/2_9_4_cam_start",
+  "script:sewers/hub/1_5_1_cam_start",
+  "script:sewers/hub/mor_talking01",
+  "script:sewers/hub/mor_talking02",
+  "script:sewers/hub/mor_talking03"
+ ],
+ "mission_start_zones": {
+  "alison": [
+   "nyc/alison/nyc1_1_1"
+  ],
+  "asteroid_int2": [
+   "astroid_m/visit1/asteroid2_3"
+  ],
+  "asteroid_mm2": [
+   "mastermold/mastermold2"
+  ],
+  "asteroid_rock": [
+   "astroid_m/visit1/asteroid1_1"
+  ],
+  "astral1b": [
+   "astral/ast1/astral4_3"
+  ],
+  "astral2": [
+   "astral/ast3/astral3_2"
+  ],
+  "dr_mag1": [
+   "mansion/dr_mag/dr_mag01"
+  ],
+  "dr_mansion1b": [
+   "?jug_fb",
+   "?mansion/man1b/subbasement1b"
+  ],
+  "haarp": [
+   "haarp/ext/haarp_ext01"
+  ],
+  "hive1": [
+   "hive/h_ext/hive1_1_1"
+  ],
+  "mansion1": [
+   "mansion/man1a/mansion1a_1"
+  ],
+  "mansion2": [
+   "mansion/man2/mansion_back2"
+  ],
+  "mansion3": [
+   "mansion/man3/mansion3_2"
+  ],
+  "mansion4_grso_done": [
+   "mansion/man4/grso_debriefing"
+  ],
+  "mansion6": [
+   "mansion/man6/mansion6_2"
+  ],
+  "mansion7": [
+   "mansion/man7/status_meeting"
+  ],
+  "mansion8": [
+   "mansion/man8/subbasement8"
+  ],
+  "muir2": [
+   "muir_is/muir2/muir_in2"
+  ],
+  "muir_in2": [
+   "muir_is/muir2/muir_in2"
+  ],
+  "nuke": [
+   "nuke_plant/nuke/nuke1_1"
+  ],
+  "riots": [
+   "nyc/riots/nyc3_1_1"
+  ],
+  "sent_fb": [
+   "nyc/fb/nyc_fb1"
+  ],
+  "sewers1": [
+   "sewers/hub/sewers1_1_1"
+  ],
+  "wx_fb_start": [
+   "weapon_x/wfb/wx1_1"
+  ]
+ },
+ "missions": {
+  "alison": {
+   "file": "data/missions/alison.eng",
+   "keepheroes": "false",
+   "loads": [
+    [
+     "loadMap",
+     "nyc/alison/nyc1_1_1"
+    ]
+   ],
+   "maxheros": "2",
+   "minheros": "2",
+   "movies": [
+    "r102"
+   ],
+   "objectives": 4,
+   "remote": "true",
+   "requiredheroes": [
+    "wolverine",
+    "cyclops"
+   ],
+   "root": "MISSION",
+   "script_found": true,
+   "scriptstart": "missions/alison",
+   "skinset": "default",
+   "teamselect": "false"
+  },
+  "arbiter": {
+   "file": "data/missions/arbiter.eng",
+   "keepheroes": "false",
+   "loads": [],
+   "location": "16 144",
+   "movies": [
+    "r105"
+   ],
+   "objectives": 8,
+   "remote": "true",
+   "requiredheroes": [],
+   "root": "MISSION",
+   "script_found": true,
+   "scriptstart": "missions/arbiter",
+   "skinset": "default",
+   "teamselect": "false"
+  },
+  "arbiter_flood": {
+   "file": "data/missions/arbiter_flood.eng",
+   "keepheroes": "false",
+   "location": "16 144",
+   "mapload": "arbiter/A_Int/arb3_1",
+   "objectives": 3,
+   "remote": "true",
+   "requiredheroes": [],
+   "root": "MISSION",
+   "scriptstart": "",
+   "skinset": "default",
+   "teamselect": "false"
+  },
+  "arbiter_int": {
+   "file": "data/missions/arbiter_int.eng",
+   "keepheroes": "true",
+   "location": "16 144",
+   "mapload": "arbiter/a_int/arb2_1",
+   "objectives": 5,
+   "remote": "true",
+   "requiredheroes": [],
+   "root": "MISSION",
+   "scriptstart": "",
+   "skinset": "default",
+   "teamselect": "false"
+  },
+  "arbiter_test": {
+   "file": "data/missions/arbiter_test.eng",
+   "loads": [],
+   "location": "16 144",
+   "movies": [],
+   "objectives": 5,
+   "remote": "true",
+   "requiredheroes": [],
+   "root": "MISSION",
+   "script_found": true,
+   "scriptstart": "missions/arbiter_test",
+   "skinset": "default",
+   "teamselect": "false"
+  },
+  "asteroid_briefing": {
+   "file": "data/missions/asteroid_briefing.xml",
+   "mapload": "mocap/mocap13/Briefing_3_9_8",
+   "maxheros": "1",
+   "minheros": "1",
+   "objectives": 0,
+   "requiredheroes": [
+    "MAGMA"
+   ],
+   "root": "MISSION",
+   "skinset": "default",
+   "teamselect": "false"
+  },
+  "asteroid_int": {
+   "file": "data/missions/asteroid_int.eng",
+   "keepheroes": "true",
+   "location": "42 36",
+   "mapload": "astroid_m/Visit1/asteroid1_3",
+   "maploadblackbird": "true",
+   "maxheros": "4",
+   "minheros": "4",
+   "objectives": 2,
+   "remote": "true",
+   "requiredheroes": [],
+   "root": "MISSION",
+   "scriptstart": "",
+   "skinset": "default",
+   "teamselect": "false"
+  },
+  "asteroid_int2": {
+   "file": "data/missions/asteroid_int2.eng",
+   "keepheroes": "true",
+   "loads": [
+    [
+     "loadMap",
+     "astroid_m/Visit1/asteroid2_3"
+    ]
+   ],
+   "location": "42 36",
+   "mapload": "",
+   "maploadblackbird": "true",
+   "maxheros": "4",
+   "minheros": "4",
+   "movies": [
+    "r306"
+   ],
+   "objectives": 1,
+   "remote": "true",
+   "requiredheroes": [],
+   "root": "MISSION",
+   "script_found": true,
+   "scriptstart": "missions/asteroid2_3",
+   "skinset": "default",
+   "teamselect": "false"
+  },
+  "asteroid_mm": {
+   "file": "data/missions/asteroid_mm.eng",
+   "keepheroes": "true",
+   "location": "42 36",
+   "mapload": "mastermold/mastermold1",
+   "maploadblackbird": "true",
+   "maxheros": "4",
+   "minheros": "4",
+   "objectives": 2,
+   "remote": "true",
+   "requiredheroes": [],
+   "root": "MISSION",
+   "scriptstart": "",
+   "skinset": "default",
+   "teamselect": "false"
+  },
+  "asteroid_mm2": {
+   "file": "data/missions/asteroid_mm2.eng",
+   "keepheroes": "true",
+   "loads": [
+    [
+     "loadMap",
+     "mastermold/mastermold2"
+    ]
+   ],
+   "location": "42 36",
+   "mapload": "",
+   "maploadblackbird": "true",
+   "maxheros": "4",
+   "minheros": "4",
+   "movies": [
+    "r503"
+   ],
+   "objectives": 2,
+   "remote": "true",
+   "requiredheroes": [],
+   "root": "MISSION",
+   "script_found": true,
+   "scriptstart": "missions/mastermold2",
+   "skinset": "default",
+   "teamselect": "false"
+  },
+  "asteroid_rock": {
+   "file": "data/missions/asteroid_rock.eng",
+   "keepheroes": "false",
+   "loads": [
+    [
+     "loadMap",
+     "astroid_m/Visit1/asteroid1_1"
+    ]
+   ],
+   "location": "42 36",
+   "mapload": "",
+   "maploadblackbird": "true",
+   "maxheros": "4",
+   "minheros": "4",
+   "movies": [
+    "r302"
+   ],
+   "objectives": 1,
+   "remote": "true",
+   "requiredheroes": [
+    "FROST"
+   ],
+   "root": "MISSION",
+   "script_found": true,
+   "scriptstart": "missions/asteroid1_1",
+   "skinset": "default",
+   "teamselect": "false"
+  },
+  "astral1": {
+   "file": "data/missions/astral1.eng",
+   "keepheroes": "false",
+   "mapload": "astral/ast1/astral1_1",
+   "maxheros": "3",
+   "minheros": "3",
+   "objectives": 1,
+   "remote": "true",
+   "requiredheroes": [
+    "ProfXAstral",
+    "phoenix",
+    "frost"
+   ],
+   "root": "MISSION",
+   "scriptstart": "",
+   "skinset": "default",
+   "teamselect": "false"
+  },
+  "astral1_end": {
+   "file": "data/missions/astral1_end.eng",
+   "loads": [],
+   "maxheros": "1",
+   "minheros": "1",
+   "movies": [],
+   "objectives": 1,
+   "remote": "true",
+   "requiredheroes": [
+    "magma"
+   ],
+   "root": "MISSION",
+   "script_found": true,
+   "scriptstart": "missions/astral1_end"
+  },
+  "astral1b": {
+   "file": "data/missions/astral1b.eng",
+   "keepheroes": "false",
+   "loads": [
+    [
+     "loadMap",
+     "astral/ast1/astral4_3"
+    ]
+   ],
+   "mapload": "",
+   "maxheros": "2",
+   "minheros": "2",
+   "movies": [
+    "r202"
+   ],
+   "objectives": 1,
+   "remote": "true",
+   "requiredheroes": [
+    "phoenix",
+    "frost"
+   ],
+   "root": "MISSION",
+   "script_found": true,
+   "scriptstart": "missions/astral1b",
+   "skinset": "default",
+   "teamselect": "false"
+  },
+  "astral2": {
+   "file": "data/missions/astral2.eng",
+   "keepheroes": "false",
+   "loads": [
+    [
+     "loadMap",
+     "astral/ast3/astral3_2"
+    ]
+   ],
+   "mapload": "",
+   "maxheros": "4",
+   "minheros": "4",
+   "movies": [
+    "int106"
+   ],
+   "objectives": 3,
+   "remote": "true",
+   "requiredheroes": [],
+   "root": "MISSION",
+   "script_found": true,
+   "scriptstart": "missions/mission_fmv_106",
+   "skinset": "default",
+   "teamselect": "false"
+  },
+  "astral2_briefing": {
+   "file": "data/missions/astral2_briefing.xml",
+   "mapload": "mocap/mocap11/Briefing_3_6_7",
+   "maxheros": "1",
+   "minheros": "1",
+   "objectives": 0,
+   "requiredheroes": [
+    "MAGMA"
+   ],
+   "root": "MISSION",
+   "skinset": "default",
+   "teamselect": "false"
+  },
+  "astral2_col": {
+   "file": "data/missions/astral2_col.eng",
+   "location": "42 36",
+   "mapload": "astral/ast3/colosseum",
+   "maploadblackbird": "true",
+   "maxheros": "4",
+   "minheros": "4",
+   "objectives": 0,
+   "remote": "true",
+   "requiredheroes": [],
+   "root": "MISSION",
+   "scriptstart": "",
+   "skinset": "default",
+   "teamselect": "true"
+  },
+  "astral3": {
+   "file": "data/missions/astral3.eng",
+   "location": "42 36",
+   "mapload": "astral/SavePX/astral2_1",
+   "maploadblackbird": "true",
+   "maxheros": "4",
+   "minheros": "4",
+   "objectives": 2,
+   "remote": "true",
+   "requiredheroes": [],
+   "root": "MISSION",
+   "scriptstart": "",
+   "skinset": "default",
+   "teamselect": "true"
+  },
+  "astral_briefing": {
+   "file": "data/missions/astral_briefing.xml",
+   "mapload": "mocap/mocap7/Briefing_2_5_14_7",
+   "maxheros": "1",
+   "minheros": "1",
+   "objectives": 0,
+   "requiredheroes": [
+    "MAGMA"
+   ],
+   "root": "MISSION",
+   "skinset": "default",
+   "teamselect": "false"
+  },
+  "astral_legwork": {
+   "file": "data/missions/astral_legwork.eng",
+   "maxheros": "1",
+   "minheros": "1",
+   "objectives": 2,
+   "remote": "true",
+   "requiredheroes": [
+    "magma"
+   ],
+   "root": "MISSION",
+   "script_found": false,
+   "scriptstart": "missions/mansion4",
+   "skinset": "default",
+   "teamselect": "false"
+  },
+  "astral_sk": {
+   "file": "data/missions/astral_sk.eng",
+   "location": "42 36",
+   "mapload": "astral/savepx/final_astral",
+   "maploadblackbird": "true",
+   "maxheros": "1",
+   "minheros": "1",
+   "objectives": 1,
+   "remote": "true",
+   "requiredheroes": [
+    "PROFXGLADIATOR"
+   ],
+   "root": "MISSION",
+   "scriptstart": "",
+   "skinset": "default",
+   "teamselect": "false"
+  },
+  "astral_wx_briefing": {
+   "file": "data/missions/astral_wx_briefing.xml",
+   "mapload": "mocap/mocap7/Briefing_2_5_14_7",
+   "maxheros": "1",
+   "minheros": "1",
+   "objectives": 0,
+   "requiredheroes": [
+    "MAGMA"
+   ],
+   "root": "MISSION",
+   "skinset": "default",
+   "teamselect": "false"
+  },
+  "boss_avalanche": {
+   "file": "data/missions/boss_avalanche.eng",
+   "mapload": "mount/mount/mount2",
+   "maxheros": "4",
+   "minheros": "4",
+   "objectives": 0,
+   "requiredheroes": [],
+   "root": "MISSION",
+   "skinset": "default",
+   "teamselect": "true"
+  },
+  "boss_avalanche2": {
+   "file": "data/missions/boss_avalanche2.eng",
+   "mapload": "astral/ast3/astral3_4",
+   "maxheros": "4",
+   "minheros": "4",
+   "objectives": 0,
+   "requiredheroes": [],
+   "root": "MISSION",
+   "skinset": "default",
+   "teamselect": "true"
+  },
+  "boss_blob": {
+   "file": "data/missions/boss_blob.eng",
+   "mapload": "nyc/alison/nyc1_1_3",
+   "maxheros": "2",
+   "minheros": "2",
+   "objectives": 0,
+   "requiredheroes": [
+    "wolverine",
+    "cyclops"
+   ],
+   "root": "MISSION",
+   "skinset": "default",
+   "teamselect": "false"
+  },
+  "boss_blob2": {
+   "file": "data/missions/boss_blob2.eng",
+   "mapload": "astral/ast3/astral3_5",
+   "maxheros": "4",
+   "minheros": "4",
+   "objectives": 0,
+   "requiredheroes": [],
+   "root": "MISSION",
+   "skinset": "default",
+   "teamselect": "true"
+  },
+  "boss_havok": {
+   "file": "data/missions/boss_havok.eng",
+   "mapload": "weapon_x/old/wx2_2",
+   "maxheros": "1",
+   "minheros": "1",
+   "objectives": 0,
+   "requiredheroes": [
+    "CYCLOPS"
+   ],
+   "root": "MISSION",
+   "skinset": "default",
+   "teamselect": "false"
+  },
+  "boss_juggernaut2": {
+   "file": "data/missions/boss_juggernaut2.eng",
+   "mapload": "muir_is/muir3/muir_in3",
+   "maxheros": "4",
+   "minheros": "4",
+   "objectives": 0,
+   "requiredheroes": [],
+   "root": "MISSION",
+   "skinset": "default",
+   "teamselect": "true"
+  },
+  "boss_magneto": {
+   "file": "data/missions/boss_magneto.eng",
+   "mapload": "astroid_m/visit1/asteroid2_1",
+   "maxheros": "4",
+   "minheros": "4",
+   "objectives": 0,
+   "requiredheroes": [],
+   "root": "MISSION",
+   "skinset": "default",
+   "teamselect": "false"
+  },
+  "boss_marrow1": {
+   "file": "data/missions/boss_marrow1.eng",
+   "mapload": "sewers/hub/sewers1_2_4",
+   "maploadblackbird": "false",
+   "maxheros": "4",
+   "objectives": 1,
+   "requiredheroes": [],
+   "root": "MISSION"
+  },
+  "boss_marrow2": {
+   "file": "data/missions/boss_marrow2.eng",
+   "mapload": "Sewers/GRSO/sewers_marrow",
+   "maxheros": "4",
+   "minheros": "4",
+   "objectives": 0,
+   "requiredheroes": [],
+   "root": "MISSION",
+   "skinset": "default",
+   "teamselect": "true"
+  },
+  "boss_mastermold": {
+   "file": "data/missions/boss_mastermold.eng",
+   "keepheroes": "false",
+   "mapload": "mastermold/mastermold1",
+   "maxheros": "4",
+   "minheros": "4",
+   "objectives": 1,
+   "requiredheroes": [],
+   "root": "MISSION",
+   "skinset": "default",
+   "teamselect": "true"
+  },
+  "boss_multipleman": {
+   "file": "data/missions/boss_multipleman.eng",
+   "mapload": "muir_is/muir1/muir_out1_1",
+   "maxheros": "4",
+   "minheros": "4",
+   "objectives": 0,
+   "requiredheroes": [],
+   "root": "MISSION",
+   "skinset": "default",
+   "teamselect": "true"
+  },
+  "boss_mystique": {
+   "file": "data/missions/boss_mystique.eng",
+   "mapload": "nyc/alison/nyc1_1_2b",
+   "maxheros": "1",
+   "minheros": "1",
+   "objectives": 0,
+   "requiredheroes": [
+    "WOLVERINE"
+   ],
+   "root": "MISSION",
+   "skinset": "default",
+   "teamselect": "false"
+  },
+  "boss_mystique2": {
+   "file": "data/missions/boss_mystique2.eng",
+   "mapload": "astroid_m/visit1/asteroid1_2",
+   "maxheros": "4",
+   "minheros": "4",
+   "objectives": 0,
+   "requiredheroes": [],
+   "root": "MISSION",
+   "skinset": "default",
+   "teamselect": "true"
+  },
+  "boss_pyro": {
+   "file": "data/missions/boss_pyro.eng",
+   "mapload": "haarp/int/haarp2_6",
+   "maxheros": "4",
+   "minheros": "4",
+   "objectives": 0,
+   "requiredheroes": [],
+   "root": "MISSION",
+   "skinset": "default",
+   "teamselect": "true"
+  },
+  "boss_pyro2": {
+   "file": "data/missions/boss_pyro2.eng",
+   "mapload": "astral/ast3/astral3_3",
+   "maxheros": "4",
+   "minheros": "4",
+   "objectives": 0,
+   "requiredheroes": [],
+   "root": "MISSION",
+   "skinset": "default",
+   "teamselect": "true"
+  },
+  "boss_sabreroof": {
+   "file": "data/missions/boss_sabreroof.eng",
+   "mapload": "nyc/riots/nyc_roof1",
+   "maxheros": "1",
+   "minheros": "1",
+   "objectives": 0,
+   "requiredheroes": [
+    "WOLVERINE"
+   ],
+   "root": "MISSION",
+   "skinset": "default",
+   "teamselect": "false"
+  },
+  "boss_sentinel": {
+   "file": "data/missions/boss_sentinel.eng",
+   "mapload": "arbiter/deck/arb_fd2",
+   "maxheros": "4",
+   "minheros": "4",
+   "objectives": 0,
+   "requiredheroes": [],
+   "root": "MISSION",
+   "skinset": "default",
+   "teamselect": "true"
+  },
+  "boss_shadowking": {
+   "file": "data/missions/boss_shadowking.eng",
+   "mapload": "astral/savepx/final_astral",
+   "maxheros": "1",
+   "minheros": "1",
+   "objectives": 0,
+   "requiredheroes": [
+    "PROFXGLADIATOR"
+   ],
+   "root": "MISSION",
+   "skinset": "default",
+   "teamselect": "false"
+  },
+  "boss_toad1": {
+   "file": "data/missions/boss_toad1.eng",
+   "keepheroes": "true",
+   "mapload": "haarp/ext/haarp_ext_boss",
+   "maploadblackbird": "false",
+   "maxheros": "4",
+   "minheros": "4",
+   "objectives": 3,
+   "requiredheroes": [],
+   "root": "MISSION",
+   "skinset": "default",
+   "teamselect": "false"
+  },
+  "boss_xmen": {
+   "file": "data/missions/boss_xmen.eng",
+   "mapload": "astral/ast3/colosseum",
+   "maxheros": "4",
+   "minheros": "4",
+   "objectives": 0,
+   "requiredheroes": [],
+   "root": "MISSION",
+   "skinset": "default",
+   "teamselect": "true"
+  },
+  "demo": {
+   "file": "data/missions/demo.eng",
+   "location": "16 144",
+   "mapload": "demo/deck/arb_fd1",
+   "minheros": "4",
+   "objectives": 8,
+   "remote": "true",
+   "requiredheroes": [],
+   "root": "MISSION",
+   "scriptstart": "",
+   "skinset": "default",
+   "teamselect": "false"
+  },
+  "demo2": {
+   "file": "data/missions/demo2.eng",
+   "mapload": "demo/HUB/sewers1_1_1",
+   "maxheros": "4",
+   "minheros": "4",
+   "objectives": 1,
+   "requiredheroes": [],
+   "root": "MISSION",
+   "scriptstart": "",
+   "skinset": "default",
+   "teamselect": "true"
+  },
+  "demo_jug": {
+   "file": "data/missions/demo_jug.eng",
+   "loads": [],
+   "minheros": "4",
+   "movies": [],
+   "objectives": 1,
+   "requiredheroes": [
+    "Cyclops",
+    "Beast",
+    "Iceman",
+    "Phoenix"
+   ],
+   "root": "MISSION",
+   "script_found": true,
+   "scriptstart": "missions/demo_jug",
+   "skinset": "60s",
+   "teamselect": "false"
+  },
+  "demo_toad": {
+   "file": "data/missions/demo_toad.eng",
+   "mapload": "demo/ext/haarp_ext_boss",
+   "maploadblackbird": "false",
+   "maxheros": "4",
+   "minheros": "4",
+   "objectives": 2,
+   "requiredheroes": [],
+   "root": "MISSION",
+   "skinset": "default",
+   "teamselect": "true"
+  },
+  "dfasdfsdf": {
+   "file": "data/missions/dfasdfsdf.xml",
+   "mapload": "weapon_x/Secret/wx3_2",
+   "objectives": 0,
+   "requiredheroes": [],
+   "root": "MISSION",
+   "scriptstart": "",
+   "skinset": "default",
+   "teamselect": "false"
+  },
+  "dr_mag1": {
+   "file": "data/missions/dr_mag1.eng",
+   "loads": [
+    [
+     "loadMap",
+     "mansion/dr_mag/dr_mag01"
+    ]
+   ],
+   "maxheros": "1",
+   "minheros": "1",
+   "movies": [],
+   "objectives": 4,
+   "remote": "true",
+   "requiredheroes": [
+    "Magma"
+   ],
+   "root": "MISSION",
+   "script_found": true,
+   "scriptstart": "missions/dr_mag1",
+   "skinset": "default",
+   "teamselect": "false"
+  },
+  "dr_mag2": {
+   "file": "data/missions/dr_mag2.eng",
+   "keepheroes": "false",
+   "mapload": "mansion/dr_mag2/mag_nyc1",
+   "maxheros": "2",
+   "minheros": "2",
+   "objectives": 3,
+   "remote": "true",
+   "requiredheroes": [
+    "MAGMA",
+    "CYCLOPS"
+   ],
+   "root": "MISSION",
+   "scriptstart": "",
+   "skinset": "civilian",
+   "teamselect": "false"
+  },
+  "dr_mansion1b": {
+   "file": "data/missions/dr_mansion1b.eng",
+   "loads": [
+    [
+     "mission",
+     "jug_fb"
+    ],
+    [
+     "loadMap",
+     "mansion/man1b/subbasement1b"
+    ]
+   ],
+   "maxheros": "1",
+   "minheros": "1",
+   "movies": [],
+   "objectives": 2,
+   "remote": "true",
+   "requiredheroes": [
+    "magmacivilian"
+   ],
+   "root": "MISSION",
+   "script_found": true,
+   "scriptstart": "missions/jug_done",
+   "skinset": "default",
+   "teamselect": "false"
+  },
+  "dr_team1": {
+   "file": "data/missions/dr_team1.eng",
+   "loads": [],
+   "movies": [],
+   "objectives": 0,
+   "requiredheroes": [],
+   "root": "MISSION",
+   "script_found": true,
+   "scriptstart": "missions/dr_team1"
+  },
+  "drones": {
+   "file": "data/missions/drones.eng",
+   "loads": [],
+   "maxheros": "1",
+   "minheros": "1",
+   "movies": [],
+   "objectives": 5,
+   "remote": "true",
+   "requiredheroes": [
+    "magma"
+   ],
+   "root": "MISSION",
+   "script_found": true,
+   "scriptstart": "missions/drones",
+   "skinset": "default",
+   "teamselect": "false"
+  },
+  "end_astral": {
+   "file": "data/missions/end_astral.eng",
+   "mapload": "mansion/Man5/subbasement5b",
+   "maxheros": "1",
+   "minheros": "1",
+   "objectives": 1,
+   "requiredheroes": [
+    "MAGMA"
+   ],
+   "root": "MISSION",
+   "skinset": "default",
+   "teamselect": "false"
+  },
+  "end_astral2": {
+   "file": "data/missions/end_astral2.eng",
+   "mapload": "mocap/mocap10/Briefing_3_6_6",
+   "maxheros": "1",
+   "minheros": "1",
+   "objectives": 1,
+   "requiredheroes": [
+    "MAGMA"
+   ],
+   "root": "MISSION",
+   "skinset": "default",
+   "teamselect": "false"
+  },
+  "end_hive": {
+   "file": "data/missions/end_hive.xml",
+   "keepheroes": "false",
+   "mapload": "mocap/mocap12/Briefing_3_9_0",
+   "maxheros": "1",
+   "minheros": "1",
+   "objectives": 0,
+   "requiredheroes": [
+    "MAGMA"
+   ],
+   "root": "MISSION",
+   "skinset": "default",
+   "teamselect": "false"
+  },
+  "gfhf": {
+   "file": "data/missions/gfhf.eng",
+   "minheros": "hfg",
+   "objectives": 0,
+   "requiredheroes": [],
+   "root": "MISSION",
+   "skinset": "default",
+   "teamselect": "false"
+  },
+  "grso_briefing": {
+   "file": "data/missions/grso_briefing.xml",
+   "mapload": "mocap/mocap6/Briefing_2_5_5",
+   "maxheros": "1",
+   "minheros": "1",
+   "objectives": 0,
+   "requiredheroes": [
+    "MAGMA"
+   ],
+   "root": "MISSION",
+   "skinset": "default",
+   "teamselect": "false"
+  },
+  "grso_debriefing": {
+   "file": "data/missions/grso_debriefing.xml",
+   "mapload": "mansion/Man4/grso_debriefing",
+   "maxheros": "1",
+   "minheros": "1",
+   "objectives": 0,
+   "requiredheroes": [
+    "MAGMA"
+   ],
+   "root": "MISSION",
+   "skinset": "default",
+   "teamselect": "false"
+  },
+  "haarp": {
+   "file": "data/missions/haarp.eng",
+   "keepheroes": "false",
+   "loads": [
+    [
+     "loadMap",
+     "haarp/ext/haarp_ext01"
+    ]
+   ],
+   "location": "42 36",
+   "mapload": "",
+   "maploadblackbird": "true",
+   "maxheros": "4",
+   "minheros": "4",
+   "movies": [
+    "int103"
+   ],
+   "objectives": 4,
+   "remote": "true",
+   "requiredheroes": [],
+   "root": "MISSION",
+   "script_found": true,
+   "scriptstart": "missions/mission_fmv_103",
+   "skinset": "default",
+   "teamselect": "true"
+  },
+  "haarp_int": {
+   "file": "data/missions/haarp_int.eng",
+   "keepheroes": "true",
+   "location": "42 36",
+   "mapload": "haarp/Int/haarp2_1",
+   "maxheros": "4",
+   "minheros": "4",
+   "objectives": 2,
+   "remote": "true",
+   "requiredheroes": [],
+   "root": "MISSION",
+   "scriptstart": "",
+   "skinset": "default",
+   "teamselect": "false"
+  },
+  "harrp_briefing": {
+   "file": "data/missions/harrp_briefing.xml",
+   "mapload": "mocap/mocap2/Briefing_1_2_41",
+   "maxheros": "1",
+   "minheros": "1",
+   "objectives": 0,
+   "requiredheroes": [
+    "MAGMA"
+   ],
+   "root": "MISSION",
+   "scriptstart": "",
+   "skinset": "civilian",
+   "teamselect": "false"
+  },
+  "healer_briefing": {
+   "file": "data/missions/healer_briefing.xml",
+   "mapload": "mocap/mocap8/Briefing_2_5_22",
+   "maxheros": "1",
+   "minheros": "1",
+   "objectives": 0,
+   "requiredheroes": [
+    "MAGMA"
+   ],
+   "root": "MISSION",
+   "skinset": "default",
+   "teamselect": "false"
+  },
+  "hive1": {
+   "file": "data/missions/hive1.eng",
+   "keepheroes": "false",
+   "loads": [
+    [
+     "loadMap",
+     "hive/h_ext/hive1_1_1"
+    ]
+   ],
+   "mapload": "",
+   "maxheros": "4",
+   "minheros": "4",
+   "movies": [
+    "int105"
+   ],
+   "objectives": 10,
+   "requiredheroes": [],
+   "root": "MISSION",
+   "script_found": true,
+   "scriptstart": "missions/mission_fmv_105",
+   "skinset": "default",
+   "teamselect": "false"
+  },
+  "hive2": {
+   "file": "data/missions/hive2.eng",
+   "keepheroes": "true",
+   "mapload": "hive/H_Int/hive2_2_1",
+   "maxheros": "4",
+   "minheros": "4",
+   "objectives": 6,
+   "remote": "false",
+   "requiredheroes": [],
+   "root": "MISSION",
+   "scriptstart": "",
+   "skinset": "default",
+   "teamselect": "false"
+  },
+  "hive_ext": {
+   "file": "data/missions/hive_ext.eng",
+   "location": "42 36",
+   "mapload": "hive/H_Ext/hive1_1_1",
+   "maploadblackbird": "true",
+   "maxheros": "4",
+   "minheros": "4",
+   "objectives": 2,
+   "remote": "true",
+   "requiredheroes": [],
+   "root": "MISSION",
+   "scriptstart": "",
+   "skinset": "default",
+   "teamselect": "true"
+  },
+  "hive_int": {
+   "file": "data/missions/hive_int.eng",
+   "mapload": "hive/H_Int/hive2_2_1",
+   "maxheros": "4",
+   "minheros": "4",
+   "objectives": 15,
+   "requiredheroes": [],
+   "root": "MISSION",
+   "scriptstart": "",
+   "skinset": "default",
+   "teamselect": "true"
+  },
+  "ice_wolverine": {
+   "file": "data/missions/ice_wolverine.eng",
+   "mapload": "haarp/ice_sq/ice_sq1",
+   "maploadblackbird": "false",
+   "maxheros": "1",
+   "minheros": "1",
+   "objectives": 1,
+   "requiredheroes": [
+    "Wolverine"
+   ],
+   "root": "MISSION",
+   "skinset": "default",
+   "teamselect": "false"
+  },
+  "icetunnels": {
+   "file": "data/missions/icetunnels.eng",
+   "keepheroes": "false",
+   "loads": [],
+   "location": "42 36",
+   "maxheros": "4",
+   "minheros": "4",
+   "movies": [],
+   "objectives": 2,
+   "remote": "true",
+   "requiredheroes": [],
+   "root": "MISSION",
+   "script_found": true,
+   "scriptstart": "missions/icetunnels",
+   "skinset": "default",
+   "teamselect": "false"
+  },
+  "jug_fb": {
+   "file": "data/missions/jug_fb.eng",
+   "mapload": "mansion/jugrnt/jugrnt01",
+   "minheros": "4",
+   "objectives": 1,
+   "requiredheroes": [
+    "Cyclops",
+    "Beast",
+    "Iceman",
+    "Phoenix"
+   ],
+   "root": "MISSION",
+   "scriptstart": "",
+   "skinset": "60s",
+   "teamselect": "false"
+  },
+  "mansion": {
+   "file": "data/missions/mansion.eng",
+   "loads": [],
+   "location": "147 60",
+   "movies": [],
+   "objectives": 1,
+   "remote": "false",
+   "requiredheroes": [],
+   "root": "MISSION",
+   "script_found": true,
+   "scriptstart": "missions/mansion_start",
+   "skinset": "default",
+   "teamselect": "false"
+  },
+  "mansion1": {
+   "file": "data/missions/mansion1.eng",
+   "keepheroes": "false",
+   "loads": [
+    [
+     "loadMap",
+     "mansion/man1a/mansion1a_1"
+    ]
+   ],
+   "mapload": "",
+   "maxheros": "1",
+   "minheros": "1",
+   "movies": [
+    "r103"
+   ],
+   "objectives": 5,
+   "remote": "true",
+   "requiredheroes": [
+    "MAGMA"
+   ],
+   "root": "MISSION",
+   "script_found": true,
+   "scriptstart": "missions/mansion1",
+   "skinset": "magmacivilian",
+   "teamselect": "false"
+  },
+  "mansion1a": {
+   "file": "data/missions/mansion1a.eng",
+   "maxheros": "1",
+   "minheros": "1",
+   "objectives": 1,
+   "remote": "true",
+   "requiredheroes": [
+    "MAGMA"
+   ],
+   "root": "MISSION",
+   "script_found": false,
+   "scriptstart": "missions/mansion1a",
+   "skinset": "magmacivilian",
+   "teamselect": "false"
+  },
+  "mansion1b": {
+   "file": "data/missions/mansion1b.eng",
+   "maxheros": "1",
+   "minheros": "1",
+   "objectives": 4,
+   "remote": "true",
+   "requiredheroes": [
+    "magmacivilian"
+   ],
+   "root": "MISSION",
+   "script_found": false,
+   "scriptstart": "missions/mansion1b"
+  },
+  "mansion2": {
+   "file": "data/missions/mansion2.eng",
+   "keepheroes": "false",
+   "loads": [
+    [
+     "loadMap",
+     "mansion/man2/mansion_back2"
+    ]
+   ],
+   "maxheros": "1",
+   "minheros": "1",
+   "movies": [
+    "r103"
+   ],
+   "objectives": 7,
+   "remote": "true",
+   "requiredheroes": [
+    "MAGMA"
+   ],
+   "root": "MISSION",
+   "script_found": true,
+   "scriptstart": "missions/mansion2",
+   "skinset": "magmacivilian",
+   "teamselect": "false"
+  },
+  "mansion3": {
+   "file": "data/missions/mansion3.eng",
+   "loads": [
+    [
+     "loadMap",
+     "mansion/man3/mansion3_2"
+    ]
+   ],
+   "maxheros": "1",
+   "minheros": "1",
+   "movies": [
+    "r201",
+    "r103"
+   ],
+   "objectives": 5,
+   "remote": "true",
+   "requiredheroes": [
+    "MAGMA"
+   ],
+   "root": "MISSION",
+   "script_found": true,
+   "scriptstart": "missions/mansion3",
+   "skinset": "magmacivilian",
+   "teamselect": "false"
+  },
+  "mansion3_dangerroom": {
+   "file": "data/missions/mansion3_dangerroom.eng",
+   "keepheroes": "false",
+   "mapload": "mansion/Man3/danger_room",
+   "maxheros": "1",
+   "minheros": "1",
+   "objectives": 2,
+   "remote": "true",
+   "requiredheroes": [
+    "MAGMA"
+   ],
+   "root": "MISSION",
+   "scriptstart": "",
+   "skinset": "magmacivilian",
+   "teamselect": "false"
+  },
+  "mansion3_uniform": {
+   "file": "data/missions/mansion3_uniform.eng",
+   "keepheroes": "false",
+   "mapload": "mansion/Man3/mansion3_2",
+   "maxheros": "1",
+   "minheros": "1",
+   "objectives": 5,
+   "remote": "true",
+   "requiredheroes": [
+    "MAGMA"
+   ],
+   "root": "MISSION",
+   "scriptstart": "",
+   "skinset": "default",
+   "teamselect": "false"
+  },
+  "mansion3b": {
+   "file": "data/missions/mansion3b.eng",
+   "maxheros": "1",
+   "minheros": "1",
+   "objectives": 5,
+   "remote": "true",
+   "requiredheroes": [
+    "magmacivilian"
+   ],
+   "root": "MISSION",
+   "script_found": false,
+   "scriptstart": "missions/mansion3b",
+   "skinset": "default",
+   "teamselect": "false"
+  },
+  "mansion4": {
+   "file": "data/missions/mansion4.eng",
+   "keepheroes": "false",
+   "mapload": "mansion/Man4/mansion_back4",
+   "maxheros": "1",
+   "minheros": "1",
+   "objectives": 1,
+   "remote": "true",
+   "requiredheroes": [
+    "magma"
+   ],
+   "root": "MISSION",
+   "scriptstart": "",
+   "skinset": "default",
+   "teamselect": "false"
+  },
+  "mansion4_grso": {
+   "file": "data/missions/mansion4_grso.eng",
+   "keepheroes": "false",
+   "location": "42 36",
+   "mapload": "mansion/Man4/mansion_back4_grso",
+   "maploadblackbird": "true",
+   "maxheros": "4",
+   "minheros": "4",
+   "objectives": 2,
+   "remote": "true",
+   "requiredheroes": [],
+   "root": "MISSION",
+   "scriptstart": "",
+   "skinset": "default",
+   "teamselect": "true"
+  },
+  "mansion4_grso_done": {
+   "file": "data/missions/mansion4_grso_done.eng",
+   "loads": [
+    [
+     "loadMap",
+     "mansion/Man4/grso_debriefing"
+    ]
+   ],
+   "mapload": "",
+   "maxheros": "1",
+   "minheros": "1",
+   "movies": [],
+   "objectives": 3,
+   "remote": "true",
+   "requiredheroes": [
+    "magma"
+   ],
+   "root": "MISSION",
+   "script_found": true,
+   "scriptstart": "missions/mansion4_grso_done",
+   "skinset": "default",
+   "teamselect": "false"
+  },
+  "mansion5": {
+   "file": "data/missions/mansion5.eng",
+   "mapload": "mansion/Man5/mansion5_1",
+   "maxheros": "1",
+   "minheros": "1",
+   "objectives": 5,
+   "remote": "true",
+   "requiredheroes": [
+    "magma"
+   ],
+   "root": "MISSION",
+   "scriptstart": "",
+   "skinset": "default",
+   "teamselect": "false"
+  },
+  "mansion6": {
+   "file": "data/missions/mansion6.eng",
+   "loads": [
+    [
+     "loadMap",
+     "mansion/man6/mansion6_2"
+    ]
+   ],
+   "location": "42 36",
+   "mapload": "",
+   "maploadblackbird": "true",
+   "maxheros": "1",
+   "minheros": "1",
+   "movies": [
+    "r204",
+    "r206",
+    "r301"
+   ],
+   "objectives": 2,
+   "remote": "true",
+   "requiredheroes": [
+    "MAGMA"
+   ],
+   "root": "MISSION",
+   "script_found": true,
+   "scriptstart": "missions/mansion6_new",
+   "skinset": "default",
+   "teamselect": "false"
+  },
+  "mansion7": {
+   "file": "data/missions/mansion7.eng",
+   "loads": [
+    [
+     "loadMap",
+     "mansion/man7/status_meeting"
+    ]
+   ],
+   "location": "42 36",
+   "mapload": "",
+   "maploadblackbird": "true",
+   "maxheros": "1",
+   "minheros": "1",
+   "movies": [],
+   "objectives": 2,
+   "remote": "true",
+   "requiredheroes": [
+    "MAGMA"
+   ],
+   "root": "MISSION",
+   "script_found": true,
+   "scriptstart": "missions/mansion7_new",
+   "skinset": "default",
+   "teamselect": "false"
+  },
+  "mansion8": {
+   "file": "data/missions/mansion8.eng",
+   "keepheroes": "false",
+   "loads": [
+    [
+     "loadMap",
+     "mansion/man8/subbasement8"
+    ]
+   ],
+   "location": "42 36",
+   "mapload": "",
+   "maploadblackbird": "true",
+   "maxheros": "1",
+   "minheros": "1",
+   "movies": [],
+   "objectives": 3,
+   "remote": "true",
+   "requiredheroes": [
+    "MAGMA"
+   ],
+   "root": "MISSION",
+   "script_found": true,
+   "scriptstart": "missions/mansion8_new",
+   "skinset": "default",
+   "teamselect": "false"
+  },
+  "missions": {
+   "file": "data/missions/missions.xml",
+   "objectives": 0,
+   "requiredheroes": [],
+   "root": "MISSIONS"
+  },
+  "mount": {
+   "file": "data/missions/mount.eng",
+   "keepheroes": "true",
+   "mapload": "mount/mount/mount",
+   "maxheros": "4",
+   "minheros": "4",
+   "objectives": 2,
+   "remote": "false",
+   "requiredheroes": [],
+   "root": "MISSION",
+   "scriptstart": "",
+   "skinset": "default",
+   "teamselect": "false"
+  },
+  "muir": {
+   "file": "data/missions/muir.eng",
+   "loads": [],
+   "maxheros": "4",
+   "minheros": "4",
+   "movies": [],
+   "objectives": 1,
+   "remote": "true",
+   "requiredheroes": [],
+   "root": "MISSION",
+   "script_found": true,
+   "scriptstart": "missions/muir",
+   "skinset": "default",
+   "teamselect": "false"
+  },
+  "muir2": {
+   "file": "data/missions/muir2.eng",
+   "keepheroes": "false",
+   "loads": [
+    [
+     "loadMap",
+     "muir_is/muir2/muir_in2"
+    ]
+   ],
+   "mapload": "",
+   "maxheros": "1",
+   "minheros": "1",
+   "movies": [
+    "int101"
+   ],
+   "objectives": 2,
+   "remote": "true",
+   "requiredheroes": [
+    "magma"
+   ],
+   "root": "MISSION",
+   "script_found": true,
+   "scriptstart": "missions/mission_fmv_101",
+   "skinset": "default",
+   "teamselect": "false"
+  },
+  "muir2_reboot": {
+   "file": "data/missions/muir2_reboot.eng",
+   "keepheroes": "true",
+   "mapload": "muir_is/muir2/MUI_ComCore",
+   "maploadblackbird": "false",
+   "maxheros": "1",
+   "minheros": "1",
+   "objectives": 1,
+   "requiredheroes": [
+    "Magma"
+   ],
+   "root": "MISSION",
+   "skinset": "default",
+   "teamselect": "false"
+  },
+  "muir3": {
+   "file": "data/missions/muir3.eng",
+   "location": "42 36",
+   "mapload": "muir_is/muir3/muir_in3",
+   "maploadblackbird": "true",
+   "maxheros": "4",
+   "minheros": "4",
+   "objectives": 1,
+   "remote": "true",
+   "requiredheroes": [],
+   "root": "MISSION",
+   "scriptstart": "",
+   "skinset": "default",
+   "teamselect": "true"
+  },
+  "muir3brig": {
+   "file": "data/missions/muir3brig.eng",
+   "keepheroes": "false",
+   "mapload": "muir_is/muir3/muir_brig",
+   "maxheros": "1",
+   "minheros": "1",
+   "objectives": 0,
+   "requiredheroes": [
+    "PHOENIX"
+   ],
+   "root": "MISSION",
+   "skinset": "default",
+   "teamselect": "false"
+  },
+  "muir_in2": {
+   "file": "data/missions/muir_in2.eng",
+   "keepheroes": "false",
+   "loads": [
+    [
+     "loadMap",
+     "muir_is/muir2/muir_in2"
+    ]
+   ],
+   "location": "42 36",
+   "mapload": "",
+   "maploadblackbird": "true",
+   "maxheros": "4",
+   "minheros": "4",
+   "movies": [
+    "int101"
+   ],
+   "objectives": 0,
+   "remote": "true",
+   "requiredheroes": [],
+   "root": "MISSION",
+   "script_found": true,
+   "scriptstart": "missions/mission_fmv_101",
+   "skinset": "default",
+   "teamselect": "true"
+  },
+  "muir_int": {
+   "file": "data/missions/muir_int.eng",
+   "loads": [],
+   "maxheros": "4",
+   "minheros": "4",
+   "movies": [],
+   "objectives": 1,
+   "remote": "true",
+   "requiredheroes": [],
+   "root": "MISSION",
+   "script_found": true,
+   "scriptstart": "missions/muir_int",
+   "skinset": "civilian",
+   "teamselect": "false"
+  },
+  "muir_riots_grso_briefing": {
+   "file": "data/missions/muir_riots_grso_briefing.xml",
+   "mapload": "mocap/mocap9/Briefing_3_1_8",
+   "maxheros": "1",
+   "minheros": "1",
+   "objectives": 0,
+   "requiredheroes": [
+    "MAGMA"
+   ],
+   "root": "MISSION",
+   "skinset": "default",
+   "teamselect": "false"
+  },
+  "muirisland": {
+   "file": "data/missions/muirisland.eng",
+   "loads": [],
+   "location": "249 42",
+   "movies": [],
+   "objectives": 1,
+   "remote": "false",
+   "requiredheroes": [],
+   "root": "MISSION",
+   "script_found": true,
+   "scriptstart": "missions/muirisland_start"
+  },
+  "nuke": {
+   "file": "data/missions/nuke.eng",
+   "keepheroes": "false",
+   "loads": [
+    [
+     "loadMap",
+     "nuke_plant/nuke/nuke1_1"
+    ]
+   ],
+   "mapload": "",
+   "maxheros": "4",
+   "minheros": "4",
+   "movies": [
+    "int109"
+   ],
+   "objectives": 7,
+   "requiredheroes": [],
+   "root": "MISSION",
+   "script_found": true,
+   "scriptstart": "missions/mission_fmv_109",
+   "skinset": "default",
+   "teamselect": "false"
+  },
+  "nuke_briefing": {
+   "file": "data/missions/nuke_briefing.xml",
+   "mapload": "mocap/mocap5/Briefing_2_1_16",
+   "maxheros": "1",
+   "minheros": "1",
+   "objectives": 0,
+   "requiredheroes": [
+    "MAGMA"
+   ],
+   "root": "MISSION",
+   "skinset": "default",
+   "teamselect": "false"
+  },
+  "nuke_col": {
+   "file": "data/missions/nuke_col.eng",
+   "keepheroes": "false",
+   "location": "42 36",
+   "mapload": "Nuke_Plant/Nuke/nuke2_2",
+   "maploadblackbird": "true",
+   "maxheros": "4",
+   "minheros": "4",
+   "objectives": 3,
+   "remote": "true",
+   "requiredheroes": [],
+   "root": "MISSION",
+   "scriptstart": "",
+   "skinset": "default",
+   "teamselect": "true"
+  },
+  "nyc_rooftops": {
+   "file": "data/missions/nyc_rooftops.eng",
+   "location": "42 36",
+   "mapload": "nyc/Riots/nyc_roof1",
+   "maploadblackbird": "true",
+   "maxheros": "1",
+   "minheros": "1",
+   "objectives": 0,
+   "remote": "true",
+   "requiredheroes": [
+    "WOLVERINE"
+   ],
+   "root": "MISSION",
+   "scriptstart": "",
+   "skinset": "default",
+   "teamselect": "false"
+  },
+  "nyctest2": {
+   "file": "data/missions/nyctest2.eng",
+   "loads": [],
+   "maxheros": "4",
+   "minheros": "4",
+   "movies": [],
+   "objectives": 1,
+   "requiredheroes": [],
+   "root": "MISSION",
+   "script_found": true,
+   "scriptstart": "missions/nyctest2",
+   "skinset": "default",
+   "teamselect": "false"
+  },
+  "old_wx": {
+   "file": "data/missions/old_wx.eng",
+   "keepheroes": "false",
+   "location": "42 36",
+   "mapload": "weapon_x/OLD/wx2_1",
+   "maploadblackbird": "true",
+   "maxheros": "1",
+   "minheros": "1",
+   "objectives": 3,
+   "remote": "true",
+   "requiredheroes": [
+    "CYCLOPS"
+   ],
+   "root": "MISSION",
+   "scriptstart": "",
+   "skinset": "default",
+   "teamselect": "false"
+  },
+  "rescue": {
+   "file": "data/missions/rescue.eng",
+   "loads": [],
+   "location": "153 73",
+   "movies": [],
+   "objectives": 2,
+   "remote": "true",
+   "requiredheroes": [
+    "Cyclops",
+    "Wolverine",
+    "Storm",
+    "Phoenix"
+   ],
+   "root": "MISSION",
+   "script_found": true,
+   "scriptstart": "missions/rescue_start",
+   "skinset": "default",
+   "teamselect": "false"
+  },
+  "rescue_healer": {
+   "file": "data/missions/rescue_healer.eng",
+   "keepheroes": "false",
+   "mapload": "Sewers/Healer/sewers_hub2",
+   "maxheros": "4",
+   "minheros": "4",
+   "objectives": 7,
+   "remote": "false",
+   "requiredheroes": [],
+   "root": "MISSION",
+   "scriptstart": "",
+   "skinset": "default",
+   "teamselect": "true"
+  },
+  "riots": {
+   "file": "data/missions/riots.eng",
+   "keepheroes": "false",
+   "loads": [
+    [
+     "loadMap",
+     "nyc/riots/nyc3_1_1"
+    ]
+   ],
+   "mapload": "",
+   "maxheros": "4",
+   "minheros": "4",
+   "movies": [
+    "int104"
+   ],
+   "objectives": 8,
+   "remote": "false",
+   "requiredheroes": [],
+   "root": "MISSION",
+   "script_found": true,
+   "scriptstart": "missions/mission_fmv_104",
+   "skinset": "default",
+   "teamselect": "true"
+  },
+  "riots2": {
+   "file": "data/missions/riots2.eng",
+   "loads": [],
+   "maxheros": "1",
+   "minheros": "1",
+   "movies": [],
+   "objectives": 1,
+   "remote": "false",
+   "requiredheroes": [
+    "wolverine"
+   ],
+   "root": "MISSION",
+   "script_found": true,
+   "scriptstart": "missions/riots2",
+   "skinset": "default",
+   "teamselect": "false"
+  },
+  "rooftops": {
+   "file": "data/missions/rooftops.eng",
+   "maxheros": "2",
+   "minheros": "2",
+   "objectives": 1,
+   "requiredheroes": [],
+   "root": "MISSION",
+   "script_found": false,
+   "scriptstart": "missions/rooftops",
+   "skinset": "default",
+   "teamselect": "false"
+  },
+  "secret_wx": {
+   "file": "data/missions/secret_wx.eng",
+   "keepheroes": "false",
+   "location": "42 36",
+   "mapload": "weapon_x/Secret/wx3_1",
+   "maploadblackbird": "true",
+   "maxheros": "2",
+   "minheros": "2",
+   "objectives": 2,
+   "remote": "true",
+   "requiredheroes": [
+    "WOLVERINE",
+    "CYCLOPS"
+   ],
+   "root": "MISSION",
+   "scriptstart": "",
+   "skinset": "default",
+   "teamselect": "false"
+  },
+  "sent_fb": {
+   "file": "data/missions/sent_fb.eng",
+   "keepheroes": "false",
+   "loads": [
+    [
+     "loadMap",
+     "nyc/fb/nyc_fb1"
+    ]
+   ],
+   "mapload": "",
+   "maxheros": "4",
+   "minheros": "4",
+   "movies": [
+    "int107"
+   ],
+   "objectives": 5,
+   "remote": "true",
+   "requiredheroes": [
+    "nightcrawler"
+   ],
+   "root": "MISSION",
+   "script_found": true,
+   "scriptstart": "missions/mission_fmv_107",
+   "skinset": "70s",
+   "teamselect": "false"
+  },
+  "sentinel_fb_return": {
+   "file": "data/missions/sentinel_fb_return.eng",
+   "loads": [],
+   "maxheros": "1",
+   "minheros": "1",
+   "movies": [],
+   "objectives": 2,
+   "remote": "true",
+   "requiredheroes": [
+    "magmacivilian"
+   ],
+   "root": "MISSION",
+   "script_found": true,
+   "scriptstart": "missions/sentinel_fb_return",
+   "skinset": "default",
+   "teamselect": "false"
+  },
+  "sentinel_fb_return2": {
+   "file": "data/missions/sentinel_fb_return2.eng",
+   "loads": [],
+   "maxheros": "1",
+   "minheros": "1",
+   "movies": [],
+   "objectives": 2,
+   "remote": "true",
+   "requiredheroes": [
+    "magmacivilian"
+   ],
+   "root": "MISSION",
+   "script_found": true,
+   "scriptstart": "missions/sentinel_fb_return",
+   "skinset": "default",
+   "teamselect": "false"
+  },
+  "sentinel_mansion": {
+   "file": "data/missions/sentinel_mansion.eng",
+   "loads": [],
+   "maxheros": "4",
+   "minheros": "4",
+   "movies": [],
+   "objectives": 2,
+   "remote": "true",
+   "requiredheroes": [],
+   "root": "MISSION",
+   "script_found": true,
+   "scriptstart": "missions/sen_mansion",
+   "skinset": "default",
+   "teamselect": "false"
+  },
+  "sentinels_attack_mansion": {
+   "file": "data/missions/sentinels_attack_mansion.eng",
+   "loads": [],
+   "maxheros": "4",
+   "minheros": "4",
+   "movies": [],
+   "objectives": 2,
+   "remote": "true",
+   "requiredheroes": [],
+   "root": "MISSION",
+   "script_found": true,
+   "scriptstart": "missions/sen_mansion",
+   "skinset": "default",
+   "teamselect": "false"
+  },
+  "sentinels_attack_mansionbu": {
+   "file": "data/missions/sentinels_attack_mansionbu.eng",
+   "maxheros": "4",
+   "minheros": "4",
+   "objectives": 2,
+   "remote": "true",
+   "requiredheroes": [],
+   "root": "MISSION",
+   "script_found": false,
+   "scriptstart": "missions/sentinel_attack_mansion",
+   "skinset": "default",
+   "teamselect": "false"
+  },
+  "sentinels_mansion": {
+   "file": "data/missions/sentinels_mansion.eng",
+   "keepheroes": "false",
+   "mapload": "mansion/Man5/mansion_front5",
+   "maxheros": "4",
+   "minheros": "4",
+   "objectives": 2,
+   "remote": "true",
+   "requiredheroes": [],
+   "root": "MISSION",
+   "scriptstart": "",
+   "skinset": "default",
+   "teamselect": "true"
+  },
+  "sewer_muir_briefing": {
+   "file": "data/missions/sewer_muir_briefing.xml",
+   "mapload": "mocap/mocap3/Briefing_1_4_13",
+   "maxheros": "1",
+   "minheros": "1",
+   "objectives": 0,
+   "requiredheroes": [
+    "MAGMA"
+   ],
+   "root": "MISSION",
+   "skinset": "civilian",
+   "teamselect": "false"
+  },
+  "sewers": {
+   "file": "data/missions/sewers.eng",
+   "loads": [],
+   "location": "150 67",
+   "movies": [],
+   "objectives": 1,
+   "remote": "false",
+   "requiredheroes": [],
+   "root": "MISSION",
+   "script_found": true,
+   "scriptstart": "missions/sewers_start",
+   "skinset": "default",
+   "teamselect": "false"
+  },
+  "sewers1": {
+   "file": "data/missions/sewers1.eng",
+   "keepheroes": "false",
+   "loads": [
+    [
+     "loadMap",
+     "sewers/hub/sewers1_1_1"
+    ]
+   ],
+   "mapload": "",
+   "maxheros": "4",
+   "minheros": "4",
+   "movies": [
+    "int102"
+   ],
+   "objectives": 2,
+   "requiredheroes": [],
+   "root": "MISSION",
+   "script_found": true,
+   "scriptstart": "missions/mission_fmv_102",
+   "skinset": "default",
+   "teamselect": "true"
+  },
+  "sewers1_briefing": {
+   "file": "data/missions/sewers1_briefing.xml",
+   "keepheroes": "false",
+   "mapload": "mocap/mocap2/Briefing_1_2_41",
+   "maxheros": "1",
+   "minheros": "1",
+   "objectives": 0,
+   "requiredheroes": [
+    "MAGMA"
+   ],
+   "root": "MISSION",
+   "scriptstart": "",
+   "skinset": "civilian",
+   "teamselect": "false"
+  },
+  "sewers2": {
+   "file": "data/missions/sewers2.eng",
+   "loads": [],
+   "maxheros": "4",
+   "minheros": "4",
+   "movies": [],
+   "objectives": 6,
+   "remote": "false",
+   "requiredheroes": [],
+   "root": "MISSION",
+   "script_found": true,
+   "scriptstart": "missions/rescue_healer",
+   "skinset": "default",
+   "teamselect": "false"
+  },
+  "sewers3": {
+   "file": "data/missions/sewers3.eng",
+   "loads": [],
+   "maxheros": "4",
+   "minheros": "4",
+   "movies": [],
+   "objectives": 1,
+   "remote": "false",
+   "requiredheroes": [],
+   "root": "MISSION",
+   "script_found": true,
+   "scriptstart": "missions/sewers_hub5",
+   "skinset": "default",
+   "teamselect": "false"
+  },
+  "sewers4": {
+   "file": "data/missions/sewers4.eng",
+   "loads": [],
+   "maxheros": "4",
+   "minheros": "1",
+   "movies": [],
+   "objectives": 1,
+   "requiredheroes": [],
+   "root": "MISSION",
+   "script_found": true,
+   "scriptstart": "missions/sewers4",
+   "skinset": "default",
+   "teamselect": "false"
+  },
+  "sewers_gambit": {
+   "file": "data/missions/sewers_gambit.eng",
+   "loads": [],
+   "maxheros": "4",
+   "minheros": "4",
+   "movies": [],
+   "objectives": 1,
+   "remote": "false",
+   "requiredheroes": [],
+   "root": "MISSION",
+   "script_found": true,
+   "scriptstart": "missions/sewers_gambit",
+   "skinset": "default",
+   "teamselect": "true"
+  },
+  "sewers_grso": {
+   "file": "data/missions/sewers_grso.eng",
+   "keepheroes": "false",
+   "location": "42 36",
+   "mapload": "Sewers/GRSO/sewers3_1_1",
+   "maploadblackbird": "true",
+   "maxheros": "4",
+   "minheros": "4",
+   "objectives": 6,
+   "remote": "true",
+   "requiredheroes": [],
+   "root": "MISSION",
+   "scriptstart": "",
+   "skinset": "default",
+   "teamselect": "true"
+  },
+  "sewers_hub": {
+   "file": "data/missions/sewers_hub.eng",
+   "keepheroes": "true",
+   "mapload": "Sewers/HUB/sewers_hub",
+   "maxheros": "4",
+   "minheros": "4",
+   "objectives": 3,
+   "remote": "false",
+   "requiredheroes": [],
+   "root": "MISSION",
+   "scriptstart": "",
+   "skinset": "default",
+   "teamselect": "false"
+  },
+  "sewers_hub2": {
+   "file": "data/missions/sewers_hub2.eng",
+   "loads": [],
+   "maxheros": "4",
+   "minheros": "4",
+   "movies": [],
+   "objectives": 2,
+   "remote": "false",
+   "requiredheroes": [],
+   "root": "MISSION",
+   "script_found": true,
+   "scriptstart": "missions/sewers_hub2",
+   "skinset": "civilian",
+   "teamselect": "false"
+  },
+  "sewers_marrow": {
+   "file": "data/missions/sewers_marrow.eng",
+   "location": "42 36",
+   "mapload": "Sewers/GRSO/sewers_marrow",
+   "maploadblackbird": "true",
+   "maxheros": "4",
+   "minheros": "4",
+   "objectives": 0,
+   "remote": "true",
+   "requiredheroes": [],
+   "root": "MISSION",
+   "scriptstart": "",
+   "skinset": "default",
+   "teamselect": "true"
+  },
+  "start_astral3": {
+   "file": "data/missions/start_astral3.eng",
+   "mapload": "mansion/Man8/subbasement8b",
+   "maxheros": "1",
+   "minheros": "1",
+   "objectives": 1,
+   "requiredheroes": [
+    "MAGMA"
+   ],
+   "root": "MISSION",
+   "skinset": "default",
+   "teamselect": "false"
+  },
+  "status_meeting": {
+   "file": "data/missions/status_meeting.xml",
+   "keepheroes": "false",
+   "mapload": "mansion/Man7/status_meeting",
+   "maxheros": "1",
+   "minheros": "1",
+   "objectives": 0,
+   "requiredheroes": [
+    "MAGMA"
+   ],
+   "root": "MISSION",
+   "skinset": "default",
+   "teamselect": "false"
+  },
+  "subbasement2_fb": {
+   "file": "data/missions/subbasement2_fb.eng",
+   "loads": [],
+   "maxheros": "1",
+   "minheros": "1",
+   "movies": [],
+   "objectives": 1,
+   "remote": "true",
+   "requiredheroes": [
+    "magma"
+   ],
+   "root": "MISSION",
+   "script_found": true,
+   "scriptstart": "missions/subbasement2_fb"
+  },
+  "subbasement3": {
+   "file": "data/missions/subbasement3.eng",
+   "loads": [],
+   "maxheros": "1",
+   "minheros": "1",
+   "movies": [],
+   "objectives": 1,
+   "remote": "true",
+   "requiredheroes": [
+    "magmacivilian"
+   ],
+   "root": "MISSION",
+   "script_found": true,
+   "scriptstart": "missions/subbasement3b"
+  },
+  "subbasement3b": {
+   "file": "data/missions/subbasement3b.eng",
+   "loads": [],
+   "maxheros": "1",
+   "minheros": "1",
+   "movies": [],
+   "objectives": 4,
+   "remote": "true",
+   "requiredheroes": [
+    "magmacivilian"
+   ],
+   "root": "MISSION",
+   "script_found": true,
+   "scriptstart": "missions/dr_mag2_done",
+   "skinset": "default",
+   "teamselect": "false"
+  },
+  "testcollect": {
+   "file": "data/missions/testcollect.eng",
+   "loads": [],
+   "location": "290 150",
+   "maxheros": "1",
+   "minheros": "1",
+   "movies": [],
+   "objectives": 4,
+   "remote": "false",
+   "requiredheroes": [],
+   "root": "MISSION",
+   "script_found": true,
+   "scriptstart": "missions/testcollect_start",
+   "skinset": "default",
+   "teamselect": "false"
+  },
+  "weaponx2": {
+   "file": "data/missions/weaponx2.eng",
+   "loads": [],
+   "maxheros": "1",
+   "minheros": "1",
+   "movies": [],
+   "objectives": 1,
+   "remote": "true",
+   "requiredheroes": [
+    "wolverine"
+   ],
+   "root": "MISSION",
+   "script_found": true,
+   "scriptstart": "missions/weaponx2",
+   "skinset": "weaponx"
+  },
+  "weaponx3": {
+   "file": "data/missions/weaponx3.eng",
+   "loads": [],
+   "maxheros": "1",
+   "minheros": "1",
+   "movies": [],
+   "objectives": 1,
+   "remote": "false",
+   "requiredheroes": [
+    "cyclops"
+   ],
+   "root": "MISSION",
+   "script_found": true,
+   "scriptstart": "missions/weaponx3"
+  },
+  "wx_fb_start": {
+   "file": "data/missions/wx_fb_start.eng",
+   "keepheroes": "false",
+   "loads": [
+    [
+     "loadMap",
+     "weapon_x/wfb/wx1_1"
+    ]
+   ],
+   "location": "42 36",
+   "mapload": "",
+   "maploadblackbird": "true",
+   "maxheros": "1",
+   "minheros": "1",
+   "movies": [
+    "int108"
+   ],
+   "objectives": 1,
+   "remote": "true",
+   "requiredheroes": [
+    "WOLVERINE"
+   ],
+   "root": "MISSION",
+   "script_found": true,
+   "scriptstart": "missions/mission_fmv_108",
+   "skinset": "weaponx",
+   "teamselect": "false"
+  }
+ },
+ "movies_played": {
+  "script:arbiter/a_int/play_movies": [
+   "R106"
+  ],
+  "script:asteroid_m/end2_1movie": [
+   "r305"
+  ],
+  "script:astral/savepx/xcrystal_destroyed": [
+   "r504"
+  ],
+  "script:mansion/dr_mag/fmvexit": [
+   "r104"
+  ],
+  "script:mansion/man5/sentinel_count": [
+   "r103",
+   "r203"
+  ],
+  "script:mastermold/stage3death": [
+   "R501"
+  ],
+  "script:missions/alison": [
+   "r102"
+  ],
+  "script:missions/arbiter": [
+   "r105"
+  ],
+  "script:missions/asteroid1_1": [
+   "r302"
+  ],
+  "script:missions/asteroid2_3": [
+   "r306"
+  ],
+  "script:missions/astral1b": [
+   "r202"
+  ],
+  "script:missions/mansion1": [
+   "r103"
+  ],
+  "script:missions/mansion2": [
+   "r103"
+  ],
+  "script:missions/mansion3": [
+   "r103",
+   "r201"
+  ],
+  "script:missions/mansion6_new": [
+   "r204",
+   "r206",
+   "r301"
+  ],
+  "script:missions/mastermold2": [
+   "r503"
+  ],
+  "script:missions/mission_fmv_101": [
+   "int101"
+  ],
+  "script:missions/mission_fmv_102": [
+   "int102"
+  ],
+  "script:missions/mission_fmv_103": [
+   "int103"
+  ],
+  "script:missions/mission_fmv_104": [
+   "int104"
+  ],
+  "script:missions/mission_fmv_105": [
+   "int105"
+  ],
+  "script:missions/mission_fmv_106": [
+   "int106"
+  ],
+  "script:missions/mission_fmv_107": [
+   "int107"
+  ],
+  "script:missions/mission_fmv_108": [
+   "int108"
+  ],
+  "script:missions/mission_fmv_109": [
+   "int109"
+  ],
+  "script:missions/muirisland_start": [
+   "blackbird_leave_mansion"
+  ],
+  "script:missions/sewers_start": [
+   "blackbird_leave_mansion",
+   "test1"
+  ],
+  "script:missions/testcollect_start": [
+   "blackbird_leave_mansion"
+  ]
+ },
+ "movies_reachable": [
+  "R106",
+  "R501",
+  "int101",
+  "int102",
+  "int103",
+  "int104",
+  "int105",
+  "int106",
+  "int107",
+  "int108",
+  "int109",
+  "r102",
+  "r103",
+  "r104",
+  "r105",
+  "r201",
+  "r202",
+  "r203",
+  "r204",
+  "r206",
+  "r301",
+  "r302",
+  "r305",
+  "r306",
+  "r503",
+  "r504"
+ ],
+ "new_game": {
+  "command": "beginmission alison",
+  "mission_movies": [
+   "r102"
+  ],
+  "mission_script": "missions/alison",
+  "start_zone": "nyc/alison/nyc1_1_1",
+  "xbe_newgame_handler": "0x18d0b0"
+ },
+ "reachable_from_new_game": [
+  "nyc/alison/nyc1_1_1",
+  "nyc/alison/nyc1_1_2",
+  "nyc/alison/nyc1_1_2b",
+  "nyc/alison/nyc1_1_3",
+  "nyc/alison/nyc1_1_4",
+  "nyc/alison/nyc1_1_5",
+  "mocap/mocap1/briefing_1_1_6_5",
+  "mansion/man1a/mansion1a_1",
+  "mansion/man1a/mansion1a_2",
+  "mansion/man1a/subbasement1a",
+  "mansion/man1a/hangar1a",
+  "mocap/mocap2/briefing_1_2_41",
+  "haarp/ext/haarp_ext01",
+  "haarp/ext/haarp_ext02",
+  "haarp/ext/haarp_ext03",
+  "haarp/ext/haarp_ext04",
+  "haarp/int/haarp2_1",
+  "haarp/int/haarp2_2",
+  "haarp/int/haarp2_3",
+  "haarp/int/haarp2_6",
+  "haarp/int/icetunnel1",
+  "haarp/int/icetunnel2",
+  "haarp/ext/haarp_ext_boss",
+  "mansion/man2/mansion_back2",
+  "mansion/man2/mansion2_1",
+  "mansion/man2/mansion2_2",
+  "mansion/man2/subbasement2",
+  "nyc/fb/nyc_fb1",
+  "mansion/jugrnt/jugrnt01",
+  "mocap/mocap3/briefing_1_4_13",
+  "nyc/fb/nyc_fb2",
+  "mansion/dr_mag/dr_mag01",
+  "sewers/hub/sewers1_1_1",
+  "nyc/fb/nyc_fb3",
+  "sewers/hub/sewers1_1_2",
+  "nyc/fb/nyc_fb4",
+  "mansion/dr_mag/dr_mag03",
+  "sewers/hub/sewers1_1_3",
+  "sewers/hub/sewers1_1_4",
+  "sewers/hub/sewers_hub",
+  "sewers/hub/sewers1_2_1",
+  "sewers/hub/sewers1_2_3",
+  "sewers/hub/sewers1_2_4",
+  "mocap/mocap4/briefing_1_7_1",
+  "arbiter/deck/arb_fd1",
+  "arbiter/deck/arb_fd2",
+  "arbiter/a_int/arb2_1",
+  "arbiter/a_int/arb2_2",
+  "arbiter/a_int/arb2_3",
+  "arbiter/a_int/arb2_4",
+  "arbiter/a_int/arb3_1",
+  "arbiter/a_int/arb3_2",
+  "arbiter/a_int/arb3_3",
+  "arbiter/a_int/arb3_4",
+  "mansion/man3/mansion3_2",
+  "mansion/man3/mansion3_1",
+  "mansion/man3/subbasement3b",
+  "mansion/man3/hangar3",
+  "mansion/dr_mag2/mag_nyc1",
+  "mocap/mocap5/briefing_2_1_16",
+  "mansion/dr_mag2/mag_nyc2",
+  "mansion/dr_mag2/mag_nyc3",
+  "weapon_x/wfb/wx1_1",
+  "mansion/dr_mag2/mag_nyc4",
+  "weapon_x/wfb/wx1_2",
+  "nuke_plant/nuke/nuke1_1",
+  "weapon_x/wfb/wx1_3",
+  "nuke_plant/nuke/nuke1_2",
+  "mansion/man3/danger_room",
+  "nuke_plant/nuke/nuke1_3",
+  "nuke_plant/nuke/nuke1_4",
+  "nuke_plant/nuke/nuke2_2",
+  "nuke_plant/nuke/nuke2_2a",
+  "nuke_plant/nuke/nuke2_3",
+  "muir_is/muir2/muir_in2",
+  "muir_is/muir2/mui_comcore",
+  "mansion/man4/mansion_back4",
+  "mansion/man4/mansion4_1",
+  "mansion/man4/mansion4_2",
+  "mansion/man4/subbasement4",
+  "mocap/mocap7/briefing_2_5_14_7",
+  "astral/ast1/astral1_1",
+  "mansion/man4/mansion_back4_grso",
+  "weapon_x/old/wx2_1",
+  "mocap/mocap6/briefing_2_5_5",
+  "astral/ast1/astral1_2",
+  "mansion/man4/mansion_front4_grso",
+  "weapon_x/old/wx2_2",
+  "astral/ast1/astral1_3",
+  "mansion/man5/mansion5_1",
+  "mansion/man5/mansion5_2",
+  "weapon_x/secret/wx3_1",
+  "mansion/man4/grso_debriefing",
+  "mansion/man5/subbasement5",
+  "weapon_x/secret/wx3_2",
+  "astral/ast1/astral4_3",
+  "weapon_x/secret/wx3_3",
+  "mocap/mocap8/briefing_2_5_22",
+  "sewers/healer/sewers_hub2",
+  "mansion/man5/subbasement5b",
+  "sewers/healer/sewers2_1_1",
+  "sewers/healer/sewers2_1_2",
+  "sewers/healer/sewers2_1_3",
+  "mansion/man5/mansion_front5",
+  "sewers/healer/sewers2_1_4",
+  "mount/mount/mount",
+  "mount/mount/mount2",
+  "mansion/man6/mansion6_2",
+  "mansion/man6/mansion6_1",
+  "mansion/man6/subbasement6",
+  "mocap/mocap9/briefing_3_1_8",
+  "muir_is/muir3/muir_in3",
+  "sewers/grso/sewers3_1_1",
+  "nyc/riots/nyc3_1_1",
+  "sewers/grso/sewers3_1_2",
+  "nyc/riots/nyc3_1_2",
+  "sewers/grso/sewers3_1_3",
+  "muir_is/muir3/muir_brig",
+  "nyc/riots/nyc3_1_3",
+  "sewers/grso/sewers_marrow",
+  "mansion/man7/status_meeting",
+  "nyc/riots/nyc3_2_1",
+  "mansion/man7/subbasement7",
+  "mansion/man7/mansion7_1",
+  "mansion/man7/mansion7_2",
+  "mocap/mocap11/briefing_3_6_7",
+  "hive/h_ext/hive1_1_1",
+  "astral/ast3/astral3_2",
+  "hive/h_int/hive1_2_1",
+  "astral/ast3/astral3_3",
+  "astral/ast3/astral3_4",
+  "astral/ast3/astral3_5",
+  "astral/ast3/colosseum",
+  "hive/h_int/hive1_2_2",
+  "hive/h_int/hive1_2_3",
+  "hive/h_int/hive1_3_1",
+  "mocap/mocap10/briefing_3_6_6",
+  "hive/h_int/hive1_3_2",
+  "hive/h_int/hive1_3_3",
+  "hive/h_int/hive2_2_1",
+  "hive/h_int/hive2_2_2",
+  "hive/h_int/hive2_2_3",
+  "hive/h_int/hive2_2_4",
+  "hive/h_int/hive2_2_5",
+  "mocap/mocap12/briefing_3_9_0",
+  "astral/savepx/astral2_1",
+  "astral/savepx/astral2_2",
+  "astral/savepx/astral2_3",
+  "astral/savepx/final_astral",
+  "mansion/man8/subbasement8",
+  "mansion/man8/hangar8",
+  "mansion/man8/mansion8_1",
+  "mansion/man8/mansion8_2",
+  "mocap/mocap13/briefing_3_9_8",
+  "astroid_m/visit1/asteroid1_1",
+  "astroid_m/visit1/asteroid1_2",
+  "astroid_m/visit1/asteroid1_3",
+  "astroid_m/visit1/asteroid2_1",
+  "astroid_m/visit1/asteroid2_2",
+  "astroid_m/visit1/asteroid2_3",
+  "mastermold/mastermold1",
+  "mastermold/mastermold2"
+ ],
+ "reachable_missions": [
+  "alison",
+  "arbiter",
+  "arbiter_int",
+  "asteroid_briefing",
+  "asteroid_int",
+  "asteroid_int2",
+  "asteroid_mm",
+  "asteroid_mm2",
+  "asteroid_rock",
+  "astral1",
+  "astral1b",
+  "astral2",
+  "astral2_briefing",
+  "astral3",
+  "astral_sk",
+  "astral_wx_briefing",
+  "boss_toad1",
+  "dr_mag1",
+  "dr_mag2",
+  "end_astral",
+  "end_astral2",
+  "end_hive",
+  "grso_briefing",
+  "haarp",
+  "haarp_int",
+  "harrp_briefing",
+  "healer_briefing",
+  "hive1",
+  "hive2",
+  "jug_fb",
+  "mansion1",
+  "mansion2",
+  "mansion3",
+  "mansion3_dangerroom",
+  "mansion3_uniform",
+  "mansion4",
+  "mansion4_grso",
+  "mansion4_grso_done",
+  "mansion5",
+  "mansion6",
+  "mansion7",
+  "mansion8",
+  "mount",
+  "muir",
+  "muir2",
+  "muir2_reboot",
+  "muir3",
+  "muir3brig",
+  "muir_riots_grso_briefing",
+  "nuke",
+  "nuke_briefing",
+  "nyc_rooftops",
+  "old_wx",
+  "rescue_healer",
+  "riots",
+  "secret_wx",
+  "sent_fb",
+  "sentinels_mansion",
+  "sewer_muir_briefing",
+  "sewers1",
+  "sewers_grso",
+  "sewers_hub",
+  "wx_fb_start"
+ ],
+ "unreachable_by_category": {
+  "arena": [
+   "arena/arena_arb1",
+   "arena/arena_arb2",
+   "arena/arena_astm1",
+   "arena/arena_astral1",
+   "arena/arena_astral2",
+   "arena/arena_dr",
+   "arena/arena_haarp1",
+   "arena/arena_haarpint1",
+   "arena/arena_mansion1",
+   "arena/arena_nuke1",
+   "arena/arena_nyc1",
+   "arena/arena_nyc2",
+   "arena/arena_sewers1",
+   "arena/arena_snow1",
+   "arena/arena_weapx1"
+  ],
+  "briefing_mocap": [],
+  "campaign": [
+   "arbiter/arb_fd1",
+   "arbiter/arb_fd2",
+   "arbiter/arena_sewers1",
+   "arbiter/arena_weapx1",
+   "astral/savepx/astral1_1",
+   "astral/savepx/astral1_3",
+   "astroid_m/visit1/arb_fd1",
+   "astroid_m/visit1/arb_fd2",
+   "mansion/man5/dfdsafsd",
+   "mansion/man5/dgdfsgfs",
+   "mansion/man5/lkjdsfjasdlfsd",
+   "mansion/man5/sdafasdfasd",
+   "mansion/man5/subbasement4",
+   "mansion/man5/test",
+   "mansion/man5/zz",
+   "mansion/man5/zzz",
+   "mansion/man5/zzzzzzzz",
+   "mansion/man5/zzzzzzzzzzz",
+   "mansion/man8/subbasement8b",
+   "muir_is/muir2/muir_brig",
+   "muir_is/muir2/muir_comcore",
+   "nyc/alison/blackbird",
+   "nyc/riots/nyc3_2_2",
+   "xjet/blackbird_arbiter"
+  ],
+  "cinematic": [
+   "cinematics/beastlab2_cine"
+  ],
+  "demo_copy": [
+   "demo/a_int/arb3_1",
+   "demo/a_int/arb3_2",
+   "demo/deck/arb_fd1",
+   "demo/ext/haarp_ext_boss",
+   "demo/hub/sewers1_1_1",
+   "demo/hub/sewers1_1_2",
+   "demo/jugrnt/jugrnt01"
+  ],
+  "menu_background": [
+   "menu/main_back"
+  ]
+ },
+ "unresolved_zone_refs": [
+  [
+   "conv:mansion/man4/from_backyard_grso",
+   "loadZone",
+   "work/csamuel/mansion/man4/mansion4_1_grso"
+  ],
+  [
+   "mission:boss_multipleman",
+   "mapload",
+   "muir_is/muir1/muir_out1_1"
+  ],
+  [
+   "mission:boss_sabreroof",
+   "mapload",
+   "nyc/riots/nyc_roof1"
+  ],
+  [
+   "mission:ice_wolverine",
+   "mapload",
+   "haarp/ice_sq/ice_sq1"
+  ],
+  [
+   "mission:nyc_rooftops",
+   "mapload",
+   "nyc/Riots/nyc_roof1"
+  ],
+  [
+   "script:mansion/dr_mag/loaddr_mag02",
+   "loadMap",
+   "mansion/DR_mag/dr_mag02"
+  ],
+  [
+   "script:missions/arbiter_test",
+   "loadMap",
+   "arbiter/deck/arb_newdeck"
+  ],
+  [
+   "script:missions/drones",
+   "loadZone",
+   "work/csamuel/mansion/man4/mansion_back_grso"
+  ],
+  [
+   "script:missions/jug_done",
+   "loadMap",
+   "mansion/man1b/subbasement1b"
+  ],
+  [
+   "script:missions/mansion_start",
+   "loadMap",
+   "e3/mansion1"
+  ],
+  [
+   "script:missions/muir",
+   "loadMap",
+   "muir_is/muir1/muir_out1_1"
+  ],
+  [
+   "script:missions/muir_int",
+   "loadMap",
+   "muir_is/muir1/muir_in1"
+  ],
+  [
+   "script:missions/nyctest2",
+   "loadMap",
+   "test/nyctest2"
+  ]
+ ],
+ "zone_edges": {
+  "arbiter/a_int/arb2_1": [
+   "arbiter/a_int/arb2_2"
+  ],
+  "arbiter/a_int/arb2_2": [
+   "arbiter/a_int/arb2_1",
+   "arbiter/a_int/arb2_3"
+  ],
+  "arbiter/a_int/arb2_3": [
+   "arbiter/a_int/arb2_2",
+   "arbiter/a_int/arb2_4"
+  ],
+  "arbiter/a_int/arb2_4": [
+   "arbiter/a_int/arb3_1"
+  ],
+  "arbiter/a_int/arb3_1": [
+   "arbiter/a_int/arb3_2",
+   "mansion/man3/mansion3_2"
+  ],
+  "arbiter/a_int/arb3_2": [
+   "arbiter/a_int/arb3_1",
+   "arbiter/a_int/arb3_3",
+   "mansion/man3/mansion3_2"
+  ],
+  "arbiter/a_int/arb3_3": [
+   "arbiter/a_int/arb3_2",
+   "arbiter/a_int/arb3_4",
+   "mansion/man3/mansion3_2"
+  ],
+  "arbiter/a_int/arb3_4": [
+   "arbiter/a_int/arb3_3",
+   "mansion/man3/mansion3_2"
+  ],
+  "arbiter/arb_fd1": [
+   "arbiter/arb_fd2"
+  ],
+  "arbiter/arb_fd2": [
+   "arbiter/a_int/arb2_1"
+  ],
+  "arbiter/arena_sewers1": [],
+  "arbiter/arena_weapx1": [],
+  "arbiter/deck/arb_fd1": [
+   "arbiter/deck/arb_fd2"
+  ],
+  "arbiter/deck/arb_fd2": [
+   "arbiter/a_int/arb2_1"
+  ],
+  "arena/arena_arb1": [],
+  "arena/arena_arb2": [],
+  "arena/arena_astm1": [],
+  "arena/arena_astral1": [],
+  "arena/arena_astral2": [],
+  "arena/arena_dr": [],
+  "arena/arena_haarp1": [],
+  "arena/arena_haarpint1": [],
+  "arena/arena_mansion1": [],
+  "arena/arena_nuke1": [],
+  "arena/arena_nyc1": [],
+  "arena/arena_nyc2": [],
+  "arena/arena_sewers1": [],
+  "arena/arena_snow1": [],
+  "arena/arena_weapx1": [],
+  "astral/ast1/astral1_1": [
+   "astral/ast1/astral1_2"
+  ],
+  "astral/ast1/astral1_2": [
+   "astral/ast1/astral1_1",
+   "astral/ast1/astral1_3"
+  ],
+  "astral/ast1/astral1_3": [
+   "astral/ast1/astral1_2",
+   "astral/ast1/astral4_3"
+  ],
+  "astral/ast1/astral4_3": [
+   "mansion/man5/subbasement5b",
+   "mocap/mocap7/briefing_2_5_14_7",
+   "weapon_x/old/wx2_1"
+  ],
+  "astral/ast3/astral3_2": [
+   "astral/ast3/astral3_3",
+   "astral/ast3/astral3_4",
+   "astral/ast3/astral3_5",
+   "astral/ast3/colosseum"
+  ],
+  "astral/ast3/astral3_3": [
+   "astral/ast3/astral3_2"
+  ],
+  "astral/ast3/astral3_4": [
+   "astral/ast3/astral3_2"
+  ],
+  "astral/ast3/astral3_5": [
+   "astral/ast3/astral3_2"
+  ],
+  "astral/ast3/colosseum": [
+   "mocap/mocap10/briefing_3_6_6"
+  ],
+  "astral/savepx/astral1_1": [],
+  "astral/savepx/astral1_3": [
+   "astral/ast1/astral4_3"
+  ],
+  "astral/savepx/astral2_1": [
+   "astral/savepx/astral2_2"
+  ],
+  "astral/savepx/astral2_2": [
+   "astral/savepx/astral2_1",
+   "astral/savepx/astral2_3"
+  ],
+  "astral/savepx/astral2_3": [
+   "astral/savepx/astral2_2",
+   "astral/savepx/final_astral",
+   "mansion/man8/subbasement8"
+  ],
+  "astral/savepx/final_astral": [],
+  "astroid_m/visit1/arb_fd1": [
+   "astroid_m/visit1/arb_fd2"
+  ],
+  "astroid_m/visit1/arb_fd2": [
+   "arbiter/a_int/arb2_1"
+  ],
+  "astroid_m/visit1/asteroid1_1": [
+   "astroid_m/visit1/asteroid1_2"
+  ],
+  "astroid_m/visit1/asteroid1_2": [
+   "astroid_m/visit1/asteroid1_1",
+   "astroid_m/visit1/asteroid1_3"
+  ],
+  "astroid_m/visit1/asteroid1_3": [
+   "astroid_m/visit1/asteroid2_1"
+  ],
+  "astroid_m/visit1/asteroid2_1": [
+   "astroid_m/visit1/asteroid1_3",
+   "astroid_m/visit1/asteroid2_2"
+  ],
+  "astroid_m/visit1/asteroid2_2": [
+   "astroid_m/visit1/asteroid2_3"
+  ],
+  "astroid_m/visit1/asteroid2_3": [
+   "mastermold/mastermold1"
+  ],
+  "cinematics/beastlab2_cine": [],
+  "demo/a_int/arb3_1": [
+   "demo/a_int/arb3_2",
+   "mansion/man3/mansion3_2"
+  ],
+  "demo/a_int/arb3_2": [
+   "arbiter/a_int/arb3_3",
+   "demo/a_int/arb3_1",
+   "mansion/man3/mansion3_2"
+  ],
+  "demo/deck/arb_fd1": [
+   "demo/a_int/arb3_1"
+  ],
+  "demo/ext/haarp_ext_boss": [],
+  "demo/hub/sewers1_1_1": [
+   "demo/hub/sewers1_1_2"
+  ],
+  "demo/hub/sewers1_1_2": [
+   "demo/hub/sewers1_1_1",
+   "sewers/hub/sewers1_1_3",
+   "sewers/hub/sewers1_1_4",
+   "sewers/hub/sewers_hub"
+  ],
+  "demo/jugrnt/jugrnt01": [],
+  "haarp/ext/haarp_ext01": [
+   "haarp/ext/haarp_ext02"
+  ],
+  "haarp/ext/haarp_ext02": [
+   "haarp/ext/haarp_ext01",
+   "haarp/ext/haarp_ext03"
+  ],
+  "haarp/ext/haarp_ext03": [
+   "haarp/ext/haarp_ext02",
+   "haarp/ext/haarp_ext04"
+  ],
+  "haarp/ext/haarp_ext04": [
+   "haarp/ext/haarp_ext03",
+   "haarp/int/haarp2_1"
+  ],
+  "haarp/ext/haarp_ext_boss": [
+   "mansion/man2/mansion_back2"
+  ],
+  "haarp/int/haarp2_1": [
+   "haarp/int/haarp2_2"
+  ],
+  "haarp/int/haarp2_2": [
+   "haarp/int/haarp2_1",
+   "haarp/int/haarp2_3"
+  ],
+  "haarp/int/haarp2_3": [
+   "haarp/int/haarp2_2",
+   "haarp/int/haarp2_6"
+  ],
+  "haarp/int/haarp2_6": [
+   "haarp/int/haarp2_3",
+   "haarp/int/icetunnel1"
+  ],
+  "haarp/int/icetunnel1": [
+   "haarp/int/icetunnel2"
+  ],
+  "haarp/int/icetunnel2": [
+   "haarp/ext/haarp_ext_boss"
+  ],
+  "hive/h_ext/hive1_1_1": [
+   "hive/h_int/hive1_2_1"
+  ],
+  "hive/h_int/hive1_2_1": [
+   "hive/h_int/hive1_2_2"
+  ],
+  "hive/h_int/hive1_2_2": [
+   "hive/h_int/hive1_2_1",
+   "hive/h_int/hive1_2_3"
+  ],
+  "hive/h_int/hive1_2_3": [
+   "hive/h_int/hive1_2_2",
+   "hive/h_int/hive1_3_1"
+  ],
+  "hive/h_int/hive1_3_1": [
+   "hive/h_int/hive1_2_3",
+   "hive/h_int/hive1_3_2"
+  ],
+  "hive/h_int/hive1_3_2": [
+   "hive/h_int/hive1_3_1",
+   "hive/h_int/hive1_3_3"
+  ],
+  "hive/h_int/hive1_3_3": [
+   "hive/h_int/hive1_3_2",
+   "hive/h_int/hive2_2_1"
+  ],
+  "hive/h_int/hive2_2_1": [
+   "hive/h_int/hive2_2_2"
+  ],
+  "hive/h_int/hive2_2_2": [
+   "hive/h_int/hive2_2_1",
+   "hive/h_int/hive2_2_3"
+  ],
+  "hive/h_int/hive2_2_3": [
+   "hive/h_int/hive2_2_2",
+   "hive/h_int/hive2_2_4"
+  ],
+  "hive/h_int/hive2_2_4": [
+   "hive/h_int/hive2_2_5"
+  ],
+  "hive/h_int/hive2_2_5": [
+   "mocap/mocap12/briefing_3_9_0"
+  ],
+  "mansion/dr_mag/dr_mag01": [
+   "mansion/dr_mag/dr_mag03"
+  ],
+  "mansion/dr_mag/dr_mag03": [],
+  "mansion/dr_mag2/mag_nyc1": [
+   "mansion/dr_mag2/mag_nyc2"
+  ],
+  "mansion/dr_mag2/mag_nyc2": [
+   "mansion/dr_mag2/mag_nyc3"
+  ],
+  "mansion/dr_mag2/mag_nyc3": [
+   "mansion/dr_mag2/mag_nyc4"
+  ],
+  "mansion/dr_mag2/mag_nyc4": [
+   "mansion/man3/danger_room"
+  ],
+  "mansion/jugrnt/jugrnt01": [],
+  "mansion/man1a/hangar1a": [
+   "mansion/man1a/subbasement1a"
+  ],
+  "mansion/man1a/mansion1a_1": [
+   "mansion/man1a/mansion1a_2",
+   "mansion/man1a/subbasement1a"
+  ],
+  "mansion/man1a/mansion1a_2": [
+   "mansion/man1a/mansion1a_1",
+   "mansion/man1a/subbasement1a"
+  ],
+  "mansion/man1a/subbasement1a": [
+   "haarp/ext/haarp_ext01",
+   "mansion/man1a/hangar1a",
+   "mansion/man1a/mansion1a_1",
+   "mansion/man1a/mansion1a_2",
+   "mocap/mocap2/briefing_1_2_41"
+  ],
+  "mansion/man2/mansion2_1": [
+   "mansion/man2/mansion2_2",
+   "mansion/man2/mansion_back2",
+   "mansion/man2/subbasement2",
+   "nyc/fb/nyc_fb1"
+  ],
+  "mansion/man2/mansion2_2": [
+   "mansion/man2/mansion2_1",
+   "mansion/man2/subbasement2"
+  ],
+  "mansion/man2/mansion_back2": [
+   "mansion/man2/mansion2_1"
+  ],
+  "mansion/man2/subbasement2": [
+   "mansion/dr_mag/dr_mag01",
+   "mansion/jugrnt/jugrnt01",
+   "mansion/man2/mansion2_1",
+   "mansion/man2/mansion2_2",
+   "mocap/mocap3/briefing_1_4_13",
+   "sewers/hub/sewers1_1_1"
+  ],
+  "mansion/man3/danger_room": [
+   "mansion/man3/mansion3_2"
+  ],
+  "mansion/man3/hangar3": [
+   "mansion/man3/subbasement3b",
+   "weapon_x/wfb/wx1_1"
+  ],
+  "mansion/man3/mansion3_1": [
+   "mansion/man3/mansion3_2",
+   "mansion/man3/subbasement3b",
+   "nyc/fb/nyc_fb1"
+  ],
+  "mansion/man3/mansion3_2": [
+   "mansion/man3/mansion3_1",
+   "mansion/man3/subbasement3b"
+  ],
+  "mansion/man3/subbasement3b": [
+   "mansion/dr_mag2/mag_nyc1",
+   "mansion/jugrnt/jugrnt01",
+   "mansion/man3/hangar3",
+   "mansion/man3/mansion3_1",
+   "mansion/man3/mansion3_2",
+   "mocap/mocap5/briefing_2_1_16"
+  ],
+  "mansion/man4/grso_debriefing": [
+   "mansion/man4/subbasement4"
+  ],
+  "mansion/man4/mansion4_1": [
+   "mansion/man4/mansion4_2",
+   "mansion/man4/mansion_back4",
+   "mansion/man4/subbasement4",
+   "mocap/mocap7/briefing_2_5_14_7"
+  ],
+  "mansion/man4/mansion4_2": [
+   "mansion/man4/mansion4_1",
+   "mansion/man4/subbasement4"
+  ],
+  "mansion/man4/mansion_back4": [
+   "mansion/man4/mansion4_1"
+  ],
+  "mansion/man4/mansion_back4_grso": [
+   "mansion/man4/mansion_front4_grso"
+  ],
+  "mansion/man4/mansion_front4_grso": [
+   "mansion/man4/grso_debriefing",
+   "mansion/man4/mansion_back4_grso",
+   "mansion/man5/mansion5_1"
+  ],
+  "mansion/man4/subbasement4": [
+   "astral/ast1/astral1_1",
+   "mansion/man4/mansion4_1",
+   "mansion/man4/mansion4_2",
+   "mansion/man4/mansion_back4_grso",
+   "mocap/mocap6/briefing_2_5_5",
+   "mocap/mocap7/briefing_2_5_14_7",
+   "weapon_x/old/wx2_1"
+  ],
+  "mansion/man5/dfdsafsd": [],
+  "mansion/man5/dgdfsgfs": [],
+  "mansion/man5/lkjdsfjasdlfsd": [],
+  "mansion/man5/mansion5_1": [
+   "mansion/man5/mansion5_2",
+   "mansion/man5/subbasement5"
+  ],
+  "mansion/man5/mansion5_2": [
+   "mansion/man5/mansion5_1",
+   "mansion/man5/subbasement5"
+  ],
+  "mansion/man5/mansion_front5": [
+   "mansion/man5/mansion5_1"
+  ],
+  "mansion/man5/sdafasdfasd": [],
+  "mansion/man5/subbasement4": [],
+  "mansion/man5/subbasement5": [
+   "mansion/man5/mansion5_1",
+   "mansion/man5/mansion5_2",
+   "mocap/mocap8/briefing_2_5_22",
+   "sewers/healer/sewers_hub2"
+  ],
+  "mansion/man5/subbasement5b": [
+   "mansion/man5/mansion_front5"
+  ],
+  "mansion/man5/test": [],
+  "mansion/man5/zz": [],
+  "mansion/man5/zzz": [],
+  "mansion/man5/zzzzzzzz": [],
+  "mansion/man5/zzzzzzzzzzz": [],
+  "mansion/man6/mansion6_1": [
+   "mansion/man6/mansion6_2",
+   "mansion/man6/subbasement6"
+  ],
+  "mansion/man6/mansion6_2": [
+   "mansion/man6/mansion6_1",
+   "mansion/man6/subbasement6"
+  ],
+  "mansion/man6/subbasement6": [
+   "mansion/man6/mansion6_1",
+   "mansion/man6/mansion6_2",
+   "mocap/mocap9/briefing_3_1_8",
+   "muir_is/muir3/muir_in3",
+   "nyc/riots/nyc3_1_1",
+   "sewers/grso/sewers3_1_1"
+  ],
+  "mansion/man7/mansion7_1": [
+   "mansion/man7/mansion7_2",
+   "mansion/man7/subbasement7"
+  ],
+  "mansion/man7/mansion7_2": [
+   "mansion/man7/mansion7_1",
+   "mansion/man7/subbasement7"
+  ],
+  "mansion/man7/status_meeting": [
+   "mansion/man7/subbasement7"
+  ],
+  "mansion/man7/subbasement7": [
+   "astral/ast3/astral3_2",
+   "hive/h_ext/hive1_1_1",
+   "mansion/man7/mansion7_1",
+   "mansion/man7/mansion7_2",
+   "mocap/mocap11/briefing_3_6_7"
+  ],
+  "mansion/man8/hangar8": [
+   "mansion/man8/subbasement8"
+  ],
+  "mansion/man8/mansion8_1": [
+   "mansion/man8/mansion8_2",
+   "mansion/man8/subbasement8"
+  ],
+  "mansion/man8/mansion8_2": [
+   "mansion/man8/mansion8_1",
+   "mansion/man8/subbasement8"
+  ],
+  "mansion/man8/subbasement8": [
+   "astral/ast3/astral3_2",
+   "astroid_m/visit1/asteroid1_1",
+   "mansion/man8/hangar8",
+   "mansion/man8/mansion8_1",
+   "mansion/man8/mansion8_2",
+   "mocap/mocap13/briefing_3_9_8"
+  ],
+  "mansion/man8/subbasement8b": [
+   "astral/savepx/astral2_1"
+  ],
+  "mastermold/mastermold1": [
+   "mastermold/mastermold2"
+  ],
+  "mastermold/mastermold2": [],
+  "menu/main_back": [],
+  "mocap/mocap1/briefing_1_1_6_5": [
+   "mansion/man1a/mansion1a_1"
+  ],
+  "mocap/mocap10/briefing_3_6_6": [
+   "hive/h_ext/hive1_1_1"
+  ],
+  "mocap/mocap11/briefing_3_6_7": [
+   "astral/ast3/astral3_2"
+  ],
+  "mocap/mocap12/briefing_3_9_0": [
+   "astral/savepx/astral2_1"
+  ],
+  "mocap/mocap13/briefing_3_9_8": [
+   "astroid_m/visit1/asteroid1_1"
+  ],
+  "mocap/mocap2/briefing_1_2_41": [
+   "haarp/ext/haarp_ext01"
+  ],
+  "mocap/mocap3/briefing_1_4_13": [
+   "sewers/hub/sewers1_1_1"
+  ],
+  "mocap/mocap4/briefing_1_7_1": [
+   "arbiter/deck/arb_fd1"
+  ],
+  "mocap/mocap5/briefing_2_1_16": [
+   "nuke_plant/nuke/nuke1_1"
+  ],
+  "mocap/mocap6/briefing_2_5_5": [
+   "mansion/man4/mansion_back4_grso"
+  ],
+  "mocap/mocap7/briefing_2_5_14_7": [
+   "astral/ast1/astral1_1"
+  ],
+  "mocap/mocap8/briefing_2_5_22": [
+   "sewers/healer/sewers_hub2"
+  ],
+  "mocap/mocap9/briefing_3_1_8": [
+   "muir_is/muir3/muir_in3",
+   "nyc/riots/nyc3_1_1",
+   "sewers/grso/sewers3_1_1"
+  ],
+  "mount/mount/mount": [
+   "mount/mount/mount2"
+  ],
+  "mount/mount/mount2": [
+   "mansion/man6/mansion6_2"
+  ],
+  "muir_is/muir2/mui_comcore": [],
+  "muir_is/muir2/muir_brig": [],
+  "muir_is/muir2/muir_comcore": [],
+  "muir_is/muir2/muir_in2": [
+   "mansion/man4/mansion_back4",
+   "muir_is/muir2/mui_comcore"
+  ],
+  "muir_is/muir3/muir_brig": [
+   "mansion/man7/status_meeting",
+   "muir_is/muir3/muir_in3",
+   "nyc/riots/nyc3_1_1",
+   "sewers/grso/sewers3_1_1"
+  ],
+  "muir_is/muir3/muir_in3": [
+   "mansion/man7/status_meeting",
+   "muir_is/muir3/muir_brig",
+   "nyc/riots/nyc3_1_1",
+   "sewers/grso/sewers3_1_1"
+  ],
+  "nuke_plant/nuke/nuke1_1": [
+   "nuke_plant/nuke/nuke1_2"
+  ],
+  "nuke_plant/nuke/nuke1_2": [
+   "nuke_plant/nuke/nuke1_1",
+   "nuke_plant/nuke/nuke1_3"
+  ],
+  "nuke_plant/nuke/nuke1_3": [
+   "nuke_plant/nuke/nuke1_2",
+   "nuke_plant/nuke/nuke1_4",
+   "nuke_plant/nuke/nuke2_2"
+  ],
+  "nuke_plant/nuke/nuke1_4": [
+   "nuke_plant/nuke/nuke1_3"
+  ],
+  "nuke_plant/nuke/nuke2_2": [
+   "muir_is/muir2/muir_in2",
+   "nuke_plant/nuke/nuke2_2a",
+   "nuke_plant/nuke/nuke2_3"
+  ],
+  "nuke_plant/nuke/nuke2_2a": [
+   "nuke_plant/nuke/nuke2_2",
+   "nuke_plant/nuke/nuke2_3"
+  ],
+  "nuke_plant/nuke/nuke2_3": [
+   "nuke_plant/nuke/nuke2_2",
+   "nuke_plant/nuke/nuke2_2a"
+  ],
+  "nyc/alison/blackbird": [
+   "mansion/man1a/mansion1a_1"
+  ],
+  "nyc/alison/nyc1_1_1": [
+   "nyc/alison/nyc1_1_2"
+  ],
+  "nyc/alison/nyc1_1_2": [
+   "nyc/alison/nyc1_1_2b"
+  ],
+  "nyc/alison/nyc1_1_2b": [
+   "nyc/alison/nyc1_1_3"
+  ],
+  "nyc/alison/nyc1_1_3": [
+   "nyc/alison/nyc1_1_4"
+  ],
+  "nyc/alison/nyc1_1_4": [
+   "nyc/alison/nyc1_1_5"
+  ],
+  "nyc/alison/nyc1_1_5": [
+   "mocap/mocap1/briefing_1_1_6_5",
+   "nyc/alison/nyc1_1_1"
+  ],
+  "nyc/fb/nyc_fb1": [
+   "nyc/fb/nyc_fb2"
+  ],
+  "nyc/fb/nyc_fb2": [
+   "nyc/fb/nyc_fb3"
+  ],
+  "nyc/fb/nyc_fb3": [
+   "nyc/fb/nyc_fb4"
+  ],
+  "nyc/fb/nyc_fb4": [],
+  "nyc/riots/nyc3_1_1": [
+   "nyc/riots/nyc3_1_2"
+  ],
+  "nyc/riots/nyc3_1_2": [
+   "nyc/riots/nyc3_1_3"
+  ],
+  "nyc/riots/nyc3_1_3": [
+   "mansion/man7/status_meeting",
+   "muir_is/muir3/muir_in3",
+   "nyc/riots/nyc3_1_1",
+   "nyc/riots/nyc3_2_1",
+   "sewers/grso/sewers3_1_1"
+  ],
+  "nyc/riots/nyc3_2_1": [
+   "mansion/man7/status_meeting",
+   "muir_is/muir3/muir_in3",
+   "nyc/riots/nyc3_1_1",
+   "sewers/grso/sewers3_1_1"
+  ],
+  "nyc/riots/nyc3_2_2": [
+   "astroid_m/visit1/asteroid2_1",
+   "astroid_m/visit1/asteroid2_3"
+  ],
+  "sewers/grso/sewers3_1_1": [
+   "sewers/grso/sewers3_1_2"
+  ],
+  "sewers/grso/sewers3_1_2": [
+   "sewers/grso/sewers3_1_1",
+   "sewers/grso/sewers3_1_3"
+  ],
+  "sewers/grso/sewers3_1_3": [
+   "sewers/grso/sewers3_1_2",
+   "sewers/grso/sewers_marrow"
+  ],
+  "sewers/grso/sewers_marrow": [
+   "mansion/man7/status_meeting",
+   "muir_is/muir3/muir_in3",
+   "nyc/riots/nyc3_1_1",
+   "sewers/grso/sewers3_1_1",
+   "sewers/grso/sewers3_1_3"
+  ],
+  "sewers/healer/sewers2_1_1": [
+   "sewers/healer/sewers2_1_2",
+   "sewers/healer/sewers_hub2"
+  ],
+  "sewers/healer/sewers2_1_2": [
+   "sewers/healer/sewers2_1_1",
+   "sewers/healer/sewers2_1_3"
+  ],
+  "sewers/healer/sewers2_1_3": [
+   "sewers/healer/sewers2_1_2",
+   "sewers/healer/sewers2_1_4"
+  ],
+  "sewers/healer/sewers2_1_4": [
+   "mount/mount/mount",
+   "sewers/healer/sewers2_1_3"
+  ],
+  "sewers/healer/sewers_hub2": [
+   "sewers/healer/sewers2_1_1"
+  ],
+  "sewers/hub/sewers1_1_1": [
+   "sewers/hub/sewers1_1_2"
+  ],
+  "sewers/hub/sewers1_1_2": [
+   "sewers/hub/sewers1_1_1",
+   "sewers/hub/sewers1_1_3",
+   "sewers/hub/sewers1_1_4",
+   "sewers/hub/sewers_hub"
+  ],
+  "sewers/hub/sewers1_1_3": [
+   "sewers/hub/sewers1_1_2"
+  ],
+  "sewers/hub/sewers1_1_4": [
+   "sewers/hub/sewers1_1_2"
+  ],
+  "sewers/hub/sewers1_2_1": [
+   "sewers/hub/sewers1_2_3"
+  ],
+  "sewers/hub/sewers1_2_3": [
+   "sewers/hub/sewers1_2_1",
+   "sewers/hub/sewers1_2_4"
+  ],
+  "sewers/hub/sewers1_2_4": [
+   "mocap/mocap4/briefing_1_7_1",
+   "sewers/hub/sewers1_2_3"
+  ],
+  "sewers/hub/sewers_hub": [
+   "sewers/hub/sewers1_2_1"
+  ],
+  "weapon_x/old/wx2_1": [
+   "weapon_x/old/wx2_2"
+  ],
+  "weapon_x/old/wx2_2": [
+   "weapon_x/secret/wx3_1"
+  ],
+  "weapon_x/secret/wx3_1": [
+   "weapon_x/secret/wx3_2"
+  ],
+  "weapon_x/secret/wx3_2": [
+   "weapon_x/secret/wx3_3"
+  ],
+  "weapon_x/secret/wx3_3": [
+   "mansion/man5/subbasement5b",
+   "mocap/mocap7/briefing_2_5_14_7",
+   "weapon_x/old/wx2_1"
+  ],
+  "weapon_x/wfb/wx1_1": [
+   "weapon_x/wfb/wx1_2"
+  ],
+  "weapon_x/wfb/wx1_2": [
+   "weapon_x/wfb/wx1_3"
+  ],
+  "weapon_x/wfb/wx1_3": [],
+  "xjet/blackbird_arbiter": [
+   "arbiter/deck/arb_fd1"
+  ]
+ }
+}

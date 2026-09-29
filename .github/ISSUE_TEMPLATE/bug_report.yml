@@ -1,0 +1,71 @@
+name: Bug report
+description: The builder failed, or something in the built game is wrong.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for testing. **Never attach or link game files**: not the disc image, not the build folder or the
+        build cache, not save files, not screenshots of copyrighted art beyond what shows the bug. The two files
+        asked for below hold file names, sizes, hashes, versions and error codes only.
+  - type: input
+    id: version
+    attributes:
+      label: Builder version
+      description: "`xml1-builder --version` (or the version the launcher shows on the game page)"
+      placeholder: "xml1-builder 0.1.0 (Legends Classic; content 1, commit ...)"
+    validations:
+      required: true
+  - type: dropdown
+    id: how
+    attributes:
+      label: How did you run it?
+      options:
+        - Ultimate Legends launcher
+        - xml1-builder release zip (standalone)
+        - from source (python -m xml1builder)
+    validations:
+      required: true
+  - type: dropdown
+    id: where
+    attributes:
+      label: Where did it go wrong?
+      options:
+        - the build (the builder reported an error)
+        - verify / repair
+        - in game
+        - something else
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what did you expect?
+      description: For a build error, the error code and stage (e.g. `E_ISO_WRONG_GAME`, stage `probe`). For an in-game bug, where (zone or mission) and how to get there.
+    validations:
+      required: true
+  - type: textarea
+    id: verify_report
+    attributes:
+      label: verify-report.json
+      description: "Paste or attach `<your build folder>\\_build\\verify-report.json` (written by every build and every verify)."
+      render: json
+  - type: textarea
+    id: log
+    attributes:
+      label: End of builder.log
+      description: "The last ~50 lines of `<your build folder>\\_build\\builder.log` (your user-profile path is already masked)."
+      render: text
+  - type: input
+    id: system
+    attributes:
+      label: System
+      description: Windows version, CPU, RAM; xml2-fix version if it's an in-game bug.
+      placeholder: "Windows 11 23H2, Ryzen 5 3600, 16 GB; xml2-fix 1.2.0"
+  - type: checkboxes
+    id: rules
+    attributes:
+      label: Content rules
+      options:
+        - label: I have not attached or linked any game files, disc images, save files or build folders.
+          required: true

@@ -1,0 +1,651 @@
+{
+ "conflicts": {
+  "textures/automap/astral/astral1_1.igb": [
+   {
+    "bundles": [
+     "packages/generated/maps/astral/ast1/astral1_1.fb"
+    ],
+    "md5": "1df09ca4ee182693b4ce91fd2c8416cd",
+    "n_bundles": 1,
+    "size": 135546
+   },
+   {
+    "bundles": [
+     "packages/generated/maps/astral/savepx/astral1_1.fb"
+    ],
+    "md5": "cf6eacf75736ae247ce0a79882071a52",
+    "n_bundles": 1,
+    "size": 135546
+   }
+  ],
+  "textures/automap/astral/astral1_3.igb": [
+   {
+    "bundles": [
+     "packages/generated/maps/astral/ast1/astral1_3.fb"
+    ],
+    "md5": "973a22f57be60a9f7eaf54dacbc5cec7",
+    "n_bundles": 1,
+    "size": 266618
+   },
+   {
+    "bundles": [
+     "packages/generated/maps/astral/savepx/astral1_3.fb"
+    ],
+    "md5": "22a411fb948d289bbda04a2aa1f2a604",
+    "n_bundles": 1,
+    "size": 266618
+   }
+  ],
+  "textures/automap/mansion/backyard.igb": [
+   {
+    "bundles": [
+     "packages/generated/maps/mansion/man2/mansion_back2.fb",
+     "packages/generated/maps/mansion/man4/mansion_back4.fb"
+    ],
+    "md5": "a5853298dcd719cc09e5baa53b3475c6",
+    "n_bundles": 2,
+    "size": 266618
+   },
+   {
+    "bundles": [
+     "packages/generated/maps/mansion/man4/mansion_back4_grso.fb"
+    ],
+    "md5": "bacf27ceb4fa3a34ce03e87bc947caf5",
+    "n_bundles": 1,
+    "size": 266618
+   }
+  ],
+  "textures/automap/mansion/hangar.igb": [
+   {
+    "bundles": [
+     "packages/generated/maps/mansion/man1a/hangar1a.fb",
+     "packages/generated/maps/mansion/man3/hangar3.fb"
+    ],
+    "md5": "95eb77947872d81f434f21adb848c13f",
+    "n_bundles": 2,
+    "size": 70010
+   },
+   {
+    "bundles": [
+     "packages/generated/maps/mansion/man8/hangar8.fb"
+    ],
+    "md5": "9b2fea1949470e9ec2d71d76eb3efb3d",
+    "n_bundles": 1,
+    "size": 70010
+   }
+  ],
+  "textures/automap/mansion/jugrnt/jugrnt01.igb": [
+   {
+    "bundles": [
+     "packages/generated/maps/demo/jugrnt/jugrnt01.fb",
+     "packages/generated/maps/mansion/jugrnt/jugrnt01.fb",
+     "packages/generated/maps/mansion/man1a/mansion1a_1.fb",
+     "packages/generated/maps/mansion/man2/mansion2_1.fb",
+     "packages/generated/maps/mansion/man3/mansion3_1.fb",
+     "packages/generated/maps/mansion/man4/mansion4_1.fb"
+    ],
+    "md5": "30b34a51566a073949271f54b26686a4",
+    "n_bundles": 6,
+    "size": 70018
+   },
+   {
+    "bundles": [
+     "packages/generated/maps/mansion/man5/mansion5_1.fb",
+     "packages/generated/maps/mansion/man6/mansion6_1.fb",
+     "packages/generated/maps/mansion/man7/mansion7_1.fb",
+     "packages/generated/maps/mansion/man8/mansion8_1.fb"
+    ],
+    "md5": "d9fd749ba301d6b0c8d4a55bd87cca41",
+    "n_bundles": 4,
+    "size": 70018
+   }
+  ],
+  "textures/automap/mansion/mansion2.igb": [
+   {
+    "bundles": [
+     "packages/generated/maps/mansion/man1a/mansion1a_2.fb",
+     "packages/generated/maps/mansion/man2/mansion2_2.fb",
+     "packages/generated/maps/mansion/man3/mansion3_2.fb",
+     "packages/generated/maps/mansion/man4/mansion4_2.fb"
+    ],
+    "md5": "80656a0bd66e288d95af6c32395228e8",
+    "n_bundles": 4,
+    "size": 70010
+   },
+   {
+    "bundles": [
+     "packages/generated/maps/mansion/man5/mansion5_2.fb",
+     "packages/generated/maps/mansion/man6/mansion6_2.fb",
+     "packages/generated/maps/mansion/man7/mansion7_2.fb",
+     "packages/generated/maps/mansion/man8/mansion8_2.fb"
+    ],
+    "md5": "4347ed1d1665fc5a4f573b8c99195a4b",
+    "n_bundles": 4,
+    "size": 70010
+   }
+  ],
+  "textures/automap/mansion/subbasement.igb": [
+   {
+    "bundles": [
+     "packages/generated/maps/mansion/man1a/subbasement1a.fb",
+     "packages/generated/maps/mansion/man2/subbasement2.fb",
+     "packages/generated/maps/mansion/man3/subbasement3b.fb",
+     "packages/generated/maps/mansion/man4/subbasement4.fb",
+     "packages/generated/maps/mansion/man5/subbasement5.fb",
+     "packages/generated/maps/mansion/man7/subbasement7.fb"
+    ],
+    "md5": "f1f9c558de71ab3a65bf32ebb8d1a42f",
+    "n_bundles": 6,
+    "size": 135550
+   },
+   {
+    "bundles": [
+     "packages/generated/maps/mansion/man6/subbasement6.fb",
+     "packages/generated/maps/mansion/man7/status_meeting.fb",
+     "packages/generated/maps/mansion/man8/subbasement8.fb",
+     "packages/generated/maps/mansion/man8/subbasement8b.fb"
+    ],
+    "md5": "1d18d0a540644a2a42ae40586ce5b729",
+    "n_bundles": 4,
+    "size": 135550
+   }
+  ],
+  "textures/automap/nyc_alison/nyc1_1_2b.igb": [
+   {
+    "bundles": [
+     "packages/generated/maps/mansion/dr_mag2/mag_nyc3.fb"
+    ],
+    "md5": "2abe9e58c65dbd2d3f998c6cdb189c89",
+    "n_bundles": 1,
+    "size": 135550
+   },
+   {
+    "bundles": [
+     "packages/generated/maps/nyc/alison/nyc1_1_2b.fb"
+    ],
+    "md5": "451068f04f89d4e8f952847e7920eb7a",
+    "n_bundles": 1,
+    "size": 135550
+   }
+  ]
+ },
+ "demo_variant_kept": [
+  "textures/automap/mansion/jugrnt/jugrnt01.igb"
+ ],
+ "empty_entries": {
+  "actors/7501.igb": [
+   "packages/generated/characters/computer_7501.fb",
+   "packages/generated/characters/computer_7501_nc.fb"
+  ],
+  "maps/astral/savepx/astral1_1.chr": [
+   "packages/generated/maps/astral/savepx/astral1_1.fb"
+  ],
+  "maps/astral/savepx/astral1_1.nav": [
+   "packages/generated/maps/astral/savepx/astral1_1.fb"
+  ],
+  "maps/astral/savepx/astral1_1.xml": [
+   "packages/generated/maps/astral/savepx/astral1_1.fb"
+  ],
+  "maps/astral/savepx/astral1_3.chr": [
+   "packages/generated/maps/astral/savepx/astral1_3.fb"
+  ],
+  "maps/astral/savepx/astral1_3.igb": [
+   "packages/generated/maps/astral/savepx/astral1_3.fb"
+  ],
+  "maps/astral/savepx/astral1_3.nav": [
+   "packages/generated/maps/astral/savepx/astral1_3.fb"
+  ],
+  "maps/astral/savepx/astral1_3.xml": [
+   "packages/generated/maps/astral/savepx/astral1_3.fb"
+  ],
+  "maps/cinematics/beastlab2_cine.nav": [
+   "packages/generated/maps/cinematics/beastlab2_cine.fb"
+  ],
+  "maps/mansion/man2/mansion_back2.nav": [
+   "packages/generated/maps/mansion/man2/mansion_back2.fb"
+  ],
+  "maps/mansion/man3/danger_room.nav": [
+   "packages/generated/maps/mansion/man3/danger_room.fb"
+  ],
+  "maps/mansion/man4/grso_debriefing.nav": [
+   "packages/generated/maps/mansion/man4/grso_debriefing.fb"
+  ],
+  "maps/mansion/man4/mansion_back4.nav": [
+   "packages/generated/maps/mansion/man4/mansion_back4.fb"
+  ],
+  "maps/mansion/man5/dfdsafsd.chr": [
+   "packages/generated/maps/mansion/man5/dfdsafsd.fb"
+  ],
+  "maps/mansion/man5/dfdsafsd.igb": [
+   "packages/generated/maps/mansion/man5/dfdsafsd.fb"
+  ],
+  "maps/mansion/man5/dfdsafsd.nav": [
+   "packages/generated/maps/mansion/man5/dfdsafsd.fb"
+  ],
+  "maps/mansion/man5/dfdsafsd.xml": [
+   "packages/generated/maps/mansion/man5/dfdsafsd.fb"
+  ],
+  "maps/mansion/man5/dgdfsgfs.chr": [
+   "packages/generated/maps/mansion/man5/dgdfsgfs.fb"
+  ],
+  "maps/mansion/man5/dgdfsgfs.igb": [
+   "packages/generated/maps/mansion/man5/dgdfsgfs.fb"
+  ],
+  "maps/mansion/man5/dgdfsgfs.nav": [
+   "packages/generated/maps/mansion/man5/dgdfsgfs.fb"
+  ],
+  "maps/mansion/man5/dgdfsgfs.xml": [
+   "packages/generated/maps/mansion/man5/dgdfsgfs.fb"
+  ],
+  "maps/mansion/man5/lkjdsfjasdlfsd.chr": [
+   "packages/generated/maps/mansion/man5/lkjdsfjasdlfsd.fb"
+  ],
+  "maps/mansion/man5/lkjdsfjasdlfsd.igb": [
+   "packages/generated/maps/mansion/man5/lkjdsfjasdlfsd.fb"
+  ],
+  "maps/mansion/man5/lkjdsfjasdlfsd.nav": [
+   "packages/generated/maps/mansion/man5/lkjdsfjasdlfsd.fb"
+  ],
+  "maps/mansion/man5/lkjdsfjasdlfsd.xml": [
+   "packages/generated/maps/mansion/man5/lkjdsfjasdlfsd.fb"
+  ],
+  "maps/mansion/man5/mansion5_1.nav": [
+   "packages/generated/maps/mansion/man5/mansion5_1.fb"
+  ],
+  "maps/mansion/man5/mansion5_2.nav": [
+   "packages/generated/maps/mansion/man5/mansion5_2.fb"
+  ],
+  "maps/mansion/man5/sdafasdfasd.chr": [
+   "packages/generated/maps/mansion/man5/sdafasdfasd.fb"
+  ],
+  "maps/mansion/man5/sdafasdfasd.igb": [
+   "packages/generated/maps/mansion/man5/sdafasdfasd.fb"
+  ],
+  "maps/mansion/man5/sdafasdfasd.nav": [
+   "packages/generated/maps/mansion/man5/sdafasdfasd.fb"
+  ],
+  "maps/mansion/man5/sdafasdfasd.xml": [
+   "packages/generated/maps/mansion/man5/sdafasdfasd.fb"
+  ],
+  "maps/mansion/man5/subbasement4.nav": [
+   "packages/generated/maps/mansion/man5/subbasement4.fb"
+  ],
+  "maps/mansion/man5/subbasement5b.nav": [
+   "packages/generated/maps/mansion/man5/subbasement5b.fb"
+  ],
+  "maps/mansion/man5/test.chr": [
+   "packages/generated/maps/mansion/man5/test.fb"
+  ],
+  "maps/mansion/man5/test.igb": [
+   "packages/generated/maps/mansion/man5/test.fb"
+  ],
+  "maps/mansion/man5/test.nav": [
+   "packages/generated/maps/mansion/man5/test.fb"
+  ],
+  "maps/mansion/man5/test.xml": [
+   "packages/generated/maps/mansion/man5/test.fb"
+  ],
+  "maps/mansion/man5/zz.chr": [
+   "packages/generated/maps/mansion/man5/zz.fb"
+  ],
+  "maps/mansion/man5/zz.igb": [
+   "packages/generated/maps/mansion/man5/zz.fb"
+  ],
+  "maps/mansion/man5/zz.nav": [
+   "packages/generated/maps/mansion/man5/zz.fb"
+  ],
+  "maps/mansion/man5/zz.xml": [
+   "packages/generated/maps/mansion/man5/zz.fb"
+  ],
+  "maps/mansion/man5/zzz.chr": [
+   "packages/generated/maps/mansion/man5/zzz.fb"
+  ],
+  "maps/mansion/man5/zzz.igb": [
+   "packages/generated/maps/mansion/man5/zzz.fb"
+  ],
+  "maps/mansion/man5/zzz.nav": [
+   "packages/generated/maps/mansion/man5/zzz.fb"
+  ],
+  "maps/mansion/man5/zzz.xml": [
+   "packages/generated/maps/mansion/man5/zzz.fb"
+  ],
+  "maps/mansion/man5/zzzzzzzz.chr": [
+   "packages/generated/maps/mansion/man5/zzzzzzzz.fb"
+  ],
+  "maps/mansion/man5/zzzzzzzz.igb": [
+   "packages/generated/maps/mansion/man5/zzzzzzzz.fb"
+  ],
+  "maps/mansion/man5/zzzzzzzz.nav": [
+   "packages/generated/maps/mansion/man5/zzzzzzzz.fb"
+  ],
+  "maps/mansion/man5/zzzzzzzz.xml": [
+   "packages/generated/maps/mansion/man5/zzzzzzzz.fb"
+  ],
+  "maps/mansion/man5/zzzzzzzzzzz.chr": [
+   "packages/generated/maps/mansion/man5/zzzzzzzzzzz.fb"
+  ],
+  "maps/mansion/man5/zzzzzzzzzzz.igb": [
+   "packages/generated/maps/mansion/man5/zzzzzzzzzzz.fb"
+  ],
+  "maps/mansion/man5/zzzzzzzzzzz.nav": [
+   "packages/generated/maps/mansion/man5/zzzzzzzzzzz.fb"
+  ],
+  "maps/mansion/man5/zzzzzzzzzzz.xml": [
+   "packages/generated/maps/mansion/man5/zzzzzzzzzzz.fb"
+  ],
+  "maps/mansion/man6/mansion6_1.nav": [
+   "packages/generated/maps/mansion/man6/mansion6_1.fb"
+  ],
+  "maps/mansion/man6/mansion6_2.nav": [
+   "packages/generated/maps/mansion/man6/mansion6_2.fb"
+  ],
+  "maps/mansion/man6/subbasement6.nav": [
+   "packages/generated/maps/mansion/man6/subbasement6.fb"
+  ],
+  "maps/mansion/man7/mansion7_1.nav": [
+   "packages/generated/maps/mansion/man7/mansion7_1.fb"
+  ],
+  "maps/mansion/man7/mansion7_2.nav": [
+   "packages/generated/maps/mansion/man7/mansion7_2.fb"
+  ],
+  "maps/mansion/man7/status_meeting.nav": [
+   "packages/generated/maps/mansion/man7/status_meeting.fb"
+  ],
+  "maps/mansion/man8/hangar8.nav": [
+   "packages/generated/maps/mansion/man8/hangar8.fb"
+  ],
+  "maps/mansion/man8/mansion8_1.nav": [
+   "packages/generated/maps/mansion/man8/mansion8_1.fb"
+  ],
+  "maps/mansion/man8/mansion8_2.nav": [
+   "packages/generated/maps/mansion/man8/mansion8_2.fb"
+  ],
+  "maps/mansion/man8/subbasement8.nav": [
+   "packages/generated/maps/mansion/man8/subbasement8.fb"
+  ],
+  "maps/mansion/man8/subbasement8b.nav": [
+   "packages/generated/maps/mansion/man8/subbasement8b.fb"
+  ],
+  "maps/menu/main_back.nav": [
+   "packages/generated/maps/menu/main_back.fb"
+  ],
+  "maps/mocap/mocap1/briefing_1_1_6_5.nav": [
+   "packages/generated/maps/mocap/mocap1/briefing_1_1_6_5.fb"
+  ],
+  "maps/mocap/mocap10/briefing_3_6_6.nav": [
+   "packages/generated/maps/mocap/mocap10/briefing_3_6_6.fb"
+  ],
+  "maps/mocap/mocap11/briefing_3_6_7.nav": [
+   "packages/generated/maps/mocap/mocap11/briefing_3_6_7.fb"
+  ],
+  "maps/mocap/mocap12/briefing_3_9_0.nav": [
+   "packages/generated/maps/mocap/mocap12/briefing_3_9_0.fb"
+  ],
+  "maps/mocap/mocap13/briefing_3_9_8.nav": [
+   "packages/generated/maps/mocap/mocap13/briefing_3_9_8.fb"
+  ],
+  "maps/mocap/mocap2/briefing_1_2_41.nav": [
+   "packages/generated/maps/mocap/mocap2/briefing_1_2_41.fb"
+  ],
+  "maps/mocap/mocap3/briefing_1_4_13.nav": [
+   "packages/generated/maps/mocap/mocap3/briefing_1_4_13.fb"
+  ],
+  "maps/mocap/mocap4/briefing_1_7_1.nav": [
+   "packages/generated/maps/mocap/mocap4/briefing_1_7_1.fb"
+  ],
+  "maps/mocap/mocap5/briefing_2_1_16.nav": [
+   "packages/generated/maps/mocap/mocap5/briefing_2_1_16.fb"
+  ],
+  "maps/mocap/mocap6/briefing_2_5_5.nav": [
+   "packages/generated/maps/mocap/mocap6/briefing_2_5_5.fb"
+  ],
+  "maps/mocap/mocap7/briefing_2_5_14_7.nav": [
+   "packages/generated/maps/mocap/mocap7/briefing_2_5_14_7.fb"
+  ],
+  "maps/mocap/mocap8/briefing_2_5_22.nav": [
+   "packages/generated/maps/mocap/mocap8/briefing_2_5_22.fb"
+  ],
+  "maps/mocap/mocap9/briefing_3_1_8.nav": [
+   "packages/generated/maps/mocap/mocap9/briefing_3_1_8.fb"
+  ],
+  "maps/muir_is/muir2/muir_brig.nav": [
+   "packages/generated/maps/muir_is/muir2/muir_brig.fb"
+  ],
+  "maps/muir_is/muir2/muir_comcore.xml": [
+   "packages/generated/maps/muir_is/muir2/muir_comcore.fb"
+  ],
+  "maps/nyc/alison/blackbird.nav": [
+   "packages/generated/maps/nyc/alison/blackbird.fb"
+  ],
+  "maps/xjet/blackbird_arbiter.nav": [
+   "packages/generated/maps/xjet/blackbird_arbiter.fb"
+  ],
+  "models/ui/models/x_slider.igb": [
+   "packages/generated/maps/package/menus/options_sound.fb"
+  ],
+  "off": [
+   "packages/generated/maps/mansion/man1a/hangar1a.fb",
+   "packages/generated/maps/mansion/man1a/mansion1a_1.fb",
+   "packages/generated/maps/mansion/man1a/mansion1a_2.fb",
+   "packages/generated/maps/mansion/man1a/subbasement1a.fb",
+   "packages/generated/maps/mansion/man2/mansion2_1.fb",
+   "packages/generated/maps/mansion/man2/mansion2_2.fb",
+   "packages/generated/maps/mansion/man2/mansion_back2.fb",
+   "packages/generated/maps/mansion/man2/subbasement2.fb",
+   "packages/generated/maps/mansion/man3/danger_room.fb",
+   "packages/generated/maps/mansion/man3/hangar3.fb",
+   "packages/generated/maps/mansion/man3/mansion3_1.fb",
+   "packages/generated/maps/mansion/man3/mansion3_2.fb",
+   "packages/generated/maps/mansion/man3/subbasement3b.fb",
+   "packages/generated/maps/mansion/man4/grso_debriefing.fb",
+   "packages/generated/maps/mansion/man4/mansion4_1.fb",
+   "packages/generated/maps/mansion/man4/mansion4_2.fb",
+   "packages/generated/maps/mansion/man4/mansion_back4.fb",
+   "packages/generated/maps/mansion/man4/subbasement4.fb",
+   "packages/generated/maps/mansion/man5/mansion5_1.fb",
+   "packages/generated/maps/mansion/man5/mansion5_2.fb",
+   "packages/generated/maps/mansion/man5/subbasement5.fb",
+   "packages/generated/maps/mansion/man5/subbasement5b.fb",
+   "packages/generated/maps/mansion/man6/mansion6_1.fb",
+   "packages/generated/maps/mansion/man6/mansion6_2.fb",
+   "packages/generated/maps/mansion/man6/subbasement6.fb",
+   "packages/generated/maps/mansion/man7/mansion7_1.fb",
+   "packages/generated/maps/mansion/man7/mansion7_2.fb",
+   "packages/generated/maps/mansion/man7/status_meeting.fb",
+   "packages/generated/maps/mansion/man7/subbasement7.fb",
+   "packages/generated/maps/mansion/man8/hangar8.fb",
+   "packages/generated/maps/mansion/man8/mansion8_1.fb",
+   "packages/generated/maps/mansion/man8/mansion8_2.fb",
+   "packages/generated/maps/mansion/man8/subbasement8.fb",
+   "packages/generated/maps/mansion/man8/subbasement8b.fb",
+   "packages/generated/maps/muir_is/muir2/muir_in2.fb",
+   "packages/generated/maps/muir_is/muir3/muir_brig.fb",
+   "packages/generated/maps/nyc/alison/blackbird.fb",
+   "packages/generated/maps/sewers/healer/sewers_hub2.fb",
+   "packages/generated/maps/sewers/hub/sewers_hub.fb"
+  ],
+  "on": [
+   "packages/generated/maps/arbiter/a_int/arb2_1.fb",
+   "packages/generated/maps/arbiter/a_int/arb2_2.fb",
+   "packages/generated/maps/arbiter/a_int/arb2_3.fb",
+   "packages/generated/maps/arbiter/a_int/arb2_4.fb",
+   "packages/generated/maps/arbiter/a_int/arb3_1.fb",
+   "packages/generated/maps/arbiter/a_int/arb3_2.fb",
+   "packages/generated/maps/arbiter/a_int/arb3_3.fb",
+   "packages/generated/maps/arbiter/a_int/arb3_4.fb",
+   "packages/generated/maps/arbiter/arb_fd1.fb",
+   "packages/generated/maps/arbiter/arb_fd2.fb",
+   "packages/generated/maps/arbiter/arena_sewers1.fb",
+   "packages/generated/maps/arbiter/arena_weapx1.fb",
+   "packages/generated/maps/arbiter/deck/arb_fd1.fb",
+   "packages/generated/maps/arbiter/deck/arb_fd2.fb",
+   "packages/generated/maps/arena/arena_arb1.fb",
+   "packages/generated/maps/arena/arena_arb2.fb",
+   "packages/generated/maps/arena/arena_astm1.fb",
+   "packages/generated/maps/arena/arena_astral1.fb",
+   "packages/generated/maps/arena/arena_astral2.fb",
+   "packages/generated/maps/arena/arena_dr.fb",
+   "packages/generated/maps/arena/arena_haarp1.fb",
+   "packages/generated/maps/arena/arena_haarpint1.fb",
+   "packages/generated/maps/arena/arena_mansion1.fb",
+   "packages/generated/maps/arena/arena_nuke1.fb",
+   "packages/generated/maps/arena/arena_nyc1.fb",
+   "packages/generated/maps/arena/arena_nyc2.fb",
+   "packages/generated/maps/arena/arena_sewers1.fb",
+   "packages/generated/maps/arena/arena_snow1.fb",
+   "packages/generated/maps/arena/arena_weapx1.fb",
+   "packages/generated/maps/astral/ast1/astral1_1.fb",
+   "packages/generated/maps/astral/ast1/astral1_2.fb",
+   "packages/generated/maps/astral/ast1/astral1_3.fb",
+   "packages/generated/maps/astral/ast1/astral4_3.fb",
+   "packages/generated/maps/astral/ast3/astral3_2.fb",
+   "packages/generated/maps/astral/ast3/astral3_3.fb",
+   "packages/generated/maps/astral/ast3/astral3_4.fb",
+   "packages/generated/maps/astral/ast3/astral3_5.fb",
+   "packages/generated/maps/astral/ast3/colosseum.fb",
+   "packages/generated/maps/astral/savepx/astral1_1.fb",
+   "packages/generated/maps/astral/savepx/astral1_3.fb",
+   "packages/generated/maps/astral/savepx/astral2_1.fb",
+   "packages/generated/maps/astral/savepx/astral2_2.fb",
+   "packages/generated/maps/astral/savepx/astral2_3.fb",
+   "packages/generated/maps/astral/savepx/final_astral.fb",
+   "packages/generated/maps/astroid_m/visit1/arb_fd1.fb",
+   "packages/generated/maps/astroid_m/visit1/arb_fd2.fb",
+   "packages/generated/maps/astroid_m/visit1/asteroid1_1.fb",
+   "packages/generated/maps/astroid_m/visit1/asteroid1_2.fb",
+   "packages/generated/maps/astroid_m/visit1/asteroid1_3.fb",
+   "packages/generated/maps/astroid_m/visit1/asteroid2_1.fb",
+   "packages/generated/maps/astroid_m/visit1/asteroid2_2.fb",
+   "packages/generated/maps/astroid_m/visit1/asteroid2_3.fb",
+   "packages/generated/maps/cinematics/beastlab2_cine.fb",
+   "packages/generated/maps/demo/a_int/arb3_1.fb",
+   "packages/generated/maps/demo/a_int/arb3_2.fb",
+   "packages/generated/maps/demo/deck/arb_fd1.fb",
+   "packages/generated/maps/demo/ext/haarp_ext_boss.fb",
+   "packages/generated/maps/demo/hub/sewers1_1_1.fb",
+   "packages/generated/maps/demo/hub/sewers1_1_2.fb",
+   "packages/generated/maps/demo/jugrnt/jugrnt01.fb",
+   "packages/generated/maps/haarp/ext/haarp_ext01.fb",
+   "packages/generated/maps/haarp/ext/haarp_ext02.fb",
+   "packages/generated/maps/haarp/ext/haarp_ext03.fb",
+   "packages/generated/maps/haarp/ext/haarp_ext04.fb",
+   "packages/generated/maps/haarp/ext/haarp_ext_boss.fb",
+   "packages/generated/maps/haarp/int/haarp2_1.fb",
+   "packages/generated/maps/haarp/int/haarp2_2.fb",
+   "packages/generated/maps/haarp/int/haarp2_3.fb",
+   "packages/generated/maps/haarp/int/haarp2_6.fb",
+   "packages/generated/maps/haarp/int/icetunnel1.fb",
+   "packages/generated/maps/haarp/int/icetunnel2.fb",
+   "packages/generated/maps/hive/h_ext/hive1_1_1.fb",
+   "packages/generated/maps/hive/h_int/hive1_2_1.fb",
+   "packages/generated/maps/hive/h_int/hive1_2_2.fb",
+   "packages/generated/maps/hive/h_int/hive1_2_3.fb",
+   "packages/generated/maps/hive/h_int/hive1_3_1.fb",
+   "packages/generated/maps/hive/h_int/hive1_3_2.fb",
+   "packages/generated/maps/hive/h_int/hive1_3_3.fb",
+   "packages/generated/maps/hive/h_int/hive2_2_1.fb",
+   "packages/generated/maps/hive/h_int/hive2_2_2.fb",
+   "packages/generated/maps/hive/h_int/hive2_2_3.fb",
+   "packages/generated/maps/hive/h_int/hive2_2_4.fb",
+   "packages/generated/maps/hive/h_int/hive2_2_5.fb",
+   "packages/generated/maps/mansion/dr_mag2/mag_nyc1.fb",
+   "packages/generated/maps/mansion/dr_mag2/mag_nyc2.fb",
+   "packages/generated/maps/mansion/dr_mag2/mag_nyc3.fb",
+   "packages/generated/maps/mansion/dr_mag2/mag_nyc4.fb",
+   "packages/generated/maps/mansion/dr_mag/dr_mag01.fb",
+   "packages/generated/maps/mansion/dr_mag/dr_mag03.fb",
+   "packages/generated/maps/mansion/jugrnt/jugrnt01.fb",
+   "packages/generated/maps/mansion/man4/mansion_back4_grso.fb",
+   "packages/generated/maps/mansion/man4/mansion_front4_grso.fb",
+   "packages/generated/maps/mansion/man5/dfdsafsd.fb",
+   "packages/generated/maps/mansion/man5/dgdfsgfs.fb",
+   "packages/generated/maps/mansion/man5/lkjdsfjasdlfsd.fb",
+   "packages/generated/maps/mansion/man5/mansion_front5.fb",
+   "packages/generated/maps/mansion/man5/sdafasdfasd.fb",
+   "packages/generated/maps/mansion/man5/subbasement4.fb",
+   "packages/generated/maps/mansion/man5/test.fb",
+   "packages/generated/maps/mansion/man5/zz.fb",
+   "packages/generated/maps/mansion/man5/zzz.fb",
+   "packages/generated/maps/mansion/man5/zzzzzzzz.fb",
+   "packages/generated/maps/mansion/man5/zzzzzzzzzzz.fb",
+   "packages/generated/maps/mastermold/mastermold1.fb",
+   "packages/generated/maps/mastermold/mastermold2.fb",
+   "packages/generated/maps/menu/main_back.fb",
+   "packages/generated/maps/mocap/mocap10/briefing_3_6_6.fb",
+   "packages/generated/maps/mocap/mocap11/briefing_3_6_7.fb",
+   "packages/generated/maps/mocap/mocap12/briefing_3_9_0.fb",
+   "packages/generated/maps/mocap/mocap13/briefing_3_9_8.fb",
+   "packages/generated/maps/mocap/mocap1/briefing_1_1_6_5.fb",
+   "packages/generated/maps/mocap/mocap2/briefing_1_2_41.fb",
+   "packages/generated/maps/mocap/mocap3/briefing_1_4_13.fb",
+   "packages/generated/maps/mocap/mocap4/briefing_1_7_1.fb",
+   "packages/generated/maps/mocap/mocap5/briefing_2_1_16.fb",
+   "packages/generated/maps/mocap/mocap6/briefing_2_5_5.fb",
+   "packages/generated/maps/mocap/mocap7/briefing_2_5_14_7.fb",
+   "packages/generated/maps/mocap/mocap8/briefing_2_5_22.fb",
+   "packages/generated/maps/mocap/mocap9/briefing_3_1_8.fb",
+   "packages/generated/maps/mount/mount/mount.fb",
+   "packages/generated/maps/mount/mount/mount2.fb",
+   "packages/generated/maps/muir_is/muir2/mui_comcore.fb",
+   "packages/generated/maps/muir_is/muir2/muir_brig.fb",
+   "packages/generated/maps/muir_is/muir2/muir_comcore.fb",
+   "packages/generated/maps/muir_is/muir3/muir_in3.fb",
+   "packages/generated/maps/nuke_plant/nuke/nuke1_1.fb",
+   "packages/generated/maps/nuke_plant/nuke/nuke1_2.fb",
+   "packages/generated/maps/nuke_plant/nuke/nuke1_3.fb",
+   "packages/generated/maps/nuke_plant/nuke/nuke1_4.fb",
+   "packages/generated/maps/nuke_plant/nuke/nuke2_2.fb",
+   "packages/generated/maps/nuke_plant/nuke/nuke2_2a.fb",
+   "packages/generated/maps/nuke_plant/nuke/nuke2_3.fb",
+   "packages/generated/maps/nyc/alison/nyc1_1_1.fb",
+   "packages/generated/maps/nyc/alison/nyc1_1_2.fb",
+   "packages/generated/maps/nyc/alison/nyc1_1_2b.fb",
+   "packages/generated/maps/nyc/alison/nyc1_1_3.fb",
+   "packages/generated/maps/nyc/alison/nyc1_1_4.fb",
+   "packages/generated/maps/nyc/alison/nyc1_1_5.fb",
+   "packages/generated/maps/nyc/fb/nyc_fb1.fb",
+   "packages/generated/maps/nyc/fb/nyc_fb2.fb",
+   "packages/generated/maps/nyc/fb/nyc_fb3.fb",
+   "packages/generated/maps/nyc/fb/nyc_fb4.fb",
+   "packages/generated/maps/nyc/riots/nyc3_1_1.fb",
+   "packages/generated/maps/nyc/riots/nyc3_1_2.fb",
+   "packages/generated/maps/nyc/riots/nyc3_1_3.fb",
+   "packages/generated/maps/nyc/riots/nyc3_2_1.fb",
+   "packages/generated/maps/nyc/riots/nyc3_2_2.fb",
+   "packages/generated/maps/sewers/grso/sewers3_1_1.fb",
+   "packages/generated/maps/sewers/grso/sewers3_1_2.fb",
+   "packages/generated/maps/sewers/grso/sewers3_1_3.fb",
+   "packages/generated/maps/sewers/grso/sewers_marrow.fb",
+   "packages/generated/maps/sewers/healer/sewers2_1_1.fb",
+   "packages/generated/maps/sewers/healer/sewers2_1_2.fb",
+   "packages/generated/maps/sewers/healer/sewers2_1_3.fb",
+   "packages/generated/maps/sewers/healer/sewers2_1_4.fb",
+   "packages/generated/maps/sewers/hub/sewers1_1_1.fb",
+   "packages/generated/maps/sewers/hub/sewers1_1_2.fb",
+   "packages/generated/maps/sewers/hub/sewers1_1_3.fb",
+   "packages/generated/maps/sewers/hub/sewers1_1_4.fb",
+   "packages/generated/maps/sewers/hub/sewers1_2_1.fb",
+   "packages/generated/maps/sewers/hub/sewers1_2_3.fb",
+   "packages/generated/maps/sewers/hub/sewers1_2_4.fb",
+   "packages/generated/maps/weapon_x/old/wx2_1.fb",
+   "packages/generated/maps/weapon_x/old/wx2_2.fb",
+   "packages/generated/maps/weapon_x/secret/wx3_1.fb",
+   "packages/generated/maps/weapon_x/secret/wx3_2.fb",
+   "packages/generated/maps/weapon_x/secret/wx3_3.fb",
+   "packages/generated/maps/weapon_x/wfb/wx1_1.fb",
+   "packages/generated/maps/weapon_x/wfb/wx1_2.fb",
+   "packages/generated/maps/weapon_x/wfb/wx1_3.fb",
+   "packages/generated/maps/xjet/blackbird_arbiter.fb"
+  ]
+ },
+ "kept_first_bundle": {
+  "textures/automap/astral/astral1_1.igb": "packages/generated/maps/astral/ast1/astral1_1.fb",
+  "textures/automap/astral/astral1_3.igb": "packages/generated/maps/astral/ast1/astral1_3.fb",
+  "textures/automap/mansion/backyard.igb": "packages/generated/maps/mansion/man2/mansion_back2.fb",
+  "textures/automap/mansion/hangar.igb": "packages/generated/maps/mansion/man1a/hangar1a.fb",
+  "textures/automap/mansion/jugrnt/jugrnt01.igb": "packages/generated/maps/demo/jugrnt/jugrnt01.fb",
+  "textures/automap/mansion/mansion2.igb": "packages/generated/maps/mansion/man1a/mansion1a_2.fb",
+  "textures/automap/mansion/subbasement.igb": "packages/generated/maps/mansion/man1a/subbasement1a.fb",
+  "textures/automap/nyc_alison/nyc1_1_2b.igb": "packages/generated/maps/mansion/dr_mag2/mag_nyc3.fb"
+ }
+}

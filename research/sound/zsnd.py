@@ -1,0 +1,20 @@
+"""Moved to tools/xml1build/lib/zsnd.py (BUILDER_DESIGN.md 1.5; SPEC.md 27.13): the pipeline and the builder import it
+from the xml1build package. This shim keeps the research tools importing it by its old name (`import zsnd` gives the
+very same module object) and `python research/sound/zsnd.py ...` working."""
+import os as _os
+import sys as _sys
+
+# research/<topic>/ -> <repo>/tools (appended: never shadows the research folder's own modules)
+_TOOLS = _os.path.join(_os.path.dirname(_os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))), 'tools')
+if _TOOLS not in _sys.path:
+    _sys.path.append(_TOOLS)
+
+if __name__ == '__main__':
+    if not _sys.argv[1:]:        # the developer defaults: XML2's and XML1's banks
+        from xml1build.sources import REPO_ROOT as _ROOT, DEFAULT_XML2 as _X2
+        _sys.argv[1:] = [(_X2 / 'Sounds' / 'eng').as_posix(), (_ROOT / 'xml1_xbox' / 'sounds' / 'zsds').as_posix()]
+    import runpy as _runpy
+    _runpy.run_module('xml1build.lib.zsnd', run_name='__main__', alter_sys=True)
+elif __name__ != '__mp_main__':
+    import importlib as _importlib
+    _sys.modules[__name__] = _importlib.import_module('xml1build.lib.zsnd')

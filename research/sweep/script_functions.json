@@ -1,0 +1,3569 @@
+{
+ "xml1": {
+  "act": {
+   "args": "aa",
+   "handler": "0xa05b0",
+   "record_va": "0x3d0e98",
+   "ret": "n",
+   "stub": false
+  },
+  "addBolton": {
+   "args": "asssd",
+   "handler": "0x9ecb0",
+   "record_va": "0x3d0fd8",
+   "ret": "n",
+   "stub": false
+  },
+  "addHero": {
+   "args": "s",
+   "handler": "0x99a00",
+   "record_va": "0x3d16c8",
+   "ret": "n",
+   "stub": false
+  },
+  "addPopupDialogOption": {
+   "args": "ss",
+   "handler": "0x99390",
+   "record_va": "0x3d1388",
+   "ret": "n",
+   "stub": false
+  },
+  "addXtremePip": {
+   "args": "",
+   "handler": "0x99e10",
+   "record_va": "0x3d0e88",
+   "ret": "n",
+   "stub": false
+  },
+  "alive": {
+   "args": "a",
+   "handler": "0xa01d0",
+   "record_va": "0x3d0c48",
+   "ret": "i",
+   "stub": false
+  },
+  "allowConversation": {
+   "args": "s",
+   "handler": "0x98b70",
+   "record_va": "0x3d1068",
+   "ret": "n",
+   "stub": false
+  },
+  "attackEntityWithType": {
+   "args": "aass",
+   "handler": "0x9cac0",
+   "record_va": "0x3d0e18",
+   "ret": "n",
+   "stub": false
+  },
+  "awardXPToPlayable": {
+   "args": "i",
+   "handler": "0x98ac0",
+   "record_va": "0x3d0cd8",
+   "ret": "n",
+   "stub": false
+  },
+  "beATeamPlayer": {
+   "args": "as",
+   "handler": "0x9c590",
+   "record_va": "0x3d1008",
+   "ret": "n",
+   "stub": false
+  },
+  "beginMission": {
+   "args": "s",
+   "handler": "0x9a770",
+   "record_va": "0x3d1628",
+   "ret": "n",
+   "stub": false
+  },
+  "beginMissionHack": {
+   "args": "s",
+   "handler": "0x9a7e0",
+   "record_va": "0x3d1638",
+   "ret": "n",
+   "stub": false
+  },
+  "beginSideMission": {
+   "args": "s",
+   "handler": "0x9a4f0",
+   "record_va": "0x3d1498",
+   "ret": "n",
+   "stub": false
+  },
+  "blackbirdMenu": {
+   "args": "sss",
+   "handler": "0x9a370",
+   "record_va": "0x3d1308",
+   "ret": "n",
+   "stub": false
+  },
+  "cameraFOV": {
+   "args": "ff",
+   "handler": "0x98e30",
+   "record_va": "0x3d1178",
+   "ret": "n",
+   "stub": false
+  },
+  "cameraFade": {
+   "args": "ff",
+   "handler": "0x98ec0",
+   "record_va": "0x3d1198",
+   "ret": "n",
+   "stub": false
+  },
+  "cameraFocusToEntity": {
+   "args": "affff",
+   "handler": "0x9e630",
+   "record_va": "0x3d11a8",
+   "ret": "n",
+   "stub": false
+  },
+  "cameraFocusToEntityYaw": {
+   "args": "affaf",
+   "handler": "0x9e710",
+   "record_va": "0x3d11b8",
+   "ret": "n",
+   "stub": false
+  },
+  "cameraFollowMotionPath": {
+   "args": "sssss",
+   "handler": "0x98fd0",
+   "record_va": "0x3d11d8",
+   "ret": "n",
+   "stub": false
+  },
+  "cameraMove": {
+   "args": "sf",
+   "handler": "0x99e40",
+   "record_va": "0x3d1158",
+   "ret": "n",
+   "stub": false
+  },
+  "cameraPan": {
+   "args": "sfs",
+   "handler": "0x99eb0",
+   "record_va": "0x3d1168",
+   "ret": "n",
+   "stub": false
+  },
+  "cameraReset": {
+   "args": "",
+   "handler": "0x98e90",
+   "record_va": "0x3d1188",
+   "ret": "n",
+   "stub": false
+  },
+  "cameraResetOldSchool": {
+   "args": "",
+   "handler": "0x98ea0",
+   "record_va": "0x3d1228",
+   "ret": "n",
+   "stub": false
+  },
+  "cameraSetClipPlane": {
+   "args": "f",
+   "handler": "0x99f50",
+   "record_va": "0x3d1218",
+   "ret": "n",
+   "stub": false
+  },
+  "cameraShake": {
+   "args": "ff",
+   "handler": "0x98f70",
+   "record_va": "0x3d11c8",
+   "ret": "n",
+   "stub": false
+  },
+  "cameraToEntityAngles": {
+   "args": "af",
+   "handler": "0x9e940",
+   "record_va": "0x3d11e8",
+   "ret": "n",
+   "stub": false
+  },
+  "cameraToLocationAngles": {
+   "args": "ssf",
+   "handler": "0x99fa0",
+   "record_va": "0x3d11f8",
+   "ret": "n",
+   "stub": false
+  },
+  "canCancelDialog": {
+   "args": "s",
+   "handler": "0x99350",
+   "record_va": "0x3d1398",
+   "ret": "n",
+   "stub": false
+  },
+  "cinematicEnd": {
+   "args": "",
+   "handler": "0x98f50",
+   "record_va": "0x3d13c8",
+   "ret": "n",
+   "stub": false
+  },
+  "cinematicStart": {
+   "args": "ss",
+   "handler": "0x98f10",
+   "record_va": "0x3d13b8",
+   "ret": "n",
+   "stub": false
+  },
+  "codexMenu": {
+   "args": "i",
+   "handler": "0x99180",
+   "record_va": "0x3d1238",
+   "ret": "n",
+   "stub": false
+  },
+  "controlPlayerHeroWithAI": {
+   "args": "f",
+   "handler": "0x9cc20",
+   "record_va": "0x3d0e28",
+   "ret": "n",
+   "stub": false
+  },
+  "controllersContinue": {
+   "args": "",
+   "handler": "0x99640",
+   "record_va": "0x3d14e8",
+   "ret": "n",
+   "stub": false
+  },
+  "copyOriginAndAngles": {
+   "args": "aa",
+   "handler": "0x9b8a0",
+   "record_va": "0x3d0c78",
+   "ret": "n",
+   "stub": false
+  },
+  "createPopupDialog": {
+   "args": "s",
+   "handler": "0x99300",
+   "record_va": "0x3d1358",
+   "ret": "n",
+   "stub": false
+  },
+  "createPopupDialogXml": {
+   "args": "s",
+   "handler": "0x9ee90",
+   "record_va": "0x3d1368",
+   "ret": "n",
+   "stub": false
+  },
+  "createPopupDialogXmlFilter": {
+   "args": "ss",
+   "handler": "0x9eeb0",
+   "record_va": "0x3d1378",
+   "ret": "n",
+   "stub": false
+  },
+  "damage": {
+   "args": "aai",
+   "handler": "0x9fd10",
+   "record_va": "0x3d1788",
+   "ret": "n",
+   "stub": false
+  },
+  "dangerRoomMenu": {
+   "args": "",
+   "handler": "0x992d0",
+   "record_va": "0x3d12b8",
+   "ret": "n",
+   "stub": false
+  },
+  "debug": {
+   "args": "s",
+   "handler": "0x2123a0",
+   "record_va": "0x3d1318",
+   "ret": "n",
+   "stub": true
+  },
+  "destroyMultipartPiece": {
+   "args": "ai",
+   "handler": "0x9ce30",
+   "record_va": "0x3d0ea8",
+   "ret": "n",
+   "stub": false
+  },
+  "disallowResponseOnVar": {
+   "args": "si",
+   "handler": "0x98b00",
+   "record_va": "0x3d1058",
+   "ret": "n",
+   "stub": false
+  },
+  "display": {
+   "args": "s",
+   "handler": "0x2123a0",
+   "record_va": "0x3d1338",
+   "ret": "n",
+   "stub": true
+  },
+  "displayEx": {
+   "args": "sfsfs",
+   "handler": "0x2123a0",
+   "record_va": "0x3d1328",
+   "ret": "n",
+   "stub": true
+  },
+  "displayHelp": {
+   "args": "s",
+   "handler": "0x9a410",
+   "record_va": "0x3d1348",
+   "ret": "n",
+   "stub": false
+  },
+  "endDRScenario": {
+   "args": "",
+   "handler": "0x99890",
+   "record_va": "0x3d1658",
+   "ret": "n",
+   "stub": false
+  },
+  "endSideMission": {
+   "args": "s",
+   "handler": "0x9a590",
+   "record_va": "0x3d14a8",
+   "ret": "n",
+   "stub": false
+  },
+  "enemiesNoTarget": {
+   "args": "s",
+   "handler": "0x999d0",
+   "record_va": "0x3d1698",
+   "ret": "n",
+   "stub": false
+  },
+  "enterSoloMode": {
+   "args": "a",
+   "handler": "0x9eef0",
+   "record_va": "0x3d1108",
+   "ret": "n",
+   "stub": false
+  },
+  "exitSoloMode": {
+   "args": "a",
+   "handler": "0x9ef70",
+   "record_va": "0x3d1118",
+   "ret": "n",
+   "stub": false
+  },
+  "extractionPoint": {
+   "args": "a",
+   "handler": "0x9f110",
+   "record_va": "0x3d14b8",
+   "ret": "n",
+   "stub": false
+  },
+  "extractionPointChange": {
+   "args": "ai",
+   "handler": "0x9f8f0",
+   "record_va": "0x3d14d8",
+   "ret": "n",
+   "stub": false
+  },
+  "extractionPointLite": {
+   "args": "asssss",
+   "handler": "0x9f4a0",
+   "record_va": "0x3d14c8",
+   "ret": "n",
+   "stub": false
+  },
+  "faceEntity": {
+   "args": "aa",
+   "handler": "0x9cec0",
+   "record_va": "0x3d0eb8",
+   "ret": "n",
+   "stub": false
+  },
+  "fadd": {
+   "args": "ff",
+   "handler": "0xcca70",
+   "record_va": "0x3d56a0",
+   "ret": "f",
+   "stub": false
+  },
+  "fade": {
+   "args": "affs",
+   "handler": "0x9c400",
+   "record_va": "0x3d0df8",
+   "ret": "n",
+   "stub": false
+  },
+  "fdiv": {
+   "args": "ff",
+   "handler": "0xccb60",
+   "record_va": "0x3d56d0",
+   "ret": "f",
+   "stub": false
+  },
+  "fmul": {
+   "args": "ff",
+   "handler": "0xccb10",
+   "record_va": "0x3d56c0",
+   "ret": "f",
+   "stub": false
+  },
+  "fsub": {
+   "args": "ff",
+   "handler": "0xccac0",
+   "record_va": "0x3d56b0",
+   "ret": "f",
+   "stub": false
+  },
+  "gameover": {
+   "args": "s",
+   "handler": "0x99830",
+   "record_va": "0x3d1738",
+   "ret": "n",
+   "stub": false
+  },
+  "getBody": {
+   "args": "a",
+   "handler": "0x9c260",
+   "record_va": "0x3d0d38",
+   "ret": "i",
+   "stub": false
+  },
+  "getCount": {
+   "args": "as",
+   "handler": "0xa03c0",
+   "record_va": "0x3d0d98",
+   "ret": "i",
+   "stub": false
+  },
+  "getEnable": {
+   "args": "a",
+   "handler": "0x9c890",
+   "record_va": "0x3d0dd8",
+   "ret": "i",
+   "stub": false
+  },
+  "getGameVar": {
+   "args": "s",
+   "handler": "0x98bb0",
+   "record_va": "0x3d1088",
+   "ret": "i",
+   "stub": false
+  },
+  "getHealth": {
+   "args": "a",
+   "handler": "0x9c370",
+   "record_va": "0x3d0d58",
+   "ret": "f",
+   "stub": false
+  },
+  "getHealthMax": {
+   "args": "a",
+   "handler": "0x9c2e0",
+   "record_va": "0x3d0d48",
+   "ret": "f",
+   "stub": false
+  },
+  "getID": {
+   "args": "a",
+   "handler": "0x9b540",
+   "record_va": "0x3d0c08",
+   "ret": "i",
+   "stub": false
+  },
+  "getIDString": {
+   "args": "a",
+   "handler": "0x9b5b0",
+   "record_va": "0x3d0c18",
+   "ret": "s",
+   "stub": false
+  },
+  "getInventoryCount": {
+   "args": "s",
+   "handler": "0x99530",
+   "record_va": "0x3d1448",
+   "ret": "i",
+   "stub": false
+  },
+  "getMissionFlag": {
+   "args": "si",
+   "handler": "0x98cb0",
+   "record_va": "0x3d10c8",
+   "ret": "i",
+   "stub": false
+  },
+  "getMissionVar": {
+   "args": "s",
+   "handler": "0x98c30",
+   "record_va": "0x3d10a8",
+   "ret": "i",
+   "stub": false
+  },
+  "getName": {
+   "args": "a",
+   "handler": "0x9b660",
+   "record_va": "0x3d0c28",
+   "ret": "s",
+   "stub": false
+  },
+  "getObjective": {
+   "args": "ss",
+   "handler": "0x9a0e0",
+   "record_va": "0x3d1478",
+   "ret": "i",
+   "stub": false
+  },
+  "getPosX": {
+   "args": "a",
+   "handler": "0x9b0c0",
+   "record_va": "0x3d0bb8",
+   "ret": "i",
+   "stub": false
+  },
+  "getPosY": {
+   "args": "a",
+   "handler": "0x9b140",
+   "record_va": "0x3d0bc8",
+   "ret": "i",
+   "stub": false
+  },
+  "getPosZ": {
+   "args": "a",
+   "handler": "0x9b1c0",
+   "record_va": "0x3d0bd8",
+   "ret": "i",
+   "stub": false
+  },
+  "getTimeRemaining": {
+   "args": "",
+   "handler": "0x98de0",
+   "record_va": "0x3d1148",
+   "ret": "f",
+   "stub": false
+  },
+  "hailToTheKing": {
+   "args": "a",
+   "handler": "0x9ee20",
+   "record_va": "0x3d0ff8",
+   "ret": "n",
+   "stub": false
+  },
+  "heroNoTarget": {
+   "args": "s",
+   "handler": "0x999a0",
+   "record_va": "0x3d1688",
+   "ret": "n",
+   "stub": false
+  },
+  "iadd": {
+   "args": "ii",
+   "handler": "0xccbb0",
+   "record_va": "0x3d56e0",
+   "ret": "i",
+   "stub": false
+  },
+  "idiv": {
+   "args": "ii",
+   "handler": "0xccca0",
+   "record_va": "0x3d5710",
+   "ret": "i",
+   "stub": false
+  },
+  "imageViewer": {
+   "args": "s",
+   "handler": "0x9a210",
+   "record_va": "0x3d1298",
+   "ret": "n",
+   "stub": false
+  },
+  "immediateObjective": {
+   "args": "s",
+   "handler": "0x9a480",
+   "record_va": "0x3d1488",
+   "ret": "n",
+   "stub": false
+  },
+  "imul": {
+   "args": "ii",
+   "handler": "0xccc50",
+   "record_va": "0x3d5700",
+   "ret": "i",
+   "stub": false
+  },
+  "initHud": {
+   "args": "",
+   "handler": "0x992f0",
+   "record_va": "0x3d12e8",
+   "ret": "n",
+   "stub": false
+  },
+  "isub": {
+   "args": "ii",
+   "handler": "0xccc00",
+   "record_va": "0x3d56f0",
+   "ret": "i",
+   "stub": false
+  },
+  "killEntity": {
+   "args": "a",
+   "handler": "0x9cf40",
+   "record_va": "0x3d0ec8",
+   "ret": "n",
+   "stub": false
+  },
+  "levelUp": {
+   "args": "ais",
+   "handler": "0xa0490",
+   "record_va": "0x3d0d68",
+   "ret": "n",
+   "stub": false
+  },
+  "loadDangerRoomCourse": {
+   "args": "s",
+   "handler": "0x9faf0",
+   "record_va": "0x3d1758",
+   "ret": "n",
+   "stub": false
+  },
+  "loadMap": {
+   "args": "s",
+   "handler": "0x9a850",
+   "record_va": "0x3d16e8",
+   "ret": "n",
+   "stub": false
+  },
+  "loadMapAddTeam": {
+   "args": "s",
+   "handler": "0x9a8c0",
+   "record_va": "0x3d16f8",
+   "ret": "n",
+   "stub": false
+  },
+  "loadZone": {
+   "args": "ss",
+   "handler": "0x9a930",
+   "record_va": "0x3d1708",
+   "ret": "n",
+   "stub": false
+  },
+  "lockCombat": {
+   "args": "s",
+   "handler": "0x99aa0",
+   "record_va": "0x3d1718",
+   "ret": "n",
+   "stub": false
+  },
+  "lockControls": {
+   "args": "f",
+   "handler": "0x99b00",
+   "record_va": "0x3d1728",
+   "ret": "n",
+   "stub": false
+  },
+  "loopCombatNode": {
+   "args": "ass",
+   "handler": "0x9dc40",
+   "record_va": "0x3d0f88",
+   "ret": "n",
+   "stub": false
+  },
+  "magnetoBall": {
+   "args": "as",
+   "handler": "0x2123a0",
+   "record_va": "0x3d1748",
+   "ret": "n",
+   "stub": true
+  },
+  "mainMenuExit": {
+   "args": "",
+   "handler": "0x99b30",
+   "record_va": "0x3d17c8",
+   "ret": "n",
+   "stub": false
+  },
+  "mission": {
+   "args": "ss",
+   "handler": "0x99420",
+   "record_va": "0x3d1418",
+   "ret": "n",
+   "stub": false
+  },
+  "missionComplete": {
+   "args": "s",
+   "handler": "0x9e850",
+   "record_va": "0x3d13e8",
+   "ret": "n",
+   "stub": false
+  },
+  "missionComplete2": {
+   "args": "",
+   "handler": "0x990e0",
+   "record_va": "0x3d13f8",
+   "ret": "n",
+   "stub": false
+  },
+  "moveToEntity": {
+   "args": "as",
+   "handler": "0x9d340",
+   "record_va": "0x3d0ed8",
+   "ret": "n",
+   "stub": false
+  },
+  "objective": {
+   "args": "ss",
+   "handler": "0x995d0",
+   "record_va": "0x3d1468",
+   "ret": "n",
+   "stub": false
+  },
+  "openmenu": {
+   "args": "s",
+   "handler": "0x9aa10",
+   "record_va": "0x3d17b8",
+   "ret": "n",
+   "stub": false
+  },
+  "overrideFocusToEntity": {
+   "args": "af",
+   "handler": "0x9e9e0",
+   "record_va": "0x3d1208",
+   "ret": "n",
+   "stub": false
+  },
+  "personalItem": {
+   "args": "s",
+   "handler": "0x99280",
+   "record_va": "0x3d12a8",
+   "ret": "n",
+   "stub": false
+  },
+  "playanim": {
+   "args": "sass",
+   "handler": "0x9c910",
+   "record_va": "0x3d0e08",
+   "ret": "n",
+   "stub": false
+  },
+  "randomInt": {
+   "args": "ii",
+   "handler": "0x99580",
+   "record_va": "0x3d1458",
+   "ret": "i",
+   "stub": false
+  },
+  "remove": {
+   "args": "aa",
+   "handler": "0xa0690",
+   "record_va": "0x3d1798",
+   "ret": "n",
+   "stub": false
+  },
+  "removeBolton": {
+   "args": "ad",
+   "handler": "0x9ed90",
+   "record_va": "0x3d0fe8",
+   "ret": "n",
+   "stub": false
+  },
+  "removeFromGroup": {
+   "args": "a",
+   "handler": "0x9fbd0",
+   "record_va": "0x3d16a8",
+   "ret": "n",
+   "stub": false
+  },
+  "restartMission": {
+   "args": "",
+   "handler": "0x9a6e0",
+   "record_va": "0x3d1668",
+   "ret": "n",
+   "stub": false
+  },
+  "restartZone": {
+   "args": "",
+   "handler": "0x9a630",
+   "record_va": "0x3d1648",
+   "ret": "n",
+   "stub": false
+  },
+  "restoreEnergy": {
+   "args": "ai",
+   "handler": "0x9bcb0",
+   "record_va": "0x3d0ca8",
+   "ret": "n",
+   "stub": false
+  },
+  "restoreHealth": {
+   "args": "ai",
+   "handler": "0x9bd50",
+   "record_va": "0x3d0cb8",
+   "ret": "n",
+   "stub": false
+  },
+  "resurrect": {
+   "args": "a",
+   "handler": "0x9c640",
+   "record_va": "0x3d1018",
+   "ret": "n",
+   "stub": false
+  },
+  "reviewCinematics": {
+   "args": "",
+   "handler": "0x99220",
+   "record_va": "0x3d1268",
+   "ret": "n",
+   "stub": false
+  },
+  "reviewComics": {
+   "args": "",
+   "handler": "0x99240",
+   "record_va": "0x3d1278",
+   "ret": "n",
+   "stub": false
+  },
+  "reviewConcept": {
+   "args": "",
+   "handler": "0x99260",
+   "record_va": "0x3d1288",
+   "ret": "n",
+   "stub": false
+  },
+  "reviewLoadScreens": {
+   "args": "",
+   "handler": "0x99200",
+   "record_va": "0x3d1258",
+   "ret": "n",
+   "stub": false
+  },
+  "saveloadAbort": {
+   "args": "",
+   "handler": "0x996a0",
+   "record_va": "0x3d1538",
+   "ret": "n",
+   "stub": false
+  },
+  "saveloadChooseCorrupt": {
+   "args": "",
+   "handler": "0x997c0",
+   "record_va": "0x3d15c8",
+   "ret": "n",
+   "stub": false
+  },
+  "saveloadChooseFile": {
+   "args": "i",
+   "handler": "0x996d0",
+   "record_va": "0x3d1598",
+   "ret": "n",
+   "stub": false
+  },
+  "saveloadCleanUp": {
+   "args": "",
+   "handler": "0x99690",
+   "record_va": "0x3d1528",
+   "ret": "n",
+   "stub": false
+  },
+  "saveloadCompleteLoad": {
+   "args": "",
+   "handler": "0x997d0",
+   "record_va": "0x3d15d8",
+   "ret": "n",
+   "stub": false
+  },
+  "saveloadDeleteCorrupt": {
+   "args": "",
+   "handler": "0x997e0",
+   "record_va": "0x3d15e8",
+   "ret": "n",
+   "stub": false
+  },
+  "saveloadDeleteFile": {
+   "args": "i",
+   "handler": "0x99790",
+   "record_va": "0x3d15b8",
+   "ret": "n",
+   "stub": false
+  },
+  "saveloadDeleteSuccess": {
+   "args": "",
+   "handler": "0x99680",
+   "record_va": "0x3d1508",
+   "ret": "n",
+   "stub": false
+  },
+  "saveloadFormat": {
+   "args": "",
+   "handler": "0x2123a0",
+   "record_va": "0x3d1518",
+   "ret": "n",
+   "stub": true
+  },
+  "saveloadImageCheck": {
+   "args": "",
+   "handler": "0x997f0",
+   "record_va": "0x3d15f8",
+   "ret": "n",
+   "stub": false
+  },
+  "saveloadLoadOptions": {
+   "args": "",
+   "handler": "0x99760",
+   "record_va": "0x3d1558",
+   "ret": "n",
+   "stub": false
+  },
+  "saveloadLoseGameState": {
+   "args": "i",
+   "handler": "0x99700",
+   "record_va": "0x3d15a8",
+   "ret": "n",
+   "stub": false
+  },
+  "saveloadOverwrite": {
+   "args": "i",
+   "handler": "0x99730",
+   "record_va": "0x3d1548",
+   "ret": "n",
+   "stub": false
+  },
+  "saveloadOvrWriteOpts": {
+   "args": "",
+   "handler": "0x99780",
+   "record_va": "0x3d1568",
+   "ret": "n",
+   "stub": false
+  },
+  "saveloadOvrWriteOptsAsk": {
+   "args": "",
+   "handler": "0x99770",
+   "record_va": "0x3d1578",
+   "ret": "n",
+   "stub": false
+  },
+  "saveloadProcess": {
+   "args": "i",
+   "handler": "0x99650",
+   "record_va": "0x3d14f8",
+   "ret": "n",
+   "stub": false
+  },
+  "saveloadSaveConfirmed": {
+   "args": "i",
+   "handler": "0x99800",
+   "record_va": "0x3d1608",
+   "ret": "n",
+   "stub": false
+  },
+  "saveloadSelectDevice": {
+   "args": "i",
+   "handler": "0x996b0",
+   "record_va": "0x3d1588",
+   "ret": "n",
+   "stub": false
+  },
+  "screenFade": {
+   "args": "ff",
+   "handler": "0x98ec0",
+   "record_va": "0x3d12f8",
+   "ret": "n",
+   "stub": false
+  },
+  "setAIActive": {
+   "args": "as",
+   "handler": "0x9dd90",
+   "record_va": "0x3d0f78",
+   "ret": "n",
+   "stub": false
+  },
+  "setAggression": {
+   "args": "ai",
+   "handler": "0xa0320",
+   "record_va": "0x3d0d88",
+   "ret": "n",
+   "stub": false
+  },
+  "setAngles": {
+   "args": "as",
+   "handler": "0x9c090",
+   "record_va": "0x3d0d18",
+   "ret": "n",
+   "stub": false
+  },
+  "setCanMove": {
+   "args": "as",
+   "handler": "0x9d710",
+   "record_va": "0x3d0f18",
+   "ret": "n",
+   "stub": false
+  },
+  "setCombatNode": {
+   "args": "as",
+   "handler": "0x9de40",
+   "record_va": "0x3d0f98",
+   "ret": "n",
+   "stub": false
+  },
+  "setCombatNodeOther": {
+   "args": "asa",
+   "handler": "0x9df00",
+   "record_va": "0x3d0fa8",
+   "ret": "n",
+   "stub": false
+  },
+  "setDangerLevel": {
+   "args": "f",
+   "handler": "0x990b0",
+   "record_va": "0x3d13d8",
+   "ret": "n",
+   "stub": false
+  },
+  "setDefaultTarget": {
+   "args": "a",
+   "handler": "0x9dad0",
+   "record_va": "0x3d0fb8",
+   "ret": "n",
+   "stub": false
+  },
+  "setDestroyObjects": {
+   "args": "as",
+   "handler": "0x9bf50",
+   "record_va": "0x3d0d78",
+   "ret": "n",
+   "stub": false
+  },
+  "setEnable": {
+   "args": "as",
+   "handler": "0x9bb80",
+   "record_va": "0x3d0c98",
+   "ret": "n",
+   "stub": false
+  },
+  "setEngageEnemy": {
+   "args": "as",
+   "handler": "0x9d900",
+   "record_va": "0x3d0f48",
+   "ret": "n",
+   "stub": false
+  },
+  "setFlee": {
+   "args": "as",
+   "handler": "0x9d7b0",
+   "record_va": "0x3d0f28",
+   "ret": "n",
+   "stub": false
+  },
+  "setFollowingHero": {
+   "args": "as",
+   "handler": "0x9d5a0",
+   "record_va": "0x3d0f08",
+   "ret": "n",
+   "stub": false
+  },
+  "setGameVar": {
+   "args": "si",
+   "handler": "0x98bf0",
+   "record_va": "0x3d1098",
+   "ret": "n",
+   "stub": false
+  },
+  "setGoal": {
+   "args": "a",
+   "handler": "0x9ea80",
+   "record_va": "0x3d12d8",
+   "ret": "n",
+   "stub": false
+  },
+  "setGroupLeader": {
+   "args": "a",
+   "handler": "0x9fcd0",
+   "record_va": "0x3d16b8",
+   "ret": "n",
+   "stub": false
+  },
+  "setHealth": {
+   "args": "ai",
+   "handler": "0x9b780",
+   "record_va": "0x3d0c58",
+   "ret": "n",
+   "stub": false
+  },
+  "setHealthMax": {
+   "args": "ai",
+   "handler": "0x9b810",
+   "record_va": "0x3d0c68",
+   "ret": "n",
+   "stub": false
+  },
+  "setHintType": {
+   "args": "as",
+   "handler": "0x9bc20",
+   "record_va": "0x3d0de8",
+   "ret": "n",
+   "stub": false
+  },
+  "setHomingID": {
+   "args": "aa",
+   "handler": "0x9d270",
+   "record_va": "0x3d0e78",
+   "ret": "n",
+   "stub": false
+  },
+  "setInCampaign": {
+   "args": "ss",
+   "handler": "0x99460",
+   "record_va": "0x3d1428",
+   "ret": "n",
+   "stub": false
+  },
+  "setInventoryCount": {
+   "args": "si",
+   "handler": "0x994d0",
+   "record_va": "0x3d1438",
+   "ret": "n",
+   "stub": false
+  },
+  "setInvisible": {
+   "args": "as",
+   "handler": "0x9c6b0",
+   "record_va": "0x3d0db8",
+   "ret": "n",
+   "stub": false
+  },
+  "setInvulnerable": {
+   "args": "as",
+   "handler": "0x9bea0",
+   "record_va": "0x3d0cf8",
+   "ret": "n",
+   "stub": false
+  },
+  "setMissionFlag": {
+   "args": "sii",
+   "handler": "0x98d20",
+   "record_va": "0x3d10d8",
+   "ret": "n",
+   "stub": false
+  },
+  "setMissionVar": {
+   "args": "si",
+   "handler": "0x98c70",
+   "record_va": "0x3d10b8",
+   "ret": "n",
+   "stub": false
+  },
+  "setMotionPath": {
+   "args": "as",
+   "handler": "0x9cfb0",
+   "record_va": "0x3d0e48",
+   "ret": "n",
+   "stub": false
+  },
+  "setName": {
+   "args": "as",
+   "handler": "0x9b700",
+   "record_va": "0x3d0c38",
+   "ret": "n",
+   "stub": false
+  },
+  "setNearestWaypointPath": {
+   "args": "as",
+   "handler": "0x9da40",
+   "record_va": "0x3d0f68",
+   "ret": "n",
+   "stub": false
+  },
+  "setNoClip": {
+   "args": "as",
+   "handler": "0x9bae0",
+   "record_va": "0x3d0c88",
+   "ret": "n",
+   "stub": false
+  },
+  "setNoCollide": {
+   "args": "as",
+   "handler": "0x9bff0",
+   "record_va": "0x3d0d08",
+   "ret": "n",
+   "stub": false
+  },
+  "setOrigin": {
+   "args": "as",
+   "handler": "0x9c170",
+   "record_va": "0x3d0d28",
+   "ret": "n",
+   "stub": false
+  },
+  "setParent": {
+   "args": "aa",
+   "handler": "0x9c780",
+   "record_va": "0x3d0dc8",
+   "ret": "n",
+   "stub": false
+  },
+  "setPartyLightColor": {
+   "args": "sf",
+   "handler": "0x9a040",
+   "record_va": "0x3d1768",
+   "ret": "n",
+   "stub": false
+  },
+  "setPatternSequence": {
+   "args": "as",
+   "handler": "0x9d4e0",
+   "record_va": "0x3d0ef8",
+   "ret": "n",
+   "stub": false
+  },
+  "setPosX": {
+   "args": "ai",
+   "handler": "0x9b240",
+   "record_va": "0x3d0b88",
+   "ret": "n",
+   "stub": false
+  },
+  "setPosY": {
+   "args": "ai",
+   "handler": "0x9b2e0",
+   "record_va": "0x3d0b98",
+   "ret": "n",
+   "stub": false
+  },
+  "setPosZ": {
+   "args": "ai",
+   "handler": "0x9b380",
+   "record_va": "0x3d0ba8",
+   "ret": "n",
+   "stub": false
+  },
+  "setPowerStatus": {
+   "args": "ass",
+   "handler": "0x9db60",
+   "record_va": "0x3d0fc8",
+   "ret": "n",
+   "stub": false
+  },
+  "setRadiusConfinement": {
+   "args": "afa",
+   "handler": "0x9d400",
+   "record_va": "0x3d0ee8",
+   "ret": "n",
+   "stub": false
+  },
+  "setReactToEnemies": {
+   "args": "as",
+   "handler": "0x9d860",
+   "record_va": "0x3d0f38",
+   "ret": "n",
+   "stub": false
+  },
+  "setScale": {
+   "args": "af",
+   "handler": "0x9b420",
+   "record_va": "0x3d0bf8",
+   "ret": "n",
+   "stub": false
+  },
+  "setStructure": {
+   "args": "ai",
+   "handler": "0x9b4b0",
+   "record_va": "0x3d0be8",
+   "ret": "n",
+   "stub": false
+  },
+  "setVelocity": {
+   "args": "as",
+   "handler": "0x9bdf0",
+   "record_va": "0x3d0ce8",
+   "ret": "n",
+   "stub": false
+  },
+  "setWaypointPath": {
+   "args": "asi",
+   "handler": "0x9d9a0",
+   "record_va": "0x3d0f58",
+   "ret": "n",
+   "stub": false
+  },
+  "setXP": {
+   "args": "ai",
+   "handler": "0xa0280",
+   "record_va": "0x3d0cc8",
+   "ret": "n",
+   "stub": false
+  },
+  "setallaiactive": {
+   "args": "s",
+   "handler": "0x993f0",
+   "record_va": "0x3d1408",
+   "ret": "n",
+   "stub": false
+  },
+  "setteam": {
+   "args": "sa",
+   "handler": "0x9c4d0",
+   "record_va": "0x3d0da8",
+   "ret": "n",
+   "stub": false
+  },
+  "shopMenu": {
+   "args": "s",
+   "handler": "0x9a310",
+   "record_va": "0x3d12c8",
+   "ret": "n",
+   "stub": false
+  },
+  "showPopupDialog": {
+   "args": "",
+   "handler": "0x993e0",
+   "record_va": "0x3d13a8",
+   "ret": "n",
+   "stub": false
+  },
+  "soloModeCheck": {
+   "args": "a",
+   "handler": "0x9eff0",
+   "record_va": "0x3d10f8",
+   "ret": "i",
+   "stub": false
+  },
+  "sound": {
+   "args": "sass",
+   "handler": "0x9fa00",
+   "record_va": "0x3d1618",
+   "ret": "n",
+   "stub": false
+  },
+  "spawn": {
+   "args": "assss",
+   "handler": "0x9d100",
+   "record_va": "0x3d0e68",
+   "ret": "i",
+   "stub": false
+  },
+  "spawnEffect": {
+   "args": "asss",
+   "handler": "0x9e180",
+   "record_va": "0x3d1038",
+   "ret": "n",
+   "stub": false
+  },
+  "spawnEffectBone": {
+   "args": "ass",
+   "handler": "0x9e000",
+   "record_va": "0x3d1028",
+   "ret": "n",
+   "stub": false
+  },
+  "startConversation": {
+   "args": "s",
+   "handler": "0x9e3d0",
+   "record_va": "0x3d1048",
+   "ret": "n",
+   "stub": false
+  },
+  "startMotionPath": {
+   "args": "asss",
+   "handler": "0x9d030",
+   "record_va": "0x3d0e58",
+   "ret": "n",
+   "stub": false
+  },
+  "startMovie": {
+   "args": "ss",
+   "handler": "0x99a30",
+   "record_va": "0x3d16d8",
+   "ret": "n",
+   "stub": false
+  },
+  "timerAdd": {
+   "args": "f",
+   "handler": "0x98db0",
+   "record_va": "0x3d1128",
+   "ret": "n",
+   "stub": false
+  },
+  "timerStart": {
+   "args": "ffs",
+   "handler": "0x9e570",
+   "record_va": "0x3d1138",
+   "ret": "n",
+   "stub": false
+  },
+  "triviaMenu": {
+   "args": "",
+   "handler": "0x991e0",
+   "record_va": "0x3d1248",
+   "ret": "n",
+   "stub": false
+  },
+  "use": {
+   "args": "aa",
+   "handler": "0x9fe40",
+   "record_va": "0x3d17a8",
+   "ret": "n",
+   "stub": false
+  },
+  "vibrate": {
+   "args": "ssff",
+   "handler": "0x9eaf0",
+   "record_va": "0x3d1778",
+   "ret": "n",
+   "stub": false
+  },
+  "viewSparringHighScores": {
+   "args": "",
+   "handler": "0x99970",
+   "record_va": "0x3d1678",
+   "ret": "n",
+   "stub": false
+  },
+  "waitsignal": {
+   "args": "s",
+   "handler": "0xcca40",
+   "record_va": "0x3d5690",
+   "ret": "w",
+   "stub": false
+  },
+  "waittimed": {
+   "args": "f",
+   "handler": "0xcc9f0",
+   "record_va": "0x3d5680",
+   "ret": "w",
+   "stub": false
+  },
+  "walkToAndFace": {
+   "args": "aass",
+   "handler": "0x9cd50",
+   "record_va": "0x3d0e38",
+   "ret": "n",
+   "stub": false
+  },
+  "xtremeConversationLight": {
+   "args": "as",
+   "handler": "0x9e310",
+   "record_va": "0x3d1078",
+   "ret": "n",
+   "stub": false
+  },
+  "zoneLink": {
+   "args": "",
+   "handler": "0x9e520",
+   "record_va": "0x3d10e8",
+   "ret": "n",
+   "stub": false
+  }
+ },
+ "xml2": {
+  "AnswerFriendRequest": {
+   "args": "ii",
+   "handler": "0x5aaff0",
+   "record_va": "0x68b8e8",
+   "ret": "n",
+   "stub": true
+  },
+  "AnswerGameInvite": {
+   "args": "ii",
+   "handler": "0x5aaff0",
+   "record_va": "0x68b918",
+   "ret": "n",
+   "stub": true
+  },
+  "AreYouSure": {
+   "args": "isss",
+   "handler": "0x4a0f90",
+   "record_va": "0x68b9d8",
+   "ret": "n",
+   "stub": false
+  },
+  "CancelGameInvite": {
+   "args": "i",
+   "handler": "0x5aaff0",
+   "record_va": "0x68b928",
+   "ret": "n",
+   "stub": true
+  },
+  "InviteConfirmation": {
+   "args": "s",
+   "handler": "0x5aaff0",
+   "record_va": "0x68ba08",
+   "ret": "n",
+   "stub": true
+  },
+  "JoinFriendsGame": {
+   "args": "i",
+   "handler": "0x5aaff0",
+   "record_va": "0x68b988",
+   "ret": "n",
+   "stub": true
+  },
+  "KickPlayer": {
+   "args": "i",
+   "handler": "0x49fac0",
+   "record_va": "0x68ba88",
+   "ret": "n",
+   "stub": false
+  },
+  "LaunchFeedbackMenu": {
+   "args": "is",
+   "handler": "0x5aaff0",
+   "record_va": "0x68b978",
+   "ret": "n",
+   "stub": true
+  },
+  "LaunchFriendReqVoiceMenu": {
+   "args": "s",
+   "handler": "0x5aaff0",
+   "record_va": "0x68b948",
+   "ret": "n",
+   "stub": true
+  },
+  "LaunchGameInviteVoiceMenu": {
+   "args": "i",
+   "handler": "0x5aaff0",
+   "record_va": "0x68b958",
+   "ret": "n",
+   "stub": true
+  },
+  "LaunchReceiveVoiceMenu": {
+   "args": "i",
+   "handler": "0x5aaff0",
+   "record_va": "0x68b968",
+   "ret": "n",
+   "stub": true
+  },
+  "Logout": {
+   "args": "",
+   "handler": "0x49f960",
+   "record_va": "0x68b998",
+   "ret": "n",
+   "stub": false
+  },
+  "LogoutNoExit": {
+   "args": "",
+   "handler": "0x49f990",
+   "record_va": "0x68b9a8",
+   "ret": "n",
+   "stub": false
+  },
+  "ReNegotiate": {
+   "args": "i",
+   "handler": "0x49fa10",
+   "record_va": "0x68ba18",
+   "ret": "n",
+   "stub": false
+  },
+  "RemoveFriend": {
+   "args": "i",
+   "handler": "0x5aaff0",
+   "record_va": "0x68b8f8",
+   "ret": "n",
+   "stub": true
+  },
+  "SendFeedback": {
+   "args": "iis",
+   "handler": "0x5aaff0",
+   "record_va": "0x68b938",
+   "ret": "n",
+   "stub": true
+  },
+  "SendFriendRequest": {
+   "args": "si",
+   "handler": "0x5aaff0",
+   "record_va": "0x68b8d8",
+   "ret": "n",
+   "stub": true
+  },
+  "SendFriendVoiceAttachmentPrompt": {
+   "args": "s",
+   "handler": "0x5aaff0",
+   "record_va": "0x68b9e8",
+   "ret": "n",
+   "stub": true
+  },
+  "SendGameInvite": {
+   "args": "ii",
+   "handler": "0x5aaff0",
+   "record_va": "0x68b908",
+   "ret": "n",
+   "stub": true
+  },
+  "SendVoiceAttachmentPrompt": {
+   "args": "ss",
+   "handler": "0x5aaff0",
+   "record_va": "0x68b9f8",
+   "ret": "n",
+   "stub": true
+  },
+  "SetDontShowWarningOff": {
+   "args": "",
+   "handler": "0x49fe10",
+   "record_va": "0x68bb08",
+   "ret": "n",
+   "stub": false
+  },
+  "SetGameType": {
+   "args": "i",
+   "handler": "0x49f8f0",
+   "record_va": "0x68ba28",
+   "ret": "n",
+   "stub": false
+  },
+  "SetMaxPlayers": {
+   "args": "i",
+   "handler": "0x49f9b0",
+   "record_va": "0x68b9c8",
+   "ret": "n",
+   "stub": false
+  },
+  "SetNumInvites": {
+   "args": "i",
+   "handler": "0x5aaff0",
+   "record_va": "0x68b9b8",
+   "ret": "n",
+   "stub": true
+  },
+  "SetPrefDifficulty": {
+   "args": "i",
+   "handler": "0x49fa70",
+   "record_va": "0x68ba48",
+   "ret": "n",
+   "stub": false
+  },
+  "SetPrefGameType": {
+   "args": "i",
+   "handler": "0x49fa40",
+   "record_va": "0x68ba38",
+   "ret": "n",
+   "stub": false
+  },
+  "ToggleMute": {
+   "args": "ii",
+   "handler": "0x5aaff0",
+   "record_va": "0x68b8c8",
+   "ret": "n",
+   "stub": true
+  },
+  "act": {
+   "args": "aa",
+   "handler": "0x4a9010",
+   "record_va": "0x68ad28",
+   "ret": "n",
+   "stub": false
+  },
+  "actSilent": {
+   "args": "aa",
+   "handler": "0x4a90f0",
+   "record_va": "0x68ad38",
+   "ret": "n",
+   "stub": false
+  },
+  "addBolton": {
+   "args": "asssd",
+   "handler": "0x4a66b0",
+   "record_va": "0x68ae98",
+   "ret": "n",
+   "stub": false
+  },
+  "addXtremePip": {
+   "args": "",
+   "handler": "0x4a0240",
+   "record_va": "0x68ad18",
+   "ret": "n",
+   "stub": false
+  },
+  "alive": {
+   "args": "a",
+   "handler": "0x4a8440",
+   "record_va": "0x68a9d8",
+   "ret": "i",
+   "stub": false
+  },
+  "allowConversation": {
+   "args": "s",
+   "handler": "0x49db10",
+   "record_va": "0x68af68",
+   "ret": "n",
+   "stub": false
+  },
+  "allowResponseOnGameVarCount": {
+   "args": "si",
+   "handler": "0x4a5d50",
+   "record_va": "0x68af58",
+   "ret": "n",
+   "stub": false
+  },
+  "amIAnXman": {
+   "args": "a",
+   "handler": "0x4a2af0",
+   "record_va": "0x68ac28",
+   "ret": "i",
+   "stub": false
+  },
+  "attackEntityWithType": {
+   "args": "aass",
+   "handler": "0x4a40a0",
+   "record_va": "0x68aca8",
+   "ret": "n",
+   "stub": false
+  },
+  "awardXPToPlayable": {
+   "args": "i",
+   "handler": "0x49d9d0",
+   "record_va": "0x68aa88",
+   "ret": "n",
+   "stub": false
+  },
+  "beATeamPlayer": {
+   "args": "as",
+   "handler": "0x4a3ac0",
+   "record_va": "0x68aec8",
+   "ret": "n",
+   "stub": false
+  },
+  "beginMission": {
+   "args": "s",
+   "handler": "0x4a0af0",
+   "record_va": "0x68b5b8",
+   "ret": "n",
+   "stub": false
+  },
+  "beginMissionHack": {
+   "args": "s",
+   "handler": "0x4a0b60",
+   "record_va": "0x68b5c8",
+   "ret": "n",
+   "stub": false
+  },
+  "blackbirdMenu": {
+   "args": "sss",
+   "handler": "0x4a0640",
+   "record_va": "0x68b228",
+   "ret": "n",
+   "stub": false
+  },
+  "bootToDash": {
+   "args": "i",
+   "handler": "0x5aaff0",
+   "record_va": "0x68b8a8",
+   "ret": "n",
+   "stub": true
+  },
+  "cameraFOV": {
+   "args": "ff",
+   "handler": "0x49dee0",
+   "record_va": "0x68b088",
+   "ret": "n",
+   "stub": false
+  },
+  "cameraFade": {
+   "args": "ff",
+   "handler": "0x49df70",
+   "record_va": "0x68b0a8",
+   "ret": "n",
+   "stub": false
+  },
+  "cameraFocusToEntity": {
+   "args": "affff",
+   "handler": "0x4a5f80",
+   "record_va": "0x68b0b8",
+   "ret": "n",
+   "stub": false
+  },
+  "cameraFocusToEntityYaw": {
+   "args": "affaf",
+   "handler": "0x4a6060",
+   "record_va": "0x68b0c8",
+   "ret": "n",
+   "stub": false
+  },
+  "cameraFollowMotionPath": {
+   "args": "sssss",
+   "handler": "0x49e080",
+   "record_va": "0x68b0e8",
+   "ret": "n",
+   "stub": false
+  },
+  "cameraMove": {
+   "args": "sf",
+   "handler": "0x49dd80",
+   "record_va": "0x68b068",
+   "ret": "n",
+   "stub": false
+  },
+  "cameraPan": {
+   "args": "sfs",
+   "handler": "0x49de20",
+   "record_va": "0x68b078",
+   "ret": "n",
+   "stub": false
+  },
+  "cameraReset": {
+   "args": "",
+   "handler": "0x49df40",
+   "record_va": "0x68b098",
+   "ret": "n",
+   "stub": false
+  },
+  "cameraResetOldSchool": {
+   "args": "",
+   "handler": "0x49df50",
+   "record_va": "0x68b138",
+   "ret": "n",
+   "stub": false
+  },
+  "cameraSetClipPlane": {
+   "args": "f",
+   "handler": "0x4a0270",
+   "record_va": "0x68b128",
+   "ret": "n",
+   "stub": false
+  },
+  "cameraShake": {
+   "args": "ff",
+   "handler": "0x49e020",
+   "record_va": "0x68b0d8",
+   "ret": "n",
+   "stub": false
+  },
+  "cameraToEntityAngles": {
+   "args": "af",
+   "handler": "0x4a62b0",
+   "record_va": "0x68b0f8",
+   "ret": "n",
+   "stub": false
+  },
+  "cameraToLocationAngles": {
+   "args": "ssf",
+   "handler": "0x49e6c0",
+   "record_va": "0x68b108",
+   "ret": "n",
+   "stub": false
+  },
+  "cancelWaitingDialog": {
+   "args": "",
+   "handler": "0x49fc10",
+   "record_va": "0x68bad8",
+   "ret": "n",
+   "stub": false
+  },
+  "causeTroubleForAutotest": {
+   "args": "",
+   "handler": "0x5aaff0",
+   "record_va": "0x68b028",
+   "ret": "n",
+   "stub": true
+  },
+  "cinematicEnd": {
+   "args": "",
+   "handler": "0x49e000",
+   "record_va": "0x68b298",
+   "ret": "n",
+   "stub": false
+  },
+  "cinematicStart": {
+   "args": "ss",
+   "handler": "0x49dfc0",
+   "record_va": "0x68b288",
+   "ret": "n",
+   "stub": false
+  },
+  "closeDangerRoom": {
+   "args": "i",
+   "handler": "0x49eb10",
+   "record_va": "0x68b858",
+   "ret": "n",
+   "stub": false
+  },
+  "closemenu": {
+   "args": "s",
+   "handler": "0x4a0f20",
+   "record_va": "0x68ba68",
+   "ret": "n",
+   "stub": false
+  },
+  "codexMenu": {
+   "args": "i",
+   "handler": "0x49e250",
+   "record_va": "0x68b148",
+   "ret": "n",
+   "stub": false
+  },
+  "confirmKickPlayerDialog": {
+   "args": "i",
+   "handler": "0x49fcd0",
+   "record_va": "0x68baa8",
+   "ret": "n",
+   "stub": false
+  },
+  "controlPlayerHeroWithAI": {
+   "args": "f",
+   "handler": "0x4a4200",
+   "record_va": "0x68acb8",
+   "ret": "n",
+   "stub": false
+  },
+  "controllersContinue": {
+   "args": "",
+   "handler": "0x49ef00",
+   "record_va": "0x68b428",
+   "ret": "n",
+   "stub": false
+  },
+  "copyOriginAndAngles": {
+   "args": "aa",
+   "handler": "0x4a27f0",
+   "record_va": "0x68aa18",
+   "ret": "n",
+   "stub": false
+  },
+  "createPopupDialogXml": {
+   "args": "s",
+   "handler": "0x4a6890",
+   "record_va": "0x68b268",
+   "ret": "n",
+   "stub": false
+  },
+  "createPopupDialogXmlFilter": {
+   "args": "ss",
+   "handler": "0x4a68b0",
+   "record_va": "0x68b278",
+   "ret": "n",
+   "stub": false
+  },
+  "damage": {
+   "args": "aai",
+   "handler": "0x4a91d0",
+   "record_va": "0x68b878",
+   "ret": "n",
+   "stub": false
+  },
+  "dangerRoomEndMission": {
+   "args": "",
+   "handler": "0x49fc50",
+   "record_va": "0x68baf8",
+   "ret": "n",
+   "stub": false
+  },
+  "dangerRoomMenu": {
+   "args": "",
+   "handler": "0x49e5d0",
+   "record_va": "0x68b1d8",
+   "ret": "n",
+   "stub": false
+  },
+  "dataDiscReward": {
+   "args": "s",
+   "handler": "0x4a7560",
+   "record_va": "0x68b788",
+   "ret": "n",
+   "stub": false
+  },
+  "debug": {
+   "args": "s",
+   "handler": "0x5aaff0",
+   "record_va": "0x68b238",
+   "ret": "n",
+   "stub": true
+  },
+  "disallowResponse": {
+   "args": "",
+   "handler": "0x49da10",
+   "record_va": "0x68af48",
+   "ret": "n",
+   "stub": false
+  },
+  "disallowResponseOnObjective": {
+   "args": "ss",
+   "handler": "0x49da20",
+   "record_va": "0x68af38",
+   "ret": "n",
+   "stub": false
+  },
+  "disallowResponseOnVar": {
+   "args": "si",
+   "handler": "0x49da90",
+   "record_va": "0x68af28",
+   "ret": "n",
+   "stub": false
+  },
+  "display": {
+   "args": "s",
+   "handler": "0x5aaff0",
+   "record_va": "0x68b248",
+   "ret": "n",
+   "stub": true
+  },
+  "endDRScenario": {
+   "args": "",
+   "handler": "0x49f320",
+   "record_va": "0x68b608",
+   "ret": "n",
+   "stub": false
+  },
+  "enemiesNoTarget": {
+   "args": "s",
+   "handler": "0x49f700",
+   "record_va": "0x68b638",
+   "ret": "n",
+   "stub": false
+  },
+  "extractionPoint": {
+   "args": "a",
+   "handler": "0x4a6b50",
+   "record_va": "0x68b3f8",
+   "ret": "n",
+   "stub": false
+  },
+  "extractionPointChange": {
+   "args": "ai",
+   "handler": "0x4a7020",
+   "record_va": "0x68b418",
+   "ret": "n",
+   "stub": false
+  },
+  "extractionPointLite": {
+   "args": "asss",
+   "handler": "0x4a6d80",
+   "record_va": "0x68b408",
+   "ret": "n",
+   "stub": false
+  },
+  "extractionUnlock": {
+   "args": "s",
+   "handler": "0x49f1e0",
+   "record_va": "0x68b3e8",
+   "ret": "n",
+   "stub": false
+  },
+  "faceEntity": {
+   "args": "aa",
+   "handler": "0x4a4320",
+   "record_va": "0x68ad48",
+   "ret": "n",
+   "stub": false
+  },
+  "fadd": {
+   "args": "ff",
+   "handler": "0x4d91b0",
+   "record_va": "0x690458",
+   "ret": "f",
+   "stub": false
+  },
+  "fade": {
+   "args": "affs",
+   "handler": "0x4a3780",
+   "record_va": "0x68ac58",
+   "ret": "n",
+   "stub": false
+  },
+  "fadeIn": {
+   "args": "af",
+   "handler": "0x4a38e0",
+   "record_va": "0x68ac78",
+   "ret": "n",
+   "stub": false
+  },
+  "fadeOut": {
+   "args": "af",
+   "handler": "0x4a3970",
+   "record_va": "0x68ac88",
+   "ret": "n",
+   "stub": false
+  },
+  "fdiv": {
+   "args": "ff",
+   "handler": "0x4d92a0",
+   "record_va": "0x690488",
+   "ret": "f",
+   "stub": false
+  },
+  "fmul": {
+   "args": "ff",
+   "handler": "0x4d9250",
+   "record_va": "0x690478",
+   "ret": "f",
+   "stub": false
+  },
+  "fsub": {
+   "args": "ff",
+   "handler": "0x4d9200",
+   "record_va": "0x690468",
+   "ret": "f",
+   "stub": false
+  },
+  "gameover": {
+   "args": "s",
+   "handler": "0x4a7220",
+   "record_va": "0x68b6d8",
+   "ret": "n",
+   "stub": false
+  },
+  "getAIControlled": {
+   "args": "a",
+   "handler": "0x4a3f10",
+   "record_va": "0x68abf8",
+   "ret": "i",
+   "stub": false
+  },
+  "getBrotherhood": {
+   "args": "a",
+   "handler": "0x4a3f90",
+   "record_va": "0x68ac08",
+   "ret": "i",
+   "stub": false
+  },
+  "getConversationActive": {
+   "args": "",
+   "handler": "0x49db50",
+   "record_va": "0x68af78",
+   "ret": "i",
+   "stub": false
+  },
+  "getDangerRoomActive": {
+   "args": "",
+   "handler": "0x49ec80",
+   "record_va": "0x68b328",
+   "ret": "i",
+   "stub": false
+  },
+  "getDistance": {
+   "args": "aa",
+   "handler": "0x4a68f0",
+   "record_va": "0x68b308",
+   "ret": "f",
+   "stub": false
+  },
+  "getEnable": {
+   "args": "a",
+   "handler": "0x4a3e90",
+   "record_va": "0x68aba8",
+   "ret": "i",
+   "stub": false
+  },
+  "getGameFlag": {
+   "args": "si",
+   "handler": "0x4a5db0",
+   "record_va": "0x68af88",
+   "ret": "i",
+   "stub": false
+  },
+  "getGameVarBitCount": {
+   "args": "s",
+   "handler": "0x4a7c70",
+   "record_va": "0x68afa8",
+   "ret": "i",
+   "stub": false
+  },
+  "getHealth": {
+   "args": "a",
+   "handler": "0x4a36f0",
+   "record_va": "0x68ab18",
+   "ret": "f",
+   "stub": false
+  },
+  "getHealthMax": {
+   "args": "a",
+   "handler": "0x4a3660",
+   "record_va": "0x68ab08",
+   "ret": "f",
+   "stub": false
+  },
+  "getID": {
+   "args": "a",
+   "handler": "0x4a1e90",
+   "record_va": "0x68a998",
+   "ret": "i",
+   "stub": false
+  },
+  "getIDString": {
+   "args": "a",
+   "handler": "0x4a1f00",
+   "record_va": "0x68a9a8",
+   "ret": "s",
+   "stub": false
+  },
+  "getInventoryCount": {
+   "args": "s",
+   "handler": "0x49edc0",
+   "record_va": "0x68b378",
+   "ret": "i",
+   "stub": false
+  },
+  "getName": {
+   "args": "a",
+   "handler": "0x4a1fb0",
+   "record_va": "0x68a9b8",
+   "ret": "s",
+   "stub": false
+  },
+  "getNearestMonsterSpawner": {
+   "args": "ai",
+   "handler": "0x4a6980",
+   "record_va": "0x68b318",
+   "ret": "i",
+   "stub": false
+  },
+  "getObjective": {
+   "args": "ss",
+   "handler": "0x4a03f0",
+   "record_va": "0x68b3a8",
+   "ret": "i",
+   "stub": false
+  },
+  "getOpened": {
+   "args": "a",
+   "handler": "0x4a4020",
+   "record_va": "0x68abb8",
+   "ret": "i",
+   "stub": false
+  },
+  "getParentID": {
+   "args": "a",
+   "handler": "0x4a3bf0",
+   "record_va": "0x68ab78",
+   "ret": "i",
+   "stub": false
+  },
+  "getPosX": {
+   "args": "a",
+   "handler": "0x4a1980",
+   "record_va": "0x68a948",
+   "ret": "i",
+   "stub": false
+  },
+  "getPosY": {
+   "args": "a",
+   "handler": "0x4a1a20",
+   "record_va": "0x68a958",
+   "ret": "i",
+   "stub": false
+  },
+  "getPosZ": {
+   "args": "a",
+   "handler": "0x4a1ac0",
+   "record_va": "0x68a968",
+   "ret": "i",
+   "stub": false
+  },
+  "getTimeRemaining": {
+   "args": "",
+   "handler": "0x49dd30",
+   "record_va": "0x68b058",
+   "ret": "f",
+   "stub": false
+  },
+  "getZoneFlag": {
+   "args": "si",
+   "handler": "0x49dc00",
+   "record_va": "0x68afd8",
+   "ret": "i",
+   "stub": false
+  },
+  "getZoneReset": {
+   "args": "",
+   "handler": "0x4a0800",
+   "record_va": "0x68b008",
+   "ret": "i",
+   "stub": false
+  },
+  "getZoneVar": {
+   "args": "s",
+   "handler": "0x49db80",
+   "record_va": "0x68afb8",
+   "ret": "i",
+   "stub": false
+  },
+  "hailToTheKing": {
+   "args": "a",
+   "handler": "0x4a6820",
+   "record_va": "0x68aeb8",
+   "ret": "n",
+   "stub": false
+  },
+  "heroNoTarget": {
+   "args": "s",
+   "handler": "0x49f6d0",
+   "record_va": "0x68b628",
+   "ret": "n",
+   "stub": false
+  },
+  "homingBeaconReward": {
+   "args": "si",
+   "handler": "0x4a7a00",
+   "record_va": "0x68b798",
+   "ret": "n",
+   "stub": false
+  },
+  "hudMessage": {
+   "args": "ifs",
+   "handler": "0x49eb60",
+   "record_va": "0x68b258",
+   "ret": "n",
+   "stub": false
+  },
+  "iadd": {
+   "args": "ii",
+   "handler": "0x4d92f0",
+   "record_va": "0x690498",
+   "ret": "i",
+   "stub": false
+  },
+  "idiv": {
+   "args": "ii",
+   "handler": "0x4d93e0",
+   "record_va": "0x6904c8",
+   "ret": "i",
+   "stub": false
+  },
+  "imageViewer": {
+   "args": "s",
+   "handler": "0x49e440",
+   "record_va": "0x68b1b8",
+   "ret": "n",
+   "stub": false
+  },
+  "immediateObjective": {
+   "args": "s",
+   "handler": "0x4a06e0",
+   "record_va": "0x68b3b8",
+   "ret": "n",
+   "stub": false
+  },
+  "imul": {
+   "args": "ii",
+   "handler": "0x4d9390",
+   "record_va": "0x6904b8",
+   "ret": "i",
+   "stub": false
+  },
+  "initHud": {
+   "args": "",
+   "handler": "0x49e6b0",
+   "record_va": "0x68b218",
+   "ret": "n",
+   "stub": false
+  },
+  "isActorOnTeam": {
+   "args": "a",
+   "handler": "0x4a5a70",
+   "record_va": "0x68b818",
+   "ret": "i",
+   "stub": false
+  },
+  "isBlinkPortalActive": {
+   "args": "",
+   "handler": "0x49f220",
+   "record_va": "0x68b5f8",
+   "ret": "i",
+   "stub": false
+  },
+  "isCharacterUnlocked": {
+   "args": "a",
+   "handler": "0x49f610",
+   "record_va": "0x68ac38",
+   "ret": "i",
+   "stub": false
+  },
+  "isExtractionPointUnlocked": {
+   "args": "",
+   "handler": "0x49f1a0",
+   "record_va": "0x68b3d8",
+   "ret": "i",
+   "stub": false
+  },
+  "isHardDifficultyUnlocked": {
+   "args": "",
+   "handler": "0x49f680",
+   "record_va": "0x68b868",
+   "ret": "i",
+   "stub": false
+  },
+  "isub": {
+   "args": "ii",
+   "handler": "0x4d9340",
+   "record_va": "0x6904a8",
+   "ret": "i",
+   "stub": false
+  },
+  "kickPlayerDialog": {
+   "args": "",
+   "handler": "0x4a14b0",
+   "record_va": "0x68ba98",
+   "ret": "n",
+   "stub": false
+  },
+  "killEntity": {
+   "args": "a",
+   "handler": "0x4a8ce0",
+   "record_va": "0x68ad58",
+   "ret": "n",
+   "stub": false
+  },
+  "killEntitySilent": {
+   "args": "a",
+   "handler": "0x4a8d60",
+   "record_va": "0x68ad68",
+   "ret": "n",
+   "stub": false
+  },
+  "loadDangerRoomCourse": {
+   "args": "s",
+   "handler": "0x4a72e0",
+   "record_va": "0x68b6e8",
+   "ret": "n",
+   "stub": false
+  },
+  "loadMap": {
+   "args": "s",
+   "handler": "0x4a0c50",
+   "record_va": "0x68b668",
+   "ret": "n",
+   "stub": false
+  },
+  "loadMapAddTeam": {
+   "args": "s",
+   "handler": "0x4a0bd0",
+   "record_va": "0x68b678",
+   "ret": "n",
+   "stub": false
+  },
+  "loadMapChooseTeam": {
+   "args": "s",
+   "handler": "0x4a0d30",
+   "record_va": "0x68b698",
+   "ret": "n",
+   "stub": false
+  },
+  "loadMapKeepTeam": {
+   "args": "s",
+   "handler": "0x4a0cc0",
+   "record_va": "0x68b688",
+   "ret": "n",
+   "stub": false
+  },
+  "loadNetworkConfig": {
+   "args": "i",
+   "handler": "0x5aaff0",
+   "record_va": "0x68b778",
+   "ret": "n",
+   "stub": true
+  },
+  "loadZone": {
+   "args": "ss",
+   "handler": "0x4a0da0",
+   "record_va": "0x68b6a8",
+   "ret": "n",
+   "stub": false
+  },
+  "lockCombat": {
+   "args": "s",
+   "handler": "0x49f860",
+   "record_va": "0x68b6b8",
+   "ret": "n",
+   "stub": false
+  },
+  "lockControls": {
+   "args": "f",
+   "handler": "0x49f8c0",
+   "record_va": "0x68b6c8",
+   "ret": "n",
+   "stub": false
+  },
+  "loopCombatNode": {
+   "args": "ass",
+   "handler": "0x4a4eb0",
+   "record_va": "0x68ae48",
+   "ret": "n",
+   "stub": false
+  },
+  "mainMenuExit": {
+   "args": "",
+   "handler": "0x49fb00",
+   "record_va": "0x68bae8",
+   "ret": "n",
+   "stub": false
+  },
+  "mainMenuExitDialog": {
+   "args": "",
+   "handler": "0x49fb20",
+   "record_va": "0x68bab8",
+   "ret": "n",
+   "stub": false
+  },
+  "missionComplete": {
+   "args": "s",
+   "handler": "0x4a61b0",
+   "record_va": "0x68b2b8",
+   "ret": "n",
+   "stub": false
+  },
+  "missionComplete2": {
+   "args": "",
+   "handler": "0x49e190",
+   "record_va": "0x68b2c8",
+   "ret": "n",
+   "stub": false
+  },
+  "moveHeroesToEnt": {
+   "args": "a",
+   "handler": "0x4a2560",
+   "record_va": "0x68aa28",
+   "ret": "n",
+   "stub": false
+  },
+  "moveToEntity": {
+   "args": "as",
+   "handler": "0x4a4690",
+   "record_va": "0x68ad98",
+   "ret": "n",
+   "stub": false
+  },
+  "newMissionBriefing": {
+   "args": "",
+   "handler": "0x49e230",
+   "record_va": "0x68b2f8",
+   "ret": "n",
+   "stub": false
+  },
+  "objective": {
+   "args": "ss",
+   "handler": "0x49ee90",
+   "record_va": "0x68b398",
+   "ret": "n",
+   "stub": false
+  },
+  "openWaitingDialog": {
+   "args": "",
+   "handler": "0x49fb40",
+   "record_va": "0x68bac8",
+   "ret": "n",
+   "stub": false
+  },
+  "openmenu": {
+   "args": "s",
+   "handler": "0x4a0eb0",
+   "record_va": "0x68ba58",
+   "ret": "n",
+   "stub": false
+  },
+  "overrideFocusToEntity": {
+   "args": "af",
+   "handler": "0x4a6350",
+   "record_va": "0x68b118",
+   "ret": "n",
+   "stub": false
+  },
+  "permanentStatBoost": {
+   "args": "as",
+   "handler": "0x4a20d0",
+   "record_va": "0x68aa08",
+   "ret": "n",
+   "stub": false
+  },
+  "personalItem": {
+   "args": "s",
+   "handler": "0x49e570",
+   "record_va": "0x68b1c8",
+   "ret": "n",
+   "stub": false
+  },
+  "playBossSound": {
+   "args": "sif",
+   "handler": "0x49eab0",
+   "record_va": "0x68b848",
+   "ret": "n",
+   "stub": false
+  },
+  "playCombatNodeTrigger": {
+   "args": "asi",
+   "handler": "0x4a5010",
+   "record_va": "0x68ae68",
+   "ret": "n",
+   "stub": false
+  },
+  "playanim": {
+   "args": "sass",
+   "handler": "0x4a8a20",
+   "record_va": "0x68ac98",
+   "ret": "n",
+   "stub": false
+  },
+  "randomInt": {
+   "args": "ii",
+   "handler": "0x49ee40",
+   "record_va": "0x68b388",
+   "ret": "i",
+   "stub": false
+  },
+  "recallZone": {
+   "args": "",
+   "handler": "0x4a74f0",
+   "record_va": "0x68b5e8",
+   "ret": "n",
+   "stub": false
+  },
+  "remove": {
+   "args": "aa",
+   "handler": "0x4a9300",
+   "record_va": "0x68b888",
+   "ret": "n",
+   "stub": false
+  },
+  "removeBolton": {
+   "args": "ad",
+   "handler": "0x4a6790",
+   "record_va": "0x68aea8",
+   "ret": "n",
+   "stub": false
+  },
+  "restartZone": {
+   "args": "",
+   "handler": "0x4a0870",
+   "record_va": "0x68b5d8",
+   "ret": "n",
+   "stub": false
+  },
+  "restoreEnergy": {
+   "args": "ai",
+   "handler": "0x4a2c20",
+   "record_va": "0x68aa58",
+   "ret": "n",
+   "stub": false
+  },
+  "restoreHealth": {
+   "args": "ai",
+   "handler": "0x4a2dd0",
+   "record_va": "0x68aa68",
+   "ret": "n",
+   "stub": false
+  },
+  "restorelastzone": {
+   "args": "s",
+   "handler": "0x4a0760",
+   "record_va": "0x68b3c8",
+   "ret": "n",
+   "stub": false
+  },
+  "resurrect": {
+   "args": "a",
+   "handler": "0x4a3b70",
+   "record_va": "0x68aed8",
+   "ret": "n",
+   "stub": false
+  },
+  "reviewCinematics": {
+   "args": "",
+   "handler": "0x49e3b0",
+   "record_va": "0x68b188",
+   "ret": "n",
+   "stub": false
+  },
+  "reviewComics": {
+   "args": "",
+   "handler": "0x49e3e0",
+   "record_va": "0x68b198",
+   "ret": "n",
+   "stub": false
+  },
+  "reviewConcept": {
+   "args": "",
+   "handler": "0x49e410",
+   "record_va": "0x68b1a8",
+   "ret": "n",
+   "stub": false
+  },
+  "reviewLoadScreens": {
+   "args": "",
+   "handler": "0x49e380",
+   "record_va": "0x68b178",
+   "ret": "n",
+   "stub": false
+  },
+  "reviewMenu": {
+   "args": "",
+   "handler": "0x49e310",
+   "record_va": "0x68b168",
+   "ret": "n",
+   "stub": false
+  },
+  "saveloadAbort": {
+   "args": "",
+   "handler": "0x49efc0",
+   "record_va": "0x68b4a8",
+   "ret": "n",
+   "stub": false
+  },
+  "saveloadBootDeleteCorrupt": {
+   "args": "",
+   "handler": "0x5aaff0",
+   "record_va": "0x68b458",
+   "ret": "n",
+   "stub": true
+  },
+  "saveloadChooseCorrupt": {
+   "args": "",
+   "handler": "0x49f130",
+   "record_va": "0x68b548",
+   "ret": "n",
+   "stub": false
+  },
+  "saveloadChooseFile": {
+   "args": "i",
+   "handler": "0x49f010",
+   "record_va": "0x68b508",
+   "ret": "n",
+   "stub": false
+  },
+  "saveloadCleanUp": {
+   "args": "",
+   "handler": "0x49efb0",
+   "record_va": "0x68b498",
+   "ret": "n",
+   "stub": false
+  },
+  "saveloadCompleteLoad": {
+   "args": "",
+   "handler": "0x49f140",
+   "record_va": "0x68b558",
+   "ret": "n",
+   "stub": false
+  },
+  "saveloadDefaultCheck": {
+   "args": "",
+   "handler": "0x5aaff0",
+   "record_va": "0x68b438",
+   "ret": "n",
+   "stub": true
+  },
+  "saveloadDefaultCheck2": {
+   "args": "",
+   "handler": "0x5aaff0",
+   "record_va": "0x68b448",
+   "ret": "n",
+   "stub": true
+  },
+  "saveloadDeleteCorrupt": {
+   "args": "",
+   "handler": "0x49f150",
+   "record_va": "0x68b568",
+   "ret": "n",
+   "stub": false
+  },
+  "saveloadDeleteFile": {
+   "args": "i",
+   "handler": "0x49f100",
+   "record_va": "0x68b538",
+   "ret": "n",
+   "stub": false
+  },
+  "saveloadDeleteSuccess": {
+   "args": "",
+   "handler": "0x49ef90",
+   "record_va": "0x68b478",
+   "ret": "n",
+   "stub": false
+  },
+  "saveloadFormat": {
+   "args": "",
+   "handler": "0x49efa0",
+   "record_va": "0x68b488",
+   "ret": "n",
+   "stub": false
+  },
+  "saveloadImageCheck": {
+   "args": "",
+   "handler": "0x49f160",
+   "record_va": "0x68b578",
+   "ret": "n",
+   "stub": false
+  },
+  "saveloadLoadOptions": {
+   "args": "",
+   "handler": "0x49f0d0",
+   "record_va": "0x68b4c8",
+   "ret": "n",
+   "stub": false
+  },
+  "saveloadLoseGameState": {
+   "args": "i",
+   "handler": "0x49f070",
+   "record_va": "0x68b518",
+   "ret": "n",
+   "stub": false
+  },
+  "saveloadNoSpaceWarning": {
+   "args": "i",
+   "handler": "0x49f040",
+   "record_va": "0x68b528",
+   "ret": "n",
+   "stub": false
+  },
+  "saveloadOverwrite": {
+   "args": "i",
+   "handler": "0x49f0a0",
+   "record_va": "0x68b4b8",
+   "ret": "n",
+   "stub": false
+  },
+  "saveloadOvrWriteOpts": {
+   "args": "",
+   "handler": "0x49f0f0",
+   "record_va": "0x68b4d8",
+   "ret": "n",
+   "stub": false
+  },
+  "saveloadOvrWriteOptsAsk": {
+   "args": "",
+   "handler": "0x49f0e0",
+   "record_va": "0x68b4e8",
+   "ret": "n",
+   "stub": false
+  },
+  "saveloadProcess": {
+   "args": "i",
+   "handler": "0x49ef60",
+   "record_va": "0x68b468",
+   "ret": "n",
+   "stub": false
+  },
+  "saveloadSaveConfirmed": {
+   "args": "i",
+   "handler": "0x49f170",
+   "record_va": "0x68b588",
+   "ret": "n",
+   "stub": false
+  },
+  "saveloadSelectDevice": {
+   "args": "i",
+   "handler": "0x49efe0",
+   "record_va": "0x68b4f8",
+   "ret": "n",
+   "stub": false
+  },
+  "setAIActive": {
+   "args": "as",
+   "handler": "0x4a50f0",
+   "record_va": "0x68ae38",
+   "ret": "n",
+   "stub": false
+  },
+  "setActorHuge": {
+   "args": "as",
+   "handler": "0x4a3060",
+   "record_va": "0x68b758",
+   "ret": "n",
+   "stub": false
+  },
+  "setActorScaleTimed": {
+   "args": "aff",
+   "handler": "0x4a8380",
+   "record_va": "0x68abe8",
+   "ret": "n",
+   "stub": false
+  },
+  "setAggression": {
+   "args": "ai",
+   "handler": "0x4a8710",
+   "record_va": "0x68ab38",
+   "ret": "n",
+   "stub": false
+  },
+  "setAlpha": {
+   "args": "af",
+   "handler": "0x4a3850",
+   "record_va": "0x68ac68",
+   "ret": "n",
+   "stub": false
+  },
+  "setAmbientLightColor": {
+   "args": "s",
+   "handler": "0x49ea00",
+   "record_va": "0x68b738",
+   "ret": "n",
+   "stub": false
+  },
+  "setAngles": {
+   "args": "as",
+   "handler": "0x4a3450",
+   "record_va": "0x68aae8",
+   "ret": "n",
+   "stub": false
+  },
+  "setAnimSpeed": {
+   "args": "af",
+   "handler": "0x4a8280",
+   "record_va": "0x68abd8",
+   "ret": "n",
+   "stub": false
+  },
+  "setAutoEquip": {
+   "args": "i",
+   "handler": "0x4a0370",
+   "record_va": "0x68b2e8",
+   "ret": "n",
+   "stub": false
+  },
+  "setAutoSpend": {
+   "args": "ii",
+   "handler": "0x4a02c0",
+   "record_va": "0x68b2d8",
+   "ret": "n",
+   "stub": false
+  },
+  "setBossPartyLightColor": {
+   "args": "s",
+   "handler": "0x49e8a0",
+   "record_va": "0x68b718",
+   "ret": "n",
+   "stub": false
+  },
+  "setBossPartyLightEntity": {
+   "args": "s",
+   "handler": "0x4a6460",
+   "record_va": "0x68b728",
+   "ret": "n",
+   "stub": false
+  },
+  "setBossUndying": {
+   "args": "as",
+   "handler": "0x4a8860",
+   "record_va": "0x68ac48",
+   "ret": "n",
+   "stub": false
+  },
+  "setCanMove": {
+   "args": "as",
+   "handler": "0x4a4a60",
+   "record_va": "0x68add8",
+   "ret": "n",
+   "stub": false
+  },
+  "setCombatNode": {
+   "args": "as",
+   "handler": "0x4a51a0",
+   "record_va": "0x68ae58",
+   "ret": "n",
+   "stub": false
+  },
+  "setCombatNodeOther": {
+   "args": "asa",
+   "handler": "0x4a5260",
+   "record_va": "0x68ae78",
+   "ret": "n",
+   "stub": false
+  },
+  "setCurrentAct": {
+   "args": "i",
+   "handler": "0x49f440",
+   "record_va": "0x68b5a8",
+   "ret": "n",
+   "stub": false
+  },
+  "setDangerLevel": {
+   "args": "f",
+   "handler": "0x49e160",
+   "record_va": "0x68b2a8",
+   "ret": "n",
+   "stub": false
+  },
+  "setDangerRoomFailed": {
+   "args": "",
+   "handler": "0x49eca0",
+   "record_va": "0x68b338",
+   "ret": "n",
+   "stub": false
+  },
+  "setDangerRoomSuccess": {
+   "args": "",
+   "handler": "0x49ecb0",
+   "record_va": "0x68b348",
+   "ret": "n",
+   "stub": false
+  },
+  "setDefaultTarget": {
+   "args": "a",
+   "handler": "0x4a4e20",
+   "record_va": "0x68ae88",
+   "ret": "n",
+   "stub": false
+  },
+  "setDestroyObjects": {
+   "args": "as",
+   "handler": "0x4a31c0",
+   "record_va": "0x68ab28",
+   "ret": "n",
+   "stub": false
+  },
+  "setDifficultyLevel": {
+   "args": "i",
+   "handler": "0x4a0930",
+   "record_va": "0x68b7a8",
+   "ret": "n",
+   "stub": false
+  },
+  "setEnable": {
+   "args": "as",
+   "handler": "0x4a84f0",
+   "record_va": "0x68aa48",
+   "ret": "n",
+   "stub": false
+  },
+  "setEngageEnemy": {
+   "args": "as",
+   "handler": "0x4a4c50",
+   "record_va": "0x68ae08",
+   "ret": "n",
+   "stub": false
+  },
+  "setFlee": {
+   "args": "as",
+   "handler": "0x4a4b00",
+   "record_va": "0x68ade8",
+   "ret": "n",
+   "stub": false
+  },
+  "setFollowingHero": {
+   "args": "as",
+   "handler": "0x4a48f0",
+   "record_va": "0x68adc8",
+   "ret": "n",
+   "stub": false
+  },
+  "setGameFlag": {
+   "args": "sii",
+   "handler": "0x4a5e10",
+   "record_va": "0x68af98",
+   "ret": "n",
+   "stub": false
+  },
+  "setGameSpeed": {
+   "args": "f",
+   "handler": "0x49e9b0",
+   "record_va": "0x68b808",
+   "ret": "n",
+   "stub": false
+  },
+  "setGoal": {
+   "args": "a",
+   "handler": "0x4a63f0",
+   "record_va": "0x68b208",
+   "ret": "n",
+   "stub": false
+  },
+  "setHealth": {
+   "args": "ai",
+   "handler": "0x4a2440",
+   "record_va": "0x68a9e8",
+   "ret": "n",
+   "stub": false
+  },
+  "setHealthMax": {
+   "args": "ai",
+   "handler": "0x4a24d0",
+   "record_va": "0x68a9f8",
+   "ret": "n",
+   "stub": false
+  },
+  "setHintType": {
+   "args": "as",
+   "handler": "0x4a2b90",
+   "record_va": "0x68abc8",
+   "ret": "n",
+   "stub": false
+  },
+  "setHomingID": {
+   "args": "aa",
+   "handler": "0x4a45b0",
+   "record_va": "0x68ad08",
+   "ret": "n",
+   "stub": false
+  },
+  "setInventoryCount": {
+   "args": "si",
+   "handler": "0x49ed40",
+   "record_va": "0x68b368",
+   "ret": "n",
+   "stub": false
+  },
+  "setInvisible": {
+   "args": "as",
+   "handler": "0x4a8910",
+   "record_va": "0x68ab58",
+   "ret": "n",
+   "stub": false
+  },
+  "setInvulnerable": {
+   "args": "as",
+   "handler": "0x4a3110",
+   "record_va": "0x68aaa8",
+   "ret": "n",
+   "stub": false
+  },
+  "setMotionPath": {
+   "args": "as",
+   "handler": "0x4a43a0",
+   "record_va": "0x68acd8",
+   "ret": "n",
+   "stub": false
+  },
+  "setName": {
+   "args": "as",
+   "handler": "0x4a2050",
+   "record_va": "0x68a9c8",
+   "ret": "n",
+   "stub": false
+  },
+  "setNearestWaypointPath": {
+   "args": "as",
+   "handler": "0x4a4d90",
+   "record_va": "0x68ae28",
+   "ret": "n",
+   "stub": false
+  },
+  "setNoClip": {
+   "args": "as",
+   "handler": "0x4a2a40",
+   "record_va": "0x68aa38",
+   "ret": "n",
+   "stub": false
+  },
+  "setNoCollide": {
+   "args": "as",
+   "handler": "0x4a3300",
+   "record_va": "0x68aab8",
+   "ret": "n",
+   "stub": false
+  },
+  "setNoCollideNoTickle": {
+   "args": "as",
+   "handler": "0x4a33b0",
+   "record_va": "0x68aac8",
+   "ret": "n",
+   "stub": false
+  },
+  "setNoGravity": {
+   "args": "as",
+   "handler": "0x4a87b0",
+   "record_va": "0x68aad8",
+   "ret": "n",
+   "stub": false
+  },
+  "setOrigin": {
+   "args": "as",
+   "handler": "0x4a3550",
+   "record_va": "0x68aaf8",
+   "ret": "n",
+   "stub": false
+  },
+  "setParent": {
+   "args": "aa",
+   "handler": "0x4a3c70",
+   "record_va": "0x68ab88",
+   "ret": "n",
+   "stub": false
+  },
+  "setPartyLightColor": {
+   "args": "sf",
+   "handler": "0x49e7b0",
+   "record_va": "0x68b6f8",
+   "ret": "n",
+   "stub": false
+  },
+  "setPartyLightRadiusScale": {
+   "args": "f",
+   "handler": "0x49e950",
+   "record_va": "0x68b708",
+   "ret": "n",
+   "stub": false
+  },
+  "setPathIgnore": {
+   "args": "as",
+   "handler": "0x4a85a0",
+   "record_va": "0x68ac18",
+   "ret": "n",
+   "stub": false
+  },
+  "setPatternSequence": {
+   "args": "as",
+   "handler": "0x4a4830",
+   "record_va": "0x68adb8",
+   "ret": "n",
+   "stub": false
+  },
+  "setPosX": {
+   "args": "ai",
+   "handler": "0x4a1b60",
+   "record_va": "0x68a918",
+   "ret": "n",
+   "stub": false
+  },
+  "setPosY": {
+   "args": "ai",
+   "handler": "0x4a1c10",
+   "record_va": "0x68a928",
+   "ret": "n",
+   "stub": false
+  },
+  "setPosZ": {
+   "args": "ai",
+   "handler": "0x4a81d0",
+   "record_va": "0x68a938",
+   "ret": "n",
+   "stub": false
+  },
+  "setRadiusConfinement": {
+   "args": "afa",
+   "handler": "0x4a4750",
+   "record_va": "0x68ada8",
+   "ret": "n",
+   "stub": false
+  },
+  "setReactToEnemies": {
+   "args": "as",
+   "handler": "0x4a4bb0",
+   "record_va": "0x68adf8",
+   "ret": "n",
+   "stub": false
+  },
+  "setRecallActive": {
+   "args": "s",
+   "handler": "0x49ecf0",
+   "record_va": "0x68b768",
+   "ret": "n",
+   "stub": false
+  },
+  "setRotZ": {
+   "args": "ai",
+   "handler": "0x4a1cc0",
+   "record_va": "0x68a908",
+   "ret": "n",
+   "stub": false
+  },
+  "setScale": {
+   "args": "af",
+   "handler": "0x4a1d70",
+   "record_va": "0x68a988",
+   "ret": "n",
+   "stub": false
+  },
+  "setSegmentVisible": {
+   "args": "ass",
+   "handler": "0x4a5bd0",
+   "record_va": "0x68b828",
+   "ret": "n",
+   "stub": false
+  },
+  "setSkin": {
+   "args": "as",
+   "handler": "0x4a3dc0",
+   "record_va": "0x68ab98",
+   "ret": "n",
+   "stub": false
+  },
+  "setStructure": {
+   "args": "ai",
+   "handler": "0x4a1e00",
+   "record_va": "0x68a978",
+   "ret": "n",
+   "stub": false
+  },
+  "setTeamInvisible": {
+   "args": "ss",
+   "handler": "0x4a04d0",
+   "record_va": "0x68ab68",
+   "ret": "n",
+   "stub": false
+  },
+  "setVelocity": {
+   "args": "as",
+   "handler": "0x4a2f80",
+   "record_va": "0x68aa98",
+   "ret": "n",
+   "stub": false
+  },
+  "setWaypointPath": {
+   "args": "asi",
+   "handler": "0x4a4cf0",
+   "record_va": "0x68ae18",
+   "ret": "n",
+   "stub": false
+  },
+  "setXP": {
+   "args": "ai",
+   "handler": "0x4a8660",
+   "record_va": "0x68aa78",
+   "ret": "n",
+   "stub": false
+  },
+  "setZoneFlag": {
+   "args": "sii",
+   "handler": "0x49dc70",
+   "record_va": "0x68afe8",
+   "ret": "n",
+   "stub": false
+  },
+  "setZoneVar": {
+   "args": "si",
+   "handler": "0x49dbc0",
+   "record_va": "0x68afc8",
+   "ret": "n",
+   "stub": false
+  },
+  "setallaiactive": {
+   "args": "s",
+   "handler": "0x49ecc0",
+   "record_va": "0x68b358",
+   "ret": "n",
+   "stub": false
+  },
+  "setteam": {
+   "args": "sa",
+   "handler": "0x4a3a00",
+   "record_va": "0x68ab48",
+   "ret": "n",
+   "stub": false
+  },
+  "setupHost": {
+   "args": "",
+   "handler": "0x49faa0",
+   "record_va": "0x68ba78",
+   "ret": "n",
+   "stub": false
+  },
+  "shopMenu": {
+   "args": "s",
+   "handler": "0x49e640",
+   "record_va": "0x68b1e8",
+   "ret": "n",
+   "stub": false
+  },
+  "showHealthBar": {
+   "args": "as",
+   "handler": "0x4a3260",
+   "record_va": "0x68ad88",
+   "ret": "n",
+   "stub": false
+  },
+  "sound": {
+   "args": "ssas",
+   "handler": "0x4a7130",
+   "record_va": "0x68b598",
+   "ret": "n",
+   "stub": false
+  },
+  "spawn": {
+   "args": "assss",
+   "handler": "0x4a4420",
+   "record_va": "0x68acf8",
+   "ret": "i",
+   "stub": false
+  },
+  "spawnEffect": {
+   "args": "asss",
+   "handler": "0x4a54c0",
+   "record_va": "0x68aef8",
+   "ret": "n",
+   "stub": false
+  },
+  "spawnEffectBone": {
+   "args": "ass",
+   "handler": "0x4a5360",
+   "record_va": "0x68aee8",
+   "ret": "n",
+   "stub": false
+  },
+  "startCharConversation": {
+   "args": "sas",
+   "handler": "0x4a57b0",
+   "record_va": "0x68af18",
+   "ret": "n",
+   "stub": false
+  },
+  "startConversation": {
+   "args": "s",
+   "handler": "0x4a5660",
+   "record_va": "0x68af08",
+   "ret": "n",
+   "stub": false
+  },
+  "startFirstMission": {
+   "args": "",
+   "handler": "0x4a7b10",
+   "record_va": "0x68b7e8",
+   "ret": "n",
+   "stub": false
+  },
+  "startGameDiffDialog": {
+   "args": "",
+   "handler": "0x49f470",
+   "record_va": "0x68b7d8",
+   "ret": "n",
+   "stub": false
+  },
+  "startMotionPath": {
+   "args": "asss",
+   "handler": "0x4a8f20",
+   "record_va": "0x68ace8",
+   "ret": "n",
+   "stub": false
+  },
+  "startMovie": {
+   "args": "ss",
+   "handler": "0x49f7e0",
+   "record_va": "0x68b648",
+   "ret": "n",
+   "stub": false
+  },
+  "startMoviePreview": {
+   "args": "ss",
+   "handler": "0x49f730",
+   "record_va": "0x68b658",
+   "ret": "i",
+   "stub": false
+  },
+  "stashMenu": {
+   "args": "",
+   "handler": "0x49e680",
+   "record_va": "0x68b1f8",
+   "ret": "n",
+   "stub": false
+  },
+  "strcatint": {
+   "args": "si",
+   "handler": "0x4da6b0",
+   "record_va": "0x6904e8",
+   "ret": "s",
+   "stub": false
+  },
+  "strcatstr": {
+   "args": "ss",
+   "handler": "0x4da620",
+   "record_va": "0x6904d8",
+   "ret": "s",
+   "stub": false
+  },
+  "strveci": {
+   "args": "iii",
+   "handler": "0x4da730",
+   "record_va": "0x6904f8",
+   "ret": "s",
+   "stub": false
+  },
+  "swapInStump": {
+   "args": "a",
+   "handler": "0x4a8e70",
+   "record_va": "0x68ad78",
+   "ret": "n",
+   "stub": false
+  },
+  "timerAdd": {
+   "args": "f",
+   "handler": "0x49dd00",
+   "record_va": "0x68b038",
+   "ret": "n",
+   "stub": false
+  },
+  "timerStart": {
+   "args": "ffs",
+   "handler": "0x4a5ec0",
+   "record_va": "0x68b048",
+   "ret": "n",
+   "stub": false
+  },
+  "titleUpdate": {
+   "args": "",
+   "handler": "0x5aaff0",
+   "record_va": "0x68b8b8",
+   "ret": "n",
+   "stub": true
+  },
+  "triviaMenu": {
+   "args": "",
+   "handler": "0x49e2a0",
+   "record_va": "0x68b158",
+   "ret": "n",
+   "stub": false
+  },
+  "unlockCharacter": {
+   "args": "sn",
+   "handler": "0x49f520",
+   "record_va": "0x68b7f8",
+   "ret": "n",
+   "stub": false
+  },
+  "unlockHardDifficulty": {
+   "args": "",
+   "handler": "0x49f6b0",
+   "record_va": "0x68b838",
+   "ret": "n",
+   "stub": false
+  },
+  "use": {
+   "args": "aa",
+   "handler": "0x4a7cd0",
+   "record_va": "0x68b898",
+   "ret": "n",
+   "stub": false
+  },
+  "useDefaultStats": {
+   "args": "",
+   "handler": "0x49f4b0",
+   "record_va": "0x68b7b8",
+   "ret": "n",
+   "stub": false
+  },
+  "useSavedStats": {
+   "args": "",
+   "handler": "0x49f490",
+   "record_va": "0x68b7c8",
+   "ret": "n",
+   "stub": false
+  },
+  "vibrate": {
+   "args": "ssff",
+   "handler": "0x4a64f0",
+   "record_va": "0x68b748",
+   "ret": "n",
+   "stub": false
+  },
+  "viewSparringHighScores": {
+   "args": "",
+   "handler": "0x49f410",
+   "record_va": "0x68b618",
+   "ret": "n",
+   "stub": false
+  },
+  "waitsignal": {
+   "args": "s",
+   "handler": "0x4d9180",
+   "record_va": "0x690448",
+   "ret": "w",
+   "stub": false
+  },
+  "waittimed": {
+   "args": "f",
+   "handler": "0x4d9130",
+   "record_va": "0x690438",
+   "ret": "w",
+   "stub": false
+  },
+  "walkToAndFace": {
+   "args": "aass",
+   "handler": "0x4a8c00",
+   "record_va": "0x68acc8",
+   "ret": "n",
+   "stub": false
+  },
+  "wanderNextZoneLink": {
+   "args": "",
+   "handler": "0x5aaff0",
+   "record_va": "0x68b018",
+   "ret": "n",
+   "stub": true
+  },
+  "zoneLink": {
+   "args": "",
+   "handler": "0x4a5e70",
+   "record_va": "0x68aff8",
+   "ret": "n",
+   "stub": false
+  }
+ }
+}

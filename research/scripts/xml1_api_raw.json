@@ -1,0 +1,1762 @@
+[
+ {
+  "entry": "0x1e17fc",
+  "name": "j",
+  "ret": "j",
+  "args": "j",
+  "func": "0x4c220",
+  "table": "001e17fc"
+ },
+ {
+  "entry": "0x1e1800",
+  "name": "j",
+  "ret": "j",
+  "args": "j",
+  "func": "0x1e14a2",
+  "table": "001e1800"
+ },
+ {
+  "entry": "0x1e1804",
+  "name": "j",
+  "ret": "j",
+  "args": "j",
+  "func": "0x1e1493",
+  "table": "001e1804"
+ },
+ {
+  "entry": "0x2b7228",
+  "name": "h",
+  "ret": "h",
+  "args": "h",
+  "func": "0x2b6fc1",
+  "table": "002b7228"
+ },
+ {
+  "entry": "0x2b722c",
+  "name": "h",
+  "ret": "h",
+  "args": "h",
+  "func": "0x2b702d",
+  "table": "002b722c"
+ },
+ {
+  "entry": "0x2b783c",
+  "name": "j",
+  "ret": "j",
+  "args": "j",
+  "func": "0x2b7542",
+  "table": "002b783c"
+ },
+ {
+  "entry": "0x2b7840",
+  "name": "j",
+  "ret": "j",
+  "args": "j",
+  "func": "0x2b75d2",
+  "table": "002b7840"
+ },
+ {
+  "entry": "0x3d0b88",
+  "name": "setPosX",
+  "ret": "n",
+  "args": "ai",
+  "func": "0x9b240",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d0b98",
+  "name": "setPosY",
+  "ret": "n",
+  "args": "ai",
+  "func": "0x9b2e0",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d0ba8",
+  "name": "setPosZ",
+  "ret": "n",
+  "args": "ai",
+  "func": "0x9b380",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d0bb8",
+  "name": "getPosX",
+  "ret": "i",
+  "args": "a",
+  "func": "0x9b0c0",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d0bc8",
+  "name": "getPosY",
+  "ret": "i",
+  "args": "a",
+  "func": "0x9b140",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d0bd8",
+  "name": "getPosZ",
+  "ret": "i",
+  "args": "a",
+  "func": "0x9b1c0",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d0be8",
+  "name": "setStructure",
+  "ret": "n",
+  "args": "ai",
+  "func": "0x9b4b0",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d0bf8",
+  "name": "setScale",
+  "ret": "n",
+  "args": "af",
+  "func": "0x9b420",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d0c08",
+  "name": "getID",
+  "ret": "i",
+  "args": "a",
+  "func": "0x9b540",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d0c18",
+  "name": "getIDString",
+  "ret": "s",
+  "args": "a",
+  "func": "0x9b5b0",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d0c28",
+  "name": "getName",
+  "ret": "s",
+  "args": "a",
+  "func": "0x9b660",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d0c38",
+  "name": "setName",
+  "ret": "n",
+  "args": "as",
+  "func": "0x9b700",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d0c48",
+  "name": "alive",
+  "ret": "i",
+  "args": "a",
+  "func": "0xa01d0",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d0c58",
+  "name": "setHealth",
+  "ret": "n",
+  "args": "ai",
+  "func": "0x9b780",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d0c68",
+  "name": "setHealthMax",
+  "ret": "n",
+  "args": "ai",
+  "func": "0x9b810",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d0c78",
+  "name": "copyOriginAndAngles",
+  "ret": "n",
+  "args": "aa",
+  "func": "0x9b8a0",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d0c88",
+  "name": "setNoClip",
+  "ret": "n",
+  "args": "as",
+  "func": "0x9bae0",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d0c98",
+  "name": "setEnable",
+  "ret": "n",
+  "args": "as",
+  "func": "0x9bb80",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d0ca8",
+  "name": "restoreEnergy",
+  "ret": "n",
+  "args": "ai",
+  "func": "0x9bcb0",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d0cb8",
+  "name": "restoreHealth",
+  "ret": "n",
+  "args": "ai",
+  "func": "0x9bd50",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d0cc8",
+  "name": "setXP",
+  "ret": "n",
+  "args": "ai",
+  "func": "0xa0280",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d0cd8",
+  "name": "awardXPToPlayable",
+  "ret": "n",
+  "args": "i",
+  "func": "0x98ac0",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d0ce8",
+  "name": "setVelocity",
+  "ret": "n",
+  "args": "as",
+  "func": "0x9bdf0",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d0cf8",
+  "name": "setInvulnerable",
+  "ret": "n",
+  "args": "as",
+  "func": "0x9bea0",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d0d08",
+  "name": "setNoCollide",
+  "ret": "n",
+  "args": "as",
+  "func": "0x9bff0",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d0d18",
+  "name": "setAngles",
+  "ret": "n",
+  "args": "as",
+  "func": "0x9c090",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d0d28",
+  "name": "setOrigin",
+  "ret": "n",
+  "args": "as",
+  "func": "0x9c170",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d0d38",
+  "name": "getBody",
+  "ret": "i",
+  "args": "a",
+  "func": "0x9c260",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d0d48",
+  "name": "getHealthMax",
+  "ret": "f",
+  "args": "a",
+  "func": "0x9c2e0",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d0d58",
+  "name": "getHealth",
+  "ret": "f",
+  "args": "a",
+  "func": "0x9c370",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d0d68",
+  "name": "levelUp",
+  "ret": "n",
+  "args": "ais",
+  "func": "0xa0490",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d0d78",
+  "name": "setDestroyObjects",
+  "ret": "n",
+  "args": "as",
+  "func": "0x9bf50",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d0d88",
+  "name": "setAggression",
+  "ret": "n",
+  "args": "ai",
+  "func": "0xa0320",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d0d98",
+  "name": "getCount",
+  "ret": "i",
+  "args": "as",
+  "func": "0xa03c0",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d0da8",
+  "name": "setteam",
+  "ret": "n",
+  "args": "sa",
+  "func": "0x9c4d0",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d0db8",
+  "name": "setInvisible",
+  "ret": "n",
+  "args": "as",
+  "func": "0x9c6b0",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d0dc8",
+  "name": "setParent",
+  "ret": "n",
+  "args": "aa",
+  "func": "0x9c780",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d0dd8",
+  "name": "getEnable",
+  "ret": "i",
+  "args": "a",
+  "func": "0x9c890",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d0de8",
+  "name": "setHintType",
+  "ret": "n",
+  "args": "as",
+  "func": "0x9bc20",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d0df8",
+  "name": "fade",
+  "ret": "n",
+  "args": "affs",
+  "func": "0x9c400",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d0e08",
+  "name": "playanim",
+  "ret": "n",
+  "args": "sass",
+  "func": "0x9c910",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d0e18",
+  "name": "attackEntityWithType",
+  "ret": "n",
+  "args": "aass",
+  "func": "0x9cac0",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d0e28",
+  "name": "controlPlayerHeroWithAI",
+  "ret": "n",
+  "args": "f",
+  "func": "0x9cc20",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d0e38",
+  "name": "walkToAndFace",
+  "ret": "n",
+  "args": "aass",
+  "func": "0x9cd50",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d0e48",
+  "name": "setMotionPath",
+  "ret": "n",
+  "args": "as",
+  "func": "0x9cfb0",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d0e58",
+  "name": "startMotionPath",
+  "ret": "n",
+  "args": "asss",
+  "func": "0x9d030",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d0e68",
+  "name": "spawn",
+  "ret": "i",
+  "args": "assss",
+  "func": "0x9d100",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d0e78",
+  "name": "setHomingID",
+  "ret": "n",
+  "args": "aa",
+  "func": "0x9d270",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d0e88",
+  "name": "addXtremePip",
+  "ret": "n",
+  "args": "",
+  "func": "0x99e10",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d0e98",
+  "name": "act",
+  "ret": "n",
+  "args": "aa",
+  "func": "0xa05b0",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d0ea8",
+  "name": "destroyMultipartPiece",
+  "ret": "n",
+  "args": "ai",
+  "func": "0x9ce30",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d0eb8",
+  "name": "faceEntity",
+  "ret": "n",
+  "args": "aa",
+  "func": "0x9cec0",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d0ec8",
+  "name": "killEntity",
+  "ret": "n",
+  "args": "a",
+  "func": "0x9cf40",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d0ed8",
+  "name": "moveToEntity",
+  "ret": "n",
+  "args": "as",
+  "func": "0x9d340",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d0ee8",
+  "name": "setRadiusConfinement",
+  "ret": "n",
+  "args": "afa",
+  "func": "0x9d400",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d0ef8",
+  "name": "setPatternSequence",
+  "ret": "n",
+  "args": "as",
+  "func": "0x9d4e0",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d0f08",
+  "name": "setFollowingHero",
+  "ret": "n",
+  "args": "as",
+  "func": "0x9d5a0",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d0f18",
+  "name": "setCanMove",
+  "ret": "n",
+  "args": "as",
+  "func": "0x9d710",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d0f28",
+  "name": "setFlee",
+  "ret": "n",
+  "args": "as",
+  "func": "0x9d7b0",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d0f38",
+  "name": "setReactToEnemies",
+  "ret": "n",
+  "args": "as",
+  "func": "0x9d860",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d0f48",
+  "name": "setEngageEnemy",
+  "ret": "n",
+  "args": "as",
+  "func": "0x9d900",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d0f58",
+  "name": "setWaypointPath",
+  "ret": "n",
+  "args": "asi",
+  "func": "0x9d9a0",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d0f68",
+  "name": "setNearestWaypointPath",
+  "ret": "n",
+  "args": "as",
+  "func": "0x9da40",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d0f78",
+  "name": "setAIActive",
+  "ret": "n",
+  "args": "as",
+  "func": "0x9dd90",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d0f88",
+  "name": "loopCombatNode",
+  "ret": "n",
+  "args": "ass",
+  "func": "0x9dc40",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d0f98",
+  "name": "setCombatNode",
+  "ret": "n",
+  "args": "as",
+  "func": "0x9de40",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d0fa8",
+  "name": "setCombatNodeOther",
+  "ret": "n",
+  "args": "asa",
+  "func": "0x9df00",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d0fb8",
+  "name": "setDefaultTarget",
+  "ret": "n",
+  "args": "a",
+  "func": "0x9dad0",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d0fc8",
+  "name": "setPowerStatus",
+  "ret": "n",
+  "args": "ass",
+  "func": "0x9db60",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d0fd8",
+  "name": "addBolton",
+  "ret": "n",
+  "args": "asssd",
+  "func": "0x9ecb0",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d0fe8",
+  "name": "removeBolton",
+  "ret": "n",
+  "args": "ad",
+  "func": "0x9ed90",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d0ff8",
+  "name": "hailToTheKing",
+  "ret": "n",
+  "args": "a",
+  "func": "0x9ee20",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d1008",
+  "name": "beATeamPlayer",
+  "ret": "n",
+  "args": "as",
+  "func": "0x9c590",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d1018",
+  "name": "resurrect",
+  "ret": "n",
+  "args": "a",
+  "func": "0x9c640",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d1028",
+  "name": "spawnEffectBone",
+  "ret": "n",
+  "args": "ass",
+  "func": "0x9e000",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d1038",
+  "name": "spawnEffect",
+  "ret": "n",
+  "args": "asss",
+  "func": "0x9e180",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d1048",
+  "name": "startConversation",
+  "ret": "n",
+  "args": "s",
+  "func": "0x9e3d0",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d1058",
+  "name": "disallowResponseOnVar",
+  "ret": "n",
+  "args": "si",
+  "func": "0x98b00",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d1068",
+  "name": "allowConversation",
+  "ret": "n",
+  "args": "s",
+  "func": "0x98b70",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d1078",
+  "name": "xtremeConversationLight",
+  "ret": "n",
+  "args": "as",
+  "func": "0x9e310",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d1088",
+  "name": "getGameVar",
+  "ret": "i",
+  "args": "s",
+  "func": "0x98bb0",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d1098",
+  "name": "setGameVar",
+  "ret": "n",
+  "args": "si",
+  "func": "0x98bf0",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d10a8",
+  "name": "getMissionVar",
+  "ret": "i",
+  "args": "s",
+  "func": "0x98c30",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d10b8",
+  "name": "setMissionVar",
+  "ret": "n",
+  "args": "si",
+  "func": "0x98c70",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d10c8",
+  "name": "getMissionFlag",
+  "ret": "i",
+  "args": "si",
+  "func": "0x98cb0",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d10d8",
+  "name": "setMissionFlag",
+  "ret": "n",
+  "args": "sii",
+  "func": "0x98d20",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d10e8",
+  "name": "zoneLink",
+  "ret": "n",
+  "args": "",
+  "func": "0x9e520",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d10f8",
+  "name": "soloModeCheck",
+  "ret": "i",
+  "args": "a",
+  "func": "0x9eff0",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d1108",
+  "name": "enterSoloMode",
+  "ret": "n",
+  "args": "a",
+  "func": "0x9eef0",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d1118",
+  "name": "exitSoloMode",
+  "ret": "n",
+  "args": "a",
+  "func": "0x9ef70",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d1128",
+  "name": "timerAdd",
+  "ret": "n",
+  "args": "f",
+  "func": "0x98db0",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d1138",
+  "name": "timerStart",
+  "ret": "n",
+  "args": "ffs",
+  "func": "0x9e570",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d1148",
+  "name": "getTimeRemaining",
+  "ret": "f",
+  "args": "",
+  "func": "0x98de0",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d1158",
+  "name": "cameraMove",
+  "ret": "n",
+  "args": "sf",
+  "func": "0x99e40",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d1168",
+  "name": "cameraPan",
+  "ret": "n",
+  "args": "sfs",
+  "func": "0x99eb0",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d1178",
+  "name": "cameraFOV",
+  "ret": "n",
+  "args": "ff",
+  "func": "0x98e30",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d1188",
+  "name": "cameraReset",
+  "ret": "n",
+  "args": "",
+  "func": "0x98e90",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d1198",
+  "name": "cameraFade",
+  "ret": "n",
+  "args": "ff",
+  "func": "0x98ec0",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d11a8",
+  "name": "cameraFocusToEntity",
+  "ret": "n",
+  "args": "affff",
+  "func": "0x9e630",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d11b8",
+  "name": "cameraFocusToEntityYaw",
+  "ret": "n",
+  "args": "affaf",
+  "func": "0x9e710",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d11c8",
+  "name": "cameraShake",
+  "ret": "n",
+  "args": "ff",
+  "func": "0x98f70",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d11d8",
+  "name": "cameraFollowMotionPath",
+  "ret": "n",
+  "args": "sssss",
+  "func": "0x98fd0",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d11e8",
+  "name": "cameraToEntityAngles",
+  "ret": "n",
+  "args": "af",
+  "func": "0x9e940",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d11f8",
+  "name": "cameraToLocationAngles",
+  "ret": "n",
+  "args": "ssf",
+  "func": "0x99fa0",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d1208",
+  "name": "overrideFocusToEntity",
+  "ret": "n",
+  "args": "af",
+  "func": "0x9e9e0",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d1218",
+  "name": "cameraSetClipPlane",
+  "ret": "n",
+  "args": "f",
+  "func": "0x99f50",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d1228",
+  "name": "cameraResetOldSchool",
+  "ret": "n",
+  "args": "",
+  "func": "0x98ea0",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d1238",
+  "name": "codexMenu",
+  "ret": "n",
+  "args": "i",
+  "func": "0x99180",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d1248",
+  "name": "triviaMenu",
+  "ret": "n",
+  "args": "",
+  "func": "0x991e0",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d1258",
+  "name": "reviewLoadScreens",
+  "ret": "n",
+  "args": "",
+  "func": "0x99200",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d1268",
+  "name": "reviewCinematics",
+  "ret": "n",
+  "args": "",
+  "func": "0x99220",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d1278",
+  "name": "reviewComics",
+  "ret": "n",
+  "args": "",
+  "func": "0x99240",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d1288",
+  "name": "reviewConcept",
+  "ret": "n",
+  "args": "",
+  "func": "0x99260",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d1298",
+  "name": "imageViewer",
+  "ret": "n",
+  "args": "s",
+  "func": "0x9a210",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d12a8",
+  "name": "personalItem",
+  "ret": "n",
+  "args": "s",
+  "func": "0x99280",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d12b8",
+  "name": "dangerRoomMenu",
+  "ret": "n",
+  "args": "",
+  "func": "0x992d0",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d12c8",
+  "name": "shopMenu",
+  "ret": "n",
+  "args": "s",
+  "func": "0x9a310",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d12d8",
+  "name": "setGoal",
+  "ret": "n",
+  "args": "a",
+  "func": "0x9ea80",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d12e8",
+  "name": "initHud",
+  "ret": "n",
+  "args": "",
+  "func": "0x992f0",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d12f8",
+  "name": "screenFade",
+  "ret": "n",
+  "args": "ff",
+  "func": "0x98ec0",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d1308",
+  "name": "blackbirdMenu",
+  "ret": "n",
+  "args": "sss",
+  "func": "0x9a370",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d1318",
+  "name": "debug",
+  "ret": "n",
+  "args": "s",
+  "func": "0x2123a0",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d1328",
+  "name": "displayEx",
+  "ret": "n",
+  "args": "sfsfs",
+  "func": "0x2123a0",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d1338",
+  "name": "display",
+  "ret": "n",
+  "args": "s",
+  "func": "0x2123a0",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d1348",
+  "name": "displayHelp",
+  "ret": "n",
+  "args": "s",
+  "func": "0x9a410",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d1358",
+  "name": "createPopupDialog",
+  "ret": "n",
+  "args": "s",
+  "func": "0x99300",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d1368",
+  "name": "createPopupDialogXml",
+  "ret": "n",
+  "args": "s",
+  "func": "0x9ee90",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d1378",
+  "name": "createPopupDialogXmlFilter",
+  "ret": "n",
+  "args": "ss",
+  "func": "0x9eeb0",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d1388",
+  "name": "addPopupDialogOption",
+  "ret": "n",
+  "args": "ss",
+  "func": "0x99390",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d1398",
+  "name": "canCancelDialog",
+  "ret": "n",
+  "args": "s",
+  "func": "0x99350",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d13a8",
+  "name": "showPopupDialog",
+  "ret": "n",
+  "args": "",
+  "func": "0x993e0",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d13b8",
+  "name": "cinematicStart",
+  "ret": "n",
+  "args": "ss",
+  "func": "0x98f10",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d13c8",
+  "name": "cinematicEnd",
+  "ret": "n",
+  "args": "",
+  "func": "0x98f50",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d13d8",
+  "name": "setDangerLevel",
+  "ret": "n",
+  "args": "f",
+  "func": "0x990b0",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d13e8",
+  "name": "missionComplete",
+  "ret": "n",
+  "args": "s",
+  "func": "0x9e850",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d13f8",
+  "name": "missionComplete2",
+  "ret": "n",
+  "args": "",
+  "func": "0x990e0",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d1408",
+  "name": "setallaiactive",
+  "ret": "n",
+  "args": "s",
+  "func": "0x993f0",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d1418",
+  "name": "mission",
+  "ret": "n",
+  "args": "ss",
+  "func": "0x99420",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d1428",
+  "name": "setInCampaign",
+  "ret": "n",
+  "args": "ss",
+  "func": "0x99460",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d1438",
+  "name": "setInventoryCount",
+  "ret": "n",
+  "args": "si",
+  "func": "0x994d0",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d1448",
+  "name": "getInventoryCount",
+  "ret": "i",
+  "args": "s",
+  "func": "0x99530",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d1458",
+  "name": "randomInt",
+  "ret": "i",
+  "args": "ii",
+  "func": "0x99580",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d1468",
+  "name": "objective",
+  "ret": "n",
+  "args": "ss",
+  "func": "0x995d0",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d1478",
+  "name": "getObjective",
+  "ret": "i",
+  "args": "ss",
+  "func": "0x9a0e0",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d1488",
+  "name": "immediateObjective",
+  "ret": "n",
+  "args": "s",
+  "func": "0x9a480",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d1498",
+  "name": "beginSideMission",
+  "ret": "n",
+  "args": "s",
+  "func": "0x9a4f0",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d14a8",
+  "name": "endSideMission",
+  "ret": "n",
+  "args": "s",
+  "func": "0x9a590",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d14b8",
+  "name": "extractionPoint",
+  "ret": "n",
+  "args": "a",
+  "func": "0x9f110",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d14c8",
+  "name": "extractionPointLite",
+  "ret": "n",
+  "args": "asssss",
+  "func": "0x9f4a0",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d14d8",
+  "name": "extractionPointChange",
+  "ret": "n",
+  "args": "ai",
+  "func": "0x9f8f0",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d14e8",
+  "name": "controllersContinue",
+  "ret": "n",
+  "args": "",
+  "func": "0x99640",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d14f8",
+  "name": "saveloadProcess",
+  "ret": "n",
+  "args": "i",
+  "func": "0x99650",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d1508",
+  "name": "saveloadDeleteSuccess",
+  "ret": "n",
+  "args": "",
+  "func": "0x99680",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d1518",
+  "name": "saveloadFormat",
+  "ret": "n",
+  "args": "",
+  "func": "0x2123a0",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d1528",
+  "name": "saveloadCleanUp",
+  "ret": "n",
+  "args": "",
+  "func": "0x99690",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d1538",
+  "name": "saveloadAbort",
+  "ret": "n",
+  "args": "",
+  "func": "0x996a0",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d1548",
+  "name": "saveloadOverwrite",
+  "ret": "n",
+  "args": "i",
+  "func": "0x99730",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d1558",
+  "name": "saveloadLoadOptions",
+  "ret": "n",
+  "args": "",
+  "func": "0x99760",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d1568",
+  "name": "saveloadOvrWriteOpts",
+  "ret": "n",
+  "args": "",
+  "func": "0x99780",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d1578",
+  "name": "saveloadOvrWriteOptsAsk",
+  "ret": "n",
+  "args": "",
+  "func": "0x99770",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d1588",
+  "name": "saveloadSelectDevice",
+  "ret": "n",
+  "args": "i",
+  "func": "0x996b0",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d1598",
+  "name": "saveloadChooseFile",
+  "ret": "n",
+  "args": "i",
+  "func": "0x996d0",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d15a8",
+  "name": "saveloadLoseGameState",
+  "ret": "n",
+  "args": "i",
+  "func": "0x99700",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d15b8",
+  "name": "saveloadDeleteFile",
+  "ret": "n",
+  "args": "i",
+  "func": "0x99790",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d15c8",
+  "name": "saveloadChooseCorrupt",
+  "ret": "n",
+  "args": "",
+  "func": "0x997c0",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d15d8",
+  "name": "saveloadCompleteLoad",
+  "ret": "n",
+  "args": "",
+  "func": "0x997d0",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d15e8",
+  "name": "saveloadDeleteCorrupt",
+  "ret": "n",
+  "args": "",
+  "func": "0x997e0",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d15f8",
+  "name": "saveloadImageCheck",
+  "ret": "n",
+  "args": "",
+  "func": "0x997f0",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d1608",
+  "name": "saveloadSaveConfirmed",
+  "ret": "n",
+  "args": "i",
+  "func": "0x99800",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d1618",
+  "name": "sound",
+  "ret": "n",
+  "args": "sass",
+  "func": "0x9fa00",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d1628",
+  "name": "beginMission",
+  "ret": "n",
+  "args": "s",
+  "func": "0x9a770",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d1638",
+  "name": "beginMissionHack",
+  "ret": "n",
+  "args": "s",
+  "func": "0x9a7e0",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d1648",
+  "name": "restartZone",
+  "ret": "n",
+  "args": "",
+  "func": "0x9a630",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d1658",
+  "name": "endDRScenario",
+  "ret": "n",
+  "args": "",
+  "func": "0x99890",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d1668",
+  "name": "restartMission",
+  "ret": "n",
+  "args": "",
+  "func": "0x9a6e0",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d1678",
+  "name": "viewSparringHighScores",
+  "ret": "n",
+  "args": "",
+  "func": "0x99970",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d1688",
+  "name": "heroNoTarget",
+  "ret": "n",
+  "args": "s",
+  "func": "0x999a0",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d1698",
+  "name": "enemiesNoTarget",
+  "ret": "n",
+  "args": "s",
+  "func": "0x999d0",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d16a8",
+  "name": "removeFromGroup",
+  "ret": "n",
+  "args": "a",
+  "func": "0x9fbd0",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d16b8",
+  "name": "setGroupLeader",
+  "ret": "n",
+  "args": "a",
+  "func": "0x9fcd0",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d16c8",
+  "name": "addHero",
+  "ret": "n",
+  "args": "s",
+  "func": "0x99a00",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d16d8",
+  "name": "startMovie",
+  "ret": "n",
+  "args": "ss",
+  "func": "0x99a30",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d16e8",
+  "name": "loadMap",
+  "ret": "n",
+  "args": "s",
+  "func": "0x9a850",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d16f8",
+  "name": "loadMapAddTeam",
+  "ret": "n",
+  "args": "s",
+  "func": "0x9a8c0",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d1708",
+  "name": "loadZone",
+  "ret": "n",
+  "args": "ss",
+  "func": "0x9a930",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d1718",
+  "name": "lockCombat",
+  "ret": "n",
+  "args": "s",
+  "func": "0x99aa0",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d1728",
+  "name": "lockControls",
+  "ret": "n",
+  "args": "f",
+  "func": "0x99b00",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d1738",
+  "name": "gameover",
+  "ret": "n",
+  "args": "s",
+  "func": "0x99830",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d1748",
+  "name": "magnetoBall",
+  "ret": "n",
+  "args": "as",
+  "func": "0x2123a0",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d1758",
+  "name": "loadDangerRoomCourse",
+  "ret": "n",
+  "args": "s",
+  "func": "0x9faf0",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d1768",
+  "name": "setPartyLightColor",
+  "ret": "n",
+  "args": "sf",
+  "func": "0x9a040",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d1778",
+  "name": "vibrate",
+  "ret": "n",
+  "args": "ssff",
+  "func": "0x9eaf0",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d1788",
+  "name": "damage",
+  "ret": "n",
+  "args": "aai",
+  "func": "0x9fd10",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d1798",
+  "name": "remove",
+  "ret": "n",
+  "args": "aa",
+  "func": "0xa0690",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d17a8",
+  "name": "use",
+  "ret": "n",
+  "args": "aa",
+  "func": "0x9fe40",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d17b8",
+  "name": "openmenu",
+  "ret": "n",
+  "args": "s",
+  "func": "0x9aa10",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d17c8",
+  "name": "mainMenuExit",
+  "ret": "n",
+  "args": "",
+  "func": "0x99b30",
+  "table": "003d0b88"
+ },
+ {
+  "entry": "0x3d5620",
+  "name": "==",
+  "ret": "i",
+  "args": "aa",
+  "func": "0xcc830",
+  "table": "003d5620"
+ },
+ {
+  "entry": "0x3d5630",
+  "name": "!=",
+  "ret": "i",
+  "args": "aa",
+  "func": "0xcc870",
+  "table": "003d5620"
+ },
+ {
+  "entry": "0x3d5640",
+  "name": "<",
+  "ret": "i",
+  "args": "aa",
+  "func": "0xcc8b0",
+  "table": "003d5620"
+ },
+ {
+  "entry": "0x3d5650",
+  "name": ">",
+  "ret": "i",
+  "args": "aa",
+  "func": "0xcc8f0",
+  "table": "003d5620"
+ },
+ {
+  "entry": "0x3d5660",
+  "name": "<=",
+  "ret": "i",
+  "args": "aa",
+  "func": "0xcc930",
+  "table": "003d5620"
+ },
+ {
+  "entry": "0x3d5670",
+  "name": ">=",
+  "ret": "i",
+  "args": "aa",
+  "func": "0xcc990",
+  "table": "003d5620"
+ },
+ {
+  "entry": "0x3d5680",
+  "name": "waittimed",
+  "ret": "w",
+  "args": "f",
+  "func": "0xcc9f0",
+  "table": "003d5620"
+ },
+ {
+  "entry": "0x3d5690",
+  "name": "waitsignal",
+  "ret": "w",
+  "args": "s",
+  "func": "0xcca40",
+  "table": "003d5620"
+ },
+ {
+  "entry": "0x3d56a0",
+  "name": "fadd",
+  "ret": "f",
+  "args": "ff",
+  "func": "0xcca70",
+  "table": "003d5620"
+ },
+ {
+  "entry": "0x3d56b0",
+  "name": "fsub",
+  "ret": "f",
+  "args": "ff",
+  "func": "0xccac0",
+  "table": "003d5620"
+ },
+ {
+  "entry": "0x3d56c0",
+  "name": "fmul",
+  "ret": "f",
+  "args": "ff",
+  "func": "0xccb10",
+  "table": "003d5620"
+ },
+ {
+  "entry": "0x3d56d0",
+  "name": "fdiv",
+  "ret": "f",
+  "args": "ff",
+  "func": "0xccb60",
+  "table": "003d5620"
+ },
+ {
+  "entry": "0x3d56e0",
+  "name": "iadd",
+  "ret": "i",
+  "args": "ii",
+  "func": "0xccbb0",
+  "table": "003d5620"
+ },
+ {
+  "entry": "0x3d56f0",
+  "name": "isub",
+  "ret": "i",
+  "args": "ii",
+  "func": "0xccc00",
+  "table": "003d5620"
+ },
+ {
+  "entry": "0x3d5700",
+  "name": "imul",
+  "ret": "i",
+  "args": "ii",
+  "func": "0xccc50",
+  "table": "003d5620"
+ },
+ {
+  "entry": "0x3d5710",
+  "name": "idiv",
+  "ret": "i",
+  "args": "ii",
+  "func": "0xccca0",
+  "table": "003d5620"
+ }
+]

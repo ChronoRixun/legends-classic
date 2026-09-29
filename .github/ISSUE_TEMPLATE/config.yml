@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: xml2-fix (the engine fixes the port runs with)
+    url: https://github.com/ChronoRixun/xml2-fix/issues
+    about: Controller, display, frame rate, Discord or online problems that also happen in X-Men Legends II.
+  - name: Ultimate Legends (the launcher)
+    url: https://github.com/ChronoRixun/ultimate-legends/issues
+    about: Problems with the launcher itself (installing, updating, the library, settings).

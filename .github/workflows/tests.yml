@@ -1,0 +1,41 @@
+# The tests that need no game data (BUILDER_DESIGN.md 6.1): the synthetic unit tests (disc reading, bundles, the
+# prepare stages on made-up inputs, the builder CLI with a stub pipeline) and the sound kernel's compile + self-check
+# (synthetic audio: kernel vs numpy vs pure Python). Everything that needs the games runs on the developer's PC
+# (BUILDER_DESIGN.md 6.2), never on a CI runner.
+name: tests
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  unit:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.14"        # the Python the builder is frozen with (requirements-freeze.txt)
+          architecture: x64
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      - name: Install the runtime dependencies
+        run: python -m pip install -r requirements.txt
+
+      - name: Unit tests
+        run: python tests/unit/run.py
+
+      - name: Sound kernel (compile + self-check)
+        # Windows: MSVC through vswhere + vcvarsall (windows-latest has Visual Studio with the C++ tools);
+        # Linux: cc. Exit 1 when the library fails adpcm_c's self-check against numpy and the pure-Python codecs.
+        run: python tools/build_sound_kernel.py
