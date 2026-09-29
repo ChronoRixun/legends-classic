@@ -71,6 +71,12 @@ port needs (`--no-ini` leaves the file alone; the keys are in `_build\stamp.json
 The release zip is not code-signed yet, so Windows SmartScreen or an antivirus may warn about it: compare the
 SHA-256 with the release page, or build it yourself from source ([docs/BUILDING.md](docs/BUILDING.md)).
 
+### First start
+
+The first time the game starts, Windows 10 or 11 may ask to install **DirectPlay**, an old Windows component that
+Windows' own compatibility list requests for X-Men Legends II. Either answer works: *Install this feature* (once, from
+Windows Update) stops the question, and *Skip this installation* lets the game start without it.
+
 ### What the build does
 
 1. **Checks your inputs.** The disc image must be X-Men Legends for Xbox (title id `4156001E`) and complete; XML2
@@ -99,12 +105,16 @@ Verified in game on the developer's PC (mostly by automated runs that drive the 
 - **The first game's front end**: main menu, Danger Room, Review (load screens, cinematics), credits.
 - **Movies and music**, including the first game's layered music.
 - **Display** (xml2-fix): borderless or windowed at your desktop's resolution.
+- **A clean Windows 11** (Windows Sandbox: no Python, nothing preinstalled): the released builder made the game from a
+  disc image in about 6.5 minutes and verified every file; a new game there played from the intro through several
+  zones. The files matched the developer's own builds one for one.
 
 Known limitations:
 
 - Key bindings and display settings are shared with X-Men Legends II (both read the same Windows registry key);
   saves are separate.
-- Online play is not supported for the port yet: port games and X-Men Legends II games would meet in the same lobby.
+- Online play (*Play Online*) is X-Men Legends II's, through the [OpenSpy](https://openspy.net) servers; port games
+  only list other port games. Tested between two copies of the game against a test server, not yet over the internet.
 - Local co-op on controllers should work (it is X-Men Legends II's) but has had little testing.
 - Open bugs and play-test notes: [issues](https://github.com/ChronoRixun/legends-classic/issues) and
   `research/campaign/late_game_test.md`.
