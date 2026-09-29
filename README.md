@@ -48,7 +48,8 @@ your saves stay.
 ### Standalone: the `xml1-builder` release zip
 
 Download `xml1-builder-<version>-win64.zip` from [Releases](https://github.com/ChronoRixun/legends-classic/releases)
-(check it against `SHA256SUMS.txt`), unzip it anywhere and run it from a command prompt:
+(check it against `SHA256SUMS.txt`), unzip it into a folder of its own (the zip has no top-level folder) and run it
+from a command prompt:
 
 ```
 xml1-builder info    --iso "D:\Images\X-Men Legends.iso" --xml2 "C:\Games\X-Men Legends II"
@@ -132,7 +133,8 @@ Known limitations:
 | | packaging and CI (frozen Windows build, synthetic tests, the content guard) | done |
 | | the launcher's setup wizard and game page | in progress |
 | | this public repository | done |
-| | release testing on clean PCs, then a public beta | next |
+| | release testing on a clean PC (Windows Sandbox) | done |
+| | the launcher release with the port entry, then a public beta | next |
 | later | online play kept apart from X-Men Legends II's; settings separate from X-Men Legends II's; compressed disc images | ideas |
 
 ## Repository layout
@@ -176,6 +178,10 @@ X-Men Legends and X-Men Legends II were made by Raven Software (the PC version o
 published by Activision; this project exists because those games are worth playing. Engine fixes:
 [xml2-fix](https://github.com/ChronoRixun/xml2-fix). Launcher: [Ultimate Legends](https://github.com/ChronoRixun/ultimate-legends).
 Built with Python, numpy and PyInstaller. Project: [ChronoRixun](https://github.com/ChronoRixun).
+
+The reverse engineering, the pipeline and these notes were made by one person working with Claude (Opus 5.5 and
+Fable 5.1) over a few days; the commit trailers and the research notes show that work as it happened. It is meant as
+a showcase of what people and AI can do together on preservation work.
 
 ## License and disclaimer
 
