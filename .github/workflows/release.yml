@@ -91,6 +91,11 @@ jobs:
     permissions:
       contents: write           # only this job can create the release
     steps:
+      - uses: actions/checkout@v7            # CHANGELOG.md for the notes (the job has no tree otherwise)
+        with:
+          sparse-checkout: CHANGELOG.md
+          sparse-checkout-cone-mode: false
+
       - uses: actions/download-artifact@v8
         with:
           name: xml1-builder
