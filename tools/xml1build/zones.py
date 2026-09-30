@@ -78,6 +78,7 @@ PRECACHE_PATH_TYPES = frozenset({'motionpath', 'conversation', 'dialog', 'fx', '
 LINK_ATTRS = ('nextzone', 'prevzone')
 CORE_KINDS = frozenset({'characters', 'zonexml', 'nav'})
 XML_KINDS = frozenset({'xml', 'xml_resident'})
+HERO_STYLE_PREFIX = 'data/powerstyles/x1_ps_'      # a playable hero's power style (heroes.py; section 28)
 # world attributes never carried over from a replaced XML2 zone (geometry/sound/script are XML1's)
 BASE_WORLD_SKIP = frozenset({'name', 'extent_min', 'extent_max', 'zonescript', 'soundfile'})
 # XML1 items appended to XML2's items table (only the ones converted content names in inventoryitem) keep only
@@ -529,6 +530,8 @@ class Zones:
         self.char_entries = collections.defaultdict(set)        # (kind, fn) -> packages listing it
         self.loading_numeric = collections.defaultdict(set)     # mapped numeric loading texture -> users
         self.pkgs = {}                                          # PKGB rel -> [(kind, fn)]
+        self.hero_style_zones = {}                              # hero -> zones whose package carries his style (s.28)
+        self._playable = None                                   # lower-case playable hero names, on first use
         self.music = {}
         self._effect_refs, self._data_refs, self._script_lits, self._script_ok = {}, {}, {}, {}
         self._script_text = {}
@@ -668,6 +671,18 @@ class Zones:
         data = (ctx.out / res.out_rels[0]).read_bytes()
         ctx.write_bytes(engb, data, source='zones:shadow', replace=True)
         self.counts['engb_shadow_fixed'] += 1
+
+    def hero_of_style(self, entry):
+        """the lower-case hero name when a mapped package entry is a playable hero's power style
+        ('fightstyle', 'data/powerstyles/x1_ps_<hero>'), else None (section 28)."""
+        kind, fn = entry
+        if kind != 'fightstyle' or not fn.startswith(HERO_STYLE_PREFIX):
+            return None
+        hero = fn[len(HERO_STYLE_PREFIX):]
+        if self._playable is None:
+            from . import heroes as H                          # local import: heroes imports nothing of zones
+            self._playable = frozenset(h.lower() for h in H.hero_plan(self.ctx)['heroes'])
+        return hero if hero in self._playable else None
 
     def char_entry(self, kind, x1_rel):
         """(kind, mapped filename) for character-namespace entries (files owned by the characters module)."""
@@ -1680,6 +1695,14 @@ class Zones:
                     if ze:
                         pkg.add(*ze)
                     continue
+                # section 28: a playable hero's power style in a zone package (XML1 precaches it for the zone's NPC
+                # copy of the hero: Cyclops in nyc1_1_2b / nyc1_1_3, ...) needs the hero's talents registered first,
+                # as in his own character package - a style registered while its talents are unknown binds no
+                # powers, and a save loaded in that zone registers the zone package before the party's packages
+                hero = self.hero_of_style(ce)
+                if hero and pkg.add('xml_talents', f'data/talents/{hero}'):
+                    self.counts['hero_talents_before_zone_style'] += 1
+                    self.hero_style_zones.setdefault(hero, []).append(zone)
                 pkg.add(*ce)
                 self.char_entries[ce].add(where)
                 continue
@@ -2561,6 +2584,11 @@ def run(ctx):
     ctx.shared['zones_converted'] = list(Z.converted)
     ctx.shared['zones_skipped'] = {**Z.skipped, **Z.frontend}
     ctx.shared['zone_info'] = Z.zone_info
+    if Z.hero_style_zones:                                                               # section 28
+        ctx.set_count('hero_talents_before_zone_style', Z.counts.get('hero_talents_before_zone_style', 0))
+        ctx.note('hero power styles in zone packages (XML1 precaches them for NPC copies of heroes) now list the '
+                 "hero's talents first, so a save loaded there still binds the hero's powers: "
+                 + ', '.join(f'{h} ({len(zs)})' for h, zs in sorted(Z.hero_style_zones.items())))
     ctx.shared['zone_animdbs'] = Z.zone_animdbs                                          # section 16
     lost = sorted(z for z, r in Z.zone_animdbs.items() if r['status'] == 'lost')
     ctx.set_count('zone_animdb_zones', sum(1 for r in Z.zone_animdbs.values() if r['status'] != 'lost'))

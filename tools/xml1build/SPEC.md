@@ -3233,3 +3233,37 @@ from source too, and `build_equiv` drops the builder's `created` / `finished` / 
 `release.yml` (windows-latest: requirements-freeze.txt, the tag = `v<VERSION>` check, optional bootloader from
 source, unit tests, the kernel, `freeze_builder.py --smoke`, the smoke tests again on the zip unpacked with `tar.exe`,
 artifact; on `v*` a separate `contents: write` job publishes the release). `tests/unit`: 52 tests.
+
+## 28. Zone packages that carry a playable hero's power style (2026-09-29, Cyclops's empty power wheel)
+
+**Symptom (Owen, first public play-through).** Cyclops joined at nyc1_1_3, the game was saved and loaded there, a
+point went into Optic Beam - and the power wheel stayed empty for Cyclops (assigning the power changed nothing);
+Wolverine's powers were fine. One zone later (nyc1_1_4) Cyclops had his power.
+
+**Cause.** XML1's zone bundles precache a playable hero's power style for the zone's NPC copy of that hero:
+`data/powerstyles/x1_ps_cyclops` in nyc1_1_2b, nyc1_1_3, mag_nyc3, mag_nyc4 and blackbird_arbiter, `x1_ps_gambit`
+in sewers1_2_4, `x1_ps_colossus` in nuke2_2, `x1_ps_wolverine` in wx2_2 and blackbird_arbiter, `x1_ps_phoenix` /
+`x1_ps_storm` in blackbird_arbiter. XML2 never does this (no retail zone package lists a hero's `ps_*`; its NPC
+copies use NPC styles). XMen2.exe resolves a style's talent references when the style is registered (heroes.py
+section: unregistered talentvalue -> literal 0, unknown `require` talent -> never satisfied), registers a style
+once per zone load, and loads a *saved game's* zone package before the party's character packages. So in those
+zones a load registers the hero's style with his talents unknown, his own package's `xml_talents` comes too late,
+and his power slots bind nothing until the next zone. A join reload (character packages first) and a plain zone
+transition don't hit it - which is why the earlier in-game join test passed.
+
+**Fix (`zones.build_package`, `hero_of_style`).** When a zone package entry is a playable hero's style
+(`data/powerstyles/x1_ps_<hero>`, hero in `heroes.hero_plan(ctx)['heroes']`), the package lists `xml_talents
+data/talents/<hero>` immediately before it - the same rule heroes.py enforces inside character packages (XML2
+retail: `xml_talents` before every fightstyle, 380/380). `Pkg.add` keeps one entry per file, so a hero already in
+the party registers his talents once. Counts: `hero_talents_before_zone_style` (12 entries in 10 packages);
+`zones_detail.json` `hero_style_zones`. CONTENT_VERSION 2 -> 3.
+
+**Verified in game 2026-09-29 23:40 (build/_pwr, pipe pwr, scratchpad pwr_drive.py).** Cyclops seated first with
+Wolverine in nyc1_1_3, a level with auto-spent points (two wheel slots filled), `savegame` through the Save menu
+(saveslot0), then a FRESH XMen2.exe: main menu -> Load Game -> the slot -> nyc1_1_3: the wheel shows both powers.
+Negative control on the same save: the zone's package re-encoded with the `xml_talents` line removed (the old
+order) -> the same fresh load -> all four wheel slots EMPTY, Cyclops still level 5. Package restored afterwards.
+
+**Open.** Whether the hero's talents registered by a zone package while he is *not* in the party count against
+the engine's 100-talent registry (SPEC_heroes; blackbird_arbiter lists four heroes' styles) - to check in game with a
+party that isn't those four. Owen also doubts Optic Beam's damage; measured separately.

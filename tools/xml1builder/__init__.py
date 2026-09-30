@@ -31,14 +31,17 @@ Frozen (BUILDER_DESIGN.md 3.2; SPEC.md 27.13): xml1-builder.spec here, driven by
 check, packaged tables, PyInstaller one folder, content guard over the bundled data, the release zip and the
 launcher's xml1-builder.json) and tested by tools/freeze_smoke.py; CI: .github/workflows/release.yml.
 """
-VERSION = '0.1.0'                 # the builder release (semver; the launcher compares it with the release manifest)
-CONTENT_VERSION = 2               # bumped only when a build's output changes (a rebuild is offered to players)
+VERSION = '0.1.1'                 # the builder release (semver; the launcher compares it with the release manifest)
+CONTENT_VERSION = 3               # bumped only when a build's output changes (a rebuild is offered to players)
 SCHEMA = 1                        # the event schema (the "v" of the hello event)
 MIN_LAUNCHER = '0.0.0'            # release manifest min_launcher: no minimum until the first launcher release with the
                                   # X-Men Legends entry is tagged (then that version; tools/freeze_builder.py)
 PROJECT = 'Legends Classic'
 REPO = 'ChronoRixun/legends-classic'
 ISSUES_URL = f'https://github.com/{REPO}/issues'
+# the notice --help, --version and every log header print (LEGAL.md; two lines, plain ASCII)
+DISCLAIMER = ('Unofficial fan tool; not affiliated with or endorsed by Marvel, Disney, Activision or Raven Software.',
+              'Uses only copies you own: it ships no game content, uploads nothing and makes no network connections.')
 # the notice --help, --version and every log header print (LEGAL.md; two lines, plain ASCII)
 DISCLAIMER = ('Unofficial fan tool; not affiliated with or endorsed by Marvel, Disney, Activision or Raven Software.',
               'Uses only copies you own: it ships no game content, uploads nothing and makes no network connections.')

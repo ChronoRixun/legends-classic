@@ -105,6 +105,9 @@ jobs:
           {
             echo "Legends Classic builder $TAG (content version $content)."
             echo
+            # this tag's section of CHANGELOG.md (from its "## $TAG" heading to the next "## "), if there is one
+            awk -v tag="$TAG" '/^## /{p = index($0, "## " tag " ") == 1 || $0 == "## " tag} p' CHANGELOG.md 2>/dev/null | tail -n +2
+            echo
             echo "The Ultimate Legends launcher installs and runs it for you. Standalone use: unzip, then run"
             echo "\`xml1-builder.exe --help\`. It contains no game data: it builds X-Men Legends from your own Xbox disc"
             echo "image and your own X-Men Legends II install, and makes no network calls."
@@ -114,5 +117,13 @@ jobs:
             cat dist/SHA256SUMS.txt
             echo '```'
           } > notes.md
-          gh release create "$TAG" dist/xml1-builder-*-win64.zip dist/xml1-builder.json dist/SHA256SUMS.txt \
-            --repo "$GITHUB_REPOSITORY" --title "xml1-builder $TAG" --notes-file notes.md
+          # the tag may already carry a release (one made on the GitHub page, which is also how the tag gets pushed
+          # from a phone): then the assets are added to it and its notes replaced; otherwise the release is created
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release upload "$TAG" dist/xml1-builder-*-win64.zip dist/xml1-builder.json dist/SHA256SUMS.txt \
+              --repo "$GITHUB_REPOSITORY" --clobber
+            gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --title "xml1-builder $TAG" --notes-file notes.md
+          else
+            gh release create "$TAG" dist/xml1-builder-*-win64.zip dist/xml1-builder.json dist/SHA256SUMS.txt \
+              --repo "$GITHUB_REPOSITORY" --title "xml1-builder $TAG" --notes-file notes.md
+          fi

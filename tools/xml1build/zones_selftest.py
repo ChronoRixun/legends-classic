@@ -28,8 +28,22 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parent))
 
 from xml1build import common as C          # noqa: E402
+from xml1build.zones import HERO_STYLE_PREFIX   # noqa: E402  (section 28)
 
 FAIL = collections.defaultdict(list)
+_PLAYABLE = {}
+
+
+def playable_heroes(out):
+    """the build's playable hero names (lower case), from heroes' own record (_build/heroes_detail.json)."""
+    key = str(out)
+    if key not in _PLAYABLE:
+        try:
+            rec = json.loads((Path(out) / '_build' / 'heroes_detail.json').read_text(encoding='utf-8'))
+            _PLAYABLE[key] = frozenset(h.lower() for h in rec.get('heroes', {}))
+        except (OSError, ValueError):
+            _PLAYABLE[key] = frozenset()
+    return _PLAYABLE[key]
 INFO = collections.Counter()
 # research/sweep/zones.json: 20 prevzone values point nowhere + 1 ambiguous (demo/deck/arb_fd1 'arb_fd2')
 KNOWN_UNRESOLVED_PREVZONE = 21
@@ -250,6 +264,17 @@ def main(argv=None):
         # the zone script / every script entry must be listed
         if w is not None and w.get('zonescript') and ('script', f'scripts/{w.get("zonescript")}') not in ents:
             fail('B_pkg_zonescript_not_listed', z)
+        # section 28: a playable hero's power style in the package lists his talents first (Cyclops's empty wheel);
+        # villains' x1_ps_* styles (Toad, Juggernaut, ...) are not heroes and stay as XML1 listed them
+        for i, (k, f) in enumerate(ents):
+            if k == 'fightstyle' and f.startswith(HERO_STYLE_PREFIX):
+                hero = f[len(HERO_STYLE_PREFIX):]
+                if hero not in playable_heroes(out):
+                    continue
+                if ('xml_talents', f'data/talents/{hero}') in ents[:i]:
+                    INFO['pkg_hero_styles_with_talents_first'] += 1
+                else:
+                    fail('B_pkg_hero_style_before_talents', f'{z}: {f} (section 28)')
     INFO['prevzone_unresolved'] = unresolved_prev
     if unresolved_prev > KNOWN_UNRESOLVED_PREVZONE:
         fail('B_prevzone_unresolved', f'{unresolved_prev} > {KNOWN_UNRESOLVED_PREVZONE}')

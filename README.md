@@ -111,12 +111,12 @@ Verified in game on the developer's PC (mostly by automated runs that drive the 
   disc image in about 6.5 minutes and verified every file; a new game there played from the intro through several
   zones. The files matched the developer's own builds one for one.
 
-Known bugs in builder 0.1.0 (fixed on `main`, in the next builder release; the launcher offers the rebuild):
+Fixed in builder 0.1.1 (content version 3; the launcher offers the rebuild, or run `xml1-builder build` again -
+see [CHANGELOG.md](CHANGELOG.md)):
 
-- **A hero's powers vanish from the power wheel after loading a save in a few zones**: nyc1_1_3 and 1_1_2b
-  (Cyclops), the two Danger Room flashback zones with Cyclops, the sewer hub zone where Gambit is met, nuke2_2
-  (Colossus) and the Blackbird arbiter zone. Leaving the zone brings them back; nothing is lost. Cause: those zones
-  precache the hero's power style for an NPC copy of him ahead of his talents.
+- **Builder 0.1.0: a hero's powers vanished from the power wheel after loading a save in a few zones** (nyc1_1_3
+  and 1_1_2b for Cyclops, the two Danger Room flashback zones with him, the sewer hub zone where Gambit is met,
+  nuke2_2 for Colossus, the Blackbird arbiter zone). Leaving the zone brought them back; nothing was lost.
 
 Known limitations:
 
@@ -142,7 +142,7 @@ Known limitations:
 | | the launcher's setup wizard and game page | done |
 | | this public repository, the community Discord | done |
 | | release testing on a clean PC (Windows Sandbox): the builder alone, and the launcher's one-click setup | done |
-| M4 | **Public test period**: the fixes the play-throughs turn up (builder 0.1.1: the power-wheel bug above), then a balance pass (melee versus powers against the first game's enemy values) | now |
+| M4 | **Public test period**: the fixes the play-throughs turn up (0.1.1: the power-wheel bug above), then a balance pass (melee versus powers against the first game's enemy values) | now |
 | later | settings separate from X-Men Legends II's; compressed disc images; online play across the internet tested | ideas |
 
 ## Repository layout
