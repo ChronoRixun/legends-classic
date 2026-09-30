@@ -162,7 +162,10 @@ python -m xml1builder build --iso <your disc image> --xml2 <your XML2 folder> --
 
 Tests, the developer build, the harness and freezing the exe: [docs/BUILDING.md](docs/BUILDING.md).
 
-## Contributing and bug reports
+## Community, contributing and bug reports
+
+- **Discord**: [discord.gg/tFxwHtZv8k](https://discord.gg/tFxwHtZv8k) - help with setting up, bug reports, finding people for
+  co-op. The same rule as here: no game files, disc images or links to them.
 
 - **Bug reports**: use the issue form. It asks for the builder version, `_build\verify-report.json` and the end of
   `_build\builder.log`: file names, sizes, hashes and error codes, nothing from the games. Never attach the disc

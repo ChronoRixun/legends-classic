@@ -13,7 +13,7 @@ disc image you made from your own *X-Men Legends* Xbox disc and your own install
 Apocalypse* for PC - and they convert those files on your own computer. Nothing is uploaded, and the builder makes no
 network connections. You are responsible for following the laws that apply where you live.
 
-**Please don't share game files.** Issues, pull requests, discussions and the community Discord must not contain or
+**Please don't share game files.** Issues, pull requests, discussions and the [community Discord](https://discord.gg/tFxwHtZv8k) must not contain or
 link to game files, disc images, ROMs or modified game executables; such posts are removed. This project will never
 link to places that offer them.
 
