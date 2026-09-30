@@ -11,10 +11,11 @@ It is a builder, not a download: every file of the result is made on your comput
 This project ships no game content - no game files, no parts of them, no modified executables - and the builder
 makes no network connections.
 
-> **Status: first public test builds.** Every mission and the ending run in automated tests on the developer's PC
-> (a full hand-played run is in progress), and the
-> builder (`xml1-builder`) makes that build from a disc image and an X-Men Legends II install in a few minutes. The
-> launcher's one-click setup for it is being finished. See [Status](#status).
+> **Status: first public test builds (builder 0.1.0, launcher 0.1.0).** Every mission and the ending run in automated
+> tests on the developer's PC (a full hand-played run is under way), the builder (`xml1-builder`) makes that build
+> from a disc image and an X-Men Legends II install in a few minutes, and the
+> [Ultimate Legends](https://github.com/ChronoRixun/ultimate-legends) launcher does it in a few clicks. Known bugs
+> and what is next: [Status](#status). Help and bug reports: the [community Discord](https://discord.gg/tFxwHtZv8k).
 
 ## What you need
 
@@ -31,8 +32,8 @@ makes no network connections.
 
 ### With the Ultimate Legends launcher (recommended)
 
-[Ultimate Legends](https://github.com/ChronoRixun/ultimate-legends) installs and runs the builder for you (the port
-entry ships with the launcher's next release):
+[Ultimate Legends](https://github.com/ChronoRixun/ultimate-legends) (0.1.0 or later; a portable zip, no install)
+downloads the builder, runs it and installs xml2-fix for you:
 
 1. Set up **X-Men Legends II** in the launcher as usual (it installs xml2-fix).
 2. Open **X-Men Legends - community port** in the library and choose **Set up**.
@@ -100,7 +101,7 @@ Verified in game on the developer's PC (mostly by automated runs that drive the 
 - **The whole campaign, in automated runs**: the opening, every mission start (73) with the party the first game used
   (forced parties, flashbacks with their fixed heroes and costumes, heroes joining mid-level), the ending chain (the
   final bosses' defeats triggered by script), the credits and back to the main menu; a 154-zone tour in one session
-  without a crash. A full hand-played run is in progress.
+  without a crash. A full hand-played run is under way (act 1 so far).
 - **The first game's heroes** with their own stats, powers (64 of 64 fire), unlock points and level curve (its
   45-level table, via xml2-fix), and its enemies with their own damage and energy values.
 - **The first game's front end**: main menu, Danger Room, Review (load screens, cinematics), credits.
@@ -109,6 +110,13 @@ Verified in game on the developer's PC (mostly by automated runs that drive the 
 - **A clean Windows 11** (Windows Sandbox: no Python, nothing preinstalled): the released builder made the game from a
   disc image in about 6.5 minutes and verified every file; a new game there played from the intro through several
   zones. The files matched the developer's own builds one for one.
+
+Known bugs in builder 0.1.0 (fixed on `main`, in the next builder release; the launcher offers the rebuild):
+
+- **A hero's powers vanish from the power wheel after loading a save in a few zones**: nyc1_1_3 and 1_1_2b
+  (Cyclops), the two Danger Room flashback zones with Cyclops, the sewer hub zone where Gambit is met, nuke2_2
+  (Colossus) and the Blackbird arbiter zone. Leaving the zone brings them back; nothing is lost. Cause: those zones
+  precache the hero's power style for an NPC copy of him ahead of his talents.
 
 Known limitations:
 
@@ -124,18 +132,18 @@ Known limitations:
 
 | | Milestone | State |
 |---|---|---|
-| M1 | Playable start to finish | done in automated runs; hand-played run in progress |
+| M1 | Playable start to finish | done in automated runs; hand-played run under way |
 | M2 | Faithful: the first game's front end, Danger Room, parties, level curve, enemy values | done, polishing |
-| M3 | **Shippable** | in progress |
+| M3 | **Shippable** | done: builder 0.1.0 and launcher 0.1.0 released 2026-09-29 |
 | | build everything from the disc image on the player's PC (the prepare stages) | done |
 | | fast sound conversion (a compiled encoder; first build in minutes) | done |
 | | the `xml1-builder` program (info / build / verify / clean, progress, cancel and resume) | done |
 | | packaging and CI (frozen Windows build, synthetic tests, the content guard) | done |
-| | the launcher's setup wizard and game page | in progress |
-| | this public repository | done |
-| | release testing on a clean PC (Windows Sandbox) | done |
-| | the launcher release with the port entry, then a public beta | next |
-| later | online play kept apart from X-Men Legends II's; settings separate from X-Men Legends II's; compressed disc images | ideas |
+| | the launcher's setup wizard and game page | done |
+| | this public repository, the community Discord | done |
+| | release testing on a clean PC (Windows Sandbox): the builder alone, and the launcher's one-click setup | done |
+| M4 | **Public test period**: the fixes the play-throughs turn up (builder 0.1.1: the power-wheel bug above), then a balance pass (melee versus powers against the first game's enemy values) | now |
+| later | settings separate from X-Men Legends II's; compressed disc images; online play across the internet tested | ideas |
 
 ## Repository layout
 
