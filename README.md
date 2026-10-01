@@ -11,7 +11,7 @@ It is a builder, not a download: every file of the result is made on your comput
 This project ships no game content - no game files, no parts of them, no modified executables - and the builder
 makes no network connections.
 
-> **Status: first public test builds (builder 0.1.0, launcher 0.1.0).** Every mission and the ending run in automated
+> **Status: first public test builds (builder 0.1.2, launcher 0.1.0).** Every mission and the ending run in automated
 > tests on the developer's PC (a full hand-played run is under way), the builder (`xml1-builder`) makes that build
 > from a disc image and an X-Men Legends II install in a few minutes, and the
 > [Ultimate Legends](https://github.com/ChronoRixun/ultimate-legends) launcher does it in a few clicks. Known bugs
@@ -111,12 +111,17 @@ Verified in game on the developer's PC (mostly by automated runs that drive the 
   disc image in about 6.5 minutes and verified every file; a new game there played from the intro through several
   zones. The files matched the developer's own builds one for one.
 
-Fixed in builder 0.1.1 (content version 3; the launcher offers the rebuild, or run `xml1-builder build` again -
-see [CHANGELOG.md](CHANGELOG.md)):
+Fixed in later builders (the launcher offers the rebuild when the content version rises, or run
+`xml1-builder build` again - see [CHANGELOG.md](CHANGELOG.md)):
 
-- **Builder 0.1.0: a hero's powers vanished from the power wheel after loading a save in a few zones** (nyc1_1_3
-  and 1_1_2b for Cyclops, the two Danger Room flashback zones with him, the sewer hub zone where Gambit is met,
-  nuke2_2 for Colossus, the Blackbird arbiter zone). Leaving the zone brought them back; nothing was lost.
+- **Builder 0.1.2 (content version 4): the first game's gun soldiers fired blanks** - the GRSO rifles, lasers,
+  lightning and nullifier guns, the HAARP soldiers and flamethrowers, the pistol thugs did no damage and showed no
+  tracer, sound or flame (the flamethrower's flame was invisible). They now fire, hit and are drawn, with the first
+  game's damage numbers; expect the HAARP exterior to be harder than it was.
+- **Builder 0.1.1 (content version 3): a hero's powers vanished from the power wheel after loading a save in a few
+  zones** (nyc1_1_3 and 1_1_2b for Cyclops, the two Danger Room flashback zones with him, the sewer hub zone where
+  Gambit is met, nuke2_2 for Colossus, the Blackbird arbiter zone). Leaving the zone brought them back; nothing was
+  lost.
 
 Known limitations:
 
@@ -142,7 +147,7 @@ Known limitations:
 | | the launcher's setup wizard and game page | done |
 | | this public repository, the community Discord | done |
 | | release testing on a clean PC (Windows Sandbox): the builder alone, and the launcher's one-click setup | done |
-| M4 | **Public test period**: the fixes the play-throughs turn up (0.1.1: the power-wheel bug above), then a balance pass (melee versus powers against the first game's enemy values) | now |
+| M4 | **Public test period**: the fixes the play-throughs turn up (0.1.1: the power-wheel bug above; 0.1.2: the silent gun soldiers), then a balance pass (melee versus powers against the first game's enemy values) | now |
 | later | settings separate from X-Men Legends II's; compressed disc images; online play across the internet tested | ideas |
 
 ## Repository layout

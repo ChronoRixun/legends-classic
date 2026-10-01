@@ -3,6 +3,16 @@
 The builder's releases, newest first. The version is `xml1-builder --version`; the content version is what a
 build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebuild.
 
+## v0.1.2 - content version 4
+
+- **Fixed: X-Men Legends' gun soldiers fired blanks** (the GRSO mp5, laser, lightning, nullifier, freeze and
+  knockback guns, the HAARP soldiers and flamethrowers, the pistol thugs): no tracer, no sound, no damage, and the
+  flamethrower's flame was invisible. XML1 arms a soldier through a weapon table the XML2 engine does not have (its
+  `weapon_fire` event is a sound event there), and XML2's AI only fires moves marked for it. Each weapon's damage,
+  range, tracer, impact, muzzle flash and sounds are now written into a copy of the soldier's power style, and the
+  moves carry the AI marking (SPEC section 29). Reported from the HAARP exterior; verified in game with the
+  health bar.
+
 ## v0.1.1 - content version 3
 
 - **Fixed: a hero's powers vanished from the power wheel after loading a save in some zones** (nyc1_1_2b and

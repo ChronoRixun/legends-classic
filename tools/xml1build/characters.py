@@ -48,6 +48,7 @@ from pathlib import Path
 from . import common as C
 from . import combat_events as CE
 from . import npc_values as NV       # SPEC 24: XML1 value codes in the styles, the NPC energy pool
+from . import weapons as W           # SPEC 29: XML1 weapon definitions as style triggers (variant styles)
 from . import scripts_transform as ST
 from .lib import x1names as N   # the XML1 namespace (was research/characters/x1names.py)
 
@@ -332,6 +333,7 @@ class _Builder:
         self.npc_powerups = {}      # x1 style rel -> (Counter, report) of heroes.convert_npc_powerups (SPEC 22.7)
         self.x1_values = None       # heroes.Values of XML1's data/values.xml (loaded on the first style)
         self.npc_codes = {}         # x1 style rel -> (Counter, problems) of npc_values.resolve_style (SPEC 24)
+        self.weapon_reports = {}    # variant style name -> (weapon, x1 style, weapons.apply counts) (SPEC 29)
         self.igb_renamed = 0
         self.import_stats = {}
         self.x1_weapons = {}
@@ -576,6 +578,46 @@ class _Builder:
             self.styles[key] = result
         return result
 
+    def weapon_style(self, x1_style, weapon, weapon_name):
+        """SPEC 29: the variant of XML1 powerstyle `x1_style` armed with `weapon` (a data/weapons/weapons.eng
+        entry): data/powerstyles/x1_<style>_<weapon>, the XML1 style with its weapon_fire triggers replaced by
+        the weapon's own (weapons.apply) and then patched like every style (value codes resolved). Returns the
+        variant's name, or None when the XML1 style does not exist."""
+        ctx = self.ctx
+        lname = x1_style.lower()
+        mapped = C.map_powerstyle(lname)
+        name = W.variant_name(mapped, weapon_name)
+        key = ('powerstyles', name)
+        with self.lock:
+            if key in self.styles:
+                return self.styles[key]
+        rel = next((r for r in (f'data/powerstyles/{lname}.eng', f'data/powerstyles/{lname}.xml') if ctx.x1_path(r)),
+                   None)
+        result = name
+        if rel is None or ctx.x1_is_empty(rel):
+            ctx.error(f'data/powerstyles/{x1_style}: weapon {weapon_name} needs it but the XML1 disc has no '
+                      f'usable copy')
+            result = None
+        else:
+            def patch(root, r=rel, w=weapon, nm=name):
+                rep = W.apply(root, w, where=nm)
+                with self.lock:
+                    self.weapon_reports[nm] = (weapon_name, lname, dict(rep))
+                self._style_patch(root, r)
+            res = ctx.import_x1_asset(rel, out_rel_noext=f'Data/powerstyles/{name}', patch=patch,
+                                      patch_key=f'{PATCH_STYLE}.weapon.{weapon_name.lower()}')
+            if not res.ok:
+                ctx.error(f'{rel}: weapon variant {name} import failed ({res.status})')
+                result = None
+            else:
+                with self.lock:
+                    self.styles_written[('powerstyles', name)] = rel
+                self._record('powerstyles', rel, res.out_rels)
+                ctx.count('weapon_styles_written')
+        with self.lock:
+            self.styles[key] = result
+        return result
+
     # ---------------------------------------------------------------- talents
     def load_talents(self):
         ctx = self.ctx
@@ -648,6 +690,16 @@ class _Builder:
             C.map_tree_refs(root)
             if rewrite is not None:
                 rewrite(self.ctx, root, n)
+            if n.startswith('data/entities/'):
+                # SPEC 29 / 24: a projectile entity's damage / knockback codes (ice_bullet L3, bullet_time K10)
+                # read as 0 on XMen2.exe like a style's; resolved to XML1's numbers the same way
+                from . import heroes as H
+                with self.lock:
+                    if self.x1_values is None:
+                        self.x1_values = H.Values(self.ctx.read_x1_xml('data/values.xml'))
+                codes = NV.resolve_style(root, self.x1_values, f'{n.rsplit("/", 1)[-1]}:')
+                with self.lock:
+                    self.npc_codes[C.norm(n)] = codes
         return patch
 
     def _model_ok(self, model, why):
@@ -962,6 +1014,13 @@ class _Builder:
                 ps = self.style('powerstyles', weapon['powerstyle'])
                 if ps:
                     new.set('powerstyle', ps)
+            if (weapon.get('type') or '').lower() in W.WEAPON_TYPES:
+                # SPEC 29: a gun fires through the style; the variant carries this weapon's triggers
+                base = a.get('powerstyle') or weapon.get('powerstyle') or ''
+                vs = self.weapon_style(base, weapon, weapon_name) if base else None
+                if vs:
+                    new.set('powerstyle', vs)
+                    ctx.count('weapon_styles_used')
             self.detail['notes'].append(f"{name}: XML1 weapon {weapon_name} -> BoltOn {b['model']} "
                                         f"(XML2's stats parser accepts and ignores 'weapon', XMen2.exe 0x4ba383)")
             ctx.count('weapons_to_bolton')

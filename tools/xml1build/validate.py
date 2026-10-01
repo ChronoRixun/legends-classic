@@ -1203,6 +1203,12 @@ class Validator:
                 continue
             want = fn(src)
             have = (el.get(attr) or '').strip()
+            if attr == 'powerstyle' and (x1el.get('weapon') or '').strip():
+                # SPEC 29: a soldier with an XML1 gun is pointed at the weapon variant of his style
+                from . import weapons as W
+                want = W.variant_name(want, (x1el.get('weapon') or '').strip())
+                if have == fn(src):
+                    continue                        # a melee weapon: the plain mapped style
             if have != want:
                 out.append(f'{attr}={have!r}, but XML1 {attr}={src!r} maps to {want!r}')
         return out

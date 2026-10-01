@@ -3267,3 +3267,68 @@ order) -> the same fresh load -> all four wheel slots EMPTY, Cyclops still level
 **Open.** Whether the hero's talents registered by a zone package while he is *not* in the party count against
 the engine's 100-talent registry (SPEC_heroes; blackbird_arbiter lists four heroes' styles) - to check in game with a
 party that isn't those four. Owen also doubts Optic Beam's damage; measured separately.
+
+## 29. XML1's weapon system as style triggers (2026-09-30, the HAARP flamers)
+
+**Symptom (Owen, first public play-through, 0.1.1).** On Magma's rescue mission outside the X-Jet (haarp_ext01) the
+HAARP flamethrower soldiers "don't say anything, I can't see the flame; they stood there then shot invisible flames
+out that persisted, and I walked into them and died". In 0.1.1 every XML1 gun soldier (GRSO mp5 / laser /
+lightning / nullifier / freeze / knockback / superlaser, the HAARP soldiers, the flamers, the pistol thugs) fired
+blanks: no tracer, no sound, no damage.
+
+**Cause (research/heroes/weapon_events.md, XMen2.exe addresses there).** XML1 arms an NPC through the stats
+attribute `weapon="wp_..."` and `data/weapons/weapons.eng`: the record names the model, bolt, damage code, range,
+muzzle / tracer / impact effects, fire / charge sounds, a continuous beam or a projectile entity, and the shared
+combat event `weapon_fire` (= `ce_atk_weap`, Damage="L0" in shared_combat_events: a placeholder) takes all of it
+from the weapon at fire time. XMen2.exe has none of that: its `ce_atk_weap` is the SOUND event class (factory
+0x4fb550 -> the ce_sound constructor 0x4f9540), so a `weapon_fire` trigger plays nothing and hits nothing; the
+stats `weapon` attribute is parsed and dropped (0x4ba373 -> 0x4bb2e7); `data/weapons/weapons.xmlb` ships empty;
+none of XML1's weapon attribute names exist in the binary. Second cause, found in game: XML2's AI fires a
+FightMove only when it carries `aitype` (the parser 0x4f6b80, 20-name table at 0x6db940; retail gun soldiers:
+`aitype="beamanyrange" aireusetime="3" priority="5"`). XML1's NPC styles have no `aitype` - XML1's AI chose by
+weapon - so even with real attack triggers the soldiers never fired: a flamer with `monster_aiforceranged` paced
+around the hero for 15 s without a shot, two mp5 soldiers stood at point-blank range while the hero sat at 20 HP.
+
+The "invisible flame that persisted" is a third thing: the zone's `fire_wall` entity (an `affectableharment`:
+damage 3 dmg_fire + knockback 200 every 0.4 s, `loopfx="ambient/fire_wall"`), which the `create_firewall*`
+scripts move to the spot the flamer plays `flame_sweep` at. Its harm worked in 0.1.1; its flame is the loop
+effect - checked in game below.
+
+**Fix.**
+
+- `tools/xml1build/weapons.py` (new). Per (XML1 style, weapon) pair in use, a VARIANT style `x1_<style>_<weapon>`
+  (`variant_name`): the XML1 style with every `weapon_fire` trigger of every FightMove replaced by the weapon's own
+  triggers (`apply`): bullet / beam -> a `beam` trigger (ce_atk_beam, one-call hit-scan: `beambolt`=actorbolt,
+  `beameffect`=muzzleaccfx (the tracer), `hiteffect`=impactfx, `damage`=the weapon's code, `damagetype`,
+  `maxrange`=range, `damagescale="difficulty"`, `damagelevel="1"`, `<damageMod name=damagemod>`) plus one
+  `effect_sound` (muzzlefx + firesound on the bolt); flame -> the ps_pyro `flame_dmg` form (`noaimfx`,
+  `useboltinfo`, `pierce`, `beameffect`=flame_shot) keeping the original trigger's tag (150: ch_constantbeam
+  fires it every `timeinterval`, which `apply` sets to 0.1 s on the `setbeam="true"` beamdata trigger) and a
+  tag-100 `sound` the engine loops while the beam is on; projectile (freeze / knockback guns) -> a `projectile`
+  trigger (ce_atk_spawn_proj: `entity`=projectileent, `filename`=entfile, `speed`, `count="1"`, `targetable`)
+  with the attack data; `chargefx` / `chargesound` `warmuptime` before the first shot (never before 0). A move
+  keeps at most 19 triggers (0x4f6aa7): a 7-shot burst gets its muzzle `effect_sound` on every other shot. Every
+  move that got weapon triggers and has no `aitype` gets XML2's retail AI marking (`AI_TYPE` / `AI_REUSE`:
+  bullets and beams `beamanyrange` 3 s, projectiles `projectile` 2.5 s, the flame `projectilenear` 4 s, and
+  `priority="5"` when absent). Value codes stay codes (L1..L5, K10): `npc_values.resolve_style` turns them into
+  XML1's numbers (section 24; L1 -> "4 5", L3 -> "15 18"), and `_data_patch` resolves them in the two projectile
+  entity files (`data/entities/freezegun_ents` ice_bullet L3, `knockbackgun_ents` bullet_time K10).
+- `characters.py`: `weapon_style()` imports the XML1 style under `Data/powerstyles/<variant>` with `W.apply` as the
+  patch (patch key `<style>.weapon.<weapon>`); `convert_stats` points a stats entry whose weapon is a bullet /
+  beam / flame / projectile weapon at the variant (melee weapons change nothing); the character package follows
+  the stats entry. Counts `weapon_styles_written`, `weapon_styles_used`.
+- `validate.py` V5 (namespace): a `powerstyle` on an entry with an XML1 `weapon` must be the variant name.
+- Variants built: x1_ps_grso_{mp5, laser_gun, lightning_gun, m_nullifier, freeze_gun, knockback_gun,
+  superlaser_gun}, x1_ps_flamethrower_flamethrower, x1_ps_pistol_pistol. `tests/unit/test_weapons.py` (9 tests).
+  CONTENT_VERSION 3 -> 4; builder 0.1.2.
+
+**Verified in game 2026-09-30 evening (build/_wpn with the variants patched in place, a VULNERABLE Wolverine: no
+`setInvulnerable` in the process; scratchpad wpn/, research/regression/weapon_damage_driver.py).** haarp_ext01: the
+flamer spawned with `act("ss_haarpsoldier_flamethrower01", ..)` next to the hero fires `power_attack` every ~4 s
+(aireusetime 4): the damage numbers 18 and 17 float over Wolverine (L3 = "15 18"), the health bar drops 19 px of
+137 per hit, the flame_shot fireball draws at the muzzle. haarp_ext04: the instantspawn mp5 soldiers (beamanyrange)
+hit for 4-5 (one measured 6-px drop) and killed the hero in under 8 s when he was teleported among them. Before the
+`aitype` change, with the same triggers, neither fired (flamer pacing 15 s, mp5 soldiers idle at point-blank with
+the hero at 20 HP). Not reached in game: the freeze and knockback guns (projectile; their zones' spawners are
+instantspawn without monster names, so neither teleport nor act finds them), lightning / laser / nullifier (same
+beam mechanism as the mp5, different effects). The `fire_wall` harm entity's loop effect is still unchecked.
