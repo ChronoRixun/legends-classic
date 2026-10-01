@@ -11,7 +11,9 @@ What run(ctx) produces (all through the ctx writers):
   * Data/npcstat.{XMLB,engb} in XML1 mode (each from its own XML2 base): the XML2 keep-list + every XML1 NPC +
     the XML1 heroes that zones use as NPCs (beast, frost, jubilee, magma, psylocke);
   * Data/shared_talents.{XMLB,engb} (ensure_talent for every talent the new entries reference, plus the NPC energy
-    talent npc_values.ENERGY_TALENT that gives each converted entry XML1's energy pool, SPEC 24);
+    talent npc_values.ENERGY_TALENT that gives each converted entry XML1's energy pool, SPEC 24, and one shared
+    talent per distinct inline XML1 NPC immunity body - blob_special, juggernaut_special ... - in XML2's
+    boss_resistances form, the entries' references renamed to the body's talent, SPEC 30);
   * Data/values.XMLB (append the XML1 codes XML2 lacks);
   * Packages/generated/characters/<name>_<skin>[_nc].PKGB for every XML1 bundle of every written name (plus
     synthesized packages for zone monster_skin variants the XML1 disc has no bundle for) and <name>_xml;
@@ -324,7 +326,9 @@ class _Builder:
         self.lock = threading.RLock()
         self.detail = {'written': {}, 'dropped_attrs': [], 'dropped_children': [], 'dropped_pkg_entries': [],
                        'kept_xml2_assets': [], 'talents_added': [], 'sounddir_dropped': [], 'x2_dropped': [],
-                       'x2_kept': [], 'packages': [], 'synth_packages': [], 'notes': []}
+                       'x2_kept': [], 'packages': [], 'synth_packages': [], 'notes': [],
+                       'immunity_talents': {}, 'immunity_refs': []}
+        self.immunities = {'bodies': {}, 'alias': {}, 'skipped': {}, 'losses': {}}   # load_immunities (SPEC 30)
         self.actor_new = {}         # XML1 actor stem (lower) -> mapped stem written/used (or None if skipped)
         self.actor_empty = set()    # XML1 actor stems with 0-byte sources (7501)
         self.ui_new = {}            # 'hud/hud_head_1801' -> 'hud/hud_head_15801' (package form)
@@ -649,6 +653,30 @@ class _Builder:
                 root.append(copy.deepcopy(t))
             self.detail['talents_added'].append([name, who])
 
+    def load_immunities(self, x1npc):
+        """SPEC 30: census the inline immunity bodies of XML1's npcstat (after load_talents: a name XML2's
+        shared_talents defines, dr_stun / sentinel_special, keeps XML2's definition)."""
+        self.immunities = NV.immunity_plan(x1npc, exclude=self.talent_names)
+
+    def immunity_name(self, talent_el):
+        """the shared talent name an inline XML1 <Talent> body resolves to (its definition is added to both
+        shared_talents roots on first use, replacing any empty one), or None when the body is not an immunity."""
+        rows, _info = NV.immunity_rows(talent_el)
+        if rows is None:
+            return None
+        canon = self.immunities['alias'].get(NV.immunity_key(rows))
+        if canon is None:
+            return None
+        with self.lock:
+            if canon not in self.detail['immunity_talents']:
+                for root in self.talent_roots:
+                    for t in [t for t in root.iter('talent') if (t.get('name') or '').lower() == canon]:
+                        root.remove(t)
+                    root.append(NV.immunity_talent(canon, rows))
+                self.talent_names.add(canon)
+                self.detail['immunity_talents'][canon] = [list(r) for r in rows]
+        return canon
+
     # ---------------------------------------------------------------- stats conversion
     def load_weapons(self):
         root = self.ctx.read_x1_xml('data/weapons/weapons.eng')
@@ -939,8 +967,19 @@ class _Builder:
                         [name, f'talent {tn}', 'hero talent tree (hero conversion)' if inline else 'level 0'])
                     continue
                 if not hero and len(c):
-                    self.detail['dropped_children'].append([name, f'talent {tn} <level> tree',
-                                                            'inline XML1 definition; kept as a reference'])
+                    # SPEC 30: an inline immunity body becomes a reference to the shared talent of that body
+                    canon = self.immunity_name(c)
+                    if canon:
+                        if any(t.tag == 'talent' and (t.get('name') or '').lower() == canon for t in new):
+                            self.detail['dropped_children'].append(
+                                [name, f'talent {tn} <level> tree', f'same immunity body as {canon}, already named'])
+                            continue
+                        with self.lock:
+                            self.detail['immunity_refs'].append([name, tn, canon])
+                        tn = canon
+                    else:
+                        self.detail['dropped_children'].append([name, f'talent {tn} <level> tree',
+                                                                'inline XML1 definition; kept as a reference'])
                 is_fs = tn.lower().startswith('fightstyle_')
                 if is_fs:
                     fight_talent = True
@@ -1402,6 +1441,7 @@ def run(ctx):
     h2 = {n.lower() for n in hero_names['engb']} | {n.lower() for n in hero_names['XMLB']}
     x2npc = {s.get('name').lower(): s.get('name') for s in base['engb'].iter('stats')}
     b.load_talents()
+    b.load_immunities(x1npc)
     b.load_weapons()
 
     # ---------------- keep list (KEEP_X2 + exe strings via x2_stats_refs.json + scan of still-active XML2 content)
@@ -1495,7 +1535,9 @@ def run(ctx):
     ctx.note(f"shared_talents: {len(b.detail['talents_added'])} empty definitions added "
              f"{sorted({t for t, _ in b.detail['talents_added']})}")
     ctx.defer('the added shared talents are empty definitions: XML1 passive talent effects (acrobatics, '
-              'toughness, mutantmastery, *_special activepowerups ...) do nothing unless reworked (powers phase)')
+              'toughness, mutantmastery, the profx_* bodies ...) do nothing unless reworked (powers phase); the '
+              'inline NPC immunity bodies are real definitions (SPEC 30)')
+    _npc_immunities_report(ctx, b)
     _values(ctx, b)
 
     # ---------------- packages
@@ -1765,6 +1807,34 @@ def _npc_energy(ctx, b, new_entries):
              f'(1..{top}): maxenergy +5 mind, energy_regen x (1 + mind / 100), so XMen2.exe\'s 30 + 4 level + '
              f'2 mind pool and 15/s regeneration become XML1\'s 30 + 4 level + 7 mind and 15 x (1 + mind / 100)/s; '
              f'{len(ranks) - len(used)} entries without a mind need none. E.g. {ex}')
+
+
+def _npc_immunities_report(ctx, b):
+    """SPEC 30: the inline NPC immunity bodies emitted as shared talents (counts, notes, detail)."""
+    im = b.immunities
+    emitted = b.detail['immunity_talents']
+    refs = b.detail['immunity_refs']
+    renamed = sorted({(x1, canon) for _, x1, canon in refs if x1.lower() != canon})
+    losses = {f'{e}:{t}': l for (e, t), l in im['losses'].items()}
+    bodies = []
+    for key, body in im['bodies'].items():
+        bodies.append({'talent': body['canonical'], 'xml1_names': sorted(body['names']),
+                       'entries': sorted(set(body['entries'])), 'affecters': [list(r) for r in body['rows']],
+                       'emitted': body['canonical'] in emitted})
+    bodies.sort(key=lambda d: d['talent'])
+    b.detail['npc_immunities'] = {'bodies': bodies, 'skipped': {f'{e}:{t}': r for (e, t), r in im['skipped'].items()},
+                                  'losses': losses, 'renamed': [list(r) for r in renamed]}
+    ctx.set_count('npc_immunity_talents', len(emitted))
+    ctx.set_count('npc_immunity_refs', len(refs))
+    ctx.note(f'NPC immunities (SPEC 30): {len(emitted)} shared talents in XML2\'s boss_resistances form for '
+             f'{len(im["bodies"])} distinct inline XML1 bodies, named by {len(refs)} talent references on '
+             f'{len({e for e, _, _ in refs})} converted entries: {sorted(emitted)}; references renamed to the '
+             f'body\'s talent: {renamed}')
+    if losses:
+        ctx.defer(f'NPC immunities: {len(losses)} inline rows have no XML2 affecter form and were dropped: {losses}')
+    unused = sorted(body['canonical'] for body in im['bodies'].values() if body['canonical'] not in emitted)
+    if unused:
+        ctx.note(f'NPC immunities: {len(unused)} XML1 bodies belong to entries not converted: {unused}')
 
 
 def _check_caps(ctx, roots, hero_roots, b):

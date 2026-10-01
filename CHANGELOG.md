@@ -3,6 +3,22 @@
 The builder's releases, newest first. The version is `xml1-builder --version`; the content version is what a
 build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebuild.
 
+## v0.1.5 - content version 7
+
+- **Fixed: a SKILL pickup levelled the whole roster.** Every hero, in the party or not, got 5,000 XP from each
+  pickup. It now gives one level's worth of XP to the hero who takes it, which is the engine's way of granting one
+  skill point (SPEC section 32). Found: the engine stops reading the item table after its 375th enhancement, which
+  had also hidden the XP pickups and the astral stone; those load again. Most Danger Room reward items are still
+  past the cut-off (noted, not yet fixed).
+- **Fixed: bosses could be stunned, knocked down, grabbed and finished like henchmen.** The first game's inline
+  immunity talents (Blob, Juggernaut, Pyro, Toad, Mystique, Magneto, Mastermold, Sabretooth, Shadow King, the
+  bots, the Morlock bruisers' physical resistance) were dropped; they are now shared talents in the engine's own
+  boss-resistance form (SPEC section 30). Checked in game: Pyro no longer goes down to Wolverine's smashes.
+- **Fixed: melee did XML2's damage, not the first game's.** Punches and kicks inheriting the shared combat events
+  did 2-3 where XML1 did 4-5, heavies 3-5 instead of 9-11. The first game's values are written onto the inheriting
+  moves (SPEC section 33). Measured: Morlock light punches on Cyclops 3-5 before, 6-7 after.
+- Fixed: twelve cloak triggers in six enemy styles used a render form the engine ignores (SPEC section 31).
+
 ## v0.1.4 - content version 6
 
 - **Fixed: projectile and explosion damage from the first game's data read as zero** - the freeze and knockback

@@ -326,6 +326,88 @@ def _damage_mod(parent, name):
     return ET.Element(tag, {'name': name})
 
 
+# ------------------------------------------------------------------------------------------ XML1 shared values
+# SPEC.md section 33. The build ships XML2's data/shared_combat_events (SPEC 4.4) and XML1 styles inherit from it by
+# name (0x501630), so an XML1 event / trigger that leaves an attribute to its shared parent gets XML2's number. Every
+# event of XML1's data/shared_combat_events.xml whose XML1 value differs from the shipped XML2 event's, with the XML1
+# value (a code of XML1's data/values.xml, resolved like section 24) and the damageMods the XML1 parent carried
+# (inherited as bits, 0x4dce80). Equal values are not listed (knockback: XML1 K1 = 40 and K2 = 120 are XML2's 40 and
+# 120). Differences deliberately NOT written (section 33.2):
+#   * damagescale: XML1 has no such attribute (not a default.xbe string); XMen2.exe's enum (0x44ec00 over the table
+#     0x6d6dec: none 0 / normal 1 / difficulty 2) is stored by 0x4dc118 and its consumer is not traced. XML2's own
+#     re-ships of XML1 NPCs (ps_sabretooth, ps_blob, ps_juggernaut punches) keep the shared punch's 'normal'.
+#   * grab damagetype dmg_grab: not an XMen2.exe string (the damage-type parser 0x43bd70 has no such type).
+#   * pickup_throw (XML1 sets no damage; XML2 "21 26") and throw impactdamage / throwspeed: XML1 has no number for
+#     them (impactdamage / throwspeed are not default.xbe strings); writing 0 would remove the damage XMen2.exe takes
+#     from these attributes.
+#   * trail colour / width: cosmetic (XML2's trail names an effect).
+#   * weapon_fire (XML1 L0, XML2 "2 3"): ce_atk_weap is XMen2.exe's sound class (SPEC 29); weapons.py replaces every
+#     weapon_fire trigger of a gun style with the weapon's own attack.
+X1_SHARED_EVENT_VALUES = {
+    # event: (((attribute, XML1 value), ...), (damageMods))     the shipped XML2 value in the comment
+    'punch': ((('damage', 'L1'),), ()),                 # "2 3"
+    'kick': ((('damage', 'L1'),), ()),                  # "2 3"
+    'teleport_punch': ((('damage', 'L1'),), ()),        # "3 5"
+    'punch_heavy': ((('damage', 'L2'),), ()),           # "3 5"
+    'kick_heavy': ((('damage', 'L2'),), ()),            # "3 5"
+    'move_damage': ((('damage', 'L2'),), ()),           # "3 5"
+    'punch_veryheavy': ((('damage', 'L3'),), ()),       # "6 9"
+    'kick_veryheavy': ((('damage', 'L3'),), ()),        # "6 9"
+    'beam': ((('damage', 'L4'),), ()),                  # "3 5"
+    'fry': ((('damage', 'L4'),), ()),                   # "6 9"
+    'suspend': ((('damage', 'L4'),), ()),               # "6 9"
+    'throw': ((), ('dmgmod_auto_knockback',)),          # XML1 Damage="0" + this damageMod; XML2 has neither
+}
+X1_SHARED_KIND = 'x1_shared_value'      # Counter prefix (not 'combat_': combat_events_selftest T4/T5 count those)
+
+
+def apply_x1_shared_values(root, values=None) -> collections.Counter:
+    """SPEC 33: write XML1's value of every X1_SHARED_EVENT_VALUES attribute (and damageMod) onto each <event> /
+    <trigger> of one XML1 style tree that names that shared event directly and does not set the attribute itself,
+    in place and idempotent. An event of the style that inherits the shared one carries the value on to every
+    trigger naming it, so only the direct child is written. Left alone: an element with a `type`; a trigger or
+    inheriting event whose name resolves to an event of the style itself (a style event of the shared name shadows
+    it, combat_events.resolve looks the style up first); an <event name=X> without inherit (a redefinition); a tag
+    update of an inherited trigger (0x4f6a1f re-parses only its own attributes onto the inherited copy, which carries
+    the value already). values: heroes.Values of XML1's data/values.xml (code -> XML1's number(s), as
+    npc_values.resolve_style); None writes the code itself. Returns a Counter {'x1_shared_value:<event>.<attr>': n}.
+    Run after rewrite_style (whose re-pointed names are XML2's)."""
+    c = collections.Counter()
+    if root is None:
+        return c
+    local = {(_get(e, 'name') or '').lower() for e in root.iter() if _tag(e) == 'event' and _get(e, 'name')}
+    moves = style_moves(root)
+    todo = [(e, None) for e in root.iter() if _tag(e) == 'event']
+    todo += [(t, m) for m in root.iter() if _tag(m) == 'fightmove' for t in m if _tag(t) == 'trigger']
+    for el, move in todo:
+        if _get(el, 'type'):
+            continue
+        inh = (_get(el, 'inherit') or '').lower()
+        nm = (_get(el, 'name') or '').lower()
+        base = inh or nm
+        if base not in X1_SHARED_EVENT_VALUES:
+            continue
+        if _tag(el) == 'event' and not inh:
+            continue                                    # <event name=punch> without inherit: a redefinition
+        if base in local and not (_tag(el) == 'event' and nm == base):
+            continue                                    # resolves to the style's own event of that name
+        if move is not None and not inh and _get(el, 'tag') is not None and \
+                inherited_trigger(moves, move, _get(el, 'tag')) is not None:
+            continue                                    # tag update of an inherited trigger
+        attrs, mods = X1_SHARED_EVENT_VALUES[base]
+        for k, code in attrs:
+            if _get(el, k) is not None:
+                continue
+            _set(el, k, values.resolve(code) if values is not None else code)
+            c[f'{X1_SHARED_KIND}:{base}.{k}'] += 1
+        have = {(_get(d, 'name') or '').lower() for d in el if _tag(d) == 'damagemod'}
+        for dm in mods:
+            if dm not in have:
+                el.append(_damage_mod(el, dm))
+                c[f'{X1_SHARED_KIND}:{base}.{dm}'] += 1
+    return c
+
+
 # ------------------------------------------------------------------------------------------ resolution
 def style_moves(root):
     """{lower FightMove name: element} of one style tree (first definition wins, as XMen2.exe's lookup)."""

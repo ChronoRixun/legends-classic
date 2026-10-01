@@ -471,6 +471,50 @@ def main(argv=None):
             else:
                 INFO['xp_pickups'] += 1
 
+    # J2. SPEC 32: XML1's SKILL pickups name SKILL_<one level step at the zone's world level>, whose item gives that XP
+    # to the activator only (setXP), never the roster award (awardXPToPlayable)
+    for k, e in owned.items():
+        if not (k.startswith('maps/') and k.endswith('.xmlb')) or not e.get('source'):
+            continue
+        src = Path(e['source'])
+        if src.suffix.lower() not in ('.eng', '.xml'):
+            continue
+        sroot = C.parse_x1_text(src)
+        x1 = {el.get('name'): el for el in sroot.iter()
+              if (el.get('inventoryitem') or '').lower() == 'skill' and el.get('name')}
+        if not x1:
+            continue
+        amount = Z.level_step_xp(Z.skill_zone_level(sroot) or Z.SKILL_LEVEL_DEFAULT, curve)
+        want = Z.SKILL_PICKUP_ITEM.format(item='SKILL', amount=amount)
+        want_act = Z.SKILL_PICKUP_SCRIPT.format(amount=amount)
+        for el in decode(out / e['rel']).iter():
+            if x1.get(el.get('name')) is None or el.get('inventoryitem') is None:
+                continue
+            item = items.get(want.lower())
+            if el.get('inventoryitem') != want:
+                fail('J_skill_pickup_entity', f'{k} {el.get("name")}: inventoryitem {el.get("inventoryitem")} '
+                                              f'(want {want})')
+            elif item is None or item.get('onactivate') != want_act or item.get('activateonpickup') != 'true':
+                fail('J_skill_pickup_item', f'{want}: {item is not None and dict(item.attrib)} (want onactivate '
+                                            f'{want_act})')
+            else:
+                INFO['skill_pickups'] += 1
+    roster = sorted(n for n, i in items.items() if 'awardxptoplayable' in (i.get('onactivate') or '').lower()
+                    and n.startswith('skill'))
+    if roster:
+        fail('J_skill_roster_award', f'skill items still award the roster: {roster}')
+    # J3. SPEC 32.1: XMen2.exe registers no item past the overflow of its 375-record enhancement pool, so the pickup
+    # items (SKILL_*, XP_*) must sit before it
+    for ext in ('.xmlb', '.engb'):
+        e = reg.entries.get(f'data/items{ext}')
+        if e is None:
+            continue
+        lost = [n for n, _ in Z.enhancement_pool_cut(C.iter_roots(decode(out / e['rel']))[0])]
+        INFO[f'items_beyond_enhancement_pool{ext}'] = len(lost)
+        bad = [n for n in lost if (n or '').upper().startswith(('SKILL', 'XP_'))]
+        if bad:
+            fail('J_pickup_item_not_loaded', f'data/items{ext}: {bad} lie past the enhancement pool overflow')
+
     print(f'zones self-test of {out}')
     print('  registry owners:', dict(owners))
     for k, v in sorted(INFO.items()):

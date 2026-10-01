@@ -336,7 +336,7 @@ These are available as module functions `C.x` and as `ctx.x`.
 | `conversations/`, `dialogs/`, `subtitles/`, `data/entities/`, `motionpaths/` text or IGB referenced by XML1 zones | XML1 wins (`force=True`): XML1-mode build, and XML2's zones are not played | zones |
 | generic `models/`, `textures/`, `effects/`, `skybox/` (140 / 189 / 7 / 1 differ) | **XML2 wins** (`kept_xml2`, the proven default). Kept counts are reported. Namespacing props is a later decision. XML1-only effects are written with their colours converted (section 11.2). | zones / characters via `import_x1_asset` |
 | global data tables (`herostat`, `npcstat`, `shared_talents`, `values`, `zoneinfo`, `common_ents`, `item_ents`, `items`, `shared_nodes`) | merged by their owner (section 5), never replaced wholesale | characters / zones |
-| other global tables (`strings`, `codex`, `trivia`, `dangerroom`, `credits`, `review_paths`, `colors`, `stat_rules`, `shared_anims`, `shared_sounds`, `shared_combat_events`, `boltonactoranims`, `personal/*`) | XML2's kept; deferred | (report only) |
+| other global tables (`strings`, `codex`, `trivia`, `dangerroom`, `credits`, `review_paths`, `colors`, `stat_rules`, `shared_anims`, `shared_sounds`, `shared_combat_events`, `boltonactoranims`, `personal/*`) | XML2's kept; deferred (`shared_combat_events`: XML1's differing values are written onto the XML1 styles instead, section 30) | (report only) |
 | `Scripts/**` (25 rewritten paths collide: `common/*`, `menus/*`) | XML1's rewritten versions overwrite `common/*`. XML2's front-end `menus/intro_normal.py`, `menus/main_back_main.py` and `menus/main_back_debug.py` are kept. `menus/new_game*.py` are replaced by the hook. | scripts |
 | sound banks (19 names) | merged banks (XML2 entries win) replace XML2's. Never install `all_ima` `x_common`/`x_voice`/`menu_*`/hero banks. | media |
 | movies `i101`-`i105`, `i107` | XML1 files renamed with an `x` prefix (`xi101`, ...) | media |
@@ -976,7 +976,8 @@ XMen2.exe's item parser (0x47aeff) knows the types item(0), potion(1), equipment
 items that converted content names in `inventoryitem` (zones, entity files, `common_ents`/`item_ents`), translated
 (`zones.ITEM_TYPE_MAP`, `translate_item`): `XP` -> one `XP_<count>` item per XML1 pickup amount with
 `setXP('_ACTIVATOR_',<count>)` (`--xp-curve xml1`, section 23.1) or `awardXPToPlayable(5000)` (`xml2`), `SKILL` ->
-`awardXPToPlayable(5000)` (XML2 has no skill-point call), `STAT` -> `permanentStatBoost('_ACTIVATOR_','body')` (XML2's stat-booster call), all
+one `SKILL_<xp>` item per pickup with `setXP('_ACTIVATOR_',<one level step at the zone's level>)` (XML2 has no
+skill-point call; section 32), `STAT` -> `permanentStatBoost('_ACTIVATOR_','body')` (XML2's stat-booster call), all
 `type="item" activateonpickup="true"`; `ASTRAL_STONE` becomes a plain item (its bonus is deferred). The other 114
 XML1 items are not added, so XML2's random-drop pool is unchanged. The items package gets only those items'
 pickup models. V6 errors on an XML1 item with a type XMen2.exe does not parse or with `activepowerup`; an
@@ -2575,8 +2576,8 @@ curve the game runs; `report.json build.xp_curve` records it (a build from befor
 
 Both curves: the XP pickup entity's `count` becomes `1` - XMen2.exe reads an inventoryent's count as a 16-bit item
 quantity (0x47a970, default 1; 300000 wrapped to -27680, 30000 would have been 30000 units). Not reproduced: XML1
-scaled a pickup by the picker's `xp` affecter. The `SKILL` pickup keeps its `awardXPToPlayable(5000)` stand-in in both
-modes (XMen2.exe has no skill-point call). Checks: V16 errors on a `rewardxp` other than the curve's value;
+scaled a pickup by the picker's `xp` affecter. The `SKILL` pickup's `awardXPToPlayable(5000)` stand-in (the whole
+roster) is replaced in both modes by one level of XP to the picker, section 32. Checks: V16 errors on a `rewardxp` other than the curve's value;
 `frontend_selftest` U14 (both modes, and with `--out` the build's table); `zones_selftest` J (the pickups against
 XML1's counts and the items).
 
@@ -3393,3 +3394,285 @@ output has zero unresolved entity codes instead of 24 across nine files: freeze/
 Magma, missile launchers, Mystique, Pyro, Sentinel grenades, and Shades. All nine weapon-variant packages
 now load their own style. Both projectile variants explicitly carry the projectile attack category.
 This is final-file validation, not a claim that projectile contact behavior has been playtested.
+
+---------------------------------------------------------------------------------------------------------------
+
+## 30. XML1's inline NPC immunity talents as shared powerup talents (2026-10-01, combat audit G1)
+
+### 30.1 The gap
+
+XML1 defines most of its NPC-only talents inline on the npcstat entry, not in shared_talents:
+`<Talent name="blob_special" level="1"><level><activepowerup powerup="def_stun" affect_type="scale" level="0"
+life="-1"/>...</level></Talent>` (xml1_loose/data/npcstat.eng: 53 inline trees on 48 entries, 31 names). Their
+bodies are the boss immunities: `def_stun` / `def_knockback` / `def_pain` / `def_critical` / `def_damage` with
+`affect_type="scale" level="0"` (immune), `def_grab` / `def_finisher` / `def_reflect_pain` (flags),
+`def_mind_control` scale 0.1 or 0.01, `no_iceshell` scale 0, and `def_damage scope_damage="dmg_physical"` scale
+0.5 (the Morlock bruisers' 50 % physical resistance). characters dropped the `<level>` trees and kept only the
+reference (`convert_stats`, "inline XML1 definition; kept as a reference"), `ensure_talent` then wrote an empty
+shared definition for each name, and heroes pruned those as "empty NPC definition (references removed)" with
+the references (DESIGN D8 / 4.7 took the names for empty XML2 definitions; XML2's shared_talents has none of the
+24 names - only `dr_stun` and `sentinel_special`). Result in content 6: every XML1 boss and elite could be
+stunned, knocked down, grabbed and thrown, finished, mind-controlled, frozen in Iceman's shell and criticalled
+like a common enemy (research/audit/xml1_combat_gaps_2026-10-01.md 2.1).
+
+### 30.2 The engine form
+
+XMen2.exe's affecter table 0x6ddb18 has every attribute the bodies use (combat_events.AFFECTERS: def_damage 39,
+def_knockback 40, def_stun 41, def_pain 42, def_critical 43, def_pickup 44, def_grab 45, def_reflect_pain 46,
+def_finisher 47, def_mind_control 50, no_iceshell 81, slow_immune 85), and XML2 ships the same idea as a shared
+talent: `boss_resistances` = `<talent><level><powerup life="-1"><affecter affect_type="scale" attribute="def_stun"
+level="0"/><affecter attribute="def_grab"/>...</powerup></level></talent>`, referenced as `<talent level="1"
+name="boss_resistances"/>` by XML2's bosses. The HUD's "Physical Resistant" / "Mental Resistant" text under a
+boss bar is XML2's own display of such affecters registering.
+
+### 30.3 What the builder does (`npc_values`, `characters`, `heroes`)
+
+- `npc_values.immunity_rows(<Talent>)` classifies one inline tree: exactly one `<level>`, every `activepowerup` a
+  permanent (`life="-1"`) `IMMUNITY_AFFECTERS` affecter; a `powerup="none"` row (an XML1 code callback such as
+  MultipleManDividing's `func_hurt="MultipleMan_Hurt"`) and attributes outside powerup / affect_type / level /
+  scope_damage are reported losses, not disqualifications. Anything else (the five `profx_*` trees of
+  profxgladiator, a timed powerup) is not an immunity and keeps today's path.
+- `npc_values.immunity_plan(npcstat)` censuses the bodies (a body = its rows as a multiset; the order of the
+  affecters inside one talent does not matter) and names each body after the XML1 talent name most entries used,
+  ties alphabetical; names XML2's shared_talents defines (`dr_stun`, `sentinel_special`) are excluded and keep
+  XML2's definition (XML2's `sentinel_special` adds `no_iceshell`). XML1's 20 inline bodies give **14 distinct
+  immunity bodies** (14 names, not the audit's 26: 4 names share the standard boss body, 6 share the bot body,
+  2 the Shadow King body, and `multipleman_special` minus its callback row equals `sabre_special`):
+
+  | shared talent | XML1 names (entries) | affecters |
+  |---|---|---|
+  | `avalanche_special` | avalanche_special (4), mystique_special (3), marrow_special (2), pyro_special (2 incl. Vulcan) | def_knockback 0, def_pain 0, def_stun 0, def_mind_control 0.1, def_grab, def_finisher |
+  | `as_special` | as_special, pod_special, shocker_special, spidermine_special, stealth_special, suicide_special (1 each) | the above minus def_mind_control, plus no_iceshell 0 |
+  | `toad_special` | toad_special (ToadAct1) | avalanche_special's plus no_iceshell 0 |
+  | `magnetoboss_special` | magnetoboss_special (MagnetoBoss) | toad_special's with def_mind_control 0.01 |
+  | `blob_special` | blob_special (4) | def_knockback 0, def_stun 0, def_mind_control 0.1 |
+  | `juggernaut_special` | juggernaut_special (3) | blob_special's plus def_critical 0 |
+  | `sabretooth_special` | sabretooth_special (3) | def_knockback 0, def_pain 0, def_mind_control 0.1, def_grab, def_finisher |
+  | `sabre_special` | sabre_special (SabretoothAct2 / Act3), multipleman_special (MultipleManDividing) | def_mind_control 0.1 |
+  | `mastermold_special` | mastermold_special | def_pain 0, def_stun 0, def_mind_control 0.01, def_finisher |
+  | `havok_special` | havok_special (HavokBoss) | def_damage dmg_energy 0, def_stun 0, def_mind_control 0.1 |
+  | `shadow_special` | shadow_special (shadowking), shadow_special2 (shadowkingtwo) | def_pain 0, def_stun 0, def_grab, def_finisher |
+  | `physical_res` | physical_res (MorlockBruiserB / C) | def_damage dmg_physical 0.5 |
+  | `forge_special` | forge_special (Forge) | def_grab |
+  | `sentspider_special` | sentspider_special (SentinelSpider, _b) | def_finisher |
+
+- `characters.convert_stats`: an inline tree whose body is in the plan becomes `<talent name="<body talent>"
+  level="1"/>` on the entry (`immunity_name`; the definition `npc_values.immunity_talent` is appended to both
+  shared_talents roots on first use, replacing any empty one; a second XML1 name of the same body on one entry is
+  dropped as a duplicate reference - none today). 41 references on 39 converted entries (SabretoothAct2 / Act3
+  carry two; the 7 dr_stun / sentinel_special trees keep XML2's definitions); 14 of them are renamed to the
+  body's talent, 10 distinct (XML1 name, talent) pairs (`characters_detail.json` `npc_immunities.renamed`; e.g.
+  PyroAct1 names `avalanche_special`, MultipleManDividing `sabre_special`, the bots `as_special`). The
+  definition is `<talent name=N><level><powerup life="-1"><affecter [affect_type="scale"] attribute=A [level=L]
+  [scope_damage=D]/>...</powerup></level></talent>`, the rows in XML1's order; rebuilt from XML2's own
+  `boss_resistances` rows the function reproduces that definition byte for byte (tests/unit/test_npc_immunities).
+- `heroes.shared_keep`: a current shared talent named by a stats entry, not an XML2 definition, in the immunity
+  form (`npc_values.is_immunity_talent`: one level, one permanent class-less powerup, only immunity affecters, no
+  talentvalues) is kept ("XML1 NPC immunity body (npc_values, SPEC 30) named by a stats entry");
+  `SHARED_KEEP_EXPECTED` gains the 14 names (`SHARED_KEEP_IMMUNITIES`).
+- Validator V19 (`npc_values.v19_immunities`): for every npcstat / herostat entry whose XML1 source carried an
+  inline immunity body (names XML2 defines excluded), the built entry names a shared talent whose definition has
+  the same rows (any name); an immunity-form shared talent no stats entry names is a warning (a pool slot for
+  nothing). Counts `npc_immunity_entries` / `npc_immunity_refs` / `npc_immunity_talents`.
+
+### 30.4 Budget (SPEC_heroes 6, DESIGN 6.2)
+
+shared_talents 47 -> **61**; registered talents, worst party 61 + (8 + 7 + 7 + 7) = **90** of 100, under the
+heroes validator's 92 (100 minus the 8-talent Danger Room margin), so no body was merged or dropped. Merging the
+four bodies that are subsets of XML2's `boss_resistances` into references to it (4 slots) stays available if a
+later section needs the room; it would add `def_pickup`, `slow_immune` and, for `avalanche_special` /
+`sabretooth_special`, `no_iceshell` that XML1 did not give those bosses.
+
+### 30.5 Lost and left different
+
+- MultipleManDividing's `func_hurt="MultipleMan_Hurt"` (the dividing-on-hit callback) has no XML2 form; the
+  entry keeps its mind-control resistance only (reported as a deferred item).
+- SabretoothAct2 / Act3 carry both `sabretooth_special` and `sabre_special` (def_mind_control 0.1 twice), as in
+  XML1; whether XMen2.exe multiplies the two scales (0.01) or takes one is not established - XML1 had the same
+  pair, so the port is faithful either way.
+- `sentinel_special` keeps XML2's definition (XML1's level-1 body is def_stun 0 twice; XML2's adds no_iceshell 0).
+- Validation: 83 synthetic unit tests pass; the build's validators report 0 errors; the output diff against the
+  content-6 build is npcstat (48 references), shared_talents (14 definitions) and the build reports only.
+  In-game evidence: section 30.6.
+
+### 30.6 In-game check (2026-10-01, research/regression/spec30_pyro)
+
+Subject: PyroAct1 in haarp/int/haarp2_6 (spawner `sp_pyroact01`, monster `pyro`; XML1 body `pyro_special` ->
+`avalanche_special`: def_knockback 0, def_pain 0, def_stun 0, def_mind_control 0.1, def_grab, def_finisher; no
+heaviness, so a normal-size knockback subject - Blob and Juggernaut carry `heaviness`, which attenuates knockback
+by itself). `immunity_driver.py <build> <tag>`: new game, `seatParty("wolverine","colossus","cyclops","iceman")`,
+`loadMapKeepTeam`, `act` the spawner, `setAIActive("pyro","FALSE")` (XMen2.exe 0x4a50f0, so he neither attacks
+nor evades), then 10 times: `copyOriginAndAngles("pyro","_HERO1_")`, Wolverine's smash (NUMPAD6), frames at
+0.15 / 0.3 / 0.5 / 0.8 s, centre crops. Same script, both builds, Wolverine active in both runs.
+
+- **build/_w4 (content 6, no immunity talents)** `before_w4_pyro_smash.jpg`: landed smashes (red hit flash, "18",
+  "3", "11", "18/14") launch Pyro into the air (smashes 2 and 3: airborne above Wolverine at 0.5 s, out of the
+  crop at 0.8 s) or floor him (smashes 4, 5, 6: lying / getting up at 0.5-0.8 s): at least 6 of 10 smashes
+  launched or floored him.
+- **build/_t1b (with the talents)** `after_t1b_pyro_smash.jpg`: the same smashes land (hit flashes, "29", "19")
+  and Pyro stays on his feet next to Wolverine in all 10 x 4 frames; never airborne, never on the floor.
+- Not established by this run: the pain flinch (def_pain 0; he twists slightly on some hits, within the smash's
+  push), def_stun / def_grab / def_finisher / def_mind_control, and the other 13 bodies. Iceman's AI froze Pyro
+  in an ice shell in both builds (frame row 9 of each sheet): PyroAct1's XML1 body has no `no_iceshell`, so that
+  is XML1-faithful; Toad / Magneto / the bots (no_iceshell 0) were not tested.
+- An earlier attempt with Pyro's AI on was ambiguous (he evades and runs; the floor frames had no hit flash);
+  a run where Wolverine had died earlier (Iceman active, Pyro teleported to the dead slot) was discarded.
+
+## 31. XML1's ce_renderfx tint form -> XML2's cloak (2026-10-01, audit G5)
+
+XMen2.exe's ce_renderfx parser (CCERenderFx vtable 0x692770 slot 4 = 0x4e94e0) reads `add` and `remove`, each a
+name of the renderfx table 0x6d7bd8 (`none`, `pain1`, `pain2`, `chilled`, `metalfreeze`, `radiation`, `radiated`,
+`fading`, `xtreme_fb`, `cloaked`, `bleeding`, `burning`) OR-ed into a mask, then the base `time` / `tag`. XML1 tinted
+the actor instead (`tint`, `solid`, `alpha` flags and an `rgba` colour; `remove="true"` to end it). The parser
+reads none of those (`solid` and `rgba` are not even XMen2.exe strings), so the 12 triggers in 6 styles did nothing: ps_grsoelite (power_boost cloak: tintout `rgba="0 0 0 0.5"` / tintin), ps_acolyte_mental,
+ps_acolyte_mental_b, ps_bh_mental, ps_mp_mental (the systemshock tint), ps_mystique (steal_form / transform_end).
+
+`x1schema.convert_renderfx` (style files, after section 33): a `ce_renderfx` trigger or event with any of `tint` /
+`solid` / `alpha` / `rgba` and no `add` / `remove` name gets `add="cloaked"`; one with `remove="true"` gets
+`remove="cloaked"`; the four XML1 attributes go; everything else (`time`, `tag`, `life`) stays. This is XML2's own
+conversion of the same triggers: XML2 retail's `tintout` / `tintin` are `add="cloaked"` / `remove="cloaked"`
+(e.g. ps_deadpool). XML1's colours are not reproduced (the renderfx table has no tint colour); Mystique's opaque
+purple morph tint (`rgba="0.1 0 0.2 1"`) becomes the translucent cloak like the others. Idempotent; counts
+`renderfx:add` / `renderfx:remove`; `x1schema.renderfx_x1_elements` lists what is left (nothing after a build).
+Tests: `tests/unit/test_xml1_data_fixes.py` (the two forms, a mixed-case form, an XML2-form trigger untouched,
+idempotent, through `convert`). In game: not checked (no cheap cloaking enemy: the GRSO elite is act 7, the mental
+Acolytes later); the build output diff shows exactly these 12 triggers changed.
+
+## 32. The SKILL pickup: one level of XP to the hero who takes it (2026-10-01, audit W2)
+
+XML1's `SKILL` item (`data/items.eng` type `skill`; pickups in haarp_ext03, sewers3_1_3, hive2_2_4) gave one free
+skill point to the hero who picked it up. The port's stand-in, `awardXPToPlayable(5000)`, is the roster award
+(0x49d9d0 -> 0x449fe0: every herostat hero, the bench included): seen in game, eleven heroes went from level 1 to 9
+on XML1's curve from one pickup at haarp_ext03.
+
+**What exists.** XMen2.exe's 308 script functions (`research/scripts/api_diff.txt`, table 0x68a908) have no call
+that grants a skill point (`setXP`, `awardXPToPlayable`, `permanentStatBoost`, `levelUp` is XML1-only), and xml2-fix
+registers none either (section 19.1). XMen2.exe's "points to spend" test 0x4b7b00 is the level byte (CStats+0x1c)
+minus a per-hero counter (vt+0x14 of the XP object), so a level is one skill point.
+
+**The approximation (data only).** zones gives each SKILL pickup its own item `SKILL_<xp>`
+(`zones.rewrite_skill_pickups`, `items_to_add`; `activateonpickup`, XML1's model and text) whose `onactivate` is
+`setXP('_ACTIVATOR_',<xp>)` (0x4a8660 -> 0x422350: the activator's own XP gain, the XP pickup's call of section 23.1)
+with `<xp>` = one level step at the zone's world `level` on the build's curve (`zones.level_step_xp`: XML1's table
+with `--xp-curve xml1`, XMen2.exe's with `xml2`):
+
+| zone | world level | xml1 (default) | xml2 |
+|---|---|---|---|
+| haarp/ext/haarp_ext03 | 6 | `SKILL_750` | `SKILL_8885` |
+| sewers/grso/sewers3_1_3 | 26 | `SKILL_581350` | `SKILL_65085` |
+| hive/h_int/hive2_2_4 | 32 | `SKILL_3826325` | `SKILL_92085` |
+
+A hero at the zone's level gains exactly one level: one skill point, as in XML1, plus what XMen2.exe gives with a
+level (stat points, health), which XML1's pickup did not. A hero below the zone's level gains more than one level,
+one above it less (possibly none). Only the picker changes; the rest of the party and the bench do not. The base
+`SKILL` item (unused once every pickup is renamed) gets `setXP('_ACTIVATOR_',100)` (XML1's level 1 -> 2). A zone
+without a world level would use level 1 and report `skill_pickup_without_level` (none does). The proper fix stays an
+xml2-fix `addSkillPoints(actor, n)` (audit W2), which would also serve the STAT pickup.
+
+Checks: `zones_selftest` J2 (each built SKILL pickup names the item of its zone's step, whose `onactivate` is the
+activator's `setXP`; no skill item awards the roster) and J3 (32.1). Tests: `tests/unit/test_xml1_data_fixes.py` (the
+step equals one level of both tables; the haarp_ext03 entity and item; the xml2 curve; a zone without a level; the
+item order of 32.1).
+
+### 32.1 Engine limit: the item table's enhancement pool (found by this section's in-game check)
+
+The first SKILL_<xp> build put the three items at the end of `Data/items`, and in game the haarp_ext03 pickup was
+gone (not drawn; the entity removed at spawn). XMen2.exe's item loader (0x480400..0x4805c5) gives every
+`<enhancement>` of the table - the prefix / suffix / tr_item affixes first, then the items in file order - a record
+from a fixed pool of 375 (`0x4804a6 cmp [mgr+0x6064], 0x177; jge 0x4806cc`); the first enhancement past it aborts the
+whole load, so that item and every later one are never registered (read in the running game: item manager [0x72a514]
+count 65, enhancement counter 375; none of the later names reached the string pool), and an `inventoryent` naming one
+of them is removed when it spawns (0x47a9b4 -> vt+0xbc). XML2 retail uses 374 (prefixes 85, suffixes 79, tr_item 95,
+items 115), so the first XML1 equipment item with two enhancements overflows it.
+
+**Pre-existing consequence (content 6, not fixed here):** the load stops at `VISOR_OF_RETRIBUTION`, so 19 of the 20
+XML1 items after it never load: 18 of the 19 Danger Room reward items (section 21.3; VISOR_OF_RETRIBUTION ..
+SHIAR_ENERGY_ARMOR), `ASTRAL_STONE` and the two `XP_<count>` pickups of section 23.1 (`XP_30000` wx2_1, `XP_300000`
+hive2_2_4), whose entities were therefore removed in game. **Fix for the pickups (this section):** `zones.items_to_add`
+orders the XML1 items it appends without enhancements first (stable), so `SKILL_*`, `XP_*`, `ASTRAL_STONE` and the
+other plain items load before the equipment cuts the load off. The Danger Room rewards stay cut off (a data fix needs
+fewer enhancements: e.g. one enhancement per reward, or dropping XML2's unused random-affix entries; an exe fix
+raises the pool); zones warns with the list (`items_beyond_enhancement_pool`, `zones.enhancement_pool_cut`), and
+`zones_selftest` J3 fails if a SKILL / XP pickup item lies past the overflow.
+
+### 32.2 In game (build/_t1a, harness pipe t1a, save folder "X-Men Legends (t1a tests)")
+
+haarp_ext03 with Wolverine and Cyclops seated, every hero first set to XML1 level 6 (`awardXPToPlayable(1320)` =
+T1(6)), then Wolverine put on the pickup (scratchpad `t1a/t1a_driver.py`, `tools/hero_xp.py` before and after):
+Wolverine 1,320 XP level 6 -> 2,070 XP level 7 (the HUD shows 7); Cyclops (in the party) and the 13 benched heroes
+stay at 1,320 / level 6. The same steps on the build without sections 31-33: every non-exempt hero 1,320 -> 6,320 XP,
+level 6 -> 9.
+
+## 33. XML1's shared combat event values on the XML1 styles (2026-10-01, audit G3)
+
+Found offline (`research/audit/xml1_combat_gaps_2026-10-01.md` G3): the build ships XML2's
+`Data/shared_combat_events` byte for byte (section 4.4), and XML1's styles inherit from it by name (section 22.1),
+so an XML1 event or trigger that leaves an attribute to its shared parent got XML2's number: an XML1 punch did
+XML2's "2 3" instead of XML1's L1 = 4-5, a heavy punch "3 5" instead of L2 = 9-11.
+
+### 33.1 Rewrite (`combat_events.apply_x1_shared_values`, run by `x1schema.convert` after `rewrite_style`)
+
+`X1_SHARED_EVENT_VALUES` lists every XML1 shared event whose XML1 value differs from the shipped XML2 event, with
+XML1's value: `damage` L1 for `punch`, `kick`, `teleport_punch`; L2 for `punch_heavy`, `kick_heavy`, `move_damage`;
+L3 for `punch_veryheavy`, `kick_veryheavy`; L4 for `beam`, `fry`, `suspend`; and XML1's `dmgmod_auto_knockback` on
+`throw` (XML1: `Damage="0"` plus that damageMod; a child inherits its parent's damageMods as bits, 0x4dce80).
+On every XML1 style tree (characters' imports, heroes before the collapse, zones' `shared_nodes` merge: the
+section 22.3 entry points), each `<event>` / `<trigger>` that names one of those events directly (`inherit`, else
+`name`) and does not set the attribute itself gets XML1's value, resolved with XML1's `data/values.xml`
+(`BuildContext.x1_values`, the section 24 numbers: "4 5", "9 11", "15 18", "25 31"). A style event that inherits
+the shared one carries the value on to every trigger naming it, so only the direct child is written. Left alone:
+an element with a `type`; a name that resolves to an event of the style itself (a style event of the shared name
+shadows it); an `<event name=X>` without `inherit` (a redefinition); a tag update of an inherited trigger (0x4f6a1f
+re-parses only its own attributes onto the inherited copy, which carries the value already). XML2-origin styles
+(XML2's 16 same-name fightstyles, XML2's shared_nodes entries) are never XML1 trees and keep XML2's numbers.
+Idempotent; counts `x1_shared_value:<event>.<attr>` in the schema log.
+
+Over XML1's style files (xml1_loose: 12 fightstyles, 34 powerstyles, `shared_nodes`): punch 61, kick 17,
+punch_heavy 20, kick_heavy 14, punch_veryheavy 8, move_damage 1, fry 2 elements, throw damageMod 7. In the build only
+the XML1 styles characters and heroes write change (XML1's 10 same-name fightstyles and every shared_nodes node of
+XML2's name stay XML2's; no XML1-only shared_nodes node inherits a listed event), 23 styles: Avalanche, Blob,
+Juggernaut (with its three throws), Magneto and Magneto boss, Pyro, Sabretooth, Toad, the clawed (a/b/c) and bruiser Morlocks, the fire demon, Shadow King two,
+`moveset_sent_adv`, `moveset_shadowdemon`, the Phoenix dopple's `phnx_fry`, and the heroes' kept XML1 moves of Beast,
+Colossus (`radial_punch`), Gambit, Phoenix, ProfXAstral and ProfXGladiator.
+
+### 33.2 Differences deliberately not written
+
+- `knockback`: XML1 K1 = 40 and K2 = 120 equal XML2's 40 and 120 (the audit's "54 inherit knockback" inherit the
+  same number).
+- `damagescale`: XML1 has no such attribute (not a default.xbe string). XMen2.exe parses it with 0x44ec00 over the
+  table 0x6d6dec (`none` 0, `normal` 1, `difficulty` 2; an unknown name is 1) into +0x14 of the attack (0x4dc118);
+  its consumer is not traced, so whether XML1's melee is closer to `normal` or `none` is unknown. XML2's own
+  re-ships of XML1 NPCs (ps_sabretooth, ps_blob, ps_juggernaut punches) keep the shared punch's `normal`; so does
+  this port.
+- `grab` `damagetype="dmg_grab"`: not an XMen2.exe string (the damage-type parser 0x43bd70 has no such type);
+  XML2's `dmg_physical` stays.
+- `pickup_throw` (XML1 sets no damage; XML2 "21 26") and the throw's `impactdamage` / `throwspeed`: XML1 has no
+  number for them (neither is a default.xbe string); writing 0 would remove the damage XMen2.exe takes from them.
+- `weapon_fire`: `ce_atk_weap` is XMen2.exe's sound class (section 29); weapons.py replaces every weapon_fire
+  trigger of a gun style. `trail` (colour / width vs an effect): cosmetic.
+
+### 33.3 Tests and checks
+
+`tests/unit/test_xml1_data_fixes.py`: on a made-up style against a made-up XML2 shared table, the effective damage
+of an inheriting punch / an event-chained heavy punch goes "2 3" / "3 5" -> "4 5" / "9 11"; overrides, a `type`,
+a tag update, a shadowing style event and non-style files are left alone; idempotent; codes without a values
+table. `combat_events_selftest` T4/T5 (the `combat_*` counts) are unchanged; V18 / V19 / V-H5 see resolved numbers.
+In game: section 33.4.
+
+### 33.4 In game (build/_t1a vs the same build without sections 31-33, build/_t1a_base; harness pipes t1a / t1abase)
+
+A GRSO soldier's own melee is not affected: the GRSO npcstat entries name no fightstyle and their XML1 power style
+(`ps_grso` -> the `x1_ps_grso_<weapon>` variants) holds only weapon_fire attacks, so their punch is XML2's default
+fightstyle with XML2's numbers. The check uses the clawed Morlocks and the Morlock brute of sewers/hub/sewers1_1_1
+(ps_clwmorlock / ps_lrgmorlock: `attacklight1/2` are bare `punch` triggers; the clawed Morlock's `power_attack`
+projectile sets its own `15 18`, the control). Cyclops alone, level 1, `setHealthMax 7779` so he never dies; every hit
+read exactly from his actor's health float (+0x27c, found by a memory scan for the two max-health markers), 60-75 s
+per build, two runs each (scratchpad `t1a/melee_driver.py`):
+
+| hits on Cyclops | before (XML2's "2 3") | after (XML1's L1 "4 5") |
+|---|---|---|
+| light melee (punch) | 3.01, 3.03, 3.14, 3.43, 3.50, 3.66, 3.70, 3.85, 4.68 (mean 3.6) | 5.65, 6.06, 6.33, 6.44, 6.78, 6.98 (mean 6.4) |
+| the 15-18 projectile (control) | 14.26 .. 17.91 (mean 16.2, n 8) | 15.54 .. 20.44 (mean 17.3, n 6) |
+
+The light hits scale by 1.8, XML1's 4.5 / XML2's 2.5 mean; the control does not move. (Hits of 5.8 / 6.3 before and
+8.1 after are probably the brute's `punch_heavy`, "3 5" -> "9 11" at the same scale; not attributed.)

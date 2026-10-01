@@ -1685,6 +1685,14 @@ x1_npc_energy""".split())
 # style <require>, no stats entry: XML2's fightstyle grab moves are not talent-gated), so the rule drops it (46).
 # In --hero-roster 21xml2 the XML2 pads reference it again and the rule keeps it. x1_npc_energy (SPEC 24) is the
 # characters module's NPC energy talent (npc_values.ENERGY_TALENT): kept while a stats entry names it (47).
+# SPEC 30: characters emits XML1's 14 distinct inline NPC immunity bodies as shared talents in XML2's boss_resistances
+# form (npc_values.immunity_plan names each body after the XML1 talent name most entries used); kept while a stats
+# entry names one (npc_values.is_immunity_talent): 47 -> 61.
+SHARED_KEEP_IMMUNITIES = frozenset("""
+as_special avalanche_special blob_special forge_special havok_special juggernaut_special magnetoboss_special
+mastermold_special physical_res sabre_special sabretooth_special sentspider_special shadow_special toad_special
+""".split())
+SHARED_KEEP_EXPECTED = SHARED_KEEP_EXPECTED | SHARED_KEEP_IMMUNITIES
 TV_LABEL = {'dmg': 'Damage', 'kb': 'Knockback', 'dlv': 'Destruction', 'lif': 'Seconds', 'pwr': 'Energy',
             'rng': 'Range', 'cnt': 'Count', 'lvl': 'Level', 'xdmg': 'Explosion Damage', 'xkb': 'Explosion Knockback'}
 
@@ -2304,8 +2312,8 @@ class HeroBuilder:
                         style_reqs.add(r.get('item').lower())
         hero_files = set().union(*self.hero_file_names.values()) if self.hero_file_names else set()
         keep, drop = [], {}
-        cur = [t.get('name') for t in ctx.read_out_xmlb('Data/shared_talents.engb').iter('talent')]
-        for n in cur:
+        cur_defs = [(t.get('name'), t) for t in ctx.read_out_xmlb('Data/shared_talents.engb').iter('talent')]
+        for n, tdef in cur_defs:
             ln = n.lower()
             why = None
             if ln.startswith('fightstyle_') and (ln in stats_refs or ln in style_reqs):
@@ -2322,6 +2330,8 @@ class HeroBuilder:
                 why = 'engine special name'
             elif ln == NV.ENERGY_TALENT and ln in stats_refs:
                 why = "XML1 NPC energy pool (npc_values, SPEC 24) named by a stats entry"
+            elif ln in stats_refs and ln not in self.x2_shared_names and NV.is_immunity_talent(tdef):
+                why = 'XML1 NPC immunity body (npc_values, SPEC 30) named by a stats entry'
             if why:
                 keep.append(ln)
             else:

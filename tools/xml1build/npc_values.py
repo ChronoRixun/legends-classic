@@ -288,6 +288,152 @@ def talent_problems(t, need_rank):
     return bad
 
 
+# ------------------------------------------------------------------------------- NPC immunity talents (SPEC 30)
+# XML1 defines its boss immunities inline on the npcstat entry: <Talent name="blob_special" level="1"><level>
+# <activepowerup powerup="def_stun" affect_type="scale" level="0" life="-1"/>...</level></Talent>. XMen2.exe's
+# affecter table 0x6ddb18 has every attribute they use (combat_events.AFFECTERS: def_damage 39, def_knockback 40,
+# def_stun 41, def_pain 42, def_critical 43, def_pickup 44, def_grab 45, def_reflect_pain 46, def_finisher 47,
+# def_mind_control 50, no_iceshell 81, slow_immune 85) and XML2 ships the same idea as a shared talent
+# (boss_resistances = <talent><level><powerup life="-1"><affecter affect_type="scale" attribute="def_stun" level="0"/>
+# ...). characters emits one shared talent per distinct inline body in that form and rewrites the entries' references
+# to it; heroes keeps those talents in its shared_talents prune (is_immunity_talent).
+IMMUNITY_AFFECTERS = ('def_damage', 'def_knockback', 'def_stun', 'def_pain', 'def_critical', 'def_pickup',
+                      'def_grab', 'def_reflect_pain', 'def_finisher', 'def_mind_control', 'no_iceshell',
+                      'slow_immune')
+_IMMUNITY_ROW_ATTRS = ('powerup', 'affect_type', 'level', 'life', 'scope_damage')
+# a row = (attribute, affect_type, level, scope_damage), all lower-case strings ('' when absent): the affecter's form
+
+
+def _lower(el):
+    return {k.lower(): v for k, v in el.attrib.items()}
+
+
+def immunity_rows(talent_el):
+    """One XML1 inline <Talent> -> (rows, losses) when its body is an immunity body (every activepowerup is a
+    permanent IMMUNITY_AFFECTERS affecter, `none` rows aside), else (None, reason). rows keep XML1's order;
+    losses name what the XML2 form cannot carry (a `none` row's func_* callbacks, user1 ...)."""
+    levels = [lv for lv in talent_el if isinstance(lv.tag, str) and lv.tag.lower() == 'level']
+    if len(levels) != 1:
+        return None, f'{len(levels)} <level> children (one expected)'
+    rows, losses = [], []
+    for ap in levels[0]:
+        if not isinstance(ap.tag, str) or ap.tag.lower() != 'activepowerup':
+            return None, f'<{ap.tag}> child (activepowerup expected)'
+        a = _lower(ap)
+        pu = (a.get('powerup') or '').lower()
+        if pu == 'none':
+            losses.append('activepowerup none (' + ' '.join(f'{k}={v}' for k, v in sorted(a.items())
+                                                            if k not in ('powerup', 'life')) + ') dropped')
+            continue
+        if pu not in IMMUNITY_AFFECTERS:
+            return None, f'activepowerup {pu} is not an immunity affecter'
+        if (a.get('life') or '-1') != '-1':
+            return None, f'activepowerup {pu} life={a.get("life")} (permanent expected)'
+        extra = sorted(k for k in a if k not in _IMMUNITY_ROW_ATTRS)
+        if extra:
+            losses.append(f'{pu}: ' + ' '.join(f'{k}={a[k]}' for k in extra) + ' dropped')
+        rows.append((pu, (a.get('affect_type') or '').lower(), (a.get('level') or '').lower(),
+                     (a.get('scope_damage') or '').lower()))
+    if not rows:
+        return None, 'no affecter rows'
+    return rows, losses
+
+
+def immunity_key(rows):
+    """the body identity: the rows as a multiset."""
+    return tuple(sorted(rows))
+
+
+def immunity_talent(name, rows):
+    """the shared talent definition in XML2's boss_resistances form."""
+    t = ET.Element('talent', {'name': name})
+    pu = ET.SubElement(ET.SubElement(t, 'level'), 'powerup', {'life': '-1'})
+    for attr, affect, level, scope in rows:
+        a = {}
+        if affect:
+            a['affect_type'] = affect
+        a['attribute'] = attr
+        if level != '':
+            a['level'] = level
+        if scope:
+            a['scope_damage'] = scope
+        ET.SubElement(pu, 'affecter', a)
+    return t
+
+
+def definition_rows(talent_el):
+    """rows of a shared talent definition in <out> when it has the immunity form (one <level>, one permanent
+    <powerup>, only IMMUNITY_AFFECTERS affecters, no talentvalues), else None."""
+    if talent_el is None or any(isinstance(c.tag, str) and c.tag.lower() == 'talentvalues' for c in talent_el):
+        return None
+    levels = [lv for lv in talent_el if isinstance(lv.tag, str) and lv.tag.lower() == 'level']
+    if len(levels) != 1 or (levels[0].get('count') or '1') != '1':
+        return None
+    pus = [p for p in levels[0] if isinstance(p.tag, str)]
+    if len(pus) != 1 or pus[0].tag.lower() != 'powerup' or pus[0].get('life') != '-1' or pus[0].get('class'):
+        return None
+    rows = []
+    for a in pus[0]:
+        if not isinstance(a.tag, str) or a.tag.lower() != 'affecter':
+            return None
+        d = _lower(a)
+        attr = (d.get('attribute') or '').lower()
+        if attr not in IMMUNITY_AFFECTERS or set(d) - {'attribute', 'affect_type', 'level', 'scope_damage'}:
+            return None
+        rows.append((attr, (d.get('affect_type') or '').lower(), (d.get('level') or '').lower(),
+                     (d.get('scope_damage') or '').lower()))
+    return rows or None
+
+
+def is_immunity_talent(talent_el):
+    return definition_rows(talent_el) is not None
+
+
+def immunity_plan(npc_root, exclude=()):
+    """Census of the inline immunity bodies of an XML1 npcstat tree. Returns
+    {'bodies': {key: {'rows', 'names': {xml1 name: entries}, 'entries': [...], 'canonical'}},
+     'alias': {key: canonical}, 'skipped': {(entry, name): reason}, 'losses': {(entry, name): [..]}}.
+    `exclude`: lower-case talent names XML2 defines itself (dr_stun, sentinel_special): their references stay as
+    they are and XML2's definition applies. Canonical name per body: the XML1 name used by the most entries, ties
+    alphabetical; a name already taken by another body gets the next candidate (or a _2 suffix)."""
+    bodies = {}
+    skipped, losses = {}, {}
+    ex = {e.lower() for e in exclude}
+    stats = npc_root if isinstance(npc_root, (list, tuple)) else npc_root.iter()      # a tree or a stats list
+    for st in stats:
+        if not isinstance(st.tag, str) or st.tag.lower() != 'stats':
+            continue
+        sname = st.get('name') or ''
+        for t in st:
+            if not isinstance(t.tag, str) or t.tag.lower() != 'talent' or len(t) == 0:
+                continue
+            tn = t.get('name') or ''
+            if tn.lower() in ex:
+                skipped[(sname, tn)] = 'defined by XML2 shared_talents'
+                continue
+            rows, info = immunity_rows(t)
+            if rows is None:
+                skipped[(sname, tn)] = info
+                continue
+            if info:
+                losses[(sname, tn)] = info
+            b = bodies.setdefault(immunity_key(rows), {'rows': rows, 'names': {}, 'entries': []})
+            b['names'][tn.lower()] = b['names'].get(tn.lower(), 0) + 1
+            b['entries'].append(sname)
+    taken = set()
+    alias = {}
+    for key in sorted(bodies, key=lambda k: (-len(bodies[k]['entries']), min(bodies[k]['names']))):
+        b = bodies[key]
+        cands = sorted(b['names'], key=lambda n: (-b['names'][n], n))
+        name = next((c for c in cands if c not in taken), None)
+        if name is None:
+            name = next(f'{cands[0]}_{i}' for i in range(2, 100) if f'{cands[0]}_{i}' not in taken)
+        taken.add(name)
+        b['canonical'] = name
+        alias[key] = name
+    return {'bodies': bodies, 'alias': alias, 'skipped': skipped, 'losses': losses}
+
+
 # ------------------------------------------------------------------------------------------ exe / xbe facts
 def verify_exe(exe_path):
     """the value name table 0x6da240 and the energy constants against XMen2.exe. Returns mismatch strings."""
@@ -447,3 +593,66 @@ def v19(v, ck):
                 ck.error(f'shared_talents{ext}: {len(defs)} definitions of {ENERGY_TALENT} (1 expected)')
             for b in talent_problems(defs[0] if defs else None, max(ranks.values())):
                 ck.error(f'shared_talents{ext}: {b}')
+    v19_immunities(v, ck)
+
+
+def v19_immunities(v, ck):
+    """SPEC 30: every XML1-origin npcstat entry whose XML1 source carried an inline immunity body (immunity_rows)
+    names a shared talent whose definition in <out> carries the same affecter rows (any name); every immunity-form
+    shared talent in <out> is named by some stats entry (else a warning: it costs a pool slot for nothing)."""
+    ctx = v.ctx
+    try:
+        x2 = {(t.get('name') or '').lower() for t in ctx.read_base_xmlb('Data/shared_talents.engb').iter('talent')}
+    except Exception:          # noqa: BLE001 - no base install: nothing XML2-defined to exclude
+        x2 = set()
+    try:
+        x1root = ctx.read_x1_xml('data/npcstat.eng')
+    except Exception:          # noqa: BLE001
+        x1root = None
+    if x1root is None:
+        ck.warn('XML1 data/npcstat.eng not readable: NPC immunity talents (SPEC 30) unverified')
+        return
+    x1_by = {(st.get('name') or '').lower(): st for st in x1root.iter()
+             if isinstance(st.tag, str) and st.tag.lower() == 'stats'}
+    st = v.stats()
+    for ext in ('.xmlb', '.engb'):
+        t = v.tree(f'data/shared_talents{ext}')
+        defs = {(x.get('name') or '').lower(): x for x in t.iter('talent')} if t is not None else {}
+        def_rows = {n: definition_rows(x) for n, x in defs.items()}
+        n_entries = n_refs = 0
+        used, referenced = set(), set()
+        for el in st['variants'].get(ext, {}).get('npcstat', []) + st['variants'].get(ext, {}).get('herostat', []):
+            name = (el.get('name') or '').lower()
+            refs = [(x.get('name') or '').lower() for x in el if isinstance(x.tag, str) and x.tag.lower() == 'talent']
+            referenced.update(refs)
+            src = x1_by.get(name)
+            if src is None:
+                continue
+            wanted = []
+            for tl in src:
+                if not isinstance(tl.tag, str) or tl.tag.lower() != 'talent' or len(tl) == 0 \
+                        or (tl.get('name') or '').lower() in x2:
+                    continue
+                rows, _info = immunity_rows(tl)
+                if rows is not None:
+                    wanted.append((tl.get('name'), immunity_key(rows)))
+            if not wanted:
+                continue
+            n_entries += 1
+            have = {r: immunity_key(def_rows[r]) for r in refs if def_rows.get(r)}
+            for tn, key in wanted:
+                hits = [r for r, k in have.items() if k == key]
+                if not hits:
+                    ck.error(f'npcstat{ext} {el.get("name")}: XML1 inline talent {tn} '
+                             f'({" ".join(a + ("=" + lv if lv else "") for a, _, lv, _ in key)}) has no shared '
+                             f'talent with the same affecters (SPEC 30)')
+                else:
+                    used.update(hits)
+                    n_refs += 1
+        idle = sorted(n for n, r in def_rows.items() if r and n not in x2 and n not in referenced)
+        if idle:
+            ck.warn(f'shared_talents{ext}: immunity talents named by no stats entry {idle} (a pool slot each)')
+        if ext == '.engb':
+            ck.set('npc_immunity_entries', n_entries)
+            ck.set('npc_immunity_refs', n_refs)
+            ck.set('npc_immunity_talents', len(used))

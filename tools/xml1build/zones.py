@@ -96,9 +96,10 @@ ITEM_TYPE_MAP = {
     'stat': ('item', {'activateonpickup': 'true', 'onactivate': "permanentStatBoost('_ACTIVATOR_','body')"},
              "XML1 free stat point -> permanentStatBoost('_ACTIVATOR_','body'), XML2's stat-booster call "
              "(e.g. Maps/Act1/genosha/genosha3); XML2 has no stat item type or free-stat-point call"),
-    'skill': ('item', {'activateonpickup': 'true', 'onactivate': 'awardXPToPlayable(5000)'},
-              "XML1 free skill point -> awardXPToPlayable(5000): XML2 has no skill item type and no skill-point "
-              "call ('skill' is not an XMen2.exe string); XP is what grants skill points in XML2"),
+    'skill': ('item', {'activateonpickup': 'true', 'onactivate': "setXP('_ACTIVATOR_',100)"},
+              "XML1 free skill point -> one level of XP to the hero who takes it (SPEC 32): XML2 has no skill item "
+              "type and no skill-point call ('skill' is not an XMen2.exe string); each pickup names its own "
+              "SKILL_<xp> item sized to its zone's level (SKILL_PICKUP_*); 100 = XML1's level 1 -> 2"),
 }
 # SPEC 23.1: XML1's XP pickups (hive2_2_4 item_xp01 count 300000, wx2_1 count 30000). default.xbe reads the
 # inventoryent's count as the amount (0x7d3c0 -> +0x2c8) and gives it as XP to the hero who picks it up (0x7dc41:
@@ -110,6 +111,72 @@ ITEM_TYPE_MAP = {
 # (XML1's count is XP, not a quantity). --xp-curve xml2 keeps the one XP item and ITEM_TYPE_MAP's 5000.
 XP_PICKUP_ITEM = '{item}_{amount}'
 XP_PICKUP_SCRIPT = "setXP('_ACTIVATOR_',{amount})"
+# SPEC 32: XML1's SKILL pickup (data/items.eng type skill; haarp_ext03, sewers3_1_3, hive2_2_4) gave one free skill
+# point to the hero who took it. XMen2.exe has no script call that grants a skill point (none of its 308 functions,
+# research/scripts/api_diff.txt; xml2-fix adds none), and awardXPToPlayable is the roster award (0x49d9d0 -> 0x449fe0:
+# every hero, the bench included). Its unspent-skill test 0x4b7b00 is level minus a per-hero spent count, so one level
+# is one skill point. The data-only approximation: XP to the activator only (setXP, 0x4a8660 -> 0x422350) equal to one
+# level step at the zone's world `level` (XML1's level for the zone: haarp_ext03 6, sewers3_1_3 26, hive2_2_4 32) on
+# the build's XP curve. A hero at that level gains exactly one level (one skill point, plus that level's stat points
+# and health, which XML1's pickup did not give); a lower hero gains more than one level, a higher one less.
+SKILL_PICKUP_ITEM = '{item}_{amount}'
+SKILL_PICKUP_SCRIPT = XP_PICKUP_SCRIPT
+SKILL_LEVEL_DEFAULT = 1                # a zone without a world level (none of the three; reported as a problem)
+# SPEC 32.1: XMen2.exe's item table loader (0x480400..0x4805c5) gives every <enhancement> of data/items (the prefixes,
+# suffixes and tr_item affixes first, then the items in file order) a record of a fixed pool of 375 (0x4804a6
+# cmp [mgr+0x6064], 0x177; jge 0x4806cc): the first enhancement past it ABORTS the load, so that item and every later
+# one are never registered, and an inventoryent naming one of them is removed when it spawns (0x47a9b4 -> vt+0xbc).
+# XML2 retail uses 374 (prefixes 85, suffixes 79, tr_item 95, items 115). So the XML1 items without enhancements (the
+# pickups: SKILL_*, XP_*, STAT, keys, ASTRAL_STONE) go before the XML1 equipment, whose enhancements overflow it.
+ITEM_ENHANCEMENT_POOL = 375
+
+
+def item_enhancements(el):
+    return sum(1 for e in el.iter() if isinstance(e.tag, str) and e.tag.lower() == 'enhancement')
+
+
+def enhancement_pool_cut(top):
+    """[(item name, enhancements before it)] of the <item>s of one items tree (its top element) that XMen2.exe never
+    registers: the one whose enhancement overflows ITEM_ENHANCEMENT_POOL and every item after it."""
+    used = sum(item_enhancements(c) for c in top if c.tag.lower() != 'item')
+    cut, out = False, []
+    for c in top:
+        if c.tag.lower() != 'item':
+            continue
+        n = item_enhancements(c)
+        if not cut and used + n > ITEM_ENHANCEMENT_POOL:
+            cut = True
+        if cut:
+            out.append((c.get('name'), used))
+        used += n
+    return out
+
+
+def skill_zone_level(root):
+    """the world entity's `level` of a zone tree (XML1: <entity name="world" ... level="6">), or None."""
+    for el in root.iter():
+        if (el.get('name') or '').strip().lower() == 'world' and (el.get('level') or '').strip().isdigit():
+            return int(el.get('level').strip())
+    return None
+
+
+def xml1_kill_xp(level):
+    """default.xbe 0x54800: trunc(2.5 (4/3)^(level - 1)), exactly (the step factor of XML1's level table)."""
+    from fractions import Fraction
+    return math.floor(Fraction(5, 2) * Fraction(4, 3) ** (level - 1))
+
+
+def level_step_xp(level, curve='xml1'):
+    """XP from `level` to `level` + 1 on the build's curve: XML1's table (default.xbe 0x541e0, what xml2-fix
+    XPCurve=xml1 installs: T1(n) = T1(n-1) + 5 (n + 8) f(n-1), cap 45) or XMen2.exe's own (0x448a90: T2(n) = T2(n-1)
+    + (730 + 65 (n - 2)) n + 1500, cap 99). research/heroes/levels.md section 4; tools/power_sweep.xp_for_level has
+    the same tables."""
+    lv = max(1, int(level))
+    if curve == 'xml1':
+        lv = min(lv, 44)
+        return 5 * (lv + 9) * xml1_kill_xp(lv)
+    lv = min(lv, 98)
+    return (730 + 65 * (lv - 1)) * (lv + 1) + 1500
 SOUNDFILE_MAX = 10                   # XMen2.exe 0x5920cb: strlen >= 10 aborts zone sound loading
 SAVENAME_MAX = 63                    # zoneinfo savename copied into a 0x40 buffer (0x4850d5)
 # zoneinfo attributes of XML2's Xtraction network (0x468130 registers extraction="true", 0x467f60 parses the rest);
@@ -524,6 +591,8 @@ class Zones:
         self.item_refs = collections.defaultdict(set)           # inventoryitem value (lower) -> where
         self.xp_pickups = {}                                    # 'xp_300000' -> ('XP', 300000) (SPEC 23.1)
         self._x1_xp_items = None
+        self.skill_pickups = {}                                 # 'skill_750' -> ('SKILL', 750, level) (SPEC 32)
+        self._x1_skill_items = None
         self.counts = collections.Counter()
         self.kept_files, self.written_x1 = set(), set()
         self.problems = collections.defaultdict(lambda: collections.defaultdict(set))   # kind -> item -> zones
@@ -934,6 +1003,45 @@ class Zones:
                                  (e.get('type') or '').strip().lower() == 'xp'}
         return self._x1_xp_items
 
+    def x1_skill_items(self):
+        """{lower name: name} of XML1's items of type skill (data/items.eng: SKILL)."""
+        if self._x1_skill_items is None:
+            try:
+                root = self.ctx.read_x1_xml('data/items.eng')
+            except KeyError:
+                root = None
+            self._x1_skill_items = {e.get('name').lower(): e.get('name') for e in
+                                    (root.iter() if root is not None else ())
+                                    if e.tag.lower() == 'item' and e.get('name') and
+                                    (e.get('type') or '').strip().lower() == 'skill'}
+        return self._x1_skill_items
+
+    def rewrite_skill_pickups(self, zone, root):
+        """SPEC 32 (SKILL_PICKUP_ITEM): an entity naming an XML1 skill item names SKILL_<xp> instead, whose item gives
+        one level step at the zone's world level (level_step_xp, the build's curve) to the activator only. Returns
+        the rewrites."""
+        items = self.x1_skill_items()
+        if not items:
+            return 0
+        n = 0
+        level = None
+        for el in root.iter():
+            v = (el.get('inventoryitem') or '').strip()
+            if not v or v.lower() not in items:
+                continue
+            if level is None:
+                level = skill_zone_level(root)
+                if level is None:
+                    self.problem('skill_pickup_without_level', 'world entity has no level', zone)
+                    level = SKILL_LEVEL_DEFAULT
+            amount = level_step_xp(level, C.xp_curve_mode(self.ctx))
+            name = SKILL_PICKUP_ITEM.format(item=items[v.lower()], amount=amount)
+            el.set('inventoryitem', name)
+            self.skill_pickups[name.lower()] = (items[v.lower()], amount, level)
+            self.counts['skill_pickups_activator_xp'] += 1
+            n += 1
+        return n
+
     def rewrite_xp_pickups(self, zone, root):
         """SPEC 23.1 (XP_PICKUP_ITEM): an entity naming an XML1 xp item gets count 1 (both curves) and, with
         --xp-curve xml1, the item XP_<count> that gives XML1's amount to the activator. Returns the rewrites."""
@@ -1089,6 +1197,7 @@ class Zones:
         elif zone.lower() in ST.JOIN_DOUBLE_SPAWNERS and not join_hero_starts(root):
             self.problem('join_start_missing', 'no slot-2 playerstartent for the joined hero', zone)
         self.rewrite_xp_pickups(zone, root)                             # SPEC 23.1: XML1's XP pickup amounts
+        self.rewrite_skill_pickups(zone, root)                          # SPEC 32: SKILL -> the picker's level step
         renamed, missing = rename_npc_doubles(zone, root)                # section 18: the other same-name NPCs
         if renamed:
             self.counts['npc_doubles_renamed'] += renamed
@@ -1921,7 +2030,8 @@ class Zones:
                     self.ensure_file(pkg, 'xml', C.split_ext(fr)[0], (C.split_ext(fr)[1],), zone, why)
             elif cat == 'item':
                 self.item_refs[v.strip().lower()].add(zone)
-                if v.lower() not in self.item_names() and v.strip().lower() not in self.xp_pickups:
+                if v.lower() not in self.item_names() and v.strip().lower() not in self.xp_pickups and \
+                        v.strip().lower() not in self.skill_pickups:
                     self.problem('inventoryitem_unknown', v, zone)
             elif cat == 'character':
                 if self.stats_names is not None and v.lower() not in self.stats_names:
@@ -2224,6 +2334,26 @@ class Zones:
             report.append(f'{el.get("name")} (XML1 {base} pickup of {amount} XP -> onactivate {el.get("onactivate")!r}: '
                           f'XML1 gives the pickup\'s count to the hero who takes it; used by '
                           f'{sorted(self.item_refs[low])[:3]})')
+        # SPEC 32: one item per XML1 skill pickup amount (one level step at the zone's level, to the picker)
+        for low, (base, amount, level) in sorted(self.skill_pickups.items()):
+            if low in have or low not in self.item_refs:
+                continue
+            src = by_name.get(base.lower())
+            el = self.translate_item(src)[0] if src is not None else None
+            if el is None:
+                report.append(f'{low}: not added (XML1 item {base} missing)')
+                continue
+            el.set('name', SKILL_PICKUP_ITEM.format(item=base, amount=amount))
+            el.set('onactivate', SKILL_PICKUP_SCRIPT.format(amount=amount))
+            out.append(el)
+            have.add(low)
+            self.counts['items_skill_pickup_amounts'] += 1
+            report.append(f'{el.get("name")} (XML1 {base} free skill point -> onactivate {el.get("onactivate")!r}: one '
+                          f'level step at zone level {level} to the hero who takes it, SPEC 32; used by '
+                          f'{sorted(self.item_refs[low])[:3]})')
+        # SPEC 32.1: the items without enhancements first (stable), so XMen2.exe's 375-record enhancement pool, which
+        # XML2's own table nearly fills, cannot cut them off behind the XML1 equipment
+        out.sort(key=lambda el: item_enhancements(el) > 0)
         return out, report
 
     def dr_reward_items(self):
@@ -2294,6 +2424,13 @@ class Zones:
             else:
                 ctx.write_xmlb(f'Data/{name}', trees[exts[0]], tuple(exts), source=f'zones:{x1rel}')
             self.counts[f'{name}_added'] = len(added_names)
+            if name == 'items':                     # SPEC 32.1: what the 375-record enhancement pool cuts off
+                lost = enhancement_pool_cut(C.iter_roots(trees[exts[0]])[0])
+                self.counts['items_beyond_enhancement_pool'] = len(lost)
+                if lost:
+                    ctx.warn(f'Data/items: {len(lost)} items are never loaded by XMen2.exe - the enhancement pool '
+                             f'({ITEM_ENHANCEMENT_POOL}, 0x4804a6) overflows at {lost[0][0]} ({lost[0][1]} used before '
+                             f'it), and the load stops there: {[n for n, _ in lost]}')
             ctx.note(f'Data/{name}: {len(added_names)} XML1 entries added, {xml2_wins} same-name entries kept '
                      f'as XML2, {unnamed} unnamed XML1 children skipped')
             # package: XML2's generated PKGB + missing entries of the XML1 bundle + files the added entries use

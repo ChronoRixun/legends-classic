@@ -808,6 +808,7 @@ class BuildContext:
         self._json = {}
         self._sound_plan = None
         self._weapon_models = None
+        self._x1_values = None          # heroes.Values of XML1's data/values.xml (x1schema, SPEC 33)
         self.schema_log = {}                 # x1schema change kind -> {x1 rel: count} (every module's imports)
 
     # ------------------------------------------------------------------ options / logging / report
@@ -954,12 +955,26 @@ class BuildContext:
             self._weapon_models = wm
         return self._weapon_models
 
+    def x1_values(self):
+        """heroes.Values of XML1's data/values.xml (cached; None without one): x1schema resolves the XML1 value codes
+        it writes onto the styles with it (SPEC 33)."""
+        if self._x1_values is None:
+            from .heroes import Values              # local import: heroes imports this module
+            try:
+                root = self.read_x1_xml('data/values.xml')
+            except KeyError:
+                root = None
+            self._x1_values = Values(root) if root is not None else False
+        return self._x1_values or None
+
     def x1_schema(self, root, x1_rel):
         """Apply xml1build.x1schema.convert (XML1 -> XML2 entity classes / renamed attributes / effect colours)
         to an XML1 text tree in place and log the changes in ctx.schema_log. Every XML1 text file the build
         writes goes through this (import_x1_asset calls it; modules that write XML1 trees themselves call it)."""
         from . import x1schema
-        ch = x1schema.convert(root, x1_rel, self.weapon_models())
+        from . import combat_events
+        ch = x1schema.convert(root, x1_rel, self.weapon_models(),
+                              self.x1_values() if combat_events.is_style_rel(x1_rel) else None)
         if ch:
             key = norm(x1_rel)
             with self._lock:

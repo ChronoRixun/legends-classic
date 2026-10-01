@@ -42,6 +42,10 @@ own patch), and zones runs it on the world tables it merges itself, so every mod
    counterpart are renamed (ch_throw -> ch_pickup_throw), as is the affecter atk_damage_scale (-> scale-type
    atk_damage). XMen2.exe drops a trigger whose name does not resolve (0x501630), runs an unknown handler as
    %default% (0x4fd860) and parses an unknown affecter as none (0x534d90). SPEC.md section 22.
+   Then combat_events.apply_x1_shared_values: an XML1 event / trigger that leaves damage (or the throw's damageMod) to
+   a shared combat event XML2's shipped table changed gets XML1's value (punch L1 = "4 5" instead of XML2's "2 3"),
+   SPEC.md section 33; and convert_renderfx: XML1's ce_renderfx tint form -> XML2's add / remove="cloaked",
+   SPEC.md section 31.
 """
 from __future__ import annotations
 
@@ -226,8 +230,9 @@ def is_effect_rel(rel):
     return r.startswith('effects/')
 
 
-def convert(root, rel, weapon_models=None):
-    """Apply every conversion that applies to XML1 file `rel`. Returns a Counter of change kinds."""
+def convert(root, rel, weapon_models=None, x1_values=None):
+    """Apply every conversion that applies to XML1 file `rel`. x1_values: heroes.Values of XML1's data/values.xml
+    (resolves the codes section 33 writes; None writes the codes). Returns a Counter of change kinds."""
     c = collections.Counter()
     if root is None:
         return c
@@ -240,7 +245,63 @@ def convert(root, rel, weapon_models=None):
         c[f'{kind}:{detail}' if kind not in ('turret_model',) else kind] += 1
     if CE.is_style_rel(rel):
         c.update(CE.rewrite_style(root))
+        c.update(CE.apply_x1_shared_values(root, x1_values))
+        c.update(convert_renderfx(root))
     return c
+
+
+# --------------------------------------------------------------------------------------------- renderfx (SPEC 31)
+# XMen2.exe's ce_renderfx parser (CCERenderFx vtable 0x692770 slot 4 = 0x4e94e0) reads `add` and `remove`, each a
+# name of the renderfx table 0x6d7bd8 (none pain1 pain2 chilled metalfreeze radiation radiated fading xtreme_fb
+# cloaked bleeding burning) OR-ed into a mask, then the base `time` / `tag`. XML1 (default.xbe) tinted the actor
+# instead: tint / solid / alpha flags and an `rgba` colour, and `remove="true"` to end it; none of those names is an
+# XMen2.exe string, so the triggers did nothing. XML2's own conversion of the same-named triggers (tintout / tintin,
+# e.g. ps_deadpool's cloak) is `add="cloaked"` / `remove="cloaked"`, the translucent cloak.
+RENDERFX_X1_ATTRS = ('tint', 'solid', 'alpha', 'rgba')
+RENDERFX_X1_CLOAK = 'cloaked'
+
+
+def convert_renderfx(root):
+    """XML1 ce_renderfx tint triggers -> XML2's renderfx names, in place and idempotent: a trigger / event of type
+    ce_renderfx with any of tint / solid / alpha / rgba and no `add` / `remove` name gets add="cloaked"; with
+    remove="true" it gets remove="cloaked"; the XML1 attributes go. Returns a Counter {'renderfx:add|remove': n}."""
+    c = collections.Counter()
+    if root is None:
+        return c
+    for el in root.iter():
+        if not isinstance(el.tag, str) or el.tag.lower() not in ('trigger', 'event'):
+            continue
+        a = {k.lower(): k for k in el.attrib}
+        if (el.get(a.get('type', 'type')) or '').strip().lower() != 'ce_renderfx':
+            continue
+        x1 = [a[k] for k in RENDERFX_X1_ATTRS if k in a]
+        rm = (el.get(a['remove']) if 'remove' in a else '') or ''
+        if rm.strip().lower() == 'true':
+            del el.attrib[a['remove']]
+            el.set('remove', RENDERFX_X1_CLOAK)
+            kind = 'remove'
+        elif x1 and 'add' not in a and 'remove' not in a:
+            el.set('add', RENDERFX_X1_CLOAK)
+            kind = 'add'
+        else:
+            continue
+        for k in x1:
+            del el.attrib[k]
+        c[f'renderfx:{kind}'] += 1
+    return c
+
+
+def renderfx_x1_elements(root):
+    """[(tag, name)] of ce_renderfx elements still in XML1's form (tint / solid / alpha / rgba, or remove="true")."""
+    out = []
+    for el in root.iter():
+        if not isinstance(el.tag, str) or el.tag.lower() not in ('trigger', 'event'):
+            continue
+        a = {k.lower(): v for k, v in el.attrib.items()}
+        if (a.get('type') or '').strip().lower() == 'ce_renderfx' and \
+                (any(k in a for k in RENDERFX_X1_ATTRS) or (a.get('remove') or '').strip().lower() == 'true'):
+            out.append((el.tag, a.get('name')))
+    return out
 
 
 # --------------------------------------------------------------------------------------------- selftest

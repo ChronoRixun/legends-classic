@@ -247,13 +247,17 @@ cannot reach a per-hero file).
 by a stats entry or a style `<require>`; named by a `<require cat="skill|talent">` of a powerstyle / fightstyle the
 final stats use and not defined in a hero file; an XML2 definition referenced by a stats entry; a plain reference
 of an XML1 hero (incl. the engine special names `flight`, `ice_skating`, `night_faith`, E13); one of
-`toughness`, `mutantmastery`, `acrobatics`, which get XML1's real definitions; or characters' NPC energy talent
-`x1_npc_energy` while a stats entry names it (SPEC 24.3). Everything else is dropped: XML2's
-unreferenced `fightstyle_staff`, `mutantmaster`, `block`, `grab`, `psionic_fury`, `knock_resist`,
-`corrupt_vampire`, `deadpool_regen`, `blimpyboy`, `monst_dmg_low`, the 5 `profx_*`, and 27 empty `*_special`-style
-NPC definitions. Result 88 -> **46** (DESIGN listed 47 with `grab`; a delta is a warning naming it), 89 -> **47**
-with `x1_npc_energy` (SPEC 24). Registered talents worst party = 47 + 8 + 7 + 7 + 7 = **76** of 100 (+8 danger room
-margin = 84 <= 100).
+`toughness`, `mutantmastery`, `acrobatics`, which get XML1's real definitions; characters' NPC energy talent
+`x1_npc_energy` while a stats entry names it (SPEC 24.3); or one of characters' XML1 NPC immunity talents (SPEC 30:
+a non-XML2 definition in the immunity form, `npc_values.is_immunity_talent`) while a stats entry names it.
+Everything else is dropped: XML2's unreferenced `fightstyle_staff`, `mutantmaster`, `block`, `grab`,
+`psionic_fury`, `knock_resist`, `corrupt_vampire`, `deadpool_regen`, `blimpyboy`, `monst_dmg_low`, the 5 `profx_*`,
+and the remaining empty NPC definitions (`jug_xtreme`, `pyro_shield`, `shade_spawn`, the `profx_*`). Result 88 ->
+**46** (DESIGN listed 47 with `grab`; a delta is a warning naming it), 89 -> **47** with `x1_npc_energy` (SPEC 24),
+**61** with the 14 immunity talents (SPEC 30; DESIGN D8 / 4.7 dropped them as "empty `*_special` definitions" -
+the emptiness was characters' own `ensure_talent` stub, the real bodies were inline in XML1's npcstat).
+Registered talents worst party = 61 + 8 + 7 + 7 + 7 = **90** of 100 (+8 danger room margin = 98 <= 100; the
+validator's limit is 92 before the margin).
 
 ---------------------------------------------------------------------------------------------------------------
 
