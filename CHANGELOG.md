@@ -3,6 +3,16 @@
 The builder's releases, newest first. The version is `xml1-builder --version`; the content version is what a
 build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebuild.
 
+## v0.1.3 - content version 5
+
+- **Fixed (0.1.2 regression): in zones with gun soldiers, the third and fourth heroes of the party had no power
+  wheel** (holding the power key did nothing for them; the first two heroes were fine, and the next zone restored
+  everyone). 0.1.2 pointed the soldiers at their new per-weapon power styles but their packages still listed the
+  old style, so the engine loaded the new one on demand - and a style loaded outside the packages breaks the
+  power registration of the heroes seated after it. The character and zone packages now list the style the
+  soldier actually uses (SPEC section 29.1), and the validator refuses a build where a stats entry names a style
+  no package carries. Reported from the HAARP exterior with a four-hero party; reproduced and verified there.
+
 ## v0.1.2 - content version 4
 
 - **Fixed: X-Men Legends' gun soldiers fired blanks** (the GRSO mp5, laser, lightning, nullifier, freeze and

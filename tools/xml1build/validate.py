@@ -964,6 +964,60 @@ class Validator:
                 ck.warn(f'{z}: Maps/{z}.NAVB exists but the package has no <nav> entry')
             if 'combat_is' not in kinds:
                 ck.warn(f'{z}: zone package has no <combat_is> flag (character _nc packages are chosen by it)')
+            self._v4_styles_named_by_stats(ck, z, kinds.get('fightstyle', set()))
+        self._v4_character_packages_name_the_style(ck, sc)
+
+    def _zone_chr_powerstyles(self, z):
+        """{lower powerstyle} of the zone's CHRB characters (herostat / npcstat entries)."""
+        t = self.tree(f'maps/{z}.chrb')
+        if t is None:
+            return set()
+        by = self.stats()['by_name']
+        out = set()
+        for c in t.iter('character'):
+            e = by.get((c.get('name') or '').lower())
+            if e is not None and (e[1].get('powerstyle') or '').strip():
+                out.add(e[1].get('powerstyle').strip().lower())
+        return out
+
+    def _v4_styles_named_by_stats(self, ck, z, pkg_styles):
+        """SPEC 29.1: a power style the engine loads on demand (named by a stats entry, listed by no package) breaks
+        the party's power wheels (the third and fourth heroes seated had none in haarp_ext01 on 0.1.2). A zone
+        package that lists a weapon-variant BASE style (x1_<base>_<weapon> exists among the stats powerstyles) while
+        none of the zone's characters uses the base itself is the 0.1.2 shape of that: error."""
+        used = self._zone_chr_powerstyles(z)
+        all_ps = {(e[1].get('powerstyle') or '').strip().lower() for e in self.stats()['by_name'].values()}
+        for fn in sorted(pkg_styles):
+            if not fn.startswith('data/powerstyles/'):
+                continue
+            base = fn[len('data/powerstyles/'):]
+            stem = base[3:] if base.startswith('x1_') else base
+            variants = {v for v in used if v.startswith(f'x1_{stem}_') and v != base}
+            if variants and base not in used:
+                ck.error(f'{z}: zone package lists {fn} but the characters of the zone use its weapon variant(s) '
+                         f'{sorted(variants)} - a style loaded outside the packages breaks the power wheels of the party '
+                         f'(SPEC 29.1)')
+            elif base not in used and base not in all_ps and any(v.startswith(f'x1_{stem}_') for v in all_ps):
+                ck.warn(f'{z}: zone package lists {fn}, a base style no stats entry uses (its weapon variants exist)')
+
+    def _v4_character_packages_name_the_style(self, ck, sc):
+        """SPEC 29.1: every (non-_nc) character package of a stats entry that lists power styles lists the entry's
+        own powerstyle - the engine must find the style in a package, not load it on demand."""
+        by = self.stats()['by_name']
+        for n, entries in sorted(sc.pkg.items()):
+            m = re.fullmatch(r'packages/generated/characters/(.+)_(\d{4,5})\.pkgb', n)
+            if not m:
+                continue
+            e = by.get(m.group(1).lower())
+            if e is None:
+                continue
+            ps = (e[1].get('powerstyle') or '').strip().lower()
+            listed = {C.norm(fn or '')[len('data/powerstyles/'):] for kind, fn in entries
+                      if kind == 'fightstyle' and C.norm(fn or '').startswith('data/powerstyles/')}
+            if ps and listed and ps not in listed:
+                ck.error(f'{sc.files[n]["rel"]}: lists powerstyle(s) {sorted(listed)} but the stats entry '
+                         f'{e[1].get("name")} uses {ps} - the engine would load it on demand, which breaks the '
+                         f'power wheels of the party (SPEC 29.1)')
 
     def _base_pkg_entries(self, n):
         """{(kind, norm filename)} of the XML2 package at the same path (empty when the base has none)."""

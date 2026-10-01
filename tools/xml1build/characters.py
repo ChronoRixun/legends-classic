@@ -334,6 +334,7 @@ class _Builder:
         self.x1_values = None       # heroes.Values of XML1's data/values.xml (loaded on the first style)
         self.npc_codes = {}         # x1 style rel -> (Counter, problems) of npc_values.resolve_style (SPEC 24)
         self.weapon_reports = {}    # variant style name -> (weapon, x1 style, weapons.apply counts) (SPEC 29)
+        self.variant_base = {}      # weapon variant style name -> the mapped base style it replaces (SPEC 29.1)
         self.igb_renamed = 0
         self.import_stats = {}
         self.x1_weapons = {}
@@ -589,6 +590,7 @@ class _Builder:
         name = W.variant_name(mapped, weapon_name)
         key = ('powerstyles', name)
         with self.lock:
+            self.variant_base[name] = mapped.lower()
             if key in self.styles:
                 return self.styles[key]
         rel = next((r for r in (f'data/powerstyles/{lname}.eng', f'data/powerstyles/{lname}.xml') if ctx.x1_path(r)),
@@ -1117,6 +1119,20 @@ class _Builder:
                 ET.SubElement(root, e[0], {'filename': e[1]})
         return root, seen
 
+    def swap_variant_style(self, root, stats_el):
+        """SPEC 29.1: a package of a stats entry that uses a weapon variant style lists the VARIANT where XML1's
+        bundle listed the base style. A power style the engine loads on demand (named by a stats entry but by no
+        package) breaks the party's power wheels: in haarp_ext01 (0.1.2) the third and fourth heroes seated had
+        no wheel until the next zone; with the variant in the packages all four do (verified in game)."""
+        vs = (stats_el.get('powerstyle') or '').lower()
+        base = self.variant_base.get(vs)
+        if not base:
+            return
+        for e in root:
+            if e.tag == 'fightstyle' and C.norm(e.get('filename', '')) == f'data/powerstyles/{base}':
+                e.set('filename', f'data/powerstyles/{vs}')
+                self.ctx.count('package_styles_to_variant')
+
     def add_boltons(self, root, seen, stats_el, who):
         """XML2 packages list every BoltOn model (fix_package_for_boltons) and its anim DB."""
         for b in stats_el.iter('BoltOn'):
@@ -1201,6 +1217,7 @@ class _Builder:
                     who = f'{lname}_{s4}{suffix}'
                     root, seen = self.build_pkg(ents, who)
                     self.add_boltons(root, seen, st, who)
+                    self.swap_variant_style(root, st)
                     rel = C.char_package_rel(lname, C.map_skin(s4), suffix == '_nc')
                     actual = self.write_pkg(rel, root)
                     if actual:
@@ -1214,6 +1231,7 @@ class _Builder:
             rel = f'Packages/generated/characters/{lname}_xml.PKGB'
             if xb is not None:
                 root, _ = self.build_pkg(xb, f'{lname}_xml')
+                self.swap_variant_style(root, st)
                 if len(root) == 0:
                     ctx.warn(f'{lname}_xml: XML1 bundle has no usable entry; not written')
                     continue
@@ -1557,6 +1575,8 @@ def run(ctx):
                          'powerstyle': st.get('powerstyle'), 'sounddir': st.get('sounddir'), 'origin': origin}
     ctx.shared['stats'] = stats
     ctx.shared['stats_names'] = set(stats)
+    ctx.shared['weapon_variant_base'] = dict(b.variant_base)                       # SPEC 29.1 (zones packages)
+    ctx.shared['stats_powerstyle'] = {n: (e.get('powerstyle') or '').lower() for n, e in stats_by_lname.items()}
     ctx.shared['char_packages'] = set(char_pkgs)
     ctx.set_count('npc_entries', sum(1 for _, o in new_entries if o == 'xml1'))
     ctx.set_count('hero_as_npc', sum(1 for _, o in new_entries if o == 'xml1_hero_as_npc'))

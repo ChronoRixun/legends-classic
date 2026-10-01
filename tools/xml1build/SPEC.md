@@ -3332,3 +3332,32 @@ hit for 4-5 (one measured 6-px drop) and killed the hero in under 8 s when he wa
 the hero at 20 HP). Not reached in game: the freeze and knockback guns (projectile; their zones' spawners are
 instantspawn without monster names, so neither teleport nor act finds them), lightning / laser / nullifier (same
 beam mechanism as the mp5, different effects). The `fire_wall` harm entity's loop effect is still unchecked.
+
+### 29.1 Styles named by a stats entry must be listed by its packages (2026-10-01, the missing power wheels)
+
+**Symptom (Owen, 0.1.2, the HAARP exterior with Magma, Jean, Iceman and Wolverine).** The bottom and left heroes'
+power wheel would not open at all (holding the power key did nothing); the top and right heroes' opened. Reproduced
+in build/_wpn with the same four (scratchpad wheel_seats.py: seatParty, loadMapKeepTeam haarp_ext01, UP / RIGHT /
+DOWN / LEFT then the power key): seats 3 and 4 have no wheel, with a 3-hero party seat 3 has none, with 2 both
+work; the same party in nyc1_1_1 has all four; haarp_ext01 on 0.1.1 content (build/_pwr) has all four; the flamer
+need not spawn (the zone load alone does it).
+
+**Cause.** 0.1.2 pointed the HAARP soldiers' stats entries at the weapon variants (x1_ps_grso_mp5,
+x1_ps_flamethrower_flamethrower) but their character packages, built from XML1's bundles, still listed the base
+styles (ps_grso, ps_flamethrower), as did the zone package. The engine loaded the variants on demand when the
+zone's instantspawn soldiers appeared, and a power style loaded outside the packages breaks the power registration
+of the heroes seated after it (the mechanism in the exe is not traced; the fix below is proven by the control).
+
+**Fix.** `characters.swap_variant_style`: every character package (bundle, synthesized, `_xml`) of a stats entry
+that uses a weapon variant lists the variant where the bundle listed the base (`variant_base` from
+`weapon_style`; count `package_styles_to_variant`). `zones.weapon_variant_entries` (characters publishes
+`ctx.shared['weapon_variant_base']` and `stats_powerstyle`): a zone package's `data/powerstyles/<base>` becomes the
+variants the zone's .chr characters use, the base kept only when a character still uses it (counts
+`zone_style_variants`, `zone_base_styles_replaced`). Validator V4: a zone package listing a weapon-variant base that
+none of its characters uses, or a character package whose power styles do not include its stats entry's, is an
+error (77 on the 0.1.2 play build, 0 on the fixed one). `tests/unit/test_zone_packages.py`. CONTENT_VERSION 4 -> 5,
+builder 0.1.3.
+
+**Verified in game 2026-10-01.** build/_wpn with the three HAARP packages patched by hand to the variants: all
+four wheels (Magma, Jean, Wolverine, Iceman) in haarp_ext01. build/_w3 (the builder's own output, harness pipe
+w3): the same four-seat check - see the sheet wheel/sheet_w3fix.png in the session scratchpad.

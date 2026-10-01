@@ -11,7 +11,7 @@ It is a builder, not a download: every file of the result is made on your comput
 This project ships no game content - no game files, no parts of them, no modified executables - and the builder
 makes no network connections.
 
-> **Status: first public test builds (builder 0.1.2, launcher 0.1.0).** Every mission and the ending run in automated
+> **Status: first public test builds (builder 0.1.3, launcher 0.1.0).** Every mission and the ending run in automated
 > tests on the developer's PC (a full hand-played run is under way), the builder (`xml1-builder`) makes that build
 > from a disc image and an X-Men Legends II install in a few minutes, and the
 > [Ultimate Legends](https://github.com/ChronoRixun/ultimate-legends) launcher does it in a few clicks. Known bugs
@@ -114,6 +114,9 @@ Verified in game on the developer's PC (mostly by automated runs that drive the 
 Fixed in later builders (the launcher offers the rebuild when the content version rises, or run
 `xml1-builder build` again - see [CHANGELOG.md](CHANGELOG.md)):
 
+- **Builder 0.1.3 (content version 5): with builder 0.1.2, in zones with gun soldiers the third and fourth heroes
+  of the party had no power wheel** (holding the power key did nothing for them; the next zone restored it). A
+  packaging slip in 0.1.2; fixed, and the builder now refuses to produce it.
 - **Builder 0.1.2 (content version 4): the first game's gun soldiers fired blanks** - the GRSO rifles, lasers,
   lightning and nullifier guns, the HAARP soldiers and flamethrowers, the pistol thugs did no damage and showed no
   tracer, sound or flame (the flamethrower's flame was invisible). They now fire, hit and are drawn, with the first
@@ -147,7 +150,7 @@ Known limitations:
 | | the launcher's setup wizard and game page | done |
 | | this public repository, the community Discord | done |
 | | release testing on a clean PC (Windows Sandbox): the builder alone, and the launcher's one-click setup | done |
-| M4 | **Public test period**: the fixes the play-throughs turn up (0.1.1: the power-wheel bug above; 0.1.2: the silent gun soldiers), then a balance pass (melee versus powers against the first game's enemy values) | now |
+| M4 | **Public test period**: the fixes the play-throughs turn up (0.1.1: the power-wheel bug above; 0.1.2: the silent gun soldiers; 0.1.3: the missing power wheels), then a balance pass (melee versus powers against the first game's enemy values) | now |
 | later | settings separate from X-Men Legends II's; compressed disc images; online play across the internet tested | ideas |
 
 ## Repository layout

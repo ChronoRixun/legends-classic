@@ -693,6 +693,30 @@ class Zones:
             return C.map_package_entry(kind, x1_rel)
         return None
 
+    def weapon_variant_entries(self, ce, chr_names, zone):
+        """SPEC 29.1: a zone package entry `data/powerstyles/<base>` becomes the weapon VARIANTS of that style the
+        zone's .chr characters use (characters publishes weapon_variant_base / stats_powerstyle), keeping the base
+        only when a character of the zone still uses it. A style the engine loads on demand - named by a stats
+        entry, listed by no package - breaks the party's power wheels (the third and fourth heroes seated), so the
+        packages must name what the stats entries name."""
+        if ce[0] != 'fightstyle' or not ce[1].startswith('data/powerstyles/'):
+            return [ce]
+        vb = self.ctx.shared.get('weapon_variant_base') or {}
+        if not vb:
+            return [ce]
+        base = ce[1][len('data/powerstyles/'):].lower()
+        sp = self.ctx.shared.get('stats_powerstyle') or {}
+        used = [sp.get(n.lower(), '') for n in chr_names]
+        variants = sorted({u for u in used if u and vb.get(u) == base})
+        if not variants:
+            return [ce]
+        out = [ce] if base in used else []
+        out += [('fightstyle', f'data/powerstyles/{v}') for v in variants]
+        self.counts['zone_style_variants'] += len(variants)
+        if base not in used:
+            self.counts['zone_base_styles_replaced'] += 1
+        return out
+
     # ---- section 16: per-zone animation DB (XMen2.exe "zone_%s", 0x486710)
     @staticmethod
     def mission_animdb_stem(kind, x1_rel):
@@ -1519,7 +1543,7 @@ class Zones:
         if not ires.ok:
             ctx.error(f'{zone}: map IGB not written ({ires.status})')
 
-        pkg_entries = self.build_package(zone, bundle, st, has_nav, ires.ok)
+        pkg_entries = self.build_package(zone, bundle, st, has_nav, ires.ok, chr_names)
         # ---- actor_budget (section 14): the XML1 bundle precaches the XML1 hero actors of its CHRB heroes; where
         # the name resolves to an XML2 herostat stand-in those skins/anim DBs are dead weight in XMen2.exe's
         # 40-slot actor table (mansion4_1 crash at 0x5743bb). Drops them; nothing else in the package changes.
@@ -1630,7 +1654,7 @@ class Zones:
         self.counts['automaps_written'] += 1
         return f'automaps/{zone}'
 
-    def build_package(self, zone, bundle, st, has_nav, igb_ok):
+    def build_package(self, zone, bundle, st, has_nav, igb_ok, chr_names=()):
         ctx = self.ctx
         stem = f'maps/{zone}'
         pkg = Pkg()
@@ -1703,8 +1727,9 @@ class Zones:
                 if hero and pkg.add('xml_talents', f'data/talents/{hero}'):
                     self.counts['hero_talents_before_zone_style'] += 1
                     self.hero_style_zones.setdefault(hero, []).append(zone)
-                pkg.add(*ce)
-                self.char_entries[ce].add(where)
+                for ce2 in self.weapon_variant_entries(ce, chr_names, zone):       # SPEC 29.1
+                    pkg.add(*ce2)
+                    self.char_entries[ce2].add(where)
                 continue
             if k == 'motionpath':
                 res = self.import_asset(n)
