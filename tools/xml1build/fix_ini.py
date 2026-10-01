@@ -88,8 +88,12 @@ REVIEW_STATS_LABEL = 'option05_text'
 XP_CURVE = 'xml1'
 BUILD_REPORT = ('_build', 'report.json')
 
-# xml2-fix [Limits] (29938a0): actor table 40 -> 127, resource name table 450 -> 1024 (research/limits/)
-LIMITS = {'ActorSlots': '127', 'ResourceNames': '1024'}
+# xml2-fix [Limits] (29938a0): actor table 40 -> 127, resource name table 450 -> 1024 (research/limits/);
+# 1.3.0: the item manager's enhancement record pool 375 -> 512 (SPEC 32.1 / 32.3: XML2's own table uses 374, so the
+# port's 19 Danger Room rewards with their 54 enhancements never loaded; saves store record numbers, so the pool can
+# only grow). zones.ITEM_ENHANCEMENT_POOL reads this value: what the shipped ini asks the fix for is the pool the
+# build is checked against.
+LIMITS = {'ActorSlots': '127', 'ResourceNames': '1024', 'ItemEnhancements': '512'}
 
 # xml2-fix [Game] ForcedTeams (SPEC 19): '1' = the scripts of a --forced-teams seat build seat XML1's parties
 # (xml2-fix forced_teams module), '0' = the functions exist but report off (team menu), 'off' = no key (nothing
@@ -97,13 +101,14 @@ LIMITS = {'ActorSlots': '127', 'ResourceNames': '1024'}
 # missing key, an xml2-fix build without the module or no DLL at all, the same scripts open the team menu.
 FORCED_TEAMS_VALUES = ('1', '0', 'off')
 
-# the xml2-fix release a builder-made play build needs (every key above is in v1.2.0)
-REQUIRED_XML2FIX = '1.2.0'
+# the xml2-fix release a builder-made play build needs (every key above is in v1.2.0; v1.3.0: the SKILL pickup's
+# addSkillPoints, the conversation hooks [Game] AutoAdvance / ReplyVoices / ReplyCursor - SPEC 32, 34)
+REQUIRED_XML2FIX = '1.3.0'
 
 # every key the port may write (the builder drops the ones a build does not need); the launcher owns the rest
 PORT_OWNED = {'Game': ('NewGameTeam', 'ResetUnlocks', 'SaveFolder', 'ForcedTeams', 'PostgameScript', 'WindowTitle',
                        'EndHeroUnlock', 'MainMenuItems', 'NewGamePlus', 'ReviewStats', 'XPCurve'),
-              'Limits': ('ActorSlots', 'ResourceNames'),
+              'Limits': ('ActorSlots', 'ResourceNames', 'ItemEnhancements'),
               'Online': ('GameVersion',)}
 
 

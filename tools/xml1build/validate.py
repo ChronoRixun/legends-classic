@@ -3551,13 +3551,19 @@ class Validator:
         ck.set('scripts_with_xml2fix_calls', len(uses))
         if mode != 'seat':
             for r, u in sorted(uses.items()):
-                ck.error(f'V14a: {self.idx.get(r)}:{u[0][0]}: {u[0][1]}() in a --forced-teams menu build')
+                menu_only = [(ln, fn) for ln, fn in u if fn not in ST.XML2FIX_DATA_FUNCS]
+                if menu_only:
+                    ck.error(f'V14a: {self.idx.get(r)}:{menu_only[0][0]}: {menu_only[0][1]}() in a --forced-teams menu build')
+        uses = {r: [(ln, fn) for ln, fn in u if fn not in ST.XML2FIX_DATA_FUNCS] for r, u in uses.items()}
+        uses = {r: u for r, u in uses.items() if u}
         sc = self.scan
         for table in (sc.inline, sc.runscripts):
             for n, lst in self.data_items(table):
                 for item in lst:
                     code = item[2] if isinstance(item, tuple) else item
-                    if self._XFIX_CALL.search(code or ''):
+                    for m in self._XFIX_CALL.finditer(code or ''):
+                        if m.group(1) in ST.XML2FIX_DATA_FUNCS:
+                            continue             # SPEC 32: the SKILL item's addSkillPoints (inert without the DLL)
                         ck.error(f'V14a: {sc.files[n]["rel"]}: xml2-fix call in inline data code {code[:80]!r} (the '
                                  f'pipeline only emits them in script files, behind their guard)')
         plan = S.forced_party_plan(ctx)

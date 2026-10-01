@@ -1,14 +1,60 @@
 {
- "about": "Script functions the xml2-fix dinput.dll registers for the forced-parties feature (research/heroes/FORCED_TEAMS_DESIGN.md 1.2; SPEC 19). They exist only when xml2-fix's forced_teams module is installed and [Game] ForcedTeams is present in xml2-fix.ini (registration: extended copy of the table at 0x68a908, push operands 0x49fe31 / 0x49fe36). xml1build merges them into the XMen2.exe API (xml2_api.json) for --forced-teams seat builds only; validate V14a cross-checks these entries against scripts_transform.XML2FIX_API.",
- "xml2fix": "forced_teams module, xml2-fix 0c82a6e (branch display; joinHero since 0c82a6e) - bump when the module's functions change",
+ "about": "Script functions the xml2-fix dinput.dll registers (research/heroes/FORCED_TEAMS_DESIGN.md 1.2; SPEC 19; addSkillPoints: SPEC 32). They exist only when xml2-fix's forced_teams module is installed and [Game] ForcedTeams is present in xml2-fix.ini (registration: extended copy of the table at 0x68a908, push operands 0x49fe31 / 0x49fe36). xml1build merges them into the XMen2.exe API (xml2_api.json) for --forced-teams seat builds, and the ones in common.XML2FIX_ALWAYS_FUNCS (addSkillPoints, called from the SKILL item's data) into every build's; validate V14a cross-checks these entries against scripts_transform.XML2FIX_API.",
+ "xml2fix": "forced_teams module, xml2-fix 1.3.0 (branch conversations; addSkillPoints since 1.3.0) - bump when the module's functions change",
  "functions": {
-  "xml2fixFeature": {"args": "s", "ret": "i", "func": "xml2-fix", "table": "xml2-fix"},
-  "seatParty": {"args": "ssss", "ret": "n", "func": "xml2-fix", "table": "xml2-fix"},
-  "setSkinset": {"args": "ss", "ret": "n", "func": "xml2-fix", "table": "xml2-fix"},
-  "pushParty": {"args": "a", "ret": "n", "func": "xml2-fix", "table": "xml2-fix"},
-  "popParty": {"args": "s", "ret": "n", "func": "xml2-fix", "table": "xml2-fix"},
-  "addHero": {"args": "s", "ret": "i", "func": "xml2-fix", "table": "xml2-fix"},
-  "getPartyMember": {"args": "i", "ret": "s", "func": "xml2-fix", "table": "xml2-fix"},
-  "joinHero": {"args": "s", "ret": "i", "func": "xml2-fix", "table": "xml2-fix"}
+  "xml2fixFeature": {
+   "args": "s",
+   "ret": "i",
+   "func": "xml2-fix",
+   "table": "xml2-fix"
+  },
+  "seatParty": {
+   "args": "ssss",
+   "ret": "n",
+   "func": "xml2-fix",
+   "table": "xml2-fix"
+  },
+  "setSkinset": {
+   "args": "ss",
+   "ret": "n",
+   "func": "xml2-fix",
+   "table": "xml2-fix"
+  },
+  "pushParty": {
+   "args": "a",
+   "ret": "n",
+   "func": "xml2-fix",
+   "table": "xml2-fix"
+  },
+  "popParty": {
+   "args": "s",
+   "ret": "n",
+   "func": "xml2-fix",
+   "table": "xml2-fix"
+  },
+  "addHero": {
+   "args": "s",
+   "ret": "i",
+   "func": "xml2-fix",
+   "table": "xml2-fix"
+  },
+  "getPartyMember": {
+   "args": "i",
+   "ret": "s",
+   "func": "xml2-fix",
+   "table": "xml2-fix"
+  },
+  "joinHero": {
+   "args": "s",
+   "ret": "i",
+   "func": "xml2-fix",
+   "table": "xml2-fix"
+  },
+  "addSkillPoints": {
+   "args": "ai",
+   "ret": "n",
+   "func": "xml2-fix",
+   "table": "xml2-fix"
+  }
  }
 }

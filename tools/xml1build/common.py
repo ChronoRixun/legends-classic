@@ -650,6 +650,9 @@ class ImportResult:
 
 FORCED_TEAMS_MODES = ('seat', 'menu')
 XML2FIX_API_JSON = 'scripts/xml2fix_api.json'     # under research/: the xml2-fix script functions (SPEC 19)
+# the xml2-fix functions every build's data may call, seat build or not (SPEC 32: addSkillPoints in the SKILL item's
+# onactivate); the rest are merged into the script API of --forced-teams seat builds only
+XML2FIX_ALWAYS_FUNCS = ('addSkillPoints',)
 
 
 def forced_teams_mode(ctx) -> str:
@@ -881,14 +884,15 @@ class BuildContext:
         """research/scripts/xml2_api.json: script function name (exact case) -> {args, ret, func, table}. In a
         --forced-teams seat build (SPEC 19) the xml2-fix functions of research/scripts/xml2fix_api.json are merged
         in: scripts call them only behind the xml2fixFeature guard (validate V14b), and without the DLL the engine
-        drops those statements, so the checks treat them as registered."""
-        if forced_teams_mode(self) != 'seat':
-            return self.research_json('scripts/xml2_api.json')
-        key = '_xml2_api_forced'
+        drops those statements, so the checks treat them as registered. XML2FIX_ALWAYS_FUNCS (addSkillPoints, the
+        SKILL item's onactivate, SPEC 32) are merged into every build's."""
+        seat = forced_teams_mode(self) == 'seat'
+        key = '_xml2_api_forced' if seat else '_xml2_api_data'
         if key not in self._json:
             api = dict(self.research_json('scripts/xml2_api.json'))
             for name, e in self.research_json(XML2FIX_API_JSON)['functions'].items():
-                api.setdefault(name, dict(e))
+                if seat or name in XML2FIX_ALWAYS_FUNCS:
+                    api.setdefault(name, dict(e))
             self._json[key] = api
         return self._json[key]
 

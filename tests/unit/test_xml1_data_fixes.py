@@ -1,7 +1,7 @@
 """SPEC 31-33 (2026-10-01 audits W2, G3, G5) on made-up data - no game files:
 30 XML1's shared combat event values on the XML1 styles that inherit them (combat_events.apply_x1_shared_values),
 31 XML1's ce_renderfx tint form -> XML2's cloaked renderfx (x1schema.convert_renderfx),
-32 the SKILL pickup as one level of XP to the hero who takes it (zones.rewrite_skill_pickups / items_to_add)."""
+32 the SKILL pickup as xml2-fix's addSkillPoints('_ACTIVATOR_',1) to the hero who takes it (zones.items_to_add)."""
 import collections
 import types
 import xml.etree.ElementTree as ET
@@ -157,25 +157,6 @@ def test_renderfx_runs_through_convert_on_styles():
 
 
 # ---------------------------------------------------------------------------------------------- SPEC 32 (W2)
-def xml1_table(top):
-    t = [0, 0]
-    for n in range(2, top + 1):
-        t.append(t[-1] + 5 * (n + 8) * Z.xml1_kill_xp(n - 1))
-    return t
-
-
-def test_level_step_is_one_level_of_either_curve():
-    t1 = xml1_table(46)
-    for lv in (1, 6, 26, 32, 44):
-        assert Z.level_step_xp(lv, 'xml1') == t1[lv + 1] - t1[lv]
-    assert (Z.level_step_xp(6), Z.level_step_xp(26), Z.level_step_xp(32)) == (750, 581350, 3826325)
-    t2 = [0, 0]
-    for n in range(2, 100):
-        t2.append(t2[-1] + (730 + 65 * (n - 2)) * n + 1500)
-    for lv in (1, 6, 26, 98):
-        assert Z.level_step_xp(lv, 'xml2') == t2[lv + 1] - t2[lv]
-
-
 ITEMS = ET.fromstring('<items><item name="XP" type="xp" model="pickups/experience_point"/>'
                       '<item name="SKILL" displayname="Skill Points" type="skill" description="Free skill point!" '
                       'model="pickups/skill_point"/><item name="STAT" type="stat"/></items>')
@@ -188,36 +169,39 @@ def zones_stub(curve='xml1'):
     z = Z.Zones.__new__(Z.Zones)
     z.ctx = types.SimpleNamespace(read_x1_xml=lambda rel: ITEMS,
                                   opt=lambda k: {'xp_curve': curve, 'frontend': 'xml2'}.get(k))
-    z.skill_pickups, z._x1_skill_items, z.xp_pickups = {}, None, {}
+    z.xp_pickups = {}
     z.item_refs = collections.defaultdict(set)
     z.counts = collections.Counter()
     z.problems = collections.defaultdict(lambda: collections.defaultdict(set))
     return z
 
 
-def test_skill_pickup_gives_the_zone_level_step_to_the_activator_only():
+def test_skill_pickup_calls_xml2fix_add_skill_points_for_the_picker():
+    """SPEC 32: XML1's SKILL item keeps its name; its onactivate is xml2-fix's addSkillPoints('_ACTIVATOR_',1)."""
     z = zones_stub()
     root = ET.fromstring(ZONE)
-    assert z.rewrite_skill_pickups('haarp/ext/haarp_ext03', root) == 1
-    assert root[1].get('inventoryitem') == 'SKILL_750' and root[1].get('count') == '1'
-    z.item_refs['skill_750'].add('haarp/ext/haarp_ext03')
+    assert root[1].get('inventoryitem') == 'skill'                # the entity is left as XML1 wrote it
+    z.item_refs['skill'].add('haarp/ext/haarp_ext03')
     added, report = z.items_to_add(list(ITEMS), set())
-    item = next(i for i in added if i.get('name') == 'SKILL_750')
-    assert item.get('onactivate') == "setXP('_ACTIVATOR_',750)" and item.get('activateonpickup') == 'true'
+    item = next(i for i in added if i.get('name') == 'SKILL')
+    assert item.get('onactivate') == "addSkillPoints('_ACTIVATOR_',1)" and item.get('activateonpickup') == 'true'
     assert item.get('type') == 'item' and item.get('model') == 'pickups/skill_point'
+    assert item.get('displayname') == 'Skill Points' and item.get('description') == 'Free skill point!'
     assert not any('awardXPToPlayable' in (i.get('onactivate') or '') for i in added)
-    assert 'awardXPToPlayable' not in Z.ITEM_TYPE_MAP['skill'][1]['onactivate']
+    assert not any('setXP' in (i.get('onactivate') or '') for i in added)
+    assert Z.ITEM_TYPE_MAP['skill'][1]['onactivate'] == Z.SKILL_PICKUP_SCRIPT == "addSkillPoints('_ACTIVATOR_',1)"
+    # the same on XMen2.exe's curve: the call does not depend on XP tables
+    z2 = zones_stub('xml2')
+    z2.item_refs['skill'].add('z')
+    added2, _ = z2.items_to_add(list(ITEMS), set())
+    assert next(i for i in added2 if i.get('name') == 'SKILL').get('onactivate') == "addSkillPoints('_ACTIVATOR_',1)"
 
 
-def test_skill_pickup_on_xmen2_curve_and_without_a_level():
-    z = zones_stub('xml2')
-    root = ET.fromstring(ZONE)
-    z.rewrite_skill_pickups('z', root)
-    assert root[1].get('inventoryitem') == 'SKILL_8885'
-    z = zones_stub()
-    root = ET.fromstring(ZONE.replace(' level="6"', ''))
-    z.rewrite_skill_pickups('z', root)
-    assert root[1].get('inventoryitem') == 'SKILL_100' and 'skill_pickup_without_level' in z.problems
+def test_add_skill_points_is_in_the_script_api_of_every_build():
+    """the lint knows the call in seat and menu builds alike (common.XML2FIX_ALWAYS_FUNCS, scripts_transform)."""
+    from xml1build import common as C, scripts_transform as ST
+    assert 'addSkillPoints' in C.XML2FIX_ALWAYS_FUNCS and ST.XML2FIX_API['addSkillPoints'] == ('n', 'ai')
+    assert 'addSkillPoints' in ST.XML2FIX_DATA_FUNCS and 'seatParty' not in ST.XML2FIX_DATA_FUNCS
 
 
 # ---------------------------------------------------------------------------------------------- SPEC 32.1
@@ -235,17 +219,26 @@ def inventory(affix_enhancements, items):
 
 def test_enhancement_pool_cuts_the_overflowing_item_and_every_later_one():
     top = inventory(372, [('A', 2), ('B', 0), ('EQ', 2), ('C', 0)])
-    assert Z.enhancement_pool_cut(top) == [('EQ', 374), ('C', 376)]
-    assert Z.enhancement_pool_cut(inventory(373, [('A', 2), ('B', 0)])) == []
+    assert Z.enhancement_pool_cut(top, 375) == [('EQ', 374), ('C', 376)]
+    assert Z.enhancement_pool_cut(inventory(373, [('A', 2), ('B', 0)]), 375) == []
+
+
+def test_enhancement_pool_follows_the_fix_the_port_asks_for():
+    """SPEC 32.1 / 32.3: the build is checked against the pool the shipped ini asks xml2-fix for (512 since 1.3.0);
+    XMen2.exe's own 375 stays the stock number."""
+    from xml1build import fix_ini as FI
+    assert FI.LIMITS['ItemEnhancements'] == '512' and 'ItemEnhancements' in FI.PORT_OWNED['Limits']
+    assert Z.ITEM_ENHANCEMENT_POOL == 512 and Z.ITEM_ENHANCEMENT_POOL_STOCK == 375
+    top = inventory(374, [('EQ', 1), ('C', 2)])
+    assert Z.enhancement_pool_cut(top) == [] and Z.enhancement_pool_cut(top, 375) == [('C', 375)]
+    assert Z.enhancement_pool_cut(inventory(500, [('A', 12), ('B', 1)])) == [('B', 512)]
 
 
 def test_pickup_items_go_before_the_xml1_equipment():
     z = zones_stub()
-    root = ET.fromstring(ZONE)
-    z.rewrite_skill_pickups('haarp/ext/haarp_ext03', root)
     x1 = [ET.fromstring('<item name="RING" type="equipment"/>')] + list(ITEMS)
     z.item_refs['ring'].add('z')
-    z.item_refs['skill_750'].add('z')
+    z.item_refs['skill'].add('z')
     z.item_refs['stat'].add('z')
     real = z.translate_item
 
@@ -257,6 +250,6 @@ def test_pickup_items_go_before_the_xml1_equipment():
         return real(c)
     z.translate_item = translate
     added, _ = z.items_to_add(x1, set())
-    assert [i.get('name') for i in added] == ['STAT', 'SKILL_750', 'RING']
+    assert [i.get('name') for i in added] == ['SKILL', 'STAT', 'RING']   # file order, the enhancement-free first
     top = inventory(374, [(i.get('name'), Z.item_enhancements(i)) for i in added])
-    assert Z.enhancement_pool_cut(top) == []               # the pickups load; RING's one enhancement is the 375th
+    assert Z.enhancement_pool_cut(top, 375) == []          # the pickups load; RING's one enhancement is the 375th

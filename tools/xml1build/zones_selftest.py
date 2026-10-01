@@ -471,8 +471,8 @@ def main(argv=None):
             else:
                 INFO['xp_pickups'] += 1
 
-    # J2. SPEC 32: XML1's SKILL pickups name SKILL_<one level step at the zone's world level>, whose item gives that XP
-    # to the activator only (setXP), never the roster award (awardXPToPlayable)
+    # J2. SPEC 32: XML1's SKILL pickups keep XML1's item (SKILL), whose onactivate is xml2-fix's
+    # addSkillPoints('_ACTIVATOR_',1) - one unspent skill point to the picker, never the roster award (awardXPToPlayable)
     for k, e in owned.items():
         if not (k.startswith('maps/') and k.endswith('.xmlb')) or not e.get('source'):
             continue
@@ -484,18 +484,16 @@ def main(argv=None):
               if (el.get('inventoryitem') or '').lower() == 'skill' and el.get('name')}
         if not x1:
             continue
-        amount = Z.level_step_xp(Z.skill_zone_level(sroot) or Z.SKILL_LEVEL_DEFAULT, curve)
-        want = Z.SKILL_PICKUP_ITEM.format(item='SKILL', amount=amount)
-        want_act = Z.SKILL_PICKUP_SCRIPT.format(amount=amount)
+        want_act = Z.SKILL_PICKUP_SCRIPT
         for el in decode(out / e['rel']).iter():
             if x1.get(el.get('name')) is None or el.get('inventoryitem') is None:
                 continue
-            item = items.get(want.lower())
-            if el.get('inventoryitem') != want:
+            item = items.get((el.get('inventoryitem') or '').lower())
+            if (el.get('inventoryitem') or '').lower() != 'skill':
                 fail('J_skill_pickup_entity', f'{k} {el.get("name")}: inventoryitem {el.get("inventoryitem")} '
-                                              f'(want {want})')
+                                              f'(want SKILL, XML1\'s own item)')
             elif item is None or item.get('onactivate') != want_act or item.get('activateonpickup') != 'true':
-                fail('J_skill_pickup_item', f'{want}: {item is not None and dict(item.attrib)} (want onactivate '
+                fail('J_skill_pickup_item', f'SKILL: {item is not None and dict(item.attrib)} (want onactivate '
                                             f'{want_act})')
             else:
                 INFO['skill_pickups'] += 1
@@ -503,8 +501,9 @@ def main(argv=None):
                     and n.startswith('skill'))
     if roster:
         fail('J_skill_roster_award', f'skill items still award the roster: {roster}')
-    # J3. SPEC 32.1: XMen2.exe registers no item past the overflow of its 375-record enhancement pool, so the pickup
-    # items (SKILL_*, XP_*) must sit before it
+    # J3. SPEC 32.1: XMen2.exe registers no item past the overflow of its enhancement pool (375 records; the fix's
+    # [Limits] ItemEnhancements, 512 for the port, is what Z.ITEM_ENHANCEMENT_POOL checks against), so the pickup
+    # items (SKILL, XP_*) must sit before it
     for ext in ('.xmlb', '.engb'):
         e = reg.entries.get(f'data/items{ext}')
         if e is None:

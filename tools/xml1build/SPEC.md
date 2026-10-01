@@ -3538,41 +3538,49 @@ Tests: `tests/unit/test_xml1_data_fixes.py` (the two forms, a mixed-case form, a
 idempotent, through `convert`). In game: not checked (no cheap cloaking enemy: the GRSO elite is act 7, the mental
 Acolytes later); the build output diff shows exactly these 12 triggers changed.
 
-## 32. The SKILL pickup: one level of XP to the hero who takes it (2026-10-01, audit W2)
+## 32. The SKILL pickup: one skill point to the hero who takes it, through xml2-fix (2026-10-01, audit W2; 1.3.0)
 
 XML1's `SKILL` item (`data/items.eng` type `skill`; pickups in haarp_ext03, sewers3_1_3, hive2_2_4) gave one free
-skill point to the hero who picked it up. The port's stand-in, `awardXPToPlayable(5000)`, is the roster award
+skill point to the hero who picked it up. The port's first stand-in, `awardXPToPlayable(5000)`, was the roster award
 (0x49d9d0 -> 0x449fe0: every herostat hero, the bench included): seen in game, eleven heroes went from level 1 to 9
-on XML1's curve from one pickup at haarp_ext03.
+on XML1's curve from one pickup at haarp_ext03. Its second (content 7, this section's first form) gave the picker one
+level step of XP (`SKILL_<xp>` items sized to the zone's world level), a level and its stat points rather than a point.
 
-**What exists.** XMen2.exe's 308 script functions (`research/scripts/api_diff.txt`, table 0x68a908) have no call
-that grants a skill point (`setXP`, `awardXPToPlayable`, `permanentStatBoost`, `levelUp` is XML1-only), and xml2-fix
-registers none either (section 19.1). XMen2.exe's "points to spend" test 0x4b7b00 is the level byte (CStats+0x1c)
-minus a per-hero counter (vt+0x14 of the XP object), so a level is one skill point.
+**What the engine has.** XMen2.exe's 308 script functions (`research/scripts/api_diff.txt`, table 0x68a908) have no
+call that grants a skill point (`setXP`, `awardXPToPlayable`, `permanentStatBoost`; `levelUp` is XML1-only). Its
+"points to spend" test 0x4b7b00 (on a hero's stats) is: nothing for an xpexempt hero (bit 0x20 of CStats+0x2ad); else
+the two words of the saved block at CStats+4 - the **unspent skill points** at block+0x14 (CStats+0x18; read by
+0x544a30, written by 0x43a5b0 when the stats have talents, block+0xb8 > 0) and the unspent attribute points at
+block+0x16 (0x544a40 / 0x43a3f0) - summed above 0, or levels the hero hasn't been given their points for yet (the level
+byte CStats+0x1c past the XP object's processed count, CStats+0xc0 vt+0x14 = 0x5f5ff0). Each level processed gives one
+skill point and four attribute points (the autospend 0x4bbae0 at 0x4bbb54-0x4bbb75: +1 to the word at +0x14, +4 to the
+one at +0x16); the skills screen spends from the word at +0x14 (0x5e5dff -> 0x43a5b0); the block is saved with the
+hero (0x43a520), so a point granted keeps across a save.
 
-**The approximation (data only).** zones gives each SKILL pickup its own item `SKILL_<xp>`
-(`zones.rewrite_skill_pickups`, `items_to_add`; `activateonpickup`, XML1's model and text) whose `onactivate` is
-`setXP('_ACTIVATOR_',<xp>)` (0x4a8660 -> 0x422350: the activator's own XP gain, the XP pickup's call of section 23.1)
-with `<xp>` = one level step at the zone's world `level` on the build's curve (`zones.level_step_xp`: XML1's table
-with `--xp-curve xml1`, XMen2.exe's with `xml2`):
+**The fix (xml2-fix 1.3.0, `addSkillPoints(name, n)`; forced_teams_rules.hpp / forced_teams.cpp in the xml2-fix
+repository).** Registered with the forced-teams functions (the ninth entry of the DLL's copy of the function table,
+`n(ai)` like `setXP`; it works whatever `[Game] ForcedTeams` says, and `xml2fixFeature("skillpoints")` reports 1 when it
+is there). It resolves the name as `setXP` does (0x4a8660: 0x4a7e30 lists the entities the name means - a named
+entity, `_ACTIVE_HERO_`, `_HERO1_`.., `_ALL_HEROES_`; the script compiler has turned an item's `_ACTIVATOR_` into the
+activator's name by then), keeps the ones with the stats class bit (bit [0x70b840]+0x24 of the class info, setXP's
+test) and a stats object at entity+0x35c, and adds n (1..20) to each one's word through the game's own getter and
+setter; nothing else changes (no XP, no level, no popup). Every call is logged with before / after per hero.
 
-| zone | world level | xml1 (default) | xml2 |
-|---|---|---|---|
-| haarp/ext/haarp_ext03 | 6 | `SKILL_750` | `SKILL_8885` |
-| sewers/grso/sewers3_1_3 | 26 | `SKILL_581350` | `SKILL_65085` |
-| hive/h_int/hive2_2_4 | 32 | `SKILL_3826325` | `SKILL_92085` |
+**The data (this builder).** The `SKILL` item keeps XML1's name, model and texts (`items_to_add` -> `translate_item`,
+`ITEM_TYPE_MAP['skill']`): type `item`, `activateonpickup`, `onactivate="addSkillPoints('_ACTIVATOR_',1)"`
+(`zones.SKILL_PICKUP_SCRIPT`). The pickup entities are left as XML1 wrote them (`inventoryitem="skill"`, count 1);
+the `SKILL_<xp>` items, `zones.rewrite_skill_pickups` and `level_step_xp` are gone. The call is an xml2-fix name in
+data: `common.XML2FIX_ALWAYS_FUNCS` merges it into the script API of every build (seat or menu), and validate V14a
+lets data call the names in `scripts_transform.XML2FIX_DATA_FUNCS` (V14b's guard rule stays for the forced-teams
+calls). **No fallback:** an inline `onactivate` is one statement, and a second statement would run as well as the
+call, not instead of it; without the DLL, or with one before 1.3.0, the engine drops the unknown call at compile and the
+pickup gives nothing (the entity still vanishes with its sound and effect). The port's manifest requires xml2-fix
+`>= fix_ini.REQUIRED_XML2FIX` = 1.3.0, which the launcher enforces; the harness copies the DLL it is given.
 
-A hero at the zone's level gains exactly one level: one skill point, as in XML1, plus what XMen2.exe gives with a
-level (stat points, health), which XML1's pickup did not. A hero below the zone's level gains more than one level,
-one above it less (possibly none). Only the picker changes; the rest of the party and the bench do not. The base
-`SKILL` item (unused once every pickup is renamed) gets `setXP('_ACTIVATOR_',100)` (XML1's level 1 -> 2). A zone
-without a world level would use level 1 and report `skill_pickup_without_level` (none does). The proper fix stays an
-xml2-fix `addSkillPoints(actor, n)` (audit W2), which would also serve the STAT pickup.
-
-Checks: `zones_selftest` J2 (each built SKILL pickup names the item of its zone's step, whose `onactivate` is the
-activator's `setXP`; no skill item awards the roster) and J3 (32.1). Tests: `tests/unit/test_xml1_data_fixes.py` (the
-step equals one level of both tables; the haarp_ext03 entity and item; the xml2 curve; a zone without a level; the
-item order of 32.1).
+Checks: `zones_selftest` J2 (each built SKILL pickup names XML1's `SKILL`, whose `onactivate` is the call and
+`activateonpickup` true; no skill item awards the roster) and J3 (32.1, unchanged: the pickup items load before the
+equipment). Tests: `tests/unit/test_xml1_data_fixes.py` (the item and its call on both curves, the API merge, the
+item order of 32.1). In game: 32.2.
 
 ### 32.1 Engine limit: the item table's enhancement pool (found by this section's in-game check)
 
@@ -3585,23 +3593,69 @@ count 65, enhancement counter 375; none of the later names reached the string po
 of them is removed when it spawns (0x47a9b4 -> vt+0xbc). XML2 retail uses 374 (prefixes 85, suffixes 79, tr_item 95,
 items 115), so the first XML1 equipment item with two enhancements overflows it.
 
-**Pre-existing consequence (content 6, not fixed here):** the load stops at `VISOR_OF_RETRIBUTION`, so 19 of the 20
+**xml2-fix 1.3.0 (`[Limits] ItemEnhancements`, SPEC 32.3 on the items-limit branch has the save-format evidence):** the fix
+grows the pool - the records and their bitmap move to the end of a bigger item manager, 41 instructions and one
+cloned bit scan carry the new size, nothing already numbered moves - and the port's ini asks for 512
+(`fix_ini.LIMITS['ItemEnhancements']`). `zones.ITEM_ENHANCEMENT_POOL` reads that value, so the warning below and J3
+are measured against the pool the shipped ini asks the fix for: with the fix all 88 items (410 enhancements) load;
+an install without the fix, or with one before 1.3.0, keeps XMen2.exe's 375 and the cut-off below. In game
+(build/_fix130, the 1.3.0 DLL, `ItemEnhancements=512`): see 34.3.
+
+**Pre-existing consequence (content 6, fixed by the fix above):** the load stops at `VISOR_OF_RETRIBUTION`, so 19 of the 20
 XML1 items after it never load: 18 of the 19 Danger Room reward items (section 21.3; VISOR_OF_RETRIBUTION ..
 SHIAR_ENERGY_ARMOR), `ASTRAL_STONE` and the two `XP_<count>` pickups of section 23.1 (`XP_30000` wx2_1, `XP_300000`
 hive2_2_4), whose entities were therefore removed in game. **Fix for the pickups (this section):** `zones.items_to_add`
-orders the XML1 items it appends without enhancements first (stable), so `SKILL_*`, `XP_*`, `ASTRAL_STONE` and the
+orders the XML1 items it appends without enhancements first (stable), so `SKILL`, `XP_*`, `ASTRAL_STONE` and the
 other plain items load before the equipment cuts the load off. The Danger Room rewards stay cut off (a data fix needs
 fewer enhancements: e.g. one enhancement per reward, or dropping XML2's unused random-affix entries; an exe fix
 raises the pool); zones warns with the list (`items_beyond_enhancement_pool`, `zones.enhancement_pool_cut`), and
-`zones_selftest` J3 fails if a SKILL / XP pickup item lies past the overflow.
+`zones_selftest` J3 fails if a SKILL / XP pickup item lies past the overflow. Why no data-only fix: 32.3.
 
-### 32.2 In game (build/_t1a, harness pipe t1a, save folder "X-Men Legends (t1a tests)")
+### 32.2 In game
 
-haarp_ext03 with Wolverine and Cyclops seated, every hero first set to XML1 level 6 (`awardXPToPlayable(1320)` =
-T1(6)), then Wolverine put on the pickup (scratchpad `t1a/t1a_driver.py`, `tools/hero_xp.py` before and after):
-Wolverine 1,320 XP level 6 -> 2,070 XP level 7 (the HUD shows 7); Cyclops (in the party) and the 13 benched heroes
-stay at 1,320 / level 6. The same steps on the build without sections 31-33: every non-exempt hero 1,320 -> 6,320 XP,
-level 6 -> 9.
+**xml2-fix 1.3.0 form (build/_fix130, harness pipe f130, save folder "X-Men Legends (f130 tests)"):** see the
+in-game notes at the end of section 34 (the same run): `tools/skill_points.py` reads every hero's unspent skill and
+attribute points (the words at CStats+0x18 / +0x1a) before and after.
+
+**Content 7 form (one level step of XP; build/_t1a, harness pipe t1a):** haarp_ext03 with Wolverine and Cyclops
+seated, every hero first set to XML1 level 6 (`awardXPToPlayable(1320)` = T1(6)), then Wolverine put on the pickup
+(`tools/hero_xp.py` before and after): Wolverine 1,320 XP level 6 -> 2,070 XP level 7 (the HUD shows 7); Cyclops (in
+the party) and the 13 benched heroes stay at 1,320 / level 6. The same steps on the build without sections 31-33:
+every non-exempt hero 1,320 -> 6,320 XP, level 6 -> 9.
+
+### 32.3 Why the rewards cannot be fitted by data alone: saves store enhancement record numbers (2026-10-01)
+
+**What the 374 are.** XML2 retail's `Data/items`: `prefixes` 85, `suffixes` 79, `tr_item` 95, the 27 standard /
+advanced / legend belts, gloves and armor (1 each; records 259-285), 15 hero uniques with `enemy_level -1`
+(`ACCELERATED_VISOR` .. `WPN_X_FISTS`, item defs 40-54, records 286-339; XML2's Danger Room rewards, named only by
+XML2's `Data/dangerroom`, so unwinnable with `--frontend xml1`) and 9 drop uniques with `enemy_level` 25-35
+(`APOC_BANE` .. `XAVIER_DREAM`, defs 55-63, records 340-373; named by nothing but the items table, so random drops).
+
+**The save format.** The item manager's save (0x47c4c0) writes, per item definition (up to 160, 0x480430), its count
+byte (+0x39) and a flag bit (+0x3b), then every item instance (the gear bag; a hero's equipped slots go through
+0x4b8570 -> the same instance save): instance save 0x481610 / load 0x482b40 = definition index (byte, manager
+vt+0x7c / vt+0x18), 4 bytes (+0x2c, +0x2d, +0x2f, +0x2e), then three lists (+8, +0x10, +0x18), each a dword count
+and per element the **enhancement record index** (u16) + a dword (element class vtable 0x6865ac, save 0x45e4e0,
+load 0x482ad0 -> 0x481910 -> vt+0x2c 0x45e510; the record is looked up by index, manager vt+0x10 0x47bad0). List
++0x10 is the definition's own enhancements (0x481a10 copies the definition's up to 8 record indices, def+0x24),
++8 / +0x18 the random affixes (manager vt+0x108 / vt+0x10c). So a saved drop unique names its own records.
+
+**Measured** (item manager in the running game, def+0x24 record indices): content 7 (`build/_t15`) `APOC_BANE` (def
+55) = records 340-345, `XAVIER_DREAM` (def 63) = 371-373; with the 15 hero uniques' 54 enhancements stripped (branch
+items-limit c81d220, reverted) `APOC_BANE` = 286-291, `XAVIER_DREAM` = 317-319, and 340-355 belong to the XML1
+rewards. A content 7 save holding a drop unique would load it with an XML1 reward's bonuses (or none: records past
+355 do not exist then). Stripping or removing anything before record 374 renumbers saved records; the definition
+order is saved too (by index), so items cannot be reordered either.
+
+**What fits without renumbering:** only records 286-339 (owned by whatever sits at definitions 40-54, which no save
+holds) and record 374. Putting XML1 rewards at definitions 40-54, padded to exactly 54 enhancements, plus one
+single-enhancement reward at the end, loads 16 of the 19 rewards; the 22 padding enhancements would show in the gear
+screen (unverified) and 3 rewards still miss. **So the full fix is an xml2-fix patch of the pool** (0x4804a6
+`cmp eax, 0x177`; the 375 records of 0x28 bytes at mgr+0x2594, its allocation bitmap at mgr+0x602c, the counter at
+mgr+0x6064, the lookup bound in 0x47bad0, the manager allocated 0x7a00 bytes at 0x480a21) - noted for the fix
+maintainer; the record numbers of saves stay valid when the pool only grows. Until then the build warns
+`items_beyond_enhancement_pool` (18 rewards). Note also def+0x24's sentinel: 0x47ad10 reads a stored record 0xff as
+"none", so record 255 can never be an item's own enhancement.
 
 ## 33. XML1's shared combat event values on the XML1 styles (2026-10-01, audit G3)
 
@@ -3676,3 +3730,95 @@ per build, two runs each (scratchpad `t1a/melee_driver.py`):
 
 The light hits scale by 1.8, XML1's 4.5 / XML2's 2.5 mean; the control does not move. (Hits of 5.8 / 6.3 before and
 8.1 after are probably the brute's `punch_heavy`, "3 5" -> "9 11" at the same scale; not attributed.)
+
+## 34. XML1's `runWithoutUser` conversation lines, the voiced replies and the reply-menu cursor through xml2-fix (2026-10-01, audit W1 / W3 / 7; 1.3.0)
+
+Found by the world audit (`research/audit/xml1_world_gaps_2026-10-01.md`): XML1's conversations flag lines (and whole
+startConditions, and single `%BLANK%` responses) `runWithoutUser="true"` - the mansion tours, the walk-and-talk
+lines, the cutscene chains: 151 conversations wholly (939 lines), 51 more in part (530 lines and responses). XMen2.exe
+never reads the attribute (not an exe string; the line parser 0x458820 / 0x459860 looks for it nowhere): on the XML2
+engine every one of those lines sat until the player pressed accept. Two more engine behaviours the XML1 data hits far
+more often than XML2's: a chosen reply's voice is stopped one frame after it starts (0x45d242-0x45d27d; XML1 has 239
+voiced replies, XML2 six), and a reply menu come back to by `tagJump` with its previous pick now hidden highlights
+nothing (the menu builder stores the visible count as the cursor, 0x45b5f1-0x45b5fc; XML1's hub menus).
+
+### 34.1 The engine side (xml2-fix 1.3.0, `conversations_rules.hpp` / `conversations.cpp`; `[Game] AutoAdvance`, `ReplyVoices`, `ReplyCursor`, each on unless 0)
+
+The conversation system's update (vt+0xc = 0x45d1a0, every frame) is described byte by byte in the rules header; the
+three changes, each written only when every byte it relies on is the retail build's:
+
+- **AutoAdvance.** The engine does parse `timeDelay` (0x458b68: atof into the line's +0x80, 0.5 when absent) and then
+  never uses it (its one other use, a copy into CS+0x239a8 at display, is read by nothing). The builder writes the
+  flag INTO that number: a NEGATIVE `timeDelay` marks a line that advances by itself; the magnitude is how long to
+  show it when there is no voice to wait for. The call at 0x45d33e (the menu manager's vt+0x138(4), "accept pressed")
+  becomes a call into the fix, which asks the game's own accept first and hands the answer back; when it isn't
+  pressed and the current line's `timeDelay` is negative, exactly ONE reply is visible (CS+0x21b28), the engine's own
+  first-second lock-out (CS+0x21b5c) has passed, no menu is up, and either the line's voice (CS+0x21b80) was heard
+  playing and then not (plus 0.25 s), or there is no voice (or one the sound system never started) and |timeDelay| has
+  passed, the fix does what accept does without the menu sound - stops the line's voice if any and picks reply 0
+  (CS vt+0x18) - and answers "not pressed". A menu of two or more replies is never picked for the player.
+- **ReplyVoices.** The pending-reply step (0x45d242, `call 0x592480`) becomes a jump into the fix: while the chosen
+  reply's voice still plays and accept isn't pressed, the update goes on at step 3 (the line and its menu stay drawn)
+  instead of stopping the voice; once it has ended, or when accept is pressed (a skip), the game's own path runs.
+- **ReplyCursor.** The store at 0x45b5fc becomes a jump to a stub that stores max(count - 1, 0): the reply after the
+  previous pick, which the pick's own bookkeeping meant (0x45d61d-0x45d636 remembers pick + 1, wrapping to 0).
+
+`xml2-fix.log` gets one line per auto-advanced line (its id, timeDelay, why, how long it was shown, the voice handle)
+and the start / end of every reply-voice wait (the handle, its lifetime in ms and game time, skipped or ended).
+
+### 34.2 The data side (this builder: `conversations.mark_auto_advance`, run by `scripts.rewrite_data_tree` on every XML1 conversation)
+
+A `<line>` is marked when it is flagged itself, or its enclosing `<startCondition>` is (every line of that tree), or its
+one and only `<response>` is (XML1 flags the `%BLANK%` under a flagged line, and 11 times the response alone).
+Responses are not marked. The magnitude: an existing positive `timeDelay` on the line (XML1's own 2 / 3, six lines) is
+kept; otherwise a reading time from the text after its `%SPEAKER%` token, 1 s + 0.06 s a character, clamped to 2..12 s
+(`reading_seconds`). The attribute is written under the engine's own name `timeDelay` (a `timedelay` of any other case
+is replaced); `runWithoutUser` itself stays in the file (the engine ignores it). Idempotent (a negative value is left
+alone; scripts_selftest runs `rewrite_data_tree` twice). Counts in XML1's English conversations (xml1_loose): 268 +
+37 flagged lines with one reply, 745 + 99 lines under flagged startConditions, 11 single flagged responses; the 2 + 4
++ 40 menu lines inside flagged trees are marked too but never picked (they have several replies). Retail data has
+no negative `timeDelay` (XML1: 6 lines / 6 responses at 2 or 3; XML2: 2 / 2), so XML2's own data is untouched by the
+hook even with the keys on, and without the fix the number is as inert as it always was.
+
+Tests: `tests/unit/test_conversations_auto_advance.py` (which lines and why, the values, the floor / ceiling / token
+stripping, the engine's attribute name, responses untouched, idempotence). In game: 34.3.
+
+### 34.3 In game (build/_fix130, harness pipe f130, save folder "X-Men Legends (f130 tests)", xml2-fix branch `conversations`, 2026-10-01)
+
+Wolverine alone (`loadMapKeepTeam`), windowed, `tools/conv_probe.py` every 0.5 s, `xml2-fix.log` quoted; the drivers
+and frames are in the session scratchpad (`f130_driver.py`, `f130/*.png`).
+
+- **A line goes on by itself (W1).** mansion1a_2's entry conversation (Jean's second-floor line, id 64, voice handle
+  0x4): no key pressed for 90 s; the probe shows the line up at 2 s and the conversation over by 8.5 s; the log:
+  `line 64 advanced by itself (timeDelay -8.00, its voice played and ended, shown 6.64 s, 1 reply visible, voice
+  handle 0x00000004)`. mansion1a_1's entry conversation: line 67 (voice 0xb) went on by itself into the hub menu
+  (line 69, 4 replies visible) at 9 s.
+- **A menu is never picked (W1).** Line 69 with 4 visible replies sat for 85 s with nothing pressed (the probe:
+  the same line, `selected 0`, `pending 0`; no log line).
+- **A chosen reply's voice plays out (W3).** Enter on the first (voiced) reply of that menu: the probe shows the
+  menu line still up with `pending_response 69` and voice handle 0xc for the first 1.8 s, then the answer (line 70);
+  the log: `a chosen reply's voice (handle 0x0000000C) is playing - the conversation waits for it` ...
+  `the reply's voice (handle 0x0000000C) ended after 1719 ms (1.72 s of game time) - on to its answer`. Before the
+  fix (the audit, build/_w4): the answer within the key press, the reply's handle replaced before its first sample.
+- **The chain after it (W1):** lines 70, 71 and 72 went on by themselves at 6.10 s, 4.67 s and 1.35 s (each `its
+  voice played and ended`), then the conversation ended; no key after the one Enter.
+- **ReplyCursor:** bytes verified against the retail exe (xml2_test), not reproduced in game in this run (the hub
+  re-entry with a hidden reply needs the mansion1 `disallowResponseOnVar` state; `startConversation` of 1_2_1_2
+  from the pipe did not start after the entry conversation had run).
+- **addSkillPoints (SPEC 32):** `tools/skill_points.py` before / after `addSkillPoints('_ACTIVE_HERO_',1)` from the
+  pipe in nyc1_1_1: Wolverine's unspent skill points 0 -> 1, every other hero 0 -> 0, levels and attribute points
+  unchanged; the log: `addSkillPoints("_ACTIVE_HERO_", 1) -> Wolverine: unspent skill points 0 -> 1`; the
+  character screen's SKILLS tab shows `REMAINING POINTS 1` for Wolverine (frame `19_details_right.png`), its STATS
+  tab `REMAINING POINTS 0`, and the HUD shows the game's own "Press [F1] to Level Up" prompt (0x46d089 -> 0x4b7b00).
+  The pickup itself (haarp_ext03's `item_skill`, `SKILL` registered as definition 64 of 69, read from the item
+  manager) did not fire in this session: `copyOriginAndAngles("_HERO1_","item_skill")` plus a walk never touched it,
+  and the same held for the content-7 form (`SKILL_750` / `setXP`) and for haarp_ext02's health pack with the 1.2.0
+  DLL - the touch method of this run, not the item; the activator resolution is `setXP`'s (0x4a7e30) and the pipe
+  run above shows the call reaching the hero's counter.
+- **[Limits] ItemEnhancements=512 (32.1):** the same build with the 1.3.0 DLL and the key: the log `item enhancement
+  pool raised from 375 to 512 records - the item manager grows from 0x7a00 to 0xCA40 bytes ... records move from
+  +0x2594 to +0x7A00`; after New Game the item manager (read from [0x72a514]) holds **88 definitions** (69 before:
+  the load stopped at VISOR_OF_RETRIBUTION) and **410 enhancement records** (375 before), the 410 bits set in the
+  new bitmap at +0xca00 and none in the old one; definitions 69-87 (the 19 Danger Room rewards) own records 374-409,
+  every record a definition names has the record vtable; the pipe's `status` says `items 410/512`; haarp_ext03
+  loads and a save completes with the pool at 410. XML2's own records 0-373 are where they were.

@@ -56,6 +56,8 @@ import collections
 import re
 from dataclasses import dataclass
 
+from . import common as C
+
 LOAD_ZONE_FUNCS = ('loadZone', 'loadMapKeepTeam', 'loadMapChooseTeam', 'loadMapAddTeam', 'loadMap',
                    'restorelastzone')
 SIGN_COMMENT = '# ( "x1 sign-extend" )'
@@ -436,7 +438,10 @@ def choose_team_in_bodies(lines, bodies):
 # the build merges into the API of --forced-teams seat builds): name -> (ret, args)
 XML2FIX_API = {'xml2fixFeature': ('i', 's'), 'seatParty': ('n', 'ssss'), 'setSkinset': ('n', 'ss'),
                'pushParty': ('n', 'a'), 'popParty': ('n', 's'), 'addHero': ('i', 's'), 'getPartyMember': ('s', 'i'),
-               'joinHero': ('i', 's')}
+               'joinHero': ('i', 's'), 'addSkillPoints': ('n', 'ai')}
+# xml2-fix functions data may call directly (SPEC 32: the SKILL item's onactivate): not forced-teams features, registered
+# with the rest whatever [Game] ForcedTeams says, inert without the DLL (the engine drops a call it doesn't know)
+XML2FIX_DATA_FUNCS = frozenset(C.XML2FIX_ALWAYS_FUNCS)
 FT_VAR, AH_VAR, JH_VAR = 'x1ft', 'x1ah', 'x1jh'
 FT_FEATURE, AH_FEATURE, JH_FEATURE = 'forcedteams', 'addhero', 'joinhero'
 FEATURES = (FT_FEATURE, AH_FEATURE, JH_FEATURE)

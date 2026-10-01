@@ -464,7 +464,7 @@ def cmd_build(a, output, cancel, pipeline_factory):
         seconds = round(time.monotonic() - t_start, 1)
         output.human(f'build finished in {seconds} s: {verify_summary["files"]} files verified, {job.warnings} warnings')
         if not (out_dir / 'dinput.dll').is_file():
-            output.human('Next: X-Men Legends needs the XML2 Fix (dinput.dll, xml2-fix 1.2.0 or newer) in this folder; '
+            output.human('Next: X-Men Legends needs the XML2 Fix (dinput.dll, xml2-fix 1.3.0 or newer) in this folder; '
                          'the Ultimate Legends launcher installs it, or copy it from the xml2-fix release.')
         output.event('result', ok=True, exit=0, out=mask(out_dir), report=mask(out_dir / S.BUILD_DIR / 'report.json'),
                      log=mask(output.log_path) if output.log_path else None, errors=0, warnings=job.warnings,

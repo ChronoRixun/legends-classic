@@ -47,6 +47,7 @@ import weakref
 from pathlib import Path
 
 from . import common as C
+from . import conversations as CV
 from . import scripts_lint as L
 from . import scripts_transform as T
 
@@ -1329,6 +1330,7 @@ def rewrite_data_tree(ctx, root, rel) -> int:
     n = 0
     if conversation:
         n += _drop_cut_mission_responses(ctx, root, rel)
+        n += CV.mark_auto_advance(root)   # SPEC 34: runWithoutUser lines -> a negative timeDelay (xml2-fix AutoAdvance)
     inline_ends = _inline_end_refs(ctx)            # SPEC 19: data endSideMission -> generated end script (seat)
     x1_front = C.frontend_mode(ctx) == 'xml1'      # SPEC 21: imageViewer literals follow the review namespace
     for el in root.iter():

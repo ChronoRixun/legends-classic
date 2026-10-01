@@ -3,6 +3,18 @@
 The builder's releases, newest first. The version is `xml1-builder --version`; the content version is what a
 build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebuild.
 
+## v0.1.6 - content version 8 (needs XML2 Fix 1.3.0)
+
+- **Conversations advance by themselves again.** The first game let many lines run on without a key press once
+  the voice finished (the mission briefings, the mansion tours, the hub chatter); on the XML2 engine every one of
+  them waited for Enter. The builder now marks those lines and XML2 Fix 1.3.0 advances them when the voice ends
+  (SPEC section 34). Spoken replies also play to the end instead of being cut off.
+- **A SKILL pickup gives one skill point to the hero who takes it**, exactly as in the first game, through a new
+  script function in XML2 Fix 1.3.0. This replaces 0.1.5's one-level-of-XP approximation (SPEC section 32).
+- **All 19 Danger Room reward items load.** The engine's item table stopped at 375 enhancements; the fix raises the
+  pool to 512 and the builder asks for it (SPEC section 32.3). Existing saves keep working: nothing is renumbered.
+- The launcher installs XML2 Fix 1.3.0 before offering this rebuild; standalone users need it in the game folder.
+
 ## v0.1.5 - content version 7
 
 - **Fixed: a SKILL pickup levelled the whole roster.** Every hero, in the party or not, got 5,000 XP from each
