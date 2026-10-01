@@ -895,6 +895,8 @@ class Validator:
             if f['root'] != 'packagedef':
                 ck.error(f'{f["rel"]}: root <{f["root"]}> is not <packagedef>')
             ck.count('packages_checked')
+            if f['owner'] == 'characters':
+                self._v4_style_package_target(ck, n, entries)
             seen = set()
             is_nc = n.endswith('_nc.pkgb') and n.startswith('packages/generated/characters/')
             x1_pkg = f['owner'] in ('characters', 'zones', 'testhooks')
@@ -1018,6 +1020,18 @@ class Validator:
                 ck.error(f'{sc.files[n]["rel"]}: lists powerstyle(s) {sorted(listed)} but the stats entry '
                          f'{e[1].get("name")} uses {ps} - the engine would load it on demand, which breaks the '
                          f'power wheels of the party (SPEC 29.1)')
+
+    @staticmethod
+    def _v4_style_package_target(ck, rel, entries):
+        """A generated style package must load the style its own filename advertises (SPEC 29.2)."""
+        match = re.fullmatch(r'packages/generated/(powerstyles|fightstyles)/([^/]+)\.pkgb', C.norm(rel))
+        if match is None:
+            return
+        target = f'data/{match[1]}/{match[2]}'
+        listed = {C.norm(fn or '') for kind, fn in entries if kind.lower() in ('xml', 'xml_resident', 'fightstyle')}
+        if target not in listed:
+            ck.error(f'{rel}: style package does not load its own style {target} (SPEC 29.2)')
+        ck.count('style_package_targets_checked')
 
     def _base_pkg_entries(self, n):
         """{(kind, norm filename)} of the XML2 package at the same path (empty when the base has none)."""

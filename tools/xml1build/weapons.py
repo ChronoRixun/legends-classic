@@ -54,6 +54,23 @@ def variant_name(mapped_style: str, weapon_name: str) -> str:
     return f'x1_{base}_{wp}'.lower()
 
 
+def bind_style_package(root, base: str, variant: str):
+    """A weapon variant's own package must load that variant, not its source style.
+
+    The source bundle also carries effects/entities and sometimes other styles. Replace only
+    its self-reference, preserving dependency entries and their order. Missing self-references
+    (including asset-only bundles) get an explicit XML entry.
+    """
+    old, new = f'data/powerstyles/{base}', f'data/powerstyles/{variant}'
+    for entry in root:
+        if entry.tag.lower() in ('xml', 'xml_resident', 'fightstyle') and \
+                (entry.get('filename') or '').replace('\\', '/').lower() == old:
+            entry.set('filename', new)
+    if not any(entry.tag.lower() in ('xml', 'xml_resident', 'fightstyle') and
+               (entry.get('filename') or '').replace('\\', '/').lower() == new for entry in root):
+        ET.SubElement(root, 'xml', {'filename': new})
+
+
 def _lower(el) -> dict:
     return {k.lower(): v for k, v in el.attrib.items()}
 
@@ -106,7 +123,8 @@ def shot_triggers(w: dict, t: str, with_fx: bool = True) -> list:
     if kind in ('bullet', 'beam'):
         out.append(_beam(w, t, bolt))
     elif kind == 'projectile':
-        a = {'name': 'projectile', 'time': t, 'actorbolt': bolt, 'count': '1', 'targetable': 'true'}
+        a = {'name': 'projectile', 'time': t, 'attacktype': 'projectile',
+             'actorbolt': bolt, 'count': '1', 'targetable': 'true'}
         if w.get('projectileent'):
             a['entity'] = w['projectileent']
         if w.get('entfile'):
