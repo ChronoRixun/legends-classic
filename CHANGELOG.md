@@ -10,7 +10,7 @@ build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebui
   attacks, and Magma's and Pyro's projectiles carried XML1 value codes the PC engine does not know. The zone import
   re-wrote those entity files without resolving the codes after the character converter had. Both import paths
   now resolve them, and the validator refuses a build that leaves one behind. Those attacks now do the first
-  game's damage, so expect them to hurt (SPEC section 29.2; contributed through the first community pull request).
+  game's damage, so expect them to hurt (SPEC section 29.2).
 - Preserve XML1 projectile damage and knockback values through the zone import pass. Zone imports could
   overwrite the character converter's numeric values with XML1-only codes that the PC engine reads as zero.
 - Make each per-weapon power-style package load its own variant instead of the original shared style.

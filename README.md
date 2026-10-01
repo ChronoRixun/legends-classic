@@ -116,8 +116,7 @@ Fixed in later builders (the launcher offers the rebuild when the content versio
 
 - **Builder 0.1.4 (content version 6): projectile and explosion damage from the first game's data read as zero** -
   freeze and knockback gun shots, grenades, incendiaries, missiles, and Magma's, Pyro's, Mystique's and the Shades'
-  thrown attacks did no damage. They do now, with the first game's numbers; expect those fights to hurt. Found and
-  fixed through the first community pull request.
+  thrown attacks did no damage. They do now, with the first game's numbers; expect those fights to hurt.
 - **Builder 0.1.3 (content version 5): with builder 0.1.2, in zones with gun soldiers the third and fourth heroes
   of the party had no power wheel** (holding the power key did nothing for them; the next zone restored it). A
   packaging slip in 0.1.2; fixed, and the builder now refuses to produce it.
