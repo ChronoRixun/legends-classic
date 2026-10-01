@@ -655,6 +655,8 @@ class Zones:
         def patch(root, n=n):
             C.map_tree_refs(root)
             self.prov.rewrite_data_tree(self.ctx, root, n)
+            from . import npc_values as NV
+            NV.resolve_entity_codes(self.ctx, root, n)
         return patch
 
     def _shadow_fix(self, res):

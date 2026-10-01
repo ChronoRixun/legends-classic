@@ -115,6 +115,22 @@ def resolve_style(root, values, where=''):
     return c, problems
 
 
+def resolve_entity_codes(ctx, root, rel):
+    """Use the same value-code conversion for every importer of an XML1 entity file.
+
+    Zones may take ownership of a file previously written by characters. Both must resolve the
+    codes, or that later import silently restores values XMen2.exe interprets as zero.
+    """
+    n = str(rel).replace('\\', '/').lower()
+    if not n.startswith('data/entities/'):
+        return None
+    from .heroes import Values                    # local import: heroes imports npc_values
+    result = resolve_style(root, Values(ctx.read_x1_xml('data/values.xml')), f'{n}:')
+    for problem in result[1]:
+        ctx.error(f'Entity value code: {problem}')
+    return result
+
+
 def code_findings(root):
     """[(move, element tag, attribute, value)] of every attribute value XMen2.exe reads as 0 (exe_reads_as_zero)
     in one style tree; and a Counter of the codes XMen2.exe resolves itself. For validators."""
@@ -124,7 +140,9 @@ def code_findings(root):
     skip = _skip_attrs()
     roots = list(root) if root.tag == 'xmlb_multiple_roots' else [root]
     for top in roots:
-        for el in top:
+        # Entity files can be a container, a single entity, or XMLB multiple roots.
+        elements = [top] if isinstance(top.tag, str) and top.tag.lower() == 'entity' else list(top)
+        for el in elements:
             where = (el.get('name') or el.get('Name') or '<style>') if isinstance(el.tag, str) else '<style>'
             for e in el.iter():
                 if not isinstance(e.tag, str):
@@ -331,6 +349,24 @@ def verify_xbe(xbe_path):
 
 
 # ------------------------------------------------------------------------------------------ validator V19
+def validate_entity_codes(v, ck):
+    """Check the final entity files, after every importer has had a chance to overwrite them."""
+    seen = set()
+    for rel in sorted(v.idx.under('data/entities/'), key=str.lower):
+        if not rel.lower().endswith(('.xmlb', '.engb')) or v.entry(rel) is None:
+            continue                               # unchanged XML2 files retain retail behavior
+        ck.count('entity_files_checked')
+        found, _ = code_findings(v.tree(rel))
+        for where, tag, attr, value in found:
+            key = (str(Path(rel).with_suffix('')).lower(), where, tag, attr.lower(), value)
+            if key in seen:
+                continue
+            seen.add(key)
+            ck.error(f'{rel}:{where} <{tag} {attr}="{value}">: entity value code XMen2.exe reads as 0; '
+                     f'resolve the XML1 code in every entity import path (SPEC 29.2)')
+    ck.set('entity_value_codes_left', len(seen))
+
+
 def v19(v, ck):
     """V19 NPC value codes and energy (SPEC 24): the name table / energy constants equal the install's XMen2.exe;
     no style file the build wrote holds a value code XMen2.exe reads as 0 (XML2 retail files are allowlisted
@@ -378,6 +414,7 @@ def v19(v, ck):
         ck.note(f'codes XMen2.exe resolves itself from data/values.xmlb left in built styles: {dict(exe_total)}')
     for stem, n in sorted(retail.items()):
         ck.allow(f'{stem}: {n} value code(s)', 'XML2 retail style file, unchanged (XMen2.exe ships it so)')
+    validate_entity_codes(v, ck)
     # ---- the NPC energy talent
     st = v.stats()
     x1 = v.x1_stats()

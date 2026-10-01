@@ -3,6 +3,14 @@
 The builder's releases, newest first. The version is `xml1-builder --version`; the content version is what a
 build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebuild.
 
+## Unreleased - content version 6
+
+- Preserve XML1 projectile damage and knockback values through the zone import pass. Zone imports could
+  overwrite the character converter's numeric values with XML1-only codes that the PC engine reads as zero.
+- Make each per-weapon power-style package load its own variant instead of the original shared style.
+- Explicitly classify spawned weapon attacks as projectiles rather than inheriting the attack parser's punch
+  default. Add final-output validation for entity value codes and style-package self references.
+
 ## v0.1.3 - content version 5
 
 - **Fixed (0.1.2 regression): in zones with gun soldiers, the third and fourth heroes of the party had no power

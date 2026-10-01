@@ -3361,3 +3361,35 @@ builder 0.1.3.
 **Verified in game 2026-10-01.** build/_wpn with the three HAARP packages patched by hand to the variants: all
 four wheels (Magma, Jean, Wolverine, Iceman) in haarp_ext01. build/_w3 (the builder's own output, harness pipe
 w3): the same four-seat check - see the sheet wheel/sheet_w3fix.png in the session scratchpad.
+
+### 29.2 Entity value codes and generated weapon-style packages (compatibility audit)
+
+Two cross-module defects remained after 29.1. `characters._data_patch` resolved XML1 codes in
+`data/entities/*`, but `zones._data_patch` did not. The latter compares its freshly converted source
+against a previous importer and takes ownership when they differ. It therefore restored `L3`, `L4`,
+and `K10` in the shipped freeze/knockback entity files. XMen2.exe does not resolve those names
+(section 24; the projectile parser uses the same value resolver, weapon_events.md section 4).
+Both importers now call `npc_values.resolve_entity_codes`. Unknown codes report a build error.
+V19 checks the final registered entity files as well as styles, including single and multiple XMLB roots.
+
+`characters.style_packages` also used the original bundle unchanged for weapon variants. All nine
+variant packages named the original style internally, even though the character and zone packages
+had been corrected in 29.1. `weapons.bind_style_package` changes only the source style's self-reference;
+other styles, effects and entity dependencies keep their order. It inserts the variant's XML entry if
+an asset-only bundle omits the source style. V4 checks the self-reference of generated style packages.
+
+The generated projectile trigger now explicitly sets `attacktype="projectile"`. The shared event's
+`ce_atk_spawn_proj` selects the spawn implementation but does not override the attack-data parser's
+`punch` default (weapon_events.md sections 2 and 4). The projectile's event/entity damage precedence
+still needs an in-game comparison; resolving both records does not establish which wins on contact.
+
+Regression tests use synthetic data: the character and zone entity patches must produce identical
+bytes; generated variant packages must load their own style with dependencies preserved; validators
+reject the former output. CONTENT_VERSION 5 -> 6; release version left unchanged pending review.
+
+Validation of the review branch: 78 synthetic tests pass; a full no-movies build and a subsequent rebuild
+both validate with zero errors (existing warnings retained). Compared with the 0.1.3 play build, the final
+output has zero unresolved entity codes instead of 24 across nine files: freeze/knockback weapons, grenades,
+Magma, missile launchers, Mystique, Pyro, Sentinel grenades, and Shades. All nine weapon-variant packages
+now load their own style. Both projectile variants explicitly carry the projectile attack category.
+This is final-file validation, not a claim that projectile contact behavior has been playtested.

@@ -692,14 +692,8 @@ class _Builder:
             C.map_tree_refs(root)
             if rewrite is not None:
                 rewrite(self.ctx, root, n)
-            if n.startswith('data/entities/'):
-                # SPEC 29 / 24: a projectile entity's damage / knockback codes (ice_bullet L3, bullet_time K10)
-                # read as 0 on XMen2.exe like a style's; resolved to XML1's numbers the same way
-                from . import heroes as H
-                with self.lock:
-                    if self.x1_values is None:
-                        self.x1_values = H.Values(self.ctx.read_x1_xml('data/values.xml'))
-                codes = NV.resolve_style(root, self.x1_values, f'{n.rsplit("/", 1)[-1]}:')
+            codes = NV.resolve_entity_codes(self.ctx, root, n)
+            if codes is not None:
                 with self.lock:
                     self.npc_codes[C.norm(n)] = codes
         return patch
@@ -1301,6 +1295,8 @@ class _Builder:
                 ents = bundle
             who = f'{kind}/{mapped}'
             root, _ = self.build_pkg(ents, who)
+            if kind == 'powerstyles' and mapped in self.variant_base:
+                W.bind_style_package(root, self.variant_base[mapped], mapped)
             dst = f'Packages/generated/{kind}/{mapped}.PKGB'
             if dst in ctx.base_index:
                 old = ctx.read_base_xmlb(dst)
