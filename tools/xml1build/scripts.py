@@ -49,6 +49,7 @@ from pathlib import Path
 from . import common as C
 from . import conversations as CV
 from . import scripts_lint as L
+from . import boss_phases as BP
 from . import scripts_transform as T
 
 # ----------------------------------------------------------------------------------------------- constants
@@ -360,6 +361,7 @@ def _base_text(ctx, ref):
                 text = '\r\n'.join(stmts)
                 info['bounded_loops'] = bl
                 info['bounded_loops_skipped'] = sk
+        text = BP.rewrite_script(ref, text)
         return text, info
     return _cached(ctx, ('base_text', ref), build)
 
@@ -1327,9 +1329,9 @@ def rewrite_data_tree(ctx, root, rel) -> int:
     doubles = T.npc_double_conversation_heroes(conv_ref) if conversation else set()
     # SPEC 18.1: hero NPCs with XML1's own entity name speak under that name (T.NPC_SPEAKER_CONVERSATIONS)
     npc_speakers = T.npc_speaker_renames(conv_ref) if conversation else {}
-    n = 0
+    n = BP.rewrite_data(root, r)
     if conversation:
-        n += CV.resolve_cross_file_tagjumps(ctx, root, rel)   # SPEC 35: first, so the copy is marked/rewritten too
+        n += CV.resolve_cross_file_tagjumps(ctx, root, rel)   # SPEC 39: first, so the copy is marked/rewritten too
         n += _drop_cut_mission_responses(ctx, root, rel)
         n += CV.mark_auto_advance(root)   # SPEC 34: runWithoutUser lines -> a negative timeDelay (xml2-fix AutoAdvance)
     inline_ends = _inline_end_refs(ctx)            # SPEC 19: data endSideMission -> generated end script (seat)

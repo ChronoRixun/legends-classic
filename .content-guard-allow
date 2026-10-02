@@ -27,3 +27,4 @@ BINARY  *xml1builder/data/xml2_retail_files.json.gz               # gzip of the 
 GAME_TEXT_ATTR  tests/unit/test_sources_tables.py                 # made-up mission names ("Find B & C") of a synthetic mission file (tests XML escaping)
 
 # --- nothing else is expected. In particular: no MEDIA entries (no screenshots in git), no SIZE entries.
+DECODED_XML   tests/unit/test_zone_entity_pins.py                    # invented zone XML (made/up/* names, no game data) for SPEC 35 entity pins

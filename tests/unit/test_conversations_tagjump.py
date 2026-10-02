@@ -1,4 +1,4 @@
-"""SPEC 35 (2026-10-01 audit W11) on made-up data - no game files:
+"""SPEC 39 (2026-10-01 audit W11) on made-up data - no game files:
 a conversation whose response tagjumps into another file gets the tagged line (and its subtree) copied
 into the jumping file (conversations.resolve_cross_file_tagjumps), so XMen2.exe's same-file lookup finds it."""
 import types
@@ -63,7 +63,7 @@ def test_cross_file_tagjump_copies_the_tagged_subtree():
     jumper = next(el for el in root.iter() if el.get('tagjump') == 'hub_menu')
     assert jumper.get('chosenscriptfile') == 'test/leave'           # the script stays
     assert jumper.get('conversationend') is None                    # the end flag goes: XMen2.exe ends the
-    # conversation on a response's conversationEnd even when its tagJump resolves (SPEC 35.1), which would
+    # conversation on a response's conversationEnd even when its tagJump resolves (SPEC 39.1), which would
     # preempt the menu the copy just made reachable (the menu copy ends at its own %END%)
 
 

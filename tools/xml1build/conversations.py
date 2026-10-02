@@ -117,7 +117,7 @@ def marked_lines(root):
     return out
 
 
-# ---------------------------------------------------------------------------------------------- SPEC 35: cross-file tagjumps
+# ---------------------------------------------------------------------------------------------- SPEC 39: cross-file tagjumps
 # XML1 resolved a response's tagJump across every loaded conversation file; XMen2.exe looks only in the file the
 # response lives in (0x45cde0 -> 0x4573f0, case-sensitive; conversation-speakers.md section 4 step 9). Of the 365
 # XML1 tagjumps exactly one leaves its file (audit W11, issue #9): mansion/man4/2_5_10b's last response jumps to
@@ -150,9 +150,9 @@ def _enclosing(root, el, tag):
 
 
 def resolve_cross_file_tagjumps(ctx, root, rel, table=None) -> int:
-    """SPEC 35: a conversation whose tabled tagJump leaves its file gets the tagged <line> (and its subtree) copied
+    """SPEC 39: a conversation whose tabled tagJump leaves its file gets the tagged <line> (and its subtree) copied
     from the owning conversation under the jumping response's participant. The jumping response's conversationEnd
-    is removed: XMen2.exe ends the conversation on that flag even when the tagJump resolves (in game, SPEC 35.2),
+    is removed: XMen2.exe ends the conversation on that flag even when the tagJump resolves (in game, SPEC 39.2),
     and the copied subtree ends at its own %END%. Returns the number of copies inserted."""
     r = (rel or '').replace('\\', '/').lower()
     if not r.startswith('conversations/'):
@@ -190,5 +190,5 @@ def resolve_cross_file_tagjumps(ctx, root, rel, table=None) -> int:
         n += 1
         ctx.note(f'{rel}: tagjump {tag!r} leaves the file (XML1 resolved it in {src}); the tagged line and its '
                  f'subtree were copied into a new participant of this file, and the jumper\'s conversationEnd '
-                 f'removed (SPEC 35)')
+                 f'removed (SPEC 39)')
     return n
