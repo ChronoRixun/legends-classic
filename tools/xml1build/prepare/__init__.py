@@ -272,6 +272,22 @@ def rmtree(p: Path):
         shutil.rmtree(p, onexc=onexc)
 
 
+RENAME_TRIES = 40                 # x RENAME_WAIT: ~10 s
+RENAME_WAIT = 0.25
+
+
+def rename(src: Path, dst: Path, tries: int = RENAME_TRIES, wait: float = RENAME_WAIT):
+    """Path.rename that waits out a transient Windows lock. Right after a stage writes thousands of files, an
+    antivirus or indexer scan can still hold one of them open, and renaming the directory then fails with
+    PermissionError (WinError 5); the same rename succeeds moments later (seen 2026-10-01 on the scripts stage)."""
+    for i in range(tries):
+        try:
+            return Path(src).rename(dst)
+        except PermissionError:
+            if i == tries - 1:
+                raise
+            time.sleep(wait)
+
 def publish(partial: Path, final: Path, stage: dict):
     """write stage.json into the finished partial directory and rename it to final (replacing an older final)."""
     stage = dict(stage, published=time.strftime('%Y-%m-%dT%H:%M:%S'))
@@ -279,9 +295,9 @@ def publish(partial: Path, final: Path, stage: dict):
     if final.exists():
         old = final.with_name(final.name + '.old')
         rmtree(old)
-        final.rename(old)
+        rename(final, old)
         rmtree(old)
-    partial.rename(final)
+    rename(partial, final)
     return stage
 
 

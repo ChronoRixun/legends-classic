@@ -5,12 +5,23 @@ build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebui
 
 ## Unreleased - content version 9
 
-- Restore the missing protection transitions in the Asteroid M Magneto encounter using its existing
-  shield and stage relays, with a delayed release when helpers die before the health threshold.
-- Put Shadow King's first form on the arena floor away from the party start and connect its scripted
-  shield phases to the existing timer through invulnerability toggles.
-- Master Mold's core puzzle remains deferred: the proposed spawn shield was removed after review
-  found it could prevent progression. His encounter keeps the existing behavior.
+- **Magneto's shield works again** (Asteroid M). When he raises it he cannot be hurt until his helpers are beaten -
+  the acolytes, then Sabretooth, then Mystique - as in the first game; before, the whole fight could be brute-forced
+  in one go (SPEC section 36).
+- **Shadow King's first form can be fought** (the Astral Plane finale). He used to sit on a floating pillar where
+  hits never registered; he now starts on the arena floor, away from the party, and his shield phases hold for the
+  first game's 30 seconds (SPEC section 36). His Xtreme-power shield break is not recreated; wait the shield out.
+- **Emma Frost's introduction in the mansion reaches her questions again** (fourth mansion visit). The
+  conversation ended at her last line because its jump into her question menu pointed at another file, which the
+  engine cannot follow (SPEC section 39).
+- Optional objectives are listed as secondary objectives (SPEC section 37). The first game's completion text for
+  objectives is still not shown (issue #8).
+- The per-zone music settings the first game's zone files carry were never used by the first game either, so
+  nothing is lost there (SPEC section 38).
+- The first build is more robust: when an antivirus scan briefly locks the files a prepare stage just wrote, the
+  builder waits for it instead of failing with "Access is denied".
+- Master Mold's fight is unchanged: his warp-core shield puzzle needs enemies that shoot the cores, which the
+  engine does not have; it stays an open issue.
 
 ## v0.1.6 - content version 8 (needs XML2 Fix 1.3.0)
 

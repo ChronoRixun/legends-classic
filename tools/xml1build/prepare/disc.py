@@ -36,7 +36,7 @@ import zipfile
 import zlib
 from pathlib import Path
 
-from . import PrepareError, check_cancel, digest, fb, image, publish, read_stage, rmtree, xbe
+from . import PrepareError, check_cancel, digest, fb, image, publish, read_stage, rename, rmtree, xbe
 
 STAGE = 'disc'
 VERSION = 1
@@ -285,7 +285,7 @@ def add_movies(img: image.XdvdfsImage, final: Path, stage: dict, *, log=print, c
     top = files[0].path.split('/')[0] if files else 'movies'
     dest = Path(final) / XBOX / top
     rmtree(dest)                                  # a half-added tree from an interrupted run
-    (part / top).rename(dest)
+    rename(part / top, dest)
     rmtree(part)
     st = dict(stage, movies=True)
     st['counts'] = dict(st.get('counts') or {}, movie_files=len(files), movie_bytes=n)

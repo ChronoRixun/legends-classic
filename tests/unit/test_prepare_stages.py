@@ -57,6 +57,40 @@ def test_pool_map_order_budget_and_errors():
         raise AssertionError('cancel must stop the pool')
 
 
+def test_publish_waits_out_a_transient_rename_lock():
+    """a scanner holding a fresh file makes the directory rename fail with PermissionError for a moment: publish
+    retries (prepare.rename) instead of failing the build; a lock that never clears still raises."""
+    with tempfile.TemporaryDirectory() as td:
+        partial, final = Path(td) / 'stage-v1-x.partial', Path(td) / 'stage-v1-x'
+        partial.mkdir()
+        real, calls = Path.rename, []
+
+        def flaky(self, target):
+            calls.append(self.name)
+            if len(calls) <= 2:
+                raise PermissionError(5, 'Access is denied')
+            return real(self, target)
+        Path.rename = flaky
+        try:
+            st = prepare.publish(partial, final, {'stage': 'stage'})
+        finally:
+            Path.rename = real
+        assert calls == ['stage-v1-x.partial'] * 3 and final.is_dir() and not partial.exists()
+        assert st['stage'] == 'stage' and (final / 'stage.json').is_file()
+
+        def locked(self, target):
+            raise PermissionError(5, 'Access is denied')
+        Path.rename = locked
+        try:
+            prepare.rename(final, partial, tries=3, wait=0)
+        except PermissionError:
+            pass
+        else:
+            raise AssertionError('a lock that never clears must still fail')
+        finally:
+            Path.rename = real
+
+
 def test_ntfs_walk_order_and_helpers():
     with tempfile.TemporaryDirectory() as td:
         root = Path(td)
