@@ -235,6 +235,73 @@ CALL_TARGETS = ((re.compile(r'startConversation\s*\(\s*["\']([^"\'()]+)["\']', r
 _CALL_ANY = re.compile(r'startConversation|createPopupDialogXml', re.I)
 _IGB_MP = re.compile(rb'([Mm][Pp]_[A-Za-z0-9_]{1,40})\x00')   # XML1 also has 'MP_table', 'MP_1_7_2'
 
+# SPEC 35: XMen2.exe streams zone entities by hero distance. At zone load every entity is created and released
+# again (name registry 0x4c7890 register / 0x4c70a0 unregister, both at load) unless its entity carries
+# smartent="false"; a released entity is re-created only when a hero comes near. A script that names a far-away
+# entity then finds nothing (startMotionPath 0x4a8f20 -> resolver 0x4a7e30 returns 0 matches at 0x4a8f7e; the
+# single-entity resolver 0x4a1700 -> registry lookup 0x4c6f20 returns 0), silently does nothing, and a
+# waitsignal on the path's end signal never returns (haarp_ext02 "The Bridge", 2026-10-01). XML2's own
+# script-driven entities carry smartent="false" (genosha4 shipA/shipB/bomb1-4; 487 physents, 82 doorents, 489
+# spawners, up to 68 per zone over its 170 zone files), so the port pins the entities its zone scripts name.
+PIN_SKIP_CLASSES = frozenset({'', 'playerstartent', 'waterent', 'tileent', 'cameramagnetent'})
+_OWNER_MP = re.compile(r'(?:start|set)MotionPath\s*\(\s*["\']_OWNER_["\']', re.I)
+
+
+def script_name_literals(texts):
+    """The slash-free quoted strings of script sources, lower-case: the entity names a script can resolve
+    (engine pseudo-names such as _OWNER_ / _HERO1_ excluded; paths and sound names carry a slash)."""
+    names = set()
+    for text in texts:
+        if not text:
+            continue
+        for m in _QUOTED.finditer(text):
+            s = (m.group(1) if m.group(1) is not None else m.group(2)).strip()
+            if s and '/' not in s and '\\' not in s and not s.startswith('_'):
+                names.add(s.lower())
+    return names
+
+
+def pin_scripted_entities(root, script_texts):
+    """SPEC 35: set smartent="false" on every entity (not of PIN_SKIP_CLASSES, without its own smartent) whose
+    name is a literal in the zone's scripts (`script_texts`: script ref -> source, plus the inline code of the
+    entities' *script attributes), or whose own script moves "_OWNER_" along a motion path. Returns
+    [(name, classname, why)] in document order."""
+    inline = [v for el in root.iter() if el.tag.lower() == 'entity'
+              for k, v in el.attrib.items() if k.lower().endswith('script') and v and '(' in v]
+    names = script_name_literals(list(script_texts.values()) + inline)
+    owner_refs = {r for r, t in script_texts.items() if t and _OWNER_MP.search(t)}
+    # a script names an instance (hive1_1_1 "tank1" of entinst type tank_vehicle_whole_hex); smartent is an
+    # entity attribute (XML2 never sets it on an inst: its 29,063 insts carry name/pos/orient/extents/parent
+    # only), so the instance's type is pinned, every instance of that type with it
+    by_type = {}
+    for ei in root.iter():
+        if ei.tag.lower() == 'entinst' and ei.get('type'):
+            for i in ei:
+                if i.tag.lower() == 'inst' and (i.get('name') or '').strip().lower() in names:
+                    by_type.setdefault(ei.get('type').strip().lower(), []).append(i.get('name').strip())
+    pinned = []
+    for el in root.iter():
+        if el.tag.lower() != 'entity':
+            continue
+        name = (el.get('name') or '').strip()
+        cls = (el.get('classname') or '').strip().lower()
+        if not name or cls in PIN_SKIP_CLASSES or el.get('smartent') is not None:
+            continue
+        why = 'named by a zone script' if name.lower() in names else None
+        if why is None and name.lower() in by_type:
+            why = 'type of the instance(s) ' + ', '.join(sorted(set(by_type[name.lower()])))
+        if why is None:
+            for k, v in el.attrib.items():
+                if not k.lower().endswith('script') or not v:
+                    continue
+                if ('(' in v and _OWNER_MP.search(v)) or ('(' not in v and C.script_ref(v) in owner_refs):
+                    why = f'{k} moves _OWNER_ on a motion path'
+                    break
+        if why:
+            el.set('smartent', 'false')
+            pinned.append((name, cls, why))
+    return pinned
+
 
 # ---------------------------------------------------------------------------------------------- helpers
 def load_providers(ctx):
@@ -591,6 +658,7 @@ class Zones:
         self._forced = {}                                       # forced text import results (import_asset)
         self._tile_files = {}                                   # 'tiles/<x>' -> set of stems on either disc
         self.pruned_tiles = {}                                  # zone -> [bundle tile models the zone cannot name]
+        self.pinned = {}                                        # zone -> [(name, classname, why)] smartent="false" (s.35)
         self.pruned_actors = {}                                 # zone -> [(kind, name)] XML1 hero actors nobody spawns (s.14)
         self.igb = {}                                           # zone -> IGB-cache records its package creates
         self.automaps = {}                                      # zone -> automap info (section 26)
@@ -1151,6 +1219,10 @@ class Zones:
         inline = rename_npc_inline_refs(zone, root)                     # section 18.1: its inline code follows
         if inline:
             self.counts['npc_double_inline_refs'] += inline
+        pins = pin_scripted_entities(root, self.zone_script_texts(zone, root))   # section 35: stay alive for scripts
+        if pins:
+            self.pinned[zone] = pins
+            self.counts['entities_pinned'] += len(pins)
         for el in root.iter():
             if el.tag.lower() == 'precache':
                 t = (el.get('type') or '').lower()
@@ -1483,6 +1555,21 @@ class Zones:
                 refs = []
         self._data_refs[key] = refs
         return refs
+
+    def zone_script_texts(self, zone, root):
+        """SPEC 35: script ref -> source for every script the zone runs: the XML1 bundle's scripts, the world's
+        zonescript and the scripts the entities' *script attributes name (inline code is read by
+        pin_scripted_entities itself). Unreadable scripts map to None."""
+        refs = {C.script_ref(p) for p, k in self.ctx.zone_bundle(zone) if k.lower() == 'script'}
+        w = C.find_world(root)
+        if w is not None and w.get('zonescript'):
+            refs.add(C.script_ref(w.get('zonescript')))
+        for el in root.iter():
+            if el.tag.lower() == 'entity':
+                for k, v in el.attrib.items():
+                    if k.lower().endswith('script') and v and '(' not in v:
+                        refs.add(C.script_ref(v))
+        return {r: self.script_text(r) for r in sorted(refs)}
 
     def motionpath_entries(self, x1_file, lits, zone):
         """XML2 motionpath entries 'dir/file/object' for motionpaths/<dir/file>.igb."""
@@ -2599,6 +2686,16 @@ def run(ctx):
     if Z.music:
         ctx.defer(f'{len(Z.music)} zones set XML1 per-zone music (ambientmusic/combatmusic) that XMen2.exe ignores; '
                   f'they play <soundfile>_a/_c instead: {sorted(Z.music)}')
+    # section 35: entities the zone scripts name stay alive (XMen2.exe streams the rest by hero distance)
+    if Z.pinned:
+        worst = max(Z.pinned.items(), key=lambda kv: len(kv[1]))
+        by_cls = collections.Counter(cls for pins in Z.pinned.values() for _, cls, _ in pins)
+        ctx.note(f'section 35: {Z.counts["entities_pinned"]} entities in {len(Z.pinned)} zones pinned with '
+                 f'smartent="false" so the zone scripts that name them find them wherever the heroes stand '
+                 f'(XMen2.exe releases every other entity at load, 0x4c7890/0x4c70a0, and re-creates it only near a '
+                 f'hero; haarp_ext02 startMotionPath("tank") found nothing): by class {dict(by_cls.most_common())}; '
+                 f'most in {worst[0]} ({len(worst[1])}; XML2 zones pin up to 68)')
+    ctx.set_count('entities_pinned', Z.counts['entities_pinned'])
     # section 26: automaps
     if Z.automaps:
         worst = max(Z.automaps.items(), key=lambda kv: kv[1].get('window', 0))

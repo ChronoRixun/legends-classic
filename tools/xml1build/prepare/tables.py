@@ -311,7 +311,7 @@ def mission_plan(assets: Path, loose: Path):
         for n, o in g['objs'].items():
             # SPEC 37 (issue #8): XML1's required="false" (an optional objective) is the engine's major="false"
             # (the Secondary HUD list; 'Primary'/'Secondary' are XMen2.exe strings). updatedescription (XML1's
-            # completion text) has no reader in either engine - both know only the objective commands COMPLETE /
+            # completion text, read by default.xbe) has no reader in XMen2.exe - both exes know only the objective commands COMPLETE /
             # DECREMENT / HIDE / INCOMPLETE / INCREMENT / SHOW - so it is never written to the XML2 text; it stays
             # in the plan JSON (objectives keep their source attrs above) for a future engine-side text verb, and
             # both attributes are counted instead of silently dropped.
