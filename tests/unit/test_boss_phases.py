@@ -77,3 +77,54 @@ def test_entry_guard_checks_actor_before_repositioning():
     assert 'present = exists("guardian")\r\nif present == 1\r\n     moveTo("guardian","floor")\r\nendif' in out
     assert B.guard_before(out, 'setTarget("guardian")', 'present == 1',
                           'moveTo("guardian","floor")', setup=('present = exists("guardian")',)) == out
+
+
+def test_delayed_release_stays_inside_transition_and_after_wait():
+    source = 'if phase == 2\n     chooseMode("guardian", "attack")\nendif\n'
+    statements = ['waittimed ( 0.100 )', 'protect("guardian", "FALSE")']
+    result, count = B.insert_after_call(source, 'chooseMode', 'guardian', 'attack', statements)
+    assert count == 1
+    assert 'chooseMode("guardian", "attack")\r\n     waittimed ( 0.100 )\r\n     protect("guardian", "FALSE")\r\nendif' in result
+    assert B.insert_after_call(result, 'chooseMode', 'guardian', 'attack', statements) == (result, 0)
+
+
+def test_named_floor_marker_uses_walkable_height_without_moving_party_or_second_form():
+    root = ET.Element('world')
+    group = ET.SubElement(root, 'entinst', type='nav')
+    ET.SubElement(group, 'inst', name='other', pos='90 80 -9')
+    ET.SubElement(group, 'inst', name='arena', pos='700 400 -9')
+    group = ET.SubElement(root, 'entinst', type='arrival')
+    start = ET.SubElement(group, 'inst', name='party', pos='10 20 50')
+    group = ET.SubElement(root, 'entinst', type='guardian_spawn')
+    boss = ET.SubElement(group, 'inst', name='guardian', pos='1 2 3', orient='1 0 0')
+    group = ET.SubElement(root, 'entinst', type='second_spawn')
+    second = ET.SubElement(group, 'inst', pos='4 5 6')
+    assert B.relocate_spawn(root, 'guardian_spawn', 'nav', floor_name='arena', height_type='arrival') == 1
+    assert boss.attrib == dict(name='guardian', pos='700 400 50', orient='1 0 0')
+    assert start.get('pos') == '10 20 50' and second.get('pos') == '4 5 6'
+    assert B.relocate_spawn(root, 'guardian_spawn', 'nav', floor_name='arena', height_type='arrival') == 0
+    # Duplicates across separate groups must not be hidden by a dict keyed on type.
+    duplicate = ET.SubElement(root, 'entinst', type='nav')
+    ET.SubElement(duplicate, 'inst', name='arena', pos='700 400 -9')
+    try: B.relocate_spawn(root, 'guardian_spawn', 'nav', floor_name='arena', height_type='arrival')
+    except ValueError: pass
+    else: raise AssertionError('duplicate named marker must fail')
+
+
+def test_multiple_entry_statements_stay_inside_alive_guard():
+    source = 'setTarget("guardian")\r\n'
+    statements = ['moveTo("guardian","arena")', 'z=getZ("arrival")', 'setZ("guardian",z)']
+    result = B.guard_before(source, 'setTarget("guardian")', 'present == 1', statements)
+    assert 'if present == 1\r\n     ' + '\r\n     '.join(statements) + '\r\nendif' in result
+    assert B.guard_before(result, 'setTarget("guardian")', 'present == 1', statements) == result
+
+
+def test_deferred_core_encounter_is_not_rewritten():
+    source = 'chooseMode("guardian", "attack")\r\n'
+    for ref in ('mastermold/mmspawn', 'mastermold/mmpain', 'mastermold/checkcore'):
+        assert B.rewrite_script(ref, source) == source
+    root = ET.Element('world')
+    ET.SubElement(root, 'entity', name='invented_core', team='hero')
+    before = ET.tostring(root)
+    assert B.rewrite_data(root, 'maps/mastermold/mastermold2') == 0
+    assert ET.tostring(root) == before

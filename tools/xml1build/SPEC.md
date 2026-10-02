@@ -3932,70 +3932,90 @@ classes, unnamed and classless entities left alone, a second run a no-op, unread
 
 ### 36.1 Scope and cause
 
-XML1's `magshield`, `mag2`-`mag5`, `mold1` and `sk3`/`sk4` select or configure engine-owned boss
-brains. XMen2.exe has no corresponding implementation: keeping the original pattern names preserves
-neither protection nor the original attack schedule. The audit and issue comments are recorded in
-`research/audit/boss_fights_2026-10-01.md`. This section implements the three remaining requested
-compatibility fixes through the builder; it does not recreate those brains or add engine hooks.
+XML1's boss pattern names configure engine-owned brains that XMen2.exe does not implement. This
+conversion restores Magneto's protection transitions and Shadow King's reachable first form/timed
+shield through scripts and data. It does not recreate the original brains. Master Mold is explicitly
+excluded after review found the initially proposed spawn shield could block the final fight.
 
 ### 36.2 Conversion
 
 `boss_phases.py` runs from `Scripts._base_text` and `rewrite_data_tree`, on exact script/zone paths only.
-Generated scripts retain CRLF. The original counters, timers, health thresholds, rewards and follow-on
-scripts remain in control; HAARP scripts are outside this transformation's dispatch.
+Generated scripts retain CRLF. Original counters, timers, health thresholds, rewards and follow-on
+scripts remain in control. HAARP scripts and all Master Mold scripts/data are outside the dispatch.
 
 - **Magneto, asteroid2_1:** append `setInvulnerable("magneto","TRUE")` to the existing `shieldup`
-  action's inline script. Keep its targets and activation counts. Append the FALSE counterpart after
-  the phase call in each of `asteroid_m/stage2` through `stage5`. Helper deaths and pain thresholds
-  still activate the original relays; damage cannot skip their protected intervals.
-- **Master Mold, mastermold2:** `mmspawn` activates the existing `shockshield_on` combat node while
-  the stored stage is less than 4. The unmodified `checkcore` script already switches the node off
-  and records stage 4 when the core prerequisites are complete. The guard avoids restoring the shield
-  on a later spawn with that completed state. No new damage powerup or replacement core puzzle.
-- **Shadow King, final_astral:** move the first-form spawn to the zone's existing `player_start`
-  floor position, keeping its instance identity and facing. The zone-entry script also moves a living
-  first-form `shadowking` to that marker after the existing spawn wait, so an actor restored with its
-  old position has a relocation path. The second form has a different actor name. After `sk3` calls in
-  `sk1pain` set invulnerability TRUE; after `sk4` in `dropshield` set it FALSE. The existing shield flag,
-  threshold caps and 30-second timer are unchanged.
+  inline action. Preserve its targets/counts. After the pattern call in each `asteroid_m/stage2` through
+  `stage5`, wait 0.100 seconds, then clear invulnerability. When helpers die before the threshold, the
+  pain script can activate both shieldup and the final stage-relay input together. The delay gives the
+  shield-up action time to execute before release, avoiding a permanently protected boss.
+- **Shadow King, final_astral:** place only the first-form spawner at the XY of existing named waypoint
+  `wp_bossmaster3000_04`, using `player_start` solely for its known floor height. The resulting position
+  is (-578.026, -300.718, 65.0815), 322.04 units from the party start. The waypoint's raw Z is 0, below
+  the arena's visible floor; do not use that Z for the actor. The spawner retains its identity/facing.
+  The zone-entry alive guard copies the living first-form actor to that same named waypoint, then sets
+  Z from player_start. It does not move the party. `relocate_spawn` rejects missing/duplicate instances
+  and malformed coordinate counts, including duplicate types across multiple entinst groups.
+- After `sk3` in `sk1pain`, set Shadow King's invulnerability TRUE; after `sk4` in `dropshield`, set it
+  FALSE. Original shield flag, threshold caps and 30-second timer remain. The unchanged `spawnsk2`
+  script places the second form at the first form's death position; it is not moved back to the party.
 
-The content version rises from 8 to 9; the builder version remains 0.1.6 until a release is selected.
+Content version 8 -> 9, unreleased. Builder version stays 0.1.6 until a release is selected.
 
-### 36.3 Evidence and limits (2026-10-01)
+### 36.3 Master Mold correction and deferred work
 
-Isolated baseline and fixed installations; 1280x720 windowed harness, xml2-fix 1.3.0, connected console
-session, separate save folders and pipes. No source game installation or play build was modified.
-Local screenshots are not committed. Boss HUD values are approximate pixel measurements; frames that
-selected an acolyte or spider mine were rejected after checking the title. These are staged encounter
-checks, not a full ordinary playthrough. Drivers and their setup are in
-`research/regression/boss_fights/ISSUE2.md`.
+The initial PR enabled shockshield_on at spawn while stage < 4. This was unsafe. `mmpain` needs damage
+to cross 66.7% (mold2 plus sentinel cinematic) and 33.4% (mold3). The new spawn shield prevented both.
+`checkcore` requires coresgone >= 3 AND corecount >= 3; it writes stage 4, which would also skip the
+health phases if the cores were completed first. The cores are elevated team-hero physents, designed
+for enemy fire under the missing XML1 moldblowcore targeting behavior. Switch activation alone does
+not destroy them. The review's unstaged switch-window run left coresgone at zero and the boss blue
+at 100% throughout. The former `issue2_core_control.py` bypassed this dependency by assigning the
+prerequisites; its earlier result is withdrawn as progression evidence and the driver is removed.
 
-| Check | Before | After |
+This revision takes the review's removal route: mmspawn is untouched, no Master Mold conversion or
+new release timer remains, and the original core puzzle is deferred to a separate fix. All 30 generated
+Master Mold scripts were byte-compared against the pre-PR baseline with zero differences; all 12 map
+files match the reviewer's build (whose Master Mold maps were already confirmed unchanged from main). Synthetic
+tests explicitly require these script paths and the zone to pass through unchanged. Existing missing
+core-targeting behavior is not claimed fixed. The new `issue2_review.py mastermold` uses no health or
+phase assignments, core-counter assignments or direct checkcore activation; its damage calls invoke
+the existing pain thresholds, and switch acts use their ordinary scripts.
+
+### 36.4 Evidence and limits
+
+Separate builds/save folders/pipes, 1280x720 windowed harness with xml2-fix 1.3.0, connected desktop.
+Source installations and Owen's play build were not modified. Screenshots/saves stay outside Git.
+Boss bars are approximate pixel measurements with title checks; minion-target frames are rejected.
+These are controlled encounter probes, not complete unaided campaign playthroughs.
+
+| Check | Baseline / earlier defect | Revised result |
 |---|---|---|
-| Magneto shield | Hero hits lower a red boss bar from 99.5% to 98.3% after shieldup | Protected bar turns blue; stage 2 makes it red and ordinary hero hits lower it |
-| Magneto later relays | Missing engine state cannot protect him | Named damage of 300 leaves stage-3/4/5 shield samples at 99.5/92.6/85.1%; after relay release, damage lowers them to 92.6/85.1/77.7% |
-| Master Mold initial shield | Named damage of 1000 lowers him from 99.5% to 92.1% before any cores | Spawn activates the blue shock shield; a separate node control absorbs 5000 damage at 100% |
-| Master Mold core release | Existing checkcore path present | Stage its real core-count prerequisites, activate checkcore (not shockshield_off directly), then 5000 damage lowers the red bar to 63.8% |
-| Shadow King reachability | Ordinary hero attacks leave the perched first form at 100% | Floor actor takes ordinary hits; final rebased build shows 99.0% to 96.3% |
-| Shadow King scripted shield | Pattern states have no XML1 boss brain | Isolated threshold test holds at blue 68.0% through hero hits; after the original timer it is red and hits lower it to 61.3% |
-| Shadow King first-form end | Audit needed script damage while he was perched | Stage the last damage window and one remaining HP; an ordinary hero hit invokes the original second-form transition |
+| Magneto shield | Shield-up still allowed ordinary damage, 99.5% -> 98.3% | Protection blocks damage; stage relays release it. Earlier stage-3/4/5 samples held at 99.5/92.6/85.1%, then fell to 92.6/85.1/77.7% after release |
+| Master Mold | Initial PR spawn shield gated damage behind a core puzzle whose targeting is missing | Spawn shield removed; original scripts preserved byte-for-byte; core puzzle deferred |
+| Shadow King placement | Original pillar unreachable; first PR placed him on the party start | New waypoint XY/floor Z is 322 units away. Fresh-entry images show him separate from the heroes; normal AI/party attacks reach him, 98.5% -> 98.3%, without teleporting either side |
 
-The existing generic-AI `power_boost` also grants a roughly 31-second damage shield. The isolated timer
-probe idles the AI and waits for this separate buff to expire before testing the scripted shield. It is
-not removed from normal gameplay. Scripted invulnerability does **not** reproduce XML1's Xtreme-only
-shield bypass; players can use the timed vulnerable windows. Original bespoke boss attack scheduling,
-flight/pillar choreography and cooldown changes remain outside this fix.
+Revised placement's isolated solo run: blue 83.6% stayed 83.6% under ordinary hits; after 32 seconds
+it was red, and ordinary hits lowered it to 76.2%. With the last damage window and one HP staged,
+an ordinary hero hit triggered the unchanged second-form handover on the ring floor; the second form
+was visible and its bar had already fallen to 97.3%. Normal-entry party AI was kept out of this separate
+probe because it could advance the encounter between samples. Failed/reused encounter probes were
+not counted as passes.
 
-Master Mold's puzzle prerequisites and Magneto's helper-death relays were staged; a natural full puzzle
-and helper-fight playthrough remains a tester check. Existing-save migration and re-entry after completed
-bosses have not been exercised end-to-end; the stage guard and first-form-only entry guard are covered
-structurally and the latter runs on fresh entry. The second-form transition itself was observed in game.
+Master Mold no-core-staging run after removal: spawned red at 99.5%; damage progressed through
+91.1%, 83.6%, 76.7%, 69.2%, then the 66% sentinel drop-in cinematic (captured). Subsequent damage
+reached 37.7% and the next threshold at 33.0%. No health, phase or core-counter assignments were used;
+no direct checkcore activation. All three switches were activated; after their 90-second windows
+expired, the bar remained red at 33.0% and further damage lowered it to 26.1%. Minion-title frames between the cinematic and 37.7% were discarded.
 
-Final-build timer repeat (clear-side hero positioning): blue 83.6% stays at 83.6% under hits; after
-32 seconds the bar is red and hits lower it to 77.7%. A +150-X hero offset put the probe behind a
-statue and produced misses, so the isolated driver uses -80 X and repositions before the final hit.
+The timer/phase-end probe stages health and the last damage window but uses ordinary hero attacks for
+pain/transition triggers. The generic-AI power_boost has a separate roughly 31-second damage shield;
+the isolated test idles that AI and waits out its buff. It is unchanged in normal play. Scripted
+invulnerability does not recreate XML1's Xtreme-only shield bypass; timed vulnerable windows remain.
+Original boss attack scheduling, flight/pillar choreography and cooldown changes remain outside scope.
+Save migration and completed-fight re-entry have not been exercised end-to-end.
 
-Build: full generated content on top of the SPEC 35 entity-pinning change, 0 errors (inherited warnings
-remain). Unit suite: 113 passed, including 8 new synthetic boss-helper tests with invented names covering
-conditional scope, CRLF, idempotence, exact actor matching, guarded stage/entry changes, preservation of
-spawn identity and relay attributes, invalid anchors/placement and unrelated paths.
+Build after review: 0 errors (inherited warnings remain). All affected generated scripts verified CRLF.
+Unit suite: 117 passed, including 12 synthetic boss-helper tests using invented actor/entity names.
+They cover scope, CRLF, delayed release ordering, idempotence, named marker selection, floor-height
+substitution, duplicate rejection, unchanged party/second-form positions, and Master Mold exclusion.
+Drivers and setup: `research/regression/boss_fights/ISSUE2.md`.

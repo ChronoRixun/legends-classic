@@ -6,11 +6,11 @@ build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebui
 ## Unreleased - content version 9
 
 - Restore the missing protection transitions in the Asteroid M Magneto encounter using its existing
-  shield and stage relays.
-- Start Master Mold with his existing shock-shield combat node, while preserving the completed-core
-  state on later spawns.
-- Put Shadow King's first form on the reachable arena floor and connect its scripted shield phases
-  to the existing timer through invulnerability toggles.
+  shield and stage relays, with a delayed release when helpers die before the health threshold.
+- Put Shadow King's first form on the arena floor away from the party start and connect its scripted
+  shield phases to the existing timer through invulnerability toggles.
+- Master Mold's core puzzle remains deferred: the proposed spawn shield was removed after review
+  found it could prevent progression. His encounter keeps the existing behavior.
 
 ## v0.1.6 - content version 8 (needs XML2 Fix 1.3.0)
 
