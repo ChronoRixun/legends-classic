@@ -3822,3 +3822,68 @@ and frames are in the session scratchpad (`f130_driver.py`, `f130/*.png`).
   new bitmap at +0xca00 and none in the old one; definitions 69-87 (the 19 Danger Room rewards) own records 374-409,
   every record a definition names has the record vtable; the pipe's `status` says `items 410/512`; haarp_ext03
   loads and a save completes with the pool at 410. XML2's own records 0-373 are where they were.
+
+
+---------------------------------------------------------------------------------------------------------------
+
+## 35. The one cross-file conversation tagjump: mansion4's Emma scene copies its menu into the jumping file (2026-10-01, audit W11; issue #9)
+
+XML1 resolved a response's `tagJump` across every loaded conversation file; XMen2.exe looks only in the file the
+response lives in (`0x45cde0` -> `0x4573f0`, case-sensitive match on `tagIndex`, conversation-speakers.md section 4
+step 9). Of the 365 XML1 tagjumps exactly one leaves its file: `conversations/mansion/man4/2_5_10b`'s last response
+(`tagJump="2_5_10loop"`) targets the reply-menu line that lives in `conversations/mansion/man4/2_5_10`. In the port
+the lookup returns NULL, the childless `%BLANK%` response sets the ending flag, and Xavier's introduction of Emma
+ends at Emma's last line: the seamless hand into the ask-Emma menu (and the `noReturnToGameCamAtEnd` continuity) is
+lost; the player only reaches the menu through a later re-trigger of `2_5_10`.
+
+### 35.1 The data side (this builder: `conversations.resolve_cross_file_tagjumps`, run first in the conversation branch of `scripts.rewrite_data_tree`)
+
+For the one tabled case the tagged `<line>` and its whole subtree are deep-copied out of the owning conversation
+(read from the XML1 source through `ctx.read_x1_xml`) and become the root line of a new `<participant>`
+(`x1_tagjump_<tag>`) of the jumping `<startCondition>`. Every tagIndex known to work sits on a participant root
+line (80 XML1 + 1 XML2 retail); placing the copy as a second root line of `default` was tried first and the engine
+never registered it (35.2). Entry selection - activator name, the `"default"` fallback, then the first unspent
+`runOnce` startCondition - is untouched. The copy is inserted before
+`mark_auto_advance` and the attribute pass, so it is patched exactly like the rest of the file (speaker tokens,
+script references, auto-advance marks; the menu's internal `tagJump="2_5_10loop"` responses now resolve to the
+local copy and loop there). `chosenScriptFile` on the jumping response stays as XML1 wrote it
+(`mansion/man4/profx_disapears` still fades Xavier out and marks the scene done), but its `conversationEnd` is
+removed: in game (35.2) XMen2.exe ends the conversation on a response's `conversationEnd` even when its `tagJump`
+resolves - the flag sets the ending flag at the advance and step 3 ends the conversation a frame later - while XML1
+followed the jump. The copied menu ends at its own `%END%` response (which still runs `astral_legwork`), so the
+conversation still closes properly. Idempotent: a file that already carries the `tagIndex` is left alone
+(`scripts_selftest` runs `rewrite_data_tree` twice), and a tabled conversation whose jumping response was cut is
+skipped without a copy. The fixed file stays well under the engine's 40-line / 50-response conversation pools
+(22 lines, 25 responses). Table-driven (`CROSS_FILE_TAGJUMPS`) so a second discovered case is one row, not a new
+mechanism.
+
+Why a copy and not a retarget: the menu exists only in `2_5_10`; there is no equivalent local line to point at,
+and XML1's own behaviour is "continue this conversation at that line".
+
+Tests: `tests/unit/test_conversations_tagjump.py` (made-up conversations: the copy and its placement, idempotence,
+the case-sensitive local check, missing source / missing tagIndex warnings, and the no-jumper / no-table-entry
+no-ops). In game: 35.2.
+
+### 35.2 In game (build k28, harness pipe k28, save folder "X-Men Legends (k28 tests)", windowed, 2026-10-01)
+
+Wolverine + Cyclops (`seatParty`), `loadMapKeepTeam("mansion/man4/mansion4_1")`, `startConversation` of
+`mansion/man4/2_5_10b` from the pipe, `tools/conv_probe.py` every 0.5 s; the driver and frames are in the session
+scratchpad (`tagjump_driver.py`, `tagjump_game/*.png`).
+
+- **The scene runs its two passes and lands in the menu.** Lines 64-66 (Emma meets Alison, SC1) advanced by
+  themselves, the conversation ended on SC1's own `conversationEnd` (by design: `profx_apears` fades Xavier in and
+  re-starts it), lines 67-72 (Xavier introduces Emma, SC2) advanced by themselves, and the jumping response then
+  went **straight to line 73 - the copied menu, 4 visible responses, `ending=False`, no key pressed**. Before the
+  fix the conversation ended at that point (`ending=True`, the probe sat on line 72 with one response); the menu
+  was only reachable later through a fresh `2_5_10`.
+- **The menu loops in-file.** Enter on the first reply ran its answer chain and the probe shows the menu again at
+  line 73 (`visible_responses` 4) - the copy's `tagIndex` resolves for the jumper and for the menu's own
+  `tagJump="2_5_10loop"` responses alike.
+- **What did not work, and the two corrections it took.** First attempt (copy as a second root line of the
+  `default` participant, jumper otherwise untouched): in game the conversation still ended at line 72 - the engine
+  never registered the copy's `tagIndex` (every tagIndex that works in either game sits on a participant root
+  line), and the response's `conversationEnd` was honoured even though the jump... the ending flag observed with
+  the copy in place showed `conversationEnd` ends the conversation regardless of the jump. The shipped form puts
+  the copy in a new `x1_tagjump_2_5_10loop` participant and removes the jumper's `conversationEnd`; the menu then
+  appears with the conversation unbroken, `profx_disapears` still fades Xavier out, and the menu's own `%END%`
+  still runs `astral_legwork`.

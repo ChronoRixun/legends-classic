@@ -1329,6 +1329,7 @@ def rewrite_data_tree(ctx, root, rel) -> int:
     npc_speakers = T.npc_speaker_renames(conv_ref) if conversation else {}
     n = 0
     if conversation:
+        n += CV.resolve_cross_file_tagjumps(ctx, root, rel)   # SPEC 35: first, so the copy is marked/rewritten too
         n += _drop_cut_mission_responses(ctx, root, rel)
         n += CV.mark_auto_advance(root)   # SPEC 34: runWithoutUser lines -> a negative timeDelay (xml2-fix AutoAdvance)
     inline_ends = _inline_end_refs(ctx)            # SPEC 19: data endSideMission -> generated end script (seat)
