@@ -13,6 +13,11 @@ build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebui
   script function in XML2 Fix 1.3.0. This replaces 0.1.5's one-level-of-XP approximation (SPEC section 32).
 - **All 19 Danger Room reward items load.** The engine's item table stopped at 375 enhancements; the fix raises the
   pool to 512 and the builder asks for it (SPEC section 32.3). Existing saves keep working: nothing is renumbered.
+- **Fixed: the tank cutscene on the HAARP bridge never ended** (act 1, a softlock: the camera stayed on three
+  guards and the game could not continue). The engine unloads a zone's distant objects to save memory, so the tank
+  and the gate had been unloaded before the cutscene tried to move them. Every object a zone's scripts refer to
+  by name is now kept loaded, as X-Men Legends II does for its own scripted scenes (SPEC section 35). Both tank
+  reveals now play: the gate opens, the tank drives out, the guards come through. Found in a hand play-through.
 - The launcher installs XML2 Fix 1.3.0 before offering this rebuild; standalone users need it in the game folder.
 
 ## v0.1.5 - content version 7
