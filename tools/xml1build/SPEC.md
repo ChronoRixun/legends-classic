@@ -4063,6 +4063,45 @@ absent, `updatedescription` absent from the XML2 text but counted and carried in
 
 ---------------------------------------------------------------------------------------------------------------
 
+## 38. XML1's per-zone music override attributes are dead in XML1 retail too (2026-10-01, audit W8 revisited; issue #7)
+
+The audit read the world attributes `ambientmusic` / `combatmusic` / `intromusic` (9 campaign zones + 7 demo
+copies) as per-zone music overrides the port loses: "the zone bank's default ambient / combat track plays instead
+of XML1's override". Investigating the fix surfaced that the premise is wrong - **the attributes were already dead
+in the shipped Xbox game**, and the port's behaviour matches the Xbox exactly.
+
+### 38.1 The evidence
+
+- The attribute names are not strings in `default.xbe` (`ambientmusic`, `combatmusic`, `intromusic` - absent;
+  `soundfile`, `zonescript`, `skybox` present as the read-attribute control). XML1's world parser never looked at
+  them, and there is no composition table that would build the names from pieces (`_ambient`, `combat`, `intro`
+  exist in unrelated contexts only). XMen2.exe lacks the names as well.
+- None of the override values names any audio anywhere: not a bank (216 XML1 banks: no `morlocks`, `sewers1`,
+  `arbiter1`, ...), not a sound or ZTRK track (a PJW/ELF hash scan of every sound/track name table in all 216
+  banks over the values and `music/...`, `music/music_amb/...`, `music/music_combat/...`,
+  `music/music_cues/...` spellings: zero hits), not a file (the disc holds only `default.xbe` and `sounds/zsds`),
+  and not a hardcoded xbe table (the values are not xbe strings either).
+- XML1's real music system is the same one the port uses: the world `soundfile` whose `music/<name>_a` /
+ `music/<name>_c` banks the engine loads (the keying is confirmed, sound summary section 2), plus a `CMusicEntity`
+  class and the `changethememusic` console command that no XML1 zone data uses (no `musicent` entities anywhere).
+
+So on the Xbox, `arb2_2` played `arbint_a`/`arbint_c`, `sewers1_1_4` played `sewer1_a`/`sewer1_c`, and so on -
+exactly what the port plays. The attributes are development leftovers (the values read like internal track
+working titles from Raven's music pipeline, shipped in zone files only).
+
+### 38.2 The builder side
+
+No behaviour change - there is nothing to restore. `zones.world_music_attrs` collects the attributes for the zone
+report (`zones_detail.json music_overrides`), the converted zones keep writing only what XMen2.exe reads, and the
+stage's defer message now says the attributes are dead in XML1 retail too instead of implying the port lost a live
+feature. If Raven's music titles ever resurface (e.g. a future xml2-fix hook reading them), the plan is the
+audit's sketch: build the zone's `_a` / `_c` banks from the named track.
+
+Tests: `tests/unit/test_zone_music_attrs.py` (made-up world elements: collection of the three attributes, absent /
+empty ignored, the attributes reported rather than written).
+
+---------------------------------------------------------------------------------------------------------------
+
 ## 39. The one cross-file conversation tagjump: mansion4's Emma scene copies its menu into the jumping file (2026-10-01, audit W11; issue #9)
 
 XML1 resolved a response's `tagJump` across every loaded conversation file; XMen2.exe looks only in the file the

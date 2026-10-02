@@ -72,6 +72,15 @@ EFFECT_ATTRS = frozenset({'acteffect', 'deatheffect', 'xdeatheffect', 'loopfx', 
                           'wakeeffect', 'trailfx', 'spawneffect', 'monster_spawneffect', 'monster_deatheffect'})
 SPAWN_ATTRS = frozenset({'deathspawn', 'xdeathspawn', 'actspawn', 'monster_deathspawn'})
 MUSIC_ATTRS = ('ambientmusic', 'combatmusic', 'intromusic')
+
+
+def world_music_attrs(world):
+    """{attr: value} of XML1's per-zone music override attributes on a world element (SPEC 38). Dead in both
+    engines - neither default.xbe nor XMen2.exe contains the attribute names, and no value names any audio on
+    either disc - so the attributes are reported (zones_detail.json) and never written to the converted zone."""
+    return {a: world.get(a) for a in MUSIC_ATTRS if world.get(a)}
+
+
 # precache types whose filename is a file path (lowercased, '/'); 'sound' names are hashed, 'script' uses script_ref
 PRECACHE_PATH_TYPES = frozenset({'motionpath', 'conversation', 'dialog', 'fx', 'model', 'texture', 'xml_resident',
                                  'xml', 'subtitle'})
@@ -1316,8 +1325,10 @@ class Zones:
             for c in 'ac':
                 if ctx.sound_bank_rel(f'{sf}_{c}') is None:
                     self.counts[f'zones_without_music_{c}'] += 1
-        # music overrides (dropped silently by XML2)
-        mus = {a: world.get(a) for a in MUSIC_ATTRS if world.get(a)}
+        # music overrides (SPEC 38): collected for the zone report; the converted zone never carries them -
+        # they are dead in XML1 retail too (the attribute names are not default.xbe strings, and no value names
+        # any bank / sound / track / file on the XML1 disc), so the Xbox played <soundfile>_a/_c there as well
+        mus = world_music_attrs(world)
         if mus:
             self.music[zone] = mus
         # a zone that replaces an XML2 zone (menu/main_back, the front-end backdrop) keeps XML2's world
@@ -2684,8 +2695,10 @@ def run(ctx):
     Z.build_permanent()
 
     if Z.music:
-        ctx.defer(f'{len(Z.music)} zones set XML1 per-zone music (ambientmusic/combatmusic) that XMen2.exe ignores; '
-                  f'they play <soundfile>_a/_c instead: {sorted(Z.music)}')
+        ctx.defer(f'{len(Z.music)} zones set XML1 per-zone music (ambientmusic/combatmusic/intromusic). '
+                  f'SPEC 38: dead in XML1 retail too - the attribute names are not default.xbe strings and no '
+                  f'override value names any audio on the XML1 disc - so the Xbox also played <soundfile>_a/_c '
+                  f'there; the port matches it. Zones: {sorted(Z.music)}')
     # section 35: entities the zone scripts name stay alive (XMen2.exe streams the rest by hero distance)
     if Z.pinned:
         worst = max(Z.pinned.items(), key=lambda kv: len(kv[1]))
