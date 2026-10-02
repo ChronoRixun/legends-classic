@@ -67,3 +67,13 @@ def test_shield_relay_preserves_targets_and_is_idempotent():
     assert relay.get('actscript') == "setPatternSequence('guardian','barrier_mode')" + r'\n\r' + 'setInvulnerable("guardian","TRUE")'
     assert relay.get('actcountact') == '3' and relay.get('acttargets') == 'helpers'
     assert B.protect_relay(root, 'barrier', 'guardian', 'barrier_mode') == 0
+
+
+
+def test_entry_guard_checks_actor_before_repositioning():
+    text = 'waitForSpawn()\r\nsetTarget("guardian")\r\n'
+    out = B.guard_before(text, 'setTarget("guardian")', 'present == 1',
+                         'moveTo("guardian","floor")', setup=('present = exists("guardian")',))
+    assert 'present = exists("guardian")\r\nif present == 1\r\n     moveTo("guardian","floor")\r\nendif' in out
+    assert B.guard_before(out, 'setTarget("guardian")', 'present == 1',
+                          'moveTo("guardian","floor")', setup=('present = exists("guardian")',)) == out

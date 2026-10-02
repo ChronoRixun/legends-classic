@@ -9,6 +9,7 @@ MAGNETO_STAGES = frozenset(f'asteroid_m/stage{i}' for i in range(2, 6))
 MAGNETO_ZONE = 'maps/astroid_m/visit1/asteroid2_1'
 SHADOW_SCRIPTS = frozenset(('astral/savepx/sk1pain', 'astral/savepx/dropshield'))
 MASTER_SPAWN = 'mastermold/mmspawn'
+SHADOW_START = 'astral/savepx/final_astral'
 SHADOW_ZONE = 'maps/astral/savepx/final_astral'
 
 
@@ -36,14 +37,14 @@ def insert_after_call(text, function, actor, value, statements):
     return '\r\n'.join(out), changed
 
 
-def guard_before(text, anchor, condition, statement):
+def guard_before(text, anchor, condition, statement, setup=()):
     """Insert a guarded action before a unique script anchor; fail closed if source structure changes."""
     lines = text.replace('\r\n', '\n').split('\n')
     locations = [i for i, line in enumerate(lines) if line.strip() == anchor]
     if len(locations) != 1:
         raise ValueError(f'boss phase anchor {anchor!r}: expected once, got {len(locations)}')
     i = locations[0]
-    block = [f'if {condition}', '     ' + statement, 'endif']
+    block = list(setup) + [f'if {condition}', '     ' + statement, 'endif']
     if lines[max(0, i - len(block)):i] != block:
         lines[i:i] = block
     return '\r\n'.join(lines)
@@ -66,6 +67,12 @@ def rewrite_script(ref, text):
         # on a later spawn/load after the cores have been completed.
         text = guard_before(text, 'if stage == 0', 'stage < 4',
                             'setCombatNode("mastermold", "shockshield_on" )')
+    elif ref == SHADOW_START:
+        # Also relocate an existing first-form actor on zone entry; changing only the
+        # initial spawner would not help a saved actor that still has its old position.
+        text = guard_before(text, 'setDefaultTarget("shadowking" )', 'boss_alive == 1',
+                            'copyOriginAndAngles("shadowking", "player_start" )',
+                            setup=('boss_alive = alive("shadowking" )',))
     return text
 
 
