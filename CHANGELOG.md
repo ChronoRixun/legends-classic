@@ -3,6 +3,15 @@
 The builder's releases, newest first. The version is `xml1-builder --version`; the content version is what a
 build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebuild.
 
+## Unreleased - content version 9
+
+- Restore the missing protection transitions in the Asteroid M Magneto encounter using its existing
+  shield and stage relays, with a delayed release when helpers die before the health threshold.
+- Put Shadow King's first form on the arena floor away from the party start and connect its scripted
+  shield phases to the existing timer through invulnerability toggles.
+- Master Mold's core puzzle remains deferred: the proposed spawn shield was removed after review
+  found it could prevent progression. His encounter keeps the existing behavior.
+
 ## v0.1.6 - content version 8 (needs XML2 Fix 1.3.0)
 
 - **Conversations advance by themselves again.** The first game let many lines run on without a key press once
