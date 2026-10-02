@@ -3,6 +3,15 @@
 The builder's releases, newest first. The version is `xml1-builder --version`; the content version is what a
 build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebuild.
 
+## Unreleased - content version 9
+
+- Restore the missing protection transitions in the Asteroid M Magneto encounter using its existing
+  shield and stage relays.
+- Start Master Mold with his existing shock-shield combat node, while preserving the completed-core
+  state on later spawns.
+- Put Shadow King's first form on the reachable arena floor and connect its scripted shield phases
+  to the existing timer through invulnerability toggles.
+
 ## v0.1.6 - content version 8 (needs XML2 Fix 1.3.0)
 
 - **Conversations advance by themselves again.** The first game let many lines run on without a key press once
