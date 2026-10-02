@@ -3822,3 +3822,40 @@ and frames are in the session scratchpad (`f130_driver.py`, `f130/*.png`).
   new bitmap at +0xca00 and none in the old one; definitions 69-87 (the 19 Danger Room rewards) own records 374-409,
   every record a definition names has the record vtable; the pipe's `status` says `items 410/512`; haarp_ext03
   loads and a save completes with the pool at 410. XML2's own records 0-373 are where they were.
+
+---------------------------------------------------------------------------------------------------------------
+
+## 37. XML1's objective attributes `required` and `updatedescription` (2026-10-01, audit W10; issue #8)
+
+XML1 objectives carry two attributes the port dropped: `required` ("false" on optional objectives - XML1 shipped
+two, one of them in a mission the plan installs) and `updatedescription` (the completion text XML1 swapped in when
+the objective finished - 31 installed objectives have one (unique per act group), most of them count objectives). The generator
+(`prepare/tables.mission_plan`, stage P2) wrote every objective `major="true"` and neither attribute survived.
+
+### 37.1 What the engine offers (and what it does not)
+
+XMen2.exe's objective schema is `name descname description enabled count xp major parentname type zone`. `major`
+drives the HUD's Primary list (`Primary` / `Secondary` are exe strings); XML2 retail's own minor objectives are
+`major="false"` with a `parentname`. XML1's `required="false"` maps onto it directly: the optional objective moves
+to the Secondary list instead of standing among the primaries.
+
+`updatedescription` has no reader anywhere: XMen2.exe contains neither string, and both executables know exactly
+the same objective commands - `EOBJCMD_COMPLETE / DECREMENT / HIDE / INCOMPLETE / INCREMENT / SHOW` (plus
+`UNKNOWN`) - so there is no script verb that could swap an objective's text either (`display` is a stub in both,
+0x5aaff0). The completion text therefore cannot be shown data-side; the builder now keeps the attribute in
+`mission_plan.json` (objectives keep their source attributes there) so an xml2-fix text verb can pick it up later,
+writes nothing the engine cannot read, and counts both attributes instead of dropping them silently.
+
+### 37.2 The data side (this builder: `prepare/tables.mission_plan`, stage P2, VERSION 2)
+
+`required="false"` (any case) -> `major="false"`; absent or "true" stays `major="true"`. The plan JSON gains
+`objectives_major_false` and `objectives_with_updatedescription`, and the stage log reports them. Cache: the stage
+key does not cover the generator's code, so the VERSION bump to 2 forces the tables stage (and, through its
+input-hash key, the P3 scripts stage) to re-run.
+
+In the installed content this changes one objective today (the test mission nyctest2's `enemies` objective becomes
+`major="false"`; the other `required="false"` sits in `arbiter_test`, which no script references and the plan does
+not install) and records 31 `updatedescription` objectives.
+
+Tests: `tests/unit/test_objective_attrs.py` (made-up missions: the `major` mapping for required true / false /
+absent, `updatedescription` absent from the XML2 text but counted and carried in the plan).
