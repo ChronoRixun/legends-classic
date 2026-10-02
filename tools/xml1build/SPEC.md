@@ -3823,6 +3823,244 @@ and frames are in the session scratchpad (`f130_driver.py`, `f130/*.png`).
   every record a definition names has the record vtable; the pipe's `status` says `items 410/512`; haarp_ext03
   loads and a save completes with the pool at 410. XML2's own records 0-373 are where they were.
 
+## 35. XMen2.exe streams zone entities by hero distance: the entities a zone's scripts name are pinned (2026-10-01, the haarp_ext02 bridge softlock)
+
+### 35.1 The gap
+
+haarp/ext/haarp_ext02 "The Bridge": walking onto the bridge (trigger_touch01 -> trigger_tank -> reveal_tank ->
+Scripts/haarp/ext/tank_reveal.py) locks the controls, moves the heroes to hero_spot01-04, acts exit_door, spawns
+the three tank guards, plays the engine loop, then `startMotionPath("tank", "haarp/ext/tank/mp_tank_base",
+"FALSE", "tank_finished")` and `waitsignal ( "tank_finished" )`. On the port the door stays shut, no tank appears
+and the signal never arrives: a softlock (Owen, by hand; the harness tours teleport past it). Pre-existing (0.1.5
+and 0.1.6 alike). The second reveal (haarp_ext01, tank_reveal2.py, `waittimed ( 8.000 )`) showed the same
+symptoms without the softlock: tank motionless, its henchmen stuck behind the never-opened exit_door.
+
+### 35.2 The engine (breakpoint traces of build/_t16 under scratch tankdbg.py, a gamedbg.py with int3 breakpoints)
+
+- The motion path itself is fine: the package entry `motionpath filename="haarp/ext/tank/mp_tank_base"` reaches
+  the motion-path precacher (vtable 0x69c50c; `0x57ae00` strips the entry at its last `/`, prefixes
+  `motionpaths/`, precaches the IGB, walks its scene graph in `0x57a6f0` - igTransform nodes by name, igGroup
+  children recursively - and registers `"<group>:motionpaths/haarp/ext/tank/mp_tank_base"` in the 450-name map
+  through `0x57a5c0`, 16 path records at most, `[mgr+0x15c] == 0x10` refuses). XML1's `motionpaths/haarp/ext/tank.igb`
+  (byte copy of the disc file, igTransform `mp_tank_base` + igTransformSequence1_5, 257 keys, 8.53 s) registers
+  exactly like XML2's `abyss/blimp_fly_in.IGB` (handles 0x11 / 0x12 for tank / tank2 in the trace).
+- `startMotionPath` (`0x4a8f20`) resolves its entity with `0x4a7e30` and got **0 matches for "tank"**
+  (`0x4a8f7e`); the single-entity resolver `0x4a1700` -> name registry lookup `0x4c6f20` returned 0 for every
+  `setInvisible("tank")` / `setNoClip("tank")` too. The entity existed at load: its model
+  `hive_ext/tank_vehicle_whole` loaded (`0x475817`), the name registry (`0x778b70`, ctor `0x4c6730`) registered
+  `"tank"` (`0x4c7890`) and **unregistered it in the same frame** (`0x4c70a0`), as it did for every physent /
+  doorent / spawner / affectableharment / actionent of the zone - except the three whose XML1 entity already says
+  `smartent="false"` (tank_base, tank_turret x2), which stayed registered. Entities near the heroes were
+  re-registered under new ids as the party moved (reveal_tank, ready_tank, play_tank_loop_sound, exit_door when
+  the script enabled it); teleporting a hero to the tank's spawn point (977 -1380 305, 1,200 units from the
+  bridge) re-registered `"tank"` at once while the far props (snowmobile_ha, 55galdrum_ha, fire, soldier spawns)
+  were released. So XMen2.exe keeps a zone's entities dormant unless a hero is near, or the entity is marked
+  `smartent="false"`; a script naming a dormant entity finds nothing and silently does nothing.
+- Why the script's own door and tank looked dead: exit_door (972 -1117) and tank (977 -1380) are 900 and 1,200
+  units from the hero spots at the bridge (the camera looks at 938 -220 -> 941 -316); whatever the engine
+  re-created for the door was released again as soon as it was out of range, so the gate never opened and the
+  guards spawned behind it could not come out (haarp_ext01, same layout).
+- XML2's own data is explicit about this: every entity its scripts drive along a motion path carries
+  `smartent="false"` (genosha4 shipA / shipB / bomb1-4 / firefx), and over its 170 zone files 487 physents, 82
+  doorents, 489 monsterspawnerents, 249 gameents, 329 actionents, 102 affectableharments ... are pinned that way,
+  up to 68 in one zone (egypt3). `smartent="true"` is rare (9 physents). XML1's own zones use the attribute too
+  (tank_base, tank_turret) but not on the entities its cutscenes drive from afar: XML1's engine evidently resolved
+  dormant entities differently.
+
+### 35.3 What the builder does (`zones.pin_scripted_entities`, run by `mutate_zone` after the data rewrite)
+
+For every converted zone, the scripts it runs are read (`Zones.zone_script_texts`: the XML1 bundle's scripts, the
+world's `zonescript`, and every script an entity's `*script` attribute names; inline attribute code - a value
+with `(` - is read as source). Every slash-free quoted string of those sources, lower-cased and not starting with
+`_` (`_OWNER_`, `_HERO1_`, `_ACTIVE_HERO_`), is a candidate entity name (`script_name_literals`; paths and sound
+names carry a slash). Each `entity` whose name is such a literal, or whose own `*script` moves `"_OWNER_"` with
+`startMotionPath` / `setMotionPath`, gets `smartent="false"` - unless it is of `PIN_SKIP_CLASSES` (no classname,
+playerstartent, waterent, tileent, cameramagnetent: XML2 never pins those) or XML1 already set `smartent`
+(either value wins). A script may name an *instance* rather than its entity (hive1_1_1 `tank1`-`tank4` of entinst
+type `tank_vehicle_whole_hex`, arb_fd2 `the_lift` of `decklift_arb`, hive1_2_1 `kick_barrel` of `barrel_hive_hv`,
+haarp_ext_boss `the_jet`); `smartent` is an entity attribute (XML2's 29,063 insts carry only name / pos / orient /
+extents / parent), so the instance's type is pinned and every instance of it with it (hive1_2_1: all 21 barrels for
+the one the script kicks). The scripts are not changed: `waitsignal ( "tank_finished" )` stays, the signal now comes
+from the path's end. Counted as `entities_pinned` (per zone in `Zones.pinned`); one build note gives the total,
+the per-class split and the largest zone (XML2's own largest is 68).
+
+Lost / different: pinned entities are alive from zone load wherever the heroes are, as in XML2's own zones; a
+pinned spawner that is enabled at start spawns at load (XML2 pins 489 spawners the same way). Entities named only
+through variables, `spawn()` results or `setName` are not found and stay streamed. The turret on the tank
+(`tank_turret`, XML1 `scanturretent` -> physent, section 1) still does not aim or fire: XMen2.exe has no turret
+class; XML2's firing "turrets" (tutorial1 `turret1`) are a physent whose actscript `spawn()`s an invisible gunner
+NPC and `setParent`s it to the model - the route if the port ever wants a firing turret (an XML1 gun soldier
+character, invisible / noclip, parented by the turret's spawnscript), not done here.
+
+### 35.4 Tests and checks
+
+`tests/unit/test_zone_entity_pins.py` (made-up zone and scripts): names by zone script / entity script / inline
+attribute code, `_OWNER_` motion paths by ref and inline, document order, XML1's own `smartent` kept, the skip
+classes, unnamed and classless entities left alone, a second run a no-op, unreadable scripts ignored.
+
+### 35.5 In game
+
+- Hand patch first (build/_t16: `smartent="false"` on `tank` and `exit_door` in Maps/haarp/ext/haarp_ext02.ENGB -
+  the engine reads the .ENGB, not the .XMLB beside it - and the original waitsignal script restored with CRLF; a
+  fresh process, new game, party seated, loadMapKeepTeam, `setGameFlag("x1v03",9,1)`, walk onto the bridge): the
+  registry keeps `tank` and `exit_door` from load, `startMotionPath` finds 1 match, the class bit passes, the path
+  handle resolves (`0x47528b` -> 0x7dc8ac), the gate is open and the tank rolls out of it with the three guards
+  walking ahead (scratch shots_t16f), control returns, and 11 s after the start `tank_ready` removes `tank`
+  (`UNREG tank`) and the fight begins on the bridge.
+- build/_tank (this builder, `--no-movies --test-ini`, harness pipe `tank`, save folder "X-Men Legends (tank
+  tests)", xml2-fix 1.3.0 DLL; 1,145 entities pinned in 162 zones - physent 280, monsterspawnerent 216, gameent
+  190, actionent 127, affectableharment 67, doorent 51, ...; most in mastermold2 with 29), each scene in a fresh
+  process (scratch drive3.py: new game, party magma / phoenix / iceman / wolverine, loadMapKeepTeam):
+  - haarp_ext02 bridge, the builder's own tank_reveal.py (`waitsignal` intact), `setGameFlag("x1v03",9,1)` and a
+    jog onto trigger_touch01: the gate is open, the tank drives out through it with the three guards walking
+    ahead, the fade returns control on the bridge, the HAARP soldiers engage (shots_bridge); afterwards
+    `copyOriginAndAngles("_HERO1_","base_tank_spot")` shows tank_base with its turret parked in front of the gate
+    where tank_ready put it (base_spot.png).
+  - haarp_ext04 second reveal, `act("reveal_tank","reveal_tank")` (tank_reveal2.py, `waittimed ( 8.000 )`): the
+    gate opens, the four henchmen come out through it, the tank drives out behind them, control returns
+    (shots_reveal2). Owen's earlier hand run on the 0.1.6 stopgap had both reveals with a motionless tank, a shut
+    gate and the henchmen running against it: same cause, same fix.
+  - The other motion-path scripts (arbiter crane_drop / crane_swingout, asteroid_m blastoff, hive tank1-4,
+    barrel_kicker, haarp fly_jet) were checked by data only: their targets (the_sub, the_crane, decklift_arb for
+    the_lift, shootme_floor* by `_OWNER_`, tank_vehicle_whole_hex for tank1-4, barrel_hive_hv for kick_barrel,
+    the_jet in haarp_ext_boss) all carry `smartent="false"` in the build; none of them waits on a path signal
+    (tank_reveal.py was the only `waitsignal` after a `startMotionPath` in XML1's scripts), so none could softlock
+    even before.
+
+
+## 36. Scripted boss protection on the XML2 engine (issue #2)
+
+### 36.1 Scope and cause
+
+XML1's boss pattern names configure engine-owned brains that XMen2.exe does not implement. This
+conversion restores Magneto's protection transitions and Shadow King's reachable first form/timed
+shield through scripts and data. It does not recreate the original brains. Master Mold is explicitly
+excluded after review found the initially proposed spawn shield could block the final fight.
+
+### 36.2 Conversion
+
+`boss_phases.py` runs from `Scripts._base_text` and `rewrite_data_tree`, on exact script/zone paths only.
+Generated scripts retain CRLF. Original counters, timers, health thresholds, rewards and follow-on
+scripts remain in control. HAARP scripts and all Master Mold scripts/data are outside the dispatch.
+
+- **Magneto, asteroid2_1:** append `setInvulnerable("magneto","TRUE")` to the existing `shieldup`
+  inline action. Preserve its targets/counts. After the pattern call in each `asteroid_m/stage2` through
+  `stage5`, wait 0.100 seconds, then clear invulnerability. When helpers die before the threshold, the
+  pain script can activate both shieldup and the final stage-relay input together. The delay gives the
+  shield-up action time to execute before release, avoiding a permanently protected boss.
+- **Shadow King, final_astral:** place only the first-form spawner at the XY of existing named waypoint
+  `wp_bossmaster3000_04`, using `player_start` solely for its known floor height. The resulting position
+  is (-578.026, -300.718, 65.0815), 322.04 units from the party start. The waypoint's raw Z is 0, below
+  the arena's visible floor; do not use that Z for the actor. The spawner retains its identity/facing.
+  The zone-entry alive guard copies the living first-form actor to that same named waypoint, then sets
+  Z from player_start. It does not move the party. `relocate_spawn` rejects missing/duplicate instances
+  and malformed coordinate counts, including duplicate types across multiple entinst groups.
+- After `sk3` in `sk1pain`, set Shadow King's invulnerability TRUE; after `sk4` in `dropshield`, set it
+  FALSE. Original shield flag, threshold caps and 30-second timer remain. The unchanged `spawnsk2`
+  script places the second form at the first form's death position; it is not moved back to the party.
+
+Content version 8 -> 9, unreleased. Builder version stays 0.1.6 until a release is selected.
+
+### 36.3 Master Mold correction and deferred work
+
+The initial PR enabled shockshield_on at spawn while stage < 4. This was unsafe. `mmpain` needs damage
+to cross 66.7% (mold2 plus sentinel cinematic) and 33.4% (mold3). The new spawn shield prevented both.
+`checkcore` requires coresgone >= 3 AND corecount >= 3; it writes stage 4, which would also skip the
+health phases if the cores were completed first. The cores are elevated team-hero physents, designed
+for enemy fire under the missing XML1 moldblowcore targeting behavior. Switch activation alone does
+not destroy them. The review's unstaged switch-window run left coresgone at zero and the boss blue
+at 100% throughout. The former `issue2_core_control.py` bypassed this dependency by assigning the
+prerequisites; its earlier result is withdrawn as progression evidence and the driver is removed.
+
+This revision takes the review's removal route: mmspawn is untouched, no Master Mold conversion or
+new release timer remains, and the original core puzzle is deferred to a separate fix. All 30 generated
+Master Mold scripts were byte-compared against the pre-PR baseline with zero differences; all 12 map
+files match the reviewer's build (whose Master Mold maps were already confirmed unchanged from main). Synthetic
+tests explicitly require these script paths and the zone to pass through unchanged. Existing missing
+core-targeting behavior is not claimed fixed. The new `issue2_review.py mastermold` uses no health or
+phase assignments, core-counter assignments or direct checkcore activation; its damage calls invoke
+the existing pain thresholds, and switch acts use their ordinary scripts.
+
+### 36.4 Evidence and limits
+
+Separate builds/save folders/pipes, 1280x720 windowed harness with xml2-fix 1.3.0, connected desktop.
+Source installations and Owen's play build were not modified. Screenshots/saves stay outside Git.
+Boss bars are approximate pixel measurements with title checks; minion-target frames are rejected.
+These are controlled encounter probes, not complete unaided campaign playthroughs.
+
+| Check | Baseline / earlier defect | Revised result |
+|---|---|---|
+| Magneto shield | Shield-up still allowed ordinary damage, 99.5% -> 98.3% | Protection blocks damage; stage relays release it. Earlier stage-3/4/5 samples held at 99.5/92.6/85.1%, then fell to 92.6/85.1/77.7% after release |
+| Master Mold | Initial PR spawn shield gated damage behind a core puzzle whose targeting is missing | Spawn shield removed; original scripts preserved byte-for-byte; core puzzle deferred |
+| Shadow King placement | Original pillar unreachable; first PR placed him on the party start | New waypoint XY/floor Z is 322 units away. Fresh-entry images show him separate from the heroes; normal AI/party attacks reach him, 98.5% -> 98.3%, without teleporting either side |
+
+Revised placement's isolated solo run: blue 83.6% stayed 83.6% under ordinary hits; after 32 seconds
+it was red, and ordinary hits lowered it to 76.2%. With the last damage window and one HP staged,
+an ordinary hero hit triggered the unchanged second-form handover on the ring floor; the second form
+was visible and its bar had already fallen to 97.3%. Normal-entry party AI was kept out of this separate
+probe because it could advance the encounter between samples. Failed/reused encounter probes were
+not counted as passes.
+
+Master Mold no-core-staging run after removal: spawned red at 99.5%; damage progressed through
+91.1%, 83.6%, 76.7%, 69.2%, then the 66% sentinel drop-in cinematic (captured). Subsequent damage
+reached 37.7% and the next threshold at 33.0%. No health, phase or core-counter assignments were used;
+no direct checkcore activation. All three switches were activated; after their 90-second windows
+expired, the bar remained red at 33.0% and further damage lowered it to 26.1%. Minion-title frames between the cinematic and 37.7% were discarded.
+
+The timer/phase-end probe stages health and the last damage window but uses ordinary hero attacks for
+pain/transition triggers. The generic-AI power_boost has a separate roughly 31-second damage shield;
+the isolated test idles that AI and waits out its buff. It is unchanged in normal play. Scripted
+invulnerability does not recreate XML1's Xtreme-only shield bypass; timed vulnerable windows remain.
+Original boss attack scheduling, flight/pillar choreography and cooldown changes remain outside scope.
+Save migration and completed-fight re-entry have not been exercised end-to-end.
+
+Build after review: 0 errors (inherited warnings remain). All affected generated scripts verified CRLF.
+Unit suite: 117 passed, including 12 synthetic boss-helper tests using invented actor/entity names.
+They cover scope, CRLF, delayed release ordering, idempotence, named marker selection, floor-height
+substitution, duplicate rejection, unchanged party/second-form positions, and Master Mold exclusion.
+Drivers and setup: `research/regression/boss_fights/ISSUE2.md`.
+
+---------------------------------------------------------------------------------------------------------------
+
+## 37. XML1's objective attributes `required` and `updatedescription` (2026-10-01, audit W10; issue #8)
+
+XML1 objectives carry two attributes the port dropped: `required` ("false" on optional objectives - XML1 shipped
+two, one of them in a mission the plan installs) and `updatedescription` (the completion text XML1 swapped in when
+the objective finished - 31 installed objectives have one (unique per act group), most of them count objectives). The generator
+(`prepare/tables.mission_plan`, stage P2) wrote every objective `major="true"` and neither attribute survived.
+
+### 37.1 What the engine offers (and what it does not)
+
+XMen2.exe's objective schema is `name descname description enabled count xp major parentname type zone`. `major`
+drives the HUD's Primary list (`Primary` / `Secondary` are exe strings); XML2 retail's own minor objectives are
+`major="false"` with a `parentname`. XML1's `required="false"` maps onto it directly: the optional objective moves
+to the Secondary list instead of standing among the primaries.
+
+`updatedescription` is read by XML1 (the string is in `default.xbe`: the Xbox swapped the completion text in) but
+not by XMen2.exe, which contains no such string; both executables know the same objective commands -
+`EOBJCMD_COMPLETE / DECREMENT / HIDE / INCOMPLETE / INCREMENT / SHOW` (plus `UNKNOWN`) - and `display` is a stub
+(0x5aaff0), so there is no verb that rewrites an objective's text. The builder keeps the attribute in
+`mission_plan.json` (objectives keep their source attributes there), writes nothing the engine cannot read, and
+counts both attributes instead of dropping them silently. Issue #8 stays open for the completion text. Two routes
+remain: a data-side swap for objectives a script completes (emit a hidden sibling objective carrying the
+completion text; at `EOBJCMD_COMPLETE` HIDE the original and SHOW + COMPLETE the sibling - it cannot cover count
+objectives that the engine completes on its own when DECREMENT reaches zero, which are most of the 31), or an
+xml2-fix text verb (review note, 2026-10-01).
+
+### 37.2 The data side (this builder: `prepare/tables.mission_plan`, stage P2, VERSION 2)
+
+`required="false"` (any case) -> `major="false"`; absent or "true" stays `major="true"`. The plan JSON gains
+`objectives_major_false` and `objectives_with_updatedescription`, and the stage log reports them. Cache: the stage
+key does not cover the generator's code, so the VERSION bump to 2 forces the tables stage (and, through its
+input-hash key, the P3 scripts stage) to re-run.
+
+In the installed content this changes one objective today (the test mission nyctest2's `enemies` objective becomes
+`major="false"`; the other `required="false"` sits in `arbiter_test`, which no script references and the plan does
+not install) and records 31 `updatedescription` objectives.
+
+Tests: `tests/unit/test_objective_attrs.py` (made-up missions: the `major` mapping for required true / false /
+absent, `updatedescription` absent from the XML2 text but counted and carried in the plan).
+
 ---------------------------------------------------------------------------------------------------------------
 
 ## 38. XML1's per-zone music override attributes are dead in XML1 retail too (2026-10-01, audit W8 revisited; issue #7)
@@ -3861,3 +4099,67 @@ audit's sketch: build the zone's `_a` / `_c` banks from the named track.
 
 Tests: `tests/unit/test_zone_music_attrs.py` (made-up world elements: collection of the three attributes, absent /
 empty ignored, the attributes reported rather than written).
+
+---------------------------------------------------------------------------------------------------------------
+
+## 39. The one cross-file conversation tagjump: mansion4's Emma scene copies its menu into the jumping file (2026-10-01, audit W11; issue #9)
+
+XML1 resolved a response's `tagJump` across every loaded conversation file; XMen2.exe looks only in the file the
+response lives in (`0x45cde0` -> `0x4573f0`, case-sensitive match on `tagIndex`, conversation-speakers.md section 4
+step 9). Of the 365 XML1 tagjumps exactly one leaves its file: `conversations/mansion/man4/2_5_10b`'s last response
+(`tagJump="2_5_10loop"`) targets the reply-menu line that lives in `conversations/mansion/man4/2_5_10`. In the port
+the lookup returns NULL, the childless `%BLANK%` response sets the ending flag, and Xavier's introduction of Emma
+ends at Emma's last line: the seamless hand into the ask-Emma menu (and the `noReturnToGameCamAtEnd` continuity) is
+lost; the player only reaches the menu through a later re-trigger of `2_5_10`.
+
+### 39.1 The data side (this builder: `conversations.resolve_cross_file_tagjumps`, run first in the conversation branch of `scripts.rewrite_data_tree`)
+
+For the one tabled case the tagged `<line>` and its whole subtree are deep-copied out of the owning conversation
+(read from the XML1 source through `ctx.read_x1_xml`) and become the root line of a new `<participant>`
+(`x1_tagjump_<tag>`) of the jumping `<startCondition>`. Every tagIndex known to work sits on a participant root
+line (80 XML1 + 1 XML2 retail); placing the copy as a second root line of `default` was tried first and the engine
+never registered it (35.2). Entry selection - activator name, the `"default"` fallback, then the first unspent
+`runOnce` startCondition - is untouched. The copy is inserted before
+`mark_auto_advance` and the attribute pass, so it is patched exactly like the rest of the file (speaker tokens,
+script references, auto-advance marks; the menu's internal `tagJump="2_5_10loop"` responses now resolve to the
+local copy and loop there). `chosenScriptFile` on the jumping response stays as XML1 wrote it
+(`mansion/man4/profx_disapears` still fades Xavier out and marks the scene done), but its `conversationEnd` is
+removed: in game (35.2) XMen2.exe ends the conversation on a response's `conversationEnd` even when its `tagJump`
+resolves - the flag sets the ending flag at the advance and step 3 ends the conversation a frame later - while XML1
+followed the jump. The copied menu ends at its own `%END%` response (which still runs `astral_legwork`), so the
+conversation still closes properly. Idempotent: a file that already carries the `tagIndex` is left alone
+(`scripts_selftest` runs `rewrite_data_tree` twice), and a tabled conversation whose jumping response was cut is
+skipped without a copy. The fixed file stays well under the engine's 40-line / 50-response conversation pools
+(22 lines, 25 responses). Table-driven (`CROSS_FILE_TAGJUMPS`) so a second discovered case is one row, not a new
+mechanism.
+
+Why a copy and not a retarget: the menu exists only in `2_5_10`; there is no equivalent local line to point at,
+and XML1's own behaviour is "continue this conversation at that line".
+
+Tests: `tests/unit/test_conversations_tagjump.py` (made-up conversations: the copy and its placement, idempotence,
+the case-sensitive local check, missing source / missing tagIndex warnings, and the no-jumper / no-table-entry
+no-ops). In game: 35.2.
+
+### 39.2 In game (build k28, harness pipe k28, save folder "X-Men Legends (k28 tests)", windowed, 2026-10-01)
+
+Wolverine + Cyclops (`seatParty`), `loadMapKeepTeam("mansion/man4/mansion4_1")`, `startConversation` of
+`mansion/man4/2_5_10b` from the pipe, `tools/conv_probe.py` every 0.5 s; the driver and frames are in the session
+scratchpad (`tagjump_driver.py`, `tagjump_game/*.png`).
+
+- **The scene runs its two passes and lands in the menu.** Lines 64-66 (Emma meets Alison, SC1) advanced by
+  themselves, the conversation ended on SC1's own `conversationEnd` (by design: `profx_apears` fades Xavier in and
+  re-starts it), lines 67-72 (Xavier introduces Emma, SC2) advanced by themselves, and the jumping response then
+  went **straight to line 73 - the copied menu, 4 visible responses, `ending=False`, no key pressed**. Before the
+  fix the conversation ended at that point (`ending=True`, the probe sat on line 72 with one response); the menu
+  was only reachable later through a fresh `2_5_10`.
+- **The menu loops in-file.** Enter on the first reply ran its answer chain and the probe shows the menu again at
+  line 73 (`visible_responses` 4) - the copy's `tagIndex` resolves for the jumper and for the menu's own
+  `tagJump="2_5_10loop"` responses alike.
+- **What did not work, and the two corrections it took.** First attempt (copy as a second root line of the
+  `default` participant, jumper otherwise untouched): in game the conversation still ended at line 72 - the engine
+  never registered the copy's `tagIndex` (every tagIndex that works in either game sits on a participant root
+  line), and the response's `conversationEnd` was honoured even though the jump... the ending flag observed with
+  the copy in place showed `conversationEnd` ends the conversation regardless of the jump. The shipped form puts
+  the copy in a new `x1_tagjump_2_5_10loop` participant and removes the jumper's `conversationEnd`; the menu then
+  appears with the conversation unbroken, `profx_disapears` still fades Xavier out, and the menu's own `%END%`
+  still runs `astral_legwork`.

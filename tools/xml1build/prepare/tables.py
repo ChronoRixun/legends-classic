@@ -36,7 +36,7 @@ from . import disc as P1
 from .. import common as C
 
 STAGE = 'tables'
-VERSION = 1
+VERSION = 2            # 2: SPEC 37 (issue #8) - required="false" -> major="false"; updatedescription counted
 NEWLINE = '\r\n'
 # research-relative path -> file name in the stage directory (Sources.prepared overrides these)
 OUTPUTS = {'scripts/mission_plan.json': 'mission_plan.json', 'characters/collisions.json': 'collisions.json',
@@ -301,6 +301,7 @@ def mission_plan(assets: Path, loose: Path):
             'n_groups': len(groups), 'n_objectives_total': total,
             'unused_mission_files': unused, 'groups': [], 'missions': {}}
     texts = {}
+    n_major_false = n_with_update = 0
     for i, g in enumerate(groups, 1):
         gname = f'x1_act{i:02d}'
         plan['groups'].append({'file': gname, 'act': i, 'missions': g['missions'], 'n_objectives': len(g['objs'])})
@@ -308,8 +309,20 @@ def mission_plan(assets: Path, loose: Path):
             plan['missions'][m] = {**missions[m], 'act': i, 'group_file': gname}
         root = ET.Element('MISSION', {'act': str(i)})
         for n, o in g['objs'].items():
+            # SPEC 37 (issue #8): XML1's required="false" (an optional objective) is the engine's major="false"
+            # (the Secondary HUD list; 'Primary'/'Secondary' are XMen2.exe strings). updatedescription (XML1's
+            # completion text, read by default.xbe) has no reader in XMen2.exe - both exes know only the objective commands COMPLETE /
+            # DECREMENT / HIDE / INCOMPLETE / INCREMENT / SHOW - so it is never written to the XML2 text; it stays
+            # in the plan JSON (objectives keep their source attrs above) for a future engine-side text verb, and
+            # both attributes are counted instead of silently dropped.
+            if o.get('required', '').strip().lower() == 'false':
+                n_major_false += 1
+            if o.get('updatedescription'):
+                n_with_update += 1
             a = {'name': o['name'], 'descname': o.get('descname', o['name']),
-                 'enabled': 'false', 'major': 'true', 'type': 'normal'}
+                 'enabled': 'false',
+                 'major': 'false' if o.get('required', '').strip().lower() == 'false' else 'true',
+                 'type': 'normal'}
             if o.get('description'):
                 a['description'] = o['description']
             if o.get('count'):
@@ -318,6 +331,8 @@ def mission_plan(assets: Path, loose: Path):
             ET.SubElement(root, 'OBJECTIVE', dict(sorted(a.items())))
         ET.indent(root)
         texts[gname + '.xml'] = ET.tostring(root, encoding='unicode')
+    plan['objectives_major_false'] = n_major_false
+    plan['objectives_with_updatedescription'] = n_with_update
     idx = ET.Element('MISSIONS')
     for g in plan['groups']:
         ET.SubElement(idx, 'MISSION', {'name': g['file']})
@@ -535,7 +550,9 @@ def run(disc_dir, xml2, *, log=print, cancel=None, force=False) -> dict:
     _write_text(partial / 'mission_plan.json', json.dumps(plan, indent=1))
     for name, text in texts.items():
         _write_text(partial / MISSIONS_DIR / name, text)
-    counts.update(mission_groups=plan['n_groups'], objectives=plan['n_objectives_total'], mission_files=len(texts))
+    counts.update(mission_groups=plan['n_groups'], objectives=plan['n_objectives_total'], mission_files=len(texts),
+                  objectives_major_false=plan['objectives_major_false'],
+                  objectives_with_updates=plan['objectives_with_updatedescription'])
     timings['mission_plan'] = round(time.time() - t, 1)
     check_cancel(cancel)
 
