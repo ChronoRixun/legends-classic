@@ -4022,6 +4022,47 @@ Drivers and setup: `research/regression/boss_fights/ISSUE2.md`.
 
 ---------------------------------------------------------------------------------------------------------------
 
+## 37. XML1's objective attributes `required` and `updatedescription` (2026-10-01, audit W10; issue #8)
+
+XML1 objectives carry two attributes the port dropped: `required` ("false" on optional objectives - XML1 shipped
+two, one of them in a mission the plan installs) and `updatedescription` (the completion text XML1 swapped in when
+the objective finished - 31 installed objectives have one (unique per act group), most of them count objectives). The generator
+(`prepare/tables.mission_plan`, stage P2) wrote every objective `major="true"` and neither attribute survived.
+
+### 37.1 What the engine offers (and what it does not)
+
+XMen2.exe's objective schema is `name descname description enabled count xp major parentname type zone`. `major`
+drives the HUD's Primary list (`Primary` / `Secondary` are exe strings); XML2 retail's own minor objectives are
+`major="false"` with a `parentname`. XML1's `required="false"` maps onto it directly: the optional objective moves
+to the Secondary list instead of standing among the primaries.
+
+`updatedescription` is read by XML1 (the string is in `default.xbe`: the Xbox swapped the completion text in) but
+not by XMen2.exe, which contains no such string; both executables know the same objective commands -
+`EOBJCMD_COMPLETE / DECREMENT / HIDE / INCOMPLETE / INCREMENT / SHOW` (plus `UNKNOWN`) - and `display` is a stub
+(0x5aaff0), so there is no verb that rewrites an objective's text. The builder keeps the attribute in
+`mission_plan.json` (objectives keep their source attributes there), writes nothing the engine cannot read, and
+counts both attributes instead of dropping them silently. Issue #8 stays open for the completion text. Two routes
+remain: a data-side swap for objectives a script completes (emit a hidden sibling objective carrying the
+completion text; at `EOBJCMD_COMPLETE` HIDE the original and SHOW + COMPLETE the sibling - it cannot cover count
+objectives that the engine completes on its own when DECREMENT reaches zero, which are most of the 31), or an
+xml2-fix text verb (review note, 2026-10-01).
+
+### 37.2 The data side (this builder: `prepare/tables.mission_plan`, stage P2, VERSION 2)
+
+`required="false"` (any case) -> `major="false"`; absent or "true" stays `major="true"`. The plan JSON gains
+`objectives_major_false` and `objectives_with_updatedescription`, and the stage log reports them. Cache: the stage
+key does not cover the generator's code, so the VERSION bump to 2 forces the tables stage (and, through its
+input-hash key, the P3 scripts stage) to re-run.
+
+In the installed content this changes one objective today (the test mission nyctest2's `enemies` objective becomes
+`major="false"`; the other `required="false"` sits in `arbiter_test`, which no script references and the plan does
+not install) and records 31 `updatedescription` objectives.
+
+Tests: `tests/unit/test_objective_attrs.py` (made-up missions: the `major` mapping for required true / false /
+absent, `updatedescription` absent from the XML2 text but counted and carried in the plan).
+
+---------------------------------------------------------------------------------------------------------------
+
 ## 39. The one cross-file conversation tagjump: mansion4's Emma scene copies its menu into the jumping file (2026-10-01, audit W11; issue #9)
 
 XML1 resolved a response's `tagJump` across every loaded conversation file; XMen2.exe looks only in the file the
