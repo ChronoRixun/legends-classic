@@ -383,6 +383,16 @@ def test_port_keys_from_a_synthetic_build():
         assert parsed['Game'] == g and parsed['Limits'] == keys['Limits'] and parsed['Online'] == keys['Online']
 
 
+def test_harness_installs_write_the_shipped_limits_by_default():
+    # test builds must run with the [Limits] every shipped build has; --stock-limits is the opt-out, --limits a no-op
+    sys.path.insert(0, str(Path(C.__file__).resolve().parents[1]))
+    import harness
+    p = harness.parser()
+    assert p.parse_args(['install', 'out']).stock_limits is False
+    assert p.parse_args(['install', 'out', '--limits']).stock_limits is False
+    assert p.parse_args(['install', 'out', '--stock-limits']).stock_limits is True
+
+
 # ------------------------------------------------------------------------------------------------ builder mode in xml1build
 def test_sweep_keeps_the_proxy_in_builder_mode_only():
     with tempfile.TemporaryDirectory() as td:

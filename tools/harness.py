@@ -2,7 +2,7 @@
 
 usage:
   harness.py install <out> [--mode windowed|borderless|fullscreen] [--width 1280] [--height 720]
-                           [--no-pipe] [--dll PATH] [--stock-opening] [--save-folder NAME] [--limits]
+                           [--no-pipe] [--dll PATH] [--stock-opening] [--save-folder NAME] [--stock-limits]
                            [--forced-teams [1|0|off]] [--add-hero] [--no-join-hero]
   harness.py remove  <out>
   harness.py status  <out>
@@ -120,7 +120,7 @@ def install(a):
     review_stats = build_review_stats(out)     # XML1's review menu (no Stats tab): the tab change wraps at 4
     with open(os.path.join(out, 'xml2-fix.ini'), 'w', encoding='utf-8', newline='') as f:
         save_folder = a.save_folder or (PLAY_SAVE_FOLDER if a.no_pipe else TEST_SAVE_FOLDER)
-        f.write(ini_text(a.mode, a.width, a.height, not a.no_pipe, not a.stock_opening, save_folder, a.limits,
+        f.write(ini_text(a.mode, a.width, a.height, not a.no_pipe, not a.stock_opening, save_folder, not a.stock_limits,
                          a.forced_teams, a.add_hero, postgame, main_menu_items, xp_curve, not a.no_join_hero,
                          a.pipe_name, a.online_server, a.log_network, new_game_plus,
                          # a test install (pipe on): presence off unless --discord; the play build (--no-pipe) keeps
@@ -157,7 +157,7 @@ def status(a):
         print(open(ini, encoding='utf-8').read())
 
 
-def main():
+def parser():
     ap = argparse.ArgumentParser()
     sub = ap.add_subparsers(dest='cmd', required=True)
     i = sub.add_parser('install')
@@ -167,7 +167,12 @@ def main():
     i.add_argument('--height', type=int, default=720)
     i.add_argument('--no-pipe', action='store_true')
     i.add_argument('--dll', default=DEFAULT_DLL)
-    i.add_argument('--limits', action='store_true', help='xml2-fix [Limits]: actor table 127, resource names 1024')
+    # [Limits] is on by default: every shipped build carries the builder's [Limits] (fix_ini.LIMITS), and test builds
+    # without it ran on XMen2.exe's stock tables (issue #11 was chased for days on such builds). --stock-limits is for
+    # limit research only; --limits is kept as a no-op for old command lines.
+    i.add_argument('--stock-limits', action='store_true',
+                   help='leave out [Limits] (XMen2.exe stock tables) - only for limit research; shipped builds raise them')
+    i.add_argument('--limits', action='store_true', help=argparse.SUPPRESS)
     i.add_argument('--stock-opening', action='store_true',
                    help='leave New Game as XML2 has it (no NewGameTeam / ResetUnlocks / SaveFolder)')
     i.add_argument('--forced-teams', dest='forced_teams', nargs='?', const='1', default='1',
@@ -196,7 +201,11 @@ def main():
         s = sub.add_parser(name)
         s.add_argument('out')
         s.set_defaults(fn=fn)
-    a = ap.parse_args()
+    return ap
+
+
+def main():
+    a = parser().parse_args()
     a.fn(a)
 
 
