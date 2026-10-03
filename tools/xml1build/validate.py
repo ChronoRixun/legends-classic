@@ -93,6 +93,7 @@ from . import scripts_lint as L            # V14e: branch-aware console queue wa
 from . import validate_frontend as VF      # V15-V17 (SPEC 21): front end, Danger Room, Review / codex / trivia / credits
 from . import combat_events as CE        # V18 (SPEC 22): style triggers / events / FightMove handlers
 from . import npc_values as NV           # V19 (SPEC 24): value codes XMen2.exe reads as 0, the NPC energy talent
+from . import buoys as BY
 from . import automaps as AM             # V20 (SPEC 26): XML1 automaps as .zam
 from . import skins as SK                # V21 (SPEC 25): skin blend weights / skeleton against the anim DB
 
@@ -644,7 +645,8 @@ class Validator:
                                ('V18', 'combat events', lambda ck: CE.v18(self, ck)),
                                ('V19', 'npc values', lambda ck: NV.v19(self, ck)),
                                ('V20', 'automaps', lambda ck: AM.v20(self, ck)),
-                               ('V21', 'skins', lambda ck: SK.validate(self, ck))):
+                               ('V21', 'skins', lambda ck: SK.validate(self, ck)),
+                               ('V22', 'buoys', lambda ck: BY.validate(self, ck))):
             ck = Check(cid, title)
             self.checks[cid] = ck
             t0 = time.time()
