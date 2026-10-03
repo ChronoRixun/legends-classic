@@ -561,34 +561,70 @@ def generate(nav,zone,read_model=None,map_data=None):
 
 
 def validate(v, ck):
-    """V22: re-derive from output grids/maps/models, never trust cached build notes."""
-    details={};empty=[]
+    """V22. Developer/CI builds re-derive every zone's network from the output grids, maps and models and compare
+    (never trusting cached build notes). Player builds (builder mode) check the structural invariants only: the
+    full regeneration doubles the stage's time on every rebuild, and the same code path already ran in zones.
+    --buoys empty builds must carry empty networks everywhere."""
+    import os
+    from . import common as C
+    mode = (v.ctx.opt('buoys') or os.environ.get('XML1BUILD_BUOYS') or 'generate').lower()
+    full = not C.builder_mode(v.ctx.args)
+    details = {}
+    empty = []
     for zone in sorted(v.converted_zones()):
-        tree=v.tree(f'maps/{zone}.xmlb')
+        actual = v.tree(f'maps/{zone}.boyb')
+        try:
+            nodes, edges = read_boy(actual) if actual is not None else (None, None)
+        except ValueError as exc:
+            ck.error(f'{zone}: {exc}')
+            continue
+        if nodes is None:
+            ck.error(f'{zone}: no buoy network written')
+            continue
+        if mode == 'empty':
+            if nodes:
+                ck.error(f'{zone}: --buoys empty build carries {len(nodes)} buoy nodes')
+            continue
+        if not full:
+            details[zone] = {'nodes': len(nodes), 'edges': sum(map(len, edges))}
+            if not nodes:
+                empty.append(zone)
+            continue
+        tree = v.tree(f'maps/{zone}.xmlb')
         if tree is None:
-            tree=v.tree(f'maps/{zone}.engb')
+            tree = v.tree(f'maps/{zone}.engb')
         if tree is None:
             ck.error(f'{zone}: cannot validate buoys without a zone tree')
             continue
-        expected,report=generate(v.tree(f'maps/{zone}.navb'),tree,v.read,v.read(f'maps/{zone}.igb'))
-        details[zone]=report
+        try:
+            expected, report = generate(v.tree(f'maps/{zone}.navb'), tree, v.read, v.read(f'maps/{zone}.igb'))
+        except Exception as exc:                # noqa: BLE001 - zones falls back to the empty network the same way
+            expected, report = generate(None, None)
+            report['problems'].append(f'generation failed: {type(exc).__name__}: {exc}')
+        details[zone] = report
         if report['empty_nav']:
             empty.append(zone)
-        actual=v.tree(f'maps/{zone}.boyb')
-        try:
-            if actual is None or read_boy(actual)!=read_boy(expected):
-                ck.error(f'{zone}: buoy network differs from deterministic walk-only generation')
-        except ValueError as exc:
-            ck.error(f'{zone}: {exc}')
+        if read_boy(expected) != (nodes, edges):
+            ck.error(f'{zone}: buoy network differs from deterministic walk-only generation')
         if report['coverage_gaps'] or report['problems']:
-            ck.warn(f"{zone}: buoy coverage gaps={report['coverage_gaps']}; "+'; '.join(report['problems']))
-        if report['node_budget_hit'] or report['neighbor_budget_hits'] or report['nav_block_budget_hit'] or report['edge_budget_hit'] or report['edge_budget_hits']:
-            ck.warn(f"{zone}: buoy budget hits: nodes={report['node_budget_hit']}, neighbors={report['neighbor_budget_hits']}, edges={report['edge_budget_hit']}/{report['edge_budget_hits']}, NAV blocks={report['nav_block_budget_hit']}")
-    ck.details['zones']=details
-    ck.details['empty_nav_zones']=empty
-    ck.set('nodes',sum(r['nodes'] for r in details.values()))
-    ck.set('edges',sum(r['edges'] for r in details.values()))
-    ck.set('directed_connectivity_gaps',sum(r['directed_connectivity_gaps'] for r in details.values()))
-    ck.set('coverage_gaps',sum(r['coverage_gaps'] for r in details.values()))
-    ck.set('empty_nav_zones',len(empty))
-    ck.note(f'{len(empty)} zones retain empty buoy networks because their NAV grid is empty: '+', '.join(empty))
+            ck.warn(f"{zone}: buoy coverage gaps={report['coverage_gaps']}; " + '; '.join(report['problems']))
+        if (report['node_budget_hit'] or report['neighbor_budget_hits'] or report['nav_block_budget_hit']
+                or report['edge_budget_hit'] or report['edge_budget_hits']):
+            ck.warn(f"{zone}: buoy budget hits: nodes={report['node_budget_hit']}, "
+                    f"neighbors={report['neighbor_budget_hits']}, "
+                    f"edges={report['edge_budget_hit']}/{report['edge_budget_hits']}, "
+                    f"NAV blocks={report['nav_block_budget_hit']}")
+    if mode == 'empty':
+        ck.note('--buoys empty: every converted zone carries the empty buoy network (the pre-SPEC 42 output)')
+        return
+    ck.details['zones'] = details
+    ck.details['empty_nav_zones'] = empty
+    ck.set('nodes', sum(r['nodes'] for r in details.values()))
+    ck.set('edges', sum(r['edges'] for r in details.values()))
+    if full:
+        ck.set('directed_connectivity_gaps', sum(r['directed_connectivity_gaps'] for r in details.values()))
+        ck.set('coverage_gaps', sum(r['coverage_gaps'] for r in details.values()))
+        ck.note(f'{len(empty)} zones retain empty buoy networks because their NAV grid is empty: ' + ', '.join(empty))
+    else:
+        ck.note(f'player build: structural buoy checks only ({len(empty)} zones carry an empty network); '
+                'developer and CI builds regenerate and compare every zone')

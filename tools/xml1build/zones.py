@@ -1693,14 +1693,7 @@ class Zones:
             ctx.error(f'{zone}: map IGB not written ({ires.status})')
 
         pkg_entries = self.build_package(zone, bundle, st, has_nav, ires.ok, chr_names)
-        nav = ctx.read_out_xmlb(nres.out_rels[0]) if has_nav else None
-        zone_tree = ctx.read_out_xmlb(res.out_rels[0])
-        def read_model(rel):
-            path = ctx.out_index.path(rel)
-            if path is None:
-                raise ValueError('gate model is absent')
-            return path.read_bytes()
-        buoy, buoy_report = BY.generate(nav, zone_tree, read_model, ctx.out_index.path(stem + ".igb").read_bytes() if ires.ok else None)
+        buoy, buoy_report = self.buoy_network(zone, stem, nres, res, has_nav, ires.ok)
         ctx.write_xmlb(stem, buoy, ('.BOYB',), source='zones:generated buoy network (SPEC 42)')
         ctx.note(f"{zone}: buoys nodes={buoy_report['nodes']}, edges={buoy_report['edges']}, components={buoy_report['components']}, "
                  f"coverage gaps={buoy_report['coverage_gaps']}, node budget hit={buoy_report['node_budget_hit']}, "
@@ -1815,6 +1808,31 @@ class Zones:
         self.automaps[zone] = info
         self.counts['automaps_written'] += 1
         return f'automaps/{zone}'
+
+    def buoy_network(self, zone, stem, nres, res, has_nav, map_ok):
+        """SPEC 42: the zone's BOYB and its report. --buoys empty (or XML1BUILD_BUOYS=empty) writes the empty network
+        builds had before; any unexpected failure while generating falls back to it with a warning, so one unreadable
+        model or map can never cost a player the whole build (the empty network is what 0.1.7 and earlier shipped)."""
+        ctx = self.ctx
+        mode = (ctx.opt('buoys') or os.environ.get('XML1BUILD_BUOYS') or 'generate').lower()
+        if mode == 'empty':
+            return BY.generate(None, None)
+        try:
+            nav = ctx.read_out_xmlb(nres.out_rels[0]) if has_nav else None
+            zone_tree = ctx.read_out_xmlb(res.out_rels[0])
+
+            def read_model(rel):
+                path = ctx.out_index.path(rel)
+                if path is None:
+                    raise ValueError('gate model is absent')
+                return path.read_bytes()
+            map_path = ctx.out_index.path(stem + '.igb') if map_ok else None
+            return BY.generate(nav, zone_tree, read_model, map_path.read_bytes() if map_path else None)
+        except Exception as exc:                # noqa: BLE001 - deliberate: fall back to the shipped empty network
+            ctx.warn(f'{zone}: buoy generation failed ({type(exc).__name__}: {exc}); empty buoy network written')
+            buoy, report = BY.generate(None, None)
+            report['problems'].append(f'generation failed: {type(exc).__name__}: {exc}')
+            return buoy, report
 
     def build_package(self, zone, bundle, st, has_nav, igb_ok, chr_names=()):
         ctx = self.ctx

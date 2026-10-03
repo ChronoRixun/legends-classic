@@ -4288,8 +4288,23 @@ budget hits. Directed reachability lost during pruning is reported separately, n
 The 37 empty-NAV zones retain empty networks; their complete list is in validator V22's empty_nav_zones detail
 and note in `_build/validate.json`.
 
-V22 independently re-derives expected networks from output files, checks deterministic structure and native
-bounds/caps/indices, and warns for gaps and budget hits. It does not trust cached generation notes. Stats,
+V22 in developer and CI builds independently re-derives expected networks from output files, checks deterministic
+structure and native bounds/caps/indices, and warns for gaps and budget hits. It does not trust cached generation
+notes. Player builds (builder mode) check the structural invariants only: the full re-derivation added about 25 s
+to every rebuild, and the same generation already ran in zones.
+
+### 42.5 Fallback and the developer switch (review, 2026-10-03)
+
+Any unexpected failure while generating one zone (an unreadable map or gate model, a parser error) writes that
+zone's empty network - the 0.1.7 and earlier output - with a build warning, instead of failing the build.
+`--buoys empty` (or XML1BUILD_BUOYS=empty) writes the empty network for every zone: an A/B switch for comparing
+AI movement with and without generated networks, and a quick way back. It is a content option: changing it
+re-runs zones, and builds made before SPEC 42 count as `empty`. V22 then requires every network to be empty.
+
+Behaviour note: enemies and allies now plan routes longer than about 850 units in the 161 zones with a NAV
+grid. That matches XML2's own zones and XML1's allies following anywhere; encounters that relied on enemies
+being unable to path around a gap may play differently, so releases carrying this need a hand check of mixed
+zones. Build cost: about 30 s more in zones. Stats,
 talents, hero ordering and saves are not renumbered. CONTENT_VERSION advances to 10; release VERSION is unchanged.
 
 Invented-grid tests cover encoding round trips, negative coordinates, geometry defaults, zero Z, layer loading,

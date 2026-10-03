@@ -71,6 +71,9 @@ def parse_args(argv=None):
     ap.add_argument('--tiles', choices=('used', 'folder'), default='used',
                     help="zone packages list only the tile models the zone's tile instances can name (default; "
                          "SPEC 13, XMen2.exe's 200-record IGB cache) or the whole models/tiles/<x> folder")
+    ap.add_argument('--buoys', choices=('generate', 'empty'), default='generate',
+                    help="SPEC 42: zones get generated long-range buoy networks (default) or the empty network "
+                         "builds wrote before - a developer switch for A/B tests and a quick way back")
     ap.add_argument('--hero-roster', dest='hero_roster', choices=('21', '17', '21xml2'), default='21',
                     help="herostat: default + 15 XML1 heroes + hidden Magneto placeholder + 3 hidden pads + "
                          "ProfXGladiator (the promoted XML1 npcstat hero, stats index 21) (21, the count XML2 always "
@@ -169,12 +172,15 @@ CONTENT_OPTS = {'blackbird': ('scripts', 'menu'), 'npc_scaling': ('characters', 
                 # loading, arena nosave, DR reward items), media (menu music), frontend (menus + data tables)
                 'frontend': (('scripts', 'zones', 'media', 'frontend'), C.FRONTEND_DEFAULT),
                 # SPEC 23.1: zones (the XP pickup items / entities), frontend (Danger Room rewardxp)
-                'xp_curve': (('zones', 'frontend'), C.XP_CURVE_DEFAULT)}
+                'xp_curve': (('zones', 'frontend'), C.XP_CURVE_DEFAULT),
+                # SPEC 42: zones writes each zone's BOYB
+                'buoys': ('zones', 'generate')}
 # what a build made before an option existed (no key in its report.json) effectively used
 LEGACY_OPT_VALUES = {'tiles': 'folder',          # zone packages listed whole tile folders before SPEC 13
                      'forced_teams': 'menu',     # no xml2-fix calls before SPEC 19
                      'frontend': 'xml2',         # XML2's front end before SPEC 21
-                     'xp_curve': 'xml2'}         # XML2-scaled Danger Room / XP pickup amounts before SPEC 23.1
+                     'xp_curve': 'xml2',         # XML2-scaled Danger Room / XP pickup amounts before SPEC 23.1
+                     'buoys': 'empty'}           # every converted zone had an empty buoy network before SPEC 42
 
 
 def _prev_build(out: Path):
@@ -410,7 +416,7 @@ def main(argv=None):
                     'blackbird': args.blackbird, 'npc_scaling': args.npc_scaling, 'tiles': args.tiles,
                     'hero_roster': args.hero_roster, 'hero_icons': args.hero_icons, 'hero_bleed': args.hero_bleed,
                     'newgame': args.newgame, 'forced_teams': args.forced_teams, 'frontend': args.frontend,
-                    'xp_curve': args.xp_curve,
+                    'xp_curve': args.xp_curve, 'buoys': args.buoys,
                     'start_party': args.start_party, 'start_skinset': args.start_skinset,
                     'files_registered': len(ctx.registry.entries), 'seconds': round(time.time() - t0, 1),
                     'shared_keys': sorted(ctx.shared)}

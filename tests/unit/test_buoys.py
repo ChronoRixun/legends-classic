@@ -157,13 +157,19 @@ def test_buoy_hanging_gate_blocks_character_height_not_only_feet():
     assert rep['components']==2 and rep['gate_cells']>0
 
 
+def _ctx(buoys=None, builder_mode=False):
+    from types import SimpleNamespace
+    return SimpleNamespace(opt=lambda name, default=None: buoys if name == 'buoys' else default,
+                           args=SimpleNamespace(builder_mode=builder_mode))
+
+
 def test_buoy_validator_detects_changed_network_and_reports_gaps():
     from types import SimpleNamespace
     from xml1build.validate import Check
     nav,zone=inputs([(x*3,y*3,0) for x in range(20) for y in range(20)])
     boy,report=B.generate(nav,zone)
     trees={'maps/test/room.xmlb':zone,'maps/test/room.navb':nav,'maps/test/room.boyb':boy}
-    v=SimpleNamespace(converted_zones=lambda:['test/room'],tree=trees.get,read=lambda _:None)
+    v=SimpleNamespace(converted_zones=lambda:['test/room'],tree=trees.get,read=lambda _:None,ctx=_ctx())
     ck=Check('V22','buoys');B.validate(v,ck)
     assert not ck.errors and ck.warnings and ck.details['zones']['test/room']['coverage_gaps']==112
     boy[0].set('n','0 0 0 999')
@@ -238,3 +244,28 @@ def test_buoy_missing_nav_cellsize_uses_native_spatial_scale():
     frame=B.Frame.from_world(zone[0],None)
     assert frame.size==60 and frame.origin[:2]==(30.,30.)
     assert not B.generate(nav,zone)[1]['problems']
+
+
+def test_buoy_validator_modes_player_build_and_empty_switch():
+    from types import SimpleNamespace
+    from xml1build.validate import Check
+    nav,zone=inputs([(x*3,y*3,0) for x in range(20) for y in range(20)])
+    boy,_=B.generate(nav,zone)
+    trees={'maps/test/room.xmlb':zone,'maps/test/room.navb':nav,'maps/test/room.boyb':boy}
+    # player build: structural checks only - a content change that keeps the invariants is not re-derived
+    v=SimpleNamespace(converted_zones=lambda:['test/room'],tree=trees.get,read=lambda _:None,
+                      ctx=_ctx(builder_mode=True))
+    ck=Check('V22','buoys');B.validate(v,ck)
+    assert not ck.errors and ck.details['zones']['test/room']['nodes']==len(list(boy))
+    boy[0].set('n','0 0 0 999')                      # an invalid neighbour index still fails
+    ck=Check('V22','buoys');B.validate(v,ck)
+    assert ck.errors
+    # --buoys empty: every network must be empty
+    empty,_=B.generate(None,None)
+    v=SimpleNamespace(converted_zones=lambda:['test/room'],read=lambda _:None,ctx=_ctx(buoys='empty'),
+                      tree={**trees,'maps/test/room.boyb':empty}.get)
+    ck=Check('V22','buoys');B.validate(v,ck)
+    assert not ck.errors
+    v.tree={**trees,'maps/test/room.boyb':B.generate(nav,zone)[0]}.get
+    ck=Check('V22','buoys');B.validate(v,ck)
+    assert ck.errors
