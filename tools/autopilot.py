@@ -19,7 +19,7 @@ import time
 import uuid
 
 from autopilot_core import (Monitor, Thresholds, distance, external, generate_cache,
-                            identifier, position, ui_action, approach_target)
+                            identifier, position, ui_action)
 
 HERE = Path(__file__).resolve().parent
 MARKER = '.autopilot-owner.json'
@@ -134,6 +134,8 @@ class Driver:
         self.debug_offset = 0
         self.outcome = 'not_started'
         self.recoveries = 0
+        self.assists = {}
+        self.start_context = {'kind': 'new_game', 'requested_mission': getattr(options, 'entry_mission', None), 'queued': False, 'confirmed_zone': None}
         self.save_folder = 'Autopilot-' + self.run_id
 
     def record(self, event_type, **data):
@@ -247,6 +249,15 @@ class Driver:
                         '--height', '720', '--save-folder', self.save_folder,
                         '--pipe-name', 'autopilot-' + self.run_id, '--limits'], check=True, capture_output=True)
         cp = configparser.ConfigParser();cp.read(self.build / 'xml2-fix.ini')
+        # The virtual test pad ignores physical pad input while this window is in
+        # the background. Keyboard pulses still go through this build's own pipe.
+        cp['Test']['VirtualPads'] = '1'
+        cp['Game']['WindowTitle'] = 'Autopilot ' + self.opt.mode + ' ' + self.run_id
+        with (self.build / 'xml2-fix.ini').open('w', encoding='utf-8') as stream:
+            cp.write(stream)
+        verified = configparser.ConfigParser();verified.read(self.build / 'xml2-fix.ini')
+        if verified['Test'].get('VirtualPads') != '1' or verified['Game'].get('WindowTitle') != cp['Game']['WindowTitle']:
+            raise RuntimeError('test input/title isolation did not persist')
         if (cp['Game']['SaveFolder'] != self.save_folder or cp['Display']['Mode'] != 'windowed'
                 or cp['Display']['Width'] != '1280' or cp['Display']['Height'] != '720'):
             raise RuntimeError('harness installation verification failed')
@@ -278,11 +289,24 @@ class Driver:
         self.record('start', fingerprint=cache['fingerprint'], expected_zones=self.opt.expect_zone,
                     cache_errors=cache['errors'], no_model_api=True)
         self.launch()
+        entry_targets = set()
+        if self.opt.entry_mission:
+            from autopilot_core import calls
+            entry = identifier(self.opt.entry_mission)
+            if not entry.startswith('x1/missions/begin_') or '/' in entry[len('x1/missions/begin_'):]:
+                raise ValueError('entry must name a generated begin-mission script')
+            source = self.build / 'Scripts' / (entry + '.py')
+            for fn, args in calls(source.read_text(encoding='latin-1')):
+                if fn in ('loadmapkeepteam', 'loadmapchooseteam', 'loadzone') and args:
+                    entry_targets.add(args[0].lower())
+            if not entry_targets:
+                raise ValueError('mission entry has no inspectable initial zone')
+            self.start_context['kind'] = 'mission_start'
         entered_game, last_input, last_move, goal_since, visited = False, 0., 0., None, set()
         arrival_since, handed_party = None, None
+        navigator = None
         failures_at_start = 0
         popup_since = None
-        approach = None;approach_since = 0.;approach_best = float("inf");blocked_anchors = set()
         while time.monotonic() - self.started < self.opt.seconds:
             now = time.monotonic()
             if not active_session():
@@ -303,6 +327,9 @@ class Driver:
             if state.get('schema') != 1 or state.get('error'):
                 self.finding({'kind': 'api_unavailable', 'detail': state.get('error', 'unexpected API schema')})
                 self.outcome = 'harness_blocked';return
+            if 'script_controls_locked' not in state:
+                self.finding({'kind': 'api_unavailable', 'detail': 'companion API lacks the required script-control-lock observation'})
+                self.outcome = 'harness_blocked';return
             self.state = state
             events.setdefault('events', []).extend(self.debug_events())
             self.record('sample', state=state, objectives=objectives, events=events)
@@ -313,7 +340,7 @@ class Driver:
                 self.last_zone, self.zone_started = zone, now
                 self.plan = cache['plans'].get((zone or '').lower(), {})
                 self.goal = None;goal_since = None;arrival_since = None;handed_party = None
-                approach = None;blocked_anchors.clear()
+                navigator = None
                 if zone:
                     self.seen_zones.add(zone.lower())
                 print(json.dumps({'zone': zone, 'mode': self.opt.mode, 'goals': len(self.plan.get('goals', []))}), flush=True)
@@ -324,7 +351,7 @@ class Driver:
                 if all(f['kind'] in ('hero_death', 'game_over') for f in found) and self.recoveries < self.opt.reloads:
                     self.recoveries += 1
                     if self.recover():
-                        self.goal = None;goal_since = None;handed_party = None;continue
+                        self.goal = None;goal_since = None;handed_party = None;navigator = None;continue
                 self.outcome = 'findings';return
             mode = state.get('mode')
             conv = state.get('conversation', {})
@@ -342,6 +369,18 @@ class Driver:
                 elif mode == 'menu' and not entered_game and menu == 'main':
                     self.command('tap ENTER');last_input = now
             if mode != 'in-zone' or state.get('loading') or conv.get('open') or state.get('popup') or state.get('menu_open'):
+                time.sleep(self.opt.poll);continue
+            if self.opt.entry_mission and not self.start_context['queued']:
+                self.record('mission_start_requested', script=self.opt.entry_mission, source_zone=zone)
+                request(self.build, ['script ' + self.opt.entry_mission])
+                self.start_context['queued'] = True
+                time.sleep(.5);continue
+            if self.opt.entry_mission and self.start_context['confirmed_zone'] is None:
+                if (zone or '').lower() not in entry_targets:
+                    time.sleep(.5);continue
+                self.start_context['confirmed_zone'] = zone
+                self.record('mission_start_confirmed', **self.start_context)
+            if state.get('script_controls_locked') is not False:
                 time.sleep(self.opt.poll);continue
             entered_game = True
             party = tuple((h.get('name'), h.get('entity_id')) for h in state.get('party', []) if h.get('name'))
@@ -364,7 +403,6 @@ class Driver:
                     self.finding({'kind': 'harness_blocked', 'detail': 'no unvisited generated goal; campaign completion is not established'})
                     self.outcome = 'harness_blocked';return
                 goal_since, arrival_since = now, None
-                approach = None;blocked_anchors.clear()
                 self.record('goal_selected', goal=self.goal)
                 print(json.dumps({'goal': self.goal['name'], 'kind': self.goal['kind'], 'zone': zone}), flush=True)
             if now - goal_since > self.opt.goal_timeout:
@@ -374,7 +412,8 @@ class Driver:
             party_ids = {h.get('entity_id') for h in state.get('party', [])}
             enemies = [a for a in state.get('actors', []) if a.get('alive') is True and a.get('entity_id') not in party_ids
                        and (a.get('name') or '').lower() in self.plan.get('enemy_stats', [])
-                       and distance(position(a), position(lead)) < 320]
+                       and distance(position(a), position(lead)) < 120]
+            # Proximity across a street/wall is not evidence of an active fight.
             if enemies:
                 # AI owns combat. Health changes are observed; no damage/kill script calls.
                 self.record('combat', enemy_ids=[a['entity_id'] for a in enemies])
@@ -399,26 +438,17 @@ class Driver:
                     self.goal = None
             else:
                 arrival_since = None
-                if now - last_move >= 3:
-                    if self.opt.mode == 'player-like':
-                        if approach is not None:
-                            ad = distance(position(lead), approach['pos'])
-                            if ad + 12 < approach_best:
-                                approach_best, approach_since = ad, now
-                            if ad <= 75:
-                                approach = None
-                            elif now - approach_since > 12:
-                                blocked_anchors.add(approach['name']);approach = None
-                        if approach is None:
-                            approach = approach_target(position(lead), self.goal, self.plan.get('anchors', []), blocked_anchors)
-                            approach_since, approach_best = now, distance(position(lead), approach['pos'])
-                            self.record('approach_selected', target=approach['name'], goal=self.goal['name'])
-                        name = identifier(approach['name'])
-                    else:
+                if self.opt.mode == 'fast':
+                    if now - last_move >= 3:
                         name = identifier(self.goal['name'])
-                    fn = 'copyOriginAndAngles' if self.opt.mode == 'fast' else 'moveToEntity'
-                    self.command(f'script {fn}("_HERO1_","{name}")')
-                    last_move = now
+                        self.command(f'script copyOriginAndAngles("_HERO1_","{name}")')
+                        last_move = now
+                else:
+                    from autopilot_navigation import Navigator
+                    if navigator is None:
+                        navigator = Navigator(self, state)
+                    if not navigator.step(state, lead, self.goal):
+                        self.outcome = 'findings';return
             time.sleep(self.opt.poll)
         self.outcome = 'time_budget'
 
@@ -437,14 +467,14 @@ class Driver:
             self.zones[self.last_zone] = self.zones.get(self.last_zone, 0) + now - self.zone_started
         missing = [z for z in self.opt.expect_zone if z.lower() not in self.seen_zones]
         result = {'mode': self.opt.mode, 'outcome': self.outcome, 'zones_seconds': self.zones,
-                  'findings': self.findings, 'goals_visited': self.visits, 'expected_zones_not_reached': missing,
+                  'start_context': self.start_context, 'assists_per_zone': {z:self.assists.get(z,0) for z in self.zones}, 'findings': self.findings, 'goals_visited': self.visits, 'expected_zones_not_reached': missing,
                   'acceptance': 'not established', 'elapsed': now - self.started}
         verified_json(self.output / 'summary.json', result)
         lines = ['# Autopilot run', '', f'Mode: {self.opt.mode}. Outcome: {self.outcome}.',
                  'Campaign acceptance: **not established**. Visiting an entity is not proof of completing its objective.', '',
                  '| Zone | Seconds |', '|---|---:|']
         lines += [f'| {z} | {seconds:.1f} |' for z, seconds in self.zones.items()]
-        lines += ['', f'Findings: {len(self.findings)}.']
+        lines += ['', f'Findings: {len(self.findings)}.', 'Assists per zone: ' + json.dumps(result['assists_per_zone'], sort_keys=True), 'Start context: ' + json.dumps(self.start_context, sort_keys=True)]
         lines += [f'- {f["kind"]}: {f["detail"]} (zone: {f.get("zone")})' for f in self.findings]
         if missing:
             lines += ['', 'Requested coverage not reached: ' + ', '.join(missing)]
@@ -466,10 +496,12 @@ def main(argv=None):
     p = sub.add_parser('prepare');p.add_argument('--source-build', required=True);p.add_argument('--workspace', required=True)
     p = sub.add_parser('plan');p.add_argument('workspace');p.add_argument('--hints')
     p = sub.add_parser('run');p.add_argument('workspace');p.add_argument('--dll', required=True)
-    p.add_argument('--mode', choices=('player-like', 'fast'), default='player-like')
+    p.add_argument('--mode', choices=('player-like', 'assisted', 'fast'), default='player-like')
     p.add_argument('--seconds', type=float, default=300);p.add_argument('--poll', type=float, default=.5)
     p.add_argument('--stall', type=float, default=90);p.add_argument('--goal-timeout', type=float, default=120)
     p.add_argument('--conversation-timeout', type=float, default=60);p.add_argument('--boss-timeout', type=float, default=90)
+    p.add_argument('--entry-mission', help='explicit generated mission-start seed; always recorded')
+    p.add_argument('--max-assists', type=int, default=8)
     p.add_argument('--reloads', type=int, default=1);p.add_argument('--use-key', default='E')
     p.add_argument('--hints');p.add_argument('--expect-zone', action='append', default=[])
     p = sub.add_parser('_pipe');p.add_argument('build');p.add_argument('commands')
@@ -490,6 +522,8 @@ def main(argv=None):
     import re
     if not re.fullmatch(r'[A-Za-z0-9_+]+', args.use_key):
         parser.error('use-key must be a DirectInput key name')
+    if args.max_assists < 0:
+        parser.error('max-assists must be nonnegative')
     driver = Driver(args)
     try:
         driver.run()

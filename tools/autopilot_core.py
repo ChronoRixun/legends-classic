@@ -120,10 +120,31 @@ def zone_plan(zone, root, scripts):
     anchors = [{'name': a['name'], 'pos': p} for a, p in instances
                if name_counts[a['name'].lower()] == 1 and IDENTIFIER.fullmatch(a['name'])
                and a.get('classname', '').lower() in ('ent', 'waypointent', 'gameent', 'playerstartent')]
+    barriers = []
+    for attrs, pos in instances:
+        gate = any(word in (attrs.get('classname', '') + ' ' + attrs['name']).lower()
+                   for word in ('door', 'elevator', 'bridge', 'lift', 'gate'))
+        gate |= any(k.endswith('script') and v for k, v in attrs.items())
+        gate |= attrs.get('actontouch', '').lower() == 'true' and bool(attrs.get('target'))
+        if gate:
+            try:
+                ext = [float(v) for v in attrs.get('extents', '-72 -72 -64 72 72 160').split()]
+                angle = vector(attrs.get('orient', '0 0 0'))[2]
+                if len(ext) != 6 or not all(math.isfinite(v) for v in ext):
+                    raise ValueError('invalid extents')
+                corners = [(x*math.cos(angle)-y*math.sin(angle), x*math.sin(angle)+y*math.cos(angle))
+                           for x in (ext[0], ext[3]) for y in (ext[1], ext[4])]
+                bounds = [pos[0]+min(v[0] for v in corners), pos[1]+min(v[1] for v in corners), pos[2]+ext[2],
+                          pos[0]+max(v[0] for v in corners), pos[1]+max(v[1] for v in corners), pos[2]+ext[5]]
+                barriers.append({'name': attrs['name'], 'bounds': bounds})
+            except (ValueError, TypeError):
+                barriers.append({'name': attrs['name'], 'bounds': [pos[0]-96,pos[1]-96,pos[2]-96,pos[0]+96,pos[1]+96,pos[2]+160]})
     spawners = {a['name'].lower(): a for a, _ in instances if 'spawner' in a.get('classname', '').lower()}
     enemy_stats = sorted({a['character'].lower() for a in spawners.values()
                           if a.get('character') and a.get('monster_team', '').lower() not in ('hero', 'none')})
     goal_candidates, starts, heights, boss_stats = [], [], [], set()
+    transitions = []
+    by_name = {a['name'].lower(): p for a, p in instances if name_counts[a['name'].lower()] == 1}
     # Scope ambient scripts to this zone's own directory plus explicitly referenced scripts.
     prefix = zone.rsplit('/', 1)[0] + '/'
     ambient = [k for k in scripts if k.startswith(prefix) or k.startswith('x1/' + prefix)]
@@ -153,6 +174,18 @@ def zone_plan(zone, root, scripts):
             relay_queue.append(linked.get('target', ''))
         seen, objectives, targets, bosses, followup = script_effects(refs, scripts)
         targets |= relays
+        # Literal, unconditional party moves are engine-owned transitions, not assists.
+        if not any(re.search(r'^\s*(?:if|else|while)\b', scripts.get(ref, ''), re.M) for ref in seen):
+            for ref in seen:
+                for fn, args in calls(scripts.get(ref, '')):
+                    dst = None
+                    if fn == 'copyoriginandangles' and len(args) > 1 and args[0].upper() in ('_HERO1_', '_ACTIVE_HERO_', '_ALL_HEROES_'):
+                        dst = args[1]
+                    elif fn == 'moveheroestoent' and args:
+                        dst = args[0]
+                    if dst and dst.lower() in by_name:
+                        transitions.append({'name': name, 'src': pos, 'dest': by_name[dst.lower()],
+                                            'use': attrs.get('actonuse', '').lower() == 'true'})
         bosses |= ambient_bosses
         for target, spawn in spawners.items():
             if target in bosses or spawn.get('monster_name', '').lower() in bosses or spawn.get('monstername', '').lower() in bosses:
@@ -191,7 +224,7 @@ def zone_plan(zone, root, scripts):
         goal_candidates.remove(candidate)
         ordered.append(asdict(candidate))
         here = candidate.pos
-    return {'zone': zone, 'goals': ordered, 'anchors': anchors, 'enemy_stats': enemy_stats,
+    return {'zone': zone, 'goals': ordered, 'anchors': anchors, 'starts': starts, 'script_transitions': transitions, 'barriers': barriers, 'enemy_stats': enemy_stats,
             'boss_stats': sorted(boss_stats), 'floor_lower_bound': min(heights) - 512 if heights else None,
             'floor_source': 'lowest navigation/start/trigger origin minus 512; heuristic',
             'limitations': ['Candidates may be disabled, inaccessible, or require a hero power; visiting is not completion.']}
@@ -221,19 +254,23 @@ def apply_hints(plan, hints):
 
 def generate_cache(build, output, hints=None):
     import xmlb
+    from autopilot_nav import nav_data, Routes
     build, output = Path(build).resolve(), external(output)
-    inputs = sorted([*build.glob('Maps/**/*.XMLB'), *build.glob('Maps/**/*.xmlb'), *build.glob('Scripts/**/*.py')])
+    inputs = sorted([*build.glob('Maps/**/*.XMLB'), *build.glob('Maps/**/*.xmlb'), *build.glob('Scripts/**/*.py'), *build.glob('Maps/**/*.NAVB'), *build.glob('Maps/**/*.navb')])
     # Windows glob is case-insensitive; do not hash/decode each file twice.
     inputs = sorted(set(inputs))
     digest = hashlib.sha256(b'autopilot-goals-v1')
     digest.update(Path(__file__).read_bytes())
-    scripts, maps = {}, []
+    digest.update(Path(__file__).with_name('autopilot_nav.py').read_bytes())
+    scripts, maps, navs = {}, [], {}
     for path in inputs:
         data = path.read_bytes()
         rel = path.relative_to(build).as_posix()
         digest.update(rel.lower().encode()); digest.update(hashlib.sha256(data).digest())
         if path.suffix.lower() == '.py':
             scripts[rel.split('/', 1)[1].removesuffix('.py').lower()] = data.decode('latin-1')
+        elif path.suffix.lower() == '.navb':
+            navs[rel.split('/', 1)[1].rsplit('.', 1)[0].lower()] = data
         else:
             maps.append((rel, data))
     plans, errors = {}, []
@@ -241,6 +278,22 @@ def generate_cache(build, output, hints=None):
         zone = rel.split('/', 1)[1].rsplit('.', 1)[0].lower()
         try:
             plans[zone] = zone_plan(zone, xmlb.decode(data), scripts)
+            plan = plans[zone]
+            plan['navigation'] = {'source': 'missing_nav', 'cells': [], 'links': []}
+            if zone in navs:
+                try:
+                    plan['navigation'] = nav_data(xmlb.decode(navs[zone]))
+                except (ValueError, IndexError, struct.error, RecursionError):
+                    plan['navigation']['source'] = 'invalid_or_empty_nav'
+            plan['navigation']['script_transitions'] = plan['script_transitions']
+            graph = Routes(plan['navigation'], plan['anchors'])
+            plan['routes_from_start'] = {}
+            if plan['starts']:
+                for goal in plan['goals']:
+                    try:
+                        plan['routes_from_start'][goal['name']] = {'points': graph.route(plan['starts'][0], goal['pos'])}
+                    except ValueError as exc:
+                        plan['routes_from_start'][goal['name']] = {'error': str(exc)}
             if hints and (Path(hints) / (zone + '.json')).is_file():
                 raw = (Path(hints) / (zone + '.json')).read_bytes()
                 digest.update(zone.encode());digest.update(raw)
@@ -287,7 +340,7 @@ def ui_action(state, popup_age=0., desired=0):
         if count > 1 and selected != desired:
             return 'UP' if selected > desired else 'DOWN'
         return 'ENTER'
-    if state.get('mode') == 'movie' or (state.get('menu') or '').lower() in ('team_menu', 'characters'):
+    if state.get('mode') == 'movie' or (state.get('menu') or '').lower() in ('team', 'team_menu', 'characters'):
         return 'ENTER'
     return None
 
@@ -313,6 +366,7 @@ class Monitor:
         self.falling_since = {}
         self.boss_health = {}
         self.followup = None
+        self.locked_since = None
         self.best_distance = math.inf
         self.last_goal = None
         self.reported = set()
@@ -362,6 +416,13 @@ class Monitor:
             self.followup = None
         elif self.followup and now >= self.followup[1]:
             finding('conversation_followup_missing', self.followup[0]);self.followup = None
+        if state.get('script_controls_locked') is True:
+            if self.locked_since is None:
+                self.locked_since = now
+            if now - self.locked_since >= self.limits.stall:
+                finding('script_lock_stall', 'script control lock did not clear; navigation assists prohibited')
+        else:
+            self.locked_since = None
         conv = state.get('conversation', {})
         active = conv.get('open') is True
         if active:
