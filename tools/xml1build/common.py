@@ -705,12 +705,15 @@ def args_for_out(out, base=None, **kw):
     forced_teams, no_movies, ...), so a standalone check sees the build as it was made. kw overrides."""
     b = build_options(out)
     keep = {k: b[k] for k in ('frontend', 'forced_teams', 'no_movies', 'newgame', 'blackbird', 'npc_scaling',
-                              'tiles', 'hero_roster', 'hero_icons', 'hero_bleed', 'start_zone', 'tour', 'xp_curve')
+                              'tiles', 'hero_roster', 'hero_icons', 'hero_bleed', 'start_zone', 'tour', 'xp_curve',
+                              'buoys')
             if k in b and b[k] is not None}
     if 'frontend' not in b and b:
         keep['frontend'] = 'xml2'            # a build made before SPEC 21 had XML2's front end
     if 'xp_curve' not in b and b:
         keep['xp_curve'] = 'xml2'            # a build made before SPEC 23.1 carried the XML2-scaled amounts
+    if 'buoys' not in b and b:
+        keep['buoys'] = 'empty'              # a build made before SPEC 42 wrote empty buoy networks
     keep.update(kw)
     return default_args(out=str(out), base=str(base or DEFAULT_BASE), **keep)
 

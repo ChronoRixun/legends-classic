@@ -11,7 +11,7 @@ all 210 XML1 zone bundles. Per zone:
       '/', lower case, full path only for cross-directory targets), precache filenames (lowercase '/' paths as
       in XML2, script refs normalised, 'bolton/x' -> 'models/bolton/x'), tilemodelfolder lower case;
   * .chr -> .CHRB (an empty source gives a valid <characters/>), .nav -> .NAVB (empty -> no file, no entry),
-    empty <buoy/> .BOYB, map .IGB;
+    generated walk-only .BOYB (empty NAV stays empty; SPEC 42), map .IGB;
   * Packages/generated/maps/<zone>.PKGB from the bundle entries (in order, de-duplicated) plus the scripts
     module's extras, the zone script and every file the zone XML (and the entity files / conversations it
     packages) references that the bundle lacks: models, effects (with the textures/models/sub-effects inside
@@ -56,6 +56,7 @@ from . import common as C
 from . import zones_providers as FALLBACK
 from . import actor_budget as AB          # section 14: XMen2.exe's 40-slot actor table (skins + anim DBs)
 from . import scripts_transform as ST     # section 18: the join zones' NPC double
+from . import buoys as BY                # section 42: generated long-range walk networks
 from . import automaps as AM              # section 26: XML1 automap textures -> Automaps/<zone>.zam
 
 # ---------------------------------------------------------------------------------------------- constants
@@ -1687,12 +1688,17 @@ class Zones:
         if not has_nav:
             self.counts['empty_nav'] += 1
             self.problem('nav_' + nres.status, zone, zone)
-        ctx.write_xmlb(stem, ET.Element('buoy'), ('.BOYB',), source='zones:empty buoy network')
         ires = ctx.import_x1_asset(f'{stem}.igb', force=True)
         if not ires.ok:
             ctx.error(f'{zone}: map IGB not written ({ires.status})')
 
         pkg_entries = self.build_package(zone, bundle, st, has_nav, ires.ok, chr_names)
+        buoy, buoy_report = self.buoy_network(zone, stem, nres, res, has_nav, ires.ok)
+        ctx.write_xmlb(stem, buoy, ('.BOYB',), source='zones:generated buoy network (SPEC 42)')
+        ctx.note(f"{zone}: buoys nodes={buoy_report['nodes']}, edges={buoy_report['edges']}, components={buoy_report['components']}, "
+                 f"coverage gaps={buoy_report['coverage_gaps']}, node budget hit={buoy_report['node_budget_hit']}, "
+                 f"neighbor budget hits={buoy_report['neighbor_budget_hits']}, edge budget hits={buoy_report['edge_budget_hit']}/{buoy_report['edge_budget_hits']}, "
+                 f"NAV block budget hit={buoy_report['nav_block_budget_hit']}")
         # ---- actor_budget (section 14): the XML1 bundle precaches the XML1 hero actors of its CHRB heroes; where
         # the name resolves to an XML2 herostat stand-in those skins/anim DBs are dead weight in XMen2.exe's
         # 40-slot actor table (mansion4_1 crash at 0x5743bb). Drops them; nothing else in the package changes.
@@ -1725,7 +1731,7 @@ class Zones:
         self.detail[zone] = {'status': 'converted', 'category': classify(zone), 'zonexml': zx,
                              'outputs': res.out_rels, 'zonescript': st.get('zonescript'),
                              'zonescript_how': st.get('zonescript_how'), 'soundfile': st.get('soundfile'),
-                             'links': st['links'], 'chr': chr_names, 'has_nav': has_nav,
+                             'links': st['links'], 'chr': chr_names, 'has_nav': has_nav, 'buoys': buoy_report,
                              'no_world': bool(st.get('no_world')),
                              'world_synthesized': bool(st.get('world_synthesized')), 'pkg_entries': len(pkg_entries),
                              'igb_records': self.igb[zone],
@@ -1802,6 +1808,36 @@ class Zones:
         self.automaps[zone] = info
         self.counts['automaps_written'] += 1
         return f'automaps/{zone}'
+
+    def buoy_network(self, zone, stem, nres, res, has_nav, map_ok):
+        """SPEC 42: the zone's BOYB and its report. --buoys empty writes the empty network
+        builds had before; any unexpected failure while generating falls back to it with a warning, so one unreadable
+        model or map can never cost a player the whole build (the empty network is what 0.1.7 and earlier shipped)."""
+        ctx = self.ctx
+        mode = (ctx.opt('buoys') or 'generate').lower()
+        if mode == 'empty':
+            return BY.generate(None, None)
+        try:
+            nav = ctx.read_out_xmlb(nres.out_rels[0]) if has_nav else None
+            zone_tree = ctx.read_out_xmlb(res.out_rels[0])
+
+            def read_model(rel):
+                path = ctx.out_index.path(rel)
+                if path is None:
+                    raise ValueError('gate model is absent')
+                return path.read_bytes()
+            map_path = ctx.out_index.path(stem + '.igb') if map_ok else None
+            buoy, report = BY.generate(nav, zone_tree, read_model, map_path.read_bytes() if map_path else None)
+            if report['problems']:
+                # generate() handles bad bounds / gate models itself and returns the empty network with a reason:
+                # say so, so a build never loses a zone's long-range navigation silently
+                ctx.warn(f"{zone}: buoy network not generated or incomplete: {'; '.join(report['problems'])}")
+            return buoy, report
+        except Exception as exc:                # noqa: BLE001 - deliberate: fall back to the shipped empty network
+            ctx.warn(f'{zone}: buoy generation failed ({type(exc).__name__}: {exc}); empty buoy network written')
+            buoy, report = BY.generate(None, None)
+            report['problems'].append(f'generation failed: {type(exc).__name__}: {exc}')
+            return buoy, report
 
     def build_package(self, zone, bundle, st, has_nav, igb_ok, chr_names=()):
         ctx = self.ctx

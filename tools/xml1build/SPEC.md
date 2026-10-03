@@ -592,7 +592,7 @@ from the scripts module, never raw from `xml1_loose`. Reuse `research/sweep/zone
 3. **CHR** → CHRB. An empty file gives `<characters/>` (via `write_xmlb`). Names that are not in
    `ctx.shared['stats_names']` (if present) are errors.
 4. **NAV** → NAVB if non-empty; otherwise omit the file and the entry, and warn (the 17 mansion hubs are an
-   in-game check). **BOYB:** empty `<buoy/>`, as in `convert_zone`. **Map IGB:** copied with `force`.
+   in-game check). **BOYB:** generated from the native walk grid and map bounds (section 42); empty NAV retains an empty network. **Map IGB:** copied with `force`.
 5. **Package** `Packages/generated/maps/<zone>.PKGB`, built from the bundle entries in order and de-duplicated:
    - `combat_is on/off` are kept as flags;
    - `zonexml`/`characters`/`nav`/`boy`/`model maps/<zone>`;
@@ -4202,3 +4202,114 @@ room proper, and in subbasement8 a hero placed there walks to the computer and t
 tabled start instances (`START_FIXES`: zone -> start -> (expected XML1 pos, tested pos)); facing and identity kept;
 an unexpected source position or a missing instance fails the build; a second run is a no-op. Tests:
 tests/unit/test_start_fixes.py (invented zones).
+
+
+## 42. Generated long-range buoy networks (2026-10-03, content version 10)
+
+### 42.1 Generation, not conversion
+
+XML1 ships no `.boy` files and no buoy section in its `.nav`. The former builder wrote an empty `<buoy/>`
+for every converted zone. XML2 uses NAVB for local walk grids and separate BOYB networks for long routes;
+this affects enemies and allies as well as scripted hero movement.
+
+Unpacked retail XMen2.exe: `moveToEntity` at 0x4a4690 queues movement through 0x524ef0 / 0x50f000. Actor navigator
+0x496280 calls far-path lookup 0x495790 when squared XY distance exceeds `2 * (15 * cellsize)^2` (about 848.5
+units for size 40); local failures can also use it. Attachment needs a usable node strictly within 640 units.
+A live port trace reached that lookup with a valid goal and loaded NAV cells/links, but only reserved buoy zero.
+
+### 42.2 Native encoding
+
+`buoys.py` implements the native read contract; no executable is patched.
+
+- Zone loader 0x4857ca..0x485878 starts with the IGB scene root's aggregate AABox. Explicit extent_min/max
+  replace XY; an explicit Z of zero keeps geometry Z. Re-unioning descendant boxes can double-transform
+  decoration and inflate bounds, so the authored root bound is read directly.
+- Spatial initialization 0x463f30 uses 120-unit cells unless `mapcellsize` overrides them, rounds bounds, and
+  has additional oversized-grid rounding branches. NAV initialization 0x490e10 adds half a NAV cell to its XY
+  minimum; XY bias truncates the spatial minimum divided by NAV cellsize. Z origin is effective minimum Z + 6.
+  The native NAV grid limits XY dimensions to 252 cells.
+- NAV loader 0x494470 packs c/p as `(x-bias_x, y-bias_y, trunc((z+12-origin_z)*0.083333f))`. It consumes only the first
+  two records per XY location, including duplicates. Generation mirrors this order-dependent selection and
+  reports ignored/out-of-range records, never placing buoys on floors the engine did not load. The native
+  200-block limit (9x9 cells per block, 0x493210) is also enforced in source order; unmodeled nonzero c/t
+  restriction bytes are excluded and reported. The converted corpus currently has no c/t attributes.
+  The multiplier is the native float at 0x689b30, bits 0x3daaaa7e, not exact `1/12`. At an exact height
+  boundary that difference selects the correct lower packed layer. A live NAV-cell audit and an invented
+  boundary regression cover it; a BOY decode/encode round trip alone does not validate NAV height packing.
+
+- BOY loader 0x494a30 reads a buoy root with b/n records: three unsigned packed coordinates and at most eight
+  one-based neighbor indices. Minus one terminates padded lists; omitted slots have the same meaning. Zero is
+  reserved and there are at most 288 real nodes. The directed link pool also has 350 slots, of which slot zero is reserved
+  (0x493810), leaving 349 authored arcs (0x4936d0, graph+0x2eac); eight neighbors per node alone is not sufficient. Decode 0x490980 is `origin + (x*cellsize, y*cellsize, z*12)`.
+- Coordinate range, neighbor indices and caps are checked before writing. Unreadable bounds fail closed with
+  explicit coverage diagnostics rather than guessed coordinates.
+
+Stock coordinate records were round-tripped and compared byte-for-byte with loaded records
+in two stock zones, including negative bias. Predicted origins/biases matched live memory. Geometry defaults,
+zero-Z overrides and the scene-root distinction were separately checked in live port zones. Exact scope and
+exceptions are in the external evidence report; these controls do not establish campaign coverage. The initial
+prototype passed file/stock-node round trips but a subsequent live NAV-array audit exposed its exact-division
+height error. Corrected nodes were checked against loaded heights before the corrected networks were emitted;
+prototype runtime attempts are not final-data validation.
+
+### 42.3 Conservative walk graph
+
+Zones generate BOYB after importing package model dependencies, through the normal context writer. Inputs are
+the converted NAVB, final zone tree and map/model bounds. Source installations and disc images are read-only.
+Cardinal walk neighbors follow native closest-layer selection and may differ by at most four height quanta
+(48 units; 0x495d00 requires a delta strictly between -5 and +5). The nearest-layer choice is directed; a reverse edge is emitted only when a native walk search proves it.
+Requiring each cell step to be reciprocal would invent isolated lower-floor components. Explicit NAV links are read as
+restrictions, never promoted to unconditional edges: BOY cannot encode their jump/drop/team/action requirements.
+No script-only teleport or puzzle transition becomes a walk edge. Potential doors, movers, elevators, gates
+and bridge geometry are excluded even when scripts may open them later. Instance extents or readable model
+bounds supply the volume; tilted gates use a conservative enclosing sphere rather than guessing Euler order.
+Unknown gate bounds leave an empty network with diagnostics.
+
+Gate volumes include body-height clearance below their geometry, so a hanging closed door is not treated as
+a gap beneath its mesh. Nodes prefer corridor interiors over NAV boundary corners to reduce local collisions.
+
+Each component receives a node before extra coverage is allocated. Deterministic farthest-point sampling uses
+incremental distances in weak walk components, targeting 280 units to a node, stronger than native 640-unit
+Euclidean attachment. Nodes favor cells with both incoming and outgoing native steps. Adjacent coverage regions
+propose connections; bounded directed searches prove each direction separately. Within each strongly connected
+coarse region, outgoing and incoming spanning trees precede one-way region connections and optional extra arcs.
+Output never exceeds 288 nodes, eight outgoing neighbors per node, or 349 authored directed links.
+Uncovered cells, exhausted budgets and fragmentation are reported, never repaired by crossing gates. Stable
+ordering controls seeds, ties, numbering and serialization; source order matters only for native layer loading.
+
+This is static navigation, not collision-mesh reconstruction or a puzzle solver. Opening a gate cannot add an
+excluded static edge. Native local avoidance and interaction scripts retain responsibility for dynamic geometry.
+
+### 42.4 Diagnostics and tests
+
+Every converted zone emits a build note with nodes, components, coverage gaps and node/neighbor/link/grid-block
+budget hits. Directed reachability lost during pruning is reported separately, never silently called covered.
+`_build/zones_detail.json` contains its buoys diagnostics, including gate exclusions and rejected NAV records.
+The 37 empty-NAV zones retain empty networks; their complete list is in validator V22's empty_nav_zones detail
+and note in `_build/validate.json`.
+
+V22 in developer and CI builds independently re-derives expected networks from output files, checks deterministic
+structure and native bounds/caps/indices, and warns for gaps and budget hits. It does not trust cached generation
+notes. Player builds (builder mode) check the structural invariants only: the full re-derivation added about 25 s
+to every rebuild, and the same generation already ran in zones.
+
+### 42.5 Fallback and the developer switch (review, 2026-10-03)
+
+Any failure while generating one zone - one generate() handles itself (unusable bounds, an unreadable gate model)
+or an unexpected exception - writes that zone's empty network, the 0.1.7 and earlier output, with a build warning
+naming the reason, instead of failing the build. A standalone `xml1build.validate` reads the build's recorded
+`buoys` mode from its report; a build made before SPEC 42 (no recorded mode) counts as `empty`.
+`--buoys empty` writes the empty network for every zone: an A/B switch for comparing
+AI movement with and without generated networks, and a quick way back. It is a content option: changing it
+re-runs zones, and builds made before SPEC 42 count as `empty`. V22 then requires every network to be empty.
+
+Behaviour note: enemies and allies now plan routes longer than about 850 units in the 161 zones with a NAV
+grid. That matches XML2's own zones and XML1's allies following anywhere; encounters that relied on enemies
+being unable to path around a gap may play differently, so releases carrying this need a hand check of mixed
+zones. Build cost: about 30 s more in zones. Stats,
+talents, hero ordering and saves are not renumbered. CONTENT_VERSION advances to 10; release VERSION is unchanged.
+
+Invented-grid tests cover encoding round trips, negative coordinates, geometry defaults, zero Z, layer loading,
+caps, connectivity, deterministic output, special-link/script-gate exclusion, tilted gates and empty grids.
+Live before/after routes, ally/enemy behavior, pre-change saves, setup actions and runtime limitations are
+recorded in the separate draft PR and external evidence. Autopilot campaign acceptance remains parked.
