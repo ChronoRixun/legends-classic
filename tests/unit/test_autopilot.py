@@ -104,6 +104,40 @@ def test_autopilot_cache_identity_tracks_map_and_script_content():
         assert p3 != p1 and c3['fingerprint'] != c1['fingerprint']
 
 
+def test_autopilot_cache_floor_includes_deep_navigation_cells():
+    import xmlb
+    with tempfile.TemporaryDirectory() as d:
+        root = Path(d)
+        build = root / 'build'
+        maps = build / 'Maps/fake'
+        maps.mkdir(parents=True)
+        zone_file = maps / 'room.XMLB'
+        zone_file.write_bytes(xmlb.encode(scene()))
+        nav = ET.Element('nav', cellsize='40')
+        ET.SubElement(nav, 'c', p='0 0 -1000')
+        nav_file = maps / 'room.NAVB'
+        nav_file.write_bytes(xmlb.encode(nav))
+        _, cache = a.generate_cache(build, root / 'cache')
+        assert not cache['errors']
+        plan = cache['plans']['fake/room']
+        # An authored floor well below entity origins must not end the run.
+        assert 'out_of_bounds' not in kinds(observe(a.Monitor(), 0, snapshot(z=-1000), plan=plan))
+        assert 'out_of_bounds' in kinds(observe(a.Monitor(), 0, snapshot(z=-1600), plan=plan))
+        assert plan['floor_lower_bound'] == -1512
+        assert 'navigation' in plan['floor_source']
+        # NAV heights work without selected map entities, too.
+        zone_file.write_bytes(xmlb.encode(ET.Element('map')))
+        _, cache = a.generate_cache(build, root / 'cache')
+        assert cache['plans']['fake/room']['floor_lower_bound'] == -1512
+        # Missing NAV retains the entity fallback and labels it honestly.
+        zone_file.write_bytes(xmlb.encode(scene()))
+        nav_file.unlink()
+        _, cache = a.generate_cache(build, root / 'cache')
+        fallback = cache['plans']['fake/room']
+        assert fallback['floor_lower_bound'] == -512
+        assert 'navigation' not in fallback['floor_source']
+
+
 def test_autopilot_hang_is_not_masked_by_pipe_responses():
     m = a.Monitor(a.Thresholds(stale=3))
     observe(m, 0, snapshot(10))

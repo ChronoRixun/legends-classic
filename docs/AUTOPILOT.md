@@ -26,6 +26,13 @@ python tools/autopilot.py run <workspace> --dll <schema-1-dinput.dll> --mode ass
 python tools/autopilot.py run <workspace> --dll <schema-1-dinput.dll> --mode fast --seconds 120
 ```
 
+`--seconds` and the 40-second observation startup grace start after launch;
+reported elapsed time also includes cache generation and launch setup. A budget
+that expires without one complete observation is `harness_blocked`, never a clean
+time-budget exit. All three observation responses (`state`, `objectives`, `events`)
+must have schema 1 and no error. An initial `no game-thread sample` response can
+retry within the startup grace; other API errors block the run immediately.
+
 `--expect-zone <zone-id>` may be repeated. This records coverage requirements; it
 never changes the route or jumps to those zones. Missing coverage is reported.
 `--use-key E` selects the normal Use binding; override it for custom bindings.
@@ -80,7 +87,8 @@ Nonempty NAVB grids supply cell centres, bounded-height cardinal neighbors and
 explicit directed links. XY cell indices become `(index + 0.5) * cellsize`; Z
 retains source height. Literal unconditional party-transport scripts can connect
 otherwise separate components, but the engine must actually execute them. When
-navigation is absent, nearby entity anchors provide a labeled inferred fallback.
+navigation is absent, nearby entity anchors provide a labeled inferred fallback;
+script transports attach to those anchors with the same directed transition rules.
 Routes are cached from authored starts and replanned from the live hero position.
 This graph is not a collision mesh; connectivity and obstacle clearance remain
 inferences checked by movement feedback. Door/trigger extents conservatively
@@ -110,8 +118,9 @@ Each run writes `runs/<run-id>/run.jsonl`, `summary.json`, `summary.md`, the
 debugger log, assists per zone (including zero counts), screenshots when capture
 succeeds, and one exception JSON per
 finding. Records include the zone, complete observed state, last goal, and the
-last 30 seconds of events. Screenshot failures are explicit; a nonexistent file
-is not reported as captured. The exception record contains candidate actions and
+last 30 seconds of events. Screenshot references are relative to the run directory.
+Screenshot failures record the exception type without the helper's absolute command
+path; a nonexistent file is not reported as captured. The exception record contains candidate actions and
 `model_called=false` for a future decision service.
 
 Default observation limits are configurable: no meaningful progress for 90 s,
@@ -126,8 +135,10 @@ failure.
 Progress means closer approach to a goal, zone/objective/conversation changes,
 or nearby combat health changes. Animation or movement away from the target does
 not reset the stall timer. Ground contact is unavailable; downward motion can
-also be flight or a lift. The zone-floor lower bound comes from navigation,
-start and trigger origins minus a conservative margin, not collision geometry.
+also be flight or a lift. The zone-floor lower bound uses the lowest decoded NAVB
+cell Z or selected start/waypoint/zone-link/game entity origin, minus 512 units.
+Without NAVB cells it uses only those entity origins and labels that fallback;
+without either source the bound is unavailable. This is a heuristic, not collision geometry.
 Falling/OOB findings therefore retain the state and screenshot for review.
 
 A visited goal is labeled `visited_not_proven_complete`. When a goal has known

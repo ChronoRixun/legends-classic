@@ -226,7 +226,7 @@ def zone_plan(zone, root, scripts):
         here = candidate.pos
     return {'zone': zone, 'goals': ordered, 'anchors': anchors, 'starts': starts, 'script_transitions': transitions, 'barriers': barriers, 'enemy_stats': enemy_stats,
             'boss_stats': sorted(boss_stats), 'floor_lower_bound': min(heights) - 512 if heights else None,
-            'floor_source': 'lowest navigation/start/trigger origin minus 512; heuristic',
+            'floor_source': 'lowest start/waypoint/zone-link/game entity origin minus 512; heuristic',
             'limitations': ['Candidates may be disabled, inaccessible, or require a hero power; visiting is not completion.']}
 
 
@@ -285,6 +285,12 @@ def generate_cache(build, output, hints=None):
                     plan['navigation'] = nav_data(xmlb.decode(navs[zone]))
                 except (ValueError, IndexError, struct.error, RecursionError):
                     plan['navigation']['source'] = 'invalid_or_empty_nav'
+            cells = plan['navigation']['cells']
+            if cells:
+                nav_floor = min(cell[2] for cell in cells) - 512
+                entity_floor = plan['floor_lower_bound']
+                plan['floor_lower_bound'] = min(entity_floor, nav_floor) if entity_floor is not None else nav_floor
+                plan['floor_source'] = 'lowest navigation cell or selected entity origin minus 512; heuristic'
             plan['navigation']['script_transitions'] = plan['script_transitions']
             graph = Routes(plan['navigation'], plan['anchors'])
             plan['routes_from_start'] = {}

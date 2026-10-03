@@ -127,6 +127,7 @@ class Driver:
         self.findings, self.visits, self.zones, self.seen_zones = [], [], {}, set()
         self.state, self.goal, self.plan = {}, None, {}
         self.started = time.monotonic()
+        self.live_started = None
         self.process = None
         self.pid = None
         self.last_zone = None
@@ -166,9 +167,10 @@ class Driver:
             try:
                 request(self.build, ['screenshot ' + str(shot)])
                 if shot.is_file() and shot.stat().st_size:
-                    screenshot = str(shot)
+                    screenshot = shot.relative_to(self.output).as_posix()
             except (RuntimeError, subprocess.TimeoutExpired) as exc:
-                error = str(exc)
+                # Helper exceptions can include the command's absolute output path.
+                error = f'screenshot request failed ({type(exc).__name__})'
         data = {**item, 'zone': self.state.get('zone'), 'state': self.state,
                 'last_goal': self.goal, 'events_30s': self.monitor.recent(time.monotonic()),
                 'screenshot': screenshot, 'screenshot_error': error}
@@ -289,6 +291,7 @@ class Driver:
         self.record('start', fingerprint=cache['fingerprint'], expected_zones=self.opt.expect_zone,
                     cache_errors=cache['errors'], no_model_api=True)
         self.launch()
+        self.live_started = time.monotonic()
         entry_targets = set()
         if self.opt.entry_mission:
             from autopilot_core import calls
@@ -307,7 +310,8 @@ class Driver:
         navigator = None
         failures_at_start = 0
         popup_since = None
-        while time.monotonic() - self.started < self.opt.seconds:
+        samples = 0
+        while time.monotonic() - self.live_started < self.opt.seconds:
             now = time.monotonic()
             if not active_session():
                 self.finding({'kind': 'environment_unavailable', 'detail': 'interactive session disconnected'})
@@ -318,21 +322,30 @@ class Driver:
             try:
                 state, objectives, events = request(self.build, ['state', 'objectives', 'events'])
             except (RuntimeError, subprocess.TimeoutExpired) as exc:
-                if not entered_game and now - self.started < 40:
+                if not entered_game and now - self.live_started < 40:
                     time.sleep(.5);continue
                 self.finding({'kind': 'hang', 'detail': str(exc)})
                 self.outcome = 'findings';return
-            if state.get('error') == 'no game-thread sample' and now - self.started < 40:
+            waiting_for_sample = False
+            for command, response in zip(('state', 'objectives', 'events'), (state, objectives, events)):
+                error = response.get('error')
+                if response.get('schema') != 1:
+                    error = 'unexpected API schema'
+                elif error == 'no game-thread sample' and not entered_game and now - self.live_started < 40:
+                    waiting_for_sample = True
+                    continue
+                if error:
+                    self.finding({'kind': 'api_unavailable', 'detail': f'{command}: {error}'})
+                    self.outcome = 'harness_blocked';return
+            if waiting_for_sample:
                 time.sleep(.5);continue
-            if state.get('schema') != 1 or state.get('error'):
-                self.finding({'kind': 'api_unavailable', 'detail': state.get('error', 'unexpected API schema')})
-                self.outcome = 'harness_blocked';return
             if 'script_controls_locked' not in state:
                 self.finding({'kind': 'api_unavailable', 'detail': 'companion API lacks the required script-control-lock observation'})
                 self.outcome = 'harness_blocked';return
             self.state = state
             events.setdefault('events', []).extend(self.debug_events())
             self.record('sample', state=state, objectives=objectives, events=events)
+            samples += 1
             zone = state.get('zone')
             if zone != self.last_zone:
                 if self.last_zone:
@@ -450,6 +463,9 @@ class Driver:
                     if not navigator.step(state, lead, self.goal):
                         self.outcome = 'findings';return
             time.sleep(self.opt.poll)
+        if not samples:
+            self.finding({'kind': 'api_unavailable', 'detail': 'live budget expired without a complete observation'})
+            self.outcome = 'harness_blocked';return
         self.outcome = 'time_budget'
 
     def finish(self):

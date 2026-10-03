@@ -42,6 +42,34 @@ def test_nav_script_transition_requires_trigger_wait():
     assert scripts[0]['transition']['use'] is True
 
 
+def test_nav_sparse_anchors_keep_directed_script_transports():
+    anchors = [{'pos': (0, 0, 0)}, {'pos': (100, 0, 0)},
+               {'pos': (1000, 0, -100)}, {'pos': (1100, 0, -100)}]
+    transition = {'name': 'transport_test', 'src': (105, 0, 0),
+                  'dest': (1000, 0, -100), 'use': True}
+    # Nearby anchors still connect; the distant component needs a transport.
+    graph = Routes({}, anchors)
+    assert graph.route((0, 0, 0), (100, 0, 0))
+    try:
+        graph.route((0, 0, 0), (1100, 0, -100))
+    except ValueError as exc:
+        assert 'disconnected' in str(exc)
+    else:
+        assert False, 'distant anchors must not gain an inferred walk edge'
+    graph = Routes({'script_transitions': [transition]}, anchors)
+    route = graph.route((0, 0, 0), (1100, 0, -100))
+    scripts = [p['transition'] for p in route if isinstance(p['transition'], dict)]
+    assert scripts == [{'kind': 'script', **transition}]
+    assert any(p['pos'] == transition['src'] for p in route)
+    try:
+        graph.route((1100, 0, -100), (0, 0, 0))
+    except ValueError as exc:
+        assert 'disconnected' in str(exc)
+    else:
+        assert False, 'script transport must remain directed'
+    assert not Routes({'script_transitions': [transition]}).points
+
+
 def test_nav_rejects_malformed_and_disconnected_data():
     for attrs in ({'cellsize':'nan'},{'cellsize':'0'}):
         try:

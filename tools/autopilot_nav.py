@@ -56,7 +56,6 @@ class Routes:
                 for j, b in enumerate(self.points):
                     if i != j and math.dist(a, b) <= 220 and abs(a[2] - b[2]) <= 40:
                         self.edges[i].append((j, math.dist(a, b), 0))
-            return
         xy = defaultdict(list)
         for i, (x, y, z) in enumerate(cells):
             xy[x, y].append(i)
@@ -71,10 +70,15 @@ class Routes:
             if src is not None and dst is not None:
                 self.edges[src].append((dst, max(math.dist(self.points[src], self.points[dst]), link['cost']), link['code']))
 
+        # Attach transports to either NAVB cells or sparse anchors, never to a
+        # trigger appended by a preceding transition.
+        base_points = range(len(self.points))
         for transition in self.data.get('script_transitions', []):
+            if not base_points:
+                break
             a, b = point(transition['src']), point(transition['dest'])
-            src = min(range(len(cells)), key=lambda i: math.dist(a, self.points[i]))
-            dst = min(range(len(cells)), key=lambda i: math.dist(b, self.points[i]))
+            src = min(base_points, key=lambda i: math.dist(a, self.points[i]))
+            dst = min(base_points, key=lambda i: math.dist(b, self.points[i]))
             if math.dist(a, self.points[src]) > 200 or math.dist(b, self.points[dst]) > 200:
                 continue
             trigger = len(self.points)
