@@ -1810,11 +1810,11 @@ class Zones:
         return f'automaps/{zone}'
 
     def buoy_network(self, zone, stem, nres, res, has_nav, map_ok):
-        """SPEC 42: the zone's BOYB and its report. --buoys empty (or XML1BUILD_BUOYS=empty) writes the empty network
+        """SPEC 42: the zone's BOYB and its report. --buoys empty writes the empty network
         builds had before; any unexpected failure while generating falls back to it with a warning, so one unreadable
         model or map can never cost a player the whole build (the empty network is what 0.1.7 and earlier shipped)."""
         ctx = self.ctx
-        mode = (ctx.opt('buoys') or os.environ.get('XML1BUILD_BUOYS') or 'generate').lower()
+        mode = (ctx.opt('buoys') or 'generate').lower()
         if mode == 'empty':
             return BY.generate(None, None)
         try:
@@ -1827,7 +1827,12 @@ class Zones:
                     raise ValueError('gate model is absent')
                 return path.read_bytes()
             map_path = ctx.out_index.path(stem + '.igb') if map_ok else None
-            return BY.generate(nav, zone_tree, read_model, map_path.read_bytes() if map_path else None)
+            buoy, report = BY.generate(nav, zone_tree, read_model, map_path.read_bytes() if map_path else None)
+            if report['problems']:
+                # generate() handles bad bounds / gate models itself and returns the empty network with a reason:
+                # say so, so a build never loses a zone's long-range navigation silently
+                ctx.warn(f"{zone}: buoy network not generated or incomplete: {'; '.join(report['problems'])}")
+            return buoy, report
         except Exception as exc:                # noqa: BLE001 - deliberate: fall back to the shipped empty network
             ctx.warn(f'{zone}: buoy generation failed ({type(exc).__name__}: {exc}); empty buoy network written')
             buoy, report = BY.generate(None, None)

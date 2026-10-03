@@ -269,3 +269,44 @@ def test_buoy_validator_modes_player_build_and_empty_switch():
     v.tree={**trees,'maps/test/room.boyb':B.generate(nav,zone)[0]}.get
     ck=Check('V22','buoys');B.validate(v,ck)
     assert ck.errors
+
+
+def test_zone_buoy_network_warns_for_a_handled_generation_failure():
+    # generate() handles a zone with no world entity itself (empty network + problems); zones must still warn
+    from types import SimpleNamespace
+    from xml1build import zones as Z
+    nav, _ = inputs([(0, 0, 0), (1, 0, 0)])
+    warnings = []
+    trees = {'nav': nav, 'zone': ET.Element('world')}
+    ctx = SimpleNamespace(opt=lambda name, default=None: None, warn=warnings.append,
+                          read_out_xmlb=lambda rel: trees[rel],
+                          out_index=SimpleNamespace(path=lambda rel: None))
+    zones = Z.Zones.__new__(Z.Zones)
+    zones.ctx = ctx
+    buoy, report = zones.buoy_network('test/room', 'maps/test/room', SimpleNamespace(out_rels=['nav']),
+                                      SimpleNamespace(out_rels=['zone']), True, False)
+    assert len(list(buoy)) == 0 and report['problems']
+    assert len(warnings) == 1 and 'test/room' in warnings[0]
+    # --buoys empty: no generation, no warning
+    ctx.opt = lambda name, default=None: 'empty' if name == 'buoys' else default
+    warnings.clear()
+    buoy, _ = zones.buoy_network('test/room', 'maps/test/room', None, None, True, False)
+    assert len(list(buoy)) == 0 and not warnings
+
+
+def test_standalone_checks_recover_the_recorded_buoy_mode():
+    import json
+    import tempfile
+    from pathlib import Path
+    from xml1build import common as C
+    with tempfile.TemporaryDirectory() as td:
+        out = Path(td)
+        (out / '_build').mkdir()
+        report = out / '_build' / 'report.json'
+        report.write_text(json.dumps({'build': {'frontend': 'xml1', 'buoys': 'generate'}}), encoding='utf-8')
+        assert C.args_for_out(out).buoys == 'generate'
+        report.write_text(json.dumps({'build': {'frontend': 'xml1', 'buoys': 'empty'}}), encoding='utf-8')
+        assert C.args_for_out(out).buoys == 'empty'
+        # a build made before SPEC 42 recorded no mode and wrote empty networks
+        report.write_text(json.dumps({'build': {'frontend': 'xml1'}}), encoding='utf-8')
+        assert C.args_for_out(out).buoys == 'empty'

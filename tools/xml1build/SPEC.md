@@ -4295,9 +4295,11 @@ to every rebuild, and the same generation already ran in zones.
 
 ### 42.5 Fallback and the developer switch (review, 2026-10-03)
 
-Any unexpected failure while generating one zone (an unreadable map or gate model, a parser error) writes that
-zone's empty network - the 0.1.7 and earlier output - with a build warning, instead of failing the build.
-`--buoys empty` (or XML1BUILD_BUOYS=empty) writes the empty network for every zone: an A/B switch for comparing
+Any failure while generating one zone - one generate() handles itself (unusable bounds, an unreadable gate model)
+or an unexpected exception - writes that zone's empty network, the 0.1.7 and earlier output, with a build warning
+naming the reason, instead of failing the build. A standalone `xml1build.validate` reads the build's recorded
+`buoys` mode from its report; a build made before SPEC 42 (no recorded mode) counts as `empty`.
+`--buoys empty` writes the empty network for every zone: an A/B switch for comparing
 AI movement with and without generated networks, and a quick way back. It is a content option: changing it
 re-runs zones, and builds made before SPEC 42 count as `empty`. V22 then requires every network to be empty.
 
