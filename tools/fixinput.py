@@ -20,6 +20,7 @@ The fix listens on \\.\pipe\xml2-fix-input: one command per line, one reply line
     screenshot PATH      save the frame the game just drew (.png or .bmp; give an absolute path)
     script STATEMENT     run an XML2 script statement: queued in the game's console as "runscript STATEMENT"
     console COMMAND      queue an engine console command as it is (loadmap nyc/alison/nyc1_1_3 1, ...)
+    state | objectives | events   schema-1 JSON observations (test API companion DLL)
     status | ping
 KEY is a DirectInput name (RETURN, ESCAPE, W, UP, F1, NUMPAD4, ...) or scancode (0x1C); the gameinput.py names
 (enter, esc, kp4, ...) are translated. Keys from the pipe reach the game whether or not it has the focus; the
@@ -79,6 +80,7 @@ paddown(n, buttons), padup(n, buttons), padrelease(n), stick(n, side, x, y, seco
 gameinput.py uses this module whenever the pipe is up (XML1_INPUT=pipe forces it, XML1_INPUT=sendinput the old way).
 """
 import ctypes
+import json
 import ctypes.wintypes as w
 import os
 import sys
@@ -392,14 +394,52 @@ def check(verbose=True):
     return True
 
 
+def observe(command):
+    """A schema-1 read-only reply. Error/null fields remain explicit for the caller."""
+    if command not in ('state', 'objectives', 'events'):
+        raise ValueError('not an observation command')
+    try:
+        value = json.loads(pipe().ask(command))
+    except json.JSONDecodeError as exc:
+        raise PipeError('test pipe did not return observation JSON; update XML2 Fix') from exc
+    if not isinstance(value, dict) or value.get('schema') != 1:
+        raise PipeError('unsupported observation schema')
+    return value
+
+
+def state():
+    return observe('state')
+
+
+def objectives():
+    return observe('objectives')
+
+
+def events():
+    return observe('events')
+
+
 def main(argv):
+    if not argv:
+        print(__doc__)
+        return 2
+    if '--build' in argv:
+        from current_zone import pop_build
+        argv = list(argv)
+        build = pop_build(argv)
+        if not use_build(build):
+            raise PipeError('the selected build has no enabled test pipe')
     if not argv:
         print(__doc__)
         return 2
     cmd = argv[0]
     if cmd == 'check':
         return 0 if check() else 1
-    if cmd == 'status':
+    if cmd in ('state', 'objectives', 'events'):
+        if len(argv) != 1:
+            raise PipeError('observation commands take no arguments except --build')
+        print(json.dumps(observe(cmd)))
+    elif cmd == 'status':
         print(status())
     elif cmd == 'key':
         for _ in range(int(argv[2]) if len(argv) > 2 else 1):

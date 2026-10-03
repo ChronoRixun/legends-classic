@@ -72,6 +72,9 @@ The tools that drive a running game (`campaign_walk.py`, `power_sweep.py`, `tour
 XML2 install). They run the game in a window and send input through the pipe, so they don't need the focus - but
 they do start the game: run them when nobody is playing on that PC.
 
+For experimental AI/pathfinding play and local failure reports, see [the autopilot guide](AUTOPILOT.md).
+Its owned build, generated goal cache and run evidence must live outside Git.
+
 ## Freezing the exe
 
 ```
