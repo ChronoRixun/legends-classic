@@ -57,7 +57,9 @@ boundary requiring review, not proof that the game is softlocked. Assists never
 clear a script stall, kill actors, or grant invulnerability.
 
 Use actions briefly return control to the player, press the use key, then return
-to AI. Objective-bearing breakables use ordinary attack input at their use point.
+to AI. Fight and boss triggers retain their authored Use activation even when
+classified by encounter role; touch-only triggers do not gain a Use tap.
+Objective-bearing breakables use ordinary attack input at their use point.
 Conversations select the first visible response unless a hint requests another;
 popups try Enter, then Escape if they remain open. The driver never calls a
 model API. `fast` substitutes `copyOriginAndAngles` for movement between goals;
@@ -84,7 +86,9 @@ solver or proof that a target is enabled or reachable. Script conditions and
 runtime entity motion are not fully modeled.
 
 Nonempty NAVB grids supply cell centres, bounded-height cardinal neighbors and
-explicit directed links. XY cell indices become `(index + 0.5) * cellsize`; Z
+explicit directed links. If NAV `cellsize` is omitted, the native default is the
+world's spatial X cell size times float32 one-third (40 with the default spatial
+size of 120). XY cell indices become `(index + 0.5) * cellsize`; Z
 retains source height. Literal unconditional party-transport scripts can connect
 otherwise separate components, but the engine must actually execute them. When
 navigation is absent, nearby entity anchors provide a labeled inferred fallback;
@@ -102,6 +106,8 @@ Map decoding failures appear explicitly in the cache and run log.
 Optional `--hints <directory>` reads `<zone-id>.json`. Files may contain only an
 `order` list of existing entity names and a `responses` map from such names to
 zero-based response indices. They contain no dialogue, game text or script code.
+The requested directory must exist. Invalid or unreadable per-zone hints block
+the run before launch (`harness_blocked`); missing per-zone files remain optional.
 An invented example:
 
 ```json
@@ -119,7 +125,7 @@ debugger log, assists per zone (including zero counts), screenshots when capture
 succeeds, and one exception JSON per
 finding. Records include the zone, complete observed state, last goal, and the
 last 30 seconds of events. Screenshot references are relative to the run directory.
-Screenshot failures record the exception type without the helper's absolute command
+Screenshot and observation-pipe failures record the exception type without the helper's absolute command
 path; a nonexistent file is not reported as captured. The exception record contains candidate actions and
 `model_called=false` for a future decision service.
 
@@ -152,6 +158,10 @@ this run's save folder has one unambiguous save. No save, multiple saves with
 unverified UI ordering, or an unsuccessful load become explicit recovery
 findings. Exact newest-slot selection for multiple saves is not implemented;
 `loadgame <slot>` cannot supply it (the engine ignores arguments and opens the UI).
+Recovery requires a newer valid in-zone sample with a readable living hero and
+either an observed load, a dead-to-live hero transition, or a zone change. A short
+load may finish between polls; an unchanged surviving teammate or stale sample
+alone does not establish recovery.
 No other build's saves are read or loaded.
 
 ## Validation and current limits

@@ -18,7 +18,7 @@ import sys
 import time
 import uuid
 
-from autopilot_core import (Monitor, Thresholds, distance, external, generate_cache,
+from autopilot_core import (HintError, Monitor, Thresholds, distance, external, generate_cache,
                             identifier, position, ui_action)
 
 HERE = Path(__file__).resolve().parent
@@ -222,15 +222,29 @@ class Driver:
             self.finding({'kind': 'recovery_unavailable', 'detail': 'multiple saves: newest-slot UI selection is not verified'})
             return False
         self.record('recovery_attempt', save=saves[0].name)
+        before = self.state
+        party_before = before.get('party', [])
+        all_dead = bool(party_before) and all(h.get('alive') is False for h in party_before)
+        dead_names = {h['name'] for h in party_before if h.get('alive') is False and h.get('name')}
         self.command('console loadgame')
         # A single owned slot is unambiguous; menu acceptance remains normal input.
         deadline = time.monotonic() + 35
         saw_load = False
         while time.monotonic() < deadline:
             state = request(self.build, ['state'])[0]
-            if state.get('loading') is True:
+            sample = state.get('sampled_ms')
+            fresh = (type(sample) is int and type(before.get('sampled_ms')) is int
+                     and sample > before['sampled_ms'])
+            valid = state.get('schema') == 1 and not state.get('error')
+            if valid and fresh and state.get('loading') is True:
                 saw_load = True
-            if saw_load and state.get('loading') is False and any(h.get('alive') for h in state.get('party', [])):
+            living = [h for h in state.get('party', []) if h.get('alive') is True and position(h)]
+            revived = all_dead or any(h.get('name') in dead_names for h in living)
+            changed_zone = before.get('zone') and state.get('zone') and before['zone'] != state['zone']
+            if (valid and fresh and state.get('loading') is False and state.get('mode') == 'in-zone'
+                    and not state.get('menu_open') and not state.get('popup') and living
+                    and (saw_load or revived or changed_zone)):
+                self.state = state
                 self.record('recovery_complete')
                 self.monitor = Monitor(self.monitor.limits)
                 return True
@@ -287,7 +301,11 @@ class Driver:
 
     def run(self):
         import current_zone
-        _, cache = generate_cache(self.build, self.workspace / 'cache', self.opt.hints)
+        try:
+            _, cache = generate_cache(self.build, self.workspace / 'cache', self.opt.hints)
+        except HintError as exc:
+            self.finding({'kind': 'invalid_hints', 'detail': str(exc)})
+            self.outcome = 'harness_blocked';return
         self.record('start', fingerprint=cache['fingerprint'], expected_zones=self.opt.expect_zone,
                     cache_errors=cache['errors'], no_model_api=True)
         self.launch()
@@ -324,7 +342,7 @@ class Driver:
             except (RuntimeError, subprocess.TimeoutExpired) as exc:
                 if not entered_game and now - self.live_started < 40:
                     time.sleep(.5);continue
-                self.finding({'kind': 'hang', 'detail': str(exc)})
+                self.finding({'kind': 'hang', 'detail': f'observation request failed ({type(exc).__name__})'})
                 self.outcome = 'findings';return
             waiting_for_sample = False
             for command, response in zip(('state', 'objectives', 'events'), (state, objectives, events)):
@@ -434,7 +452,7 @@ class Driver:
             if d <= self.goal.get('radius', 65):
                 if arrival_since is None:
                     arrival_since = now
-                if self.goal['kind'] in ('use', 'objective_use', 'link') and now - last_input > 1.5:
+                if (self.goal.get('requires_use') or self.goal['kind'] in ('use', 'objective_use', 'link')) and now - last_input > 1.5:
                     self.command('script controlPlayerHeroWithAI(0)')
                     self.command('tap ' + self.opt.use_key)
                     self.command('script controlPlayerHeroWithAI(-1)');last_input = now
@@ -545,7 +563,8 @@ def main(argv=None):
         driver.run()
     except (Exception, KeyboardInterrupt) as exc:
         driver.outcome = 'harness_error'
-        driver.finding({'kind': 'harness_error', 'detail': str(exc)})
+        detail = f'harness request failed ({type(exc).__name__})' if isinstance(exc, subprocess.TimeoutExpired) else str(exc)
+        driver.finding({'kind': 'harness_error', 'detail': detail})
     finally:
         driver.finish()
     return 0 if driver.outcome == 'time_budget' and not driver.findings else 1

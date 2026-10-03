@@ -24,8 +24,17 @@ def point(value):
         raise ValueError('invalid navigation point') from exc
 
 
-def nav_data(root):
-    size = float(root.get('cellsize', '0'))
+def nav_data(root, world=None):
+    size = root.get('cellsize')
+    if size is None:
+        from xml1build.buoys import f32, numbers
+        spatial = numbers((world if world is not None else {}).get('mapcellsize', '120 120 120'), 3)
+        if any(not 1 <= v <= 10000 for v in spatial):
+            raise ValueError('invalid spatial cell size')
+        # Match Frame.from_world and the native loader's float32 multiplication.
+        size = f32(f32(spatial[0]) * f32(1 / 3))
+    else:
+        size = float(size)
     if not math.isfinite(size) or not 1 <= size <= 1024:
         raise ValueError('invalid navigation cell size')
     cells = list(dict.fromkeys(point(e.get('p', '')) for e in root.iter('c')))

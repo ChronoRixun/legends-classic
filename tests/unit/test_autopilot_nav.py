@@ -21,6 +21,29 @@ def test_nav_world_coordinates_and_stairs():
     assert any(p['pos'] == (100,20,40) for p in route)
 
 
+def test_nav_missing_cellsize_uses_native_spatial_default():
+    from xml1build.buoys import Frame
+    nav = ET.Element('nav')
+    ET.SubElement(nav, 'c', p='0 0 0')
+    assert nav_data(nav)['cellsize'] == 40
+    for spatial in ('180 120 120', '181 120 120'):
+        world = ET.Element('entity', mapcellsize=spatial, extent_min='0 0 -10', extent_max='1000 1000 100')
+        size = nav_data(nav, world)['cellsize']
+        assert size == Frame.from_world(world, None).size
+        assert Routes(nav_data(nav, world)).points == [(size / 2, size / 2, 0)]
+    nav.set('cellsize', '24')
+    assert nav_data(nav, world)['cellsize'] == 24
+    nav.attrib.clear()
+    for invalid in ('0 120 120', 'nan 120 120', '120 120', '30000 120 120'):
+        world.set('mapcellsize', invalid)
+        try:
+            nav_data(nav, world)
+        except ValueError:
+            pass
+        else:
+            assert False, invalid
+
+
 def test_nav_keeps_explicit_link_and_direction():
     data = grid([(0,0,0),(3,0,100)], [((0,0,0),(3,0,100))])
     g = Routes(data)

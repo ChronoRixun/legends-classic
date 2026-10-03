@@ -71,6 +71,7 @@ class Goal:
     followup_zone: str | None = None
     sources: list[str] = field(default_factory=list)
     optional: bool = False
+    requires_use: bool = False
 
 
 def script_effects(refs, scripts):
@@ -107,15 +108,19 @@ def zone_plan(zone, root, scripts):
     zone = identifier(zone)
     definitions = {e.get('name', '').lower(): {k.lower(): v for k, v in e.attrib.items()}
                    for e in root.iter('entity')}
-    instances = []
+    instances, merged_instances = [], []
     for group in root.iter('entinst'):
         base = definitions.get(group.get('type', '').lower(), {})
         for inst in group:
             if inst.tag.lower() == 'inst':
                 attrs = {**base, **{k.lower(): v for k, v in inst.attrib.items()}}
+                if attrs.get('name'):
+                    merged_instances.append(attrs)
                 pos = vector(attrs.get('pos', ''))
                 if pos and attrs.get('name'):
                     instances.append((attrs, pos))
+    instance_counts = Counter(a['name'].lower() for a in merged_instances)
+    by_instance = {a['name'].lower(): a for a in merged_instances if instance_counts[a['name'].lower()] == 1}
     name_counts = Counter(a['name'].lower() for a, _ in instances)
     anchors = [{'name': a['name'], 'pos': p} for a, p in instances
                if name_counts[a['name'].lower()] == 1 and IDENTIFIER.fullmatch(a['name'])
@@ -169,7 +174,7 @@ def zone_plan(zone, root, scripts):
             if not target or target in relays:
                 continue
             relays.add(target)
-            linked = definitions.get(target, {})
+            linked = by_instance.get(target, {})
             refs.extend(v for k, v in linked.items() if k.endswith('script') and v and '(' not in v)
             relay_queue.append(linked.get('target', ''))
         seen, objectives, targets, bosses, followup = script_effects(refs, scripts)
@@ -216,7 +221,7 @@ def zone_plan(zone, root, scripts):
         optional = bool(functions) and set(functions) <= {'createpopupdialogxml', 'runscript'}
         goal_candidates.append(Goal(name, kind, pos, next_zone=next_zone,
                                     objectives=sorted(objectives), followup_zone=followup,
-                                    sources=sorted(seen), optional=optional))
+                                    sources=sorted(seen), optional=optional, requires_use=use))
     # Stable nearest-neighbour order from the spawn; zone links are tried after local actions.
     ordered, here = [], starts[0] if starts else (0., 0., 0.)
     while goal_candidates:
@@ -252,10 +257,17 @@ def apply_hints(plan, hints):
     return plan
 
 
+class HintError(ValueError):
+    """An explicitly requested hint cannot be used; do not run an unhinted plan."""
+
+
 def generate_cache(build, output, hints=None):
     import xmlb
     from autopilot_nav import nav_data, Routes
     build, output = Path(build).resolve(), external(output)
+    hint_root = Path(hints) if hints is not None else None
+    if hint_root is not None and not hint_root.is_dir():
+        raise HintError('requested hints directory is unavailable')
     inputs = sorted([*build.glob('Maps/**/*.XMLB'), *build.glob('Maps/**/*.xmlb'), *build.glob('Scripts/**/*.py'), *build.glob('Maps/**/*.NAVB'), *build.glob('Maps/**/*.navb')])
     # Windows glob is case-insensitive; do not hash/decode each file twice.
     inputs = sorted(set(inputs))
@@ -277,12 +289,14 @@ def generate_cache(build, output, hints=None):
     for rel, data in maps:
         zone = rel.split('/', 1)[1].rsplit('.', 1)[0].lower()
         try:
-            plans[zone] = zone_plan(zone, xmlb.decode(data), scripts)
+            root = xmlb.decode(data)
+            plans[zone] = zone_plan(zone, root, scripts)
             plan = plans[zone]
             plan['navigation'] = {'source': 'missing_nav', 'cells': [], 'links': []}
             if zone in navs:
                 try:
-                    plan['navigation'] = nav_data(xmlb.decode(navs[zone]))
+                    world = next((e for e in root.iter('entity') if e.get('name', '').lower() == 'world'), None)
+                    plan['navigation'] = nav_data(xmlb.decode(navs[zone]), world)
                 except (ValueError, IndexError, struct.error, RecursionError):
                     plan['navigation']['source'] = 'invalid_or_empty_nav'
             cells = plan['navigation']['cells']
@@ -300,10 +314,17 @@ def generate_cache(build, output, hints=None):
                         plan['routes_from_start'][goal['name']] = {'points': graph.route(plan['starts'][0], goal['pos'])}
                     except ValueError as exc:
                         plan['routes_from_start'][goal['name']] = {'error': str(exc)}
-            if hints and (Path(hints) / (zone + '.json')).is_file():
-                raw = (Path(hints) / (zone + '.json')).read_bytes()
-                digest.update(zone.encode());digest.update(raw)
-                plans[zone] = apply_hints(plans[zone], json.loads(raw))
+            if hint_root is not None:
+                try:
+                    raw = (hint_root / (zone + '.json')).read_bytes()
+                    plans[zone] = apply_hints(plans[zone], json.loads(raw))
+                    digest.update(zone.encode());digest.update(raw)
+                except FileNotFoundError:
+                    pass  # Per-zone hints are optional within the requested directory.
+                except (OSError, ValueError, TypeError, RecursionError) as exc:
+                    raise HintError(f'{zone}: invalid requested hint ({type(exc).__name__})') from None
+        except HintError:
+            raise
         except (ValueError, IndexError, KeyError, RecursionError, struct.error) as exc:
             errors.append({'zone': zone, 'error': type(exc).__name__})
     cache = {'schema': SCHEMA, 'fingerprint': digest.hexdigest(), 'plans': plans, 'errors': errors}

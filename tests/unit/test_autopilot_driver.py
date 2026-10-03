@@ -131,6 +131,155 @@ def test_autopilot_driver_no_observation_is_never_a_clean_budget_exit():
             assert driver.findings and not driver.monitor.observe.called
 
 
+def test_autopilot_driver_pipe_failures_do_not_serialize_helper_paths():
+    private = str(Path('synthetic_private_workspace').resolve())
+    for failure in (subprocess.TimeoutExpired(['python', private, '_pipe', private], 8),
+                    RuntimeError('helper failed in ' + private)):
+        with simulated_run(seconds=41) as (driver, _, request):
+            request.side_effect = failure
+            driver.run()
+            assert driver.outcome == 'findings' and driver.findings[0]['kind'] == 'hang'
+            assert private not in driver.findings[0]['detail'].replace('\\\\', '\\')
+            assert type(failure).__name__ in driver.findings[0]['detail']
+
+
+def test_autopilot_driver_action_timeout_is_redacted_by_top_level_handler():
+    private = str(Path('synthetic_private_workspace').resolve())
+    failure = subprocess.TimeoutExpired(['python', private, '_pipe', private, 'tap E'], 8)
+    findings = []
+    driver = SimpleNamespace(run=Mock(side_effect=failure), finish=Mock(), finding=findings.append,
+                             findings=findings, outcome='not_started')
+    with patch.object(autopilot, 'Driver', return_value=driver), patch.object(autopilot.os, 'name', 'nt'):
+        assert autopilot.main(['run', 'synthetic_workspace', '--dll', 'synthetic.dll']) == 1
+    assert findings[0]['kind'] == 'harness_error' and driver.finish.called
+    assert private not in findings[0]['detail'].replace('\\\\', '\\')
+    assert 'TimeoutExpired' in findings[0]['detail']
+
+
+def test_autopilot_driver_uses_use_activated_fight_and_boss_triggers():
+    import xml.etree.ElementTree as ET
+    from autopilot_core import zone_plan
+    from test_autopilot import snapshot
+    for boss in (False, True):
+        for activation in ('actonuse', 'actontouch'):
+            root = ET.Element('map')
+            ET.SubElement(root, 'entity', name='switch_type', classname='gameent',
+                          actscript='fake/trigger', **{activation: 'true'})
+            group = ET.SubElement(root, 'entinst', type='switch_type')
+            ET.SubElement(group, 'inst', name='switch_test', pos='0 0 0')
+            ET.SubElement(root, 'entity', name='spawn_type', classname='monsterspawner', character='enemy_test')
+            group = ET.SubElement(root, 'entinst', type='spawn_type')
+            ET.SubElement(group, 'inst', name='spawn_test', pos='100 0 0')
+            source = 'spawn("spawn_test")'
+            if boss:
+                source += '\nshowHealthBar("spawn_test")'
+            plan = zone_plan('fake/room', root, {'fake/trigger': source})
+            assert plan['goals'][0]['kind'] == ('boss_trigger' if boss else 'fight_trigger')
+            with simulated_run() as (driver, _, request):
+                driver.opt.goal_timeout = 120
+                driver.opt.use_key = 'E'
+                driver.command = Mock()
+                driver.last_zone = 'fake/room'
+                driver.plan = plan
+                state = {**snapshot(), 'script_controls_locked': False}
+                request.side_effect = lambda *_: [copy.deepcopy(state), observations()[1], observations()[2]]
+                with patch('sys.stdout', new_callable=io.StringIO):
+                    driver.run()
+                commands = [call.args[0] for call in driver.command.call_args_list]
+                assert ('tap E' in commands) == (activation == 'actonuse'), (boss, activation, commands)
+                assert not driver.findings
+
+
+def test_autopilot_driver_invalid_requested_hints_block_before_launch():
+    import xmlb
+    from autopilot_core import generate_cache
+    from test_autopilot import scene
+    with tempfile.TemporaryDirectory() as folder:
+        root = Path(folder)
+        build = root / 'build'
+        (build / 'Maps/fake').mkdir(parents=True)
+        (build / 'Maps/fake/room.XMLB').write_bytes(xmlb.encode(scene()))
+        hints = root / 'hints'
+        (hints / 'fake').mkdir(parents=True)
+        hint_file = hints / 'fake/room.json'
+        for content in ('{', '{"order":["absent_test"]}', '{"responses":{"switch_test":-1}}',
+                        '{"order":"exit_test"}', '{"order":["exit_test"]}'):
+            hint_file.write_text(content)
+            valid = content == '{"order":["exit_test"]}'
+            with simulated_run() as (driver, _, request), \
+                 patch.object(autopilot, 'generate_cache', side_effect=generate_cache):
+                driver.workspace, driver.build, driver.opt.hints = root, build, hints
+                driver.run()
+                if valid:
+                    assert driver.outcome == 'time_budget' and driver.launch.called
+                    _, cache = generate_cache(build, root / 'cache', hints)
+                    assert cache['plans']['fake/room']['goals'][0]['name'] == 'exit_test'
+                else:
+                    assert driver.outcome == 'harness_blocked'
+                    assert driver.findings and not driver.launch.called and not request.called
+                    assert str(root) not in driver.findings[0]['detail']
+        for unavailable in (root / 'absent_hints', hint_file):
+            with simulated_run() as (driver, _, _), \
+                 patch.object(autopilot, 'generate_cache', side_effect=generate_cache):
+                driver.workspace, driver.build, driver.opt.hints = root, build, unavailable
+                driver.run()
+                assert driver.outcome == 'harness_blocked' and not driver.launch.called
+        read_bytes = Path.read_bytes
+        def unreadable_hint(path):
+            if path == hint_file:
+                raise PermissionError('synthetic unreadable hint: ' + str(path))
+            return read_bytes(path)
+        with simulated_run() as (driver, _, _), \
+             patch.object(autopilot, 'generate_cache', side_effect=generate_cache), \
+             patch.object(Path, 'read_bytes', unreadable_hint):
+            driver.workspace, driver.build, driver.opt.hints = root, build, hints
+            driver.run()
+            assert driver.outcome == 'harness_blocked' and not driver.launch.called
+            assert 'PermissionError' in driver.findings[0]['detail']
+            assert str(root) not in driver.findings[0]['detail']
+
+
+def test_autopilot_driver_recovery_accepts_verified_transition_without_loading_sample():
+    from test_autopilot import snapshot
+    dead = snapshot(1000)
+    dead['party'][0].update(alive=False, health=0)
+    live = snapshot(2000)
+    loading = {**snapshot(2500), 'loading': True}
+    survivor = {**dead['party'][0], 'name': 'survivor_test', 'entity_id': 4, 'alive': True, 'health': 10}
+    partial = copy.deepcopy(dead)
+    partial['party'].append(survivor)
+    revived = copy.deepcopy(live)
+    revived['party'].append(survivor)
+    for before, samples, expected in (
+        (dead, [live], True),
+        (partial, [revived], True),
+        (live, [{**snapshot(3000), 'zone': 'fake/next'}], True),
+        (live, [loading, snapshot(3000)], True),
+        (partial, [{**partial, 'sampled_ms': 2000}], False),
+        (live, [snapshot(3000)], False),
+        (dead, [snapshot(1000)], False),
+        (dead, [snapshot(500)], False),
+        (dead, [{**live, 'mode': 'menu', 'menu_open': True}], False),
+        (dead, [{**live, 'error': 'unsupported synthetic sample'}], False),
+    ):
+        with simulated_run() as (driver, _, request):
+            driver.state = copy.deepcopy(before)
+            driver.monitor = autopilot.Monitor()
+            driver.saved_games = Mock(return_value=[Path('saveslot1.save')])
+            driver.command = Mock()
+            responses = iter(samples)
+            last = samples[-1]
+            request.side_effect = lambda *_: [copy.deepcopy(next(responses, last))]
+            assert driver.recover() is expected, (before, samples)
+            if expected:
+                assert driver.state == last
+                assert driver.command.call_args_list[-1].args[0] in ('console loadgame', 'tap ENTER')
+                assert driver.command.call_count == len(samples)
+                assert not driver.findings
+            else:
+                assert driver.findings[-1]['kind'] == 'recovery_failed'
+
+
 def test_autopilot_driver_evidence_uses_relative_screenshot_paths():
     for capture in ('success', 'timeout', 'error'):
         with tempfile.TemporaryDirectory(dir=Path(__file__).resolve().parents[2]) as folder:

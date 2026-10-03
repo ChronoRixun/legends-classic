@@ -56,6 +56,33 @@ def test_autopilot_script_graph_cycles_and_conditional_followups():
     assert a.script_effects(['fake/a'], scripts)[-1] is None
 
 
+def test_autopilot_relay_chain_resolves_merged_instance_names():
+    root = ET.Element('map')
+    ET.SubElement(root, 'entity', name='switch_type', classname='gameent', actonuse='true', target='RELAY_A')
+    group = ET.SubElement(root, 'entinst', type='switch_type')
+    ET.SubElement(group, 'inst', name='switch_test', pos='0 0 0')
+    ET.SubElement(root, 'entity', name='relay_type', classname='relayent', actscript='fake/default')
+    group = ET.SubElement(root, 'entinst', type='relay_type')
+    # Instances override the shared type; target names are case-insensitive.
+    ET.SubElement(group, 'inst', name='relay_a', pos='20 0 0', target='relay_b', actscript='fake/on_a')
+    ET.SubElement(group, 'inst', name='relay_b', pos='40 0 0', target='relay_a', actscript='fake/on_b')
+    scripts = {'fake/default': 'objective("wrong_test","COMPLETE")',
+               'fake/on_a': 'objective("first_test","COMPLETE")',
+               'fake/on_b': 'objective("second_test","COMPLETE")'}
+    goal = a.zone_plan('fake/room', root, scripts)['goals'][0]
+    assert goal['kind'] == 'objective_use'
+    assert goal['objectives'] == ['first_test', 'second_test']
+    assert goal['sources'] == ['fake/on_a', 'fake/on_b']
+    # Relays need no location for script inspection.
+    for inst in group:
+        del inst.attrib['pos']
+    assert a.zone_plan('fake/room', root, scripts)['goals'][0] == goal
+    # Duplicate instance names must not silently choose one relay's behavior.
+    ET.SubElement(group, 'inst', name='RELAY_A', actscript='fake/default')
+    goal = a.zone_plan('fake/room', root, scripts)['goals'][0]
+    assert goal['objectives'] == []
+
+
 def test_autopilot_identifier_and_hint_safety():
     for value in ('../fake', 'x" )', 'a\nb', '', 'contains space'):
         try:
@@ -136,6 +163,24 @@ def test_autopilot_cache_floor_includes_deep_navigation_cells():
         fallback = cache['plans']['fake/room']
         assert fallback['floor_lower_bound'] == -512
         assert 'navigation' not in fallback['floor_source']
+
+
+def test_autopilot_cache_passes_world_spatial_size_to_navigation():
+    import xmlb
+    with tempfile.TemporaryDirectory() as d:
+        root = Path(d)
+        maps = root / 'build/Maps/fake'
+        maps.mkdir(parents=True)
+        zone = scene()
+        ET.SubElement(zone, 'entity', name='world', mapcellsize='180 120 120')
+        (maps / 'room.XMLB').write_bytes(xmlb.encode(zone))
+        nav = ET.Element('nav')
+        ET.SubElement(nav, 'c', p='1 0 0')
+        (maps / 'room.NAVB').write_bytes(xmlb.encode(nav))
+        _, cache = a.generate_cache(root / 'build', root / 'cache')
+        navigation = cache['plans']['fake/room']['navigation']
+        assert navigation['source'] == 'xml1_nav_encoded_as_navb'
+        assert navigation['cellsize'] == 60
 
 
 def test_autopilot_hang_is_not_masked_by_pipe_responses():
