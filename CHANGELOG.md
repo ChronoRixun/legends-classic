@@ -11,9 +11,14 @@ build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebui
 - **Shadow King's first form can be fought** (the Astral Plane finale). He used to sit on a floating pillar where
   hits never registered; he now starts on the arena floor, away from the party, and his shield phases hold for the
   first game's 30 seconds (SPEC section 36). His Xtreme-power shield break is not recreated; wait the shield out.
+  The fight ends when the real Shadow King falls - his mirror images vanish with him, in any kill order (before,
+  killing an image after him left the fight unfinished; found in a hand play-through).
 - **Emma Frost's introduction in the mansion reaches her questions again** (fourth mansion visit). The
   conversation ended at her last line because its jump into her question menu pointed at another file, which the
   engine cannot follow (SPEC section 39).
+- **Fixed: arriving in the mansion after the Shadow King mission dropped the hero out of the level.** The
+  subbasement's default arrival point sat behind the war room's console desk; it now matches the war room's other
+  visits (SPEC section 41). Found in a hand play-through.
 - Optional objectives are listed as secondary objectives (SPEC section 37). The first game's completion text for
   objectives is still not shown (issue #8).
 - The per-zone music settings the first game's zone files carry were never used by the first game either, so

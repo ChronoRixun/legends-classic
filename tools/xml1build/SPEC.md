@@ -4020,6 +4020,26 @@ They cover scope, CRLF, delayed release ordering, idempotence, named marker sele
 substitution, duplicate rejection, unchanged party/second-form positions, and Master Mold exclusion.
 Drivers and setup: `research/regression/boss_fights/ISSUE2.md`.
 
+### 36.5 The second form's death ends the fight in any kill order (2026-10-02, Owen's hand test)
+
+At 50% the second form (`shadowking2`, spawner `sp_shadowkingtwo`) casts `power_xtreme`: two `spawn_actor` images of
+the character `shadowkingtwo`. They inherit the spawner's death script, `astral/savepx/shadowking_defeated`, which
+counts deaths in the zone var `deadsks` and ends the side mission (objective, popParty back to astral2_3, Professor X's
+conversation 3_9_3_4, the portal, mansion8) at exactly 3. Owen played the fight twice on the 0.1.7 candidate:
+image -> real -> image never ended (an image that dies after the real one runs nothing, so the count stops at 2);
+images first, real last ended normally. XML1's count assumed every death counts.
+
+`boss_phases.end_on_real_death` rewrites the generated script: after the counter is stored it waits 0.5 s and asks
+`alive("shadowking2")`; the fight ends if the count reached 3 OR the real one is gone, a zone var `sk_ending` (read
+and set in the same frame) lets exactly one run end it, and the leftover images are removed (four `remove` calls).
+The original ending body is unchanged; only its condition becomes the decision. Fails closed if the source shape
+changes; idempotent. One deviation from XML1: the last image no longer has to be hunted down once the real one falls.
+
+Not proven in the harness: scripted kills could not drive the first form's death reliably (his own `power_boost`
+damage shield and the pain caps), so neither the broken order nor the control reproduced there; the check is Owen's
+replay of the broken order on the rebuilt test build. Related, separate: issue #28 (arriving in the mansion out of
+bounds after the ending, seen on a run that entered the arena by a test shortcut that skipped pushParty).
+
 ---------------------------------------------------------------------------------------------------------------
 
 ## 37. XML1's objective attributes `required` and `updatedescription` (2026-10-01, audit W10; issue #8)
@@ -4163,3 +4183,22 @@ scratchpad (`tagjump_driver.py`, `tagjump_game/*.png`).
   the copy in a new `x1_tagjump_2_5_10loop` participant and removes the jumper's `conversationEnd`; the menu then
   appears with the conversation unbroken, `profx_disapears` still fades Xavier out, and the menu's own `%END%`
   still runs `astral_legwork`.
+
+
+---------------------------------------------------------------------------------------------------------------
+
+## 41. Player starts outside the walkable area (2026-10-02, issue #28)
+
+mansion/man8/subbasement8's default start `player_start01` (732.275 1535.96 24.0228, `default="true"`, no prevzone)
+is where every load without a matching prevzone arrives - in the campaign, astral/savepx/mission_end's
+`loadMapKeepTeam("mansion/man8/subbasement8")` after the Shadow King side mission. On XMen2.exe it puts the hero
+behind the war room's console desk, between the desk and the map wall: she can slide along the desk, and walking
+towards the room drops her into the void (Owen's hand test; reproduced in the harness with a plain load and a walk).
+The same war room's default start in subbasement7 (701.376 1674.6 24; the zone IGBs are the same size) is in the
+room proper, and in subbasement8 a hero placed there walks to the computer and the stairs. Elevator arrivals
+(player_start08/09) were also checked and are fine; subbasement7's and subbasement1a's defaults are fine.
+
+`start_fixes.fix_player_starts` (run from `scripts.rewrite_data_tree` next to the boss-phase data rewrites) moves
+tabled start instances (`START_FIXES`: zone -> start -> (expected XML1 pos, tested pos)); facing and identity kept;
+an unexpected source position or a missing instance fails the build; a second run is a no-op. Tests:
+tests/unit/test_start_fixes.py (invented zones).

@@ -11,6 +11,7 @@ SHADOW_SCRIPTS = frozenset(('astral/savepx/sk1pain', 'astral/savepx/dropshield')
 SHADOW_START = 'astral/savepx/final_astral'
 SHADOW_ZONE = 'maps/astral/savepx/final_astral'
 SHADOW_FLOOR_MARKER = 'wp_bossmaster3000_04'
+SHADOW_DEFEATED = 'astral/savepx/shadowking_defeated'
 
 
 def _ref(path):
@@ -51,6 +52,37 @@ def guard_before(text, anchor, condition, statement, setup=()):
     return '\r\n'.join(lines)
 
 
+def end_on_real_death(text, store, count_check, real, images, done_var, dispel=4):
+    """SPEC 36.5: a death script shared by a boss and the images he summoned ends the fight when the REAL one is
+    gone, whatever the kill order. XML1 counted three deaths; on XMen2.exe an image that dies after the real one runs
+    nothing, so image -> real -> image never reached the count. After the counter is stored (`store`, a unique line),
+    the script waits half a second, asks alive(real), and the condition line (`count_check`, e.g. 'if n == 3') becomes
+    'if go == 1': the old count still ends it, so does the real one's death; a zone var `done_var` (read and set in
+    the same frame) lets exactly one run end the fight; the leftover images are removed. Fails closed if the source
+    shape changes; a second call is a no-op."""
+    if f'getZoneVar("{done_var}" )' in text:
+        return text
+    lines = text.replace('\r\n', '\n').split('\n')
+    at =[i for i, line in enumerate(lines) if line.strip() == store]
+    check = [i for i, line in enumerate(lines) if line.strip() == count_check]
+    if len(at) != 1 or len(check) != 1 or check[0] < at[0]:
+        raise ValueError(f'end_on_real_death: expected one {store!r} before one {count_check!r}')
+    count = count_check.split()[1]
+    limit = count_check.split()[-1]
+    block = ['go = iadd(0, 0 )',
+             f'if {count} >= {limit}', '     go = iadd(1, 0 )', 'endif',
+             'waittimed ( 0.500 )',
+             f'realalive = alive("{real}" )',
+             'if realalive == 0', '     go = iadd(1, 0 )', 'endif',
+             f'ending = getZoneVar("{done_var}" )',
+             'if ending == 1', '     go = iadd(0, 0 )', 'endif',
+             'if go == 1', f'     setZoneVar("{done_var}", 1 )']
+    block += [f'     remove ( "{images}", "{images}" )'] * dispel + ['endif']
+    lines[check[0]] = lines[check[0]].replace(count_check, 'if go == 1')
+    lines[at[0] + 1:at[0] + 1] = block
+    return '\r\n'.join(lines)
+
+
 def rewrite_script(ref, text):
     ref = _ref(ref)
     if ref in MAGNETO_STAGES:
@@ -71,6 +103,10 @@ def rewrite_script(ref, text):
                              'boss_z = getPosZ("player_start" )',
                              'setPosZ("shadowking", boss_z )'],
                             setup=('boss_alive = alive("shadowking" )',))
+    elif ref == SHADOW_DEFEATED:
+        # SPEC 36.5: the second form's death ends the fight whatever happened to his mirror images
+        text = end_on_real_death(text, 'setZoneVar("deadsks", deadsks )', 'if deadsks == 3', 'shadowking2',
+                                 'shadowkingtwo', 'sk_ending')
     return text
 
 

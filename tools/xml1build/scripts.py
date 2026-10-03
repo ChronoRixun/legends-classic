@@ -50,6 +50,7 @@ from . import common as C
 from . import conversations as CV
 from . import scripts_lint as L
 from . import boss_phases as BP
+from . import start_fixes as SF
 from . import scripts_transform as T
 
 # ----------------------------------------------------------------------------------------------- constants
@@ -1330,6 +1331,7 @@ def rewrite_data_tree(ctx, root, rel) -> int:
     # SPEC 18.1: hero NPCs with XML1's own entity name speak under that name (T.NPC_SPEAKER_CONVERSATIONS)
     npc_speakers = T.npc_speaker_renames(conv_ref) if conversation else {}
     n = BP.rewrite_data(root, r)
+    n += SF.fix_player_starts(root, r)   # SPEC 41: starts that land outside the walkable area
     if conversation:
         n += CV.resolve_cross_file_tagjumps(ctx, root, rel)   # SPEC 39: first, so the copy is marked/rewritten too
         n += _drop_cut_mission_responses(ctx, root, rel)

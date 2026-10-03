@@ -128,3 +128,35 @@ def test_deferred_core_encounter_is_not_rewritten():
     before = ET.tostring(root)
     assert B.rewrite_data(root, 'maps/mastermold/mastermold2') == 0
     assert ET.tostring(root) == before
+
+
+def test_real_death_ends_the_fight_in_any_kill_order():
+    # SPEC 36.5: a death script shared by a boss and his summoned images; invented names
+    src = '\r\n'.join(['n = getZoneVar("fallen" )', 'n = iadd(n, 1 )', 'setZoneVar("fallen", n )',
+                       'if n == 3', '     finish("realm" )', 'endif', ''])
+    out = B.end_on_real_death(src, 'setZoneVar("fallen", n )', 'if n == 3', 'tyrant', 'tyrant_image', 'fallen_done')
+    lines = out.split('\r\n')
+    assert '\n' not in out.replace('\r\n', '')
+    # the old count still ends it; so does the real one's absence; one run only, then the images go
+    assert 'if n >= 3' in lines and 'realalive = alive("tyrant" )' in lines
+    assert lines.index('waittimed ( 0.500 )') < lines.index('realalive = alive("tyrant" )')
+    assert 'ending = getZoneVar("fallen_done" )' in lines and '     setZoneVar("fallen_done", 1 )' in lines
+    assert lines.count('     remove ( "tyrant_image", "tyrant_image" )') == 4
+    # the original condition now reads the decision, and its body is unchanged
+    assert 'if n == 3' not in lines and lines.count('if go == 1') == 2
+    assert lines[lines.index('     finish("realm" )') - 1] == 'if go == 1'
+    # the guard sits after the counter is stored and before the ending
+    assert lines.index('setZoneVar("fallen", n )') < lines.index('go = iadd(0, 0 )') < lines.index('     finish("realm" )')
+    assert B.end_on_real_death(out, 'setZoneVar("fallen", n )', 'if n == 3', 'tyrant', 'tyrant_image',
+                               'fallen_done') == out
+
+
+def test_real_death_rewrite_fails_closed_on_a_changed_source():
+    for src in ('setZoneVar("fallen", n )\r\n', 'if n == 3\r\nsetZoneVar("fallen", n )\r\n',
+                'setZoneVar("fallen", n )\r\nsetZoneVar("fallen", n )\r\nif n == 3\r\n'):
+        try:
+            B.end_on_real_death(src, 'setZoneVar("fallen", n )', 'if n == 3', 'tyrant', 'tyrant_image', 'fallen_done')
+        except ValueError:
+            pass
+        else:
+            raise AssertionError('a missing, misplaced or repeated anchor must fail')
