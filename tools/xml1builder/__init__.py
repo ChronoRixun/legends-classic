@@ -32,7 +32,7 @@ check, packaged tables, PyInstaller one folder, content guard over the bundled d
 launcher's xml1-builder.json) and tested by tools/freeze_smoke.py; CI: .github/workflows/release.yml.
 """
 VERSION = '0.1.7'                 # the builder release (semver; the launcher compares it with the release manifest)
-CONTENT_VERSION = 9               # bumped only when a build's output changes (a rebuild is offered to players)
+CONTENT_VERSION = 10              # bumped only when a build's output changes (a rebuild is offered to players)
 SCHEMA = 1                        # the event schema (the "v" of the hello event)
 MIN_LAUNCHER = '0.0.0'            # release manifest min_launcher: no minimum until the first launcher release with the
                                   # X-Men Legends entry is tagged (then that version; tools/freeze_builder.py)

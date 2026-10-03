@@ -3,6 +3,13 @@
 The builder's releases, newest first. The version is `xml1-builder --version`; the content version is what a
 build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebuild.
 
+## Unreleased - content version 10
+
+- Generate long-range buoy networks from XML1 navigation grids and map bounds for XML2's shared hero, ally and
+  enemy navigator (SPEC section 42). XML1 has no buoy data to convert. Generation respects native coordinate and
+  pool limits, conservatively excludes gates/special transitions, and reports remaining coverage gaps.
+  Empty navigation stays empty; per-zone build notes and validator warnings expose the limitations.
+
 ## v0.1.7 - content version 9 (needs XML2 Fix 1.3.0)
 
 - **Magneto's shield works again** (Asteroid M). When he raises it he cannot be hurt until his helpers are beaten -
