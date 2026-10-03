@@ -3947,9 +3947,11 @@ def main(argv=None):
                     help='front end the build was made with (default: from its _build/report.json)')
     ap.add_argument('--jobs', type=int, default=max(1, (os.cpu_count() or 2) // 2))
     a = ap.parse_args(argv)
-    frontend = a.frontend or getattr(C.args_for_out(a.out, a.base), 'frontend', None)
+    recorded = C.args_for_out(a.out, a.base)
+    frontend = a.frontend or getattr(recorded, 'frontend', None)
     args = C.default_args(out=a.out, base=a.base, no_movies=a.no_movies, start_zone=a.start_zone, tour=a.tour,
-                          jobs=a.jobs, forced_teams=a.forced_teams, start_party=a.start_party, frontend=frontend)
+                          jobs=a.jobs, forced_teams=a.forced_teams, start_party=a.start_party, frontend=frontend,
+                          buoys=getattr(recorded, 'buoys', None))   # SPEC 42: V22 checks the mode the build used
     reg = C.Registry.load(Path(a.out) / '_build' / 'registry.json')
     ctx = C.BuildContext(a.out, a.base, args=args, registry=reg)
     ok = C.run_step(ctx, 'validate', run)

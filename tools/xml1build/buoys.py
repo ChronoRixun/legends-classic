@@ -565,9 +565,8 @@ def validate(v, ck):
     (never trusting cached build notes). Player builds (builder mode) check the structural invariants only: the
     full regeneration doubles the stage's time on every rebuild, and the same code path already ran in zones.
     --buoys empty builds must carry empty networks everywhere."""
-    import os
     from . import common as C
-    mode = (v.ctx.opt('buoys') or os.environ.get('XML1BUILD_BUOYS') or 'generate').lower()
+    mode = (v.ctx.opt('buoys') or 'generate').lower()
     full = not C.builder_mode(v.ctx.args)
     details = {}
     empty = []
