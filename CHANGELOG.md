@@ -3,7 +3,7 @@
 The builder's releases, newest first. The version is `xml1-builder --version`; the content version is what a
 build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebuild.
 
-## Unreleased - content version 9
+## v0.1.7 - content version 9 (needs XML2 Fix 1.3.0)
 
 - **Magneto's shield works again** (Asteroid M). When he raises it he cannot be hurt until his helpers are beaten -
   the acolytes, then Sabretooth, then Mystique - as in the first game; before, the whole fight could be brute-forced
