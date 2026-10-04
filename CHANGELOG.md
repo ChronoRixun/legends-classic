@@ -18,6 +18,17 @@ build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebui
 - Restore HAARP fire-wall loop startup and restart the visual at its scripted destination, preserving the non-smart damage path (SPEC 45).
   Before-and-after runtime verification is tracked with this issue PR.
 
+- **Fixed: black spikes on some enemies** (issue #11; needs XML2 Fix 1.3.1) - the HAARP officer, the GRSO
+  nullifier and flamethrower. They looked like broken weapons but were the character's own outline, drawn with
+  another enemy's bones because the game treated the two outlines as the same mesh. The build now asks the XML2
+  Fix to compare the bones too (`[Game] GeometrySharingBlendIndices`, SPEC section 44).
+
+- **Fixed: the fourth hero having no powers in crowded zones** (issue #31; needs XML2 Fix 1.3.1). The game keeps
+  at most 19 fighting and power styles loaded at once, and several zones of the first game need up to 22 with a
+  full party, so the hero seated last lost their special moves. The build now asks the XML2 Fix for a registry of
+  32 (`[Limits] FightStyles`), and a new check (V23) counts every zone's styles for the worst possible party
+  against it (SPEC section 43).
+
 - Generate long-range buoy networks from XML1 navigation grids and map bounds for XML2's shared hero, ally and
   enemy navigator (SPEC section 42). XML1 has no buoy data to convert. Generation respects native coordinate and
   pool limits, conservatively excludes gates/special transitions, and reports remaining coverage gaps.

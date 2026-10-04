@@ -4314,6 +4314,75 @@ caps, connectivity, deterministic output, special-link/script-gate exclusion, ti
 Live before/after routes, ally/enemy behavior, pre-change saves, setup actions and runtime limitations are
 recorded in the separate draft PR and external evidence. Autopilot campaign acceptance remains parked.
 
+## 43. The fighting / power style registry (2026-10-04, issue #31)
+
+### 43.1 The limit
+
+XMen2.exe keeps every loaded style file - fighting styles, power styles, movesets and `data/shared_nodes` - in one
+registry of 19 entries (manager 0x78a800; registration 0x4ffb30). A name that is already registered costs nothing;
+a new one when the count is 19 is refused at 0x4ffb8a without a report. The permanent packages and the zone package
+register first, then the party's packages in seat order, so the hero seated last loses the power style and has no
+special moves (the fourth hero in arbiter/a_int/arb2_2 and sewers/grso/sewers3_1_2; swapping seats moves the
+failure to whoever is last). XML1's zones need up to 22 with a four-hero party: 33 converted zones are over 19
+for some party.
+
+Trimming content cannot fix this: the styles are the zone's enemies' and the party's own.
+
+### 43.2 The raise
+
+xml2-fix 1.3.1 `[Limits] FightStyles` (20..32) rebuilds the registry with the configured size; the port's ini asks
+for `fix_ini.LIMITS['FightStyles']` = 32, and `REQUIRED_XML2FIX` is 1.3.1. 32 keeps both of the registry's bitmaps
+at one word, which is the most the fix supports, and leaves ten entries over the measured maximum for styles a
+script loads later. An older xml2-fix ignores the key, and the registry stays at 19.
+
+`tools/harness.py` writes the same `[Limits]` block, so test installs carry the raise too.
+
+### 43.3 V23
+
+`style_budget.validate` counts, per converted zone, the distinct style files of: the permanent packages, the zone
+package, the packages of the zone's CHRB characters, and the worst four-hero party (every combination of the
+playable herostat entries; a zone with combat off loads the heroes' `_nc` packages). More than the capacity the ini
+asks for is an error; exactly the capacity is a warning (no room for a scripted load). Without the key the check
+counts against the game's own 19. Scripted spawns outside the CHRB roster and temporary power styles are not
+modeled.
+
+Invented-package tests cover the capacity value, distinct-file counting, shared movesets counted once, the worst
+party, NPC packages, combat-off zones and the stock registry. On a full build: 198 zones, 33 over 19, the largest
+22 (astral/ast1/astral4_3).
+
+## 44. Enemy outlines drawn with another skin's bones (2026-10-04, issue #11)
+
+### 44.1 What was reported and what it is
+
+Issue #11 reported black, spiky "weapons" on some enemies (the HAARP officer, the GRSO nullifier and flamethrower).
+The weapons are fine. The spikes are the character's own black outline pass, deformed.
+
+When XMen2.exe caches a model it runs a sharing pass that replaces a geometry with an identical one already loaded
+in the same resource group (comparator 0x56D210, decision 0x56D700). The comparison covers format, counts,
+positions and weights but not the packed blend indices. XML1's enemy skins reuse one outline shape across skins
+with different skeleton indices: the officer's outline (534 vertices) equals the soldier's in every compared field,
+and differs in the index field of every vertex. The engine hands the officer the soldier's outline, and the
+officer's skin palette reads those indices as other bones.
+
+Shown at runtime with a logging hook (no debugger): blocking only that one substitution gave a normal officer in
+5 of 5 launches with the soldier unchanged; hiding only the gun left the spikes. The async-load theory was ruled
+out (both weapons loaded synchronously and completely in every launch). Earlier package-content, package-weight,
+package-identity and spawn-position theories had already been falsified over repeated launches.
+
+### 44.2 The fix
+
+xml2-fix 1.3.1 `[Game] GeometrySharingBlendIndices=1` adds the missing comparison inside the candidate loop: a
+candidate whose packed indices differ is skipped, and the search goes on to the next one. Vertex-array layouts
+the fix does not recognise keep the game's own comparison. It is off without the key (stock XML2 is not known to
+need it), so `fix_ini.game_keys` writes it for every XML1 build, and harness installs carry it.
+
+No data changes: the skins are XML1's. Measured in four zones the fix rejected 0 to 2 reuses out of 154 to 1657
+comparisons, with memory within about 1.3 MiB.
+
+Not covered: only the HAARP officer and soldier (5 launches) and the GRSO nullifier and flamethrower (1 launch
+each) were checked in game. The comparator's other gaps (normals, extra UV sets, a count-reuse defect found in
+static analysis) are not addressed.
+
 ## 45. HAARP fire-wall loop startup and relocation (issue #12)
 
 The wall effect and its textures are present. Two engine behaviours hid it: the
