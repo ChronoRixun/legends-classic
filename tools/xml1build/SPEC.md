@@ -4313,3 +4313,23 @@ Invented-grid tests cover encoding round trips, negative coordinates, geometry d
 caps, connectivity, deterministic output, special-link/script-gate exclusion, tilted gates and empty grids.
 Live before/after routes, ally/enemy behavior, pre-change saves, setup actions and runtime limitations are
 recorded in the separate draft PR and external evidence. Autopilot campaign acceptance remains parked.
+
+## 48. STAT pickups grant an unspent attribute point (issue #10)
+
+The STAT item's activation now calls the companion xml2-fix addStatPoints function
+with _ACTIVATOR_ and one point. The player can choose which attribute to raise;
+the former fixed body boost is removed. Item identity, display/model references and
+pickup placement remain unchanged. The call is in the versioned API and is recognized
+by lint for both forced-team modes, like addSkillPoints.
+
+The engine function uses the same character-name resolver as addSkillPoints, then
+reads/writes the native saved attribute-point word at CStats+4+0x16 through the retail
+getter/setter. It does not change XP, levels, skill points or a fixed attribute.
+Amounts outside 1..20 and signed counter overflow are refused. The new function is
+appended to the registration table; existing function indices remain unchanged, and
+the total including native builtins is 318 of the engine's 320 names.
+
+Synthetic grant/amount/overflow tests and a native accessor test over a synthetic
+saved block cover the offline contract. Actual pickup ownership, spending the point
+and save/reload remain manual checks. The builder requires the planned companion
+XML2 Fix 1.3.2 release; an old DLL cannot execute this new call.

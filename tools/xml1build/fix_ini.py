@@ -103,7 +103,8 @@ FORCED_TEAMS_VALUES = ('1', '0', 'off')
 
 # the xml2-fix release a builder-made play build needs (every key above is in v1.2.0; v1.3.0: the SKILL pickup's
 # addSkillPoints, the conversation hooks [Game] AutoAdvance / ReplyVoices / ReplyCursor - SPEC 32, 34)
-REQUIRED_XML2FIX = '1.3.0'
+# Planned companion release: addStatPoints (SPEC 48).
+REQUIRED_XML2FIX = '1.3.2'
 
 # every key the port may write (the builder drops the ones a build does not need); the launcher owns the rest
 PORT_OWNED = {'Game': ('NewGameTeam', 'ResetUnlocks', 'SaveFolder', 'ForcedTeams', 'PostgameScript', 'WindowTitle',

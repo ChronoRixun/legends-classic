@@ -106,17 +106,18 @@ ITEM_KEEP_ATTRS = ('name', 'displayname', 'description', 'model', 'cost', 'onact
 # the port's manifest requires xml2-fix >= fix_ini.REQUIRED_XML2FIX, and no data form can express a fallback (a second
 # statement would run as well as the call, not instead of it).
 SKILL_PICKUP_SCRIPT = "addSkillPoints('_ACTIVATOR_',1)"
+STAT_PICKUP_SCRIPT = "addStatPoints('_ACTIVATOR_',1)"  # SPEC 48: one unspent attribute point
 # XML1 pickup types XMen2.exe does not have (its types are item/potion/equipment/money, 0x47af1a..0x47af85):
 # the pickup becomes an 'item' that activates on pickup and runs the XML2 script call closest to its XML1
 # effect. XP / skill amounts are engine-defined in XML1 (not in data): 5000 XP is in the range XML2 retail
-# scripts award (awardXPToPlayable 2000..40000) and is a tuning value, as is the stat XML2 boosts.
+# scripts award (awardXPToPlayable 2000..40000) and is a tuning value. Stat/skill pickups keep one free point.
 ITEM_TYPE_MAP = {
     'xp': ('item', {'activateonpickup': 'true', 'onactivate': 'awardXPToPlayable(5000)'},
            "XML1 'xp' pickup -> awardXPToPlayable(5000) (XML2 has no xp item type; --xp-curve xml2: an XML2-scaled "
            "tuning value; --xp-curve xml1 gives each pickup its own XP_<count> item, XP_PICKUP_SCRIPT)"),
-    'stat': ('item', {'activateonpickup': 'true', 'onactivate': "permanentStatBoost('_ACTIVATOR_','body')"},
-             "XML1 free stat point -> permanentStatBoost('_ACTIVATOR_','body'), XML2's stat-booster call "
-             "(e.g. Maps/Act1/genosha/genosha3); XML2 has no stat item type or free-stat-point call"),
+    'stat': ('item', {'activateonpickup': 'true', 'onactivate': STAT_PICKUP_SCRIPT},
+             "XML1 free stat point -> xml2-fix addStatPoints('_ACTIVATOR_',1): one unspent attribute point "
+             "to the collector, using the native saved point counter (SPEC 48)"),
     'skill': ('item', {'activateonpickup': 'true', 'onactivate': SKILL_PICKUP_SCRIPT},
               "XML1 free skill point -> xml2-fix addSkillPoints('_ACTIVATOR_',1): one unspent skill point to the hero "
               "who takes it (SPEC 32; XML2 has no skill item type and no skill-point call of its own)"),
