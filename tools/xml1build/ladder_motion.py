@@ -49,15 +49,15 @@ def rewrite_script(ref, lines):
     signal = match.group(1)
     original = ['setAIActive("_OWNER_","FALSE")', f'{signal}=getIDString("_OWNER_")',
                 canon(lines[plays[0]]), f'waitsignal({signal})', 'setAIActive("_OWNER_","TRUE")']
-    rewritten = original[:2] + ['setNoCollide("_OWNER_","TRUE")', canon(start)] + original[2:4] + [
-        'setNoCollide("_OWNER_","FALSE")', original[4]]
+    rewritten = original[:2] + ['setNoCollide("_OWNER_","TRUE")', 'setNoClip("_OWNER_","TRUE")', canon(start)] + original[2:4] + [
+        'setNoClip("_OWNER_","FALSE")', 'setNoCollide("_OWNER_","FALSE")', original[4]]
     if statements == rewritten:
         return lines
     if statements != original:
         raise ValueError(f'{ref}: unexpected ladder animation or completion signal')
     out = list(lines)
-    out.insert(waits[0] + 1, 'setNoCollide("_OWNER_", "FALSE" )')
-    out[plays[0]:plays[0]] = ['setNoCollide("_OWNER_", "TRUE" )', start]
+    out[waits[0] + 1:waits[0] + 1] = ['setNoClip("_OWNER_", "FALSE" )', 'setNoCollide("_OWNER_", "FALSE" )']
+    out[plays[0]:plays[0]] = ['setNoCollide("_OWNER_", "TRUE" )', 'setNoClip("_OWNER_", "TRUE" )', start]
     return out
 
 

@@ -4332,14 +4332,24 @@ Unexpected interpolation, rotation, channel lengths or duration fail the build.
 No key coordinates or game binary are distributed in this repository.
 
 The two original descent scripts start the relative path before playing their original
-EA_ZONE animation and retain their original waitsignal expression. Collision is disabled
-during the slide and restored after the signal, as in XML2's own tutorial ladder script.
+EA_ZONE animation and retain their original waitsignal expression. World clipping and entity collision are disabled
+during the slide and restored after the signal. Entity collision alone does not bypass
+the world trace at the top of the ladder.
 The path, package entry and normal IGB budget are generated together. Affected zones
 also check the native 16-path registry limit. Each path remains relative to its actor,
 so repeated spawns and differently oriented ladders share it. The bad sound-path
 spawnscript on sewers3_1_2's ladderdude02 is unchanged, as are ladder objectives.
 
-Static analysis and generated-file inspection establish the source movement and output
-structure. Runtime validation remains required: animation/path synchronization, signal
-delivery, end position, collision restoration, repeated spawns and save/reload. This
-change is a review candidate until those checks pass; it is not a completed hand test.
+XML2 Fix 1.3.2's opt-in `[Game] CharacterLadderPaths=1` is required. Characters
+do not schedule the generic native path evaluator, and their goal predicate bypasses
+it when no ordinary movement goal is set. The companion enables native scheduling
+and path evaluation only for these two generated resources. It retains native timing,
+relative movement, and final callback handling; ordinary character movement is unchanged.
+The builder owns the key and requires 1.3.2. Version 1.3.1 remains reserved for the
+fighting-style registry and geometry-sharing changes.
+
+Controlled in-game before/after checks in Sewers and Arbiter show the original soldiers
+stranded above the floor and converted soldiers descending to it. Repeated overlapping
+Sewers spawns also land and restore collision. See `docs/issue-32-validation.md` for
+measurements and limits: these are isolated authored-spawner tests, not a campaign
+playthrough; saving during descent and reloading in another process remains unverified.

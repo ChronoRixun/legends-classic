@@ -30,6 +30,8 @@ def test_ladder_script_preserves_animation_signal_and_restores_collision():
     assert [x for x in out if x.startswith(('playanim', 'waitsignal'))] == lines[2:4]
     assert out.index('setNoCollide("_OWNER_", "TRUE" )') < out.index(lines[2])
     assert out.index('setNoCollide("_OWNER_", "FALSE" )') > out.index(lines[3])
+    assert out.index('setNoClip("_OWNER_", "TRUE" )') < out.index(lines[2])
+    assert out.index('setNoClip("_OWNER_", "FALSE" )') > out.index(lines[3])
     assert any('startMotionPath' in x and '"TRUE", ""' in x for x in out)
     assert L.rewrite_script('sewers/grso/grso_ladder_down', out) == out
     assert L.rewrite_script('object_ambi/sewers/grso_slide_down', lines) == lines

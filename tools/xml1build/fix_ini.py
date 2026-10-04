@@ -103,11 +103,12 @@ FORCED_TEAMS_VALUES = ('1', '0', 'off')
 
 # the xml2-fix release a builder-made play build needs (every key above is in v1.2.0; v1.3.0: the SKILL pickup's
 # addSkillPoints, the conversation hooks [Game] AutoAdvance / ReplyVoices / ReplyCursor - SPEC 32, 34)
-REQUIRED_XML2FIX = '1.3.0'
+# Character ladder paths require the planned 1.3.2 engine companion (SPEC 46).
+REQUIRED_XML2FIX = '1.3.2'
 
 # every key the port may write (the builder drops the ones a build does not need); the launcher owns the rest
 PORT_OWNED = {'Game': ('NewGameTeam', 'ResetUnlocks', 'SaveFolder', 'ForcedTeams', 'PostgameScript', 'WindowTitle',
-                       'EndHeroUnlock', 'MainMenuItems', 'NewGamePlus', 'ReviewStats', 'XPCurve'),
+                       'EndHeroUnlock', 'MainMenuItems', 'NewGamePlus', 'ReviewStats', 'XPCurve', 'CharacterLadderPaths'),
               'Limits': ('ActorSlots', 'ResourceNames', 'ItemEnhancements'),
               'Online': ('GameVersion',)}
 
@@ -230,6 +231,7 @@ def game_keys(*, xml1_opening=True, save_folder=None, forced_teams='1', add_hero
         game['ReviewStats'] = review_stats
     if xp_curve:
         game['XPCurve'] = xp_curve
+    game['CharacterLadderPaths'] = '1'
     return game
 
 

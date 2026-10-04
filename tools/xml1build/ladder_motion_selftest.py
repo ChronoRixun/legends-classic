@@ -35,6 +35,8 @@ def check(out, source_root=None):
         assert f'"{path}/{L.PATH_NODE}"' in script and enum in script
         assert script.count('waitsignal') == 1 and 'waittimed' not in script
         assert script.index('startMotionPath') < script.index('playanim') < script.index('waitsignal')
+        assert L.rewrite_script(ref, script.splitlines()) == script.splitlines()
+        assert script.count('setNoClip') == 2 and script.count('setNoCollide') == 2
         checked_paths.add(path + '/' + L.PATH_NODE)
     affected = 0
     for pkg in (out / 'Packages/generated/maps').rglob('*.PKGB'):

@@ -5,7 +5,7 @@ build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebui
 
 ## Unreleased - content version 11
 
-- Preserve authored ladder descent through source-derived relative motion paths (SPEC 46).
+- Preserve authored ladder descent through source-derived relative motion paths and the XML2 Fix 1.3.2 CharacterLadderPaths companion (SPEC 46).
   Before-and-after runtime verification is tracked with this issue PR.
 
 - Generate long-range buoy networks from XML1 navigation grids and map bounds for XML2's shared hero, ally and
