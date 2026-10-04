@@ -4314,7 +4314,37 @@ caps, connectivity, deterministic output, special-link/script-gate exclusion, ti
 Live before/after routes, ally/enemy behavior, pre-change saves, setup actions and runtime limitations are
 recorded in the separate draft PR and external evidence. Autopilot campaign acceptance remains parked.
 
-## SPEC (number assigned at merge): Conversation speaker HUD-head residency
+## 45. HAARP fire-wall loop startup and relocation (issue #12)
+
+The wall effect and its textures are present. Two engine behaviours hid it: the
+harm parser at 0x4396a0 clears the loop-on bit for positive firstact, and a running
+loop retains its old world placement after copyOriginAndAngles moves the entity.
+
+The exact HAARP exterior fire_wall definition gets firstact=0, keeping loopfxstarton
+without entering XML2's smartfire damage mode. The wall is staged underground until
+its authored placement script moves it. This advances its initialization from the
+original one-second delay; placement timing, damage fields and the normal non-smart
+harm handler remain unchanged. An explicit smartfire configuration is not overwritten.
+
+The six placement scripts hide the wall before the original act/move sequence and
+show it after the move. Hiding/re-showing restarts the existing loop at the destination.
+Scripts with an act keep it before the move; move-only scripts get no new act. The
+flamer animation, waits, target names and activation count are preserved. Unexpected
+source forms fail conversion rather than silently leaving the effect broken.
+
+A smartfire=true candidate was rejected in game: although restarting its loop made
+it visible, its different scheduling reduced damage. The final conversion does not
+set that flag or change collision flags, damage, extent, health or extinguish reaction.
+
+Controlled before/after proof in haarp_ext01 used fresh processes, the same vulnerable
+Wolverine and the same native hazard relocated to the unobstructed landing area.
+Baseline: no visible fire during damaging contact. Final candidate: visible fire and
+floating damage values. Both completed the matching contact/exit sequence at 57 HP
+from 90. This is an isolated hazard/placement test, not a full campaign playthrough
+or a precise rate benchmark. Local captures and state records are retained outside Git;
+see docs/issue-12-validation.md. Extinguishing and save/reload remain separate checks.
+
+## 49. Conversation speaker HUD-head residency (2026-10-04, issue #13)
 
 Issue #13: with forced parties disabled, a named speaker can be absent from both
 party and zone actors. Conversation portrait creation asks the IGB cache for
@@ -4336,7 +4366,7 @@ same rule applies with forced parties enabled or disabled; zone/NPC presence and
 an arbitrary player's party are not assumed. Existing missing head assets are
 not fabricated.
 
-**V-TBD conversation portraits** independently reads final conversations, stats
+**V24 conversation portraits** independently reads final conversations, stats
 and packages. An available required head without permanent/zone model coverage
 is an error. A missing head whose source asset exists is an error; unavailable
 source heads/stats are separately reported as inherited warnings (V5/V6 still
@@ -4360,7 +4390,7 @@ Cyclops in `mansion/man3/2_1_10` with Wolverine alone. The NYC starting zone
 remained at 36 direct records and loaded/rendered. Across all 198 zones the
 change adds 89 direct model entries in 48 zones (maximum seven per zone), with
 V12 still passing. The largest direct counts are mansion Juggernaut 119 -> 122,
-its demo counterpart 118 -> 121, and mansion4_2 unchanged at 115. V-TBD checks
+its demo counterpart 118 -> 121, and mansion4_2 unchanged at 115. V24 checks
 612 speaker/zone occurrences: 579 covered, 33 inherited occurrences of three
 unavailable source heads, zero available-head gaps.
 

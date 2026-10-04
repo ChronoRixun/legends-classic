@@ -647,7 +647,7 @@ class Validator:
                                ('V20', 'automaps', lambda ck: AM.v20(self, ck)),
                                ('V21', 'skins', lambda ck: SK.validate(self, ck)),
                                ('V22', 'buoys', lambda ck: BY.validate(self, ck)),
-                               ('V-TBD', 'conversation portraits', self.conversation_portraits)):
+                               ('V24', 'conversation portraits', self.conversation_portraits)):
             ck = Check(cid, title)
             self.checks[cid] = ck
             t0 = time.time()

@@ -104,7 +104,7 @@ def test_validator_negative_restore_and_inherited_missing_head():
         x1_stats=lambda: stats,
         ctx=types.SimpleNamespace(base_index=types.SimpleNamespace(path=lambda rel: None), x1_path=lambda rel: None))
     def check():
-        ck = V.Check('V-TBD', 'conversation portraits')
+        ck = V.Check('V24', 'conversation portraits')
         V.Validator.conversation_portraits(v, ck)
         return ck
     assert not check().errors
