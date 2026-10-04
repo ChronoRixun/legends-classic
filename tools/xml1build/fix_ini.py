@@ -5,7 +5,8 @@ keys:
 
   the port (this module)  the content requirements of a build - [Game] NewGameTeam / ResetUnlocks / SaveFolder /
                           ForcedTeams / PostgameScript / WindowTitle / EndHeroUnlock / MainMenuItems / NewGamePlus /
-                          ReviewStats / XPCurve, [Limits] ActorSlots / ResourceNames, [Online] GameVersion. They are
+                          ReviewStats / XPCurve / GeometrySharingBlendIndices, [Limits] ActorSlots /
+                          ResourceNames / ItemEnhancements / FightStyles, [Online] GameVersion. They are
                           functions of the build's content (the menus it wrote, its report.json, its scripts), so the
                           builder (tools/xml1builder) writes them after a build, and tools/harness.py takes its
                           [Game] / [Limits] / [Online] lines from here too (the harness and the shipped build cannot
@@ -93,7 +94,17 @@ BUILD_REPORT = ('_build', 'report.json')
 # port's 19 Danger Room rewards with their 54 enhancements never loaded; saves store record numbers, so the pool can
 # only grow). zones.ITEM_ENHANCEMENT_POOL reads this value: what the shipped ini asks the fix for is the pool the
 # build is checked against.
-LIMITS = {'ActorSlots': '127', 'ResourceNames': '1024', 'ItemEnhancements': '512'}
+# 1.3.1: the fighting / power style registry 19 -> 32 (SPEC 43, issue #31: XML1's zones need up to 22 styles with a
+# four-hero party; the 20th was refused and the hero seated last had no powers). style_budget.capacity reads this
+# value for V23.
+LIMITS = {'ActorSlots': '127', 'ResourceNames': '1024', 'ItemEnhancements': '512', 'FightStyles': '32'}
+
+# xml2-fix 1.3.1 [Game] GeometrySharingBlendIndices (SPEC 44, issue #11): XMen2.exe's geometry sharing reuses one
+# skinned mesh for another when positions and weights match although their packed blend indices differ; XML1's
+# enemies share outlines that way across skins and drew them with the wrong bones (large black spikes on the HAARP
+# officer, the GRSO nullifier and flamethrower). '1' makes the fix compare the indices too. Off in xml2-fix unless
+# set (stock XML2 is not known to need it), so every XML1 build asks for it.
+GEOMETRY_SHARING_BLEND_INDICES = '1'
 
 # xml2-fix [Game] ForcedTeams (SPEC 19): '1' = the scripts of a --forced-teams seat build seat XML1's parties
 # (xml2-fix forced_teams module), '0' = the functions exist but report off (team menu), 'off' = no key (nothing
@@ -102,14 +113,16 @@ LIMITS = {'ActorSlots': '127', 'ResourceNames': '1024', 'ItemEnhancements': '512
 FORCED_TEAMS_VALUES = ('1', '0', 'off')
 
 # the xml2-fix release a builder-made play build needs (every key above is in v1.2.0; v1.3.0: the SKILL pickup's
-# addSkillPoints, the conversation hooks [Game] AutoAdvance / ReplyVoices / ReplyCursor - SPEC 32, 34)
-# Planned companion release: addStatPoints (SPEC 48).
+# addSkillPoints, the conversation hooks [Game] AutoAdvance / ReplyVoices / ReplyCursor - SPEC 32, 34; v1.3.1:
+# [Limits] FightStyles - SPEC 43, [Game] GeometrySharingBlendIndices - SPEC 44; v1.3.2: the STAT pickup's
+# addStatPoints - SPEC 48)
 REQUIRED_XML2FIX = '1.3.2'
 
 # every key the port may write (the builder drops the ones a build does not need); the launcher owns the rest
 PORT_OWNED = {'Game': ('NewGameTeam', 'ResetUnlocks', 'SaveFolder', 'ForcedTeams', 'PostgameScript', 'WindowTitle',
-                       'EndHeroUnlock', 'MainMenuItems', 'NewGamePlus', 'ReviewStats', 'XPCurve'),
-              'Limits': ('ActorSlots', 'ResourceNames', 'ItemEnhancements'),
+                       'EndHeroUnlock', 'MainMenuItems', 'NewGamePlus', 'ReviewStats', 'XPCurve',
+                       'GeometrySharingBlendIndices'),
+              'Limits': ('ActorSlots', 'ResourceNames', 'ItemEnhancements', 'FightStyles'),
               'Online': ('GameVersion',)}
 
 
@@ -210,6 +223,7 @@ def game_keys(*, xml1_opening=True, save_folder=None, forced_teams='1', add_hero
         game.update(NewGameTeam='wolverine', ResetUnlocks='0')
         if save_folder:
             game['SaveFolder'] = save_folder
+        game['GeometrySharingBlendIndices'] = GEOMETRY_SHARING_BLEND_INDICES
     if forced_teams in ('0', '1'):
         game['ForcedTeams'] = forced_teams
     if add_hero:

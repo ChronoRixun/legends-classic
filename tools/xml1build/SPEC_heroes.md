@@ -247,7 +247,9 @@ cannot reach a per-hero file).
 by a stats entry or a style `<require>`; named by a `<require cat="skill|talent">` of a powerstyle / fightstyle the
 final stats use and not defined in a hero file; an XML2 definition referenced by a stats entry; a plain reference
 of an XML1 hero (incl. the engine special names `flight`, `ice_skating`, `night_faith`, E13); one of
-`toughness`, `mutantmastery`, `acrobatics`, which get XML1's real definitions; characters' NPC energy talent
+`SHARED_REAL_DEFS` (`toughness`, `mutantmastery`, `acrobatics`, `critical`, `might`, `leadership`, `flight`),
+which get XML1's real definitions (the last four: SPEC 50 at the end of this file);
+characters' NPC energy talent
 `x1_npc_energy` while a stats entry names it (SPEC 24.3); or one of characters' XML1 NPC immunity talents (SPEC 30:
 a non-XML2 definition in the immunity form, `npc_values.is_immunity_talent`) while a stats entry names it.
 Everything else is dropped: XML2's unreferenced `fightstyle_staff`, `mutantmaster`, `block`, `grab`,
@@ -410,3 +412,46 @@ In-game checks, in order (DESIGN 7.2, trimmed to what the build needs; `build/_h
 
 Known pre-existing failure, not from this module: `regress_nyc1.py` check "zone package covers all 88 proven
 entries" fails since SPEC section 16 renamed `mission_alison` to `zone_nyc1_1_1` (also on `build/xml1_full`).
+
+---------------------------------------------------------------------------------------------------------------
+
+## SPEC 50: the first game's shared hero passives (critical, might, leadership, flight)
+
+The four hero passives both games define kept XML2's definitions although XML1's differ and are expressible
+(issue #15 part 1, audit xml1_combat_gaps_2026-10-01.md G6). `SHARED_REAL_DEFS` now also covers them, so
+`shared_definition` writes XML1's real definitions into `Data/shared_talents` exactly as it already did for
+toughness / mutantmastery / acrobatics (section 6). Per talent, in the engine's terms:
+
+- **critical** — XML1's 5 ranks, +2/4/6/8/10 % melee critical chance gated at character levels 1/7/12/17/22
+  (XML1's data carries descriptions only; the xbe hardcoded the bonus). Each rank gets
+  `<powerup life="-1"><affecter attribute="critical" level="0.02..0.10"/></powerup>`: the `critical` affecter
+  (id 70) is the same one XML2's own 15-rank `critical` definition drives with its `critical_add` talentvalue.
+  XML2's 15 ranks (+5 %/rank, up to +33 %) are replaced.
+- **might** — XML1's 3 ranks: lifting Heavy -> Massive -> Gigantic objects. Each rank gets the affecter pair
+  XML2's own `might` carries: `might_heaviness` 1/2/3 (id 37) + `might_structure` 1 (id 38); rank 3 also resolves
+  the NPC references at `might level="3"` (Sentinel family, Blob, Juggernaut, ...). XML2's 2 ranks stopped at
+  heaviness 2. Declared losses, kept in XML1's rank text: the +5/10/15 % melee damage has no faithful engine
+  expression (the `damage` affecter has no melee-only scope; an unscoped one would boost powers too, which XML1's
+  did not) and the +3/6/8 Destruction (`damagelevel` affecter, id 36) is in the engine's table but its passive
+  use is unverified. Untraced: whether heroes could lift heaviness-3 objects before (capability math).
+- **leadership** — XML1's 5 ranks with XML1's own `<activepowerup>` bodies, which convert through the generic
+  path now that `combo_damage` / `combo_xp` are known engine affecters (ids 76/77; the old converter dropped
+  them as "no XML2 affecter"): `<affecter attribute="combo_damage" affect_type="scale" level="1.25..2.5"/>` and
+  `combo_xp` 1.05..1.25, gated at character levels 4/9/14/19/24. Replaces XML2's 15 ranks of
+  leadership_critical / leadership_xp (a team-critical/team-XP identity XML1 never sold).
+- **flight** — XML1's 5 ranks with no level gates; the drain is the `flight_pwr` talentvalue 40/30/20/10/5 at
+  ranks 1..5, the same keyed talentvalue XML2's own `flight` uses (10..3). Replaces XML2's numbers; flight
+  pickup stays whatever the engine itself implements (XML1 allowed pickup from rank 3; the rank-3+ descriptions
+  keep XML1's text).
+
+Validator: heroes `_validate` checks rank counts, level gates, per-rank affecters and flight's
+talentvalues of the four kept definitions. Unit: `tests/unit/test_shared_talents.py` (synthetic XML1 trees,
+invented descriptions).
+
+Save compatibility: a save made under the old build may carry a higher rank than the new definition has
+(critical up to 15 vs the new 5). The engine computes a hero's applied talent level in FUN_0043b180
+(0x43b180): it reads the stored level from the stats talent record and clamps it to the definition's rank
+count (`vt+4()` of the talent object, the parsed sum of `<level count>`), so an over-max saved rank loads as
+the new maximum, inert above it. Traced in the decompile, not play-verified. Skill points spent on the clamped
+ranks are not refunded (FUN_004bbae0 reconciles against the character level, not the rank count). NPC `might
+level="4"` (MagnetoBoss, SentinelSpider x2) clamps the same way to the new 3 ranks.

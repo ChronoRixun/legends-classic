@@ -1986,7 +1986,42 @@ class Zones:
                     self.ensure_call_target(pkg, kind, rel, zone, f'{f} call')
         else:
             ctx.warn(f'{zone}: package reference closure did not settle after 8 passes')
+        self.conversation_heads(zone, pkg)
         return pkg.root(tail=[('boy', stem)])
+
+    def conversation_heads(self, zone, pkg):
+        """Precache final named speakers after the script/data reference closure.
+
+        No party is assumed: ForcedTeams can be disabled at runtime. Only HUD
+        models are added, before the core block, with the normal Pkg deduplication.
+        Existing missing source heads remain validator findings, not new assets.
+        """
+        from . import conversations as CV
+        ctx = self.ctx
+        if not hasattr(self, '_portrait_stats'):
+            self._portrait_stats = {}
+            for name in ('herostat', 'npcstat'):
+                rel = ctx.out_index.find(f'data/{name}', ('.engb', '.XMLB'))
+                if rel:
+                    for entry in ctx.read_out_xmlb(rel).iter('stats'):
+                        self._portrait_stats[(entry.get('name') or '').lower()] = entry
+            rel = ctx.out_index.find('packages/generated/maps/package/permanent', ('.PKGB',))
+            tree = ctx.read_out_xmlb(rel) if rel else ()
+            self._portrait_permanent = {C.norm(e.get('filename') or '') for e in tree
+                                        if e.tag.lower() == 'model'}
+            self._portrait_conversations = {}
+        heads = set()
+        for kind, name in pkg.main + pkg.extra:
+            if kind not in XML_KINDS or not name.startswith('conversations/'):
+                continue
+            if name not in self._portrait_conversations:
+                rel = ctx.out_index.find(name, ('.engb', '.XMLB'))
+                self._portrait_conversations[name] = (
+                    CV.portrait_requirements(ctx.read_out_xmlb(rel), self._portrait_stats) if rel else {})
+            heads.update(h for h in self._portrait_conversations[name].values() if h)
+        for head in sorted(heads - self._portrait_permanent):
+            if ctx.out_index.find(head, ('.IGB',)) and pkg.add('model', head, extra=True):
+                self.counts['conversation_heads_added'] += 1
 
     def resolve_refs(self, zone, pkg, refs, defined, lits, mp_files, source=None, tiles=None):
         ctx = self.ctx

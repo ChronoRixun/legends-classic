@@ -8,6 +8,30 @@ build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebui
 - STAT pickups grant an unspent attribute point through the companion XML2 Fix 1.3.2 function (SPEC 48).
   Before-and-after runtime verification is tracked with this issue PR.
 
+- **The first game's shared hero passives** (issue #34): critical strike (5 ranks, +2 to +10%, unlocking at levels
+  1/7/12/17/22), might (3 ranks, heavier objects each rank), leadership (5 ranks of combo damage and combo XP) and
+  flight (energy drain 40 down to 5 per second) replace X-Men Legends II's versions. Might's bonus melee damage has no
+  engine equivalent and is not recreated. A save that holds more ranks than a talent now has keeps the maximum; the
+  extra skill points are not refunded (SPEC 50 in SPEC_heroes.md).
+
+- **Fixed: black portraits in conversations for heroes who are not in the party or the zone** (issue #13; seen with
+  forced parties switched off, for example Magma's reply menus in the mansion). Zone packages now preload the
+  portrait of every named speaker of their conversations, and a new check (V24) verifies it (SPEC section 49).
+
+- Restore HAARP fire-wall loop startup and restart the visual at its scripted destination, preserving the non-smart damage path (SPEC 45).
+  Before-and-after runtime verification is tracked with this issue PR.
+
+- **Fixed: black spikes on some enemies** (issue #11; needs XML2 Fix 1.3.1) - the HAARP officer, the GRSO
+  nullifier and flamethrower. They looked like broken weapons but were the character's own outline, drawn with
+  another enemy's bones because the game treated the two outlines as the same mesh. The build now asks the XML2
+  Fix to compare the bones too (`[Game] GeometrySharingBlendIndices`, SPEC section 44).
+
+- **Fixed: the fourth hero having no powers in crowded zones** (issue #31; needs XML2 Fix 1.3.1). The game keeps
+  at most 19 fighting and power styles loaded at once, and several zones of the first game need up to 22 with a
+  full party, so the hero seated last lost their special moves. The build now asks the XML2 Fix for a registry of
+  32 (`[Limits] FightStyles`), and a new check (V23) counts every zone's styles for the worst possible party
+  against it (SPEC section 43).
+
 - Generate long-range buoy networks from XML1 navigation grids and map bounds for XML2's shared hero, ally and
   enemy navigator (SPEC section 42). XML1 has no buoy data to convert. Generation respects native coordinate and
   pool limits, conservatively excludes gates/special transitions, and reports remaining coverage gaps.
