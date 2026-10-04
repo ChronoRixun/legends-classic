@@ -646,7 +646,8 @@ class Validator:
                                ('V19', 'npc values', lambda ck: NV.v19(self, ck)),
                                ('V20', 'automaps', lambda ck: AM.v20(self, ck)),
                                ('V21', 'skins', lambda ck: SK.validate(self, ck)),
-                               ('V22', 'buoys', lambda ck: BY.validate(self, ck))):
+                               ('V22', 'buoys', lambda ck: BY.validate(self, ck)),
+                               ('V24', 'conversation portraits', self.conversation_portraits)):
             ck = Check(cid, title)
             self.checks[cid] = ck
             t0 = time.time()
@@ -903,6 +904,7 @@ class Validator:
             is_nc = n.endswith('_nc.pkgb') and n.startswith('packages/generated/characters/')
             x1_pkg = f['owner'] in ('characters', 'zones', 'testhooks')
             base_entries = self._base_pkg_entries(n) if x1_pkg else set()
+            native_heads = self.native_conversation_heads(entries) if f['owner'] == 'zones' else set()
             for kind, fn in entries:
                 ck.count('pkg_entries_checked')
                 if kind not in PKG_KINDS:
@@ -914,7 +916,8 @@ class Validator:
                 if (kind, fn.lower()) in seen:
                     ck.count('duplicate_entries')
                 seen.add((kind, fn.lower()))
-                if x1_pkg and kind in NAMESPACE_KINDS and (kind, C.norm(fn)) not in base_entries:
+                if (x1_pkg and kind in NAMESPACE_KINDS and (kind, C.norm(fn)) not in base_entries
+                        and not (kind == 'model' and C.norm(fn) in native_heads)):
                     mapped = C.map_package_entry(kind, fn)[1]
                     cur = C.pkg_name(fn)
                     if kind in ('actorskin', 'actoranimdb') and cur.startswith('actors/'):
@@ -2077,6 +2080,97 @@ class Validator:
         if inherited:
             ck.warn(f'{sum(inherited.values())} conversation speaker tokens ({len(inherited)} distinct) name no stats '
                     f'entry in XML1 either (inherited: no speaker name/portrait there too): {dict(inherited)}')
+
+    def native_conversation_heads(self, entries):
+        """Final conversation heads of same-name/same-skin native XML2 stats.
+
+        These already use the destination namespace even when their number also
+        names an XML1 skin. Only exempt heads required by this package's actual
+        conversations from V4's source-namespace test; file checks still apply.
+        """
+        from . import conversations as CV
+        final = {name: value[1] for name, value in self.stats()['by_name'].items()}
+        if not hasattr(self, '_native_portrait_stats'):
+            native = {}
+            for name in ('herostat', 'npcstat'):
+                rel = self.ctx.base_index.find(f'data/{name}', ('.engb', '.xmlb'))
+                if rel:
+                    for entry in self.ctx.read_base_xmlb(rel).iter('stats'):
+                        key = (entry.get('name') or '').lower()
+                        current = final.get(key)
+                        if current is not None and current.get('skin') == entry.get('skin'):
+                            native[key] = current
+            self._native_portrait_stats = native
+        heads = set()
+        for kind, name in entries:
+            if kind not in ('xml', 'xml_resident') or not C.norm(name).startswith('conversations/'):
+                continue
+            rel = self.idx.find(name, ('.engb', '.xmlb'))
+            root = self.tree(rel) if rel else None
+            if root is not None:
+                heads.update(h for h in CV.portrait_requirements(root, self._native_portrait_stats).values() if h)
+        return heads
+
+    def conversation_portraits(self, ck):
+        """Cold no-party head coverage; stricter than relying on a forced party.
+
+        Read final English conversations/stats and package models independently
+        of the builder's counts. Existing unavailable source assets are warnings;
+        an available head without permanent/zone coverage is an error.
+        """
+        from . import conversations as CV
+        stats = {name: value[1] for name, value in self.stats()['by_name'].items()}
+        source_heads = {}
+        for _, entry in self.x1_stats().values():
+            if entry.get('skin'):
+                source = f'hud/hud_head_{entry.get("skin")}'
+                source_heads[C.map_package_entry('model', source)[1]] = source + '.igb'
+        permanent = {C.norm(f) for k, f in (self.zone_pkg('package/permanent') or []) if k == 'model'}
+        requirements = {}
+        gaps, unavailable = [], []
+        for zone in self.converted_zones():
+            entries = self.zone_pkg(zone) or []
+            covered = permanent | {C.norm(f) for k, f in entries if k == 'model'}
+            ck.count('zones')
+            for kind, name in entries:
+                name = C.norm(name)
+                if kind not in ('xml', 'xml_resident') or not name.startswith('conversations/'):
+                    continue
+                if name not in requirements:
+                    rel = self.idx.find(name, ('.engb', '.xmlb'))
+                    tree = self.tree(rel) if rel else None
+                    if tree is None:
+                        ck.error(f'{name}: cannot read final conversation for portrait coverage')
+                    requirements[name] = CV.portrait_requirements(tree, stats) if tree is not None else {}
+                for speaker, head in requirements[name].items():
+                    ck.count('speaker_zone_occurrences')
+                    if head in covered:
+                        ck.count('covered')
+                        continue
+                    finding = {'zone': zone, 'conversation': name, 'speaker': speaker, 'head': head}
+                    if head and self.exists(head + '.igb'):
+                        gaps.append(finding)
+                        ck.error(f'{zone}: {name} speaker {speaker}: {head} has no permanent/zone precache')
+                        continue
+                    # V5/V6 already diagnose missing stats. For an unavailable
+                    # head, only tolerate a source defect, never a lost import.
+                    # Match by mapped asset, not speaker name: final speaker-only
+                    # aliases need not exist as stats names in the source table.
+                    source_head = source_heads.get(head)
+                    if head and (self.ctx.base_index.path(head + '.igb') or
+                                 (source_head and self.ctx.x1_path(source_head))):
+                        ck.error(f'{zone}: {name} speaker {speaker}: source head exists but {head} is missing')
+                        gaps.append(finding)
+                    else:
+                        unavailable.append(finding)
+        ck.set('uncovered', len(gaps))
+        ck.set('unavailable', len(unavailable))
+        ck.details['uncovered'] = gaps
+        ck.details['unavailable'] = unavailable
+        if unavailable:
+            ck.warn(f'{len(unavailable)} speaker/zone occurrences lack stats/heads in available source data; '
+                    'see unavailable details (inherited; stats also checked by V5/V6)')
+        ck.note('Coverage requires permanent/zone models even with forced parties enabled; no particular party is assumed.')
 
     def v6_zones(self, ck):
         ctx = self.ctx

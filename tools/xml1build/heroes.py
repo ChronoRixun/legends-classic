@@ -1793,7 +1793,7 @@ class HeroBuilder:
 
     # SPEC 18.1: a speaker stats entry per renamed NPC double that speaks (scripts_transform.NPC_DOUBLE_SPEAKERS).
     # A conversation's %NAME% token is looked up twice: the stats entry of that name gives the line's name label and
-    # portrait (0x456d00 registry vt+0x3c/+0x64, 0x5d59d0 -> 0x5f4ec0 skin -> ui/hud/characters/<skin>), and the zone
+    # portrait (0x456d00 registry vt+0x3c/+0x64, 0x5d59d0 -> 0x5f4ec0 skin -> hud/hud_head_<skin>), and the zone
     # entity of that name gets the talk animation (0x45bd1e -> 0x4c6f20, the entity name table). The double is named
     # <hero>_x1double, so its lines say %<HERO>_X1DOUBLE% and need a stats entry of that name that shows the hero:
     # XML2's own NPC-version pattern (npcstat CyclopsSimple / Cyclops_MC: characteranims, charactername, skin, team,

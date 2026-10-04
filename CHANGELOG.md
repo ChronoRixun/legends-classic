@@ -5,6 +5,10 @@ build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebui
 
 ## Unreleased - content version 11
 
+- **Fixed: black portraits in conversations for heroes who are not in the party or the zone** (issue #13; seen with
+  forced parties switched off, for example Magma's reply menus in the mansion). Zone packages now preload the
+  portrait of every named speaker of their conversations, and a new check (V24) verifies it (SPEC section 49).
+
 - Restore HAARP fire-wall loop startup and restart the visual at its scripted destination, preserving the non-smart damage path (SPEC 45).
   Before-and-after runtime verification is tracked with this issue PR.
 
