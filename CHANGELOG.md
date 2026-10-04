@@ -3,7 +3,10 @@
 The builder's releases, newest first. The version is `xml1-builder --version`; the content version is what a
 build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebuild.
 
-## Unreleased - content version 10
+## Unreleased - content version 11
+
+- Retain objective completion descriptions for the companion XML2 Fix 1.3.2 reader (SPEC 47), without changing saved objective ordering.
+  Before-and-after runtime verification is tracked with this issue PR.
 
 - Generate long-range buoy networks from XML1 navigation grids and map bounds for XML2's shared hero, ally and
   enemy navigator (SPEC section 42). XML1 has no buoy data to convert. Generation respects native coordinate and

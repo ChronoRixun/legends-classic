@@ -4313,3 +4313,36 @@ Invented-grid tests cover encoding round trips, negative coordinates, geometry d
 caps, connectivity, deterministic output, special-link/script-gate exclusion, tilted gates and empty grids.
 Live before/after routes, ally/enemy behavior, pre-change saves, setup actions and runtime limitations are
 recorded in the separate draft PR and external evidence. Autopilot campaign acceptance remains parked.
+
+## 47. Objective completion descriptions follow the saved completion state (issue #8)
+
+The builder retains XML1's updatedescription attribute for the companion XML2 Fix
+ObjectiveDescriptions reader. Prepare tables VERSION 3 invalidates stale P2/P3 outputs;
+the final mission installer also restores the attribute from the plan, so developer
+builds with older research output retain it. No objective is added, removed, reordered
+or regrouped. Conflicting completion strings for an existing shared objective are a
+build error rather than a silent change to saved objective identity. The current owned
+inputs have 31 distinct completion descriptions and no such conflicts.
+
+The companion fix captures this extra attribute while the native parser reads each
+objective. It keys bounded strings by the native unsigned state index at record+0x1a9:
+the engine sorts whole objective records after parsing, so record addresses are not
+stable keys. The slot is cleared on every allocation before attributes are read, which
+prevents stale text across acts and permits several mission files in one act.
+
+The journal's inline description operand is redirected to the stored completion text
+only while the existing state byte has its completion bit set. Otherwise it uses the
+original description. This covers script completions, automatic counted completions,
+completion reversal and state restored from a save without rewriting saved records.
+Titles, completion popups, XP, counters and objective visibility retain their native
+behavior. The parser, allocation and journal hooks require retail code guards and are
+installed together; without [Game] ObjectiveDescriptions=1 the original engine runs.
+
+The builder writes that key and requires the planned XML2 Fix 1.3.2 release. The builder
+PR depends on its companion engine PR and must not be released against 1.3.0. This is
+independent of private SPEC 43-44/V23 work, which is not included here.
+
+Synthetic tests cover prepared and developer mission metadata, unchanged ordering,
+conflict rejection and engine selection/reset rules. Executable guards are checked
+against an owned executable without running it. Journal refresh, counted completion,
+completion reversal, act changes and fresh-process save reload await manual testing.

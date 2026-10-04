@@ -103,11 +103,12 @@ FORCED_TEAMS_VALUES = ('1', '0', 'off')
 
 # the xml2-fix release a builder-made play build needs (every key above is in v1.2.0; v1.3.0: the SKILL pickup's
 # addSkillPoints, the conversation hooks [Game] AutoAdvance / ReplyVoices / ReplyCursor - SPEC 32, 34)
-REQUIRED_XML2FIX = '1.3.0'
+# Planned companion release: ObjectiveDescriptions (SPEC 47). Do not release against 1.3.0.
+REQUIRED_XML2FIX = '1.3.2'
 
 # every key the port may write (the builder drops the ones a build does not need); the launcher owns the rest
 PORT_OWNED = {'Game': ('NewGameTeam', 'ResetUnlocks', 'SaveFolder', 'ForcedTeams', 'PostgameScript', 'WindowTitle',
-                       'EndHeroUnlock', 'MainMenuItems', 'NewGamePlus', 'ReviewStats', 'XPCurve'),
+                       'EndHeroUnlock', 'MainMenuItems', 'NewGamePlus', 'ReviewStats', 'XPCurve', 'ObjectiveDescriptions'),
               'Limits': ('ActorSlots', 'ResourceNames', 'ItemEnhancements'),
               'Online': ('GameVersion',)}
 
@@ -202,7 +203,7 @@ def build_forced_teams(out):
 def game_keys(*, xml1_opening=True, save_folder=None, forced_teams='1', add_hero=False, join_hero=True, postgame=None,
               port_identity=False, main_menu_items=None, new_game_plus=None, review_stats=None, xp_curve=None) -> dict:
     """the [Game] keys, in the order tools/harness.py always wrote them (a dict: insertion order)."""
-    game = {}
+    game = {'ObjectiveDescriptions': '1'}
     if xml1_opening:
         # XML1's opening: startFirstMission seats Wolverine alone, resetgame unlocks nobody (xml2-fix new_game.cpp;
         # the build's New Game hook uses loadMapKeepTeam - build_xml1.py --newgame keepteam, the default)

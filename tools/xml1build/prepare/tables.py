@@ -36,7 +36,7 @@ from . import disc as P1
 from .. import common as C
 
 STAGE = 'tables'
-VERSION = 2            # 2: SPEC 37 (issue #8) - required="false" -> major="false"; updatedescription counted
+VERSION = 3            # 3: SPEC 47 - retain completion descriptions for xml2-fix
 NEWLINE = '\r\n'
 # research-relative path -> file name in the stage directory (Sources.prepared overrides these)
 OUTPUTS = {'scripts/mission_plan.json': 'mission_plan.json', 'characters/collisions.json': 'collisions.json',
@@ -309,12 +309,8 @@ def mission_plan(assets: Path, loose: Path):
             plan['missions'][m] = {**missions[m], 'act': i, 'group_file': gname}
         root = ET.Element('MISSION', {'act': str(i)})
         for n, o in g['objs'].items():
-            # SPEC 37 (issue #8): XML1's required="false" (an optional objective) is the engine's major="false"
-            # (the Secondary HUD list; 'Primary'/'Secondary' are XMen2.exe strings). updatedescription (XML1's
-            # completion text, read by default.xbe) has no reader in XMen2.exe - both exes know only the objective commands COMPLETE /
-            # DECREMENT / HIDE / INCOMPLETE / INCREMENT / SHOW - so it is never written to the XML2 text; it stays
-            # in the plan JSON (objectives keep their source attrs above) for a future engine-side text verb, and
-            # both attributes are counted instead of silently dropped.
+            # Optional objectives stay secondary. The extension reader in xml2-fix
+            # selects updatedescription when the existing completion bit is set.
             if o.get('required', '').strip().lower() == 'false':
                 n_major_false += 1
             if o.get('updatedescription'):
@@ -325,6 +321,8 @@ def mission_plan(assets: Path, loose: Path):
                  'type': 'normal'}
             if o.get('description'):
                 a['description'] = o['description']
+            if o.get('updatedescription'):
+                a['updatedescription'] = o['updatedescription']
             if o.get('count'):
                 a['count'] = o['count']
             a['xp'] = o.get('xp', '0')

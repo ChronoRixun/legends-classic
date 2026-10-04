@@ -349,7 +349,7 @@ def test_port_keys_from_a_synthetic_build():
     with tempfile.TemporaryDirectory() as td:
         out = Path(td)
         assert FI.port_keys(out) == {'Game': {'NewGameTeam': 'wolverine', 'ResetUnlocks': '0',
-                                              'SaveFolder': 'X-Men Legends', 'ForcedTeams': '1'},
+                                              'SaveFolder': 'X-Men Legends', 'ForcedTeams': '1', 'ObjectiveDescriptions': '1'},
                                      'Limits': {'ActorSlots': '127', 'ResourceNames': '1024', 'ItemEnhancements': '512'}}
         menu = ET.Element('menu', type='MAIN_MENU')
         for i in range(1, 9):
