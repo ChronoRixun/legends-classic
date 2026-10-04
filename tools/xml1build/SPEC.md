@@ -4313,3 +4313,25 @@ Invented-grid tests cover encoding round trips, negative coordinates, geometry d
 caps, connectivity, deterministic output, special-link/script-gate exclusion, tilted gates and empty grids.
 Live before/after routes, ally/enemy behavior, pre-change saves, setup actions and runtime limitations are
 recorded in the separate draft PR and external evidence. Autopilot campaign acceptance remains parked.
+
+## 45. HAARP fire walls restore their loop effect after delayed activation (issue #12)
+
+The existing effect and its five textures are present in the converted zone package.
+The failure is in the harm entity lifecycle: XMen2.exe's parser at 0x4396a0 clears
+loopfxstarton when firstact is positive. Its delayed activation at 0x4392f0 calls
+0x439430, which restores the loop-effect bit only when smartfire is enabled. XML1's
+HAARP fire_wall has firstact=1 and loopfxstarton=true but no smartfire attribute.
+Damage activation therefore does not imply visual activation.
+
+`x1schema.convert_haarp_fire_wall` sets smartfire=true on that entity in HAARP exterior
+maps only. It requires the expected class, effect, positive delay and initial loop
+flag, and preserves any explicit smartfire value. Damage, repeat interval, extent,
+health, extinguish reaction, effect content and positioning scripts remain authored
+values. XML2's smart-fire form restores the effect when the hazard activates; its
+collision flags match the wall's existing nonblocking intent. No new validator ID
+is allocated. SPEC 43-44 and V23 are reserved by private work.
+
+Synthetic tests cover activation configuration, idempotence and exclusion of unrelated
+or explicitly configured entities. Static analysis establishes the missing activation
+path; flame visibility, damage, extinguishing and save/reload still require an in-game
+check. Do not describe this as visually verified until that check is performed.

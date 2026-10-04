@@ -3,7 +3,10 @@
 The builder's releases, newest first. The version is `xml1-builder --version`; the content version is what a
 build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebuild.
 
-## Unreleased - content version 10
+## Unreleased - content version 11
+
+- Enable the native smart-fire lifecycle for delayed HAARP fire walls (SPEC 45).
+  Before-and-after runtime verification is tracked with this issue PR.
 
 - Generate long-range buoy networks from XML1 navigation grids and map bounds for XML2's shared hero, ally and
   enemy navigator (SPEC section 42). XML1 has no buoy data to convert. Generation respects native coordinate and

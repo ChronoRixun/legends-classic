@@ -224,6 +224,32 @@ def color_channel_elements(root):
     return [(el.tag, el.get('name')) for el in root.iter() if any(el.get(c) is not None for c in COLOR_CHANNELS)]
 
 
+# HAARP fire walls use XML2's native smart-fire lifecycle. The harm parser (0x4396a0)
+# clears loopfxstarton for positive firstact, and activation (0x439430) restores it
+# only for smartfire. Keep the correction local: other hazards may deliberately
+# control their visual independently. SPEC 45 / issue #12.
+def convert_haarp_fire_wall(root, rel):
+    path = str(rel).replace('\\', '/').lower().lstrip('/')
+    if not path.startswith('maps/haarp/ext/'):
+        return 0
+    changed = 0
+    for el in root.iter('entity'):
+        if (el.get('name') != 'fire_wall'
+                or el.get('classname') != 'affectableharment'
+                or el.get('loopfx') != 'ambient/fire_wall'
+                or el.get('loopfxstarton', '').lower() != 'true'
+                or 'smartfire' in el.attrib):
+            continue
+        try:
+            delayed = float(el.get('firstact', '0')) > 0
+        except ValueError:
+            delayed = False
+        if delayed:
+            el.set('smartfire', 'true')
+            changed += 1
+    return changed
+
+
 # --------------------------------------------------------------------------------------------- dispatcher
 def is_effect_rel(rel):
     r = str(rel).replace('\\', '/').lower().lstrip('/')
@@ -243,6 +269,9 @@ def convert(root, rel, weapon_models=None, x1_values=None):
             c['effect_files_recoloured'] += 1
     for kind, detail in convert_entities(root, weapon_models):
         c[f'{kind}:{detail}' if kind not in ('turret_model',) else kind] += 1
+    n = convert_haarp_fire_wall(root, rel)
+    if n:
+        c['haarp_fire_wall_smartfire'] += n
     if CE.is_style_rel(rel):
         c.update(CE.rewrite_style(root))
         c.update(CE.apply_x1_shared_values(root, x1_values))
