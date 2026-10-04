@@ -4313,3 +4313,99 @@ Invented-grid tests cover encoding round trips, negative coordinates, geometry d
 caps, connectivity, deterministic output, special-link/script-gate exclusion, tilted gates and empty grids.
 Live before/after routes, ally/enemy behavior, pre-change saves, setup actions and runtime limitations are
 recorded in the separate draft PR and external evidence. Autopilot campaign acceptance remains parked.
+
+## 45. HAARP fire-wall loop startup and relocation (issue #12)
+
+The wall effect and its textures are present. Two engine behaviours hid it: the
+harm parser at 0x4396a0 clears the loop-on bit for positive firstact, and a running
+loop retains its old world placement after copyOriginAndAngles moves the entity.
+
+The exact HAARP exterior fire_wall definition gets firstact=0, keeping loopfxstarton
+without entering XML2's smartfire damage mode. The wall is staged underground until
+its authored placement script moves it. This advances its initialization from the
+original one-second delay; placement timing, damage fields and the normal non-smart
+harm handler remain unchanged. An explicit smartfire configuration is not overwritten.
+
+The six placement scripts hide the wall before the original act/move sequence and
+show it after the move. Hiding/re-showing restarts the existing loop at the destination.
+Scripts with an act keep it before the move; move-only scripts get no new act. The
+flamer animation, waits, target names and activation count are preserved. Unexpected
+source forms fail conversion rather than silently leaving the effect broken.
+
+A smartfire=true candidate was rejected in game: although restarting its loop made
+it visible, its different scheduling reduced damage. The final conversion does not
+set that flag or change collision flags, damage, extent, health or extinguish reaction.
+
+Controlled before/after proof in haarp_ext01 used fresh processes, the same vulnerable
+Wolverine and the same native hazard relocated to the unobstructed landing area.
+Baseline: no visible fire during damaging contact. Final candidate: visible fire and
+floating damage values. Both completed the matching contact/exit sequence at 57 HP
+from 90. This is an isolated hazard/placement test, not a full campaign playthrough
+or a precise rate benchmark. Local captures and state records are retained outside Git;
+see docs/issue-12-validation.md. Extinguishing and save/reload remain separate checks.
+
+## 49. Conversation speaker HUD-head residency (2026-10-04, issue #13)
+
+Issue #13: with forced parties disabled, a named speaker can be absent from both
+party and zone actors. Conversation portrait creation asks the IGB cache for
+`hud/hud_head_<skin>` in the party slot group or zone group 11, with permanent
+group 2 as fallback. A file on disk alone does not make that lookup succeed.
+
+After completing each zone package's script/data reference closure, the zones
+builder reads its final English conversations (XMLB fallback), including rewritten
+speaker aliases and copied cross-file tagjump subtrees. Named line/response
+speakers use the final herostat/npcstat baseline skin. Built-in activator and
+control tokens need no additional head. An unloaded speaker uses the exact stats
+skin; the builder does not manufacture an alternate-costume fallback or remap
+converted skin numbers again.
+
+Available heads absent from the permanent package are added as `model` entries
+through `Pkg.add(extra=True)`: deterministic, deduplicated, before the zone core.
+No actor, animation database, talent, style or conversation node is added. The
+same rule applies with forced parties enabled or disabled; zone/NPC presence and
+an arbitrary player's party are not assumed. Existing missing head assets are
+not fabricated.
+
+**V24 conversation portraits** independently reads final conversations, stats
+and packages. An available required head without permanent/zone model coverage
+is an error. A missing head whose source asset exists is an error; unavailable
+source heads/stats are separately reported as inherited warnings (V5/V6 still
+check stats). The check deliberately requires coverage without party packages,
+which also covers forced-party configurations. V12 continues to check every
+zone's direct IGB budget; passing it is not a bound on all simultaneous groups.
+V4 permits an otherwise source-looking model name only when a conversation in
+that package requires the head of a same-name, same-skin native XML2 stats entry.
+The asset must still exist; this avoids remapping a retained XML2 speaker twice.
+
+Cold-start runtime experiment: the unchanged build with ForcedTeams=0 and
+Wolverine alone showed a black Magma portrait on `mansion/man1a/1_2_37`, line 66
+(four replies); Rogue's preceding head rendered. A single zone model addition
+made Magma render with no Magma actor. Direct package IGB records increased
+111 to 112; live IGB records 154 to 155 and resource names 239 to 240, with
+16 actor slots and 10 fight styles unchanged. This was a staged map load and
+conversation invocation, not evidence of the natural campaign interaction path.
+
+The generalized build reproduced that positive result and rendered absent
+Cyclops in `mansion/man3/2_1_10` with Wolverine alone. The NYC starting zone
+remained at 36 direct records and loaded/rendered. Across all 198 zones the
+change adds 89 direct model entries in 48 zones (maximum seven per zone), with
+V12 still passing. The largest direct counts are mansion Juggernaut 119 -> 122,
+its demo counterpart 118 -> 121, and mansion4_2 unchanged at 115. V24 checks
+612 speaker/zone occurrences: 579 covered, 33 inherited occurrences of three
+unavailable source heads, zero available-head gaps.
+
+A staged stress run in the largest zone, with the estimator's heaviest baseline
+party (Magma, Iceman, Psylocke, Wolverine), used 184/200 IGB records and 297/1024
+resource names. `extractionPointChange` released zone resources: its team menu
+used 87/200 and 160/1024; returning retained the party and used 186/200 and
+300/1024. This route does not keep the entire zone and team-menu head packages
+resident together. These measurements are not bounds for every costume, menu
+route, saved-game load or long session; those remain unverified.
+
+Synthetic tests cover final speaker keys, the offset-four form, mixed case,
+activator/control tokens, exact skins, aliases, duplicates, missing stats/assets,
+existing permanent/zone coverage, closure-introduced conversations, copied
+subtrees, ordering, idempotence, and a removed-head validator negative control.
+
+Generated packages change, so CONTENT_VERSION must advance at merge. The task
+coordinator owns that bump; this change intentionally leaves its value untouched.

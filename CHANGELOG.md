@@ -3,7 +3,14 @@
 The builder's releases, newest first. The version is `xml1-builder --version`; the content version is what a
 build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebuild.
 
-## Unreleased - content version 10
+## Unreleased - content version 11
+
+- **Fixed: black portraits in conversations for heroes who are not in the party or the zone** (issue #13; seen with
+  forced parties switched off, for example Magma's reply menus in the mansion). Zone packages now preload the
+  portrait of every named speaker of their conversations, and a new check (V24) verifies it (SPEC section 49).
+
+- Restore HAARP fire-wall loop startup and restart the visual at its scripted destination, preserving the non-smart damage path (SPEC 45).
+  Before-and-after runtime verification is tracked with this issue PR.
 
 - Generate long-range buoy networks from XML1 navigation grids and map bounds for XML2's shared hero, ally and
   enemy navigator (SPEC section 42). XML1 has no buoy data to convert. Generation respects native coordinate and
