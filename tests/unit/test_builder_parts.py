@@ -349,8 +349,10 @@ def test_port_keys_from_a_synthetic_build():
     with tempfile.TemporaryDirectory() as td:
         out = Path(td)
         assert FI.port_keys(out) == {'Game': {'NewGameTeam': 'wolverine', 'ResetUnlocks': '0',
-                                              'SaveFolder': 'X-Men Legends', 'ForcedTeams': '1', 'ObjectiveDescriptions': '1'},
-                                     'Limits': {'ActorSlots': '127', 'ResourceNames': '1024', 'ItemEnhancements': '512'}}
+                                              'SaveFolder': 'X-Men Legends', 'ForcedTeams': '1',
+                                              'GeometrySharingBlendIndices': '1', 'ObjectiveDescriptions': '1'},
+                                     'Limits': {'ActorSlots': '127', 'ResourceNames': '1024', 'ItemEnhancements': '512',
+                                                'FightStyles': '32'}}
         menu = ET.Element('menu', type='MAIN_MENU')
         for i in range(1, 9):
             attrs = {'name': f'button{i}', 'text': f't{i}'}
@@ -620,3 +622,17 @@ def test_stdin_watch_never_blocks_dll_loads_or_subprocess():
         finally:
             if p.poll() is None:
                 p.kill()
+
+
+def test_xml1_builds_ask_for_the_geometry_sharing_fix():
+    """SPEC 44: the key is XML1's (xml2-fix leaves the fix off without it); an XML2-opening ini carries none."""
+    assert FI.game_keys(xml1_opening=True)['GeometrySharingBlendIndices'] == '1'
+    assert 'GeometrySharingBlendIndices' not in FI.game_keys(xml1_opening=False)
+    assert 'GeometrySharingBlendIndices' in FI.PORT_OWNED['Game']
+
+
+def test_xml1_builds_ask_for_objective_descriptions():
+    """SPEC 47: the key is XML1's (xml2-fix keeps XML2's journal text without it); an XML2-opening ini has none."""
+    assert FI.game_keys(xml1_opening=True)['ObjectiveDescriptions'] == '1'
+    assert 'ObjectiveDescriptions' not in FI.game_keys(xml1_opening=False)
+    assert 'ObjectiveDescriptions' in FI.PORT_OWNED['Game']

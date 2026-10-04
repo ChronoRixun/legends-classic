@@ -4314,6 +4314,105 @@ caps, connectivity, deterministic output, special-link/script-gate exclusion, ti
 Live before/after routes, ally/enemy behavior, pre-change saves, setup actions and runtime limitations are
 recorded in the separate draft PR and external evidence. Autopilot campaign acceptance remains parked.
 
+## 43. The fighting / power style registry (2026-10-04, issue #31)
+
+### 43.1 The limit
+
+XMen2.exe keeps every loaded style file - fighting styles, power styles, movesets and `data/shared_nodes` - in one
+registry of 19 entries (manager 0x78a800; registration 0x4ffb30). A name that is already registered costs nothing;
+a new one when the count is 19 is refused at 0x4ffb8a without a report. The permanent packages and the zone package
+register first, then the party's packages in seat order, so the hero seated last loses the power style and has no
+special moves (the fourth hero in arbiter/a_int/arb2_2 and sewers/grso/sewers3_1_2; swapping seats moves the
+failure to whoever is last). XML1's zones need up to 22 with a four-hero party: 33 converted zones are over 19
+for some party.
+
+Trimming content cannot fix this: the styles are the zone's enemies' and the party's own.
+
+### 43.2 The raise
+
+xml2-fix 1.3.1 `[Limits] FightStyles` (20..32) rebuilds the registry with the configured size; the port's ini asks
+for `fix_ini.LIMITS['FightStyles']` = 32, and `REQUIRED_XML2FIX` is 1.3.1. 32 keeps both of the registry's bitmaps
+at one word, which is the most the fix supports, and leaves ten entries over the measured maximum for styles a
+script loads later. An older xml2-fix ignores the key, and the registry stays at 19.
+
+`tools/harness.py` writes the same `[Limits]` block, so test installs carry the raise too.
+
+### 43.3 V23
+
+`style_budget.validate` counts, per converted zone, the distinct style files of: the permanent packages, the zone
+package, the packages of the zone's CHRB characters, and the worst four-hero party (every combination of the
+playable herostat entries; a zone with combat off loads the heroes' `_nc` packages). More than the capacity the ini
+asks for is an error; exactly the capacity is a warning (no room for a scripted load). Without the key the check
+counts against the game's own 19. Scripted spawns outside the CHRB roster and temporary power styles are not
+modeled.
+
+Invented-package tests cover the capacity value, distinct-file counting, shared movesets counted once, the worst
+party, NPC packages, combat-off zones and the stock registry. On a full build: 198 zones, 33 over 19, the largest
+22 (astral/ast1/astral4_3).
+
+## 44. Enemy outlines drawn with another skin's bones (2026-10-04, issue #11)
+
+### 44.1 What was reported and what it is
+
+Issue #11 reported black, spiky "weapons" on some enemies (the HAARP officer, the GRSO nullifier and flamethrower).
+The weapons are fine. The spikes are the character's own black outline pass, deformed.
+
+When XMen2.exe caches a model it runs a sharing pass that replaces a geometry with an identical one already loaded
+in the same resource group (comparator 0x56D210, decision 0x56D700). The comparison covers format, counts,
+positions and weights but not the packed blend indices. XML1's enemy skins reuse one outline shape across skins
+with different skeleton indices: the officer's outline (534 vertices) equals the soldier's in every compared field,
+and differs in the index field of every vertex. The engine hands the officer the soldier's outline, and the
+officer's skin palette reads those indices as other bones.
+
+Shown at runtime with a logging hook (no debugger): blocking only that one substitution gave a normal officer in
+5 of 5 launches with the soldier unchanged; hiding only the gun left the spikes. The async-load theory was ruled
+out (both weapons loaded synchronously and completely in every launch). Earlier package-content, package-weight,
+package-identity and spawn-position theories had already been falsified over repeated launches.
+
+### 44.2 The fix
+
+xml2-fix 1.3.1 `[Game] GeometrySharingBlendIndices=1` adds the missing comparison inside the candidate loop: a
+candidate whose packed indices differ is skipped, and the search goes on to the next one. Vertex-array layouts
+the fix does not recognise keep the game's own comparison. It is off without the key (stock XML2 is not known to
+need it), so `fix_ini.game_keys` writes it for every XML1 build, and harness installs carry it.
+
+No data changes: the skins are XML1's. Measured in four zones the fix rejected 0 to 2 reuses out of 154 to 1657
+comparisons, with memory within about 1.3 MiB.
+
+Not covered: only the HAARP officer and soldier (5 launches) and the GRSO nullifier and flamethrower (1 launch
+each) were checked in game. The comparator's other gaps (normals, extra UV sets, a count-reuse defect found in
+static analysis) are not addressed.
+
+## 45. HAARP fire-wall loop startup and relocation (issue #12)
+
+The wall effect and its textures are present. Two engine behaviours hid it: the
+harm parser at 0x4396a0 clears the loop-on bit for positive firstact, and a running
+loop retains its old world placement after copyOriginAndAngles moves the entity.
+
+The exact HAARP exterior fire_wall definition gets firstact=0, keeping loopfxstarton
+without entering XML2's smartfire damage mode. The wall is staged underground until
+its authored placement script moves it. This advances its initialization from the
+original one-second delay; placement timing, damage fields and the normal non-smart
+harm handler remain unchanged. An explicit smartfire configuration is not overwritten.
+
+The six placement scripts hide the wall before the original act/move sequence and
+show it after the move. Hiding/re-showing restarts the existing loop at the destination.
+Scripts with an act keep it before the move; move-only scripts get no new act. The
+flamer animation, waits, target names and activation count are preserved. Unexpected
+source forms fail conversion rather than silently leaving the effect broken.
+
+A smartfire=true candidate was rejected in game: although restarting its loop made
+it visible, its different scheduling reduced damage. The final conversion does not
+set that flag or change collision flags, damage, extent, health or extinguish reaction.
+
+Controlled before/after proof in haarp_ext01 used fresh processes, the same vulnerable
+Wolverine and the same native hazard relocated to the unobstructed landing area.
+Baseline: no visible fire during damaging contact. Final candidate: visible fire and
+floating damage values. Both completed the matching contact/exit sequence at 57 HP
+from 90. This is an isolated hazard/placement test, not a full campaign playthrough
+or a precise rate benchmark. Local captures and state records are retained outside Git;
+see docs/issue-12-validation.md. Extinguishing and save/reload remain separate checks.
+
 ## 47. Objective completion descriptions follow the saved completion state (issue #8)
 
 The builder retains XML1's updatedescription attribute for the companion XML2 Fix
@@ -4340,7 +4439,7 @@ installed together; without [Game] ObjectiveDescriptions=1 the original engine r
 
 The builder writes that key and requires the planned XML2 Fix 1.3.2 release. The builder
 PR depends on its companion engine PR and must not be released against 1.3.0. This is
-independent of private SPEC 43-44/V23 work, which is not included here.
+independent of the 1.3.1 work (SPEC 43-44, V23).
 
 Synthetic tests cover prepared and developer mission metadata, unchanged ordering,
 conflict rejection and engine selection/reset rules. Executable guards are checked
@@ -4348,3 +4447,69 @@ against an owned executable without running it. Controlled in-game primary journ
 source wording. A counted objective reached native completion; its rendered display,
 secondary-objective rendering, act transitions and fresh-process save reload remain
 unverified. See `docs/issue-8-validation.md` for the test boundaries.
+
+## 49. Conversation speaker HUD-head residency (2026-10-04, issue #13)
+
+Issue #13: with forced parties disabled, a named speaker can be absent from both
+party and zone actors. Conversation portrait creation asks the IGB cache for
+`hud/hud_head_<skin>` in the party slot group or zone group 11, with permanent
+group 2 as fallback. A file on disk alone does not make that lookup succeed.
+
+After completing each zone package's script/data reference closure, the zones
+builder reads its final English conversations (XMLB fallback), including rewritten
+speaker aliases and copied cross-file tagjump subtrees. Named line/response
+speakers use the final herostat/npcstat baseline skin. Built-in activator and
+control tokens need no additional head. An unloaded speaker uses the exact stats
+skin; the builder does not manufacture an alternate-costume fallback or remap
+converted skin numbers again.
+
+Available heads absent from the permanent package are added as `model` entries
+through `Pkg.add(extra=True)`: deterministic, deduplicated, before the zone core.
+No actor, animation database, talent, style or conversation node is added. The
+same rule applies with forced parties enabled or disabled; zone/NPC presence and
+an arbitrary player's party are not assumed. Existing missing head assets are
+not fabricated.
+
+**V24 conversation portraits** independently reads final conversations, stats
+and packages. An available required head without permanent/zone model coverage
+is an error. A missing head whose source asset exists is an error; unavailable
+source heads/stats are separately reported as inherited warnings (V5/V6 still
+check stats). The check deliberately requires coverage without party packages,
+which also covers forced-party configurations. V12 continues to check every
+zone's direct IGB budget; passing it is not a bound on all simultaneous groups.
+V4 permits an otherwise source-looking model name only when a conversation in
+that package requires the head of a same-name, same-skin native XML2 stats entry.
+The asset must still exist; this avoids remapping a retained XML2 speaker twice.
+
+Cold-start runtime experiment: the unchanged build with ForcedTeams=0 and
+Wolverine alone showed a black Magma portrait on `mansion/man1a/1_2_37`, line 66
+(four replies); Rogue's preceding head rendered. A single zone model addition
+made Magma render with no Magma actor. Direct package IGB records increased
+111 to 112; live IGB records 154 to 155 and resource names 239 to 240, with
+16 actor slots and 10 fight styles unchanged. This was a staged map load and
+conversation invocation, not evidence of the natural campaign interaction path.
+
+The generalized build reproduced that positive result and rendered absent
+Cyclops in `mansion/man3/2_1_10` with Wolverine alone. The NYC starting zone
+remained at 36 direct records and loaded/rendered. Across all 198 zones the
+change adds 89 direct model entries in 48 zones (maximum seven per zone), with
+V12 still passing. The largest direct counts are mansion Juggernaut 119 -> 122,
+its demo counterpart 118 -> 121, and mansion4_2 unchanged at 115. V24 checks
+612 speaker/zone occurrences: 579 covered, 33 inherited occurrences of three
+unavailable source heads, zero available-head gaps.
+
+A staged stress run in the largest zone, with the estimator's heaviest baseline
+party (Magma, Iceman, Psylocke, Wolverine), used 184/200 IGB records and 297/1024
+resource names. `extractionPointChange` released zone resources: its team menu
+used 87/200 and 160/1024; returning retained the party and used 186/200 and
+300/1024. This route does not keep the entire zone and team-menu head packages
+resident together. These measurements are not bounds for every costume, menu
+route, saved-game load or long session; those remain unverified.
+
+Synthetic tests cover final speaker keys, the offset-four form, mixed case,
+activator/control tokens, exact skins, aliases, duplicates, missing stats/assets,
+existing permanent/zone coverage, closure-introduced conversations, copied
+subtrees, ordering, idempotence, and a removed-head validator negative control.
+
+Generated packages change, so CONTENT_VERSION must advance at merge. The task
+coordinator owns that bump; this change intentionally leaves its value untouched.
