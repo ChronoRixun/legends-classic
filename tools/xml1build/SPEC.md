@@ -4313,3 +4313,33 @@ Invented-grid tests cover encoding round trips, negative coordinates, geometry d
 caps, connectivity, deterministic output, special-link/script-gate exclusion, tilted gates and empty grids.
 Live before/after routes, ally/enemy behavior, pre-change saves, setup actions and runtime limitations are
 recorded in the separate draft PR and external evidence. Autopilot campaign acceptance remains parked.
+
+## 46. Ladder descent uses the authored movement through a native motion path (issue #32)
+
+The sewer and Arbiter descent clips contain a Motion track with 31 translation keys
+and a 1.6-second descent. Their animation skeletons do not contain a Motion bone.
+XMen2.exe's motion setup (0x56a800) first searches the skeleton for that bone; only
+then does 0x56a620 extract the track's precomputed movement metadata. These XML1
+clips have neither the skeleton entry nor that metadata. Playing the pose animation
+alone therefore does not supply the character's descent to that reader.
+
+`ladder_motion` extracts the original Motion sequence from the player's mission_grso
+mission2 and mission_a_int mission1 clips. It generates two native motion paths using
+the player's common/cabinet_knockedover file as a structural template. Translation
+keys are relative to the first key; rotations and timestamps are retained. The
+cabinet's transform and scale channel are removed, and duration follows the clip.
+Unexpected interpolation, rotation, channel lengths or duration fail the build.
+No key coordinates or game binary are distributed in this repository.
+
+The two original descent scripts start the relative path before playing their original
+EA_ZONE animation and retain their original waitsignal expression. Collision is disabled
+during the slide and restored after the signal, as in XML2's own tutorial ladder script.
+The path, package entry and normal IGB budget are generated together. Affected zones
+also check the native 16-path registry limit. Each path remains relative to its actor,
+so repeated spawns and differently oriented ladders share it. The bad sound-path
+spawnscript on sewers3_1_2's ladderdude02 is unchanged, as are ladder objectives.
+
+Static analysis and generated-file inspection establish the source movement and output
+structure. Runtime validation remains required: animation/path synchronization, signal
+delivery, end position, collision restoration, repeated spawns and save/reload. This
+change is a review candidate until those checks pass; it is not a completed hand test.

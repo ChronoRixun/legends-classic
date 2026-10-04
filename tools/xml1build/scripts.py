@@ -530,6 +530,8 @@ def _script_text(ctx, ref, mode=None):
         if lines and lines[-1] != '' and (ref in _generated_zone_scripts(ctx) or ref in _forced_generated_scripts(ctx)
                                           or ref in frontend_scripts(ctx)):
             lines.append('')                                   # final CRLF, like every research script
+        from . import ladder_motion as LM
+        lines = LM.rewrite_script(ref, lines)
         return '\r\n'.join(lines), info
     return _cached(ctx, ('text', ref, mode), build)
 
