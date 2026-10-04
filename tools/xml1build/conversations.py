@@ -51,6 +51,48 @@ def _children(el, tag):
     return [c for c in el if isinstance(c.tag, str) and c.tag.lower() == tag]
 
 
+# These tokens do not select a named stats entry. The activator's head is supplied
+# by its own character package; end/blank/control tokens require no portrait.
+PORTRAIT_BUILTINS = frozenset({'player', 'x-team', 'null', 'end', 'more', 'continue', 'blank'})
+
+
+def speaker_keys(root):
+    """Named speakers in final line/response text, including the engine's offset-four form.
+
+    Read transformed trees (including copied tagjump subtrees), not source aliases.
+    A percent token later in dialogue is not a speaker selector.
+    """
+    speakers = set()
+    for el in root.iter():
+        if not isinstance(el.tag, str) or el.tag.lower() not in ('line', 'response'):
+            continue
+        for attr, value in el.attrib.items():
+            if attr.lower() not in ('text', 'textb'):
+                continue
+            text = value or ''
+            match = re.match(r'%([^%]+)%', text)
+            if match is None:
+                match = re.match(r'%([^%]+)%', text[4:])
+            if match and match[1].lower() not in PORTRAIT_BUILTINS:
+                speakers.add(match[1].lower())
+    return sorted(speakers)
+
+
+def portrait_requirements(root, stats):
+    """speaker -> final baseline HUD head, or None for a missing stats/skin.
+
+    An unloaded speaker uses its exact stats skin. Do not invent a costume-01
+    fallback or remap an already converted skin. A loaded hero can fall back to
+    this default through the engine's existing current/default costume lookup.
+    """
+    result = {}
+    for speaker in speaker_keys(root):
+        entry = stats.get(speaker)
+        skin = _attr(entry, 'skin')[1] if entry is not None else None
+        result[speaker] = 'hud/hud_head_' + skin.lower() if skin else None
+    return result
+
+
 def reading_seconds(text):
     """how long a line with no voice stays up: its text after the %SPEAKER% token, at the reading rate."""
     chars = len(_TOKEN.sub('', text or '').strip())
