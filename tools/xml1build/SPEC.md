@@ -4489,7 +4489,7 @@ triggers.
 `x1schema.convert_fall_kill_volumes` applies only to map entities with the XML1
 lethal-touch signature: `affectableharment`, `damage="32000"`,
 `damagetype="dmg_direct"`, `actontouch="true"`, `nocollide="true"`. Matching is
-independent of entity names. After normal class conversion, set
+independent of entity names except for the specific deferred pair below. After normal class conversion, set
 `boxcollision="true"` and `smartent="false"`, the collision and residency flags
 used by XML2's native fall kill volumes. Preserve every other attribute and all
 instances, including bounds, positions, orientations, damage modifiers, targeting
@@ -4516,7 +4516,8 @@ Experimental XMLB writes must use `common.encode_xmlb`: unsorted attributes
 invalidate the engine's binary-search lookups and any resulting mechanism claim.
 
 V-TBD checks registered XML1-sourced map outputs for matching volumes missing
-either flag; identical localized twins are counted once. Its number is assigned
+either flag; identical localized twins are counted once. Deferred volumes are
+reported separately, and adding either enabling flag to one is an error. Its number is assigned
 at merge. Synthetic tests cover preservation of multiple instance bounds and
 activation scripts, class remapping, unrelated hazards, idempotence, sorted
 binary output, and validator negative controls for each flag. CONTENT_VERSION
@@ -4533,7 +4534,7 @@ alive. These are bounded harness checks, with scripted party/position setup,
 not a complete campaign or saved-game playthrough. An attempted closer-edge
 solo lure was navigation-limited and is not additional combat proof.
 
-The final output contains 32 matching definitions and 41 instances across 30
+The initial PR output contained 32 matching definitions and 41 instances across 30
 converted zones. Comparison of all 198 map trees found only the intended flag
 changes (32 smartent attributes, 31 boxcollision attributes; one box already
 had collision). V-TBD counted all 32 definitions once across localized twins;
@@ -4541,3 +4542,38 @@ full build validation and the zones self-test passed.
 
 The reduced two-flag configuration also passed a staged flat-floor on-foot
 control: Wolverine lost exactly 32,000 HP at Z=0.16, with no fall.
+
+### Review follow-up: deferred flooded-room volume (issue #5)
+
+Leave only `kill_target` in `maps/arbiter/a_int/arb3_4` in its original form.
+`FALL_KILL_DEFERRED` identifies an exact map stem and entity name; other lethal
+entities in that map and same-name entities in other maps still receive the fix.
+This leaves 31 enabled definitions in 29 converted zones, with one definition
+explicitly deferred. No bounds, damage values or unrelated hazards change.
+
+Four-hero runtime review reproduced a regression: the player crossed a
+player-created ice bridge safely, while AI Wolverine took the flooded-room
+route and lost 32,000 HP. Restoring the original volume left the party alive;
+a separate real-input water entry left the player and an AI ally alive below
+the plane. Keep this volume deferred until issue #5 party handling and the
+crossing are revalidated. The bridge script itself removes the solo triggers,
+so this test proves an AI-routing interaction, not that missing solo mode alone
+explains all of it.
+
+The nuclear-plant pit `nuke_plant/nuke/nuke2_2a` remains enabled: its tested bridge
+crossing produced no AI kill-volume deaths. A level-1 attempt had ordinary enemy
+combat deaths; a repeat staged to level 17 separated those from lethal-volume
+hits. Some allies lagged on the bridge. An attempted Storm crossing did not
+maintain flight and is only a player-fall control, not evidence about flight
+routing. Original Xbox behavior and every possible party route remain unverified.
+
+Synthetic tests use invented map/entity identifiers to check exact-pair scope,
+source-attribute preservation, neighboring hazards, localized paths, validator
+deferral reporting and rejection of accidental reactivation.
+
+The revised generated build repeated the flooded-room bridge crossing with all
+four heroes alive, and HAARP still killed on a real double jump for 32,000 damage.
+A short control retained the earlier experiment's misspelled `damagemo` field:
+its definition attributes and instance bounds matched the saved experiment,
+but normal sorted encoding killed correctly. The saved experimental XMLB had
+unsorted attribute keys; it was not a valid negative control for the native flags.

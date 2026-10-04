@@ -94,3 +94,38 @@ def test_fall_volume_validator_detects_each_missing_flag_once_per_twin_pair():
             entity.set(key, expected)
         entity.attrib.pop('smartent')
         assert not check_fixture(folder, root, source='native').errors
+
+
+def test_deferred_volume_keeps_source_form_without_excluding_neighbor_hazards():
+    from unittest.mock import patch
+    # Re-enabling the conversion for a deferred room must fail this test.
+    deferred = {'maps/invented/flooded': frozenset({'pit_alpha'})}
+    for rel in ('maps/invented/flooded.eng', 'Maps\\Invented\\Flooded.XMLB'):
+        root, entity = fixture()
+        before = dict(entity.attrib)
+        other = ET.SubElement(root, 'entity', dict(before, name='pit_beta'))
+        with patch.object(S, 'FALL_KILL_DEFERRED', deferred, create=True):
+            changes = S.convert(root, rel)
+        assert entity.attrib == before
+        assert other.get('boxcollision') == 'true' and other.get('smartent') == 'false'
+        assert changes['fall_kill_volumes'] == 1
+    root, entity = fixture()
+    with patch.object(S, 'FALL_KILL_DEFERRED', deferred, create=True):
+        S.convert(root, 'maps/invented/other.eng')
+    assert entity.get('boxcollision') == 'true' and entity.get('smartent') == 'false'
+
+
+def test_validator_reports_deferral_and_rejects_accidental_reactivation():
+    from unittest.mock import patch
+    deferred = {'maps/invented/cliff': frozenset({'pit_alpha'})}
+    with tempfile.TemporaryDirectory() as temp, patch.object(S, 'FALL_KILL_DEFERRED', deferred, create=True):
+        root, entity = fixture()
+        check = check_fixture(Path(temp), root)
+        assert not check.errors
+        assert check.counts['volumes_deferred'] == 1
+        assert len(check.allowed) == 1 and '#5' in check.allowed[0]
+        for changed_flags in ({'boxcollision': 'true'}, {'smartent': 'false'},
+                              {'boxcollision': 'true', 'smartent': 'false'}):
+            root, entity = fixture(**changed_flags)
+            check = check_fixture(Path(temp), root)
+            assert len(check.errors) == 1

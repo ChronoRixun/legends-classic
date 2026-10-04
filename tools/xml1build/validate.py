@@ -338,7 +338,7 @@ class Scan:
         self.x1_sourced = 0      # registered XMLB-family files converted from an XML1 source file
         self.unknown_classes = {}  # norm rel -> [(entity name, classname)] XMen2.exe does not register (0x461080)
         self.color_channels = {}   # norm rel (effects/) -> [(tag, name)] still carrying XML1 red/green/blue
-        self.fall_kill_volumes = {}  # map rel -> [(name, missing XML2 flags)]
+        self.fall_kill_volumes = {}  # map rel -> [(name, missing XML2 flags, deferred)]
         self.items = {}            # norm rel (data/items.*) -> root
         self.inv_items = {}        # norm rel -> [inventoryitem values]
         self.turret_mount = {}     # norm rel -> [(entity name, missing flags)] remapped scan turrets not fixed-mount
@@ -491,7 +491,8 @@ class Validator:
                 volumes = XS.fall_kill_volumes(root, n)
                 if volumes:
                     sc.fall_kill_volumes[n] = [
-                        (el.get('name'), [k for k, v in XS.FALL_KILL_FLAGS.items() if el.get(k) != v])
+                        (el.get('name'), [k for k, v in XS.FALL_KILL_FLAGS.items() if el.get(k) != v],
+                         XS.fall_kill_volume_deferred(el, n))
                         for el in volumes]
                 if n in ('data/items.xmlb', 'data/items.engb'):
                     sc.items[n] = root
@@ -910,7 +911,16 @@ class Validator:
             if n in sc.twins or not self.is_x1_source((self.reg.get(n) or {}).get('source')):
                 continue
             ck.count('files_checked')
-            for name, missing in volumes:
+            for name, missing, deferred in volumes:
+                if deferred:
+                    ck.count('volumes_deferred')
+                    if len(missing) < len(XS.FALL_KILL_FLAGS):
+                        ck.error(f'{sc.files[n]["rel"]}: deferred fall kill volume {name!r} was reactivated '
+                                 f'before issue #5 party handling was validated')
+                    else:
+                        ck.allow(f'{sc.files[n]["rel"]}: fall kill volume {name!r} remains deferred',
+                                 'issue #5: AI follows the player into this hazard')
+                    continue
                 ck.count('volumes_checked')
                 if missing:
                     ck.error(f'{sc.files[n]["rel"]}: fall kill volume {name!r} lacks '

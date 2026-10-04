@@ -255,6 +255,18 @@ def convert_haarp_fire_wall(root, rel):
 # Runtime controls: boxcollision alone leaves the HAARP ravine survivable; both
 # flags give the original 32000-damage hit on entry (SPEC: number assigned at merge).
 FALL_KILL_FLAGS = {'boxcollision': 'true', 'smartent': 'false'}
+# Preserve these original hazards until issue #5 party handling is available and
+# the crossings are revalidated: AI can follow a safe leader into their water.
+FALL_KILL_DEFERRED = {
+    'maps/arbiter/a_int/arb3_4': frozenset({'kill_target'}),
+}
+
+
+def fall_kill_volume_deferred(el, rel):
+    path = str(rel).replace('\\', '/').lower().lstrip('/')
+    stem = path.rsplit('.', 1)[0]
+    return el.get('name') in FALL_KILL_DEFERRED.get(stem, ())
+
 
 
 def fall_kill_volumes(root, rel):
@@ -273,6 +285,8 @@ def fall_kill_volumes(root, rel):
 def convert_fall_kill_volumes(root, rel):
     changed = 0
     for el in fall_kill_volumes(root, rel):
+        if fall_kill_volume_deferred(el, rel):
+            continue
         if any(el.get(k) != v for k, v in FALL_KILL_FLAGS.items()):
             el.attrib.update(FALL_KILL_FLAGS)
             changed += 1
