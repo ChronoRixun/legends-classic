@@ -862,7 +862,7 @@ def _damage_text(desc_parts):
     return None
 
 
-def translate_equipment(ctx, c):
+def translate_equipment(ctx, c, *, expanded=False):
     """XML1 <item type="equipment"> with <require>/<activepowerup> -> (XML2 <item type="equipment">, note) or
     (None, reason). XMen2.exe equipment (0x47aeff): class gloves/armor/belt, <require cat="character|level">
     (0x4ac470: cat trait/level/counter/xtreme/race/character), <enhancement description><powerup life="-1">
@@ -873,7 +873,16 @@ def translate_equipment(ctx, c):
       def_damage_scale L scope_damage=dmg_X -> resist_X 1-L
       strength/speed/body/mind L -> same x stat_scale; traits L -> traits x stat_scale
       power_cost L (scale) -> power_cost scale L (ps_bishop's form)
-    Other powerups are reported and dropped."""
+    Other powerups are reported and dropped.
+
+    expanded=True opts into the issue-6 mapping audit. Build callers deliberately keep
+    the legacy default until the item/save-format release (including enhancement order).
+    The expanded path returns explicit approximation/loss notes; it writes no files.
+    """
+    if expanded:
+        from .equipment import convert_equipment
+        result = convert_equipment(ctx, c)
+        return result.item, result.note
     name = (c.get('name') or '').strip()
     if (c.get('type') or '').lower() != 'equipment':
         return None, f'{name}: type {c.get("type")!r} is not equipment'
