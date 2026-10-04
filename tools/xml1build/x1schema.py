@@ -250,6 +250,35 @@ def convert_haarp_fire_wall(root, rel):
     return changed
 
 
+# Fall kill volumes use XML1's original damage, bounds and activation scripts.
+# XML2 retail enables box collision and disables smart-entity streaming for them.
+# Runtime controls: boxcollision alone leaves the HAARP ravine survivable; both
+# flags give the original 32000-damage hit on entry (SPEC: number assigned at merge).
+FALL_KILL_FLAGS = {'boxcollision': 'true', 'smartent': 'false'}
+
+
+def fall_kill_volumes(root, rel):
+    """The XML1 map-only lethal touch pattern, independent of entity names."""
+    path = str(rel).replace('\\', '/').lower().lstrip('/')
+    if root is None or not path.startswith('maps/'):
+        return []
+    return [el for el in root.iter('entity')
+            if el.get('classname') == 'affectableharment'
+            and el.get('damage') == '32000'
+            and el.get('damagetype') == 'dmg_direct'
+            and el.get('actontouch', '').lower() == 'true'
+            and el.get('nocollide', '').lower() == 'true']
+
+
+def convert_fall_kill_volumes(root, rel):
+    changed = 0
+    for el in fall_kill_volumes(root, rel):
+        if any(el.get(k) != v for k, v in FALL_KILL_FLAGS.items()):
+            el.attrib.update(FALL_KILL_FLAGS)
+            changed += 1
+    return changed
+
+
 # --------------------------------------------------------------------------------------------- dispatcher
 def is_effect_rel(rel):
     r = str(rel).replace('\\', '/').lower().lstrip('/')
@@ -269,6 +298,9 @@ def convert(root, rel, weapon_models=None, x1_values=None):
             c['effect_files_recoloured'] += 1
     for kind, detail in convert_entities(root, weapon_models):
         c[f'{kind}:{detail}' if kind not in ('turret_model',) else kind] += 1
+    n = convert_fall_kill_volumes(root, rel)
+    if n:
+        c['fall_kill_volumes'] += n
     n = convert_haarp_fire_wall(root, rel)
     if n:
         c['haarp_fire_wall_loop_start'] += n

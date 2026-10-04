@@ -60,6 +60,7 @@ Checks (severity per SPEC 4.6: error = will not load or silently misbehaves; war
                 index counts equal, indices inside the blend palette, palette entries on skeleton bones, weights
                 summing to 1 (errors); every bone the skin's vertices use in the anim DB skeleton (skin / skeleton
                 mismatch: error, warning when the XML1 disc has it too); 1-2 blend weights noted
+  V-TBD fall kill volumes: XML1 map lethal-touch boxes have boxcollision=true and smartent=false
   V23 fight styles (SPEC 43, style_budget.validate): per converted zone the distinct style files of the permanent
                 packages, the zone package, its CHRB characters' packages and the worst four-hero party against
                 the registry the shipped ini asks xml2-fix for ([Limits] FightStyles, else XMen2.exe's 19): more
@@ -337,6 +338,7 @@ class Scan:
         self.x1_sourced = 0      # registered XMLB-family files converted from an XML1 source file
         self.unknown_classes = {}  # norm rel -> [(entity name, classname)] XMen2.exe does not register (0x461080)
         self.color_channels = {}   # norm rel (effects/) -> [(tag, name)] still carrying XML1 red/green/blue
+        self.fall_kill_volumes = {}  # map rel -> [(name, missing XML2 flags)]
         self.items = {}            # norm rel (data/items.*) -> root
         self.inv_items = {}        # norm rel -> [inventoryitem values]
         self.turret_mount = {}     # norm rel -> [(entity name, missing flags)] remapped scan turrets not fixed-mount
@@ -486,6 +488,11 @@ class Validator:
                     cc = XS.color_channel_elements(root)
                     if cc:
                         sc.color_channels[n] = cc
+                volumes = XS.fall_kill_volumes(root, n)
+                if volumes:
+                    sc.fall_kill_volumes[n] = [
+                        (el.get('name'), [k for k, v in XS.FALL_KILL_FLAGS.items() if el.get(k) != v])
+                        for el in volumes]
                 if n in ('data/items.xmlb', 'data/items.engb'):
                     sc.items[n] = root
                 inv = [el.get('inventoryitem') for el in root.iter() if el.get('inventoryitem')]
@@ -653,7 +660,8 @@ class Validator:
                                ('V21', 'skins', lambda ck: SK.validate(self, ck)),
                                ('V22', 'buoys', lambda ck: BY.validate(self, ck)),
                                ('V23', 'fight styles', lambda ck: SB.validate(self, ck)),
-                               ('V24', 'conversation portraits', self.conversation_portraits)):
+                               ('V24', 'conversation portraits', self.conversation_portraits),
+                               ('V-TBD', 'fall kill volumes', self.fall_kill_volumes)):
             ck = Check(cid, title)
             self.checks[cid] = ck
             t0 = time.time()
@@ -894,6 +902,19 @@ class Validator:
                          f'fixed mount; x1schema.TURRET_MOUNT_FLAGS)')
                 n_turrets += 1
         ck.set('turrets_not_fixed_mount', n_turrets)
+
+    def fall_kill_volumes(self, ck):
+        """V-TBD: converted fall kill volumes must be active collision boxes."""
+        sc = self.scan
+        for n, volumes in sorted(sc.fall_kill_volumes.items()):
+            if n in sc.twins or not self.is_x1_source((self.reg.get(n) or {}).get('source')):
+                continue
+            ck.count('files_checked')
+            for name, missing in volumes:
+                ck.count('volumes_checked')
+                if missing:
+                    ck.error(f'{sc.files[n]["rel"]}: fall kill volume {name!r} lacks '
+                             f'{", ".join(k + "=" + XS.FALL_KILL_FLAGS[k] for k in missing)}')
 
     # ================================================================== V4 packages
     def v4_packages(self, ck):
