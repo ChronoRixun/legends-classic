@@ -4330,6 +4330,8 @@ appended to the registration table; existing function indices remain unchanged, 
 the total including native builtins is 318 of the engine's 320 names.
 
 Synthetic grant/amount/overflow tests and a native accessor test over a synthetic
-saved block cover the offline contract. Actual pickup ownership, spending the point
-and save/reload remain manual checks. The builder requires the planned companion
+saved block cover the offline contract. A controlled original/candidate pickup test
+confirmed collector-only granting, unchanged XP/levels/skills and other heroes,
+fresh-process save persistence, and spending the point on Focus through the native
+stats screen. See `docs/issue-10-validation.md` for setup and limits. The builder requires the planned companion
 XML2 Fix 1.3.2 release; an old DLL cannot execute this new call.
