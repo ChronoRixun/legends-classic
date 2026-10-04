@@ -11,7 +11,7 @@ It is a builder, not a download: every file of the result is made on your comput
 This project ships no game content - no game files, no parts of them, no modified executables - and the builder
 makes no network connections.
 
-> **Status: first public test builds (builder 0.1.7, launcher 0.2.0).** Every mission and the ending run in automated
+> **Status: first public test builds (builder 0.1.7, launcher 0.2.1).** Every mission and the ending run in automated
 > tests on the developer's PC (a full hand-played run is under way), the builder (`xml1-builder`) makes that build
 > from a disc image and an X-Men Legends II install in a few minutes, and the
 > [Ultimate Legends](https://github.com/ChronoRixun/ultimate-legends) launcher does it in a few clicks. Known bugs
@@ -23,7 +23,7 @@ makes no network connections.
 |---|---|
 | **X-Men Legends for the original Xbox** | your own disc, made into a disc image: a full Redump-style `.iso` or an XISO both work. [How to image your own disc](docs/DUMPING.md). The PlayStation 2 and GameCube versions are different games under the hood and aren't supported (the builder recognises them and says so); compressed images (CCI / CSO) need decompressing first. |
 | **X-Men Legends II: Rise of Apocalypse for PC** | installed, English, with the retail `XMen2.exe` (the builder checks it) and unmodified game files. Your install is only read, never changed. |
-| **[xml2-fix](https://github.com/ChronoRixun/xml2-fix) 1.2.0 or later** | the in-memory engine fixes the port relies on (new-game party, forced parties, the first game's level curve, bigger zones, its own save folder, display options). The Ultimate Legends launcher installs it for you. |
+| **[xml2-fix](https://github.com/ChronoRixun/xml2-fix) 1.3.1 or later** | the in-memory engine fixes the port relies on (new-game party, forced parties, the first game's level curve, bigger zones, its own save folder, display options). The Ultimate Legends launcher installs it for you. Each builder needs a minimum version: see [Versions that go together](#versions-that-go-together). |
 | **Windows 10 or 11, 64-bit** | the released builder is a Windows program. From source it is plain Python + numpy, written to run on Linux too (its tests run there in CI; a full Linux build is untested so far). |
 | **Disk space** | about 8 GB while building with movies (the game ~4.6 GB + a build cache ~3.2 GB you can delete afterwards), about 6 GB without movies. |
 | **Time** | the first build converts every sound bank: about 6-8 minutes on a current 8-core PC. Rebuilds with the cache take 2-3 minutes. |
@@ -32,8 +32,9 @@ makes no network connections.
 
 ### With the Ultimate Legends launcher (recommended)
 
-[Ultimate Legends](https://github.com/ChronoRixun/ultimate-legends) (0.1.0 or later; a portable zip, no install)
-downloads the builder, runs it and installs xml2-fix for you:
+[Ultimate Legends](https://github.com/ChronoRixun/ultimate-legends) (a portable zip, no install) downloads the
+builder, runs it and installs xml2-fix for you. On a Steam Deck or another Linux PC under Proton, use launcher 0.2.1 or
+later: earlier launchers could not unpack the builder there.
 
 1. Set up **X-Men Legends II** in the launcher as usual (it installs xml2-fix).
 2. Open **X-Men Legends - community port** in the library and choose **Set up**.
@@ -140,7 +141,30 @@ Fixed in later builders (the launcher offers the rebuild when the content versio
   Gambit is met, nuke2_2 for Colossus, the Blackbird arbiter zone). Leaving the zone brought them back; nothing was
   lost.
 
-Known limitations:
+### What isn't there
+
+Some of the first game's features rely on engine code X-Men Legends II doesn't have. Until they are recreated (most
+need new engine hooks in xml2-fix), the port plays without them:
+
+- **Solo mode in 18 zones.** The first game let you send the party away for bridge puzzles (from the first ice
+  tunnel on), five Astral Plane zones and a nuclear-plant zone with moving platforms. X-Men Legends II turned that
+  input into Regroup, so the party stays with you there. Whether that breaks any of those puzzles hasn't been
+  checked in game yet ([#5](https://github.com/ChronoRixun/legends-classic/issues/5)).
+- **Scan turrets** never aim or fire (12 turrets in 8 zones, starting with the HAARP tank's missiles)
+  ([#4](https://github.com/ChronoRixun/legends-classic/issues/4)).
+- **Breakable enemy parts**: Juggernaut's helmet never comes off and the Sentinels' arms can't be destroyed
+  ([#3](https://github.com/ChronoRixun/legends-classic/issues/3)).
+- **Master Mold's warp-core shield.** In the first game his shield drops when the warp cores are destroyed; nothing
+  shoots the cores on this engine, so the port never raises the shield and the fight is won on damage alone
+  ([#27](https://github.com/ChronoRixun/legends-classic/issues/27)).
+- **The first game's loot table and shop.** Its equipment drops and the item shop are absent; random drops are X-Men
+  Legends II's ([#6](https://github.com/ChronoRixun/legends-classic/issues/6)).
+- **Objective completion text.** Objectives keep their first description when the first game would have changed it
+  ([#8](https://github.com/ChronoRixun/legends-classic/issues/8)).
+- **Talent costs are X-Men Legends II's**: the first game's two-point Xtreme and Legend ranks cost one point
+  ([#15](https://github.com/ChronoRixun/legends-classic/issues/15)).
+
+### Known limitations
 
 - Key bindings and display settings are shared with X-Men Legends II (both read the same Windows registry key);
   saves are separate.
@@ -149,6 +173,20 @@ Known limitations:
 - Local co-op on controllers should work (it is X-Men Legends II's) but has had little testing.
 - Open bugs and play-test notes: [issues](https://github.com/ChronoRixun/legends-classic/issues) and
   `research/campaign/late_game_test.md`.
+
+### Versions that go together
+
+A build records the xml2-fix version it needs (`_build\stamp.json`, `requires`). With an older fix the game still
+starts but the new keys do nothing: for example the fourth hero's powers or the enemy outlines can go wrong, without an
+error. The launcher installs the latest fix.
+
+| Builder | Content version | Needs xml2-fix | Notes |
+|---|---|---|---|
+| 0.1.8 (not released yet) | 11 | 1.3.1 | fighting-style registry (`[Limits] FightStyles`), enemy outlines (`[Game] GeometrySharingBlendIndices`) |
+| 0.1.6 - 0.1.7 | 8 - 9 | 1.3.0 | conversation hooks, skill points, the item-enhancement pool |
+| 0.1.0 - 0.1.5 | 2 - 7 | 1.2.0 | |
+
+Launcher: any release runs every builder; on Proton (Steam Deck, Linux) 0.2.1 or later.
 
 ## Roadmap
 
