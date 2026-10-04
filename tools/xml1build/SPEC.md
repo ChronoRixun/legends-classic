@@ -4330,12 +4330,12 @@ the engine sorts whole objective records after parsing, so record addresses are 
 stable keys. The slot is cleared on every allocation before attributes are read, which
 prevents stale text across acts and permits several mission files in one act.
 
-The journal's inline description operand is redirected to the stored completion text
+Both primary and secondary journal description operands are redirected to the stored completion text
 only while the existing state byte has its completion bit set. Otherwise it uses the
 original description. This covers script completions, automatic counted completions,
 completion reversal and state restored from a save without rewriting saved records.
 Titles, completion popups, XP, counters and objective visibility retain their native
-behavior. The parser, allocation and journal hooks require retail code guards and are
+behavior. The parser, allocation and two journal hooks require retail code guards and are
 installed together; without [Game] ObjectiveDescriptions=1 the original engine runs.
 
 The builder writes that key and requires the planned XML2 Fix 1.3.2 release. The builder
@@ -4344,5 +4344,7 @@ independent of private SPEC 43-44/V23 work, which is not included here.
 
 Synthetic tests cover prepared and developer mission metadata, unchanged ordering,
 conflict rejection and engine selection/reset rules. Executable guards are checked
-against an owned executable without running it. Journal refresh, counted completion,
-completion reversal, act changes and fresh-process save reload await manual testing.
+against an owned executable without running it. Controlled in-game primary journal completion and reversal now display the expected
+source wording. A counted objective reached native completion; its rendered display,
+secondary-objective rendering, act transitions and fresh-process save reload remain
+unverified. See `docs/issue-8-validation.md` for the test boundaries.
