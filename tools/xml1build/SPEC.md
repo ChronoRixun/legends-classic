@@ -4314,24 +4314,32 @@ caps, connectivity, deterministic output, special-link/script-gate exclusion, ti
 Live before/after routes, ally/enemy behavior, pre-change saves, setup actions and runtime limitations are
 recorded in the separate draft PR and external evidence. Autopilot campaign acceptance remains parked.
 
-## 45. HAARP fire walls restore their loop effect after delayed activation (issue #12)
+## 45. HAARP fire-wall loop startup and relocation (issue #12)
 
-The existing effect and its five textures are present in the converted zone package.
-The failure is in the harm entity lifecycle: XMen2.exe's parser at 0x4396a0 clears
-loopfxstarton when firstact is positive. Its delayed activation at 0x4392f0 calls
-0x439430, which restores the loop-effect bit only when smartfire is enabled. XML1's
-HAARP fire_wall has firstact=1 and loopfxstarton=true but no smartfire attribute.
-Damage activation therefore does not imply visual activation.
+The wall effect and its textures are present. Two engine behaviours hid it: the
+harm parser at 0x4396a0 clears the loop-on bit for positive firstact, and a running
+loop retains its old world placement after copyOriginAndAngles moves the entity.
 
-`x1schema.convert_haarp_fire_wall` sets smartfire=true on that entity in HAARP exterior
-maps only. It requires the expected class, effect, positive delay and initial loop
-flag, and preserves any explicit smartfire value. Damage, repeat interval, extent,
-health, extinguish reaction, effect content and positioning scripts remain authored
-values. XML2's smart-fire form restores the effect when the hazard activates; its
-collision flags match the wall's existing nonblocking intent. No new validator ID
-is allocated. SPEC 43-44 and V23 are reserved by private work.
+The exact HAARP exterior fire_wall definition gets firstact=0, keeping loopfxstarton
+without entering XML2's smartfire damage mode. The wall is staged underground until
+its authored placement script moves it. This advances its initialization from the
+original one-second delay; placement timing, damage fields and the normal non-smart
+harm handler remain unchanged. An explicit smartfire configuration is not overwritten.
 
-Synthetic tests cover activation configuration, idempotence and exclusion of unrelated
-or explicitly configured entities. Static analysis establishes the missing activation
-path; flame visibility, damage, extinguishing and save/reload still require an in-game
-check. Do not describe this as visually verified until that check is performed.
+The six placement scripts hide the wall before the original act/move sequence and
+show it after the move. Hiding/re-showing restarts the existing loop at the destination.
+Scripts with an act keep it before the move; move-only scripts get no new act. The
+flamer animation, waits, target names and activation count are preserved. Unexpected
+source forms fail conversion rather than silently leaving the effect broken.
+
+A smartfire=true candidate was rejected in game: although restarting its loop made
+it visible, its different scheduling reduced damage. The final conversion does not
+set that flag or change collision flags, damage, extent, health or extinguish reaction.
+
+Controlled before/after proof in haarp_ext01 used fresh processes, the same vulnerable
+Wolverine and the same native hazard relocated to the unobstructed landing area.
+Baseline: no visible fire during damaging contact. Final candidate: visible fire and
+floating damage values. Both completed the matching contact/exit sequence at 57 HP
+from 90. This is an isolated hazard/placement test, not a full campaign playthrough
+or a precise rate benchmark. Local captures and state records are retained outside Git;
+see docs/issue-12-validation.md. Extinguishing and save/reload remain separate checks.

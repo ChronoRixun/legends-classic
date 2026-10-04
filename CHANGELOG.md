@@ -5,7 +5,7 @@ build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebui
 
 ## Unreleased - content version 11
 
-- Enable the native smart-fire lifecycle for delayed HAARP fire walls (SPEC 45).
+- Restore HAARP fire-wall loop startup and restart the visual at its scripted destination, preserving the non-smart damage path (SPEC 45).
   Before-and-after runtime verification is tracked with this issue PR.
 
 - Generate long-range buoy networks from XML1 navigation grids and map bounds for XML2's shared hero, ally and

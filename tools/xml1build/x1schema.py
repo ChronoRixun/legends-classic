@@ -224,10 +224,10 @@ def color_channel_elements(root):
     return [(el.tag, el.get('name')) for el in root.iter() if any(el.get(c) is not None for c in COLOR_CHANNELS)]
 
 
-# HAARP fire walls use XML2's native smart-fire lifecycle. The harm parser (0x4396a0)
-# clears loopfxstarton for positive firstact, and activation (0x439430) restores it
-# only for smartfire. Keep the correction local: other hazards may deliberately
-# control their visual independently. SPEC 45 / issue #12.
+# Positive firstact clears the loop bit in the harm parser (0x4396a0).
+# Starting at zero keeps that bit without changing the non-smart damage path.
+# Walls are staged underground; their placement scripts restart the loop at the
+# destination. Do not use smartfire: it changes damage scheduling (SPEC 45).
 def convert_haarp_fire_wall(root, rel):
     path = str(rel).replace('\\', '/').lower().lstrip('/')
     if not path.startswith('maps/haarp/ext/'):
@@ -245,7 +245,7 @@ def convert_haarp_fire_wall(root, rel):
         except ValueError:
             delayed = False
         if delayed:
-            el.set('smartfire', 'true')
+            el.set('firstact', '0')
             changed += 1
     return changed
 
@@ -271,7 +271,7 @@ def convert(root, rel, weapon_models=None, x1_values=None):
         c[f'{kind}:{detail}' if kind not in ('turret_model',) else kind] += 1
     n = convert_haarp_fire_wall(root, rel)
     if n:
-        c['haarp_fire_wall_smartfire'] += n
+        c['haarp_fire_wall_loop_start'] += n
     if CE.is_style_rel(rel):
         c.update(CE.rewrite_style(root))
         c.update(CE.apply_x1_shared_values(root, x1_values))
