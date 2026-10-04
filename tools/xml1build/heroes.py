@@ -137,8 +137,31 @@ TEXTUREICON = {'cyclops': '0', 'phoenix': '1', 'wolverine': '2', 'storm': '3', '
                'iceman': '6', 'colossus': '7', 'profxastral': '9', 'gambit': '11', 'profxgladiator': '9'}
 TEXTUREICON_NONE = '63'
 HERO_ONLY_PASSIVES = ('accuracy', 'pointblank', 'grappling', 'healing_factor', 'knockback')   # -> per-hero files
-SHARED_REAL_DEFS = ('toughness', 'mutantmastery', 'acrobatics')          # XML1 definitions replace the empties
+SHARED_REAL_DEFS = ('toughness', 'mutantmastery', 'acrobatics',
+                    'critical', 'might', 'leadership', 'flight')       # XML1 definitions replace the XML2 ones
 SPECIAL_TALENT_NAMES = ('flight', 'ice_skating', 'night_faith')          # cached by name, 0x4be130 (E13)
+# Engine-form bodies for the four converted passives whose effects XML1's xbe hardcoded (no <activepowerup> in
+# XML1 data) or that the engine reads as a keyed talentvalue (audit xml1_combat_gaps_2026-10-01.md G6; the
+# affecter ids are combat_events.AFFECTERS, verified against XMen2.exe's table):
+#  critical: XML1 +2/4/6/8/10 % melee critical chance -> the `critical` affecter (id 70), the same affecter
+#    XML2's own critical definition uses, as fractions per rank;
+#  might: XML1 lifting Heavy -> Massive -> Gigantic -> might_heaviness 1/2/3 (id 37) with might_structure 1
+#    (id 38), the affecter pair XML2's own might carries and DESIGN 4.6's might_mode mapping produces. XML1's
+#    +5/10/15 % melee damage and +3/6/8 Destruction have no faithful engine expression (the `damage` affecter
+#    has no melee-only scope, and the `damagelevel` affecter's passive use is unverified), so they are declared
+#    losses - the rank descriptions keep XML1's text;
+#  flight: XML1 40/30/20/10/5 energy per second -> the flight_pwr talentvalue, which is how XML2's own flight
+#    expresses the drain and which the exe reads by name (flight pickup stays the engine's own rank-3 behaviour).
+SHARED_REAL_POWERUPS = {
+    'critical': [[('critical', '0.02')], [('critical', '0.04')], [('critical', '0.06')],
+                 [('critical', '0.08')], [('critical', '0.10')]],
+    'might': [[('might_heaviness', '1'), ('might_structure', '1')],
+              [('might_heaviness', '2'), ('might_structure', '1')],
+              [('might_heaviness', '3'), ('might_structure', '1')]],
+}
+SHARED_REAL_TALENTVALUES = {
+    'flight': {'flight_pwr': {1: '40', 2: '30', 3: '20', 4: '10', 5: '5'}},
+}
 DROP_STATS_ATTRS = ('ratingmelee', 'ratingranged', 'ratingsupport', 'ratingdurability')
 COSTUME_RENAME = {'skin_magmacivilian': 'skin_civilian'}                  # D6: slot 8 is free for Magma
 COSTUMES_X2 = ('astonishing', 'aoa', '60s', '70s', 'weaponx', 'future', 'winter', 'civilian')  # table 0x6d8aa0
@@ -168,7 +191,8 @@ VALUE_REF_ATTRS = frozenset({
 # affecter attribute names XML2 retail data uses (inventory.json xml2_contract + every XML2 style / talent file)
 AFFECTER_VOCAB = frozenset({
     'all_talents', 'atk_attack_rating', 'atk_critical', 'atk_damage', 'atk_vampire', 'atk_vampire_energy',
-    'attack_rating', 'body', 'confused', 'critical', 'damage', 'def_absorb_damage', 'def_damage', 'def_damage_scope',
+    'attack_rating', 'body', 'combo_damage', 'combo_xp', 'confused', 'critical', 'damage', 'def_absorb_damage',
+    'def_damage', 'def_damage_scope',
     'def_dodge', 'def_finisher', 'def_grab', 'def_knockback', 'def_mind_control', 'def_pain', 'def_pickup',
     'def_reflect_pain', 'def_stun', 'defense_rating', 'deflect_damage', 'energy_regen', 'extra_money',
     'extra_potions', 'fear', 'frozen', 'health_regen', 'health_regen_pct', 'invisible', 'jump', 'maxenergy',
@@ -1550,9 +1574,6 @@ def convert_activepowerups(apus, values, rank, where, report, bleed='on'):
         if pu == 'none':
             report.setdefault('losses', []).append(f'{where}: activepowerup none ({funcs}) dropped')
             continue
-        if pu in ('combo_damage', 'combo_xp'):
-            report.setdefault('losses', []).append(f'{where}: {pu} has no XML2 affecter; dropped')
-            continue
         attr = a.get('powerup')                    # XML1's spelling (damageLevel) - the exe string has that case
         if pu not in AFFECTER_VOCAB:
             report.setdefault('unverified_affecters', []).append(f'{where}: {pu}')
@@ -1669,6 +1690,23 @@ class TalentFile:
         dup = [n for n, c in collections.Counter(self.names).items() if c > 1]
         if dup:
             self.report['errors'].append(f'{self.hero}: duplicate talents {dup}')
+
+
+def convert_shared_real(name, src, values, icons='xml1', bleed='on'):
+    """one SHARED_REAL_DEFS definition: XML1's <talent> from data/shared_talents.eng in XML2 form. toughness /
+    mutantmastery / acrobatics carry their powerups in XML1 data and convert as-is; critical / might had their
+    effects hardcoded in XML1's xbe (descriptions only), so their engine-form powerups are injected from
+    SHARED_REAL_POWERUPS, flight's drain is the engine-keyed flight_pwr talentvalue (SHARED_REAL_TALENTVALUES),
+    and leadership's combo_damage / combo_xp activepowerups convert through the generic path now that the two
+    affecters are known to the engine (ids 76/77). Returns (<talent>, report)."""
+    tf = TalentFile('shared', values, icons, bleed)
+    tal = tf.add_inline(src, talentvalues=SHARED_REAL_TALENTVALUES.get(name))
+    tal.attrib.pop('power', None)
+    for lv, powerups in zip([c for c in tal if c.tag == 'level'], SHARED_REAL_POWERUPS.get(name, [])):
+        p = ET.SubElement(lv, 'powerup', {'life': '-1'})
+        for attr, lvl in powerups:
+            p.append(_affecter(attr, lvl))
+    return tal, tf.report
 
 
 # ------------------------------------------------------------------------------------------------ builder
@@ -2325,7 +2363,7 @@ class HeroBuilder:
             elif ln in self.hero_talent_refs:
                 why = 'XML1 hero plain reference'
             elif ln in SHARED_REAL_DEFS:
-                why = 'XML1 real definition (toughness / mutantmastery / acrobatics)'
+                why = 'XML1 real definition (SHARED_REAL_DEFS)'
             elif ln in SPECIAL_TALENT_NAMES and ln in self.hero_talent_refs:
                 why = 'engine special name'
             elif ln == NV.ENERGY_TALENT and ln in stats_refs:
@@ -2339,13 +2377,10 @@ class HeroBuilder:
         return keep, drop, stats_refs, style_reqs
 
     def shared_definition(self, name):
-        """toughness / mutantmastery / acrobatics: XML1's real definition in XML2 form."""
-        src = self.x1_shared.get(name)
-        tf = TalentFile('shared', self.values, self.icons, self.bleed)
-        tal = tf.add_inline(src)
-        for msg in tf.report['errors']:
+        """SHARED_REAL_DEFS: XML1's real definition in XML2 form (convert_shared_real)."""
+        tal, report = convert_shared_real(name, self.x1_shared.get(name), self.values, self.icons, self.bleed)
+        for msg in report['errors']:
             self.ctx.error(f'shared_talents {name}: {msg}')
-        tal.attrib.pop('power', None)
         return tal
 
     # ---------------------------------------------------------------- write everything
@@ -2792,6 +2827,50 @@ def _validate(ctx, report=None):
                 ln = (st.get('name') or '').lower()
                 if tn in SPECIAL_TALENT_NAMES and tn not in shared_names and tn not in file_names.get(ln, set()):
                     ck.error(f'{st.get("name")}: special talent {tn} (0x4be130) defined nowhere')
+        # SPEC 50 (SPEC_heroes.md: the first game's shared hero passives): the kept definitions of
+        # critical / might / leadership / flight carry XML1's rank counts, level gates and engine-form bodies
+        # (SHARED_REAL_POWERUPS / SHARED_REAL_TALENTVALUES), not XML2's 15/2/15-rank versions
+        st_root = o.tree('Data/shared_talents.engb')
+        real_want = {
+            'critical': (5, ['1', '7', '12', '17', '22'],
+                         [[('critical', '0.02')], [('critical', '0.04')], [('critical', '0.06')],
+                          [('critical', '0.08')], [('critical', '0.10')]]),
+            'might': (3, ['1', '1', '1'],
+                      [[('might_heaviness', '1'), ('might_structure', '1')],
+                       [('might_heaviness', '2'), ('might_structure', '1')],
+                       [('might_heaviness', '3'), ('might_structure', '1')]]),
+            'leadership': (5, ['4', '9', '14', '19', '24'],
+                           [[('combo_damage', '1.25'), ('combo_xp', '1.05')],
+                            [('combo_damage', '1.5'), ('combo_xp', '1.1')],
+                            [('combo_damage', '1.75'), ('combo_xp', '1.15')],
+                            [('combo_damage', '2'), ('combo_xp', '1.2')],
+                            [('combo_damage', '2.5'), ('combo_xp', '1.25')]]),
+            'flight': (5, ['1', '1', '1', '1', '1'], [[]] * 5),
+        }
+        for tn, (ranks, gates, affecters) in real_want.items():
+            tal = next((t for t in st_root.iter('talent') if (t.get('name') or '').lower() == tn), None) \
+                if st_root is not None else None
+            if tal is None:
+                ck.error(f'shared_talents: {tn} (XML1 real definition) missing')
+                continue
+            levels = [c for c in tal if c.tag == 'level']
+            if len(levels) != ranks:
+                ck.error(f'shared_talents {tn}: {len(levels)} ranks != XML1 {ranks}')
+                continue
+            for i, lv in enumerate(levels, 1):
+                req = next((r.get('level') for r in lv if r.tag == 'require' and
+                            (r.get('cat') or '').lower() == 'level'), None)
+                if req != gates[i - 1]:
+                    ck.error(f'shared_talents {tn} rank {i}: level gate {req!r} != XML1 {gates[i - 1]!r}')
+                got = [(a.get('attribute'), a.get('level'))
+                       for p in lv.iter('powerup') for a in p.iter('affecter')]
+                if got != affecters[i - 1]:
+                    ck.error(f'shared_talents {tn} rank {i}: affecters {got} != {affecters[i - 1]}')
+            if tn == 'flight':
+                pwr = {int(tv.get('level')): tv.get('value')
+                       for tv in tal.iter('talentvalue') if tv.get('name') == 'flight_pwr'}
+                if pwr != {1: '40', 2: '30', 3: '20', 4: '10', 5: '5'}:
+                    ck.error(f'shared_talents flight: flight_pwr {pwr} != XML1 40/30/20/10/5')
         worst = sorted(file_sizes.values(), reverse=True)[:4]
         pool = len(shared['engb']) + sum(worst)
         budgets['talent_pool_worst_party'] = pool
