@@ -60,6 +60,10 @@ Checks (severity per SPEC 4.6: error = will not load or silently misbehaves; war
                 index counts equal, indices inside the blend palette, palette entries on skeleton bones, weights
                 summing to 1 (errors); every bone the skin's vertices use in the anim DB skeleton (skin / skeleton
                 mismatch: error, warning when the XML1 disc has it too); 1-2 blend weights noted
+  V23 fight styles (SPEC 43, style_budget.validate): per converted zone the distinct style files of the permanent
+                packages, the zone package, its CHRB characters' packages and the worst four-hero party against
+                the registry the shipped ini asks xml2-fix for ([Limits] FightStyles, else XMen2.exe's 19): more
+                is an error (the hero seated last has no powers), exactly full a warning
 
 Inherited defects. Many findings are defects of the XML1 disc itself (a zone, conversation, dialog, script or
 sound bank XML1 references but never shipped; a line default.xbe already dropped). They are re-derived, not
@@ -96,6 +100,7 @@ from . import npc_values as NV           # V19 (SPEC 24): value codes XMen2.exe 
 from . import buoys as BY
 from . import automaps as AM             # V20 (SPEC 26): XML1 automaps as .zam
 from . import skins as SK                # V21 (SPEC 25): skin blend weights / skeleton against the anim DB
+from . import style_budget as SB         # V23 (SPEC 43): the fighting / power style registry per zone
 
 MAX_REPORTED = 50                             # per check and severity, into ctx.error / ctx.warn
 CONTENT_OWNERS = tuple(C.MODULE_ORDER)        # characters, scripts, zones, media
@@ -647,6 +652,7 @@ class Validator:
                                ('V20', 'automaps', lambda ck: AM.v20(self, ck)),
                                ('V21', 'skins', lambda ck: SK.validate(self, ck)),
                                ('V22', 'buoys', lambda ck: BY.validate(self, ck)),
+                               ('V23', 'fight styles', lambda ck: SB.validate(self, ck)),
                                ('V24', 'conversation portraits', self.conversation_portraits)):
             ck = Check(cid, title)
             self.checks[cid] = ck
