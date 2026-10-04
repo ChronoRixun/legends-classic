@@ -248,7 +248,7 @@ by a stats entry or a style `<require>`; named by a `<require cat="skill|talent"
 final stats use and not defined in a hero file; an XML2 definition referenced by a stats entry; a plain reference
 of an XML1 hero (incl. the engine special names `flight`, `ice_skating`, `night_faith`, E13); one of
 `SHARED_REAL_DEFS` (`toughness`, `mutantmastery`, `acrobatics`, `critical`, `might`, `leadership`, `flight`),
-which get XML1's real definitions (the last four: SPEC (number assigned at merge) at the end of this file);
+which get XML1's real definitions (the last four: SPEC 50 at the end of this file);
 characters' NPC energy talent
 `x1_npc_energy` while a stats entry names it (SPEC 24.3); or one of characters' XML1 NPC immunity talents (SPEC 30:
 a non-XML2 definition in the immunity form, `npc_values.is_immunity_talent`) while a stats entry names it.
@@ -415,7 +415,7 @@ entries" fails since SPEC section 16 renamed `mission_alison` to `zone_nyc1_1_1`
 
 ---------------------------------------------------------------------------------------------------------------
 
-## SPEC (number assigned at merge): the first game's shared hero passives (critical, might, leadership, flight)
+## SPEC 50: the first game's shared hero passives (critical, might, leadership, flight)
 
 The four hero passives both games define kept XML2's definitions although XML1's differ and are expressible
 (issue #15 part 1, audit xml1_combat_gaps_2026-10-01.md G6). `SHARED_REAL_DEFS` now also covers them, so
@@ -444,7 +444,7 @@ toughness / mutantmastery / acrobatics (section 6). Per talent, in the engine's 
   pickup stays whatever the engine itself implements (XML1 allowed pickup from rank 3; the rank-3+ descriptions
   keep XML1's text).
 
-Validator: heroes `_validate` V-TBD checks rank counts, level gates, per-rank affecters and flight's
+Validator: heroes `_validate` checks rank counts, level gates, per-rank affecters and flight's
 talentvalues of the four kept definitions. Unit: `tests/unit/test_shared_talents.py` (synthetic XML1 trees,
 invented descriptions).
 

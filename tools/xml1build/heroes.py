@@ -2827,7 +2827,7 @@ def _validate(ctx, report=None):
                 ln = (st.get('name') or '').lower()
                 if tn in SPECIAL_TALENT_NAMES and tn not in shared_names and tn not in file_names.get(ln, set()):
                     ck.error(f'{st.get("name")}: special talent {tn} (0x4be130) defined nowhere')
-        # V-TBD (SPEC (number assigned at merge): the first game's shared hero passives): the kept definitions of
+        # SPEC 50 (SPEC_heroes.md: the first game's shared hero passives): the kept definitions of
         # critical / might / leadership / flight carry XML1's rank counts, level gates and engine-form bodies
         # (SHARED_REAL_POWERUPS / SHARED_REAL_TALENTVALUES), not XML2's 15/2/15-rank versions
         st_root = o.tree('Data/shared_talents.engb')

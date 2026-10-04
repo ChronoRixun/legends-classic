@@ -1,4 +1,4 @@
-"""SPEC (number assigned at merge): the first game's shared hero passives (critical / might / leadership /
+"""SPEC 50: the first game's shared hero passives (critical / might / leadership /
 flight) ship XML1's definitions in the engine's form, like toughness / mutantmastery / acrobatics already do
 (xml1build.heroes SHARED_REAL_DEFS). XML1 <Talent> trees and descriptions are built in code with invented text -
 no game data; only the engine's affecter attribute and talentvalue names appear.

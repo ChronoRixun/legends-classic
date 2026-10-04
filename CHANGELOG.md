@@ -5,6 +5,12 @@ build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebui
 
 ## Unreleased - content version 11
 
+- **The first game's shared hero passives** (issue #34): critical strike (5 ranks, +2 to +10%, unlocking at levels
+  1/7/12/17/22), might (3 ranks, heavier objects each rank), leadership (5 ranks of combo damage and combo XP) and
+  flight (energy drain 40 down to 5 per second) replace X-Men Legends II's versions. Might's bonus melee damage has no
+  engine equivalent and is not recreated. A save that holds more ranks than a talent now has keeps the maximum; the
+  extra skill points are not refunded (SPEC 50 in SPEC_heroes.md).
+
 - **Fixed: black portraits in conversations for heroes who are not in the party or the zone** (issue #13; seen with
   forced parties switched off, for example Magma's reply menus in the mansion). Zone packages now preload the
   portrait of every named speaker of their conversations, and a new check (V24) verifies it (SPEC section 49).
