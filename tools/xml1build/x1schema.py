@@ -224,6 +224,32 @@ def color_channel_elements(root):
     return [(el.tag, el.get('name')) for el in root.iter() if any(el.get(c) is not None for c in COLOR_CHANNELS)]
 
 
+# Positive firstact clears the loop bit in the harm parser (0x4396a0).
+# Starting at zero keeps that bit without changing the non-smart damage path.
+# Walls are staged underground; their placement scripts restart the loop at the
+# destination. Do not use smartfire: it changes damage scheduling (SPEC 45).
+def convert_haarp_fire_wall(root, rel):
+    path = str(rel).replace('\\', '/').lower().lstrip('/')
+    if not path.startswith('maps/haarp/ext/'):
+        return 0
+    changed = 0
+    for el in root.iter('entity'):
+        if (el.get('name') != 'fire_wall'
+                or el.get('classname') != 'affectableharment'
+                or el.get('loopfx') != 'ambient/fire_wall'
+                or el.get('loopfxstarton', '').lower() != 'true'
+                or 'smartfire' in el.attrib):
+            continue
+        try:
+            delayed = float(el.get('firstact', '0')) > 0
+        except ValueError:
+            delayed = False
+        if delayed:
+            el.set('firstact', '0')
+            changed += 1
+    return changed
+
+
 # --------------------------------------------------------------------------------------------- dispatcher
 def is_effect_rel(rel):
     r = str(rel).replace('\\', '/').lower().lstrip('/')
@@ -243,6 +269,9 @@ def convert(root, rel, weapon_models=None, x1_values=None):
             c['effect_files_recoloured'] += 1
     for kind, detail in convert_entities(root, weapon_models):
         c[f'{kind}:{detail}' if kind not in ('turret_model',) else kind] += 1
+    n = convert_haarp_fire_wall(root, rel)
+    if n:
+        c['haarp_fire_wall_loop_start'] += n
     if CE.is_style_rel(rel):
         c.update(CE.rewrite_style(root))
         c.update(CE.apply_x1_shared_values(root, x1_values))
