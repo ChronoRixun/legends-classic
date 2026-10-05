@@ -118,12 +118,134 @@ SPEAKER_ATTRS = ('text', 'textb')
 JOIN_HERO_SCRIPTS = {'nyc/alison/add_cyclops': 1, 'mansion/dr_mag2/blob/add_cyclops': 2}
 JOIN_HERO_ZONE_SCRIPTS = {'nyc/alison/nyc1_1_3': 1, 'x1/zones/mansion/dr_mag2/mag_nyc4': 2}
 JOIN_HERO_MISSIONS = {'alison': 1, 'dr_mag2': 2}
-# Unlock points (research/heroes/roster.md 1.1.3 / 4; Owen's decision 2026-09-28). XML1 unlocked Jubilee, Colossus and
-# Psylocke through data/missions/missions.xml charunlock, which no script or conversation reproduces; the port
-# unlocks them at the start of the mission after which XML1 first shows them as NPCs, in story order (Jubilee in the
-# mansion2 hub, Colossus in mansion_back4, Psylocke in mansion7_1). scripts_transform.unlock_at_mission_starts puts
-# the line in every copy of the begin body; heroes V-H13 checks it.
-MISSION_START_UNLOCKS = {'mansion2': ('jubilee',), 'mansion4': ('colossus',), 'mansion7': ('psylocke',)}
+# Mission-start unlocks (issue #55, SPEC 58; xml1build.unlocks). XML1 unlocks, at
+# every beginmission (side missions included), every hero of its cumulative table up to the mission's
+# missions.xml charunlock milestone; mission_start_unlocks(ctx) reads both from the player's copy and
+# scripts_transform.unlock_at_mission_starts puts the lines in every copy of every begin body (the same lines in each,
+# so the later body matching still sees identical bodies); heroes V-H13 checks it. It replaced the hand-placed
+# Jubilee / Colossus / Psylocke unlock points of 2026-09-28, which stood in for this table.
+
+
+def mission_start_unlocks(ctx) -> dict:
+    """Pure (cached): {'missions': {mission: (hero, ...)}, 'cumulative': {mission: (hero, ...)}, 'dropped':
+    {mission: (non-playable hero, ...)}, 'errors': [str]}, limited to the playable heroes of this build's herostat.
+    cumulative = XML1's unlock set of every mission in missions.xml (all rows up to its milestone); missions = the
+    lines each begin body writes: the milestone's own group (the rows after the previous milestone). XMen2.exe keeps
+    unlocks in the profile and nothing clears them, so every story path, which starts each milestone's missions in
+    table order, ends each mission start with XML1's cumulative set; the full cumulative set in every copy pushed the
+    act-3 hubs (nyc3_2_1, muir_in3: four begin-body copies each) past the 620-statement pool (0x4d7e6e). Saves from
+    earlier builds get the cumulative set from their zone script on load (catchup_unlock_plan). Any problem reading the table or the milestones is an error (the build fails
+    in run(); the map is then empty - never a guess)."""
+    def build():
+        from . import unlocks as U                     # noqa: WPS433
+        errors = []
+        xbe = Path(ctx.x1_xbox) / 'default.xbe'
+        try:
+            rows = U.read_xbe_table(xbe)
+        except U.UnlockTableError as e:
+            errors.append(f'default.xbe: {e}. XML1\'s per-mission hero unlocks cannot be read from this executable, '
+                          f'so the build stops instead of guessing them (issue #55)')
+            rows = None
+        try:
+            root = ctx.read_x1_xml('data/missions/missions.xml')
+        except KeyError as e:
+            errors.append(f'{e}: the per-mission unlock milestones (charunlock) are missing')
+            root = None
+        milestones, missing = U.mission_milestones(root) if root is not None else ({}, [])
+        for m in missing:
+            errors.append(f'missions.xml: mission {m} has no charunlock milestone')
+        if rows is None or errors:
+            return {'missions': {}, 'cumulative': {}, 'dropped': {}, 'errors': errors, 'rows': len(rows or ())}
+        playable = set(_port_heroes(ctx))
+        cum, drop = U.mission_unlocks(milestones, rows, playable)
+        grp, _ = U.mission_unlocks(milestones, rows, playable, fn=U.group)
+        return {'missions': grp, 'cumulative': cum, 'dropped': drop, 'errors': errors, 'rows': len(rows)}
+    return _cached(ctx, 'mission_start_unlocks', build)
+
+
+def _mission_start_unlock_map(ctx) -> dict:
+    return mission_start_unlocks(ctx)['missions']
+
+
+def _mission_cumulative_map(ctx) -> dict:
+    return mission_start_unlocks(ctx)['cumulative']
+
+
+def menu_only_unlock_map(ctx) -> dict:
+    """{mission: (hero, ...)} (pure, cached): the REQUIRED heroes of each seated forced mission (forced_party_plan
+    status 'seat') that are playable and outside the mission's cumulative unlock set. XML1 only seats them (Magma
+    before her milestone, the Professor X forms, Cyclops at the two joins); scripts_transform.menu_only_unlocks moves
+    their header unlock into the team-menu branch of the seat block."""
+    def build():
+        cum = _mission_cumulative_map(ctx)
+        heroes = _port_heroes(ctx)
+        out = {}
+        plan = {k.lower(): v for k, v in _mission_plan(ctx).items()}
+        for m, row in forced_party_plan(ctx).items():
+            if row.get('status') != 'seat':
+                continue
+            req = [h.lower() for h in (plan.get(m) or {}).get('required') or [] if h]
+            only = tuple(dict.fromkeys(h for h in req if h in heroes and h not in cum.get(m, ())))
+            if only:
+                out[m] = only
+        return out
+    return _cached(ctx, 'menu_only_unlocks', build)
+
+
+# Zones whose catch-up unlocks (issue #55) would push the zone's script set past XMen2.exe's 620-node statement pool
+# (0x4d7e6e): zone -> why. A save there keeps the unlocks it had; the mission starts before it apply the table.
+CATCHUP_SKIP_ZONES = {'mastermold/mastermold2': '613 of 620 statements already (NARROW_PACKED)',
+                      'nyc/riots/nyc3_2_1': '610 of 620 statements with its four act-3 begin bodies (measured '
+                                            '2026-10-04)'}
+
+
+def _x1_world_mission(ctx, zone):
+    """the XML1 world entity's mission attribute (lowercase) or ''."""
+    def build():
+        for ext in ('.eng', '.xml'):
+            rel = f'maps/{zone}{ext}'
+            if ctx.x1_path(rel) is None:
+                continue
+            try:
+                root = ctx.read_x1_xml(rel)
+            except Exception:          # noqa: BLE001 - a broken zone file is the zones module's error
+                return ''
+            w = C.find_world(root) if root is not None else None
+            return ((w.get('mission') if w is not None else '') or '').strip().lower()
+        return ''
+    return _cached(ctx, ('world_mission', zone), build)
+
+
+def catchup_unlock_plan(ctx) -> dict:
+    """Pure (cached): {'scripts': {zone script ref: (hero, ...)}, 'zones': {zone: (mission, ref)}, 'skipped':
+    {zone: why}}. Every converted XML1 zone whose world entity names a mission gets that mission's cumulative unlock
+    set in its zone script (scripts_transform.catchup_unlocks), so a save made inside the mission by an earlier build
+    catches up on load; a zone script shared by zones of several missions gets the heroes common to all of them (it
+    never unlocks beyond any of its zones' milestones)."""
+    def build():
+        cum = _mission_cumulative_map(ctx)
+        per_ref, zones, skipped = {}, {}, {}
+        for z in ctx.x1_zones():
+            if z in C.MENU_ZONES or not _x1_zone_convertible(ctx, z):
+                continue
+            m = _x1_world_mission(ctx, z)
+            if not m or m not in cum:
+                continue
+            ref = zone_script_ref(ctx, z)
+            if ref is None:
+                skipped[z] = f'mission {m}: no zone script'
+                continue
+            if z in CATCHUP_SKIP_ZONES:
+                skipped[z] = CATCHUP_SKIP_ZONES[z]
+                per_ref[ref] = None
+                continue
+            zones[z] = (m, ref)
+            if ref in per_ref and per_ref[ref] is None:
+                continue
+            hs = list(cum[m])
+            per_ref[ref] = hs if ref not in per_ref else [h for h in per_ref[ref] if h in hs]
+        return {'scripts': {r: tuple(hs) for r, hs in per_ref.items() if hs}, 'zones': zones, 'skipped': skipped}
+    return _cached(ctx, 'catchup_unlocks', build)
 
 # Forced teams (SPEC 19, research/heroes/FORCED_TEAMS_DESIGN.md). XML1's team builder (xbe 0x18d6d0, run by
 # beginmission unless keepheroes) seats REQUIRED, then RECOMMENDED, clears RESTRICTED and caps at maxheros.
@@ -143,6 +265,7 @@ SIDE_MISSIONS = {'jug_fb': 'mansion2', 'sent_fb': 'mansion2', 'dr_mag1': 'mansio
 INLINE_SIDE_ENDS = {"endSideMission('true')": 'jug_fb'}
 SIDE_END_REF = 'x1/missions/end_{}'
 SIDE_BEGIN_REF = 'x1/missions/begin_{}'
+CRLF = '\r\n'
 
 # research-confirmed droppable lines: XML1's own defects in unreferenced developer scripts (scripts
 # VERIFICATION: "14 remain, all pre-existing XML1 defects in dead developer scripts"; none is referenced by a
@@ -341,9 +464,9 @@ def _base_text(ctx, ref):
         if blackbird_mode(ctx) == 'chooseteam':
             lines, zs = T.blackbird_to_choose_team(lines)
             info['blackbird'] = zs
-        # unlock points: every copy of a begin body gets the same lines, so the body matching of the later passes
-        # (choose_team_in_bodies, forced_party_in_bodies) still sees identical bodies
-        lines, ul = T.unlock_at_mission_starts(lines, MISSION_START_UNLOCKS)
+        # XML1's mission-start unlocks (issue #55): every copy of a begin body gets the same lines, so the body
+        # matching of the later passes (choose_team_in_bodies, forced_party_in_bodies) still sees identical bodies
+        lines, ul = T.unlock_at_mission_starts(lines, _mission_start_unlock_map(ctx))
         if ul:
             info['mission_unlocks'] = ul
         text, zl = T.normalise_zone_literals('\r\n'.join(lines))
@@ -480,6 +603,10 @@ def _script_text(ctx, ref, mode=None):
             # their end site. The team-menu load stays as the else branch (no DLL / ForcedTeams=0).
             lines, fp = T.forced_party_in_bodies(lines, _mission_bodies_final(ctx), forced_party_plan(ctx))
             info['forced_party'] = fp
+            # issue #55: XML1 only seats these REQUIRED heroes; the team-menu branch still unlocks them
+            lines, mo = T.menu_only_unlocks(lines, menu_only_unlock_map(ctx))
+            if mo:
+                info['menu_only_unlocks'] = mo
             sides = _side_plan(ctx)
             lines, pushed = T.side_push_at_markers(lines, {s for s, r in sides.items() if r['push']})
             side = _inline_side_begins(ctx).get(ref)
@@ -496,6 +623,12 @@ def _script_text(ctx, ref, mode=None):
         if act is not None:
             lines = T.inject_act(lines, act)
             info['act_injected'] = act
+        # issue #55: saves made inside a mission by an earlier build get its unlocks when they are loaded
+        cu = catchup_unlock_plan(ctx)['scripts'].get(ref)
+        if cu:
+            lines, ch = T.catchup_unlocks(lines, cu)
+            if ch:
+                info['catchup_unlocks'] = ch
         # T7 join_hero (research/heroes/roster.md; SPEC_heroes.md): the two addHero(cyclops) scripts, their zone
         # scripts' guards and the owning missions' start bodies (every inlined copy carries the marker); seat builds
         # try xml2-fix addHero, then joinHero first (SPEC 19.7, design 3.6) and keep T7 as the fallback. The join
@@ -532,6 +665,9 @@ def _script_text(ctx, ref, mode=None):
             lines.append('')                                   # final CRLF, like every research script
         from .fire_wall_scripts import rewrite as rewrite_fire_wall
         lines = rewrite_fire_wall(ref, lines)
+        from .fire_wall_scripts import relocation_plan, rewrite_loops
+        targets = _cached(ctx, 'harm_loop_relocations', lambda: relocation_plan(ctx))
+        lines, info['harm_loop_relocations'] = rewrite_loops(ref, lines, targets.get(ref.rsplit('/', 1)[0], {}))
         return '\r\n'.join(lines), info
     return _cached(ctx, ('text', ref, mode), build)
 
@@ -1550,7 +1686,8 @@ def _derive_post_branch_step(ctx, hero):
     for ref, p in _installable_refs(ctx).items():
         if ref.startswith('x1/'):
             continue                                   # generated mission starts are not branch ends
-        t = script_text(ctx, ref)
+        # XML1's own unlock sites only: not the mission-start / catch-up unlocks this module adds (issue #55)
+        t = CRLF.join(T.strip_generated_unlocks((script_text(ctx, ref) or '').split(CRLF)))
         mu = pat_unlock.search(t)
         if not mu:
             continue
@@ -2482,16 +2619,36 @@ def _transform_report(ctx, det, installed):
              f'matching party; blackbirdMenu starts already open the team menu: '
              f'{sorted(fh.items())}')
     ctx.set_count('act_on_entry_injected', len(acts))
-    # unlock points (MISSION_START_UNLOCKS): every installed copy of those begin bodies unlocks the hero once
+    # XML1's mission-start unlocks (issue #55): every installed copy of every begin body unlocks its mission's
+    # cumulative set once
+    msu = mission_start_unlocks(ctx)
+    for e in msu['errors']:
+        ctx.error(f'mission-start unlocks: {e}')
+    ul_map = msu['missions']
     ctx.set_count('mission_start_unlocks', len(unlocks))
-    for m, heroes in sorted(MISSION_START_UNLOCKS.items()):
-        if SIDE_BEGIN_REF.format(m) not in _installable_refs(ctx):
-            ctx.error(f'unlock point {m} -> {heroes}: {SIDE_BEGIN_REF.format(m)} is not installed')
+    ctx.set_count('mission_start_unlock_missions', len(ul_map))
+    no_begin = sorted(m for m in ul_map if SIDE_BEGIN_REF.format(m) not in _installable_refs(ctx))
     for ref in sorted(installed):
         text = _script_text(ctx, ref)[0] or ''
-        probs, _ = T.unlock_problems(text.split('\r\n'), MISSION_START_UNLOCKS)
+        probs, _ = T.unlock_problems(text.split('\r\n'), ul_map)
         for p in probs:
-            ctx.error(f'scripts/{ref}.py: unlock point: {p}')
+            ctx.error(f'scripts/{ref}.py: mission-start unlock: {p}')
+        for p in T.menu_only_problems(text.split('\r\n'), menu_only_unlock_map(ctx)):
+            ctx.error(f'scripts/{ref}.py: {p}')
+    mo = sorted({(m, h) for ref in installed for m, h in _script_text(ctx, ref)[1].get('menu_only_unlocks') or ()})
+    ctx.set_count('menu_only_unlocks', len(mo))
+    ctx.note(f'issue #55: REQUIRED heroes XML1 only seats (their unlock moved into the team-menu branch of the seat '
+             f'block): {dict(sorted(menu_only_unlock_map(ctx).items()))}')
+    cu_plan = catchup_unlock_plan(ctx)
+    cu_done = sorted(ref for ref in installed if _script_text(ctx, ref)[1].get('catchup_unlocks'))
+    missing_cu = sorted(set(cu_plan['scripts']) - set(cu_done))
+    for ref in missing_cu:
+        if ref in installed:
+            ctx.error(f'scripts/{ref}.py: zone-entry catch-up unlocks planned but not written')
+    ctx.set_count('catchup_unlock_scripts', len(cu_done))
+    ctx.note(f'issue #55 catch-up for saves in progress: {len(cu_done)} zone scripts unlock their zone\'s mission set '
+             f'on entry / load ({len(cu_plan["zones"])} zones); skipped: {cu_plan["skipped"]}; planned for scripts '
+             f'this module does not install: {[r for r in missing_cu if r not in installed]}')
     # SPEC 18: the scripts that address the renamed same-name NPCs (scripts_transform.NPC_DOUBLE_SCRIPTS)
     nd = {}
     for ref in sorted(T.NPC_DOUBLE_SCRIPTS):
@@ -2504,8 +2661,11 @@ def _transform_report(ctx, det, installed):
     ctx.set_count('npc_double_refs', sum(nd.values()))
     ctx.note(f'SPEC 18 same-name NPCs renamed <hero>_x1double: {T.NPC_DOUBLE_SPAWNERS}; entity references rewritten: '
              f'{nd}')
-    ctx.note(f'unlock points (roster.md 1.1.3; XML1 used missions.xml charunlock): '
-             f'{dict(MISSION_START_UNLOCKS)} in {len(unlocks)} begin-body copies: {sorted({r for r, _, _ in unlocks})}')
+    ctx.note(f'mission-start unlocks (issue #55: XML1\'s cumulative table, {msu.get("rows", 0)} rows of default.xbe, '
+             f'at each missions.xml charunlock milestone): {len(ul_map)} missions, {len(unlocks)} unlock lines added '
+             f'in {len({r for r, _, _ in unlocks})} scripts; XML1 rows that are no playable hero of this build: '
+             f'{sorted({h for hs in msu["dropped"].values() for h in hs})}; missions without an installed begin '
+             f'script (nothing starts them): {no_begin}')
     specs = _narrow_specs(ctx)
     for sp in specs:
         files = sorted(set(narrowed_files.get(sp.key, [])))

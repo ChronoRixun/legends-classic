@@ -46,6 +46,16 @@ own patch), and zones runs it on the world tables it merges itself, so every mod
    a shared combat event XML2's shipped table changed gets XML1's value (punch L1 = "4 5" instead of XML2's "2 3"),
    SPEC.md section 33; and convert_renderfx: XML1's ce_renderfx tint form -> XML2's add / remove="cloaked",
    SPEC.md section 31.
+5. Ordinary harm loops: positive firstact clears XML2's loop-on bit (0x4399d9).
+   Start-on loops get firstact=0 after class remapping, advancing initial activation
+   but preserving the damage mode and repeat delays (SPEC 51).
+5. Popup dialogs (files under dialogs/): XMen2.exe's popup loader (0x5ebfd0) skips every <dialog> whose platform
+   the platform test 0x4bd650 rejects: an empty or missing platform is accepted, a list (space / comma / tab
+   separated) only with a PC token; XML1's xbox / ps2 / gc variants are all skipped, so a file with only those
+   opens an empty panel (issue #50). convert_dialog_platforms gives each such dialog (per filter value, the
+   loader's second test at 0x5ec003) an untagged copy of its ps2 variant, else xbox, else the first: XML2's own
+   platform-split hints end with an untagged PC variant, which is word for word the ps2 text in 9 of the 10
+   that have a ps2 variant ("press", "analog stick": no Xbox trigger "pull"). The console variants stay as they were.
 5. Object physics scales (issue #51): entity heaviness 0..5 -> XMen2.exe's 0..3 and structure 0..10 -> 0..2
    (convert_physics), so ordinary objects can be lifted and breakable walls can open. Attack levels retain
    main behavior: level zero cannot damage living characters (0x4293e3). The punch/power wall rule needs an engine fix.
@@ -305,28 +315,84 @@ def color_channel_elements(root):
     return [(el.tag, el.get('name')) for el in root.iter() if any(el.get(c) is not None for c in COLOR_CHANNELS)]
 
 
-# Positive firstact clears the loop bit in the harm parser (0x4396a0).
-# Starting at zero keeps that bit without changing the non-smart damage path.
-# Walls are staged underground; their placement scripts restart the loop at the
-# destination. Do not use smartfire: it changes damage scheduling (SPEC 45).
-def convert_haarp_fire_wall(root, rel):
-    path = str(rel).replace('\\', '/').lower().lstrip('/')
-    if not path.startswith('maps/haarp/ext/'):
-        return 0
+def has_delayed_harm_loop(el):
+    """A start-on ordinary harm loop that the XML2 parser disables (SPEC 51).
+
+    Run after class remapping. Smartfire has its own loop/damage scheduler;
+    retain enabled or unrecognized explicit configurations. Explicit false is
+    the same ordinary harm path as an absent smartfire attribute.
+    """
+    if ((el.get('classname') or '').strip().lower() != 'affectableharment'
+            or not (el.get('loopfx') or '').strip()
+            or (el.get('loopfxstarton') or '').strip().lower() != 'true'
+            or (el.get('smartfire') or '').strip().lower() not in ('', 'false', '0')):
+        return False
+    try:
+        delay = float(el.get('firstact', '0'))
+    except ValueError:
+        return False
+    return math.isfinite(delay) and delay > 0
+
+
+def delayed_harm_loops(root):
+    """(name, effect, delay) for each entity still in the dead loop-start form."""
+    return [(el.get('name'), el.get('loopfx'), el.get('firstact'))
+            for el in root.iter('entity') if has_delayed_harm_loop(el)]
+
+
+def convert_harm_loop_start(root):
+    """Keep authored start-on loops, at the cost of advancing first activation.
+
+    Do not choose by effect/name/path: the parser also affects non-fire loops.
+    Damage amounts, repeat delays and extinguish reactions remain authored.
+    """
     changed = 0
     for el in root.iter('entity'):
-        if (el.get('name') != 'fire_wall'
-                or el.get('classname') != 'affectableharment'
-                or el.get('loopfx') != 'ambient/fire_wall'
-                or el.get('loopfxstarton', '').lower() != 'true'
-                or 'smartfire' in el.attrib):
-            continue
-        try:
-            delayed = float(el.get('firstact', '0')) > 0
-        except ValueError:
-            delayed = False
-        if delayed:
+        if has_delayed_harm_loop(el):
             el.set('firstact', '0')
+            changed += 1
+    return changed
+
+
+# Fall kill volumes use XML1's original damage, bounds and activation scripts.
+# XML2 retail enables box collision and disables smart-entity streaming for them.
+# Runtime controls: boxcollision alone leaves the HAARP ravine survivable; both
+# flags give the original 32000-damage hit on entry (SPEC 52).
+FALL_KILL_FLAGS = {'boxcollision': 'true', 'smartent': 'false'}
+# Preserve these original hazards until issue #5 party handling is available and
+# the crossings are revalidated: AI can follow a safe leader into their water.
+FALL_KILL_DEFERRED = {
+    'maps/arbiter/a_int/arb3_4': frozenset({'kill_target'}),
+}
+
+
+def fall_kill_volume_deferred(el, rel):
+    path = str(rel).replace('\\', '/').lower().lstrip('/')
+    stem = path.rsplit('.', 1)[0]
+    return el.get('name') in FALL_KILL_DEFERRED.get(stem, ())
+
+
+
+def fall_kill_volumes(root, rel):
+    """The XML1 map-only lethal touch pattern, independent of entity names."""
+    path = str(rel).replace('\\', '/').lower().lstrip('/')
+    if root is None or not path.startswith('maps/'):
+        return []
+    return [el for el in root.iter('entity')
+            if el.get('classname') == 'affectableharment'
+            and el.get('damage') == '32000'
+            and el.get('damagetype') == 'dmg_direct'
+            and el.get('actontouch', '').lower() == 'true'
+            and el.get('nocollide', '').lower() == 'true']
+
+
+def convert_fall_kill_volumes(root, rel):
+    changed = 0
+    for el in fall_kill_volumes(root, rel):
+        if fall_kill_volume_deferred(el, rel):
+            continue
+        if any(el.get(k) != v for k, v in FALL_KILL_FLAGS.items()):
+            el.attrib.update(FALL_KILL_FLAGS)
             changed += 1
     return changed
 
@@ -350,10 +416,17 @@ def convert(root, rel, weapon_models=None, x1_values=None):
             c['effect_files_recoloured'] += 1
     for kind, detail in convert_entities(root, weapon_models):
         c[f'{kind}:{detail}' if kind not in ('turret_model',) else kind] += 1
-    c.update(convert_physics(root))
-    n = convert_haarp_fire_wall(root, rel)
+    n = convert_fall_kill_volumes(root, rel)
     if n:
-        c['haarp_fire_wall_loop_start'] += n
+        c['fall_kill_volumes'] += n
+    c.update(convert_physics(root))
+    n = convert_harm_loop_start(root)
+    if n:
+        c['harm_loop_start'] += n
+    if is_dialog_rel(rel):
+        n = convert_dialog_platforms(root)
+        if n:
+            c['dialog_pc_variant_added'] += n
     if CE.is_style_rel(rel):
         c.update(CE.rewrite_style(root))
         c.update(CE.apply_x1_shared_values(root, x1_values))
@@ -413,6 +486,81 @@ def renderfx_x1_elements(root):
                 (any(k in a for k in RENDERFX_X1_ATTRS) or (a.get('remove') or '').strip().lower() == 'true'):
             out.append((el.tag, a.get('name')))
     return out
+
+
+# --------------------------------------------------------------------------------------------- dialogs (issue #50)
+# 0x4bd650 tokenises the platform value on space / comma / tab (separators at 0x68d618) and compares each
+# token with "PC" (0x68e9a0) through _stricmp; an empty value is accepted too. DIALOG_PC_SOURCES: the console variant copied when
+# none is accepted (see the module doc, item 5).
+DIALOG_PLATFORM_SEPARATORS = ' ,\t'
+DIALOG_PC_SOURCES = ('ps2', 'xbox', 'gc')
+
+
+def is_dialog_rel(rel):
+    r = str(rel).replace('\\', '/').lower().lstrip('/')
+    return r.startswith('dialogs/')
+
+
+def dialog_platform_accepted(value):
+    """XMen2.exe's platform test (0x4bd650) as a bool: no / empty platform or a list with a PC token."""
+    if value is None or value == '':
+        return True
+    tokens = ''.join(' ' if ch in DIALOG_PLATFORM_SEPARATORS else ch for ch in value).split()
+    return any(t.upper() == 'PC' for t in tokens)
+
+
+def _dialog_list(root):
+    """the <dialog> elements the popup loader walks: the children of a dialog_def (XML2's wrapper) or of the
+    several-roots wrapper, or a lone root dialog. Returns (parent or None, [dialog])."""
+    if root is None:
+        return None, []
+    if isinstance(root.tag, str) and root.tag.lower() == 'dialog':
+        return None, [root]
+    parent = root
+    for el in root:
+        if isinstance(el.tag, str) and el.tag.lower() == 'dialog_def':
+            parent = el
+            break
+    return parent, [el for el in parent if isinstance(el.tag, str) and el.tag.lower() == 'dialog']
+
+
+def _dialog_groups(dialogs):
+    """filter value -> the dialogs the loader can pick for it (0x5ec003: a dialog with no filter matches any)."""
+    filters = {(d.get('filter') or '') for d in dialogs} - {''} or {''}
+    return {f: [d for d in dialogs if (d.get('filter') or '') in ('', f)] for f in sorted(filters)}
+
+
+def dialog_platform_problems(root):
+    """[(filter value, [platforms])] of the dialog groups in which XMen2.exe accepts no variant (an empty panel)."""
+    _, dialogs = _dialog_list(root)
+    out = []
+    for f, group in _dialog_groups(dialogs).items():
+        if group and not any(dialog_platform_accepted(d.get('platform')) for d in group):
+            out.append((f, [d.get('platform') or '' for d in group]))
+    return out
+
+
+def convert_dialog_platforms(root):
+    """Give every dialog group with no accepted variant an untagged copy of its ps2 / xbox / first variant, placed
+    right after the group's last variant. Idempotent. Returns the number of variants added."""
+    import copy
+    parent, dialogs = _dialog_list(root)
+    added = 0
+    for f, group in _dialog_groups(dialogs).items():
+        if not group or any(dialog_platform_accepted(d.get('platform')) for d in group):
+            continue
+        by_platform = {(d.get('platform') or '').strip().lower(): d for d in reversed(group)}
+        src = next((by_platform[p] for p in DIALOG_PC_SOURCES if p in by_platform), group[0])
+        if parent is None:                      # a lone root dialog: it can only be made untagged itself
+            for k in [k for k in src.attrib if k.lower() == 'platform']:
+                del src.attrib[k]
+        else:
+            pc = copy.deepcopy(src)
+            for k in [k for k in pc.attrib if k.lower() == 'platform']:
+                del pc.attrib[k]
+            parent.insert(list(parent).index(group[-1]) + 1, pc)
+        added += 1
+    return added
 
 
 # --------------------------------------------------------------------------------------------- selftest

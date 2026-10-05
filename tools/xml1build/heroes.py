@@ -1742,7 +1742,7 @@ def convert_shared_real(name, src, values, icons='xml1', bleed='on'):
 # ------------------------------------------------------------------------------------------------ builder
 # DESIGN 4.7: the shared_talents keep list the rule-based prune must reproduce (a delta is a warning)
 SHARED_KEEP_EXPECTED = frozenset("""
-fightstyle_finesse1 fightstyle_hero fightstyle_wrestling fightstyle_psionic fightstyle_gun_rifle fightstyle_gun_hip
+fightstyle_finesse1 fightstyle_hero fightstyle_wrestling fightstyle_psionic x1_fightstyle_gun_rifle fightstyle_gun_hip
 fightstyle_baton fightstyle_huge fightstyle_nonhuman fightstyle_villain leadership grab critical might flight
 energy_resistant mental_resistant physical_resistant energy_resistant_share mental_resistant_share
 physical_resistant_share spawn_invis dr_stun sentinel_special boss_resistances monst_dmg_high aval_crack aval_quake
@@ -1755,6 +1755,9 @@ x1_npc_energy""".split())
 # SPEC 30: characters emits XML1's 14 distinct inline NPC immunity bodies as shared talents in XML2's boss_resistances
 # form (npc_values.immunity_plan names each body after the XML1 talent name most entries used); kept while a stats
 # entry names one (npc_values.is_immunity_talent): 47 -> 61.
+# Issue #52: the gun soldiers carry their gun's fighting style instead of their own (weapons.gun_fightstyle), and
+# the rifle style ships as x1_fightstyle_gun_rifle (x1names.X1_OWN_FIGHTSTYLES): it replaces XML2's
+# fightstyle_gun_rifle in the list, which nothing names any more (still 61).
 SHARED_KEEP_IMMUNITIES = frozenset("""
 as_special avalanche_special blob_special forge_special havok_special juggernaut_special magnetoboss_special
 mastermold_special physical_res sabre_special sabretooth_special sentspider_special shadow_special toad_special
@@ -2352,7 +2355,7 @@ class HeroBuilder:
             for t in st.iter('talent'):
                 n = (t.get('name') or '').lower()
                 stats_refs.add(n)
-                if n.startswith('fightstyle_'):
+                if N.is_fightstyle_name(n):
                     fightstyles.add(n)
             if st.get('powerstyle'):
                 styles.add(st.get('powerstyle').lower())
@@ -2362,7 +2365,7 @@ class HeroBuilder:
             if e.get('moveset1'):
                 fightstyles.add(e.get('moveset1').lower())
             for t in e.iter('talent'):
-                if (t.get('name') or '').lower().startswith('fightstyle_'):
+                if N.is_fightstyle_name(t.get('name')):
                     fightstyles.add(t.get('name').lower())
         style_reqs = set()
         for kind, names in (('powerstyles', styles), ('fightstyles', fightstyles)):
@@ -2386,7 +2389,7 @@ class HeroBuilder:
         for n, tdef in cur_defs:
             ln = n.lower()
             why = None
-            if ln.startswith('fightstyle_') and (ln in stats_refs or ln in style_reqs):
+            if N.is_fightstyle_name(ln) and (ln in stats_refs or ln in style_reqs):
                 why = 'fightstyle named by a stats entry / style'
             elif ln in style_reqs and ln not in hero_files:
                 why = 'named by a style <require>'
@@ -2596,7 +2599,7 @@ class HeroBuilder:
         ctx.defer('D15 (v1 scope): Rogue\'s decide step (ch_roguedecide) is dropped (Gambit/Jubilee charged_throw: '
                   'ch_throw -> ch_pickup_throw, SPEC 22); astral solo mode (T10), XML1 Danger Room courses, XML1 '
                   'team bonuses, talent icon re-atlassing, Psylocke blades 2/3 (BoltOn <require>), NPC-vs-hero balance '
-                  '(flashback party save+restore: SPEC 19 popParty; unlock points: scripts.MISSION_START_UNLOCKS)')
+                  '(flashback party save+restore: SPEC 19 popParty; mission-start unlocks: scripts.mission_start_unlocks)')
         ctx.write_meta('heroes_detail.json', self.detail)
 
 
@@ -2859,7 +2862,7 @@ def _validate(ctx, report=None):
                 ln = (st.get('name') or '').lower()
                 if tn in SPECIAL_TALENT_NAMES and tn not in shared_names and tn not in file_names.get(ln, set()):
                     ck.error(f'{st.get("name")}: special talent {tn} (0x4be130) defined nowhere')
-        # V-TBD (issue #51): every playable hero can grab an enemy (GRAB_TALENT)
+        # V-H4, SPEC 59 (issue #51): every playable hero can grab an enemy (GRAB_TALENT)
         for msg in grab_problems(heros.get('engb', []), o.tree('Data/shared_talents.engb')):
             ck.error(msg)
         # SPEC 50 (SPEC_heroes.md: the first game's shared hero passives): the kept definitions of
@@ -3192,12 +3195,12 @@ def _validate(ctx, report=None):
         elif 'x1join' not in zp.read_bytes().decode('latin-1'):
             ck.error(f'Scripts/{zone_ref}.py: T7 zone guard (getGameFlag x1join) missing')
 
-    # ---- V-H13 unlock points (roster.md 1.1.3 / 4: XML1's missions.xml charunlock -> a mission-start unlock)
+    # ---- V-H13 mission-start unlocks (issue #55: XML1's missions.xml charunlock + default.xbe's cumulative table)
     ck = Check('V-H13')
     checks.append(ck)
     from . import scripts as S                              # noqa: WPS433 - the unlock table's owner
     from . import scripts_transform as ST                   # noqa: WPS433
-    unlocks = S.MISSION_START_UNLOCKS
+    unlocks = S.mission_start_unlocks(ctx)['missions']
     for m, hs in sorted(unlocks.items()):
         for h in hs:
             if h.lower() not in hero_l:
@@ -3220,9 +3223,29 @@ def _validate(ctx, report=None):
                 copies[mm.group('m').strip().lower()] += 1
     for m in sorted(unlocks):
         ref = f'x1/missions/begin_{m}'
-        if o.idx.path(C.script_rel(ref)) is None:
-            ck.error(f'Scripts/{ref}.py missing (unlock point {m})')
-        ck.counts[f'unlock_copies_{m}'] = copies.get(m, 0)
+        if o.idx.path(C.script_rel(ref)) is not None and not copies.get(m):
+            ck.error(f'Scripts/{ref}.py has no begin-body marker for mission {m} (its unlocks cannot be checked)')
+    ck.counts['unlock_missions'] = len(unlocks)
+    ck.counts['unlock_begin_copies'] = sum(copies.values())
+
+    # ---- V-H14 (issue #55): a seated forced mission never unlocks the REQUIRED heroes XML1 only seats (Magma before
+    # her milestone, the Professor X forms) outside the team-menu branch
+    ck = Check('V-H14')
+    checks.append(ck)
+    only = S.menu_only_unlock_map(ctx) if C.forced_teams_mode(ctx) == 'seat' else {}
+    marks = tuple(f'XML1 beginMission({m})' for m in only)
+    n = 0
+    for rel in o.idx.under('scripts/'):
+        if not marks or not rel.lower().endswith('.py'):
+            continue
+        text = o.idx.path(rel).read_bytes().decode('latin-1')
+        if not any(mk in text for mk in marks):
+            continue
+        n += 1
+        for p in ST.menu_only_problems(text.split('\r\n'), only):
+            ck.error(f'{rel}: {p}')
+    ck.counts['seat_only_missions'] = len(only)
+    ck.counts['seat_only_scripts_checked'] = n
     return checks, budgets
 
 

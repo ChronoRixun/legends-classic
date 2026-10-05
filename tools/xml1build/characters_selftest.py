@@ -170,7 +170,7 @@ for ext in ('XMLB', 'engb'):
                 tn = c.get('name').lower()
                 if tn not in tal['engb'] and tn not in hero_tal:
                     bad(f'{where}: talent {tn} undefined')
-                if tn.startswith('fightstyle_') and not exists(f'data/fightstyles/{tn}.xmlb'):
+                if N.is_fightstyle_name(tn) and not exists(f'data/fightstyles/{tn}.xmlb'):
                     bad(f'{where}: fightstyle file {tn} missing')
             elif c.tag == 'BoltOn':
                 m = c.get('model', '')

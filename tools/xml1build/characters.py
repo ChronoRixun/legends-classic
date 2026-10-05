@@ -339,6 +339,7 @@ class _Builder:
         self.npc_codes = {}         # x1 style rel -> (Counter, problems) of npc_values.resolve_style (SPEC 24)
         self.weapon_reports = {}    # variant style name -> (weapon, x1 style, weapons.apply counts) (SPEC 29)
         self.variant_base = {}      # weapon variant style name -> the mapped base style it replaces (SPEC 29.1)
+        self.weapon_event_reports = {}  # x1 style rel -> weapons.rewrite_weapon_events counts (SPEC 29.3)
         self.igb_renamed = 0
         self.import_stats = {}
         self.x1_weapons = {}
@@ -504,12 +505,25 @@ class _Builder:
 
     # ---------------------------------------------------------------- styles
     def _style_patch(self, root, rel=''):
+        # SPEC 29.3: style events that name an XML1 weapon (ps_mystique's left_gun / right_gun) -> beam events
+        # (before map_tree_refs, as weapons.apply for the variants: the added effect / sound paths get mapped too)
+        wrep = W.rewrite_weapon_events(root, self.x1_weapons)
+        if wrep:
+            with self.lock:
+                self.weapon_event_reports[C.norm(rel)] = dict(wrep)
+            if wrep.get('moves_over_trigger_cap'):
+                self.ctx.error(f'{rel}: weapon events left a FightMove over {W.MAX_TRIGGERS} triggers')
         # trigger skin/actorskin (ps_toad 2605/9601 ...) and any actors/ paths; script references / inline code
         # through the scripts provider (none in the XML1 styles today, kept for consistency with zones' data)
         C.map_tree_refs(root)
         rewrite = _rewrite_data_tree_fn(self.ctx)
         if rewrite is not None:
             rewrite(self.ctx, root, rel)
+        # a fighting style shipped under its own name (x1names.X1_OWN_FIGHTSTYLES) also names itself so (its
+        # animations= is mapped above with its anim DB)
+        if root.tag.lower() == 'fightingstyle':
+            for k in [k for k in root.attrib if k.lower() == 'name']:
+                root.set(k, C.map_fightstyle(root.get(k)))
         # SPEC 22.7: XML1-form powerup triggers (powerup= / remove="true") -> XML2's <affecter> / remove_tag form,
         # the heroes' converter plus the NPC-only forms; XML1's value codes resolved (NPC balance stays XML1's)
         from . import heroes as H                  # noqa: WPS433 - heroes imports characters lazily too
@@ -955,6 +969,8 @@ class _Builder:
             ctx.warn(f'{name}: weapon {weapon_name} not in XML1 data/weapons/weapons.eng; dropped')
         new = ET.Element('stats', out)
         fight_talent = False
+        # a gun's fighting style REPLACES the entry's own (weapons.gun_fightstyle: default.xbe, one talent in XML2)
+        gun_fs = W.gun_fightstyle(weapon)
         for c in st:
             tag = c.tag.lower()
             ca = _lower_attrs(c)
@@ -980,7 +996,13 @@ class _Builder:
                     else:
                         self.detail['dropped_children'].append([name, f'talent {tn} <level> tree',
                                                                 'inline XML1 definition; kept as a reference'])
-                is_fs = tn.lower().startswith('fightstyle_')
+                is_fs = N.is_fightstyle_name(tn)
+                if is_fs and gun_fs:
+                    self.detail['dropped_children'].append(
+                        [name, f'talent {tn}', f'fighting style replaced by the {gun_fs} of weapon {weapon_name} '
+                                               f'(XML1 replaces it while armed; issue #52)'])
+                    ctx.count('fightstyles_replaced_by_gun')
+                    continue
                 if is_fs:
                     fight_talent = True
                     mapped = self.style('fightstyles', tn)
@@ -1040,7 +1062,7 @@ class _Builder:
                 # 'ebolton_weapon2' is not in XMen2.exe's slot table (0x6d6530), so XML2 would drop the BoltOn.
                 ET.SubElement(new, 'BoltOn', {'bolt': weapon.get('accessorybolt', 'Bip01 L Hand'),
                                               'model': C.norm(am).removesuffix('.igb'), 'slot': 'ebolton_altweapon'})
-            if not fight_talent and weapon.get('fightstyle'):
+            if (gun_fs or not fight_talent) and weapon.get('fightstyle'):
                 fs = self.style('fightstyles', weapon['fightstyle'])
                 if fs:
                     self.ensure_talent(fs, True, name)
@@ -1315,7 +1337,7 @@ class _Builder:
         if suffix == '' and st.get('powerstyle'):
             out.append([f"data/powerstyles/{st.get('powerstyle')}.xml", 'fightstyle'])
         for t in st.iter('talent'):
-            if t.get('name', '').lower().startswith('fightstyle_'):
+            if N.is_fightstyle_name(t.get('name', '')):
                 out.append([f"actors/{t.get('name')}.igb", 'actoranimdb'])
                 out.append([f"data/fightstyles/{t.get('name')}.eng", 'fightstyle'])
         return out, 'synth:stats'
@@ -2061,12 +2083,21 @@ def _report_styles(ctx, b):
              f'(validator V18)')
     _report_npc_powerups(ctx, b)
     _report_npc_codes(ctx, b)
+    wev = collections.Counter()
+    for counts in b.weapon_event_reports.values():
+        wev.update(counts)
+    ctx.set_count('weapon_events_to_beam', wev.get('weapon_event_to_beam', 0))
+    if wev:
+        ctx.note(f'style events naming an XML1 weapon (SPEC 29.3, weapons.rewrite_weapon_events): '
+                 f'{dict(sorted(b.weapon_event_reports.items()))}')
+    b.detail['weapon_events'] = dict(sorted(b.weapon_event_reports.items()))
     ctx.defer(f'{len(b.styles_written)} converted XML1 styles keep XML1 combat semantics: power-system review '
               f'pending (powers rework). {len(handler_styles)} use FightMove handlers XMen2.exe lacks and XML2 has no '
               f'counterpart for (they run as %default%: the move without its logic; combat_events.'
               f'UNREGISTERED_HANDLER_NOTES): {handler_styles}')
     shared_fs = sorted(k for (kind, k), v in b.styles.items() if kind == 'fightstyles' and v and
                        (kind, v) not in b.styles_written)
-    ctx.note(f'fightstyles shared with XML2 by name (XML2 versions used): {shared_fs}; XML1 fightstyle_gun_rifle '
-             f'has 9 anim names XML2\'s lacks (research collisions)')
+    ctx.note(f'fightstyles shared with XML2 by name (XML2 versions used): {shared_fs}; shipped under their own name '
+             f'because XML2\'s file lacks the first game\'s animations (x1names.X1_OWN_FIGHTSTYLES): '
+             f'{sorted(N.map_fightstyle(n) for n in N.X1_OWN_FIGHTSTYLES)}')
     ctx.set_count('styles_review_pending', len(b.styles_written))
