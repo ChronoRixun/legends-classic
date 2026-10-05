@@ -4637,3 +4637,46 @@ A short control retained the earlier experiment's misspelled `damagemo` field:
 its definition attributes and instance bounds matched the saved experiment,
 but normal sorted encoding killed correctly. The saved experimental XMLB had
 unsorted attribute keys; it was not a valid negative control for the native flags.
+
+## 53. The first game's voice lines (2026-10-05, issue #49)
+
+XMen2.exe builds each character's sound table when the character loads (0x438d20, called from 0x4239be). For
+every event of the build's `shared_sounds` table it checks a name with the sound system's exists method (vtable
++0x34, 0x590120) and, when it exists, stores the handle from resolve (+0x38, 0x590bd0); a missing name stores the
+"none" handle and the line is skipped. The first six events (pain .. death) use `char/<sounddir>/<event>`, every
+later one (tauntkd, victory, sight, the team commands, lowhealth, epitaph, solo, xtreme, levelup, bored, the banter
+events) `char/<voice folder>/<event>`, the voice folder being the sounddir with its `_m/` as `_v/`
+(`simlookup.voice_dir`). The first game names the same lines `character/<voice folder>/<event>` in its global
+`x_voice` bank.
+
+Before: P2 recovered names for x_voice only as `character/x_voice/<word>` guesses, so P4 wrote no `char/` alias
+for them, and the merge into X-Men Legends II's `x_voice` kept X-Men Legends II's entries on every shared key. In
+game (the character sound-table builder traced at 0x438f9f / 0x438fbb): Wolverine and Jean answered none of their
+24 voice names; Cyclops and Blob answered only X-Men Legends II's lines (Cyclops 20 events plus 14 banter lines,
+Blob 7 events including canttalk / lowhealth / respaffirm, which the first game's Blob does not have). Offline, on
+the same bank: Emma, Gambit and Rogue silent too; Colossus, Iceman, Nightcrawler and Storm X-Men Legends II's lines,
+Beast 5 of them.
+
+Rules:
+- P2 `tables` (VERSION 4) tries `character/<voice folder>/<event>` for every XML1 herostat / npcstat sounddir and
+  every XML1 `shared_sounds` event, in the `x_voice` bank only (no other XML1 bank names one). Where such a name
+  shares a key with another guess (ELF hash collisions), the voice name wins. P4's existing rename then writes the
+  `char/` aliases (645 -> 2179 aliases).
+- P4 `sound` (VERSION 2) merges with a shadow list: `char/<voice folder>/<event>` for every first-game voice folder
+  and every event of both games' `shared_sounds`. X-Men Legends II's entries under those names (and their random
+  variants) keep their index and audio but move to a private key (`merge_zsnd.shadow_key`), so the first game's
+  entries are appended and answer instead. X-Men Legends II's lines for events the first game's character never had
+  (Cyclops's banter, Blob's low-health line) no longer play either: that character said nothing there. 854 keys
+  are shadowed. The media check of merged banks accepts exactly those private keys.
+
+**V27 voice lines** (validator): for every XML1 stats entry, every voice name the
+first game's `x_voice` answers must answer in `<out>`'s `x_voice` (error: silent), from an entry whose audio file
+index is past the retail bank's files (error: X-Men Legends II's line). On the unfixed build it reports the silent
+heroes; on the fixed build 0 errors.
+
+Bank: `x_voice.zss` 153,229,172 -> 153,278,260 bytes (key and entry tables only; the first game's audio was
+already in the bank under its `character/` keys). The sound prepare stage reruns once (43 s with the compiled
+kernel on an 8-thread machine, about 6 minutes with the numpy codec).
+
+Not established: which event the hero switch itself plays, and the run-time play path for a stored handle (the
+switch keys did not switch heroes in the opening NYC zones in the test harness, on either build).

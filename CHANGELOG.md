@@ -5,6 +5,13 @@ build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebui
 
 ## Unreleased - content version 11
 
+- **Fixed: the first game's heroes and villains were silent or spoke X-Men Legends II's lines** (issue #49).
+  Wolverine, Jean, Emma, Gambit, Jubilee, Magma, Professor X, Psylocke and Rogue had no taunts, team commands,
+  low-health or victory lines; Cyclops, Colossus, Iceman, Nightcrawler, Storm, Beast and villains such as Blob and
+  Mystique used the second game's voice actors. The first game's lines are now found under the names the engine
+  asks for, and they win over the second game's in the shared voice bank. A new check (V27) verifies every voice
+  line. The sound prepare stage reruns once.
+
 - **Fixed: invisible fires beyond HAARP's exterior walls** (issue #12): restore
   delayed start-on harm loops across imported content, including NYC, the Arbiter
   and sewers, and restart source-identified loops after scripted relocation.
