@@ -75,7 +75,7 @@ def validator(folder, files, owners):
     v.tree = lambda rel: C.decode_xmlb(paths[C.norm(rel)].read_bytes()) if C.norm(rel) in paths else None
     v.entry = lambda rel: v.reg.get(C.norm(rel))
     v.exists = lambda rel: C.norm(rel) in paths
-    ck = Check('V-TBD', 'personal items')
+    ck = Check('V30', 'personal items')
     VF.v_personal_items(v, ck)
     return ck
 

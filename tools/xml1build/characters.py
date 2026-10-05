@@ -339,6 +339,7 @@ class _Builder:
         self.npc_codes = {}         # x1 style rel -> (Counter, problems) of npc_values.resolve_style (SPEC 24)
         self.weapon_reports = {}    # variant style name -> (weapon, x1 style, weapons.apply counts) (SPEC 29)
         self.variant_base = {}      # weapon variant style name -> the mapped base style it replaces (SPEC 29.1)
+        self.weapon_event_reports = {}  # x1 style rel -> weapons.rewrite_weapon_events counts (SPEC 29.3)
         self.igb_renamed = 0
         self.import_stats = {}
         self.x1_weapons = {}
@@ -504,6 +505,14 @@ class _Builder:
 
     # ---------------------------------------------------------------- styles
     def _style_patch(self, root, rel=''):
+        # SPEC 29.3: style events that name an XML1 weapon (ps_mystique's left_gun / right_gun) -> beam events
+        # (before map_tree_refs, as weapons.apply for the variants: the added effect / sound paths get mapped too)
+        wrep = W.rewrite_weapon_events(root, self.x1_weapons)
+        if wrep:
+            with self.lock:
+                self.weapon_event_reports[C.norm(rel)] = dict(wrep)
+            if wrep.get('moves_over_trigger_cap'):
+                self.ctx.error(f'{rel}: weapon events left a FightMove over {W.MAX_TRIGGERS} triggers')
         # trigger skin/actorskin (ps_toad 2605/9601 ...) and any actors/ paths; script references / inline code
         # through the scripts provider (none in the XML1 styles today, kept for consistency with zones' data)
         C.map_tree_refs(root)
@@ -2061,6 +2070,14 @@ def _report_styles(ctx, b):
              f'(validator V18)')
     _report_npc_powerups(ctx, b)
     _report_npc_codes(ctx, b)
+    wev = collections.Counter()
+    for counts in b.weapon_event_reports.values():
+        wev.update(counts)
+    ctx.set_count('weapon_events_to_beam', wev.get('weapon_event_to_beam', 0))
+    if wev:
+        ctx.note(f'style events naming an XML1 weapon (SPEC 29.3, weapons.rewrite_weapon_events): '
+                 f'{dict(sorted(b.weapon_event_reports.items()))}')
+    b.detail['weapon_events'] = dict(sorted(b.weapon_event_reports.items()))
     ctx.defer(f'{len(b.styles_written)} converted XML1 styles keep XML1 combat semantics: power-system review '
               f'pending (powers rework). {len(handler_styles)} use FightMove handlers XMen2.exe lacks and XML2 has no '
               f'counterpart for (they run as %default%: the move without its logic; combat_events.'

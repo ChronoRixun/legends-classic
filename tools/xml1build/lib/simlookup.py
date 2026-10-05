@@ -34,6 +34,14 @@ def resolve(name, zone, banks):
             return n, p, 'random x%d' % k
     return n, None, None
 
+def voice_dir(sounddir):
+    """the folder XMen2.exe looks a character's voice events up in: the sound table builder (0x438d20) copies
+    'char/<sounddir>/' with its first '_m/' as '_v/' (0x438ded); events from index 6 of shared_sounds (tauntkd,
+    victory, sight, the team commands, lowhealth, ...) use 'char/<voice dir>/<event>' (0x438f5f), the first six
+    (pain .. death) the sounddir itself. XML1 builds the same names under 'character/'."""
+    d = (sounddir or '').strip().replace('\\', '/').lower()
+    return (d + '/').replace('_m/', '_v/', 1)[:-1] if d else ''
+
 def names_from(files):
     rx = re.compile(r'\b([a-z_0-9]*sound[a-z_0-9]*|soundtoplay[b]?)\s*=\s*"([^"]+)"', re.I)
     out = []

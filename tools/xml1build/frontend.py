@@ -63,6 +63,10 @@ SPEC 21). With --frontend xml1 (the default) it writes A-D:
      * UI/menus/review.{XMLB,engb}: XML2's REVIEW_PATHS_MENU without the Stats tab (option05_text, option05_focus;
        XML1's Review had no Stats, and XML2's lists its acts 1-5 from exe code); xml2-fix [Game] ReviewStats=0
        (REVIEW_STATS_KEY, written by tools/harness.py) makes the tab change wrap at 4 (SPEC 21.4.3).
+     * UI/menus/codex.{XMLB,engb}: XML2's CODEX_MENU without its list's icon cells (CODEX_ICON_ATTRS on the
+       MENU_ITEM_LISTCODEX item and the CODEX_ICON_PRECACHE texture; issue #48). XML1's codex list was text only;
+       XML2's draws cell `textureicon` of mini_convo_icons per entry, and XML1's NPCs have no textureicon, so every
+       NPC entry drew cell 0 (Cyclops). Without `icons` the list draws no cell (0x5c269e reads it only when present).
 
   D. Data/personal/<item>.{XMLB,engb} + Textures/personal/*.IGB (both front ends: in-zone data, issue #47): the
      first game's 36 bedroom items (personalItem('<hero>NN') in the mansion *_2 zones; XMen2.exe's personalItem
@@ -71,7 +75,7 @@ SPEC 21). With --frontend xml1 (the default) it writes A-D:
      Textures/personal, so every other item showed the last image the menu manager had set - the mansion's loading
      screen. The ITEM schema is the same in both games (texture + text); the text is written with
      escape_menu_text, the texture is XML1's IGB under the same name. UI/menus/personal and menu_personal.IGB stay
-     XML2's (the same PERSONAL_MENU as XML1's). Known gap (SPEC "Personal items"): XMen2.exe draws the item's
+     XML2's (the same PERSONAL_MENU as XML1's). Known gap (SPEC 56): XMen2.exe draws the item's
      picture but not its text box - the text is loaded and word-wrapped in memory.
 
 Providers (pure, usable before / without run): dr_reward_items(ctx), translate_equipment(ctx, item),
@@ -1303,6 +1307,57 @@ def review_menu_trees(ctx):
     return halves[0], halves[1], removed[0] if removed[0] == removed[1] else removed
 
 
+# ------------------------------------------------------------------------------------ the codex menu's icons
+# Issue #48. XML2's UI/menus/codex list item (MENU_ITEM_LISTCODEX) has icons="textures/ui/mini_convo_icons.png"
+# with icons_cols / icons_rows 8: the list (built from the stats by name, 0x5b0be0) draws for each entry the cell
+# its stats' `textureicon` names (stored only when present, 0x44c329; unset = 0 = Cyclops' face). XML1's codex
+# menus had no icons and XML1's stats no textureicon (default.xbe has no such string), so XML1's NPC entries all drew
+# Cyclops. The list reads `icons` only when the item has it (0x5c269e..0x5c2711): the port's codex menu is XML2's
+# without the three icon attributes and without the icon texture's precache. Both halves (.XMLB keys, .engb
+# English) are XML2's with the same changes.
+CODEX_MENU_REL = 'UI/menus/codex'
+CODEX_LIST_TYPE = 'MENU_ITEM_LISTCODEX'
+CODEX_ICON_ATTRS = ('icons', 'icons_cols', 'icons_rows')
+CODEX_ICON_PRECACHE = 'textures/ui/mini_convo_icons'
+
+
+def codex_menu_trees(ctx):
+    """(xmlb root, engb root, removed): XML2's UI/menus/codex halves without the list's icon attributes
+    (CODEX_ICON_ATTRS) and the icon texture's precache (CODEX_ICON_PRECACHE). removed = sorted change names, the
+    same for both halves or a list of both. (None, None, []) when the base install lacks either half."""
+    halves, removed = [], []
+    for ext in ('.XMLB', '.engb'):
+        try:
+            root = ctx.read_base_xmlb(CODEX_MENU_REL + ext)
+        except (KeyError, FileNotFoundError, ValueError):
+            return None, None, []
+        gone = []
+        for it in root.iter('item'):
+            if (it.get('type') or '').upper() == CODEX_LIST_TYPE:
+                for k in CODEX_ICON_ATTRS:
+                    if k in it.attrib:
+                        del it.attrib[k]
+                        gone.append(f'{it.get("name")}.{k}')
+        for pc in [pc for pc in root.findall('precache') if C.norm(C.split_ext(C.norm(pc.get('filename') or ''))[0])
+                   == CODEX_ICON_PRECACHE]:
+            root.remove(pc)
+            gone.append(f'precache {CODEX_ICON_PRECACHE}')
+        removed.append(sorted(gone))
+        halves.append(root)
+    return halves[0], halves[1], removed[0] if removed[0] == removed[1] else removed
+
+
+def codex_icon_problems(root):
+    """[str]: what in a codex menu tree still draws XML2's icon cells (a list item with icons*, the precache)."""
+    out = []
+    for it in root.iter('item'):
+        if (it.get('type') or '').upper() == CODEX_LIST_TYPE:
+            out += [f'list item {it.get("name")!r} has {k}' for k in CODEX_ICON_ATTRS if k in it.attrib]
+    out += [f'precache {pc.get("filename")}' for pc in root.findall('precache')
+            if C.split_ext(C.norm(pc.get('filename') or ''))[0] == CODEX_ICON_PRECACHE]
+    return out
+
+
 # ================================================================================================ D. personal items
 PERSONAL_DIR = 'data/personal'                     # XML1 assets/data/personal/<item>.eng; XMen2.exe 0x5cedd0
 PERSONAL_REL = 'Data/personal'
@@ -1541,6 +1596,18 @@ def run(ctx):
         ctx.note(f'review menu: {REVIEW_MENU_REL} = XML2\'s without the Stats tab ({", ".join(removed)}); the tab '
                  f'change wraps at 4 with xml2-fix [{REVIEW_STATS_KEY[0]}] {REVIEW_STATS_KEY[1]}='
                  f'{REVIEW_STATS_KEY[2]} (tools/harness.py writes it)')
+    # ---- the codex menu: XML1's text-only list, no icon cells (issue #48)
+    kx, kg, kremoved = codex_menu_trees(ctx)
+    want = sorted([f'list.{k}' for k in CODEX_ICON_ATTRS] + [f'precache {CODEX_ICON_PRECACHE}'])
+    if kx is None:
+        ctx.error(f'codex menu: {CODEX_MENU_REL}.XMLB / .engb not in the base install')
+    elif kremoved != want:
+        ctx.error(f'codex menu: XML2\'s {CODEX_MENU_REL} changes {kremoved}, expected {want} in both halves')
+    else:
+        ctx.write_xmlb_pair(CODEX_MENU_REL, kx, kg, source='frontend:XML2\'s codex menu without list icons')
+        det['codex_menu'] = {'removed': kremoved}
+        ctx.note(f'codex menu: {CODEX_MENU_REL} = XML2\'s without the list\'s icon cells ({", ".join(kremoved)}): '
+                 f'XML1\'s codex list was text only')
     ctx.write_meta('frontend_detail.json', det)
     ctx.log(f'main menu, dangerroom ({(drep.get("counts") or {}).get("courses")} courses), review '
             f'({dict(by_type)}), codex, trivia, credits written')
