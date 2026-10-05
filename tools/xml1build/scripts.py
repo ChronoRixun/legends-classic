@@ -532,6 +532,9 @@ def _script_text(ctx, ref, mode=None):
             lines.append('')                                   # final CRLF, like every research script
         from .fire_wall_scripts import rewrite as rewrite_fire_wall
         lines = rewrite_fire_wall(ref, lines)
+        from .fire_wall_scripts import relocation_plan, rewrite_loops
+        targets = _cached(ctx, 'harm_loop_relocations', lambda: relocation_plan(ctx))
+        lines, info['harm_loop_relocations'] = rewrite_loops(ref, lines, targets.get(ref.rsplit('/', 1)[0], {}))
         return '\r\n'.join(lines), info
     return _cached(ctx, ('text', ref, mode), build)
 

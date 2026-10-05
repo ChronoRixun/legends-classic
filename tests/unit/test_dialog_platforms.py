@@ -93,7 +93,7 @@ def check_fixture(folder, root):
         validator.reg[name] = dict(rel=name, owner='zones', source='invented')
     validator.idx = SimpleNamespace(path=lambda name: folder / Path(name).name)
     validator.is_x1_source = lambda value: value == 'invented'
-    check = Check('V-TBD', 'dialog platforms')
+    check = Check('V28', 'dialog platforms')
     validator.dialog_platforms(check)
     return check
 

@@ -46,6 +46,9 @@ own patch), and zones runs it on the world tables it merges itself, so every mod
    a shared combat event XML2's shipped table changed gets XML1's value (punch L1 = "4 5" instead of XML2's "2 3"),
    SPEC.md section 33; and convert_renderfx: XML1's ce_renderfx tint form -> XML2's add / remove="cloaked",
    SPEC.md section 31.
+5. Ordinary harm loops: positive firstact clears XML2's loop-on bit (0x4399d9).
+   Start-on loops get firstact=0 after class remapping, advancing initial activation
+   but preserving the damage mode and repeat delays (SPEC 51).
 5. Popup dialogs (files under dialogs/): XMen2.exe's popup loader (0x5ebfd0) skips every <dialog> whose platform
    the platform test 0x4bd650 rejects: an empty or missing platform is accepted, a list (space / comma / tab
    separated) only with a PC token; XML1's xbox / ps2 / gc variants are all skipped, so a file with only those
@@ -231,28 +234,84 @@ def color_channel_elements(root):
     return [(el.tag, el.get('name')) for el in root.iter() if any(el.get(c) is not None for c in COLOR_CHANNELS)]
 
 
-# Positive firstact clears the loop bit in the harm parser (0x4396a0).
-# Starting at zero keeps that bit without changing the non-smart damage path.
-# Walls are staged underground; their placement scripts restart the loop at the
-# destination. Do not use smartfire: it changes damage scheduling (SPEC 45).
-def convert_haarp_fire_wall(root, rel):
-    path = str(rel).replace('\\', '/').lower().lstrip('/')
-    if not path.startswith('maps/haarp/ext/'):
-        return 0
+def has_delayed_harm_loop(el):
+    """A start-on ordinary harm loop that the XML2 parser disables (SPEC 51).
+
+    Run after class remapping. Smartfire has its own loop/damage scheduler;
+    retain enabled or unrecognized explicit configurations. Explicit false is
+    the same ordinary harm path as an absent smartfire attribute.
+    """
+    if ((el.get('classname') or '').strip().lower() != 'affectableharment'
+            or not (el.get('loopfx') or '').strip()
+            or (el.get('loopfxstarton') or '').strip().lower() != 'true'
+            or (el.get('smartfire') or '').strip().lower() not in ('', 'false', '0')):
+        return False
+    try:
+        delay = float(el.get('firstact', '0'))
+    except ValueError:
+        return False
+    return math.isfinite(delay) and delay > 0
+
+
+def delayed_harm_loops(root):
+    """(name, effect, delay) for each entity still in the dead loop-start form."""
+    return [(el.get('name'), el.get('loopfx'), el.get('firstact'))
+            for el in root.iter('entity') if has_delayed_harm_loop(el)]
+
+
+def convert_harm_loop_start(root):
+    """Keep authored start-on loops, at the cost of advancing first activation.
+
+    Do not choose by effect/name/path: the parser also affects non-fire loops.
+    Damage amounts, repeat delays and extinguish reactions remain authored.
+    """
     changed = 0
     for el in root.iter('entity'):
-        if (el.get('name') != 'fire_wall'
-                or el.get('classname') != 'affectableharment'
-                or el.get('loopfx') != 'ambient/fire_wall'
-                or el.get('loopfxstarton', '').lower() != 'true'
-                or 'smartfire' in el.attrib):
-            continue
-        try:
-            delayed = float(el.get('firstact', '0')) > 0
-        except ValueError:
-            delayed = False
-        if delayed:
+        if has_delayed_harm_loop(el):
             el.set('firstact', '0')
+            changed += 1
+    return changed
+
+
+# Fall kill volumes use XML1's original damage, bounds and activation scripts.
+# XML2 retail enables box collision and disables smart-entity streaming for them.
+# Runtime controls: boxcollision alone leaves the HAARP ravine survivable; both
+# flags give the original 32000-damage hit on entry (SPEC 52).
+FALL_KILL_FLAGS = {'boxcollision': 'true', 'smartent': 'false'}
+# Preserve these original hazards until issue #5 party handling is available and
+# the crossings are revalidated: AI can follow a safe leader into their water.
+FALL_KILL_DEFERRED = {
+    'maps/arbiter/a_int/arb3_4': frozenset({'kill_target'}),
+}
+
+
+def fall_kill_volume_deferred(el, rel):
+    path = str(rel).replace('\\', '/').lower().lstrip('/')
+    stem = path.rsplit('.', 1)[0]
+    return el.get('name') in FALL_KILL_DEFERRED.get(stem, ())
+
+
+
+def fall_kill_volumes(root, rel):
+    """The XML1 map-only lethal touch pattern, independent of entity names."""
+    path = str(rel).replace('\\', '/').lower().lstrip('/')
+    if root is None or not path.startswith('maps/'):
+        return []
+    return [el for el in root.iter('entity')
+            if el.get('classname') == 'affectableharment'
+            and el.get('damage') == '32000'
+            and el.get('damagetype') == 'dmg_direct'
+            and el.get('actontouch', '').lower() == 'true'
+            and el.get('nocollide', '').lower() == 'true']
+
+
+def convert_fall_kill_volumes(root, rel):
+    changed = 0
+    for el in fall_kill_volumes(root, rel):
+        if fall_kill_volume_deferred(el, rel):
+            continue
+        if any(el.get(k) != v for k, v in FALL_KILL_FLAGS.items()):
+            el.attrib.update(FALL_KILL_FLAGS)
             changed += 1
     return changed
 
@@ -276,9 +335,12 @@ def convert(root, rel, weapon_models=None, x1_values=None):
             c['effect_files_recoloured'] += 1
     for kind, detail in convert_entities(root, weapon_models):
         c[f'{kind}:{detail}' if kind not in ('turret_model',) else kind] += 1
-    n = convert_haarp_fire_wall(root, rel)
+    n = convert_fall_kill_volumes(root, rel)
     if n:
-        c['haarp_fire_wall_loop_start'] += n
+        c['fall_kill_volumes'] += n
+    n = convert_harm_loop_start(root)
+    if n:
+        c['harm_loop_start'] += n
     if is_dialog_rel(rel):
         n = convert_dialog_platforms(root)
         if n:
