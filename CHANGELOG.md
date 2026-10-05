@@ -20,6 +20,11 @@ build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebui
   flamethrowers and leaders fight in the hip-gun style). A new check reports a gun-armed enemy without its gun's
   style.
 
+- **Conversation lines advance by themselves only where the first game's do** (issue #54). The rule now follows
+  the first game's own: a line goes on without the player only when it has a voice and is flagged itself or by
+  its file's last start condition. Lines without a voice, and lines flagged only through their reply, wait for
+  the button again (75 lines); 4 voiced lines that the first game advances now do too (SPEC 34.2).
+
 - **Fixed: invisible fires beyond HAARP's exterior walls** (issue #12): restore
   delayed start-on harm loops across imported content, including NYC, the Arbiter
   and sewers, and restart source-identified loops after scripted relocation.

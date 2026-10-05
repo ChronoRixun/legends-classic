@@ -16,12 +16,18 @@ picked for the player - and only outside the engine's own first-second accept lo
 timeDelay (XML1: 6 lines and 6 responses at 2 or 3; XML2: 2 and 2), and without the fix the number is as inert as
 it always was. Idempotent: a line already marked is left alone (scripts_selftest runs rewrite_data_tree twice).
 
-Which lines: the line itself flagged, or its enclosing startCondition flagged (every line of that tree), or its one
-and only response flagged (XML1 flags the %BLANK% response under a flagged line, and 11 times the response alone).
-Responses are not marked: the engine's pending-reply step has its own fix (xml2-fix ReplyVoices).
+Which lines (XML1's own rule, read from its executable, 2026-10-04): a line advances by itself only when it has a
+voice (`soundToPlay` not empty: the line display 0x62e20 arms the automatic advance only after starting a voice) AND
+it is flagged - the line itself carries a `runWithoutUser` attribute (the line parser 0x619a6 tests that the attribute
+exists, whatever its value) or the file's LAST `<startCondition>` has `runWithoutUser="true"` (the loader 0x622f0
+rewrites one flag byte per conversation FILE for each startCondition in turn, so the last one decides for every line
+of the file; the per-frame update 0x65860 reads that byte). A response's flag never makes anything advance (the reply
+voice path 0x60f00 never arms the advance), and a line with no voice always waits for the player. Responses are not
+marked: the engine's pending-reply step has its own fix (xml2-fix ReplyVoices).
 
 How long: an existing positive `timeDelay` on the line (XML1's own 2 / 3) is kept as the magnitude; otherwise a reading
 time from the text after its %SPEAKER% token: BASE_SECONDS + PER_CHAR per character, clamped to MIN..MAX_SECONDS.
+Every marked line has a voice, so the hook uses the magnitude only when the sound system never started that voice.
 """
 import copy
 import re
@@ -45,10 +51,6 @@ def _attr(el, attr):
         if k.lower() == attr.lower():
             return k, v
     return None, None
-
-
-def _children(el, tag):
-    return [c for c in el if isinstance(c.tag, str) and c.tag.lower() == tag]
 
 
 # These tokens do not select a named stats entry. The activator's head is supplied
@@ -106,24 +108,30 @@ def _delay_value(raw):
         return None
 
 
+def file_flagged(root):
+    """XML1's per-file flag: the LAST <startCondition> of the file (document order) has runWithoutUser="true".
+    The loader (0x622f0) clears and rewrites one byte per conversation file for each startCondition in turn, so the
+    last startCondition decides for every line of the file, whatever the earlier ones say."""
+    scs = [el for el in root.iter() if isinstance(el.tag, str) and el.tag.lower() == 'startcondition']
+    return bool(scs) and _true(scs[-1], RWU_ATTR)
+
+
 def auto_lines(root):
-    """[(line element, why)] of every <line> that should advance by itself: 'startcondition' (its tree is
-    flagged), 'line' (the line is), 'response' (its only response is)."""
+    """[(line element, why)] of every voiced <line> that XML1 advances by itself: 'line' (the line carries a
+    runWithoutUser attribute, any value) or 'file' (the file's last startCondition is flagged). A line with no
+    voice (soundToPlay empty or absent) never advances by itself, and a response's flag counts for nothing."""
+    file_flag = file_flagged(root)
     out = []
     for sc in root.iter():
         if not isinstance(sc.tag, str) or sc.tag.lower() != 'startcondition':
             continue
-        sc_flag = _true(sc, RWU_ATTR)
         for line in sc.iter():
-            if not isinstance(line.tag, str) or line.tag.lower() != 'line':
+            if not isinstance(line.tag, str) or line.tag.lower() != 'line' or not (_attr(line, 'soundtoplay')[1] or ''):
                 continue
-            responses = _children(line, 'response')
-            if sc_flag:
-                out.append((line, 'startcondition'))
-            elif _true(line, RWU_ATTR):
+            if _attr(line, RWU_ATTR)[0] is not None:
                 out.append((line, 'line'))
-            elif len(responses) == 1 and _true(responses[0], RWU_ATTR):
-                out.append((line, 'response'))
+            elif file_flag:
+                out.append((line, 'file'))
     return out
 
 
