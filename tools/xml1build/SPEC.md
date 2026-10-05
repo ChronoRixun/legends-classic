@@ -4511,37 +4511,47 @@ Budgets: shared talents 61 -> 62, worst party 90 -> 91 of the 92 the danger-room
 event's %grab_scale_dmg reference now resolves (2 instead of 0), so thrown enemies take XML2's throw damage scale.
 Validator V-TBD (in V-H4): a playable hero without the talent, or no positive grab_scale_dmg, is an error.
 
-### TBD.3 Breaking objects (structure and attack level)
+### TBD.3 Breakable walls and the ordinary-damage regression
 
-Both exes block damage to an object when the hit's attack level is below its `structure` or the structure is at the
-top (XMen2.exe 0x498044: >= 2, parser clamp 2; XML1 0x92220: 10, clamp 10), except for exactly 1,000,000 damage or
-dmg_direct. XMen2.exe's level is CCombatSystem vtable slot 0x34 (0x44f770, called at 0x4501e9 and stored back into
-the hit at 0x4501fb): min(1, hit byte +0x2e + might_structure (+0x57b & 0xf) + round(damageLevel affecter)). The
-research's open point is settled by the code: the byte at +0x2e is the attack's own DamageLevel. The attack-data
-parser 0x4dbf70 stores the `DamageLevel` attribute at attack data +0x1c (0x4dc09a), the hit builder 0x4dc230 (called
-by the attack event at 0x4e2996) copies attack data +0x1c into hit +0x2e (0x4dc271), and the attack-data constructor
-0x4dc5d0 defaults it to 1 (0x4dc603). The attack target collector also skips objects whose structure is above that
-byte (0x4de501). XML1's level is the same sum on 0..10 (punch / kick events 1, hero powers 2-10, Might 3/6/8).
+The object structure remap remains: XML1 0-1 -> 0, 2-9 -> 1, 10 -> 2. This opens routes blocked when XML1's
+structure 2-9 was copied into XMen2.exe, where structure >= 2 is unbreakable (0x498044). Lifting and the hidden
+grab talent remain as described above. **Plain combos can now break the remapped walls too.** The original
+punch-versus-power wall restriction is withdrawn; preserving ordinary character damage takes priority.
 
-XML1's numbers on XMen2.exe made every structure 2-9 object (1,062 physent instances, 177 structure-2 tile walls,
-...) unbreakable and let any attack (level >= 1, capped to 1) break every structure-1 object. The builder now maps
-both sides onto a two-step scale that keeps XML1's main boundary (a plain punch, level 1, does not break a
-structure-2 wall; a power, level >= 2, does): entity structure 0-1 -> 0, 2-9 -> 1, 10 -> 2 (convert_physics); attack
-DamageLevel 0-1 -> 0, >= 2 -> 1 in XML1 styles, plus DamageLevel 0 on a ce_atk* typed event without one
-(convert_damage_levels, before the combat rewrite); the SPEC 33 shared-event values and the blast_ranged rebase
-write DamageLevel 0 (teleport_punch 1); the XML2 data/shared_combat_events the build ships gets the same conversion
-(zones, combat_events.shared_events_on_x1_scale: punch / kick / move_damage / beam / blast / suspend 1 -> 0,
-teleport_punch 2 -> 1, typed events without one -> 0), because the heroes' melee combos are XML2's shared_nodes
-and inherit punch and kick from it; weapons.py's gun beams get DamageLevel 0 (XML1's weapons set none). Might keeps
-might_structure 1 (XML1's +3 already lifts a punch past structure 2) and the damageLevel affecter keeps its value.
+The initial implementation also mapped attack levels 0-1 -> 0 and >= 2 -> 1, including shared events, styles,
+projectiles and gun beams. That broke normal attacks against living enemies. FUN_00429320 compares hit byte
++0x2e with character byte +0x31c at 0x4293e0-0x4293e9 and accepts only unsigned **greater than**, not equality.
+A level-zero hit against a normal structure-zero character returns false at 0x42947c. The separate bypass bits
+0x00200000 / 0x40000000 mean kill / no-protection; they are not suitable substitutes for normal attacks.
 
-Remaining deviations (XMen2.exe has two breakable steps where XML1 has nine): an XML1 structure 3-9 object breaks
-with any level-2+ attack (XML1 needs the attack level to reach its structure), and an XML1 structure-1 object
-breaks with level-0 attacks too. Might rank 1 with a punch breaks every XML1 structure 2-9 object (XML1: 2-4). A
-punched object no longer gets the random level-scaled jolt XMen2.exe applies to hit objects with a level above 0
-(0x4519dc). XML2-authored styles the build keeps (XML2 fightstyles of NPCs) keep XML2's levels. The faithful fix is
-in XML2 Fix: keep XML1's 0..10 structure and level in a side table keyed by entity (byte +0x31c is tested for >= 2
-elsewhere: 0x42bdf0, 0x431c57, 0x450be7) and replace the comparison at 0x498044 and the target filter at 0x4de501
-with XML1's (level = DamageLevel + Might destruction + affecter, capped at 9, against structure < 10).
-Validator V-TBD: XML1-sourced entity definitions with structure above 2, and XML1 / hero styles with a DamageLevel
-above 1 or a typed attack without one, are errors.
+Attack levels are restored to main behavior in every affected path. Shared combat events remain the base
+file; styles retain authored values and omitted engine defaults, shared-value rewriting retains its prior
+main behavior, projectiles retain their values, and generated gun beams use level 1. Damage amounts, types,
+rolls and modifiers are not changed to compensate. The validator no longer requires the rejected zero/one
+attack-level mapping. Synthetic regressions exercise default and explicit ordinary attacks through conversion,
+including projectiles, and preserve authored zero/power values rather than inventing attack levels.
+CONTENT_VERSION advances to 12 because generated output changes.
+
+Why levelling can hide this: the attack-data constructor defaults the level to 1 (0x4dc603), the hit builder
+copies it from attack data +0x1c to hit +0x2e (0x4dc271-0x4dc274), and FUN_0044f770 adds the attacker's
+might_structure nibble (actor+0x57b) and rounded damageLevel affecter (actor+0x530), capped at 1. The result is
+stored to hit +0x2e at 0x4501fb. Wolverine's Sharpness contributes +3 at its first rank: an auto-spent higher-level
+hero can turn the broken zero into one. Character level itself is not read by this attack-level calculation.
+
+### TBD.4 Engine work required for the wall rule (not implemented here)
+
+For unchanged character defense and attack semantics, a normal hit must exceed character structure 0. To spare
+an object remapped to structure 1, the hit must be below 1. No integer can satisfy both; the effective attack
+level is capped at 1. Changing damage type, adding kill/no-protection flags or weakening character defenses
+would alter main combat and is not a faithful builder fix.
+
+XML2 Fix would need a separate object-only attack-level representation/comparison. Retain XML1's original
+structure and attack levels in side data, compute the XML1 attack threshold (authored DamageLevel + Might
+break strength + affecters), and apply it both to object damage eligibility (0x498044) and object target
+collection (0x4de501). Preserve the original/default hit level for the living-character gate at 0x4293e3 and
+its damage/defense calculation. Audit the other structure-byte consumers (0x42bdf0, 0x431c57, 0x450be7) rather
+than raising the byte's clamp globally. No XML2 Fix change is part of this builder correction.
+
+Remaining approximation: all source structure 2-9 objects map to one breakable class, so normal attacks can
+break more objects than in XML1. Class 10 remains immune; script flags and health still apply. Full original
+Might thresholds and the punch/power wall distinction remain deferred to the separate engine work above.

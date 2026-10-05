@@ -341,7 +341,6 @@ class Scan:
         self.inv_items = {}        # norm rel -> [inventoryitem values]
         self.turret_mount = {}     # norm rel -> [(entity name, missing flags)] remapped scan turrets not fixed-mount
         self.physics_scale = {}    # norm rel -> [(entity name, attribute, value)] XML1-scale object physics left
-        self.damage_levels = {}    # norm rel (XML1 styles) -> [(tag, name, problem)] XML1-scale attack levels left
         self.speakers = {}         # norm rel (conversations/) -> [(attr, %TOKEN%)]
         self.anim_enums = {}       # norm rel -> [(tag, attr, enum literal)]  animenum values + EA_* in any value
         self.zoneinfo_xtraction = {}   # norm rel (data/zoneinfo.*) -> [(zone, [attrs])] Xtraction network entries
@@ -500,10 +499,6 @@ class Validator:
                     ps = XS.physics_scale_problems(root)
                     if ps:
                         sc.physics_scale[n] = ps
-                if CE.is_style_rel(n) and (self.is_x1_source(e.get('source')) or e.get('owner') == 'heroes'):
-                    dl = XS.damage_level_problems(root)
-                    if dl:
-                        sc.damage_levels[n] = dl
                 if n.startswith('conversations/'):
                     sp = [(k, t) for el in root.iter() for k in SPEAKER_ATTRS for t in SPEAKER_RE.findall(el.get(k) or '')]
                     if sp:
@@ -915,14 +910,6 @@ class Validator:
                      f'XMen2.exe clamps (x1schema.convert_physics), e.g. {lst[:2]}')
             n_scale += len(lst)
         ck.set('x1_physics_scale_left', n_scale)
-        n_dl = 0
-        for n, lst in sorted(sc.damage_levels.items()):
-            if n in sc.twins:
-                continue
-            ck.error(f'{sc.files[n]["rel"]}: {len(lst)} attack(s) keep an XML1 attack level (x1schema.'
-                     f'convert_damage_levels: a punch would break what XML1 made structure 2), e.g. {lst[:2]}')
-            n_dl += len(lst)
-        ck.set('x1_damage_levels_left', n_dl)
 
     # ================================================================== V4 packages
     def v4_packages(self, ck):

@@ -2540,16 +2540,6 @@ class Zones:
                                label=name, only_files=only_files)
             if name == 'items':
                 self._item_names = None
-        # issue #51: the shipped XML2 shared combat events on XML1's attack-level scale (combat_events.
-        # shared_events_on_x1_scale): the heroes' melee (XML2's shared_nodes) inherits punch / kick from them
-        from . import combat_events as CE
-        root = ctx.read_base_xmlb(CE.SHARED_EVENTS_REL)          # always from the base file: not idempotent
-        levels = CE.shared_events_on_x1_scale(root)
-        done = ctx.write_xmlb(CE.SHARED_EVENTS_REL.rsplit('.', 1)[0], root, ('.XMLB',),
-                              source='zones:issue51 attack levels', replace=True) if levels else []
-        self.counts['shared_combat_event_levels'] = len(levels)
-        ctx.note(f'{CE.SHARED_EVENTS_REL}: attack levels on the XML1 scale (a punch does not break what XML1 made '
-                 f'structure 2): {levels} ({len(done)} file(s))')
 
     def merge_package(self, pkg_rel, bundle_key, skip=(), extra_refs=(), only_kinds=None, x1_only=False,
                       label='', only_files=None):

@@ -47,7 +47,7 @@ def test_bullet_single_shot_becomes_beam_plus_effect_sound():
     beam = dict(t[1][1])
     assert beam['beameffect'] == 'weapons/mp5/mp5_tracer' and beam['hiteffect'] == 'weapons/mp5/mp5_impact'
     assert beam['damage'] == 'L1' and beam['maxrange'] == '550' and beam['beambolt'] == 'Bip01 R Hand'
-    assert beam['damagescale'] == 'difficulty' and beam['damagelevel'] == '0' and beam['pierce'] == 'false'
+    assert beam['damagescale'] == 'difficulty' and beam['damagelevel'] == '1' and beam['pierce'] == 'false'
     fx = dict(t[2][1])
     assert fx['effect'] == 'weapons/mp5/mp5_muzzle' and fx['sound'] == 'character/grso_m/fire_mp5'
 

@@ -86,67 +86,49 @@ def test_the_shared_grab_talent_needs_a_positive_scale():
 
 
 # ---------------------------------------------------------------------------------------------- breaking objects
-def test_structure_keeps_xml1s_punch_versus_power_boundary():
+# These structures preserve progression, not the original punch-versus-power boundary.
+def test_structure_makes_breakable_walls_openable_and_keeps_top_immune():
     root = zone(*({'name': f'wall{v}', 'classname': 'tileent', 'structure': str(v)} for v in range(11)))
     S.convert(root, 'maps/invented/zone5.eng')
-    got = [by_name(root)[f'wall{v}'].get('structure') for v in range(11)]
-    assert got == ['0', '0', '1', '1', '1', '1', '1', '1', '1', '1', '2']
+    assert [by_name(root)[f'wall{v}'].get('structure') for v in range(11)] == ['0', '0', '1', '1', '1', '1', '1', '1', '1', '1', '2']
     assert not S.physics_scale_problems(root)
 
 
-def test_entity_damage_level_and_unconverted_structure_rule():
+def test_entity_attack_level_is_preserved_while_structure_is_converted():
     root = zone({'name': 'invented_shell', 'classname': 'projectileent', 'damagelevel': '6', 'structure': '1'},
                 {'name': 'invented_wall', 'classname': 'tileent', 'structure': '10'})
     assert S.physics_scale_problems(root) == [('invented_wall', 'structure', '10')]
     S.convert(root, 'maps/invented/zone6.eng')
-    e = by_name(root)
-    assert e['invented_shell'].get('damagelevel') == '1' and e['invented_shell'].get('structure') == '0'
-    assert e['invented_wall'].get('structure') == '2'
+    assert root[0].get('damagelevel') == '6' and root[0].get('structure') == '0'
+    assert root[1].get('structure') == '2'
 
 
-STYLE = ('<PowerStyle>'
-         '<event name="invented_slash" type="ce_atk" damage="5"/>'
-         '<event name="invented_bash" type="ce_atk_punch" damagelevel="1"/>'
-         '<FightMove name="combo1"><trigger name="punch" time="0.2"/><trigger name="kick" damagelevel="2" time="0.3"/>'
-         '<trigger name="teleport_punch" time="0.4"/></FightMove>'
-         '<FightMove name="power1"><trigger name="invented_slash" damagelevel="3" time="0.1"/>'
-         '<trigger name="effect" time="0.1"/></FightMove>'
-         '</PowerStyle>')
-
-
-def test_style_attack_levels_punch_zero_powers_one():
-    root = ET.fromstring(STYLE)
+def test_style_preserves_authored_levels_and_engine_defaults():
+    root = ET.fromstring('<PowerStyle><event name="invented_strike" type="ce_atk"/>'
+                         '<FightMove name="invented_combo"><trigger name="invented_strike" damagelevel="3"/>'
+                         '<trigger name="invented_zero" damagelevel="0"/></FightMove></PowerStyle>')
     S.convert(root, 'data/powerstyles/ps_invented.eng')
-    ev = {e.get('name'): e for e in root.iter('event')}
-    assert ev['invented_slash'].get('damagelevel') == '0'           # typed attack, default 1 = a punch
-    assert ev['invented_bash'].get('damagelevel') == '0'
-    combo = {t.get('name'): t.get('damagelevel') for t in root[2]}
-    assert combo == {'punch': '0', 'kick': '1', 'teleport_punch': '1'}   # shared punch 1 -> 0, XML1 2 -> 1
-    power = {t.get('name'): t.get('damagelevel') for t in root[3]}
-    assert power == {'invented_slash': '1', 'effect': None}
-    assert S.damage_level_problems(root) == []
+    assert root[0].get('damagelevel') is None
+    assert root[1][0].get('damagelevel') == '3'
+    assert root[1][1].get('damagelevel') == '0'  # authored zero is preserved; never invented by the converter
 
 
-def test_damage_level_rule_flags_xml1_levels_and_bare_typed_attacks():
-    root = ET.fromstring(STYLE)
-    probs = S.damage_level_problems(root)
-    assert ('event', 'invented_slash', 'type=ce_atk without damagelevel') in probs
-    assert any(p[2] == 'damagelevel=3' for p in probs) and any(p[2] == 'damagelevel=2' for p in probs)
+def test_conversion_keeps_ordinary_hits_above_living_character_structure():
+    # Character gate 0x4293e3 requires hit level > structure, not >= as for objects.
+    # Lowering an authored/default level-one hit to zero makes a normal living
+    # structure-zero enemy immune. Test the real conversion with synthetic attacks.
+    root = ET.fromstring('<PowerStyle>'
+                         '<event name="invented_default" type="ce_atk_punch" damage="7"/>'
+                         '<event name="invented_explicit" type="ce_atk_punch" damagelevel="1" damage="9"/>'
+                         '<FightMove name="invented_combo"><trigger name="punch" time="0.1"/>'
+                         '<trigger name="kick" time="0.3"/></FightMove></PowerStyle>')
+    S.convert(root, 'data/powerstyles/ps_invented_regression.eng')
+    for attack in list(root.iter('event')) + list(root.iter('trigger')):
+        assert int(attack.get('damagelevel', '1')) > 0, attack.attrib
+    assert root[0].get('damage') == '7' and root[1].get('damage') == '9'
 
 
-def test_non_style_files_keep_their_attack_attributes():
-    root = ET.fromstring(STYLE)
-    S.convert(root, 'maps/invented/not_a_style.eng')
-    assert [t.get('damagelevel') for t in root[2]] == [None, '2', None]
-
-
-def test_shared_events_shipped_on_the_xml1_scale():
-    from xml1build import combat_events as CE
-    root = ET.fromstring('<events><event name="punch" type="ce_atk_punch" damagelevel="1"/>'
-                         '<event name="punch_heavy" inherit="punch"/>'
-                         '<event name="teleport_punch" type="ce_atk_post_tele_punch" damagelevel="2"/>'
-                         '<event name="invented_fry" type="ce_atk"/><event name="invented_fx" type="ce_effect"/></events>')
-    changes = CE.shared_events_on_x1_scale(root)
-    got = {e.get('name'): e.get('damagelevel') for e in root}
-    assert got == {'punch': '0', 'punch_heavy': None, 'teleport_punch': '1', 'invented_fry': '0', 'invented_fx': None}
-    assert set(changes) == {'punch', 'teleport_punch', 'invented_fry'}
+def test_conversion_preserves_projectile_character_damage_eligibility():
+    root = zone({'name': 'invented_pellet', 'classname': 'projectileent', 'damagelevel': '1'})
+    S.convert(root, 'data/entities/invented_projectiles.eng')
+    assert int(root[0].get('damagelevel')) > 0
