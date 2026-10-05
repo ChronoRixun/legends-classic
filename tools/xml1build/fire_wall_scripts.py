@@ -1,4 +1,4 @@
-"""Restart relocated harm loops (SPEC 45 and SPEC number assigned at merge)."""
+"""Restart relocated harm loops (SPEC 45 and SPEC 51)."""
 import collections
 import re
 

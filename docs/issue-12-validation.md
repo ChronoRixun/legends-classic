@@ -82,7 +82,7 @@ relocation failure does not establish the cause of that intermittent symptom.
   asserts one validator error for an invented definition left in the dead form
   (localized twins reported once), then no error after conversion. Repeat with
   `python tests/unit/run.py -k validator_rejects_dead_loop`.
-- V-TBD found 97 errors in decoded baseline output and zero in the fixed build.
+- V25 found 97 errors in decoded baseline output and zero in the fixed build.
 - A binary comparison against the retained main-build output confirmed all six
   `Scripts/haarp/ext/create_firewall{1,1b,2,3,4,6}.py` files are byte-identical.
   Exactly four other generated scripts changed, for the eleven placements above.
@@ -90,7 +90,7 @@ relocation failure does not establish the cause of that intermittent symptom.
   and `python tools/check_no_game_content.py --self-test` from the repository root.
   From `tools/`, run `python -m xml1build.zones_selftest <out> --base <XML2-install>`
   and `python -m xml1build.scripts_selftest --out <out> --base <XML2-install>` on a
-  build made from owned inputs. Check `_build/validate.json` for V-TBD = zero.
+  build made from owned inputs. Check `_build/validate.json` for V25 = zero.
 
 The full working report, captures, saves and detailed inventories remain local
 and untracked. No game text, screenshots, decoded data or personal paths are

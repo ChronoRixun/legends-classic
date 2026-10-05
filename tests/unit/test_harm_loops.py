@@ -66,14 +66,14 @@ def test_validator_rejects_dead_loop_and_accepts_converted_tree():
         twins={names[1]}, files={n: {'rel': n} for n in names})
     validator = object.__new__(Validator)
     validator._scan = scan
-    ck = Check('V-TBD', 'harm loop startup')
+    ck = Check('V25', 'harm loop startup')
     validator.harm_loop_startup(ck)
     assert len(ck.errors) == 1
     assert names[0] in ck.errors[0] and 'invented_hazard' in ck.errors[0]
     assert 'firstact' in ck.errors[0]
     S.convert(root, 'maps/invented/room.eng')
     scan.delayed_harm_loops = {n: S.delayed_harm_loops(root) for n in names}
-    ck = Check('V-TBD', 'harm loop startup')
+    ck = Check('V25', 'harm loop startup')
     validator.harm_loop_startup(ck)
     assert not ck.errors
 
