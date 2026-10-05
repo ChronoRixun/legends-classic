@@ -53,6 +53,7 @@ import threading
 import xml.etree.ElementTree as ET
 
 from . import common as C
+from .lib import x1names                # is_fightstyle_name (x1_fightstyle_* styles, issue #52)
 
 ACTOR_SLOTS = 40          # 0x56ac10: 0x28 slots; 0x56b2c3: cmp [obj+0x73c4], 0x28 / jge -> load refused (NULL)
 RETAIL_MAX = 37           # highest estimate over XML2's own zone packages (act2/mikhail/mikhail; egypt6 and savage1 36)
@@ -167,7 +168,7 @@ class Budget:
                             'file': f, 'skin': skin, 'skins': skins,
                             'characteranims': (el.get('characteranims') or '').lower(),
                             'fightstyles': [(t2.get('name') or '').lower() for t2 in el.iter('talent')
-                                            if (t2.get('name') or '').lower().startswith('fightstyle_')],
+                                            if x1names.is_fightstyle_name(t2.get('name'))],
                             'movesets': [m.lower() for m in (el.get('moveset1'), el.get('moveset2')) if m],
                         }
                 self._stats = st

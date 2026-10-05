@@ -54,6 +54,34 @@ def variant_name(mapped_style: str, weapon_name: str) -> str:
     return f'x1_{base}_{wp}'.lower()
 
 
+def gun_fightstyle(weapon) -> str:
+    """The XML1 fighting style a gun gives its holder, or '' (a melee weapon, a gun without one, no weapon).
+
+    default.xbe replaces the holder's selected fighting style with the weapon's while it is armed (spawn's weapon
+    assignment 0x327A0 installs it in fighting-style slot 1, 0xED300 / 0xED390, and 0x30890 overwrites animation
+    slot 1 with its animations; the talent's style is kept only to restore it), and XML1's character bundles list
+    only the weapon's style. XMen2.exe uses one fighting-style talent per character (the lowest talent id,
+    0x43B0A0), so the stats entry carries the weapon's style INSTEAD of its own (characters.convert_stats)."""
+    if not weapon or (weapon.get('type') or '').lower() not in WEAPON_TYPES:
+        return ''
+    return (weapon.get('fightstyle') or '').strip()
+
+
+def fightstyle_problems(fight_talents, weapon, map_fightstyle) -> list:
+    """V-TBD (SPEC section number assigned at merge): a stats entry armed with an XML1 gun must carry exactly that
+    gun's fighting style (mapped: map_fightstyle) as its only fighting-style talent. fight_talents: the entry's
+    fighting-style talent names in file order. Returns problem strings (empty when fine or not a gun)."""
+    want = gun_fightstyle(weapon)
+    if not want:
+        return []
+    want = map_fightstyle(want).lower()
+    have = [t.lower() for t in fight_talents]
+    if have == [want]:
+        return []
+    return [f'gun {weapon.get("name")!r} gives fighting style {want!r} (XML1 replaces the entry\'s style while '
+            f'armed; XMen2.exe uses one fighting-style talent), but the entry has {have}']
+
+
 def bind_style_package(root, base: str, variant: str):
     """A weapon variant's own package must load that variant, not its source style.
 
