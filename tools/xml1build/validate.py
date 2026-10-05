@@ -364,6 +364,8 @@ class Validator:
         self._zones = None
         self._banks = None
         self._x1stats = None
+        self._weapon_fire_cache = {}    # powerstyle (lower) -> weapons.weapon_fire_left (SPEC 29.3)
+        self._weapon_types = None
         self._zoneinfo = None
         self._zone_ids = None
         self._x1checker = None
@@ -1223,6 +1225,8 @@ class Validator:
                 msg = f'{fname}:{el.get("name")} ({origin}): {p[1]}'
                 if p[0] == 'allow':
                     ck.allow(msg, p[2])
+                elif p[0] == 'warn':
+                    ck.warn(msg)
                 elif p[0] == 'hard' or origin == 'xml1':
                     ck.error(msg)
                 else:
@@ -1315,6 +1319,18 @@ class Validator:
             else:
                 ck.error(r[1])
 
+    def _x1_weapon_types(self):
+        """{lower weapon name: lower type} of XML1's data/weapons/weapons.eng (SPEC 29.3 check)."""
+        if self._weapon_types is None:
+            try:
+                root = self.ctx.read_x1_xml('data/weapons/weapons.eng')
+            except KeyError:
+                root = None
+            self._weapon_types = {} if root is None else {
+                (w.get('name') or '').lower(): (w.get('type') or '').lower()
+                for w in root.iter() if w.tag.lower() == 'weapon' and w.get('name')}
+        return self._weapon_types
+
     @staticmethod
     def _matches_x1(el, x1el):
         """an <out> stats entry that carries the XML1 entry's mapped skin (so it came from XML1, not XML2)."""
@@ -1346,7 +1362,7 @@ class Validator:
 
     def _entry_problems(self, name, fname, el, shared_t, hero_talent_files):
         """[(kind, msg[, reason])]: kind 'soft' (error for XML1-origin, warn otherwise), 'hard' (always error),
-        'allow' (allowlisted)."""
+        'warn' (always a warning), 'allow' (allowlisted)."""
         out = []
         skin = (el.get('skin') or '').strip()
         is_mc = name.startswith('_hero') and name.endswith('_mc_')
@@ -1381,6 +1397,30 @@ class Validator:
         ps = el.get('powerstyle')
         if ps and not (self.exists(f'data/powerstyles/{ps}.xmlb') or self.exists(f'data/powerstyles/{ps}.engb')):
             out.append(('soft', f'powerstyle Data/powerstyles/{ps} missing'))
+        elif ps:
+            # V5 (SPEC 29.3): XMen2.exe builds XML1's weapon_fire as a SOUND event, so a style a stats entry uses
+            # must not fire it, directly or through an event of its own (weapons.apply / rewrite_weapon_events)
+            from . import weapons as W
+            key = ps.lower()
+            if key not in self._weapon_fire_cache:
+                t = self.tree(f'data/powerstyles/{ps}.xmlb')
+                self._weapon_fire_cache[key] = W.weapon_fire_left(t) if t is not None else []
+            left = self._weapon_fire_cache[key]
+            x1 = self.x1_stats().get(name.lower())
+            wname = (x1[1].get('weapon') or '').strip().lower() if x1 is not None else ''
+            wtype = self._x1_weapon_types().get(wname, '')
+            named = [w for w, has_weapon in left if has_weapon]
+            plain = [w for w, has_weapon in left if not has_weapon]
+            if named or (plain and wtype in W.WEAPON_TYPES):
+                out.append(('soft', f'powerstyle {ps}: {len(named) + len(plain)} trigger(s) still fire XML1 '
+                                    f'weapon_fire, a sound event in XMen2.exe (no shot, no damage): '
+                                    f'{(named + plain)[:4]}'))
+            elif plain and wname:
+                out.append(('warn', f'powerstyle {ps}: {len(plain)} weapon_fire trigger(s) with the melee weapon '
+                                    f'{wname}: no shot in XMen2.exe (what XML1 did with them is not established)'))
+            elif plain:
+                out.append(('allow', f'powerstyle {ps}: {len(plain)} weapon_fire trigger(s), no shot in XMen2.exe',
+                            'the XML1 entry has no weapon: its weapon_fire had nothing to fire in XML1 either'))
         ms = el.get('moveset1')
         if ms and not (self.exists(f'data/fightstyles/{ms}.xmlb') or self.exists(f'data/fightstyles/{ms}.engb')):
             out.append(('soft', f'moveset1 Data/fightstyles/{ms} missing'))

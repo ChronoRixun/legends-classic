@@ -130,3 +130,79 @@ def test_weapon_moves_get_an_ai_type_so_xml2_fires_them():
     root = style([('power_attack', [{'name': 'weapon_fire', 'time': '0'}])])
     root.find('FightMove').set('aitype', 'beam')                  # an XML1 move that already says
     assert not W.apply(root, MP5)['aitype_added'] and root.find('FightMove').get('aitype') == 'beam'
+
+
+# SPEC 29.3: weapon events named by the style itself (invented weapon, effects and names)
+TOY = {'name': 'wp_toy_pistol', 'type': 'bullet', 'actorbolt': 'Bip01 R Hand', 'damage': 'L1', 'range': '300',
+       'damagemod': 'dmgmod_test', 'firesound': 'test/toy_bang', 'muzzlefx': 'test/toy_flash',
+       'muzzleaccfx': 'test/toy_tracer', 'impactfx': 'test/toy_hit'}
+TOYS = {'wp_toy_pistol': TOY, 'wp_toy_lobber': dict(FREEZE, name='wp_toy_lobber')}
+
+
+def two_gun_style(shots=4, others=0):
+    root = ET.Element('PowerStyle')
+    ET.SubElement(root, 'event', {'name': 'Left_Pop', 'inherit': 'weapon_fire', 'weapon': 'wp_toy_pistol',
+                                  'boltselect': 'Bip01 L Hand', 'boltonslot': 'ebolton_altweapon'})
+    ET.SubElement(root, 'event', {'name': 'right_pop', 'inherit': 'weapon_fire', 'weapon': 'WP_TOY_PISTOL'})
+    m = ET.SubElement(root, 'FightMove', {'name': 'power_attack', 'animenum': 'ea_power1', 'aitype': 'beam'})
+    for i in range(others):
+        ET.SubElement(m, 'trigger', {'name': 'sound', 'sound': 'test/other', 'time': '0'})
+    for i in range(shots):
+        ET.SubElement(m, 'trigger', {'name': 'left_pop' if i % 2 == 0 else 'right_pop', 'time': f'{0.5 + i / 10:g}'})
+    ET.SubElement(m, 'chain', {'action': 'idle', 'result': 'idle'})
+    return root
+
+
+def test_weapon_events_become_beams_with_their_bolts():
+    root = two_gun_style()
+    rep = W.rewrite_weapon_events(root, TOYS)
+    assert rep['weapon_event_to_beam'] == 2 and rep['weapon_event_shots'] == 4
+    ev = {e.get('name'): e for e in root.findall('event')}
+    assert set(ev) == {'Left_Pop', 'right_pop'}                  # names kept: the triggers still find them
+    left, right = ev['Left_Pop'], ev['right_pop']
+    assert left.get('inherit') == 'beam' and left.get('beambolt') == 'Bip01 L Hand'
+    assert right.get('beambolt') == 'Bip01 R Hand'                 # no boltselect: the weapon's actorbolt
+    for e in (left, right):
+        assert e.get('beameffect') == 'test/toy_tracer' and e.get('hiteffect') == 'test/toy_hit'
+        assert e.get('damage') == 'L1' and e.get('maxrange') == '300' and e.get('attacktype') == 'beam'
+        assert 'weapon' not in e.attrib and 'boltselect' not in e.attrib and 'time' not in e.attrib
+        assert [d.get('name') for d in e.findall('damageMod')] == ['dmgmod_test']
+    assert W.weapon_fire_left(root) == []
+
+
+def test_weapon_event_shots_get_muzzle_fx_only_within_the_trigger_cap():
+    root = two_gun_style(shots=6, others=W.MAX_TRIGGERS - 6 - 2)    # room for two effect_sound triggers
+    W.rewrite_weapon_events(root, TOYS)
+    trig = [c for c in root.find('FightMove') if c.tag == 'trigger']
+    assert len(trig) == W.MAX_TRIGGERS
+    fx = [c for c in trig if c.get('name') == 'effect_sound']
+    assert [(c.get('time'), c.get('bolt')) for c in fx] == [('0.5', 'Bip01 L Hand'), ('0.6', 'Bip01 R Hand')]
+    assert [c.get('name') for c in trig].count('left_pop') == 3   # every shot trigger kept
+    full = two_gun_style(shots=4, others=W.MAX_TRIGGERS - 4)
+    rep = W.rewrite_weapon_events(full, TOYS)
+    assert not rep['weapon_event_fx_added'] and not rep['moves_over_trigger_cap']
+
+
+def test_weapon_events_through_an_inheriting_event_and_non_bullets():
+    root = two_gun_style(shots=1)
+    ET.SubElement(root, 'event', {'name': 'left_pop_hard', 'inherit': 'left_pop', 'damage': 'L3'})
+    ET.SubElement(root, 'event', {'name': 'lob', 'inherit': 'weapon_fire', 'weapon': 'wp_toy_lobber'})
+    ET.SubElement(root, 'event', {'name': 'mystery', 'inherit': 'weapon_fire', 'weapon': 'wp_not_there'})
+    ET.SubElement(root, 'event', {'name': 'unarmed', 'inherit': 'weapon_fire'})
+    rep = W.rewrite_weapon_events(root, TOYS)
+    ev = {e.get('name'): e for e in root.findall('event')}
+    assert ev['left_pop_hard'].get('inherit') == 'beam' and ev['left_pop_hard'].get('beambolt') == 'Bip01 L Hand'
+    assert ev['left_pop_hard'].get('damage') == 'L1'               # the weapon's damage, as XML1's weapon supplies it
+    assert ev['lob'].get('inherit') == 'weapon_fire' and rep['weapon_event_projectile_kept'] == 1
+    assert ev['mystery'].get('inherit') == 'weapon_fire' and rep['weapon_event_unknown_weapon'] == 1
+    assert ev['unarmed'].get('inherit') == 'weapon_fire'           # names no weapon: left alone
+
+
+def test_weapon_fire_left_finds_plain_and_event_shots():
+    root = two_gun_style(shots=2)
+    m = root.find('FightMove')
+    ET.SubElement(m, 'trigger', {'name': 'weapon_fire', 'time': '0.9'})
+    ET.SubElement(m, 'trigger', {'name': 'weapon_fire', 'type': 'ce_sound', 'time': '1'})   # an explicit type wins
+    assert W.weapon_fire_left(root) == [('power_attack:left_pop', True), ('power_attack:right_pop', True),
+                                        ('power_attack:weapon_fire', False)]
+    assert W.weapon_fire_left(None) == []
