@@ -60,6 +60,9 @@ Checks (severity per SPEC 4.6: error = will not load or silently misbehaves; war
                 index counts equal, indices inside the blend palette, palette entries on skeleton bones, weights
                 summing to 1 (errors); every bone the skin's vertices use in the anim DB skeleton (skin / skeleton
                 mismatch: error, warning when the XML1 disc has it too); 1-2 blend weights noted
+  V-TBD codex icons (SPEC "Codex list without icons", validate_frontend.v_codex_icons): --frontend xml1:
+                UI/menus/codex (both halves) written by frontend, its MENU_ITEM_LISTCODEX without icons / icons_cols /
+                icons_rows and no mini_convo_icons precache
   V23 fight styles (SPEC 43, style_budget.validate): per converted zone the distinct style files of the permanent
                 packages, the zone package, its CHRB characters' packages and the worst four-hero party against
                 the registry the shipped ini asks xml2-fix for ([Limits] FightStyles, else XMen2.exe's 19): more
@@ -653,7 +656,8 @@ class Validator:
                                ('V21', 'skins', lambda ck: SK.validate(self, ck)),
                                ('V22', 'buoys', lambda ck: BY.validate(self, ck)),
                                ('V23', 'fight styles', lambda ck: SB.validate(self, ck)),
-                               ('V24', 'conversation portraits', self.conversation_portraits)):
+                               ('V24', 'conversation portraits', self.conversation_portraits),
+                               ('V-TBD', 'codex icons', lambda ck: VF.v_codex_icons(self, ck))):
             ck = Check(cid, title)
             self.checks[cid] = ck
             t0 = time.time()

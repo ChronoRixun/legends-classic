@@ -5,6 +5,10 @@ build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebui
 
 ## Unreleased - content version 11
 
+- **Fixed: Cyclops' face on every codex entry** (issue #48). The codex list now has no icons, as in the first game,
+  instead of X-Men Legends II's icon column, which drew Cyclops for every character without an icon of their own.
+  A new check verifies the codex menu (SPEC "Codex list without icons").
+
 - **The first game's shared hero passives** (issue #34): critical strike (5 ranks, +2 to +10%, unlocking at levels
   1/7/12/17/22), might (3 ranks, heavier objects each rank), leadership (5 ranks of combo damage and combo XP) and
   flight (energy drain 40 down to 5 per second) replace X-Men Legends II's versions. Might's bonus melee damage has no
