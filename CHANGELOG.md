@@ -70,6 +70,9 @@ build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebui
 - Preserve authored ladder descent through source-derived relative motion paths and the XML2 Fix 1.3.2 CharacterLadderPaths companion (SPEC 46).
   Before-and-after runtime verification is tracked with this issue PR.
 
+- Retain objective completion descriptions for the companion XML2 Fix 1.3.2 reader (SPEC 47), without changing saved objective ordering.
+  Before-and-after runtime verification is tracked with this issue PR.
+
 - **The first game's shared hero passives** (issue #34): critical strike (5 ranks, +2 to +10%, unlocking at levels
   1/7/12/17/22), might (3 ranks, heavier objects each rank), leadership (5 ranks of combo damage and combo XP) and
   flight (energy drain 40 down to 5 per second) replace X-Men Legends II's versions. Might's bonus melee damage has no

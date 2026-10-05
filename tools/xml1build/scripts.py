@@ -2189,8 +2189,12 @@ def _install_missions(ctx, det):
         except Exception as e:      # noqa: BLE001
             ctx.error(f'{p.name}: does not decode ({e})')
             continue
+        from .objective_text import apply_completion_text
+        updated = apply_completion_text(root, p.stem, _mission_plan(ctx))
         probs = C.xmlb_attr_problems(root)
-        if probs or len(data) <= 8 or C.encode_xmlb(C.decode_xmlb(data)) != data:
+        if updated:
+            written += ctx.write_xmlb(f'{MISSION_DIR}/{p.stem}', root, (p.suffix,), source=p)
+        elif probs or len(data) <= 8 or C.encode_xmlb(C.decode_xmlb(data)) != data:
             ctx.warn(f'Data/missions/{p.name}: research file not canonical ({probs[:2]}); re-encoded')
             written += ctx.write_xmlb(f'{MISSION_DIR}/{p.stem}', root, (p.suffix,), source=p)
         else:

@@ -5,7 +5,8 @@ keys:
 
   the port (this module)  the content requirements of a build - [Game] NewGameTeam / ResetUnlocks / SaveFolder /
                           ForcedTeams / PostgameScript / WindowTitle / EndHeroUnlock / MainMenuItems / NewGamePlus /
-                          ReviewStats / XPCurve / GeometrySharingBlendIndices / CharacterLadderPaths, [Limits]
+                          ReviewStats / XPCurve / GeometrySharingBlendIndices / CharacterLadderPaths /
+                          ObjectiveDescriptions, [Limits]
                           ActorSlots / ResourceNames / ItemEnhancements / FightStyles, [Online] GameVersion. They are
                           functions of the build's content (the menus it wrote, its report.json, its scripts), so the
                           builder (tools/xml1builder) writes them after a build, and tools/harness.py takes its
@@ -112,6 +113,12 @@ GEOMETRY_SHARING_BLEND_INDICES = '1'
 # movement is unchanged. Off in xml2-fix unless set, so every XML1 build asks for it.
 CHARACTER_LADDER_PATHS = '1'
 
+# xml2-fix 1.3.2 [Game] ObjectiveDescriptions (SPEC 47, issue #8): XML1's objectives carry an updatedescription, the
+# journal text once the objective is complete, which XMen2.exe's parser ignores; the build keeps the attribute in the
+# missions and '1' makes the fix show it in both journal renderers while the objective's completion bit is set (saved
+# objective records unchanged). Off in xml2-fix unless set, so every XML1 build asks for it.
+OBJECTIVE_DESCRIPTIONS = '1'
+
 # xml2-fix [Game] ForcedTeams (SPEC 19): '1' = the scripts of a --forced-teams seat build seat XML1's parties
 # (xml2-fix forced_teams module), '0' = the functions exist but report off (team menu), 'off' = no key (nothing
 # patched). Every xml2-fix call sits behind xml2fixFeature("forcedteams") (validate V14b), so with ForcedTeams=0, a
@@ -121,13 +128,13 @@ FORCED_TEAMS_VALUES = ('1', '0', 'off')
 # the xml2-fix release a builder-made play build needs (every key above is in v1.2.0; v1.3.0: the SKILL pickup's
 # addSkillPoints, the conversation hooks [Game] AutoAdvance / ReplyVoices / ReplyCursor - SPEC 32, 34; v1.3.1:
 # [Limits] FightStyles - SPEC 43, [Game] GeometrySharingBlendIndices - SPEC 44; v1.3.2: [Game] CharacterLadderPaths -
-# SPEC 46)
+# SPEC 46, [Game] ObjectiveDescriptions - SPEC 47)
 REQUIRED_XML2FIX = '1.3.2'
 
 # every key the port may write (the builder drops the ones a build does not need); the launcher owns the rest
 PORT_OWNED = {'Game': ('NewGameTeam', 'ResetUnlocks', 'SaveFolder', 'ForcedTeams', 'PostgameScript', 'WindowTitle',
                        'EndHeroUnlock', 'MainMenuItems', 'NewGamePlus', 'ReviewStats', 'XPCurve',
-                       'GeometrySharingBlendIndices', 'CharacterLadderPaths'),
+                       'GeometrySharingBlendIndices', 'CharacterLadderPaths', 'ObjectiveDescriptions'),
               'Limits': ('ActorSlots', 'ResourceNames', 'ItemEnhancements', 'FightStyles'),
               'Online': ('GameVersion',)}
 
@@ -231,6 +238,7 @@ def game_keys(*, xml1_opening=True, save_folder=None, forced_teams='1', add_hero
             game['SaveFolder'] = save_folder
         game['GeometrySharingBlendIndices'] = GEOMETRY_SHARING_BLEND_INDICES
         game['CharacterLadderPaths'] = CHARACTER_LADDER_PATHS
+        game['ObjectiveDescriptions'] = OBJECTIVE_DESCRIPTIONS
     if forced_teams in ('0', '1'):
         game['ForcedTeams'] = forced_teams
     if add_hero:

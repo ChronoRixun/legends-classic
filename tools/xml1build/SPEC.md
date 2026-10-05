@@ -4514,6 +4514,41 @@ Sewers spawns also land and restore collision. See `docs/issue-32-validation.md`
 measurements and limits: these are isolated authored-spawner tests, not a campaign
 playthrough; saving during descent and reloading in another process remains unverified.
 
+## 47. Objective completion descriptions follow the saved completion state (issue #8)
+
+The builder retains XML1's updatedescription attribute for the companion XML2 Fix
+ObjectiveDescriptions reader. Prepare tables VERSION 3 invalidates stale P2/P3 outputs;
+the final mission installer also restores the attribute from the plan, so developer
+builds with older research output retain it. No objective is added, removed, reordered
+or regrouped. Conflicting completion strings for an existing shared objective are a
+build error rather than a silent change to saved objective identity. The current owned
+inputs have 31 distinct completion descriptions and no such conflicts.
+
+The companion fix captures this extra attribute while the native parser reads each
+objective. It keys bounded strings by the native unsigned state index at record+0x1a9:
+the engine sorts whole objective records after parsing, so record addresses are not
+stable keys. The slot is cleared on every allocation before attributes are read, which
+prevents stale text across acts and permits several mission files in one act.
+
+Both primary and secondary journal description operands are redirected to the stored completion text
+only while the existing state byte has its completion bit set. Otherwise it uses the
+original description. This covers script completions, automatic counted completions,
+completion reversal and state restored from a save without rewriting saved records.
+Titles, completion popups, XP, counters and objective visibility retain their native
+behavior. The parser, allocation and two journal hooks require retail code guards and are
+installed together; without [Game] ObjectiveDescriptions=1 the original engine runs.
+
+The builder writes that key and requires the planned XML2 Fix 1.3.2 release. The builder
+PR depends on its companion engine PR and must not be released against 1.3.0. This is
+independent of the 1.3.1 work (SPEC 43-44, V23).
+
+Synthetic tests cover prepared and developer mission metadata, unchanged ordering,
+conflict rejection and engine selection/reset rules. Executable guards are checked
+against an owned executable without running it. Controlled in-game primary journal completion and reversal now display the expected
+source wording. A counted objective reached native completion; its rendered display,
+secondary-objective rendering, act transitions and fresh-process save reload remain
+unverified. See `docs/issue-8-validation.md` for the test boundaries.
+
 ## 49. Conversation speaker HUD-head residency (2026-10-04, issue #13)
 
 Issue #13: with forced parties disabled, a named speaker can be absent from both
