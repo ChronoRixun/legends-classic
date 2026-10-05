@@ -4536,5 +4536,5 @@ entities in the dead form, failing with the file, entity, effect and delay.
 Identical XMLB/engb twins are reported once. Synthetic tests use invented hazard
 names and effects, cover remapped classes, explicit false smartfire, unrelated
 classes, authored-off loops, missing/malformed/zero/negative delays and idempotence.
-Runtime evidence and its limitations are recorded in REPORT.md. CONTENT_VERSION
+Runtime evidence and its limitations are recorded in docs/issue-12-validation.md. CONTENT_VERSION
 stays 11 for the unreleased content revision.

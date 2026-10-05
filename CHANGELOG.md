@@ -11,7 +11,7 @@ build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebui
   This builder workaround advances the first activation by its authored delay
   (one second in affected definitions); damage values, repeat intervals and
   extinguish reactions stay unchanged. V-TBD rejects remaining dead startup forms.
-  Controlled movement, Iceman extinguishing and save/reload evidence is in `REPORT.md`.
+  Controlled movement, Iceman extinguishing and save/reload evidence is in `docs/issue-12-validation.md`.
 
 - **The first game's shared hero passives** (issue #34): critical strike (5 ranks, +2 to +10%, unlocking at levels
   1/7/12/17/22), might (3 ranks, heavier objects each rank), leadership (5 ranks of combo damage and combo XP) and
