@@ -229,8 +229,10 @@ def map_bonus(p, values=None):
             return no('health regeneration cap must be a percentage in 0..100')
         if cap[0] not in (0, 100):
             extras.append({'attribute': 'health_regen', 'affect_type': 'max', 'level': _fmt(cap[0] / 100)})
-        status, reason = 'approximate', 'same HP/s and single-item cap; XML2 starts immediately instead of '
-        reason += 'waiting 5/regen-scale seconds after damage, and combines caps by minimum instead of maximum'
+        status, reason = 'approximate', 'same nominal regeneration coefficient and single-item cap; '
+        reason += 'each scheduled tick restores 0.1 times the rate, so late ticks lower elapsed-time HP/s. '
+        reason += 'XML2 starts immediately instead of waiting 5/regen-scale seconds after damage, '
+        reason += 'and combines caps by minimum instead of maximum'
     elif pw == 'energy_regen' and mode == 'scale' and not scoped and len(nums) == 1:
         status, reason = 'approximate', 'same regeneration multiplier; XML1 also multiplies by 1+mind/100 '
         reason += 'and truncates to integer EP/s; XML2 lacks that factor and keeps fractions'
@@ -277,7 +279,7 @@ def map_bonus(p, values=None):
     elif pw == 'reflect_damage':
         text = f'Returns {_level(nums)} damage when hit'
     elif pw == 'health_regen':
-        text = f'Regenerates {shown} HP per second'
+        text = f'Health regeneration +{shown}'
         if cap[0] not in (0, 100):
             text += f' up to {_fmt(cap[0])} percent health'
     elif pw == 'atk_knockback_scale':

@@ -11,6 +11,7 @@ from unittest.mock import patch
 import equipment_report
 import xmlb
 from xml1build import equipment as E, frontend as F
+from xml1build.common import encode_xmlb
 from xml1build.heroes import Values
 
 
@@ -186,7 +187,10 @@ def test_equipment_scope_and_paired_affecters_survive_binary_serialization():
     # source slot; the existing build behavior remains unchanged.
     source.set('name', 'SYNTHETIC_BELT')
     result = E.convert_equipment(context(), source)
-    restored = xmlb.decode(xmlb.encode(result.item))
+    # Use the build writer: XML2 searches attributes in sorted order. The bare
+    # format encoder can round-trip an unsorted tree that crashes the game.
+    restored = xmlb.decode(encode_xmlb(result.item))
+    assert all(list(e.attrib) == sorted(e.attrib) for e in restored.iter())
     assert restored.get('class') == 'armor'
     assert len(restored.findall('enhancement')) == 2
     assert len(list(restored.iter('affecter'))) == 3
