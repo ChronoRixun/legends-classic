@@ -668,6 +668,8 @@ def _script_text(ctx, ref, mode=None):
         from .fire_wall_scripts import relocation_plan, rewrite_loops
         targets = _cached(ctx, 'harm_loop_relocations', lambda: relocation_plan(ctx))
         lines, info['harm_loop_relocations'] = rewrite_loops(ref, lines, targets.get(ref.rsplit('/', 1)[0], {}))
+        from . import ladder_motion as LM
+        lines = LM.rewrite_script(ref, lines)
         return '\r\n'.join(lines), info
     return _cached(ctx, ('text', ref, mode), build)
 

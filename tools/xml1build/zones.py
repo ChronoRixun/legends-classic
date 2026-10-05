@@ -1712,6 +1712,9 @@ class Zones:
         if zam:
             ET.SubElement(pkg_entries, 'zam', {'filename': zam})
         # ---- end section 26
+        paths = {e.get('filename') for e in pkg_entries if e.tag == 'motionpath'}
+        if any(p and p.startswith('x1_ladders/') for p in paths) and len(paths) > 16:
+            ctx.error(f'{zone}: ladder path exceeds the native 16-motion-path registry ({len(paths)} paths)')
         pkg_rel = f'Packages/generated/maps/{zone}'
         written = ctx.write_xmlb(pkg_rel, pkg_entries, ('.PKGB',), source=f'zones:package {zone}')
         self.pkgs[written[0]] = [(e.tag, e.get('filename')) for e in pkg_entries]
@@ -1851,6 +1854,12 @@ class Zones:
                 script_refs.add(C.script_ref(p))
         if st.get('zonescript'):
             script_refs.add(st['zonescript'])
+        # SPEC 46: source-derived ladder motion is generated before resolving path
+        # references, so packaging and the normal IGB budget include it.
+        from . import ladder_motion as LM
+        for entry in LM.build_for_scripts(ctx, script_refs):
+            pkg.add(*entry, extra=True)
+            mp_files.append('motionpaths/' + entry[1].rsplit('/', 1)[0] + '.igb')
         lits = set(st.get('mp_lits', ()))
         for r in sorted(script_refs):
             lits |= self.script_literals(r)

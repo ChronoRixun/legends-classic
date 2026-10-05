@@ -67,6 +67,9 @@ build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebui
   get that mission's heroes when they are loaded. Heroes an earlier build already unlocked stay unlocked (the game
   keeps unlocks per profile).
 
+- Preserve authored ladder descent through source-derived relative motion paths and the XML2 Fix 1.3.2 CharacterLadderPaths companion (SPEC 46).
+  Before-and-after runtime verification is tracked with this issue PR.
+
 - **The first game's shared hero passives** (issue #34): critical strike (5 ranks, +2 to +10%, unlocking at levels
   1/7/12/17/22), might (3 ranks, heavier objects each rank), leadership (5 ranks of combo damage and combo XP) and
   flight (energy drain 40 down to 5 per second) replace X-Men Legends II's versions. Might's bonus melee damage has no
