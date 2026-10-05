@@ -3,6 +3,26 @@
 The builder's releases, newest first. The version is `xml1-builder --version`; the content version is what a
 build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebuild.
 
+## Unreleased - content version 12 (needs XML2 Fix 1.3.2)
+
+- Preserve authored ladder descent through source-derived relative motion paths and the XML2 Fix 1.3.2 CharacterLadderPaths companion (SPEC 46).
+  Before-and-after runtime verification is tracked with this issue PR.
+
+- Retain objective completion descriptions for the companion XML2 Fix 1.3.2 reader (SPEC 47), without changing saved objective ordering.
+  Before-and-after runtime verification is tracked with this issue PR.
+
+- STAT pickups grant an unspent attribute point through the companion XML2 Fix 1.3.2 function (SPEC 48).
+  Before-and-after runtime verification is tracked with this issue PR.
+
+- **Sturdier objects break as in the first game: to powers and Might, not to plain punches** (follow-up to issue
+  #51; takes effect with XML2 Fix 1.3.2). The first game gives every object a structure from 0 to 10 and breaks it
+  only with an attack of at least that level: a punch is 1, powers are higher, and Might adds 3, 6 or 8. The engine
+  only knows 0 to 2, so walls such as the one in HAARP's barracks either could not be broken at all or, since the
+  last fix, broke to any punch. Every object now also carries the first game's own number, and XML2 Fix compares it
+  with the first game's attack level: that wall takes Wolverine's Claw Flurry and shrugs off his punches, a desk
+  computer needs Might or a stronger power, crates and lockers still break to anything. Attacks on enemies are
+  unchanged. A new check verifies every object's pair of numbers.
+
 ## v0.1.8 - content version 11 (needs XML2 Fix 1.3.1)
 
 - **Changed: the HAARP exterior ravine kills only the hero you control** (issue #22). Falling or double-jumping
@@ -66,15 +86,6 @@ build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebui
   unlock; with forced parties off the team menu still offers them. Saves made inside a mission by an earlier build
   get that mission's heroes when they are loaded. Heroes an earlier build already unlocked stay unlocked (the game
   keeps unlocks per profile).
-
-- Preserve authored ladder descent through source-derived relative motion paths and the XML2 Fix 1.3.2 CharacterLadderPaths companion (SPEC 46).
-  Before-and-after runtime verification is tracked with this issue PR.
-
-- Retain objective completion descriptions for the companion XML2 Fix 1.3.2 reader (SPEC 47), without changing saved objective ordering.
-  Before-and-after runtime verification is tracked with this issue PR.
-
-- STAT pickups grant an unspent attribute point through the companion XML2 Fix 1.3.2 function (SPEC 48).
-  Before-and-after runtime verification is tracked with this issue PR.
 
 - **The first game's shared hero passives** (issue #34): critical strike (5 ranks, +2 to +10%, unlocking at levels
   1/7/12/17/22), might (3 ranks, heavier objects each rank), leadership (5 ranks of combo damage and combo XP) and
