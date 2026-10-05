@@ -363,6 +363,27 @@ FALL_KILL_FLAGS = {'boxcollision': 'true', 'smartent': 'false'}
 # the crossings are revalidated: AI can follow a safe leader into their water.
 FALL_KILL_DEFERRED = {
     'maps/arbiter/a_int/arb3_4': frozenset({'kill_target'}),
+    # 0.1.9: a volume stays enabled only where every walkable cell above or beside it is at least 150 units
+    # higher (a real pit). The others lie just under floors, ramps or ledges - nyc1_1_4's is a 300-unit slab
+    # under the whole rooftop map that killed heroes on the billboard ramp - and wait for an in-game crossing
+    # test each (SPEC 52, "0.1.9: shallow volumes deferred").
+    'maps/nyc/alison/nyc1_1_4': frozenset({'kill_target01'}),
+    'maps/arbiter/a_int/arb3_2': frozenset({'kill_target'}),
+    'maps/arbiter/a_int/arb3_3': frozenset({'kill_target'}),
+    'maps/demo/a_int/arb3_2': frozenset({'kill_target'}),
+    'maps/demo/hub/sewers1_1_1': frozenset({'kill_target01'}),
+    'maps/demo/hub/sewers1_1_2': frozenset({'kill_target'}),
+    'maps/mount/mount/mount': frozenset({'kill_target'}),
+    'maps/nuke_plant/nuke/nuke1_2': frozenset({'kill_target01', 'kill_target02'}),
+    'maps/nuke_plant/nuke/nuke1_3': frozenset({'kill_target04'}),
+    'maps/nuke_plant/nuke/nuke2_2': frozenset({'kill_target', 'kill_target01'}),
+    'maps/nuke_plant/nuke/nuke2_3': frozenset({'kill_target01'}),
+    'maps/sewers/grso/sewers3_1_1': frozenset({'kill_target02'}),
+    'maps/sewers/grso/sewers_marrow': frozenset({'kill_target01'}),
+    'maps/sewers/healer/sewers2_1_3': frozenset({'kill_target02'}),
+    'maps/sewers/hub/sewers1_1_1': frozenset({'kill_target02'}),
+    'maps/sewers/hub/sewers1_1_4': frozenset({'kill_target01'}),
+    'maps/sewers/hub/sewers1_2_4': frozenset({'kill_target'}),
 }
 
 

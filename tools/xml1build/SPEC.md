@@ -4636,7 +4636,7 @@ invalidate the engine's binary-search lookups and any resulting mechanism claim.
 
 V26 checks registered XML1-sourced map outputs for matching volumes missing
 either flag; identical localized twins are counted once. Deferred volumes are
-reported separately, and adding either enabling flag to one is an error. A volume listed in
+reported separately, and `smartent="false"` on one is an error (`boxcollision` alone is inert, and nuke1_2's `kill_target02` carries it in the source). A volume listed in
 `FALL_KILL_LEADER_ONLY` must carry `actleader="true"` (without it the volume kills AI followers again), and
 a matching volume that is not listed must not carry it; the count is reported as `volumes_player_only`.
 Synthetic tests cover preservation of multiple instance bounds and
@@ -4751,6 +4751,25 @@ A short control retained the earlier experiment's misspelled `damagemo` field:
 its definition attributes and instance bounds matched the saved experiment,
 but normal sorted encoding killed correctly. The saved experimental XMLB had
 unsorted attribute keys; it was not a valid negative control for the native flags.
+
+### 0.1.9: shallow volumes deferred (regression in 0.1.8)
+
+0.1.8 enabled 31 definitions on the strength of in-game checks in three rooms (HAARP's ravine, the mountain, one
+nuclear-plant pit). A player then reported that `maps/nyc/alison/nyc1_1_4` (the East Rooftops, the first level)
+could not be crossed: its `kill_target01` is one box of 3070 x 3100 x 300 under the whole map whose top (z 339) is
+about 10 units under the lowest rooftops, and the ramp down to the billboard dips into it. With `boxcollision` the
+box kills on entry; in its original form it never fired here.
+
+Rule from 0.1.9: a volume is enabled only if every navigation cell above its footprint, or within 80 units of it,
+is at least 150 units higher than the box top - a pit a hero can only reach by falling. Measured on the built
+maps (cell x, y times the grid's cell size; the cell's z as stored). Everything else is listed in
+`FALL_KILL_DEFERRED` with its exact map stem and entity name and keeps its XML1 form (inert on this engine), as
+before 0.1.8: nyc1_1_4, arb3_2, arb3_3, mount, nuke1_2 (two), nuke1_3, nuke2_2 (two), nuke2_3, sewers3_1_1,
+sewers_marrow, sewers2_1_3, sewers1_1_1, sewers1_1_4, sewers1_2_4 and the three demo copies. Enabled: haarp_ext01
+(player-only), haarp_ext03, icetunnel1, icetunnel2, nuke1_4, nuke2_2a, sewers3_1_3, sewers1_1_2, sewers1_2_1,
+sewers1_2_3. A deferred volume returns only with a real crossing of its room in game (walk every route over or
+beside it, jump on its ramps), not on a damage reading inside the box. Navigation has no cells on ramps and
+props a hero can still stand on (the billboard), so the 150-unit margin is a screen, not a proof.
 
 ## 53. The first game's voice lines (2026-10-05, issue #49)
 
