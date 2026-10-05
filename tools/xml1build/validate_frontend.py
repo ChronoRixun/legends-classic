@@ -46,6 +46,7 @@ from . import frontend as F
 _IMAGE_VIEWER = re.compile(r'''imageViewer\s*\(\s*['"]([^'"]*)['"]''', re.I)
 _LOAD_DR = re.compile(r'''loadDangerRoomCourse\s*\(\s*['"]([^'"]*)['"]''', re.I)
 _START_MOVIE = re.compile(r'''startMovie\s*\(\s*['"]([^'"]+)['"]''')
+_PERSONAL_ITEM = re.compile(r'''personalItem\s*\(\s*['"]([^'"]*)['"]''', re.I)
 FRONTEND_TABLES = ('Data/dangerroom', 'Data/review_paths', 'Data/codex', 'Data/trivia', 'Data/credits')
 FRONTEND_FILES = (F.MENU_REL + '.XMLB', F.MENU_REL + '.engb', F.MENU_PKG_REL + '.PKGB', F.MENU_IGB_REL,
                   'Scripts/menus/intro_normal.py', 'Scripts/menus/main_back_main.py')
@@ -728,3 +729,44 @@ def v_codex_icons(v, ck):
         if not any((it.get('type') or '').upper() == F.CODEX_LIST_TYPE for it in root.iter('item')):
             ck.error(f'{rel}: no {F.CODEX_LIST_TYPE} item')
         ck.count('codex_menu_halves')
+
+def v_personal_items(v, ck):
+    """V30 (issue #47): every personalItem('<item>') literal in installed content has Data/personal/<item>
+    (.XMLB and .engb) written by the frontend module, with text and a texture whose IGB is in <out>; a missing
+    data file shows the last loading screen, a missing texture the engine's default texture."""
+    hits = _raw_hits(v, _PERSONAL_ITEM, b'personalitem', ('.xmlb', '.engb', '.py'))
+    for lit, rels in sorted(hits.items()):
+        name = C.norm(lit)
+        where = sorted(set(rels))[:3]
+        ck.count('personal_items')
+        textures, problems = {}, 0
+        for ext in ('.XMLB', '.engb'):
+            rel = f'{F.PERSONAL_REL}/{name}{ext}'
+            root = _tree(v, rel)
+            if root is None:
+                ck.error(f'personalItem({lit!r}) in {where}: {rel} missing or does not decode')
+                problems += 1
+                continue
+            if not _registered_by(v, rel, 'frontend'):
+                ck.error(f'personalItem({lit!r}): {rel} is not the first game\'s item (not written by frontend)')
+                problems += 1
+            items = [el for el in root.iter() if el.get('texture') is not None or el.get('text') is not None]
+            if not items or not items[0].get('text'):
+                ck.error(f'personalItem({lit!r}): {rel} has no text')
+                problems += 1
+            elif F.unescaped_menu_codes(items[0].get('text')):
+                ck.error(f'personalItem({lit!r}): {rel} text has unescaped renderer codes (write "|c")')
+                problems += 1
+            tex = F.personal_texture_rel(items[0].get('texture')) if items else None
+            if not tex:
+                ck.error(f'personalItem({lit!r}): {rel} names no texture')
+                problems += 1
+            else:
+                textures.setdefault(tex, []).append(rel)
+        for tex, rels in sorted(textures.items()):
+            if not v.exists(f'{tex}.igb'):
+                ck.error(f'personalItem({lit!r}): texture {tex}.IGB ({", ".join(rels)}) is not in <out> (the engine '
+                         f'draws its default texture)')
+                problems += 1
+        if not problems:
+            ck.count('personal_items_ok')

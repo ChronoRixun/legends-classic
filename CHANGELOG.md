@@ -34,6 +34,11 @@ build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebui
   instead of X-Men Legends II's icon column, which drew Cyclops for every character without an icon of their own.
   A new check verifies the codex menu (SPEC 55).
 
+- **Fixed: bedroom items showing the loading screen** (issue #47). The first game's 36 personal items in the
+  mansion bedrooms and their pictures are now converted, so examining one shows its picture instead of the mansion
+  loading screen (or, for Wolverine's flag, a yellow and magenta panel). Their description text is not drawn yet.
+  A new check verifies every item has its data and picture (SPEC 56).
+
 - **The first game's shared hero passives** (issue #34): critical strike (5 ranks, +2 to +10%, unlocking at levels
   1/7/12/17/22), might (3 ranks, heavier objects each rank), leadership (5 ranks of combo damage and combo XP) and
   flight (energy drain 40 down to 5 per second) replace X-Men Legends II's versions. Might's bonus melee damage has no
