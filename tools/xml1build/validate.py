@@ -986,7 +986,8 @@ class Validator:
                              f'but is not listed in x1schema.FALL_KILL_LEADER_ONLY')
                 if deferred:
                     ck.count('volumes_deferred')
-                    if len(missing) < len(XS.FALL_KILL_FLAGS):
+                    if 'smartent' not in missing:        # boxcollision alone is inert (SPEC 52) and one source
+                        #                                   box carries it itself; smartent=false makes it live
                         ck.error(f'{sc.files[n]["rel"]}: deferred fall kill volume {name!r} was reactivated '
                                  f'before issue #5 party handling was validated')
                     else:

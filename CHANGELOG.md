@@ -3,6 +3,15 @@
 The builder's releases, newest first. The version is `xml1-builder --version`; the content version is what a
 build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebuild.
 
+## v0.1.9 - content version 12 (needs XML2 Fix 1.3.1)
+
+- **Fixed (0.1.8 regression): the East Rooftops could not be crossed** (the first level; issue #22). One of the
+  fall volumes restored in 0.1.8 is a slab under the whole rooftop map, and the ramp to the billboard dips into
+  it: every hero died there. That volume is off again, and so is every other restored volume that lies just
+  under a floor, ramp or ledge (15 more, in the Arbiter, the mountain, the nuclear plant and the sewers), until
+  each has had a crossing test in game. The fall volumes over real pits stay on (HAARP's ravine and bridges, the
+  ice tunnels, two nuclear-plant and four sewer pits). Saves are not affected.
+
 ## v0.1.8 - content version 11 (needs XML2 Fix 1.3.1)
 
 - **Changed: the HAARP exterior ravine kills only the hero you control** (issue #22). Falling or double-jumping

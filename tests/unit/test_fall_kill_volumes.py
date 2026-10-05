@@ -124,11 +124,13 @@ def test_validator_reports_deferral_and_rejects_accidental_reactivation():
         assert not check.errors
         assert check.counts['volumes_deferred'] == 1
         assert len(check.allowed) == 1 and '#5' in check.allowed[0]
-        for changed_flags in ({'boxcollision': 'true'}, {'smartent': 'false'},
-                              {'boxcollision': 'true', 'smartent': 'false'}):
+        for changed_flags in ({'smartent': 'false'}, {'boxcollision': 'true', 'smartent': 'false'}):
             root, entity = fixture(**changed_flags)
             check = check_fixture(Path(temp), root)
             assert len(check.errors) == 1
+        # boxcollision alone is inert, and one source volume carries it itself: not a reactivation
+        root, entity = fixture(boxcollision='true')
+        assert not check_fixture(Path(temp), root).errors
 
 
 def test_player_only_volume_gets_the_leader_gate_for_the_exact_pair_only():
