@@ -157,8 +157,18 @@ need new engine hooks in xml2-fix), the port plays without them:
 - **Master Mold's warp-core shield.** In the first game his shield drops when the warp cores are destroyed; nothing
   shoots the cores on this engine, so the port never raises the shield and the fight is won on damage alone
   ([#27](https://github.com/ChronoRixun/legends-classic/issues/27)).
-- **The first game's loot table and shop.** Its equipment drops and the item shop are absent; random drops are X-Men
-  Legends II's ([#6](https://github.com/ChronoRixun/legends-classic/issues/6)).
+- **The first game's loot and shops.** Random drops are X-Men Legends II's, not the first game's equipment. The Healer
+  opens a shop, but it is X-Men Legends II's (generated stock, its prices and its training services); Forge's
+  workshop is absent ([#6](https://github.com/ChronoRixun/legends-classic/issues/6)).
+- **Saving at some Xtraction points.** Twenty of the first game's Xtraction points, the first one in the game and
+  the mansion sub-basement among them, offer Change Team only: they cannot save or load. Other Xtraction points
+  also offer an "Xtract" world map the first game never had
+  ([#63](https://github.com/ChronoRixun/legends-classic/issues/63),
+  [#46](https://github.com/ChronoRixun/legends-classic/issues/46)).
+- **Difficulty.** The port is easier than the first game: enemies have less health and hit for less, and heroes hit
+  harder ([#14](https://github.com/ChronoRixun/legends-classic/issues/14)).
+- **Walls that need a power attack.** Breakable walls the first game reserves for a power attack also break to
+  ordinary combos ([#51](https://github.com/ChronoRixun/legends-classic/issues/51)).
 - **Objective completion text.** Objectives keep their first description when the first game would have changed it
   ([#8](https://github.com/ChronoRixun/legends-classic/issues/8)).
 - **Talent costs are X-Men Legends II's**: the first game's two-point Xtreme and Legend ranks cost one point
