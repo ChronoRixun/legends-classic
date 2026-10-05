@@ -25,6 +25,11 @@ build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebui
   already did damage (9-11 per explosion when it lands next to the hero); that part of the report was not
   reproduced. A new check reports any enemy style that still fires the first game's weapon event (SPEC 29.3).
 
+- **Fixed: empty tutorial tips** (issue #50). Seven tips of the first game (six in the first mission, one in the
+  mansion) existed only in console versions, which the PC game skips, so their panel opened empty. Each now also
+  has a PC version (the PlayStation 2 wording, as X-Men Legends II did for PC), and a new check verifies every
+  dialog has one (SPEC "Popup dialog platforms").
+
 - **The first game's shared hero passives** (issue #34): critical strike (5 ranks, +2 to +10%, unlocking at levels
   1/7/12/17/22), might (3 ranks, heavier objects each rank), leadership (5 ranks of combo damage and combo XP) and
   flight (energy drain 40 down to 5 per second) replace X-Men Legends II's versions. Might's bonus melee damage has no

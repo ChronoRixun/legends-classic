@@ -4719,3 +4719,29 @@ kernel on an 8-thread machine, about 6 minutes with the numpy codec).
 
 Not established: which event the hero switch itself plays, and the run-time play path for a stored handle (the
 switch keys did not switch heroes in the opening NYC zones in the test harness, on either build).
+
+## 54. Popup dialog platforms (issue #50)
+
+Issue #50: seven of the first game's popup dialogs (six tutorial tips of the first mission and the mansion's
+second-floor hint) ship only `platform="xbox"`, `"ps2"` and `"gc"` variants. XMen2.exe's popup loader (0x5ebfd0)
+asks the platform test 0x4bd650 about every `<dialog>`: a missing or empty `platform` is accepted, a list (space,
+comma or tab separated, 0x68d618) is accepted only with a `PC` token (`_stricmp` against 0x68e9a0), anything else is
+skipped. With every variant skipped the panel opens empty, with the engine's default help line. A dialog's `filter`
+(0x5ec003) selects among variants too; a variant without one matches every filter.
+
+`x1schema.convert_dialog_platforms` (every XML1 text import under `dialogs/`) gives each filter group with no
+accepted variant an untagged copy of its `ps2` variant (else `xbox`, else the first), inserted after the group's
+last variant; the console variants are kept unchanged. The ps2 text is chosen because it is what X-Men Legends II
+itself shipped for PC: its platform-split hints end with an untagged variant, word for word the ps2 one in 9 of the
+10 that have a ps2 variant ("press" rather than the Xbox trigger "pull"). The conversion is idempotent and is
+counted as `dialog_pc_variant_added`.
+
+V28 (dialog platforms) checks every registered `Dialogs/` file (an identical `.XMLB` twin once) for a variant the
+platform test accepts per filter value.
+
+In game (xml2-fix 1.3.1, windowed harness): on the unfixed build the tips opened by tut4 and tut14 in the first zone
+and the mansion hint opened empty panels; on the fixed build all seven show their text (read from the game's popup
+record in memory, alongside the test pipe's popup state, not only from screenshots). The token-expanded button names
+read correctly with the keyboard and with a pad. Inherited wording that does not fit PC: the world-map tip names a
+PlayStation stick button and the grapple tip asks for an analog stick, which keyboard players do not have (X-Men
+Legends II's own PC automap hint has the same wording). Not changed: rewording game text is out of scope.

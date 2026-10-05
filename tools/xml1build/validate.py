@@ -61,6 +61,9 @@ Checks (severity per SPEC 4.6: error = will not load or silently misbehaves; war
                 summing to 1 (errors); every bone the skin's vertices use in the anim DB skeleton (skin / skeleton
                 mismatch: error, warning when the XML1 disc has it too); 1-2 blend weights noted
   V26 fall kill volumes (SPEC 52): XML1 map lethal-touch boxes have boxcollision=true and smartent=false
+  V28 dialog platforms (SPEC 54, x1schema.dialog_platform_problems): every registered
+                Dialogs/ file has, for each filter value, a variant XMen2.exe's platform test (0x4bd650) accepts -
+                else the popup opens an empty panel (issue #50)
   V23 fight styles (SPEC 43, style_budget.validate): per converted zone the distinct style files of the permanent
                 packages, the zone package, its CHRB characters' packages and the worst four-hero party against
                 the registry the shipped ini asks xml2-fix for ([Limits] FightStyles, else XMen2.exe's 19): more
@@ -347,6 +350,7 @@ class Scan:
         self.speakers = {}         # norm rel (conversations/) -> [(attr, %TOKEN%)]
         self.anim_enums = {}       # norm rel -> [(tag, attr, enum literal)]  animenum values + EA_* in any value
         self.zoneinfo_xtraction = {}   # norm rel (data/zoneinfo.*) -> [(zone, [attrs])] Xtraction network entries
+        self.dialog_platforms = {}     # norm rel (dialogs/) -> [(filter, [platforms])] groups with no PC variant
 
 
 # ---------------------------------------------------------------------------------------------- validator
@@ -509,6 +513,10 @@ class Validator:
                 loops = XS.delayed_harm_loops(root)
                 if loops:
                     sc.delayed_harm_loops[n] = loops
+                if n.startswith('dialogs/'):
+                    dp = XS.dialog_platform_problems(root)
+                    if dp:
+                        sc.dialog_platforms[n] = dp
                 if n.startswith('conversations/'):
                     sp = [(k, t) for el in root.iter() for k in SPEAKER_ATTRS for t in SPEAKER_RE.findall(el.get(k) or '')]
                     if sp:
@@ -671,7 +679,8 @@ class Validator:
                                ('V24', 'conversation portraits', self.conversation_portraits),
                                ('V25', 'harm loop startup', self.harm_loop_startup),
                                ('V26', 'fall kill volumes', self.fall_kill_volumes),
-                               ('V27', 'voice lines', self.voice_lines)):
+                               ('V27', 'voice lines', self.voice_lines),
+                               ('V28', 'dialog platforms', self.dialog_platforms)):
             ck = Check(cid, title)
             self.checks[cid] = ck
             t0 = time.time()
@@ -948,6 +957,21 @@ class Validator:
                          'clears the loop-on bit (invisible hazard)')
                 count += 1
         ck.set('dead_harm_loops', count)
+
+    def dialog_platforms(self, ck):
+        """V28 (issue #50; SPEC 54): a popup dialog with only console variants (XML1's xbox / ps2 / gc) opens an empty
+        panel on PC, so every registered Dialogs/ file needs an accepted variant per filter value."""
+        sc = self.scan
+        n_files = 0
+        for n, f in sorted(sc.files.items()):
+            if n.startswith('dialogs/') and f['root'] is not None and n not in sc.twins:
+                n_files += 1
+        ck.set('dialog_files_checked', n_files)
+        for n, groups in self.data_items(sc.dialog_platforms):
+            for flt, platforms in groups:
+                ck.error(f'{sc.files[n]["rel"]}: no variant XMen2.exe accepts on PC'
+                         f'{f" for filter {flt}" if flt else ""} (platforms {", ".join(platforms)}): '
+                         f'the popup opens empty (x1schema.convert_dialog_platforms)')
 
     # ================================================================== V4 packages
     def v4_packages(self, ck):
