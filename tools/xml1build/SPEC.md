@@ -4620,7 +4620,8 @@ team filter; some also invoke a script that hides the activator. Retaining the
 harm class, damage, and script preserves that authored behavior as far as the
 source data establishes it. Original Xbox runtime behavior for AI allies and
 knocked-in enemies has not been independently tested. No new hero-only targeting,
-invulnerability bypass, damage multiplier, or lethal script call is introduced.
+invulnerability bypass, damage multiplier, or lethal script call is introduced,
+except the player-only gate on one volume described under "Player-only ravine" below.
 
 Runtime mechanism controls used the released xml2-fix 1.3.1. An unchanged native
 kill definition in a staged flat-corridor box killed a walking hero without a
@@ -4635,8 +4636,10 @@ invalidate the engine's binary-search lookups and any resulting mechanism claim.
 
 V26 checks registered XML1-sourced map outputs for matching volumes missing
 either flag; identical localized twins are counted once. Deferred volumes are
-reported separately, and adding either enabling flag to one is an error. Its number is assigned
-at merge. Synthetic tests cover preservation of multiple instance bounds and
+reported separately, and adding either enabling flag to one is an error. A volume listed in
+`FALL_KILL_LEADER_ONLY` must carry `actleader="true"` (without it the volume kills AI followers again), and
+a matching volume that is not listed must not carry it; the count is reported as `volumes_player_only`.
+Synthetic tests cover preservation of multiple instance bounds and
 activation scripts, class remapping, unrelated hazards, idempotence, sorted
 binary output, and validator negative controls for each flag. CONTENT_VERSION
 remains 11 under the maintainer's unreleased-version instruction.
@@ -4660,6 +4663,59 @@ full build validation and the zones self-test passed.
 
 The reduced two-flag configuration also passed a staged flat-floor on-foot
 control: Wolverine lost exactly 32,000 HP at Z=0.16, with no fall.
+
+### Player-only ravine: the HAARP exterior volume (maintainer decision, 2026-10-05)
+
+Decision: at the HAARP exterior ravine the hero a player controls dies when he falls in; an AI follower who falls
+in is not killed and comes back to the party as he does when the volume is inert.
+
+`FALL_KILL_LEADER_ONLY` names an exact map stem and entity name (`maps/haarp/ext/haarp_ext01` / `kill_target`).
+That volume gets the two flags above plus `actleader="true"`; nothing else about it changes, and no other volume
+gets the attribute. It stays the designers' harm entity with its bounds and its 32,000 direct damage: no script
+trigger, no new damage source.
+
+Mechanism (XMen2.exe, read from the retail executable and checked in the running game): every activation of an
+entity, a touch included, first passes one gate. With `actmatchteam` the activator's team must match; with
+`actteamplayer` the activator must belong to a player (owner index not -1); with `actleader` the activator must be
+the hero its owning player controls right now (the activator's handle equals that player's entry in the engine's
+four-entry controlled-hero table). An activator that fails the gate does not activate the entity at all, so the
+harm entity never fires for it. X-Men Legends II's own maps use `actleader` on zone links, pickups, extraction
+points and script triggers, not on a harm entity; its own four kill volumes carry no such gate. In the running
+game a four-hero party showed owner index 0 on all four heroes and the controlled hero's handle in entry 0; after
+a second player joined (virtual pad 2, START), his hero showed owner index 1 and entry 1 held its handle.
+
+The gate is read at the moment of the touch, and a touch is the entry into the box, not standing in it.
+Consequences, all observed with xml2-fix 1.3.1 on a build of this branch unless marked otherwise:
+
+- A controlled hero who double-jumps off the ice bridge dies on entry (3 of 3, three different heroes, 32,000
+  damage each). Followers standing on the bridge are not hurt.
+- An AI follower who enters the box stays alive on the ravine floor. While the leader stands nearby he waits
+  there; when the leader walks on, the engine places him back with the party (about three seconds and 320 units
+  of leader distance in the two timed cases; at once when the leader was already far away).
+- Co-op: a second player's hero dies on entry like the first player's (1 of 1), while an AI hero entering in the
+  same second lived.
+- Taking control of a follower who is still falling: he dies on entry (1 of 1). Giving up control of a falling
+  hero before he reaches the box was not tested; by the same rule he would live.
+- Taking control of a follower who already lies on the ravine floor (by the hero-switch key, or because the
+  engine hands a dead leader's player the next hero and picks that one): he is alive and can walk the floor but
+  cannot leave it. His first jump takes him out of the box top and back in, and kills him (2 of 2). Switching
+  away again leaves him to the engine's placement. This is the one remaining way to stand alive on the ravine
+  floor; it ends at the first jump.
+- Enemies knocked into this ravine are no longer killed by the volume (they fail the gate like any AI). Not
+  tested; on the first game the same data killed whoever touched the box.
+
+Test record: negative control on main, an AI follower placed in mid-air above the ravine died on entry (32,000).
+On this branch: the same placement left two followers alive and returned to the party; 13 bridge crossings with a
+four-hero party (11 with one leader, 2 after a hero switch on the bridge) had no fall, no death and no damage on
+the bridge; the ice bridge formed in 8 of 9 scenario runs (the miss was the harness aiming the beam away from the
+icon). No follower fell on his own in these crossings (the earlier measurement was about one pass in six), so
+the follower result rests on the placed falls. Staged: new game, party, levelling, zone reloads, leader start
+positions, the mid-air placements; never the falls, the box entries, jumps, crossings, hero switches or the
+second player's join and movement.
+
+The other 30 enabled volumes keep killing every toucher. Whether the gate suits any of them is a per-room
+question (does a fallen follower get placed back there, and can a player inherit a hero on the floor); do not
+extend the list without the same test.
 
 ### Review follow-up: deferred flooded-room volume (issue #5)
 
