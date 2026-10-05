@@ -363,6 +363,9 @@ FALL_KILL_FLAGS = {'boxcollision': 'true', 'smartent': 'false'}
 # the crossings are revalidated: AI can follow a safe leader into their water.
 FALL_KILL_DEFERRED = {
     'maps/arbiter/a_int/arb3_4': frozenset({'kill_target'}),
+    # HAARP exterior ravine under the ice bridge: AI followers cut the ledge corners and fall in about once in six
+    # passes; with the volume inert the engine puts a fallen follower back, with it lethal the follower dies
+    'maps/haarp/ext/haarp_ext01': frozenset({'kill_target'}),
 }
 
 

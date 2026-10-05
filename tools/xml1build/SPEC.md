@@ -4644,6 +4644,16 @@ full build validation and the zones self-test passed.
 The reduced two-flag configuration also passed a staged flat-floor on-foot
 control: Wolverine lost exactly 32,000 HP at Z=0.16, with no fall.
 
+### Option: defer the HAARP exterior ravine volume too
+
+`maps/haarp/ext/haarp_ext01` / `kill_target` is deferred for the same reason. In ten walks and crossings per build
+with a four-hero party and real input, an AI follower cut a ledge corner and fell into the ravine about once in six
+passes on both builds; nothing about the volume causes the fall. With the volume inert the engine put the fallen
+follower back on the bridge about a second later; with it lethal the follower died (two deaths in the candidate's
+runs). The first game's data has no solo-mode trigger at this bridge. Cost of deferring: a leader who double-jumps
+into this ravine is left alive on the ravine floor again (issue #22 stays open for this zone). This leaves 30 enabled
+definitions and two deferred.
+
 ### Review follow-up: deferred flooded-room volume (issue #5)
 
 Leave only `kill_target` in `maps/arbiter/a_int/arb3_4` in its original form.
