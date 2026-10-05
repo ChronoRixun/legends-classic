@@ -310,7 +310,8 @@ without ctx.shared):
 | V-H10 | `--newgame keepteam` refused; a `loadMapKeepTeam` New Game hook (start-zone / tour) needs `magneto`, `cyclops`, `wolverine`, `storm` in herostat; the default hook must load with `loadMapChooseTeam` | error |
 | V-H11 | `ctx.shared['stats']` agrees with `<out>` herostat (names, file, origin) | warn |
 | V-H12 | T7: both add_cyclops scripts carry the join pattern and no `extractionPointLite`; both zone guards exist | error |
-| V-H13 | unlock points (`scripts.MISSION_START_UNLOCKS`: Jubilee at mansion2, Colossus at mansion4, Psylocke at mansion7): each hero is a playable herostat hero; every copy of those begin bodies in `<out>` (`x1/missions/begin_<m>` + the inlined copies: haarp `nextmission`, muir2 `endmuir2`, `beginmansion7mission`) unlocks it exactly once in its header (`scripts_transform.unlock_problems`) | error |
+| V-H13 | mission-start unlocks (issue #55, `scripts.mission_start_unlocks`: every mission's cumulative set of XML1's unlock table up to its `missions.xml` `charunlock` milestone, read from the player's default.xbe): each hero is a playable herostat hero; every copy of every begin body in `<out>` (`x1/missions/begin_<m>` + the inlined copies) unlocks each hero of its set exactly once in its header (`scripts_transform.unlock_problems`) | error |
+| V-TBD | issue #55 (number assigned at merge): in a `--forced-teams seat` build, no begin body that carries the seat block unlocks, in its header, a REQUIRED hero XML1 only seats (`scripts.menu_only_unlock_map`: Magma before her `dr_mag2` milestone, the Professor X forms, Cyclops at the two joins); that unlock lives in the team-menu branch (`scripts_transform.menu_only_problems`) | error |
 
 `tools/xml1build/heroes_selftest.py <out>` (HA-HK, DESIGN 5.3): XMLB round trip of every heroes-owned file; V-H1..
 V-H13 recomputed; every talentvalue at rank r equals the XML1 rung r's resolved value (an independent walk of the
