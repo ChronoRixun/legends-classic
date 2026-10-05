@@ -14,7 +14,8 @@ Rules (evidence in the characters workstream report):
           different content -> 'x1_' + name; XML1-only names are kept. 'common' and fightstyle_*/moveset_*
           DBs are shared with XML2 (they are global, linked by talent/fightstyle name).
   STYLES  data/powerstyles: per-character, 'x1_' on collision (identical files shared).
-          data/fightstyles: shared with XML2 by name (fidelity option: 'x1_' + new shared talent).
+          data/fightstyles: shared with XML2 by name (fidelity option: 'x1_' + new shared talent), except
+          X1_OWN_FIGHTSTYLES, which always ship as 'x1_' + name (style file, anim DB, shared talent).
   STATS   XML1 stats names that equal an XML2 name (case-insensitive) -> XML2's entry wins in additive
           mode; in xml1 mode XML2's same-named entry is replaced. (optional 'x1_' prefix = fidelity mode)
 """
@@ -93,18 +94,34 @@ def map_skin_part(s):
     return s
 
 
+# Fighting styles shipped under their own name ('x1_' + name: the style file, its anim DB and its shared talent)
+# because XML2's same-named file lacks animations the first game's moves play. fightstyle_gun_rifle: XML2's anim DB
+# has 13 animations, XML1's 22 - idle, attack_light1/heavy1 and the fire moves power_1/3/5/10-12 are XML1-only, so a
+# rifle soldier on XML2's file stands in another style's idle and fires without a fire animation (issue #52).
+X1_OWN_FIGHTSTYLES = frozenset({'fightstyle_gun_rifle'})
+
+
+def is_fightstyle_name(name):
+    """a fighting-style talent / file name: XML2's 'fightstyle_*' or an X1_OWN_FIGHTSTYLES 'x1_fightstyle_*'."""
+    return (name or '').lower().startswith(('fightstyle_', 'x1_fightstyle_'))
+
+
 def shares_xml2_animdb(name):
     """Global anim DBs keep XML2's version: 'common' (XML2 permanent package) and the fightstyle/moveset
     DBs, which are named by the fightstyle file's animations= attribute and linked through shared
-    talent names (fightstyle="true"), so they are shared rather than duplicated (fidelity option: x1_)."""
+    talent names (fightstyle="true"), so they are shared rather than duplicated (fidelity option: x1_).
+    X1_OWN_FIGHTSTYLES are not shared."""
     n = name.lower()
-    return n == 'common' or n.startswith(('fightstyle_', 'moveset_'))
+    return n == 'common' or (n.startswith(('fightstyle_', 'moveset_')) and n not in X1_OWN_FIGHTSTYLES)
 
 
 def map_animdb(name, fidelity=False):
-    """actors/<name>.igb for non-numeric names: character anim DBs that collide with XML2 -> 'x1_'+name."""
+    """actors/<name>.igb for non-numeric names: character anim DBs that collide with XML2 -> 'x1_'+name;
+    the anim DB of an X1_OWN_FIGHTSTYLES style -> 'x1_'+name."""
     if is_skin_id(name):
         return map_skin(name)
+    if name.lower() in X1_OWN_FIGHTSTYLES:
+        return 'x1_' + name.lower()
     if shares_xml2_animdb(name) and not fidelity:
         return name
     return 'x1_' + name if name.lower() in _colliding('actors/') else name
@@ -118,9 +135,12 @@ def map_powerstyle(name):
 
 
 def map_fightstyle(name, fidelity=False):
-    """Fightstyles/movesets are shared by talent name; XML2's same-named file is used unless fidelity."""
+    """Fightstyles/movesets are shared by talent name; XML2's same-named file is used unless fidelity.
+    X1_OWN_FIGHTSTYLES always get 'x1_' (XML2's file lacks the first game's animations)."""
     if not name:
         return name
+    if name.lower() in X1_OWN_FIGHTSTYLES:
+        return 'x1_' + name.lower()
     if fidelity and name.lower() in _colliding('data/fightstyles/'):
         return 'x1_' + name
     return name

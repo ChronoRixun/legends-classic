@@ -20,7 +20,8 @@ Checks (severity per SPEC 4.6: error = will not load or silently misbehaves; war
   V4 packages   every entry of every registered PKGB resolves; zone packages have zonexml/characters/boy/map;
                 characters/zones packages carry no unmapped XML1 skin / anim DB / HUD / loading / style name
   V5 stats      herostat/npcstat caps and cross-references (XML1-origin = error, XML2-origin = warn); XML1-origin
-                skin/characteranims/powerstyle equal the mapped XML1 values; every XML1-sourced data file is
+                skin/characteranims/powerstyle equal the mapped XML1 values; a gun-armed XML1 entry has its gun's
+                fighting style as its only one (SPEC 57, issue #52); every XML1-sourced data file is
                 idempotent under C.map_attr (no unmapped reference); every XML1 character-namespace IGB exists under
                 its mapped name with the in-IGB rename done
   V6 zones      per converted zone: CHRB/spawner names, world, zonescript, soundfile + banks, links, zoneinfo, owner
@@ -60,10 +61,20 @@ Checks (severity per SPEC 4.6: error = will not load or silently misbehaves; war
                 index counts equal, indices inside the blend palette, palette entries on skeleton bones, weights
                 summing to 1 (errors); every bone the skin's vertices use in the anim DB skeleton (skin / skeleton
                 mismatch: error, warning when the XML1 disc has it too); 1-2 blend weights noted
+  V26 fall kill volumes (SPEC 52): XML1 map lethal-touch boxes have boxcollision=true and smartent=false
+  V28 dialog platforms (SPEC 54, x1schema.dialog_platform_problems): every registered
+                Dialogs/ file has, for each filter value, a variant XMen2.exe's platform test (0x4bd650) accepts -
+                else the popup opens an empty panel (issue #50)
+  V29 codex icons (SPEC 55, validate_frontend.v_codex_icons): --frontend xml1:
+                UI/menus/codex (both halves) written by frontend, its MENU_ITEM_LISTCODEX without icons / icons_cols /
+                icons_rows and no mini_convo_icons precache
+  V30 personal items (SPEC 56, validate_frontend.v_personal_items): every personalItem literal has
+                Data/personal/<item> from the first game (frontend), with text and a texture IGB in <out>
   V23 fight styles (SPEC 43, style_budget.validate): per converted zone the distinct style files of the permanent
                 packages, the zone package, its CHRB characters' packages and the worst four-hero party against
                 the registry the shipped ini asks xml2-fix for ([Limits] FightStyles, else XMen2.exe's 19): more
                 is an error (the hero seated last has no powers), exactly full a warning
+  V25 harm loops (SPEC 51): no delayed start-on ordinary harm loops that XML2 disables
 
 Inherited defects. Many findings are defects of the XML1 disc itself (a zone, conversation, dialog, script or
 sound bank XML1 references but never shipped; a line default.xbe already dropped). They are re-derived, not
@@ -89,6 +100,7 @@ from pathlib import Path
 from . import common as C
 import xmlb                                   # noqa: E402  tools/xmlb.py
 from .lib import x1names                      # noqa: E402  the XML1 namespace (was research/characters)
+from .lib.x1names import is_fightstyle_name   # noqa: E402  fightstyle_* / x1_fightstyle_* (issue #52)
 from . import validate_script as VS
 from . import validate_sound as VSND
 from . import x1schema as XS
@@ -101,6 +113,7 @@ from . import buoys as BY
 from . import automaps as AM             # V20 (SPEC 26): XML1 automaps as .zam
 from . import skins as SK                # V21 (SPEC 25): skin blend weights / skeleton against the anim DB
 from . import style_budget as SB         # V23 (SPEC 43): the fighting / power style registry per zone
+from . import weapons as W              # V5 (SPEC 57, issue #52): a gun-armed entry carries its gun's fighting style
 
 MAX_REPORTED = 50                             # per check and severity, into ctx.error / ctx.warn
 CONTENT_OWNERS = tuple(C.MODULE_ORDER)        # characters, scripts, zones, media
@@ -337,12 +350,15 @@ class Scan:
         self.x1_sourced = 0      # registered XMLB-family files converted from an XML1 source file
         self.unknown_classes = {}  # norm rel -> [(entity name, classname)] XMen2.exe does not register (0x461080)
         self.color_channels = {}   # norm rel (effects/) -> [(tag, name)] still carrying XML1 red/green/blue
+        self.fall_kill_volumes = {}  # map rel -> [(name, missing XML2 flags, deferred)]
         self.items = {}            # norm rel (data/items.*) -> root
         self.inv_items = {}        # norm rel -> [inventoryitem values]
         self.turret_mount = {}     # norm rel -> [(entity name, missing flags)] remapped scan turrets not fixed-mount
+        self.delayed_harm_loops = {}  # norm rel -> [(entity name, loop effect, firstact)]
         self.speakers = {}         # norm rel (conversations/) -> [(attr, %TOKEN%)]
         self.anim_enums = {}       # norm rel -> [(tag, attr, enum literal)]  animenum values + EA_* in any value
         self.zoneinfo_xtraction = {}   # norm rel (data/zoneinfo.*) -> [(zone, [attrs])] Xtraction network entries
+        self.dialog_platforms = {}     # norm rel (dialogs/) -> [(filter, [platforms])] groups with no PC variant
 
 
 # ---------------------------------------------------------------------------------------------- validator
@@ -360,9 +376,12 @@ class Validator:
         self._zones = None
         self._banks = None
         self._x1stats = None
+        self._weapon_fire_cache = {}    # powerstyle (lower) -> weapons.weapon_fire_left (SPEC 29.3)
+        self._weapon_types = None
         self._zoneinfo = None
         self._zone_ids = None
         self._x1checker = None
+        self._x1weapons = None
         self._obj_refs = collections.defaultdict(set)      # objective name -> files (XML1 code)
         self._act_refs = collections.defaultdict(set)      # setCurrentAct literal -> files (XML1 code)
         self._x1_zone_set = None
@@ -486,6 +505,12 @@ class Validator:
                     cc = XS.color_channel_elements(root)
                     if cc:
                         sc.color_channels[n] = cc
+                volumes = XS.fall_kill_volumes(root, n)
+                if volumes:
+                    sc.fall_kill_volumes[n] = [
+                        (el.get('name'), [k for k, v in XS.FALL_KILL_FLAGS.items() if el.get(k) != v],
+                         XS.fall_kill_volume_deferred(el, n))
+                        for el in volumes]
                 if n in ('data/items.xmlb', 'data/items.engb'):
                     sc.items[n] = root
                 inv = [el.get('inventoryitem') for el in root.iter() if el.get('inventoryitem')]
@@ -494,6 +519,13 @@ class Validator:
                 tm = XS.turret_mount_problems(root)
                 if tm:
                     sc.turret_mount[n] = tm
+                loops = XS.delayed_harm_loops(root)
+                if loops:
+                    sc.delayed_harm_loops[n] = loops
+                if n.startswith('dialogs/'):
+                    dp = XS.dialog_platform_problems(root)
+                    if dp:
+                        sc.dialog_platforms[n] = dp
                 if n.startswith('conversations/'):
                     sp = [(k, t) for el in root.iter() for k in SPEAKER_ATTRS for t in SPEAKER_RE.findall(el.get(k) or '')]
                     if sp:
@@ -634,6 +666,18 @@ class Validator:
             self._x1stats = d
         return self._x1stats
 
+    def x1_weapons(self):
+        """XML1 weapons: lower name -> {lower attr: value} from data/weapons/weapons.eng ({} when unreadable)."""
+        if self._x1weapons is None:
+            try:
+                root = self.ctx.read_x1_xml('data/weapons/weapons.eng')
+            except KeyError:
+                root = None
+            self._x1weapons = {} if root is None else {
+                w.get('name').lower(): {k.lower(): v for k, v in w.attrib.items()}
+                for w in root.iter() if w.tag.lower() == 'weapon' and w.get('name')}
+        return self._x1weapons
+
     # ------------------------------------------------------------------ running / reporting
     def run_all(self):
         for cid, title, fn in (('V1', 'proxy', self.v1_proxy), ('V2', 'registry', self.v2_registry),
@@ -653,7 +697,13 @@ class Validator:
                                ('V21', 'skins', lambda ck: SK.validate(self, ck)),
                                ('V22', 'buoys', lambda ck: BY.validate(self, ck)),
                                ('V23', 'fight styles', lambda ck: SB.validate(self, ck)),
-                               ('V24', 'conversation portraits', self.conversation_portraits)):
+                               ('V24', 'conversation portraits', self.conversation_portraits),
+                               ('V25', 'harm loop startup', self.harm_loop_startup),
+                               ('V26', 'fall kill volumes', self.fall_kill_volumes),
+                               ('V27', 'voice lines', self.voice_lines),
+                               ('V28', 'dialog platforms', self.dialog_platforms),
+                               ('V29', 'codex icons', lambda ck: VF.v_codex_icons(self, ck)),
+                               ('V30', 'personal items', lambda ck: VF.v_personal_items(self, ck))):
             ck = Check(cid, title)
             self.checks[cid] = ck
             t0 = time.time()
@@ -894,6 +944,57 @@ class Validator:
                          f'fixed mount; x1schema.TURRET_MOUNT_FLAGS)')
                 n_turrets += 1
         ck.set('turrets_not_fixed_mount', n_turrets)
+
+    def fall_kill_volumes(self, ck):
+        """V26: converted fall kill volumes must be active collision boxes."""
+        sc = self.scan
+        for n, volumes in sorted(sc.fall_kill_volumes.items()):
+            if n in sc.twins or not self.is_x1_source((self.reg.get(n) or {}).get('source')):
+                continue
+            ck.count('files_checked')
+            for name, missing, deferred in volumes:
+                if deferred:
+                    ck.count('volumes_deferred')
+                    if len(missing) < len(XS.FALL_KILL_FLAGS):
+                        ck.error(f'{sc.files[n]["rel"]}: deferred fall kill volume {name!r} was reactivated '
+                                 f'before issue #5 party handling was validated')
+                    else:
+                        ck.allow(f'{sc.files[n]["rel"]}: fall kill volume {name!r} remains deferred',
+                                 'issue #5: AI follows the player into this hazard')
+                    continue
+                ck.count('volumes_checked')
+                if missing:
+                    ck.error(f'{sc.files[n]["rel"]}: fall kill volume {name!r} lacks '
+                             f'{", ".join(k + "=" + XS.FALL_KILL_FLAGS[k] for k in missing)}')
+
+    def harm_loop_startup(self, ck):
+        """V25 (SPEC 51): no dead ordinary harm loops."""
+        sc = self.scan
+        count = 0
+        for n, loops in sorted(sc.delayed_harm_loops.items()):
+            if n in sc.twins:
+                continue
+            for name, effect, delay in loops:
+                ck.error(f'V25: {sc.files[n]["rel"]}: entity {name!r} has loopfx={effect!r}, '
+                         f'loopfxstarton=true and firstact={delay!r}; the XML2 harm parser '
+                         'clears the loop-on bit (invisible hazard)')
+                count += 1
+        ck.set('dead_harm_loops', count)
+
+    def dialog_platforms(self, ck):
+        """V28 (issue #50; SPEC 54): a popup dialog with only console variants (XML1's xbox / ps2 / gc) opens an empty
+        panel on PC, so every registered Dialogs/ file needs an accepted variant per filter value."""
+        sc = self.scan
+        n_files = 0
+        for n, f in sorted(sc.files.items()):
+            if n.startswith('dialogs/') and f['root'] is not None and n not in sc.twins:
+                n_files += 1
+        ck.set('dialog_files_checked', n_files)
+        for n, groups in self.data_items(sc.dialog_platforms):
+            for flt, platforms in groups:
+                ck.error(f'{sc.files[n]["rel"]}: no variant XMen2.exe accepts on PC'
+                         f'{f" for filter {flt}" if flt else ""} (platforms {", ".join(platforms)}): '
+                         f'the popup opens empty (x1schema.convert_dialog_platforms)')
 
     # ================================================================== V4 packages
     def v4_packages(self, ck):
@@ -1162,6 +1263,15 @@ class Validator:
             if origin == 'xml1':
                 for m in self._namespace_problems(el, x1[name][1] if name in x1 else None):
                     ck.error(f'{fname}:{el.get("name")} (xml1): namespace: {m}')
+                # V5 (SPEC 57, issue #52): a gun-armed entry carries its gun's fighting style instead of its own
+                wname = (x1[name][1].get('weapon') or '').strip().lower() if name in x1 else ''
+                if wname:
+                    fs = [t.get('name') or '' for t in el if t.tag == 'talent'
+                          and is_fightstyle_name(t.get('name'))]
+                    for m in W.fightstyle_problems(fs, self.x1_weapons().get(wname), C.map_fightstyle):
+                        ck.error(f'{fname}:{el.get("name")} (xml1): fighting style: {m}')
+                    if W.gun_fightstyle(self.x1_weapons().get(wname)):
+                        ck.count('gun_entries_with_weapon_fightstyle')
             xe = xmlb_by.get(name)
             if xe is not None:
                 for a in ('skin', 'characteranims', 'powerstyle', 'sounddir', 'moveset1'):
@@ -1171,6 +1281,8 @@ class Validator:
                 msg = f'{fname}:{el.get("name")} ({origin}): {p[1]}'
                 if p[0] == 'allow':
                     ck.allow(msg, p[2])
+                elif p[0] == 'warn':
+                    ck.warn(msg)
                 elif p[0] == 'hard' or origin == 'xml1':
                     ck.error(msg)
                 else:
@@ -1263,6 +1375,18 @@ class Validator:
             else:
                 ck.error(r[1])
 
+    def _x1_weapon_types(self):
+        """{lower weapon name: lower type} of XML1's data/weapons/weapons.eng (SPEC 29.3 check)."""
+        if self._weapon_types is None:
+            try:
+                root = self.ctx.read_x1_xml('data/weapons/weapons.eng')
+            except KeyError:
+                root = None
+            self._weapon_types = {} if root is None else {
+                (w.get('name') or '').lower(): (w.get('type') or '').lower()
+                for w in root.iter() if w.tag.lower() == 'weapon' and w.get('name')}
+        return self._weapon_types
+
     @staticmethod
     def _matches_x1(el, x1el):
         """an <out> stats entry that carries the XML1 entry's mapped skin (so it came from XML1, not XML2)."""
@@ -1294,7 +1418,7 @@ class Validator:
 
     def _entry_problems(self, name, fname, el, shared_t, hero_talent_files):
         """[(kind, msg[, reason])]: kind 'soft' (error for XML1-origin, warn otherwise), 'hard' (always error),
-        'allow' (allowlisted)."""
+        'warn' (always a warning), 'allow' (allowlisted)."""
         out = []
         skin = (el.get('skin') or '').strip()
         is_mc = name.startswith('_hero') and name.endswith('_mc_')
@@ -1329,6 +1453,30 @@ class Validator:
         ps = el.get('powerstyle')
         if ps and not (self.exists(f'data/powerstyles/{ps}.xmlb') or self.exists(f'data/powerstyles/{ps}.engb')):
             out.append(('soft', f'powerstyle Data/powerstyles/{ps} missing'))
+        elif ps:
+            # V5 (SPEC 29.3): XMen2.exe builds XML1's weapon_fire as a SOUND event, so a style a stats entry uses
+            # must not fire it, directly or through an event of its own (weapons.apply / rewrite_weapon_events)
+            from . import weapons as W
+            key = ps.lower()
+            if key not in self._weapon_fire_cache:
+                t = self.tree(f'data/powerstyles/{ps}.xmlb')
+                self._weapon_fire_cache[key] = W.weapon_fire_left(t) if t is not None else []
+            left = self._weapon_fire_cache[key]
+            x1 = self.x1_stats().get(name.lower())
+            wname = (x1[1].get('weapon') or '').strip().lower() if x1 is not None else ''
+            wtype = self._x1_weapon_types().get(wname, '')
+            named = [w for w, has_weapon in left if has_weapon]
+            plain = [w for w, has_weapon in left if not has_weapon]
+            if named or (plain and wtype in W.WEAPON_TYPES):
+                out.append(('soft', f'powerstyle {ps}: {len(named) + len(plain)} trigger(s) still fire XML1 '
+                                    f'weapon_fire, a sound event in XMen2.exe (no shot, no damage): '
+                                    f'{(named + plain)[:4]}'))
+            elif plain and wname:
+                out.append(('warn', f'powerstyle {ps}: {len(plain)} weapon_fire trigger(s) with the melee weapon '
+                                    f'{wname}: no shot in XMen2.exe (what XML1 did with them is not established)'))
+            elif plain:
+                out.append(('allow', f'powerstyle {ps}: {len(plain)} weapon_fire trigger(s), no shot in XMen2.exe',
+                            'the XML1 entry has no weapon: its weapon_fire had nothing to fire in XML1 either'))
         ms = el.get('moveset1')
         if ms and not (self.exists(f'data/fightstyles/{ms}.xmlb') or self.exists(f'data/fightstyles/{ms}.engb')):
             out.append(('soft', f'moveset1 Data/fightstyles/{ms} missing'))
@@ -1346,7 +1494,7 @@ class Validator:
                 tn = (c.get('name') or '').lower()
                 if tn and tn not in shared_t and tn not in own_t:
                     out.append(('soft', f'talent {tn!r} is neither in shared_talents nor in data/talents/{name}'))
-                if tn.startswith('fightstyle_') and not (self.exists(f'data/fightstyles/{tn}.xmlb') or
+                if is_fightstyle_name(tn) and not (self.exists(f'data/fightstyles/{tn}.xmlb') or
                                                         self.exists(f'data/fightstyles/{tn}.engb')):
                     out.append(('soft', f'fightstyle talent {tn}: Data/fightstyles/{tn} missing'))
             elif c.tag.lower() == 'bolton':
@@ -2890,7 +3038,7 @@ class Validator:
                 flee.append(name)
             team = (el.get('team') or '').strip().lower()
             fs = [t.get('name') for t in el.iter() if t.tag.lower() == 'talent'
-                  and (t.get('name') or '').lower().startswith('fightstyle_')]
+                  and is_fightstyle_name(t.get('name'))]
             if team in self.NONCOMBAT_TEAMS and fs:
                 inert.append((name, fs[0]))
         ck.set('x1_npcs_willflee', len(flee))
@@ -3351,6 +3499,66 @@ class Validator:
         if ck.counts.get('char_events_inherited'):
             ck.note(f'{ck.counts["char_events_inherited"]} XML1 characters have no pain/death/jump/land sounds '
                     f'in XML1\'s own bank either (details.char_events_inherited)')
+
+    def voice_lines(self, ck):
+        """V27 (issue #49; SPEC 53): the voice lines of XML1's characters. XMen2.exe looks
+        a character's voice events up as 'char/<voice folder>/<event>' in the global x_voice bank (simlookup.voice_dir:
+        wolver_m -> wolver_v), where XML1 looked up 'character/<voice folder>/<event>' in its own x_voice. Every such
+        name XML1's bank answers for an XML1 stats entry must answer in <out>'s x_voice (error: the line is silent),
+        and with XML1's audio: the merge appends XML1's files after XML2's, so an answer whose file index is below
+        the retail x_voice's file count is XML2's line playing in its place (error)."""
+        from .lib.simlookup import voice_dir
+        table, x1b = self.banks, self.x1banks
+        out_rel, x1_path = table.resolve_bank('x_voice'), x1b.resolve_bank('x_voice')
+        if out_rel is None or x1_path is None:
+            ck.warn(f'x_voice missing ({"<out>" if out_rel is None else "XML1 disc"}): voice lines not checked')
+            return
+        try:
+            root = self.ctx.read_x1_xml('data/shared_sounds.xml')
+        except KeyError:
+            root = None
+        events = sorted({v.strip().lower() for el in (root.iter() if root is not None else ())
+                         for v in el.attrib.values() if v.strip()})
+        if not events:
+            ck.warn('XML1 data/shared_sounds.xml has no event names: voice lines not checked')
+            return
+        out_files = VSND.sound_files(self.ctx.out_index.path(out_rel))
+        base_path = self.ctx.base_index.path(out_rel)
+        base_files = VSND.file_count(base_path) if base_path is not None else 0
+        out_tup, x1_tup = [table.lookup_tuple(out_rel)], [x1b.lookup_tuple(x1_path)]
+        st, x1s = self.stats(), self.x1_stats()
+        folders = {}                                  # out voice folder -> (XML1 voice folder, first stats name)
+        for name, (_, el) in sorted(st['by_name'].items()):
+            sd = (el.get('sounddir') or '').strip()
+            if not sd or name not in x1s:
+                continue
+            x1sd = (x1s[name][1].get('sounddir') or '').strip() or sd
+            folders.setdefault(voice_dir(sd), (voice_dir(x1sd), name))
+        silent, xml2_wins = collections.defaultdict(list), collections.defaultdict(list)
+        for vd, (x1vd, name) in sorted(folders.items()):
+            ck.count('voice_folders')
+            for ev in events:
+                if not VSND.resolve(f'character/{x1vd}/{ev}', None, x1_tup)[1]:
+                    continue
+                ck.count('voice_names')
+                full, bank, _ = VSND.resolve(f'char/{vd}/{ev}', None, out_tup)
+                if not bank:
+                    silent[vd].append(ev)
+                    continue
+                fi = VSND.answer_file(out_files, full)
+                if fi is not None and fi < base_files:
+                    xml2_wins[vd].append(ev)
+                else:
+                    ck.count('voice_names_xml1')
+        for vd, evs in sorted(silent.items()):
+            ck.error(f'{folders[vd][1]}: x_voice answers none of char/{vd}/{"|".join(evs[:6])}'
+                     f'{" ..." if len(evs) > 6 else ""} ({len(evs)} events) although the XML1 x_voice has '
+                     f'character/{folders[vd][0]}/... (the voice lines are silent)')
+        for vd, evs in sorted(xml2_wins.items()):
+            ck.error(f'{folders[vd][1]}: char/{vd}/{"|".join(evs[:6])}{" ..." if len(evs) > 6 else ""} '
+                     f'({len(evs)} events) answer with the X-Men Legends II line, not the XML1 one')
+        ck.note(f'{ck.counts.get("voice_names_xml1", 0)}/{ck.counts.get("voice_names", 0)} XML1 voice names in '
+                f'{len(folders)} voice folders answer with the XML1 line')
 
     def _zone_sound_names(self, z, world):
         """names the zone can play: 'sound' attributes of the zone file and the registered conversations its

@@ -258,6 +258,32 @@ def script_sound_names(result):
     return [n for n in out if n]
 
 
+def sound_files(path):
+    """{sound key: file index} of a bank (sound -> sample -> file), {} when it does not parse; for telling whose
+    audio answers a name in a merged bank (V27 voice lines)."""
+    try:
+        b = zsnd.load(str(path), strict=False)
+        return {h: b.samples[s.u16(0)].u16(0) for s in b.sounds for h in s.hashes}
+    except Exception:   # noqa: BLE001 - V8 reports unparsable banks
+        return {}
+
+
+def file_count(path):
+    try:
+        return len(zsnd.load(str(path), strict=False).files)
+    except Exception:   # noqa: BLE001
+        return 0
+
+
+def answer_file(files, name):
+    """file index of the sound that answers `name` (the name itself, else random variant 0), or None."""
+    from .lib.zhash import elf_hash
+    h = elf_hash(name.replace('\\', '/'))
+    if h not in files:
+        h = elf_hash('/***RANDOM***/0', h)
+    return files.get(h)
+
+
 def file_size_ok(path):
     try:
         return os.path.getsize(path) > 0

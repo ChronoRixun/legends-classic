@@ -1712,7 +1712,7 @@ def convert_shared_real(name, src, values, icons='xml1', bleed='on'):
 # ------------------------------------------------------------------------------------------------ builder
 # DESIGN 4.7: the shared_talents keep list the rule-based prune must reproduce (a delta is a warning)
 SHARED_KEEP_EXPECTED = frozenset("""
-fightstyle_finesse1 fightstyle_hero fightstyle_wrestling fightstyle_psionic fightstyle_gun_rifle fightstyle_gun_hip
+fightstyle_finesse1 fightstyle_hero fightstyle_wrestling fightstyle_psionic x1_fightstyle_gun_rifle fightstyle_gun_hip
 fightstyle_baton fightstyle_huge fightstyle_nonhuman fightstyle_villain leadership grab critical might flight
 energy_resistant mental_resistant physical_resistant energy_resistant_share mental_resistant_share
 physical_resistant_share spawn_invis dr_stun sentinel_special boss_resistances monst_dmg_high aval_crack aval_quake
@@ -1726,6 +1726,9 @@ x1_npc_energy""".split())
 # SPEC 30: characters emits XML1's 14 distinct inline NPC immunity bodies as shared talents in XML2's boss_resistances
 # form (npc_values.immunity_plan names each body after the XML1 talent name most entries used); kept while a stats
 # entry names one (npc_values.is_immunity_talent): 47 -> 61.
+# Issue #52: the gun soldiers carry their gun's fighting style instead of their own (weapons.gun_fightstyle), and
+# the rifle style ships as x1_fightstyle_gun_rifle (x1names.X1_OWN_FIGHTSTYLES): it replaces XML2's
+# fightstyle_gun_rifle in the list, which nothing names any more (still 61).
 SHARED_KEEP_IMMUNITIES = frozenset("""
 as_special avalanche_special blob_special forge_special havok_special juggernaut_special magnetoboss_special
 mastermold_special physical_res sabre_special sabretooth_special sentspider_special shadow_special toad_special
@@ -2320,7 +2323,7 @@ class HeroBuilder:
             for t in st.iter('talent'):
                 n = (t.get('name') or '').lower()
                 stats_refs.add(n)
-                if n.startswith('fightstyle_'):
+                if N.is_fightstyle_name(n):
                     fightstyles.add(n)
             if st.get('powerstyle'):
                 styles.add(st.get('powerstyle').lower())
@@ -2330,7 +2333,7 @@ class HeroBuilder:
             if e.get('moveset1'):
                 fightstyles.add(e.get('moveset1').lower())
             for t in e.iter('talent'):
-                if (t.get('name') or '').lower().startswith('fightstyle_'):
+                if N.is_fightstyle_name(t.get('name')):
                     fightstyles.add(t.get('name').lower())
         style_reqs = set()
         for kind, names in (('powerstyles', styles), ('fightstyles', fightstyles)):
@@ -2354,7 +2357,7 @@ class HeroBuilder:
         for n, tdef in cur_defs:
             ln = n.lower()
             why = None
-            if ln.startswith('fightstyle_') and (ln in stats_refs or ln in style_reqs):
+            if N.is_fightstyle_name(ln) and (ln in stats_refs or ln in style_reqs):
                 why = 'fightstyle named by a stats entry / style'
             elif ln in style_reqs and ln not in hero_files:
                 why = 'named by a style <require>'
@@ -3190,9 +3193,9 @@ def _validate(ctx, report=None):
     ck.counts['unlock_missions'] = len(unlocks)
     ck.counts['unlock_begin_copies'] = sum(copies.values())
 
-    # ---- V-TBD (issue #55): a seated forced mission never unlocks the REQUIRED heroes XML1 only seats (Magma before
+    # ---- V-H14 (issue #55): a seated forced mission never unlocks the REQUIRED heroes XML1 only seats (Magma before
     # her milestone, the Professor X forms) outside the team-menu branch
-    ck = Check('V-TBD')
+    ck = Check('V-H14')
     checks.append(ck)
     only = S.menu_only_unlock_map(ctx) if C.forced_teams_mode(ctx) == 'seat' else {}
     marks = tuple(f'XML1 beginMission({m})' for m in only)

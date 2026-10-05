@@ -118,7 +118,7 @@ SPEAKER_ATTRS = ('text', 'textb')
 JOIN_HERO_SCRIPTS = {'nyc/alison/add_cyclops': 1, 'mansion/dr_mag2/blob/add_cyclops': 2}
 JOIN_HERO_ZONE_SCRIPTS = {'nyc/alison/nyc1_1_3': 1, 'x1/zones/mansion/dr_mag2/mag_nyc4': 2}
 JOIN_HERO_MISSIONS = {'alison': 1, 'dr_mag2': 2}
-# Mission-start unlocks (issue #55, SPEC section "number assigned at merge"; xml1build.unlocks). XML1 unlocks, at
+# Mission-start unlocks (issue #55, SPEC 58; xml1build.unlocks). XML1 unlocks, at
 # every beginmission (side missions included), every hero of its cumulative table up to the mission's
 # missions.xml charunlock milestone; mission_start_unlocks(ctx) reads both from the player's copy and
 # scripts_transform.unlock_at_mission_starts puts the lines in every copy of every begin body (the same lines in each,
@@ -665,6 +665,9 @@ def _script_text(ctx, ref, mode=None):
             lines.append('')                                   # final CRLF, like every research script
         from .fire_wall_scripts import rewrite as rewrite_fire_wall
         lines = rewrite_fire_wall(ref, lines)
+        from .fire_wall_scripts import relocation_plan, rewrite_loops
+        targets = _cached(ctx, 'harm_loop_relocations', lambda: relocation_plan(ctx))
+        lines, info['harm_loop_relocations'] = rewrite_loops(ref, lines, targets.get(ref.rsplit('/', 1)[0], {}))
         return '\r\n'.join(lines), info
     return _cached(ctx, ('text', ref, mode), build)
 
