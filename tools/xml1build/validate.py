@@ -340,6 +340,7 @@ class Scan:
         self.items = {}            # norm rel (data/items.*) -> root
         self.inv_items = {}        # norm rel -> [inventoryitem values]
         self.turret_mount = {}     # norm rel -> [(entity name, missing flags)] remapped scan turrets not fixed-mount
+        self.physics_scale = {}    # norm rel -> [(entity name, attribute, value)] XML1-scale object physics left
         self.speakers = {}         # norm rel (conversations/) -> [(attr, %TOKEN%)]
         self.anim_enums = {}       # norm rel -> [(tag, attr, enum literal)]  animenum values + EA_* in any value
         self.zoneinfo_xtraction = {}   # norm rel (data/zoneinfo.*) -> [(zone, [attrs])] Xtraction network entries
@@ -494,6 +495,10 @@ class Validator:
                 tm = XS.turret_mount_problems(root)
                 if tm:
                     sc.turret_mount[n] = tm
+                if self.is_x1_source(e.get('source')):
+                    ps = XS.physics_scale_problems(root)
+                    if ps:
+                        sc.physics_scale[n] = ps
                 if n.startswith('conversations/'):
                     sp = [(k, t) for el in root.iter() for k in SPEAKER_ATTRS for t in SPEAKER_RE.findall(el.get(k) or '')]
                     if sp:
@@ -894,6 +899,17 @@ class Validator:
                          f'fixed mount; x1schema.TURRET_MOUNT_FLAGS)')
                 n_turrets += 1
         ck.set('turrets_not_fixed_mount', n_turrets)
+        # V-TBD (issue #51): XML1-sourced entity definitions carry XMen2.exe's object physics scales
+        # (x1schema.convert_physics). An XML1 value above the engine's range means the conversion did not run, and
+        # then every XML1 heaviness-1 object needs Might (0x427f60).
+        n_scale = 0
+        for n, lst in sorted(sc.physics_scale.items()):
+            if n in sc.twins:
+                continue
+            ck.error(f'{sc.files[n]["rel"]}: {len(lst)} entity definition(s) keep XML1 object physics values '
+                     f'XMen2.exe clamps (x1schema.convert_physics), e.g. {lst[:2]}')
+            n_scale += len(lst)
+        ck.set('x1_physics_scale_left', n_scale)
 
     # ================================================================== V4 packages
     def v4_packages(self, ck):

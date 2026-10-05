@@ -4478,3 +4478,22 @@ subtrees, ordering, idempotence, and a removed-head validator negative control.
 
 Generated packages change, so CONTENT_VERSION must advance at merge. The task
 coordinator owns that bump; this change intentionally leaves its value untouched.
+
+## TBD. Object physics on XMen2.exe's scales: lifting, grabbing, breakable walls (issue #51; number assigned at merge)
+
+### TBD.1 Lifting (heaviness)
+
+XML1 (default.xbe) clamps an entity's `heaviness` to 5 and its pickup gate (0x38400) lifts an object when
+heaviness < 5 and heaviness <= might + 1, where might is the hero's `might` talent rank (0xb1ba0, talent name
+string 0x3d3fb0): anyone lifts 0-1, Might rank 1/2/3 lifts 2/3/4, 5 is never lifted. XMen2.exe clamps heaviness to
+3 (physent parser 0x498900) and its gate (0x427f60, run by ch_guard_decide 0x4ec090) lifts when the object has no
+`nopickup` bit (+0x30d & 4), heaviness < 3 and heaviness <= the hero's lift value (0x427dc0: 0 unless the
+`might_heaviness` affecter raises it). XML1's values were copied unchanged, so a heaviness-1 trash can needed Might.
+
+`x1schema.convert_physics` maps the heaviness of every XML1 entity definition (any element with a classname;
+characters' stats are a different property and untouched): 0, 1 -> 0; 2 -> 1; 3 -> 2; 4, 5 -> 3. Anyone, Might 1
+and Might 2 lift exactly XML1's objects. Remaining deviation: XML1's heaviness 4 (cars, Might rank 3) stays
+unliftable because XMen2.exe never lifts 3 (the `cmp ..., 3` at 0x427fa3); an XML2 Fix byte patch of that limit to 4
+would remove it, and XML1's heaviness 5 would then need `nopickup` (not set now: the same bit also excludes objects
+from the heaviness-limited object attacks at 0x4f2dee). Validator V-TBD: an XML1-sourced entity definition with a
+heaviness above 3 (a value the conversion did not touch) is an error.

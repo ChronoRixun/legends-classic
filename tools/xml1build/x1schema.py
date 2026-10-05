@@ -46,6 +46,8 @@ own patch), and zones runs it on the world tables it merges itself, so every mod
    a shared combat event XML2's shipped table changed gets XML1's value (punch L1 = "4 5" instead of XML2's "2 3"),
    SPEC.md section 33; and convert_renderfx: XML1's ce_renderfx tint form -> XML2's add / remove="cloaked",
    SPEC.md section 31.
+5. Object physics scales (entity definitions): XML1's heaviness 0..5 -> XMen2.exe's 0..3 (convert_physics; issue
+   #51), so objects anyone lifted in XML1 can be lifted without Might again.
 """
 from __future__ import annotations
 
@@ -196,6 +198,61 @@ def convert_entities(root, weapon_models=None):
     return changes
 
 
+# --------------------------------------------------------------------------------------------- object physics scales
+# XML1 and XMen2.exe read an entity's `heaviness` and `structure` on different scales (issue #51):
+#   * heaviness: default.xbe clamps it to 5 and lifts an object when heaviness < 5 and heaviness <= might + 1
+#     (pickup gate 0x38400, might = the hero's `might` talent rank, 0xb1ba0), so anyone lifts 0-1 and might rank
+#     1/2/3 lifts 2/3/4. XMen2.exe clamps it to 3 (physent parser 0x498900) and lifts when heaviness < 3 and
+#     heaviness <= the might_heaviness affecter sum (0x427f60 -> 0x427dc0, 0 without Might), so a hero without
+#     Might lifts only 0. XML1's value copied unchanged turned every heaviness-1 trash can into a Might-only object.
+#     HEAVINESS_X1_TO_X2 reproduces anyone / might 1 / might 2 exactly; XML1's 4 (might 3) and 5 (never) both
+#     become 3, which XMen2.exe never lifts (the "< 3" at 0x427fa3; an engine limit, see SPEC).
+HEAVINESS_X1_TO_X2 = (0, 0, 1, 2, 3, 3)
+# Characters' heaviness (herostat / npcstat <stats>) is a different property and is not touched: only elements with
+# a classname (entity definitions) are converted.
+
+
+def heaviness_x1_to_x2(value):
+    """XML1 heaviness text -> XMen2.exe's (str), or None when it is not a number (left as it is)."""
+    try:
+        v = int(float(str(value).strip()))
+    except ValueError:
+        return None
+    return str(HEAVINESS_X1_TO_X2[min(max(v, 0), len(HEAVINESS_X1_TO_X2) - 1)])
+
+
+def convert_physics(root):
+    """XML1 -> XMen2.exe object physics scales on every entity definition (element with a classname), in place.
+    NOT idempotent (heaviness 2 -> 1 -> 0): convert() runs once on each freshly parsed XML1 tree. Returns a Counter."""
+    c = collections.Counter()
+    for el in root.iter():
+        if el.get('classname') is None:
+            continue
+        old = el.get('heaviness')
+        if old is not None and old.strip():
+            new = heaviness_x1_to_x2(old)
+            if new is not None and new != old:
+                el.set('heaviness', new)
+                c['heaviness_rescaled'] += 1
+    return c
+
+
+def physics_scale_problems(root):
+    """[(entity name, attribute, value)] of entity definitions whose heaviness is above XMen2.exe's 0..3 range: an
+    XML1 value that was not converted (convert_physics)."""
+    out = []
+    for el in root.iter():
+        if el.get('classname') is None:
+            continue
+        v = el.get('heaviness')
+        try:
+            if v is not None and v.strip() and int(float(v)) > HEAVINESS_X1_TO_X2[-1]:
+                out.append((el.get('name'), 'heaviness', v))
+        except ValueError:
+            pass
+    return out
+
+
 def turret_mount_problems(root):
     """[(entity name, missing flags)] of physents that are remapped XML1 scan turrets (they carry a turretweapon)
     without the fixed-mount flags (TURRET_MOUNT_FLAGS)."""
@@ -269,6 +326,7 @@ def convert(root, rel, weapon_models=None, x1_values=None):
             c['effect_files_recoloured'] += 1
     for kind, detail in convert_entities(root, weapon_models):
         c[f'{kind}:{detail}' if kind not in ('turret_model',) else kind] += 1
+    c.update(convert_physics(root))
     n = convert_haarp_fire_wall(root, rel)
     if n:
         c['haarp_fire_wall_loop_start'] += n
