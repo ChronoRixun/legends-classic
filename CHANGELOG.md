@@ -47,6 +47,14 @@ build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebui
   loading screen (or, for Wolverine's flag, a yellow and magenta panel). Their description text is not drawn yet.
   A new check verifies every item has its data and picture (SPEC 56).
 
+- **Fixed: arriving at HAARP without Iceman (softlock), and Magma playable from the first mansion visit** (issue
+  #55). Every mission start now unlocks the heroes the first game unlocked there, read from your own copy of the game
+  (its mission list and executable); a build from an unknown executable stops with a message instead of guessing.
+  Magma and the two Professor X forms are only placed in the party where the first game did that, until their own
+  unlock; with forced parties off the team menu still offers them. Saves made inside a mission by an earlier build
+  get that mission's heroes when they are loaded. Heroes an earlier build already unlocked stay unlocked (the game
+  keeps unlocks per profile).
+
 - **The first game's shared hero passives** (issue #34): critical strike (5 ranks, +2 to +10%, unlocking at levels
   1/7/12/17/22), might (3 ranks, heavier objects each rank), leadership (5 ranks of combo damage and combo XP) and
   flight (energy drain 40 down to 5 per second) replace X-Men Legends II's versions. Might's bonus melee damage has no

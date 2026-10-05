@@ -2567,7 +2567,7 @@ class HeroBuilder:
         ctx.defer('D15 (v1 scope): Rogue\'s decide step (ch_roguedecide) is dropped (Gambit/Jubilee charged_throw: '
                   'ch_throw -> ch_pickup_throw, SPEC 22); astral solo mode (T10), XML1 Danger Room courses, XML1 '
                   'team bonuses, talent icon re-atlassing, Psylocke blades 2/3 (BoltOn <require>), NPC-vs-hero balance '
-                  '(flashback party save+restore: SPEC 19 popParty; unlock points: scripts.MISSION_START_UNLOCKS)')
+                  '(flashback party save+restore: SPEC 19 popParty; mission-start unlocks: scripts.mission_start_unlocks)')
         ctx.write_meta('heroes_detail.json', self.detail)
 
 
@@ -3160,12 +3160,12 @@ def _validate(ctx, report=None):
         elif 'x1join' not in zp.read_bytes().decode('latin-1'):
             ck.error(f'Scripts/{zone_ref}.py: T7 zone guard (getGameFlag x1join) missing')
 
-    # ---- V-H13 unlock points (roster.md 1.1.3 / 4: XML1's missions.xml charunlock -> a mission-start unlock)
+    # ---- V-H13 mission-start unlocks (issue #55: XML1's missions.xml charunlock + default.xbe's cumulative table)
     ck = Check('V-H13')
     checks.append(ck)
     from . import scripts as S                              # noqa: WPS433 - the unlock table's owner
     from . import scripts_transform as ST                   # noqa: WPS433
-    unlocks = S.MISSION_START_UNLOCKS
+    unlocks = S.mission_start_unlocks(ctx)['missions']
     for m, hs in sorted(unlocks.items()):
         for h in hs:
             if h.lower() not in hero_l:
@@ -3188,9 +3188,29 @@ def _validate(ctx, report=None):
                 copies[mm.group('m').strip().lower()] += 1
     for m in sorted(unlocks):
         ref = f'x1/missions/begin_{m}'
-        if o.idx.path(C.script_rel(ref)) is None:
-            ck.error(f'Scripts/{ref}.py missing (unlock point {m})')
-        ck.counts[f'unlock_copies_{m}'] = copies.get(m, 0)
+        if o.idx.path(C.script_rel(ref)) is not None and not copies.get(m):
+            ck.error(f'Scripts/{ref}.py has no begin-body marker for mission {m} (its unlocks cannot be checked)')
+    ck.counts['unlock_missions'] = len(unlocks)
+    ck.counts['unlock_begin_copies'] = sum(copies.values())
+
+    # ---- V-H14 (issue #55): a seated forced mission never unlocks the REQUIRED heroes XML1 only seats (Magma before
+    # her milestone, the Professor X forms) outside the team-menu branch
+    ck = Check('V-H14')
+    checks.append(ck)
+    only = S.menu_only_unlock_map(ctx) if C.forced_teams_mode(ctx) == 'seat' else {}
+    marks = tuple(f'XML1 beginMission({m})' for m in only)
+    n = 0
+    for rel in o.idx.under('scripts/'):
+        if not marks or not rel.lower().endswith('.py'):
+            continue
+        text = o.idx.path(rel).read_bytes().decode('latin-1')
+        if not any(mk in text for mk in marks):
+            continue
+        n += 1
+        for p in ST.menu_only_problems(text.split('\r\n'), only):
+            ck.error(f'{rel}: {p}')
+    ck.counts['seat_only_missions'] = len(only)
+    ck.counts['seat_only_scripts_checked'] = n
     return checks, budgets
 
 

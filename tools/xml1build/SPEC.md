@@ -2035,6 +2035,8 @@ this have no flag (unlocked) until the next mission start.
 
 ## 20. Unlock points: Jubilee, Colossus, Psylocke (2026-09-28)
 
+*Superseded by the section "XML1's per-mission hero unlocks" (issue #55): the three hand-placed unlock points were a stand-in for XML1's table and are gone.*
+
 XML1 unlocked these three through `data/missions/missions.xml` `charunlock`, not through a script or a conversation
 (research/heroes/roster.md 1.1.3 / 4). Owen's decision: at the start of the mission after which XML1 first shows them
 as NPCs, in story order - `scripts.MISSION_START_UNLOCKS` = mansion2 -> jubilee, mansion4 -> colossus, mansion7 ->
@@ -4874,3 +4876,47 @@ unchanged), the scan-turret props (no entity file changes).
 
 Tests: `tests/unit/test_gun_fightstyles.py` (invented weapons, styles and entries: the gun rule, melee and unarmed
 entries, the `x1_` mapping of style, anim DB, `animations=` and package entries, the validator rule).
+
+## 58. XML1's per-mission hero unlocks (2026-10-04, issue #55)
+
+**Symptom.** A player who skipped Iceman's optional mansion conversation reached HAARP without him and could not
+build the ice bridge (softlock); Magma could be picked from the first mansion visit on.
+
+**What XML1 does** (default.xbe, image base 0x10000). Every console `beginmission` (New Game's `beginmission
+alison`, script `beginMission`, `beginSideMission` = pushsidemission + beginmission) loads the mission through
+0x86560, which calls 0x84fc0 unconditionally (0x866fb) before the party builder 0x18d6d0. 0x84fc0 walks the table at
+0x44e2e8 (8-byte rows {milestone label, hero}, a NULL label ends it): it finds the FIRST row whose label equals the
+mission's `data/missions/missions.xml` `charunlock` (case-insensitive, 0x343612) and unlocks the hero of that row
+and of every row before it (registry vt+0x2c = 0x552a0). The party builder only seats REQUIRED heroes (slot setter,
+no unlock), so Magma, REQUIRED in the hubs and briefings, is unlocked only by the `dr_mag2` milestone (missions
+`nuke`, `nuke_col`). Loading a save never re-applies the table (the save keeps its own unlock list).
+
+**The port** (`xml1build/unlocks.py`, `scripts.mission_start_unlocks`). The milestones come from the prepared
+`missions.xml`, the table from the player's prepared `default.xbe`, after checking that the walking function
+(0x84fc0, 0xb3 bytes) has the known SHA-1 and that the mission loader calls it at 0x866fb; any other executable,
+an unreadable table or a mission without `charunlock` is a build error (no guessing; nothing from the table is in
+the repository). Rows naming no playable hero of the build (Forge, Healer) are dropped.
+- Mission starts: every copy of every begin body (`x1/missions/begin_<m>` and the inlined copies, side missions
+  included) unlocks, after its REQUIRED unlocks, the heroes of its milestone's own group (the rows after the
+  previous labelled row), identically in every copy. XMen2.exe keeps unlocks in the profile and nothing clears
+  them, so every story path, which starts each milestone's missions in table order, ends each mission start with
+  XML1's cumulative set. The full cumulative set in every copy (up to 14 lines) pushed `nyc/riots/nyc3_2_1` (four
+  act-3 begin bodies) to 671 and `muir_is/muir3/muir_in3` to 658 statements, past the 620-node pool (0x4d7e6e).
+- Seated-only heroes (`scripts.menu_only_unlock_map`, `scripts_transform.menu_only_unlocks`): in a forced-teams
+  seat build, the REQUIRED heroes of a seated mission that are outside its cumulative set (Magma before `nuke`,
+  ProfXAstral / ProfXGladiator, Cyclops at the two joins) are unlocked only in the seat block's team-menu branch
+  (`else` -> `loadMapChooseTeam`, i.e. `[Game] ForcedTeams=0` or no DLL), where the player must be able to pick
+  them; xml2-fix `seatParty` seats without an unlock check. V14c accepts those unlocks at the start of the branch.
+- Saves in progress (`scripts.catchup_unlock_plan`, `scripts_transform.catchup_unlocks`): XMen2.exe runs a zone's
+  script when a saved game is loaded into the zone (verified in game, see below), so the zone script of every zone
+  whose XML1 world entity names a mission unlocks that mission's cumulative set after its act entry (a script shared
+  by zones of several missions gets the heroes common to all). `CATCHUP_SKIP_ZONES` leaves out `mastermold2` (613)
+  and `nyc3_2_1` (610) for the statement pool.
+- The X-Men Legends II rule that the team menu reads the profile, not the save, is unchanged (scripts cannot lock a
+  hero): a profile that unlocked Magma or a later hero before keeps it. Per-save unlocks need XML2 Fix (not here).
+
+**Checks.** Build errors: the table / milestone reading; every begin-body copy unlocks its group exactly once
+(`unlock_problems`, also heroes **V-H13** on `<out>`); a seated body that still unlocks a seated-only hero in its
+header (`menu_only_problems`, also **V-H14** on `<out>`); a planned catch-up not written. Counts:
+`mission_start_unlock_missions` (99), `menu_only_unlocks`, `catchup_unlock_scripts`. Unit tests:
+`tests/unit/test_mission_unlocks.py` (invented tables and bodies).

@@ -3957,7 +3957,11 @@ class Validator:
     def _v14c_seat(self, ck, S, plan, herostat, lines, stm, k, where, ref, seat_count):
         i, s = stm[k]
         prev = [x for _, x in stm[max(0, k - 3):k]]
-        nxt = [x for _, x in stm[k + 1:k + 6]]
+        nxt = [x for _, x in stm[k + 1:k + 6 + 16]]
+        # issue #55: the team-menu branch may first unlock the REQUIRED heroes XML1 only seats (menu_only_unlocks)
+        while len(nxt) > 3 and nxt[2] == 'else' and re.fullmatch(r'unlockCharacter\("\w+", "" \)', nxt[3]):
+            del nxt[3]
+        nxt = nxt[:5]
         want_prev = [f'{ST.FT_VAR} = iadd(0, 0 )', f'{ST.FT_VAR} = xml2fixFeature("{ST.FT_FEATURE}" )',
                      f'if {ST.FT_VAR} == 1']
         z = re.fullmatch(r'loadMapKeepTeam\("([^"]+)" \)', nxt[1]) if len(nxt) > 1 else None
