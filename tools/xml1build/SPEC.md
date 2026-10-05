@@ -3395,6 +3395,45 @@ Magma, missile launchers, Mystique, Pyro, Sentinel grenades, and Shades. All nin
 now load their own style. Both projectile variants explicitly carry the projectile attack category.
 This is final-file validation, not a claim that projectile contact behavior has been playtested.
 
+### 29.3 Weapon events a style names itself: Mystique's pistols (issue #52)
+
+**Symptom (tester, builder 0.1.7).** In the first level (nyc/alison/nyc1_1_2b) Mystique's pistol attacks showed no
+bullets and did no damage.
+
+**Cause.** Section 29 rewrites only triggers literally named `weapon_fire`, and only in the variant styles of stats
+entries that carry a weapon. XML1's ps_mystique arms itself instead: two style events `left_gun` / `right_gun`
+inherit `weapon_fire` and name `weapon="wp_myst_pistol"` (the left one also `boltselect="Bip01 L Hand"`); her stats
+have no weapon. The 16 triggers of her two gun moves name those events, so in XMen2.exe every one resolved to the
+sound class (`ce_atk_weap`, section 29) and did nothing. No other XML1 style does this (ps_mastermold_two's gun events
+already inherit `beam`).
+
+**Fix.** `weapons.rewrite_weapon_events`, called by `characters._style_patch` on every converted style before the
+references are mapped: an `<event>` (root or move level) whose inherit chain reaches `weapon_fire` and names a
+bullet / beam weapon becomes a `beam` event with that weapon's data, exactly as `shot_triggers` builds a shot
+(`beambolt` = the event's `boltselect`, else the weapon's `actorbolt`; tracer, impact, damage code, range,
+`damageMod`). Event names stay, so no move gains a trigger for its shots; the weapon's muzzle flash + fire sound
+(`effect_sound`) go on the first shots of a move while it stays within 19 triggers (both of her gun moves have 17:
+the first left and the first right shot get them). Projectile / flame weapons named this way are counted and left
+(none on the disc). Count `weapon_events_to_beam` (2), report `detail['weapon_events']`.
+
+Validator (V-TBD, in V5): a stats entry's power style must not fire `weapon_fire` - through an event naming a weapon,
+or by name when the entry's XML1 weapon is a gun (error); a melee weapon is a warning (NukeGuardMelee: ps_grso with
+wp_baton, what XML1 did is not established); no weapon is allowlisted. On the unfixed output it reports Mystique's
+16 triggers (weapon_fire_left run offline on the main build's x1_ps_mystique, the style of MystiqueAct1 / Act2sim / Act3).
+
+**Verified in game (build of this branch vs main, harness pipe, Wolverine standing still, HP read through the test
+pipe every ~0.1 s, 60 s each, nyc1_1_2b: spawner acted, mystique_fight_start, myst_wp_none).** Main: 7 HP drops, all
+9.3-11.0 (her grenade, below); no 4-5 hits. This branch: muzzle flashes alternate between her two hands, tracers run
+to Wolverine with impact sparks and floating "5"s; 8 single hits of 4.2-4.6 (XML1's L1 = 4-5) plus 3 drops of
+9.2-10.2. Fewer hits than shots (6 per power_attack burst): not every shot of a burst connects, and hits closer
+together than a sample merge.
+
+**Her grenade (the same report: "showed its area and had no effect") is not reproduced.** On main, a standing
+Wolverine took 9.3-11.0 per explosion (7 in 60 s; the explosion and a floating "11" are in the frame), which is the
+spawn trigger's damage (L2 = 9-11, `usedamageasexplodeonly`). Neither research hypothesis (only the death effect
+plays; the attack data filters heroes) holds for a hero inside the radius (52). A hero who moves away from the
+landing spot is not hurt, as in XML1. Nothing changed.
+
 ---------------------------------------------------------------------------------------------------------------
 
 ## 30. XML1's inline NPC immunity talents as shared powerup talents (2026-10-01, combat audit G1)

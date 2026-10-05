@@ -5,6 +5,11 @@ build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebui
 
 ## Unreleased - content version 11
 
+- **Fixed: Mystique's pistols fired nothing** (issue #52, part). Her two-gun attacks in the first level now show
+  muzzle flashes from both hands and tracers, and each hit does the first game's pistol damage (4-5). Her grenade
+  already did damage (9-11 per explosion when it lands next to the hero); that part of the report was not
+  reproduced. A new check reports any enemy style that still fires the first game's weapon event (SPEC 29.3).
+
 - **The first game's shared hero passives** (issue #34): critical strike (5 ranks, +2 to +10%, unlocking at levels
   1/7/12/17/22), might (3 ranks, heavier objects each rank), leadership (5 ranks of combo damage and combo XP) and
   flight (energy drain 40 down to 5 per second) replace X-Men Legends II's versions. Might's bonus melee damage has no
