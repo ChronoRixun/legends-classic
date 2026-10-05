@@ -5,6 +5,21 @@ build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebui
 
 ## Unreleased - content version 11
 
+- **Fixed: the first game's heroes and villains were silent or spoke X-Men Legends II's lines** (issue #49).
+  Wolverine, Jean, Emma, Gambit, Jubilee, Magma, Professor X, Psylocke and Rogue had no taunts, team commands,
+  low-health or victory lines; Cyclops, Colossus, Iceman, Nightcrawler, Storm, Beast and villains such as Blob and
+  Mystique used the second game's voice actors. The first game's lines are now found under the names the engine
+  asks for, and they win over the second game's in the shared voice bank. A new check (V27) verifies every voice
+  line. The sound prepare stage reruns once.
+
+- **Fixed: rifle soldiers stood unarmed with the gun stuck to a fist** (issue #52, part). The HAARP, nuclear-plant,
+  Weapon X and GRSO rifle soldiers now hold their rifles level and fire from the gun, with the first game's
+  idle, fire and crouch-fire animations, and their full 7-shot bursts play. Damage per shot is unchanged (4-5); at
+  the HAARP exterior two soldiers now take about 6.6 HP per second from a standing hero instead of about 5.3, because
+  their bursts land in full. As in the first game, an enemy's gun now replaces its own fighting style (the HAARP
+  flamethrowers and leaders fight in the hip-gun style). A new check reports a gun-armed enemy without its gun's
+  style.
+
 - **Conversation lines advance by themselves only where the first game's do** (issue #54). The rule now follows
   the first game's own: a line goes on without the player only when it has a voice and is flagged itself or by
   its file's last start condition. Lines without a voice, and lines flagged only through their reply, wait for
@@ -17,6 +32,33 @@ build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebui
   (one second in affected definitions); damage values, repeat intervals and
   extinguish reactions stay unchanged. V25 rejects remaining dead startup forms.
   Controlled movement, Iceman extinguishing and save/reload evidence is in `docs/issue-12-validation.md`.
+
+- **Fixed: Mystique's pistols fired nothing** (issue #52, part). Her two-gun attacks in the first level now show
+  muzzle flashes from both hands and tracers, and each hit does the first game's pistol damage (4-5). Her grenade
+  already did damage (9-11 per explosion when it lands next to the hero); that part of the report was not
+  reproduced. A new check reports any enemy style that still fires the first game's weapon event (SPEC 29.3).
+
+- **Fixed: empty tutorial tips** (issue #50). Seven tips of the first game (six in the first mission, one in the
+  mansion) existed only in console versions, which the PC game skips, so their panel opened empty. Each now also
+  has a PC version (the PlayStation 2 wording, as X-Men Legends II did for PC), and a new check verifies every
+  dialog has one (SPEC "Popup dialog platforms").
+
+- **Fixed: Cyclops' face on every codex entry** (issue #48). The codex list now has no icons, as in the first game,
+  instead of X-Men Legends II's icon column, which drew Cyclops for every character without an icon of their own.
+  A new check verifies the codex menu (SPEC 55).
+
+- **Fixed: bedroom items showing the loading screen** (issue #47). The first game's 36 personal items in the
+  mansion bedrooms and their pictures are now converted, so examining one shows its picture instead of the mansion
+  loading screen (or, for Wolverine's flag, a yellow and magenta panel). Their description text is not drawn yet.
+  A new check verifies every item has its data and picture (SPEC 56).
+
+- **Fixed: arriving at HAARP without Iceman (softlock), and Magma playable from the first mansion visit** (issue
+  #55). Every mission start now unlocks the heroes the first game unlocked there, read from your own copy of the game
+  (its mission list and executable); a build from an unknown executable stops with a message instead of guessing.
+  Magma and the two Professor X forms are only placed in the party where the first game did that, until their own
+  unlock; with forced parties off the team menu still offers them. Saves made inside a mission by an earlier build
+  get that mission's heroes when they are loaded. Heroes an earlier build already unlocked stay unlocked (the game
+  keeps unlocks per profile).
 
 - **The first game's shared hero passives** (issue #34): critical strike (5 ranks, +2 to +10%, unlocking at levels
   1/7/12/17/22), might (3 ranks, heavier objects each rank), leadership (5 ranks of combo damage and combo XP) and

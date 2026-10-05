@@ -1224,12 +1224,12 @@ def team_lock_at_side_ends(lines, values):
 
 
 # ------------------------------------------------------------------------------------------------ unlock points
-# XML1 unlocked Jubilee, Colossus and Psylocke through data/missions/missions.xml charunlock, not through a script or
-# a conversation (research/heroes/roster.md 1.1.3 / 4). The port unlocks them at the start of a mission instead
-# (scripts.MISSION_START_UNLOCKS, Owen's decision): the unlockCharacter goes next to the mission's REQUIRED unlocks
-# in the header of its begin body (research rewrite_scripts.mission_begin_lines: flag clears, setCurrentAct,
-# objectives, REQUIRED unlocks, then the scriptstart body / load), in every copy of the body.
-UNLOCK_COMMENT = '# ( "x1: XML1 unlocks %s at this mission (missions.xml charunlock; the port\'s unlock point)" )'
+# XML1 unlocks heroes at every mission start through data/missions/missions.xml charunlock and default.xbe's
+# cumulative table (xml1build.unlocks, issue #55), not through a script or a conversation. The port puts that set
+# (scripts.mission_start_unlocks) next to the mission's REQUIRED unlocks in the header of its begin body (research
+# rewrite_scripts.mission_begin_lines: flag clears, setCurrentAct, objectives, REQUIRED unlocks, then the scriptstart
+# body / load), in every copy of the body.
+UNLOCK_COMMENT = '# ( "x1: XML1 unlocks %s at this mission start (missions.xml charunlock)" )'
 _HEADER_STMT = re.compile(r'^\s*(setGameFlag|setCurrentAct|objective|unlockCharacter)\s*\(')
 _UNLOCK_COMMENT_RE = re.compile(r'^\s*# \( "x1: XML1 unlocks \w+ at this mission ')
 
@@ -1285,6 +1285,126 @@ def unlock_at_mission_starts(lines, unlocks):
     for j, new in sorted(edits, key=lambda e: -e[0]):
         out[j:j] = new
     return out, done
+
+
+# XML1 only SEATS a forced mission's REQUIRED heroes (party builder xbe 0x18d6d0 -> the slot setter, no unlock):
+# Magma in the hubs and briefings before her dr_mag2 milestone, the two Professor X forms. Their unlock in the begin
+# body's header (research mission_begin_lines: REQUIRED unlocks) therefore moves into the team-menu branch of the
+# seat block (else: loadMapChooseTeam, xml2-fix [Game] ForcedTeams=0 or no DLL), where the player must be able to
+# pick them; xml2-fix seatParty seats a hero without an unlock check.
+MENU_UNLOCK_COMMENT = ('# ( "x1: the team menu needs %s unlocked; XML1 only seats this REQUIRED hero (no unlock '
+                       'before its milestone)" )')
+
+
+def menu_only_unlocks(lines, seat_only):
+    """-> (lines, [(mission, hero)]). seat_only: {mission: (hero, ...)} - REQUIRED heroes of seated missions outside
+    the mission's cumulative unlock set. For every begin-body marker of such a mission whose body carries the seat
+    block (FT_SEAT_COMMENT ... if x1ft == 1 ... else ... endif) before the next begin marker, the header's
+    unlockCharacter("h", "" ) lines of those heroes move to the start of the seat block's else branch. A body
+    without a seat block keeps them (its start is a team menu). Idempotent."""
+    out = list(lines)
+    done = []
+    i = 0
+    while i < len(out):
+        m = BEGIN_MARKER.match(out[i].strip())
+        if not m:
+            i += 1
+            continue
+        mis = m.group('m').strip().lower()
+        heroes = [h.lower() for h in seat_only.get(mis, ())]
+        if not heroes:
+            i += 1
+            continue
+        end = mission_header_end(out, i)
+        nxt = next((j for j in range(end, len(out)) if BEGIN_MARKER.match(out[j].strip())), len(out))
+        seat = next((j for j in range(end, nxt) if out[j].strip() == FT_SEAT_COMMENT), None)
+        if seat is None:
+            i += 1
+            continue
+        ind = out[seat][:len(out[seat]) - len(out[seat].lstrip())]
+        els = next((j for j in range(seat, nxt) if out[j] == f'{ind}else'), None)
+        if els is None:
+            i += 1
+            continue
+        move = [j for j in range(i + 1, end) if _UNLOCK.match(out[j]) and
+                _UNLOCK.match(out[j]).group('hero').lower() in heroes]
+        moved = [_UNLOCK.match(out[j]).group('hero').lower() for j in move]
+        new = []
+        for h in moved:
+            new += [f'{ind}{IND}{MENU_UNLOCK_COMMENT % h}', f'{ind}{IND}unlockCharacter("{h}", "" )']
+            done.append((mis, h))
+        if not moved:
+            i += 1
+            continue
+        out[els + 1:els + 1] = new
+        for j in sorted(move, reverse=True):
+            del out[j]
+        i += 1
+    return out, done
+
+
+# Saves in progress (issue #55): XML1 keeps unlocks per save, so a save made by an earlier build of the port inside a
+# mission lacks the heroes the mission start should have unlocked. XMen2.exe runs a zone's script when a saved game
+# is loaded into that zone (verified in game, 2026-10-04), so the zone script of every zone whose XML1 world entity
+# names a mission unlocks that mission's cumulative set again (unlockCharacter of an unlocked hero does nothing).
+CATCHUP_COMMENT = '# ( "x1: this zone\'s mission unlocks (XML1 missions.xml charunlock) for saves made before them" )'
+CATCHUP_END_COMMENT = '# ( "x1: end of the mission unlocks" )'
+
+
+def catchup_unlocks(lines, heroes):
+    """-> (lines, [hero]): CATCHUP_COMMENT + unlockCharacter("h", "" ) for each hero after the zone script's leading
+    comments and its first statement when that is setCurrentAct (the act entry stays first). Idempotent."""
+    if not heroes or any(l.strip() == CATCHUP_COMMENT for l in lines):
+        return list(lines), []
+    k = 0
+    while k < len(lines) and (not lines[k].strip() or lines[k].lstrip().startswith('#')):
+        k += 1
+    if k < len(lines) and re.fullmatch(r'setCurrentAct\s*\(\s*\d+\s*\)', lines[k].strip()):
+        k += 1
+    new = [CATCHUP_COMMENT] + [f'unlockCharacter("{h.lower()}", "" )' for h in heroes] + [CATCHUP_END_COMMENT]
+    return list(lines[:k]) + new + list(lines[k:]), [h.lower() for h in heroes]
+
+
+def strip_generated_unlocks(lines):
+    """lines without the unlocks this module generates (mission-start, team-menu and catch-up unlocks with their
+    comments): what an analysis of XML1's own unlock sites (scripts._derive_post_branch_step) must look at."""
+    out, block, skip = [], False, False
+    for l in lines:
+        s = l.strip()
+        if s == CATCHUP_COMMENT:
+            block = True
+            continue
+        if block:
+            block = s != CATCHUP_END_COMMENT
+            continue
+        if skip and _UNLOCK.match(l):
+            skip = False
+            continue
+        skip = bool(_UNLOCK_COMMENT_RE.match(s) or s.startswith('# ( "x1: the team menu needs '))
+        if not skip:
+            out.append(l)
+    return out
+
+
+def menu_only_problems(lines, seat_only):
+    """-> [problem] for menu_only_unlocks' output: a begin body of a mission in `seat_only` that carries the seat
+    block still unlocks one of those heroes in its header (XML1 never unlocked them there)."""
+    probs = []
+    for i, l in enumerate(lines):
+        m = BEGIN_MARKER.match(l.strip())
+        if not m:
+            continue
+        mis = m.group('m').strip().lower()
+        heroes = {h.lower() for h in seat_only.get(mis, ())}
+        if not heroes:
+            continue
+        end = mission_header_end(lines, i)
+        nxt = next((j for j in range(end, len(lines)) if BEGIN_MARKER.match(lines[j].strip())), len(lines))
+        if not any(lines[j].strip() == FT_SEAT_COMMENT for j in range(end, nxt)):
+            continue
+        for h in sorted(heroes & set(header_unlocks(lines, i))):
+            probs.append(f'line {i + 1}: beginMission({mis}) unlocks {h}, whom XML1 only seats (issue #55)')
+    return probs
 
 
 def unlock_problems(lines, unlocks):

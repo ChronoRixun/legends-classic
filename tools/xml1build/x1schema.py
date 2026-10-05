@@ -49,6 +49,16 @@ own patch), and zones runs it on the world tables it merges itself, so every mod
 5. Ordinary harm loops: positive firstact clears XML2's loop-on bit (0x4399d9).
    Start-on loops get firstact=0 after class remapping, advancing initial activation
    but preserving the damage mode and repeat delays (SPEC 51).
+5. Popup dialogs (files under dialogs/): XMen2.exe's popup loader (0x5ebfd0) skips every <dialog> whose platform
+   the platform test 0x4bd650 rejects: an empty or missing platform is accepted, a list (space / comma / tab
+   separated) only with a PC token; XML1's xbox / ps2 / gc variants are all skipped, so a file with only those
+   opens an empty panel (issue #50). convert_dialog_platforms gives each such dialog (per filter value, the
+   loader's second test at 0x5ec003) an untagged copy of its ps2 variant, else xbox, else the first: XML2's own
+   platform-split hints end with an untagged PC variant, which is word for word the ps2 text in 9 of the 10
+   that have a ps2 variant ("press", "analog stick": no Xbox trigger "pull"). The console variants stay as they were.
+5. Object physics scales (issue #51): entity heaviness 0..5 -> XMen2.exe's 0..3 and structure 0..10 -> 0..2
+   (convert_physics), so ordinary objects can be lifted and breakable walls can open. Attack levels retain
+   main behavior: level zero cannot damage living characters (0x4293e3). The punch/power wall rule needs an engine fix.
 """
 from __future__ import annotations
 
@@ -199,6 +209,84 @@ def convert_entities(root, weapon_models=None):
     return changes
 
 
+# --------------------------------------------------------------------------------------------- object physics scales
+# XML1 and XMen2.exe read an entity's `heaviness` and `structure` on different scales (issue #51):
+#   * heaviness: default.xbe clamps it to 5 and lifts an object when heaviness < 5 and heaviness <= might + 1
+#     (pickup gate 0x38400, might = the hero's `might` talent rank, 0xb1ba0), so anyone lifts 0-1 and might rank
+#     1/2/3 lifts 2/3/4. XMen2.exe clamps it to 3 (physent parser 0x498900) and lifts when heaviness < 3 and
+#     heaviness <= the might_heaviness affecter sum (0x427f60 -> 0x427dc0, 0 without Might), so a hero without
+#     Might lifts only 0. XML1's value copied unchanged turned every heaviness-1 trash can into a Might-only object.
+#     HEAVINESS_X1_TO_X2 reproduces anyone / might 1 / might 2 exactly; XML1's 4 (might 3) and 5 (never) both
+#     become 3, which XMen2.exe never lifts (the "< 3" at 0x427fa3; an engine limit, see SPEC).
+HEAVINESS_X1_TO_X2 = (0, 0, 1, 2, 3, 3)
+# Characters' heaviness (herostat / npcstat <stats>) is a different property and is not touched: only elements with
+# a classname (entity definitions) are converted.
+
+
+def heaviness_x1_to_x2(value):
+    """XML1 heaviness text -> XMen2.exe's (str), or None when it is not a number (left as it is)."""
+    try:
+        v = int(float(str(value).strip()))
+    except ValueError:
+        return None
+    return str(HEAVINESS_X1_TO_X2[min(max(v, 0), len(HEAVINESS_X1_TO_X2) - 1)])
+
+
+# Object structure is compressed so formerly unbreakable walls can open. Attack levels must remain as on main:
+# living characters require hit level > structure (0x4293e3), so ordinary level-zero hits do no damage. Objects
+# require level >= structure (0x498044), and the effective attack level is capped at 1 (0x44f770). With main's
+# level-one punches, remapped structure-one walls also break to plain combos. Preserving the first game's
+# punch/power distinction needs an independent object-only level comparison in XML2 Fix (SPEC issue #51).
+STRUCTURE_X1_TO_X2 = (0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 2)
+
+
+def _ival(value):
+    try:
+        return int(float(str(value).strip()))
+    except ValueError:
+        return None
+
+
+def structure_x1_to_x2(value):
+    v = _ival(value)
+    return None if v is None else str(STRUCTURE_X1_TO_X2[min(max(v, 0), len(STRUCTURE_X1_TO_X2) - 1)])
+
+
+
+def convert_physics(root):
+    """XML1 -> XMen2.exe object physics scales on every entity definition (element with a classname), in place:
+    heaviness and structure; attack damagelevel is unchanged. NOT idempotent (heaviness 2 -> 1 -> 0):
+    convert() runs once on each freshly parsed XML1 tree. Returns a Counter."""
+    c = collections.Counter()
+    for el in root.iter():
+        if el.get('classname') is None:
+            continue
+        for attr, fn in (('heaviness', heaviness_x1_to_x2), ('structure', structure_x1_to_x2)):
+            old = el.get(attr)
+            if old is not None and old.strip():
+                new = fn(old)
+                if new is not None and new != old:
+                    el.set(attr, new)
+                    c[f'{attr}_rescaled'] += 1
+    return c
+
+
+
+def physics_scale_problems(root):
+    """[(entity name, attribute, value)] of entity definitions whose heaviness / structure is above XMen2.exe's range
+    (0..3 / 0..2): an XML1 value that was not converted (convert_physics)."""
+    out = []
+    for el in root.iter():
+        if el.get('classname') is None:
+            continue
+        for attr, top in (('heaviness', HEAVINESS_X1_TO_X2[-1]), ('structure', STRUCTURE_X1_TO_X2[-1])):
+            v = _ival(el.get(attr)) if (el.get(attr) or '').strip() else None
+            if v is not None and v > top:
+                out.append((el.get('name'), attr, el.get(attr)))
+    return out
+
+
+
 def turret_mount_problems(root):
     """[(entity name, missing flags)] of physents that are remapped XML1 scan turrets (they carry a turretweapon)
     without the fixed-mount flags (TURRET_MOUNT_FLAGS)."""
@@ -331,9 +419,14 @@ def convert(root, rel, weapon_models=None, x1_values=None):
     n = convert_fall_kill_volumes(root, rel)
     if n:
         c['fall_kill_volumes'] += n
+    c.update(convert_physics(root))
     n = convert_harm_loop_start(root)
     if n:
         c['harm_loop_start'] += n
+    if is_dialog_rel(rel):
+        n = convert_dialog_platforms(root)
+        if n:
+            c['dialog_pc_variant_added'] += n
     if CE.is_style_rel(rel):
         c.update(CE.rewrite_style(root))
         c.update(CE.apply_x1_shared_values(root, x1_values))
@@ -393,6 +486,81 @@ def renderfx_x1_elements(root):
                 (any(k in a for k in RENDERFX_X1_ATTRS) or (a.get('remove') or '').strip().lower() == 'true'):
             out.append((el.tag, a.get('name')))
     return out
+
+
+# --------------------------------------------------------------------------------------------- dialogs (issue #50)
+# 0x4bd650 tokenises the platform value on space / comma / tab (separators at 0x68d618) and compares each
+# token with "PC" (0x68e9a0) through _stricmp; an empty value is accepted too. DIALOG_PC_SOURCES: the console variant copied when
+# none is accepted (see the module doc, item 5).
+DIALOG_PLATFORM_SEPARATORS = ' ,\t'
+DIALOG_PC_SOURCES = ('ps2', 'xbox', 'gc')
+
+
+def is_dialog_rel(rel):
+    r = str(rel).replace('\\', '/').lower().lstrip('/')
+    return r.startswith('dialogs/')
+
+
+def dialog_platform_accepted(value):
+    """XMen2.exe's platform test (0x4bd650) as a bool: no / empty platform or a list with a PC token."""
+    if value is None or value == '':
+        return True
+    tokens = ''.join(' ' if ch in DIALOG_PLATFORM_SEPARATORS else ch for ch in value).split()
+    return any(t.upper() == 'PC' for t in tokens)
+
+
+def _dialog_list(root):
+    """the <dialog> elements the popup loader walks: the children of a dialog_def (XML2's wrapper) or of the
+    several-roots wrapper, or a lone root dialog. Returns (parent or None, [dialog])."""
+    if root is None:
+        return None, []
+    if isinstance(root.tag, str) and root.tag.lower() == 'dialog':
+        return None, [root]
+    parent = root
+    for el in root:
+        if isinstance(el.tag, str) and el.tag.lower() == 'dialog_def':
+            parent = el
+            break
+    return parent, [el for el in parent if isinstance(el.tag, str) and el.tag.lower() == 'dialog']
+
+
+def _dialog_groups(dialogs):
+    """filter value -> the dialogs the loader can pick for it (0x5ec003: a dialog with no filter matches any)."""
+    filters = {(d.get('filter') or '') for d in dialogs} - {''} or {''}
+    return {f: [d for d in dialogs if (d.get('filter') or '') in ('', f)] for f in sorted(filters)}
+
+
+def dialog_platform_problems(root):
+    """[(filter value, [platforms])] of the dialog groups in which XMen2.exe accepts no variant (an empty panel)."""
+    _, dialogs = _dialog_list(root)
+    out = []
+    for f, group in _dialog_groups(dialogs).items():
+        if group and not any(dialog_platform_accepted(d.get('platform')) for d in group):
+            out.append((f, [d.get('platform') or '' for d in group]))
+    return out
+
+
+def convert_dialog_platforms(root):
+    """Give every dialog group with no accepted variant an untagged copy of its ps2 / xbox / first variant, placed
+    right after the group's last variant. Idempotent. Returns the number of variants added."""
+    import copy
+    parent, dialogs = _dialog_list(root)
+    added = 0
+    for f, group in _dialog_groups(dialogs).items():
+        if not group or any(dialog_platform_accepted(d.get('platform')) for d in group):
+            continue
+        by_platform = {(d.get('platform') or '').strip().lower(): d for d in reversed(group)}
+        src = next((by_platform[p] for p in DIALOG_PC_SOURCES if p in by_platform), group[0])
+        if parent is None:                      # a lone root dialog: it can only be made untagged itself
+            for k in [k for k in src.attrib if k.lower() == 'platform']:
+                del src.attrib[k]
+        else:
+            pc = copy.deepcopy(src)
+            for k in [k for k in pc.attrib if k.lower() == 'platform']:
+                del pc.attrib[k]
+            parent.insert(list(parent).index(group[-1]) + 1, pc)
+        added += 1
+    return added
 
 
 # --------------------------------------------------------------------------------------------- selftest

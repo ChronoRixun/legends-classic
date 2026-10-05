@@ -411,9 +411,9 @@ def map_loading_texture(p):
 
 def map_attr(attr: str, value):
     """Rewrite one attribute value that references an XML1 character asset. Covers skin attrs (skin,
-    skin_*, monster_skin, actorskin, leaderskin, mutantskin), characteranims, powerstyle, fightstyle /
-    moveset1, loading, and any value that is a character HUD/UI path, an actors/ path or a numeric loading
-    texture. Returns the (possibly unchanged) value."""
+    skin_*, monster_skin, actorskin, leaderskin, mutantskin), characteranims, a fighting style's animations,
+    powerstyle, fightstyle / moveset1, loading, and any value that is a character HUD/UI path, an actors/ path or
+    a numeric loading texture. Returns the (possibly unchanged) value."""
     if value is None or value == '':
         return value
     a = (attr or '').lower()
@@ -422,7 +422,7 @@ def map_attr(attr: str, value):
         return map_skin(v)
     if a == 'model' and _SKIN4.fullmatch(str(v).strip()):
         return map_skin(v)                  # numeric bolt-on / actor model = an actors/<id> skin
-    if a == 'characteranims':
+    if a in ('characteranims', 'animations'):        # animations: a fighting style's anim DB (map_animdb)
         return map_animdb(v)
     if a == 'powerstyle':
         return map_powerstyle(v)

@@ -75,6 +75,36 @@ SHARED_CAP = 99              # 0x4c05d0 push 0x63: shared ids 0..98
 FILE_CAP = 100               # per-hero file ids (idx+1)*100 .. +99 (0x4bdc00)
 FILE_TALENT_MAX = 8          # DESIGN 4.2: <= 8 talents per hero file
 STATS_TALENT_MAX = 19        # a CStats holds <= 19 <talent> children (FUN_0043bb80, == 0x13)
+# Issue #51: XMen2.exe's ch_guard_decide (0x4ec090) grabs an enemy only when the hero's grab_scale_dmg talentvalue
+# (string 0x68edac) is above 0 (0x4ec3c6-0x4ec407; otherwise action 0x1a). XML2 gives it through the hidden shared
+# talent `grab` (talentvalue 2) that every XML2 hero carries at level 1. XML1 (0xd99d0) grabs with no such gate, so
+# every XML1 hero gets the same reference; shared_keep then keeps XML2's definition (DESIGN 4.7 listed it).
+GRAB_TALENT = 'grab'
+GRAB_TALENTVALUE = 'grab_scale_dmg'
+
+
+def grab_problems(hero_stats, shared_root):
+    """[message] when a playable hero (herostat <stats playable=true>) does not name GRAB_TALENT or shared_talents
+    does not define it with a positive grab_scale_dmg (the value 0x4ec3c6 tests), i.e. heroes cannot grab enemies."""
+    out = []
+    tal = None
+    if shared_root is not None:
+        tal = next((t for t in shared_root.iter('talent') if (t.get('name') or '').lower() == GRAB_TALENT), None)
+    vals = [] if tal is None else [tv.get('value') for tv in tal.iter('talentvalue')
+                                   if (tv.get('name') or '').lower() == GRAB_TALENTVALUE]
+    try:
+        ok = bool(vals) and all(float(v) > 0 for v in vals)
+    except (TypeError, ValueError):
+        ok = False
+    if not ok:
+        out.append(f'shared_talents: no {GRAB_TALENT} talent with a positive {GRAB_TALENTVALUE} (grabs fall back, '
+                   f'0x4ec3c6)')
+    for st in hero_stats:
+        if (st.get('playable') or '').lower() != 'true':
+            continue
+        if not any((t.get('name') or '').lower() == GRAB_TALENT for t in st.iter('talent')):
+            out.append(f'{st.get("name")}: no <talent name="{GRAB_TALENT}">: cannot grab enemies (0x4ec3c6)')
+    return out
 STATS_CAP = 296              # 0x44c1a7 cmp eax,0x129
 NAME_MAX_ROSTER = 18         # < 19 chars to appear in the roster screen (0x5db590 < 0x13)
 # talentvalue names: the registrar (talent-value manager vt+0x1c = 0x4c1860) refuses a name of 20+ chars
@@ -1712,20 +1742,22 @@ def convert_shared_real(name, src, values, icons='xml1', bleed='on'):
 # ------------------------------------------------------------------------------------------------ builder
 # DESIGN 4.7: the shared_talents keep list the rule-based prune must reproduce (a delta is a warning)
 SHARED_KEEP_EXPECTED = frozenset("""
-fightstyle_finesse1 fightstyle_hero fightstyle_wrestling fightstyle_psionic fightstyle_gun_rifle fightstyle_gun_hip
+fightstyle_finesse1 fightstyle_hero fightstyle_wrestling fightstyle_psionic x1_fightstyle_gun_rifle fightstyle_gun_hip
 fightstyle_baton fightstyle_huge fightstyle_nonhuman fightstyle_villain leadership grab critical might flight
 energy_resistant mental_resistant physical_resistant energy_resistant_share mental_resistant_share
 physical_resistant_share spawn_invis dr_stun sentinel_special boss_resistances monst_dmg_high aval_crack aval_quake
 blob_butt blob_belly havok_beam havok_nova jug_punch jug_slam jug_armor marrow_shards marrow_armor marrow_xtreme
 steal_form pyro_flame pyro_firering pyro_firebat sabre_spin sabre_claw acrobatics toughness mutantmastery
 x1_npc_energy""".split())
-# DESIGN 4.7 also listed `grab` (47); in the built data nothing references it once XML2's heroes are gone (no
-# style <require>, no stats entry: XML2's fightstyle grab moves are not talent-gated), so the rule drops it (46).
-# In --hero-roster 21xml2 the XML2 pads reference it again and the rule keeps it. x1_npc_energy (SPEC 24) is the
+# DESIGN 4.7 also listed `grab` (47). Until issue #51 nothing referenced it once XML2's heroes were gone, so the rule
+# dropped it and no hero could grab an enemy (GRAB_TALENT); every hero entry now names it, so the rule keeps it. x1_npc_energy (SPEC 24) is the
 # characters module's NPC energy talent (npc_values.ENERGY_TALENT): kept while a stats entry names it (47).
 # SPEC 30: characters emits XML1's 14 distinct inline NPC immunity bodies as shared talents in XML2's boss_resistances
 # form (npc_values.immunity_plan names each body after the XML1 talent name most entries used); kept while a stats
 # entry names one (npc_values.is_immunity_talent): 47 -> 61.
+# Issue #52: the gun soldiers carry their gun's fighting style instead of their own (weapons.gun_fightstyle), and
+# the rifle style ships as x1_fightstyle_gun_rifle (x1names.X1_OWN_FIGHTSTYLES): it replaces XML2's
+# fightstyle_gun_rifle in the list, which nothing names any more (still 61).
 SHARED_KEEP_IMMUNITIES = frozenset("""
 as_special avalanche_special blob_special forge_special havok_special juggernaut_special magnetoboss_special
 mastermold_special physical_res sabre_special sabretooth_special sentspider_special shadow_special toad_special
@@ -1968,6 +2000,9 @@ class HeroBuilder:
             if lvl:
                 attrs['level'] = lvl
             ET.SubElement(e, 'talent', attrs)
+            n_tal += 1
+        if not any((t.get('name') or '').lower() == GRAB_TALENT for t in e.iter('talent')):
+            ET.SubElement(e, 'talent', {'level': '1', 'name': GRAB_TALENT})     # issue #51: grabbing enemies
             n_tal += 1
         if n_tal > STATS_TALENT_MAX:
             ctx.error(f'{name}: {n_tal} <talent> children (> {STATS_TALENT_MAX}, FUN_0043bb80)')
@@ -2320,7 +2355,7 @@ class HeroBuilder:
             for t in st.iter('talent'):
                 n = (t.get('name') or '').lower()
                 stats_refs.add(n)
-                if n.startswith('fightstyle_'):
+                if N.is_fightstyle_name(n):
                     fightstyles.add(n)
             if st.get('powerstyle'):
                 styles.add(st.get('powerstyle').lower())
@@ -2330,7 +2365,7 @@ class HeroBuilder:
             if e.get('moveset1'):
                 fightstyles.add(e.get('moveset1').lower())
             for t in e.iter('talent'):
-                if (t.get('name') or '').lower().startswith('fightstyle_'):
+                if N.is_fightstyle_name(t.get('name')):
                     fightstyles.add(t.get('name').lower())
         style_reqs = set()
         for kind, names in (('powerstyles', styles), ('fightstyles', fightstyles)):
@@ -2354,7 +2389,7 @@ class HeroBuilder:
         for n, tdef in cur_defs:
             ln = n.lower()
             why = None
-            if ln.startswith('fightstyle_') and (ln in stats_refs or ln in style_reqs):
+            if N.is_fightstyle_name(ln) and (ln in stats_refs or ln in style_reqs):
                 why = 'fightstyle named by a stats entry / style'
             elif ln in style_reqs and ln not in hero_files:
                 why = 'named by a style <require>'
@@ -2564,7 +2599,7 @@ class HeroBuilder:
         ctx.defer('D15 (v1 scope): Rogue\'s decide step (ch_roguedecide) is dropped (Gambit/Jubilee charged_throw: '
                   'ch_throw -> ch_pickup_throw, SPEC 22); astral solo mode (T10), XML1 Danger Room courses, XML1 '
                   'team bonuses, talent icon re-atlassing, Psylocke blades 2/3 (BoltOn <require>), NPC-vs-hero balance '
-                  '(flashback party save+restore: SPEC 19 popParty; unlock points: scripts.MISSION_START_UNLOCKS)')
+                  '(flashback party save+restore: SPEC 19 popParty; mission-start unlocks: scripts.mission_start_unlocks)')
         ctx.write_meta('heroes_detail.json', self.detail)
 
 
@@ -2827,6 +2862,9 @@ def _validate(ctx, report=None):
                 ln = (st.get('name') or '').lower()
                 if tn in SPECIAL_TALENT_NAMES and tn not in shared_names and tn not in file_names.get(ln, set()):
                     ck.error(f'{st.get("name")}: special talent {tn} (0x4be130) defined nowhere')
+        # V-H4, SPEC 59 (issue #51): every playable hero can grab an enemy (GRAB_TALENT)
+        for msg in grab_problems(heros.get('engb', []), o.tree('Data/shared_talents.engb')):
+            ck.error(msg)
         # SPEC 50 (SPEC_heroes.md: the first game's shared hero passives): the kept definitions of
         # critical / might / leadership / flight carry XML1's rank counts, level gates and engine-form bodies
         # (SHARED_REAL_POWERUPS / SHARED_REAL_TALENTVALUES), not XML2's 15/2/15-rank versions
@@ -3157,12 +3195,12 @@ def _validate(ctx, report=None):
         elif 'x1join' not in zp.read_bytes().decode('latin-1'):
             ck.error(f'Scripts/{zone_ref}.py: T7 zone guard (getGameFlag x1join) missing')
 
-    # ---- V-H13 unlock points (roster.md 1.1.3 / 4: XML1's missions.xml charunlock -> a mission-start unlock)
+    # ---- V-H13 mission-start unlocks (issue #55: XML1's missions.xml charunlock + default.xbe's cumulative table)
     ck = Check('V-H13')
     checks.append(ck)
     from . import scripts as S                              # noqa: WPS433 - the unlock table's owner
     from . import scripts_transform as ST                   # noqa: WPS433
-    unlocks = S.MISSION_START_UNLOCKS
+    unlocks = S.mission_start_unlocks(ctx)['missions']
     for m, hs in sorted(unlocks.items()):
         for h in hs:
             if h.lower() not in hero_l:
@@ -3185,9 +3223,29 @@ def _validate(ctx, report=None):
                 copies[mm.group('m').strip().lower()] += 1
     for m in sorted(unlocks):
         ref = f'x1/missions/begin_{m}'
-        if o.idx.path(C.script_rel(ref)) is None:
-            ck.error(f'Scripts/{ref}.py missing (unlock point {m})')
-        ck.counts[f'unlock_copies_{m}'] = copies.get(m, 0)
+        if o.idx.path(C.script_rel(ref)) is not None and not copies.get(m):
+            ck.error(f'Scripts/{ref}.py has no begin-body marker for mission {m} (its unlocks cannot be checked)')
+    ck.counts['unlock_missions'] = len(unlocks)
+    ck.counts['unlock_begin_copies'] = sum(copies.values())
+
+    # ---- V-H14 (issue #55): a seated forced mission never unlocks the REQUIRED heroes XML1 only seats (Magma before
+    # her milestone, the Professor X forms) outside the team-menu branch
+    ck = Check('V-H14')
+    checks.append(ck)
+    only = S.menu_only_unlock_map(ctx) if C.forced_teams_mode(ctx) == 'seat' else {}
+    marks = tuple(f'XML1 beginMission({m})' for m in only)
+    n = 0
+    for rel in o.idx.under('scripts/'):
+        if not marks or not rel.lower().endswith('.py'):
+            continue
+        text = o.idx.path(rel).read_bytes().decode('latin-1')
+        if not any(mk in text for mk in marks):
+            continue
+        n += 1
+        for p in ST.menu_only_problems(text.split('\r\n'), only):
+            ck.error(f'{rel}: {p}')
+    ck.counts['seat_only_missions'] = len(only)
+    ck.counts['seat_only_scripts_checked'] = n
     return checks, budgets
 
 

@@ -59,7 +59,7 @@ from pathlib import Path
 from . import common as C
 from . import media_music as MM
 
-from .lib import zhash, zsnd, ztrk     # noqa: E402  were research/sound
+from .lib import merge_zsnd, zhash, zsnd, ztrk     # noqa: E402  were research/sound
 
 MODULE = 'media'
 X1_MOVIE_DIR = ('movies', 'ntsc')          # xml1_xbox/movies/ntsc/<c1>/<c2>/<name>.sfd (Xbox layout)
@@ -330,7 +330,8 @@ def _check_bank(data: bytes, rel: str):
 
 
 def _check_merged(ctx, merged, base_rel):
-    """every XML2 entry of the replaced base bank is kept at its index with identical bytes and audio."""
+    """every XML2 entry of the replaced base bank is kept at its index with identical bytes and audio; its key too,
+    except an entry the merge shadowed (issue #49: XML1's voice folders) under merge_zsnd.shadow_key."""
     p = ctx.base_index.path(base_rel)
     if p is None:
         return [f'no XML2 bank {base_rel} to compare with']
@@ -345,7 +346,8 @@ def _check_merged(ctx, merged, base_rel):
             errs.append(f'{tname}: merged has {len(m)} < XML2 {len(a)}')
             continue
         for i, e in enumerate(a):
-            if m[i].hashes != e.hashes:
+            if m[i].hashes != e.hashes and (tname == 'samples' or m[i].hashes != [merge_zsnd.shadow_key(
+                    os.path.basename(base_rel), '' if tname == 'sounds' else 't', i)]):
                 errs.append(f'{tname}[{i}]: key changed')
                 break
             if tname == 'sounds' and m[i].raw[:0x16] != e.raw[:0x16]:
