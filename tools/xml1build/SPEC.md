@@ -4549,6 +4549,28 @@ source wording. A counted objective reached native completion; its rendered disp
 secondary-objective rendering, act transitions and fresh-process save reload remain
 unverified. See `docs/issue-8-validation.md` for the test boundaries.
 
+## 48. STAT pickups grant an unspent attribute point (issue #10)
+
+The STAT item's activation now calls the companion xml2-fix addStatPoints function
+with _ACTIVATOR_ and one point. The player can choose which attribute to raise;
+the former fixed body boost is removed. Item identity, display/model references and
+pickup placement remain unchanged. The call is in the versioned API and is recognized
+by lint for both forced-team modes, like addSkillPoints.
+
+The engine function uses the same character-name resolver as addSkillPoints, then
+reads/writes the native saved attribute-point word at CStats+4+0x16 through the retail
+getter/setter. It does not change XP, levels, skill points or a fixed attribute.
+Amounts outside 1..20 and signed counter overflow are refused. The new function is
+appended to the registration table; existing function indices remain unchanged, and
+the total including native builtins is 318 of the engine's 320 names.
+
+Synthetic grant/amount/overflow tests and a native accessor test over a synthetic
+saved block cover the offline contract. A controlled original/candidate pickup test
+confirmed collector-only granting, unchanged XP/levels/skills and other heroes,
+fresh-process save persistence, and spending the point on Focus through the native
+stats screen. See `docs/issue-10-validation.md` for setup and limits. The builder requires the planned companion
+XML2 Fix 1.3.2 release; an old DLL cannot execute this new call.
+
 ## 49. Conversation speaker HUD-head residency (2026-10-04, issue #13)
 
 Issue #13: with forced parties disabled, a named speaker can be absent from both

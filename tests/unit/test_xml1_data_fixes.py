@@ -253,3 +253,15 @@ def test_pickup_items_go_before_the_xml1_equipment():
     assert [i.get('name') for i in added] == ['SKILL', 'STAT', 'RING']   # file order, the enhancement-free first
     top = inventory(374, [(i.get('name'), Z.item_enhancements(i)) for i in added])
     assert Z.enhancement_pool_cut(top, 375) == []          # the pickups load; RING's one enhancement is the 375th
+
+def test_stat_pickup_awards_a_spendable_point_only_to_its_collector():
+    z = zones_stub('xml1')
+    z.item_refs['stat'].add('synthetic_zone')
+    added, _ = z.items_to_add(list(ITEMS), set())
+    item = next(i for i in added if i.get('name') == 'STAT')
+    assert item.get('type') == 'item' and item.get('activateonpickup') == 'true'
+    assert item.get('onactivate') == "addStatPoints('_ACTIVATOR_',1)"
+    assert 'permanentStatBoost' not in ET.tostring(item, encoding='unicode')
+    from xml1build import common as C, scripts_transform as ST
+    assert 'addStatPoints' in C.XML2FIX_ALWAYS_FUNCS
+    assert ST.XML2FIX_API['addStatPoints'] == ('n', 'ai')
