@@ -46,6 +46,13 @@ own patch), and zones runs it on the world tables it merges itself, so every mod
    a shared combat event XML2's shipped table changed gets XML1's value (punch L1 = "4 5" instead of XML2's "2 3"),
    SPEC.md section 33; and convert_renderfx: XML1's ce_renderfx tint form -> XML2's add / remove="cloaked",
    SPEC.md section 31.
+5. Popup dialogs (files under dialogs/): XMen2.exe's popup loader (0x5ebfd0) skips every <dialog> whose platform
+   the platform test 0x4bd650 rejects: an empty or missing platform is accepted, a list (space / comma / tab
+   separated) only with a PC token; XML1's xbox / ps2 / gc variants are all skipped, so a file with only those
+   opens an empty panel (issue #50). convert_dialog_platforms gives each such dialog (per filter value, the
+   loader's second test at 0x5ec003) an untagged copy of its ps2 variant, else xbox, else the first: XML2's own
+   platform-split hints end with an untagged PC variant, which is word for word the ps2 text in 9 of the 10
+   that have a ps2 variant ("press", "analog stick": no Xbox trigger "pull"). The console variants stay as they were.
 """
 from __future__ import annotations
 
@@ -272,6 +279,10 @@ def convert(root, rel, weapon_models=None, x1_values=None):
     n = convert_haarp_fire_wall(root, rel)
     if n:
         c['haarp_fire_wall_loop_start'] += n
+    if is_dialog_rel(rel):
+        n = convert_dialog_platforms(root)
+        if n:
+            c['dialog_pc_variant_added'] += n
     if CE.is_style_rel(rel):
         c.update(CE.rewrite_style(root))
         c.update(CE.apply_x1_shared_values(root, x1_values))
@@ -331,6 +342,81 @@ def renderfx_x1_elements(root):
                 (any(k in a for k in RENDERFX_X1_ATTRS) or (a.get('remove') or '').strip().lower() == 'true'):
             out.append((el.tag, a.get('name')))
     return out
+
+
+# --------------------------------------------------------------------------------------------- dialogs (issue #50)
+# 0x4bd650 tokenises the platform value on space / comma / tab (separators at 0x68d618) and compares each
+# token with "PC" (0x68e9a0) through _stricmp; an empty value is accepted too. DIALOG_PC_SOURCES: the console variant copied when
+# none is accepted (see the module doc, item 5).
+DIALOG_PLATFORM_SEPARATORS = ' ,\t'
+DIALOG_PC_SOURCES = ('ps2', 'xbox', 'gc')
+
+
+def is_dialog_rel(rel):
+    r = str(rel).replace('\\', '/').lower().lstrip('/')
+    return r.startswith('dialogs/')
+
+
+def dialog_platform_accepted(value):
+    """XMen2.exe's platform test (0x4bd650) as a bool: no / empty platform or a list with a PC token."""
+    if value is None or value == '':
+        return True
+    tokens = ''.join(' ' if ch in DIALOG_PLATFORM_SEPARATORS else ch for ch in value).split()
+    return any(t.upper() == 'PC' for t in tokens)
+
+
+def _dialog_list(root):
+    """the <dialog> elements the popup loader walks: the children of a dialog_def (XML2's wrapper) or of the
+    several-roots wrapper, or a lone root dialog. Returns (parent or None, [dialog])."""
+    if root is None:
+        return None, []
+    if isinstance(root.tag, str) and root.tag.lower() == 'dialog':
+        return None, [root]
+    parent = root
+    for el in root:
+        if isinstance(el.tag, str) and el.tag.lower() == 'dialog_def':
+            parent = el
+            break
+    return parent, [el for el in parent if isinstance(el.tag, str) and el.tag.lower() == 'dialog']
+
+
+def _dialog_groups(dialogs):
+    """filter value -> the dialogs the loader can pick for it (0x5ec003: a dialog with no filter matches any)."""
+    filters = {(d.get('filter') or '') for d in dialogs} - {''} or {''}
+    return {f: [d for d in dialogs if (d.get('filter') or '') in ('', f)] for f in sorted(filters)}
+
+
+def dialog_platform_problems(root):
+    """[(filter value, [platforms])] of the dialog groups in which XMen2.exe accepts no variant (an empty panel)."""
+    _, dialogs = _dialog_list(root)
+    out = []
+    for f, group in _dialog_groups(dialogs).items():
+        if group and not any(dialog_platform_accepted(d.get('platform')) for d in group):
+            out.append((f, [d.get('platform') or '' for d in group]))
+    return out
+
+
+def convert_dialog_platforms(root):
+    """Give every dialog group with no accepted variant an untagged copy of its ps2 / xbox / first variant, placed
+    right after the group's last variant. Idempotent. Returns the number of variants added."""
+    import copy
+    parent, dialogs = _dialog_list(root)
+    added = 0
+    for f, group in _dialog_groups(dialogs).items():
+        if not group or any(dialog_platform_accepted(d.get('platform')) for d in group):
+            continue
+        by_platform = {(d.get('platform') or '').strip().lower(): d for d in reversed(group)}
+        src = next((by_platform[p] for p in DIALOG_PC_SOURCES if p in by_platform), group[0])
+        if parent is None:                      # a lone root dialog: it can only be made untagged itself
+            for k in [k for k in src.attrib if k.lower() == 'platform']:
+                del src.attrib[k]
+        else:
+            pc = copy.deepcopy(src)
+            for k in [k for k in pc.attrib if k.lower() == 'platform']:
+                del pc.attrib[k]
+            parent.insert(list(parent).index(group[-1]) + 1, pc)
+        added += 1
+    return added
 
 
 # --------------------------------------------------------------------------------------------- selftest
