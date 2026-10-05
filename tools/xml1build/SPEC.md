@@ -4478,3 +4478,30 @@ subtrees, ordering, idempotence, and a removed-head validator negative control.
 
 Generated packages change, so CONTENT_VERSION must advance at merge. The task
 coordinator owns that bump; this change intentionally leaves its value untouched.
+
+## Personal items (number assigned at merge)
+
+Issue #47: examining a bedroom item in the mansion's second-floor zones showed the zone's loading screen, and
+Wolverine's item a yellow/magenta panel. The first game's map entities call `personalItem('<hero>NN')` (36 names, in
+the `mansion*_2` zones). XMen2.exe's `personalItem` (0x49e570) opens the `personal` menu (PERSONAL_MENU), whose loader
+(0x5cedd0) reads `data/personal/<name>`: an `ITEM` with `texture` and `text`. Section 4.4 had kept X-Men Legends II's
+`Data/personal` (only a leftover `wolverine01`, naming a texture X-Men Legends II never shipped, drawn as the engine's
+default texture) and no `Textures/personal` existed, so a missing item left the menu manager's last image on screen.
+
+`frontend.write_personal_items` (both front ends; the items are in-zone data) writes every first-game
+`data/personal/*.eng` as `Data/personal/<name>.{XMLB,engb}` (schema conversion, text through `escape_menu_text`) and
+imports each item's texture IGB under the same name (`Textures/personal/*.IGB`, 36 files). X-Men Legends II's
+`wolverine01` is replaced. The menu (`UI/menus/personal`, `menu_personal.IGB`) stays X-Men Legends II's: it is the
+same PERSONAL_MENU as the first game's. This supersedes the "XML2's kept; deferred" entry for `personal/*` in 4.4,
+and with `--frontend xml2` the frontend module now writes these items (and nothing else).
+
+V-TBD (personal items) checks every `personalItem` literal in installed data and scripts: both halves of its data
+file are the frontend module's, have text without unescaped renderer codes, and name a texture whose IGB is in
+`<out>`.
+
+In game (xml2-fix 1.3.1): on main, Cyclops' first item showed the mansion loading screen and Wolverine's the
+yellow/magenta default texture; on the fixed build both show the first game's picture and close with the back key or
+the pad's B. Known gap: the item's text is not drawn. It is loaded (the word-wrapped text is in the game's memory
+while the menu is open), but no text box appears over the picture. Re-framing the menu IGB on X-Men Legends II's menu
+camera as done for the credits menus (21.2.1) did not draw it and hid the help line too, so it is not shipped; adding
+a text style to the text box or only moving the camera's near plane changed nothing. The cause is open.

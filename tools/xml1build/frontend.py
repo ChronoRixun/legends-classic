@@ -1,8 +1,8 @@
 """xml1build.frontend - XML1's front end, Danger Room and Review data on XMen2.exe (SPEC.md section 21;
 research/frontend/M2_DESIGN.md sections A, B, C).
 
-Runs after media (common.MODULE_ORDER). With --frontend xml2 it writes nothing (XML2's front end exactly as before
-SPEC 21). With --frontend xml1 (the default) it writes:
+Runs after media (common.MODULE_ORDER). With --frontend xml2 it writes only D (XML2's front end exactly as before
+SPEC 21). With --frontend xml1 (the default) it writes A-D:
 
   A. Main menu (M2_DESIGN A.4.6, fallback A3; the renamed back-nodes of the first cut drew no text):
      * UI/menus/x1_menu_main.IGB = XML1's ui/menus/menu_main.igb (the 3D logo, XML1's button layout and lights;
@@ -63,6 +63,16 @@ SPEC 21). With --frontend xml1 (the default) it writes:
      * UI/menus/review.{XMLB,engb}: XML2's REVIEW_PATHS_MENU without the Stats tab (option05_text, option05_focus;
        XML1's Review had no Stats, and XML2's lists its acts 1-5 from exe code); xml2-fix [Game] ReviewStats=0
        (REVIEW_STATS_KEY, written by tools/harness.py) makes the tab change wrap at 4 (SPEC 21.4.3).
+
+  D. Data/personal/<item>.{XMLB,engb} + Textures/personal/*.IGB (both front ends: in-zone data, issue #47): the
+     first game's 36 bedroom items (personalItem('<hero>NN') in the mansion *_2 zones; XMen2.exe's personalItem
+     0x49e570 opens the PERSONAL_MENU, whose loader 0x5cedd0 reads data/personal/<item>). XML2 shipped only one
+     leftover (wolverine01, naming a texture it never shipped: the engine's default texture was drawn) and no
+     Textures/personal, so every other item showed the last image the menu manager had set - the mansion's loading
+     screen. The ITEM schema is the same in both games (texture + text); the text is written with
+     escape_menu_text, the texture is XML1's IGB under the same name. UI/menus/personal and menu_personal.IGB stay
+     XML2's (the same PERSONAL_MENU as XML1's). Known gap (SPEC "Personal items"): XMen2.exe draws the item's
+     picture but not its text box - the text is loaded and word-wrapped in memory.
 
 Providers (pure, usable before / without run): dr_reward_items(ctx), translate_equipment(ctx, item),
 xp_curve(ctx), trivia_acts(ctx), review_entries(ctx), review_menu_trees(ctx), menu_plan(), igb_string_fields(data),
@@ -1293,6 +1303,55 @@ def review_menu_trees(ctx):
     return halves[0], halves[1], removed[0] if removed[0] == removed[1] else removed
 
 
+# ================================================================================================ D. personal items
+PERSONAL_DIR = 'data/personal'                     # XML1 assets/data/personal/<item>.eng; XMen2.exe 0x5cedd0
+PERSONAL_REL = 'Data/personal'
+
+
+def personal_texture_rel(value):
+    """an ITEM texture value ('textures/personal/cyc_1.png') -> its IGB name without extension, or None."""
+    t = C.norm(value or '')
+    if not t:
+        return None
+    return C.split_ext(t)[0] if C.split_ext(t)[1] in ('.png', '.igb', '.tga', '.bmp') else t
+
+
+def personal_items(ctx):
+    """[(item name, ITEM root, texture rel without extension)] for every XML1 data/personal/<item>.eng (English);
+    the text escaped for XMen2.exe's renderer (escape_menu_text), the XML1 schema conversion applied."""
+    out = []
+    for rel in ctx.x1_rels(PERSONAL_DIR + '/'):
+        stem, ext = C.split_ext(rel)
+        if ext != '.eng' or '/' in stem[len(PERSONAL_DIR) + 1:]:
+            continue
+        root = _x1(ctx, rel)
+        if root is None:
+            continue
+        ctx.x1_schema(root, rel)
+        for el in root.iter():
+            if el.get('text'):
+                el.set('text', escape_menu_text(el.get('text')))
+        tex = next((personal_texture_rel(el.get('texture')) for el in root.iter() if el.get('texture')), None)
+        out.append((stem[len(PERSONAL_DIR) + 1:], root, tex))
+    return out
+
+
+def write_personal_items(ctx):
+    """D: write every XML1 personal item and import its texture. Returns a report dict."""
+    rep = {'items': [], 'textures': collections.Counter(), 'problems': []}
+    for name, root, tex in personal_items(ctx):
+        _write_pair(ctx, f'{PERSONAL_REL}/{name}', root, f'XML1 personal item {name}')
+        rep['items'].append(name)
+        if tex is None:
+            rep['problems'].append(f'{PERSONAL_REL}/{name}: no texture')
+            continue
+        st = _import_texture(ctx, tex + '.igb', tex)
+        rep['textures'][st] += 1
+        if st not in ('present', 'written', 'kept_xml2'):
+            rep['problems'].append(f'{PERSONAL_REL}/{name}: texture {tex} ({st})')
+    return rep
+
+
 # ================================================================================================ run
 def _write_pair(ctx, rel_noext, root, why):
     """a localized data table: the same English tree in .XMLB and .engb (every XML1 import does this)."""
@@ -1314,6 +1373,15 @@ def _import_texture(ctx, x1_rel, out_noext):
 def run(ctx):
     mode = C.frontend_mode(ctx)
     ctx.set_count('frontend_xml1', int(mode == 'xml1'))
+    # ---- D. personal items (in-zone data: both front ends)
+    prep = write_personal_items(ctx)
+    for p in prep['problems']:
+        ctx.error(f'personal items: {p}')
+    ctx.set_count('personal_items', len(prep['items']))
+    for st, n in prep['textures'].items():
+        ctx.set_count(f'personal_textures_{st}', n)
+    ctx.note(f'personal items: XML1\'s {len(prep["items"])} Data/personal items (XML2\'s leftover wolverine01 '
+             f'replaced) and their Textures/personal IGBs ({dict(prep["textures"])})')
     if mode != 'xml1':
         ctx.note('--frontend xml2: XML2\'s main menu, intro, menu music, Danger Room and Review data are kept '
                  '(nothing written; SPEC 21 A/B fallback)')

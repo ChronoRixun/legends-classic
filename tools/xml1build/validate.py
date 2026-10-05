@@ -60,6 +60,8 @@ Checks (severity per SPEC 4.6: error = will not load or silently misbehaves; war
                 index counts equal, indices inside the blend palette, palette entries on skeleton bones, weights
                 summing to 1 (errors); every bone the skin's vertices use in the anim DB skeleton (skin / skeleton
                 mismatch: error, warning when the XML1 disc has it too); 1-2 blend weights noted
+  V-TBD personal items (SPEC "Personal items", validate_frontend.v_personal_items): every personalItem literal has
+                Data/personal/<item> from the first game (frontend), with text and a texture IGB in <out>
   V23 fight styles (SPEC 43, style_budget.validate): per converted zone the distinct style files of the permanent
                 packages, the zone package, its CHRB characters' packages and the worst four-hero party against
                 the registry the shipped ini asks xml2-fix for ([Limits] FightStyles, else XMen2.exe's 19): more
@@ -653,7 +655,8 @@ class Validator:
                                ('V21', 'skins', lambda ck: SK.validate(self, ck)),
                                ('V22', 'buoys', lambda ck: BY.validate(self, ck)),
                                ('V23', 'fight styles', lambda ck: SB.validate(self, ck)),
-                               ('V24', 'conversation portraits', self.conversation_portraits)):
+                               ('V24', 'conversation portraits', self.conversation_portraits),
+                               ('V-TBD', 'personal items', lambda ck: VF.v_personal_items(self, ck))):
             ck = Check(cid, title)
             self.checks[cid] = ck
             t0 = time.time()
