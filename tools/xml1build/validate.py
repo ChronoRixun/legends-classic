@@ -64,6 +64,9 @@ Checks (severity per SPEC 4.6: error = will not load or silently misbehaves; war
   V28 dialog platforms (SPEC 54, x1schema.dialog_platform_problems): every registered
                 Dialogs/ file has, for each filter value, a variant XMen2.exe's platform test (0x4bd650) accepts -
                 else the popup opens an empty panel (issue #50)
+  V29 codex icons (SPEC 55, validate_frontend.v_codex_icons): --frontend xml1:
+                UI/menus/codex (both halves) written by frontend, its MENU_ITEM_LISTCODEX without icons / icons_cols /
+                icons_rows and no mini_convo_icons precache
   V23 fight styles (SPEC 43, style_budget.validate): per converted zone the distinct style files of the permanent
                 packages, the zone package, its CHRB characters' packages and the worst four-hero party against
                 the registry the shipped ini asks xml2-fix for ([Limits] FightStyles, else XMen2.exe's 19): more
@@ -680,7 +683,8 @@ class Validator:
                                ('V25', 'harm loop startup', self.harm_loop_startup),
                                ('V26', 'fall kill volumes', self.fall_kill_volumes),
                                ('V27', 'voice lines', self.voice_lines),
-                               ('V28', 'dialog platforms', self.dialog_platforms)):
+                               ('V28', 'dialog platforms', self.dialog_platforms),
+                               ('V29', 'codex icons', lambda ck: VF.v_codex_icons(self, ck))):
             ck = Check(cid, title)
             self.checks[cid] = ck
             t0 = time.time()

@@ -4745,3 +4745,24 @@ record in memory, alongside the test pipe's popup state, not only from screensho
 read correctly with the keyboard and with a pad. Inherited wording that does not fit PC: the world-map tip names a
 PlayStation stick button and the grapple tip asks for an analog stick, which keyboard players do not have (X-Men
 Legends II's own PC automap hint has the same wording). Not changed: rewording game text is out of scope.
+
+## 55. Codex list without icons (issue #48)
+
+Issue #48: every first-game codex entry that is not a hero showed Cyclops' face. X-Men Legends II's
+`UI/menus/codex` list item (`MENU_ITEM_LISTCODEX`) has `icons="textures/ui/mini_convo_icons.png"` with an 8x8 grid,
+and the list draws for each entry the cell its stats' `textureicon` names. The port's heroes carry one; the first
+game's NPC stats have none (default.xbe has no such attribute), so they all drew cell 0. The first game's codex list
+was text only (no `icons` on its codex menus).
+
+`frontend.codex_menu_trees` writes `UI/menus/codex` (both halves, each from its own XML2 file) without the list's
+`icons`, `icons_cols` and `icons_rows` and without the `textures/ui/mini_convo_icons` precache; the list reads
+`icons` only when present (0x5c269e). `--frontend xml2` keeps XML2's menu. V29 (codex icons) checks that with
+`--frontend xml1` both halves are the frontend module's and draw no icon cells.
+
+In game (xml2-fix 1.3.1): on main, an NPC entry (Professor X, unlocked with `unlockCharacter` as staged setup) showed
+Cyclops' icon; on the fixed build the list shows no icons for heroes or that entry, and the highlight follows the
+keys. Without icons the entry text starts at the list's left edge while the focus bar keeps its old start, so the
+first letters of the focused entry sit left of the bar (reported, not changed). On both builds the 3D preview and
+the Details page stayed on the first entry after moving the selection with test-pipe keys or pad; this is not caused
+by the change and is not investigated here. Enemy entries were not reached in game: `unlockCharacter` did not list
+them.

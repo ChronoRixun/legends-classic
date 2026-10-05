@@ -707,3 +707,24 @@ def v17_review(v, ck):
             ck.error(f'{rel}: not XML2\'s review menu without its Stats tab (frontend.review_menu_trees)')
         else:
             ck.count('review_menu_ok')
+
+
+def v_codex_icons(v, ck):
+    """V29 (issue #48): with --frontend xml1 the codex menu (both halves) is the frontend module's, and its list
+    draws no icon cells - XML1's codex list was text only, and an entry without a stats textureicon draws cell 0."""
+    if C.frontend_mode(v.ctx) != 'xml1':
+        ck.note('--frontend xml2: XML2\'s codex menu kept (not checked)')
+        return
+    for ext in ('.XMLB', '.engb'):
+        rel = F.CODEX_MENU_REL + ext
+        root = _tree(v, rel)
+        if root is None:
+            ck.error(f'{rel}: missing or does not decode')
+            continue
+        if not _registered_by(v, rel, 'frontend'):
+            ck.error(f'{rel}: not written by the frontend module (XML2\'s list draws an icon cell per entry)')
+        for p in F.codex_icon_problems(root):
+            ck.error(f'{rel}: {p} (the list would draw mini_convo_icons cells; XML1\'s NPC entries all get cell 0)')
+        if not any((it.get('type') or '').upper() == F.CODEX_LIST_TYPE for it in root.iter('item')):
+            ck.error(f'{rel}: no {F.CODEX_LIST_TYPE} item')
+        ck.count('codex_menu_halves')
