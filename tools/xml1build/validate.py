@@ -60,11 +60,12 @@ Checks (severity per SPEC 4.6: error = will not load or silently misbehaves; war
                 index counts equal, indices inside the blend palette, palette entries on skeleton bones, weights
                 summing to 1 (errors); every bone the skin's vertices use in the anim DB skeleton (skin / skeleton
                 mismatch: error, warning when the XML1 disc has it too); 1-2 blend weights noted
-  V-TBD fall kill volumes: XML1 map lethal-touch boxes have boxcollision=true and smartent=false
+  V26 fall kill volumes (SPEC 52): XML1 map lethal-touch boxes have boxcollision=true and smartent=false
   V23 fight styles (SPEC 43, style_budget.validate): per converted zone the distinct style files of the permanent
                 packages, the zone package, its CHRB characters' packages and the worst four-hero party against
                 the registry the shipped ini asks xml2-fix for ([Limits] FightStyles, else XMen2.exe's 19): more
                 is an error (the hero seated last has no powers), exactly full a warning
+  V25 harm loops (SPEC 51): no delayed start-on ordinary harm loops that XML2 disables
 
 Inherited defects. Many findings are defects of the XML1 disc itself (a zone, conversation, dialog, script or
 sound bank XML1 references but never shipped; a line default.xbe already dropped). They are re-derived, not
@@ -342,6 +343,7 @@ class Scan:
         self.items = {}            # norm rel (data/items.*) -> root
         self.inv_items = {}        # norm rel -> [inventoryitem values]
         self.turret_mount = {}     # norm rel -> [(entity name, missing flags)] remapped scan turrets not fixed-mount
+        self.delayed_harm_loops = {}  # norm rel -> [(entity name, loop effect, firstact)]
         self.speakers = {}         # norm rel (conversations/) -> [(attr, %TOKEN%)]
         self.anim_enums = {}       # norm rel -> [(tag, attr, enum literal)]  animenum values + EA_* in any value
         self.zoneinfo_xtraction = {}   # norm rel (data/zoneinfo.*) -> [(zone, [attrs])] Xtraction network entries
@@ -502,6 +504,9 @@ class Validator:
                 tm = XS.turret_mount_problems(root)
                 if tm:
                     sc.turret_mount[n] = tm
+                loops = XS.delayed_harm_loops(root)
+                if loops:
+                    sc.delayed_harm_loops[n] = loops
                 if n.startswith('conversations/'):
                     sp = [(k, t) for el in root.iter() for k in SPEAKER_ATTRS for t in SPEAKER_RE.findall(el.get(k) or '')]
                     if sp:
@@ -662,7 +667,8 @@ class Validator:
                                ('V22', 'buoys', lambda ck: BY.validate(self, ck)),
                                ('V23', 'fight styles', lambda ck: SB.validate(self, ck)),
                                ('V24', 'conversation portraits', self.conversation_portraits),
-                               ('V-TBD', 'fall kill volumes', self.fall_kill_volumes)):
+                               ('V25', 'harm loop startup', self.harm_loop_startup),
+                               ('V26', 'fall kill volumes', self.fall_kill_volumes)):
             ck = Check(cid, title)
             self.checks[cid] = ck
             t0 = time.time()
@@ -905,7 +911,7 @@ class Validator:
         ck.set('turrets_not_fixed_mount', n_turrets)
 
     def fall_kill_volumes(self, ck):
-        """V-TBD: converted fall kill volumes must be active collision boxes."""
+        """V26: converted fall kill volumes must be active collision boxes."""
         sc = self.scan
         for n, volumes in sorted(sc.fall_kill_volumes.items()):
             if n in sc.twins or not self.is_x1_source((self.reg.get(n) or {}).get('source')):
@@ -925,6 +931,20 @@ class Validator:
                 if missing:
                     ck.error(f'{sc.files[n]["rel"]}: fall kill volume {name!r} lacks '
                              f'{", ".join(k + "=" + XS.FALL_KILL_FLAGS[k] for k in missing)}')
+
+    def harm_loop_startup(self, ck):
+        """V25 (SPEC 51): no dead ordinary harm loops."""
+        sc = self.scan
+        count = 0
+        for n, loops in sorted(sc.delayed_harm_loops.items()):
+            if n in sc.twins:
+                continue
+            for name, effect, delay in loops:
+                ck.error(f'V25: {sc.files[n]["rel"]}: entity {name!r} has loopfx={effect!r}, '
+                         f'loopfxstarton=true and firstact={delay!r}; the XML2 harm parser '
+                         'clears the loop-on bit (invisible hazard)')
+                count += 1
+        ck.set('dead_harm_loops', count)
 
     # ================================================================== V4 packages
     def v4_packages(self, ck):

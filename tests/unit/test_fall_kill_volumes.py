@@ -71,7 +71,7 @@ def check_fixture(folder, root, source='invented'):
         validator.reg[name] = dict(rel=name, owner='zones', source=source)
     validator.idx = SimpleNamespace(path=lambda name: folder / Path(name).name)
     validator.is_x1_source = lambda value: value == 'invented'
-    check = Check('V-TBD', 'fall kill volumes')
+    check = Check('V26', 'fall kill volumes')
     validator.fall_kill_volumes(check)
     return check
 

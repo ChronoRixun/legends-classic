@@ -4389,7 +4389,7 @@ The wall effect and its textures are present. Two engine behaviours hid it: the
 harm parser at 0x4396a0 clears the loop-on bit for positive firstact, and a running
 loop retains its old world placement after copyOriginAndAngles moves the entity.
 
-The exact HAARP exterior fire_wall definition gets firstact=0, keeping loopfxstarton
+The original fix gave the exact HAARP exterior fire_wall definition firstact=0, keeping loopfxstarton
 without entering XML2's smartfire damage mode. The wall is staged underground until
 its authored placement script moves it. This advances its initialization from the
 original one-second delay; placement timing, damage fields and the normal non-smart
@@ -4412,6 +4412,9 @@ floating damage values. Both completed the matching contact/exit sequence at 57 
 from 90. This is an isolated hazard/placement test, not a full campaign playthrough
 or a precise rate benchmark. Local captures and state records are retained outside Git;
 see docs/issue-12-validation.md. Extinguishing and save/reload remain separate checks.
+
+The general harm-loop conversion below (SPEC 51) supersedes
+the name/path restriction on startup. The relocation script handling remains necessary.
 
 ## 49. Conversation speaker HUD-head residency (2026-10-04, issue #13)
 
@@ -4479,7 +4482,64 @@ subtrees, ordering, idempotence, and a removed-head validator negative control.
 Generated packages change, so CONTENT_VERSION must advance at merge. The task
 coordinator owns that bump; this change intentionally leaves its value untouched.
 
-## Fall kill volumes (number assigned at merge)
+## 51. Ordinary harm-loop startup (issue #12)
+
+`x1schema.convert_harm_loop_start` runs after entity class remapping on every
+imported XML1 tree. An entity qualifies when its class is affectableharment,
+loopfx is nonempty, loopfxstarton is true, and firstact is a finite positive
+number. Absent or explicitly false smartfire uses the ordinary harm path;
+enabled or unrecognized explicit smartfire configurations are retained.
+No entity name, map path or effect-name whitelist is used. In particular,
+non-fire loops with the same engine failure qualify too.
+
+The conversion sets only firstact to zero and records `harm_loop_start` in the
+schema change log. This includes the HAARP walls previously handled by SPEC 45.
+Their hide/move/show script wrappers are unchanged: starting a loop correctly
+does not fix its old world position after script relocation.
+
+The second failure is handled by a source-derived script pass: named instances
+of start-on, non-smart harm loops are collected from source map definitions,
+scoped to the matching maps/scripts directory. Their literal
+copyOriginAndAngles calls get hide/move/show wrappers. A preceding act of the
+same entity stays after hide and before move; move-only calls gain no act.
+Existing SPEC 45 blocks remain byte-identical. Names that also identify an
+unrelated instance in the same namespace fail conversion if moved. Authored-off
+loops and explicitly invisible definitions do not qualify. This does not infer
+dynamic targets or cross-directory script contexts. The current source inventory
+adds wrappers for six NYC placements, two Hive placements and three HAARP
+interior placements; the six existing HAARP exterior scripts remain unchanged.
+The extra script statements are checked by the existing script-pool validator.
+
+A controlled current-main NYC test confirmed this separate relocation failure
+on a fire with an empty firstact: the loop was invisible after relocation from
+underground and became visible after hide/show. This does not establish that
+every report of a fire appearing after circling has the same cause.
+
+XML1's action parser reads loopfxstarton at 0x28c66 independently of firstact
+at 0x28d32. The latter schedules an activation via 0x277e0 and the first-act
+callback at 0x27550. XML1's harm parser at 0x7c440 does not clear the loop bit.
+XML2's harm parser at 0x4396a0 clears the authored loop-on bit at 0x4399d9 when
+firstact is positive. Zero bypasses that branch. The builder therefore loses
+the initial activation delay (one second in the matching source definitions):
+damage can begin earlier, and the phase of repeated activations can shift.
+Damage values, repeat delays, contact settings, reaction powers, health and
+death scripts remain authored. Enabling smartfire is not a substitute: it
+selects a different damage scheduler (SPEC 45).
+
+A future, guarded XML2 Fix change could preserve the authored loop bit while
+retaining the delayed activation. It needs separate evaluation of the preceding
+disable call, smartfire/on-off timers, extinction and save/load, including XML2
+retail content. This builder change neither implements nor requires that patch.
+
+V25 independently scans decoded registered output for remaining ordinary harm
+entities in the dead form, failing with the file, entity, effect and delay.
+Identical XMLB/engb twins are reported once. Synthetic tests use invented hazard
+names and effects, cover remapped classes, explicit false smartfire, unrelated
+classes, authored-off loops, missing/malformed/zero/negative delays and idempotence.
+Runtime evidence and its limitations are recorded in docs/issue-12-validation.md. CONTENT_VERSION
+stays 11 for the unreleased content revision.
+
+## 52. Fall kill volumes (issue #22)
 
 Issue #22: XML1's lethal touch boxes survive conversion, but a hero can land alive
 inside one and become trapped outside the playable area. Keep the designers'
@@ -4515,7 +4575,7 @@ a hero alive there. With both flags, a real double jump killed Wolverine with a
 Experimental XMLB writes must use `common.encode_xmlb`: unsorted attributes
 invalidate the engine's binary-search lookups and any resulting mechanism claim.
 
-V-TBD checks registered XML1-sourced map outputs for matching volumes missing
+V26 checks registered XML1-sourced map outputs for matching volumes missing
 either flag; identical localized twins are counted once. Deferred volumes are
 reported separately, and adding either enabling flag to one is an error. Its number is assigned
 at merge. Synthetic tests cover preservation of multiple instance bounds and
@@ -4537,7 +4597,7 @@ solo lure was navigation-limited and is not additional combat proof.
 The initial PR output contained 32 matching definitions and 41 instances across 30
 converted zones. Comparison of all 198 map trees found only the intended flag
 changes (32 smartent attributes, 31 boxcollision attributes; one box already
-had collision). V-TBD counted all 32 definitions once across localized twins;
+had collision). V26 counted all 32 definitions once across localized twins;
 full build validation and the zones self-test passed.
 
 The reduced two-flag configuration also passed a staged flat-floor on-foot
