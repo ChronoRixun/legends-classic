@@ -20,7 +20,8 @@ Checks (severity per SPEC 4.6: error = will not load or silently misbehaves; war
   V4 packages   every entry of every registered PKGB resolves; zone packages have zonexml/characters/boy/map;
                 characters/zones packages carry no unmapped XML1 skin / anim DB / HUD / loading / style name
   V5 stats      herostat/npcstat caps and cross-references (XML1-origin = error, XML2-origin = warn); XML1-origin
-                skin/characteranims/powerstyle equal the mapped XML1 values; every XML1-sourced data file is
+                skin/characteranims/powerstyle equal the mapped XML1 values; a gun-armed XML1 entry has its gun's
+                fighting style as its only one (SPEC 57, issue #52); every XML1-sourced data file is
                 idempotent under C.map_attr (no unmapped reference); every XML1 character-namespace IGB exists under
                 its mapped name with the in-IGB rename done
   V6 zones      per converted zone: CHRB/spawner names, world, zonescript, soundfile + banks, links, zoneinfo, owner
@@ -99,6 +100,7 @@ from pathlib import Path
 from . import common as C
 import xmlb                                   # noqa: E402  tools/xmlb.py
 from .lib import x1names                      # noqa: E402  the XML1 namespace (was research/characters)
+from .lib.x1names import is_fightstyle_name   # noqa: E402  fightstyle_* / x1_fightstyle_* (issue #52)
 from . import validate_script as VS
 from . import validate_sound as VSND
 from . import x1schema as XS
@@ -111,6 +113,7 @@ from . import buoys as BY
 from . import automaps as AM             # V20 (SPEC 26): XML1 automaps as .zam
 from . import skins as SK                # V21 (SPEC 25): skin blend weights / skeleton against the anim DB
 from . import style_budget as SB         # V23 (SPEC 43): the fighting / power style registry per zone
+from . import weapons as W              # V5 (SPEC 57, issue #52): a gun-armed entry carries its gun's fighting style
 
 MAX_REPORTED = 50                             # per check and severity, into ctx.error / ctx.warn
 CONTENT_OWNERS = tuple(C.MODULE_ORDER)        # characters, scripts, zones, media
@@ -378,6 +381,7 @@ class Validator:
         self._zoneinfo = None
         self._zone_ids = None
         self._x1checker = None
+        self._x1weapons = None
         self._obj_refs = collections.defaultdict(set)      # objective name -> files (XML1 code)
         self._act_refs = collections.defaultdict(set)      # setCurrentAct literal -> files (XML1 code)
         self._x1_zone_set = None
@@ -661,6 +665,18 @@ class Validator:
                     d[(el.get('name') or '').lower()] = (f, el)
             self._x1stats = d
         return self._x1stats
+
+    def x1_weapons(self):
+        """XML1 weapons: lower name -> {lower attr: value} from data/weapons/weapons.eng ({} when unreadable)."""
+        if self._x1weapons is None:
+            try:
+                root = self.ctx.read_x1_xml('data/weapons/weapons.eng')
+            except KeyError:
+                root = None
+            self._x1weapons = {} if root is None else {
+                w.get('name').lower(): {k.lower(): v for k, v in w.attrib.items()}
+                for w in root.iter() if w.tag.lower() == 'weapon' and w.get('name')}
+        return self._x1weapons
 
     # ------------------------------------------------------------------ running / reporting
     def run_all(self):
@@ -1247,6 +1263,15 @@ class Validator:
             if origin == 'xml1':
                 for m in self._namespace_problems(el, x1[name][1] if name in x1 else None):
                     ck.error(f'{fname}:{el.get("name")} (xml1): namespace: {m}')
+                # V5 (SPEC 57, issue #52): a gun-armed entry carries its gun's fighting style instead of its own
+                wname = (x1[name][1].get('weapon') or '').strip().lower() if name in x1 else ''
+                if wname:
+                    fs = [t.get('name') or '' for t in el if t.tag == 'talent'
+                          and is_fightstyle_name(t.get('name'))]
+                    for m in W.fightstyle_problems(fs, self.x1_weapons().get(wname), C.map_fightstyle):
+                        ck.error(f'{fname}:{el.get("name")} (xml1): fighting style: {m}')
+                    if W.gun_fightstyle(self.x1_weapons().get(wname)):
+                        ck.count('gun_entries_with_weapon_fightstyle')
             xe = xmlb_by.get(name)
             if xe is not None:
                 for a in ('skin', 'characteranims', 'powerstyle', 'sounddir', 'moveset1'):
@@ -1469,7 +1494,7 @@ class Validator:
                 tn = (c.get('name') or '').lower()
                 if tn and tn not in shared_t and tn not in own_t:
                     out.append(('soft', f'talent {tn!r} is neither in shared_talents nor in data/talents/{name}'))
-                if tn.startswith('fightstyle_') and not (self.exists(f'data/fightstyles/{tn}.xmlb') or
+                if is_fightstyle_name(tn) and not (self.exists(f'data/fightstyles/{tn}.xmlb') or
                                                         self.exists(f'data/fightstyles/{tn}.engb')):
                     out.append(('soft', f'fightstyle talent {tn}: Data/fightstyles/{tn} missing'))
             elif c.tag.lower() == 'bolton':
@@ -3013,7 +3038,7 @@ class Validator:
                 flee.append(name)
             team = (el.get('team') or '').strip().lower()
             fs = [t.get('name') for t in el.iter() if t.tag.lower() == 'talent'
-                  and (t.get('name') or '').lower().startswith('fightstyle_')]
+                  and is_fightstyle_name(t.get('name'))]
             if team in self.NONCOMBAT_TEAMS and fs:
                 inert.append((name, fs[0]))
         ck.set('x1_npcs_willflee', len(flee))

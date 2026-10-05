@@ -4793,3 +4793,84 @@ the pad's B. Known gap: the item's text is not drawn. It is loaded (the word-wra
 while the menu is open), but no text box appears over the picture. Re-framing the menu IGB on X-Men Legends II's menu
 camera as done for the credits menus (21.2.1) did not draw it and hid the help line too, so it is not shipped; adding
 a text style to the text box or only moving the camera's near plane changed nothing. The cause is open.
+
+## 57. Gun soldiers fight in their gun's style (issue #52)
+
+### The gap
+
+The HAARP, nuclear-plant and Weapon X rifle guards stood in the unarmed villain idle with the rifle bolted to a raised
+fist, and the muzzle flash and shots came from above the head. The GRSO rifle soldiers held the gun up in one hand
+with the other arm spread. Two things combined:
+
+- XML1 (default.xbe) replaces the holder's selected fighting style with the weapon's while it is armed: spawn's
+  weapon assignment (0x327A0) installs it in fighting-style slot 1 (0xED300 / 0xED390), and 0x30890 overwrites
+  animation slot 1 with its animations. XML1's character bundles agree: the HAARP, nuclear-plant, Weapon X and police
+  bundles list only `fightstyle_gun_rifle`, never the `fightstyle_villain` of their stats entries (melee holders
+  likewise list only their weapon's style). The port added the weapon's style only when the entry had none, and
+  XMen2.exe uses one fighting-style talent per character (the lowest talent id, 0x43B0A0). So seven entries kept
+  `fightstyle_villain`: HAARPSoldier, HAARPFlamethrower, HAARPLeader, NukeGuard, WeapXGuard, WeapXGuardLeader,
+  Police.
+- The port shipped X-Men Legends II's `fightstyle_gun_rifle` anim DB (13 animations). The first game's has 22; idle,
+  attack_light1 / heavy1 and the fire moves power_1 / 3 / 5 / 10-12 are only in the first game's. The GRSO entries,
+  which did get the rifle talent, therefore had no rifle idle and no fire animation either. `fightstyle_gun_hip` has
+  the same 21 animations in both games.
+
+### What the builder does
+
+- `weapons.gun_fightstyle`: the style a gun (bullet / beam / flame / projectile) names. `characters.convert_stats`
+  drops the entry's fighting-style talents for such a gun and gives it the gun's (count
+  `fightstyles_replaced_by_gun`, 7). Melee weapons are unchanged: they still add their style only when the entry
+  has none (what XML1 does for them is the same replacement; not changed here).
+- `x1names.X1_OWN_FIGHTSTYLES = {fightstyle_gun_rifle}`: `map_fightstyle` and `map_animdb` give it `x1_`, so the
+  first game's style file, anim DB and shared talent ship as `x1_fightstyle_gun_rifle`, and every character, zone
+  and style package entry that named the rifle style follows through the existing mapping. `map_attr` maps a fighting
+  style's `animations=` like `characteranims`, and the style file's root `name` follows the file.
+  `is_fightstyle_name` (`fightstyle_*` or `x1_fightstyle_*`) replaces the prefix tests of the shared-talent keep rule,
+  the validator, the actor budget and the self-test. The keep list swaps `fightstyle_gun_rifle` (named by nothing
+  now) for `x1_fightstyle_gun_rifle`: still 61 shared talents.
+- 15 stats entries change (the 7 above and the 8 GRSO rifle entries, whose talent becomes the `x1_` name); 56
+  packages change only by the rename, and the style's own package is new. Budgets, per zone against the build of main: IGB cache (`igb_budget.py check`),
+  actor slots (V13) and the fight-style registry (V23) are unchanged in every one of the 198 zones: the packages
+  already listed the rifle style, and the villain style was in none of these soldiers' packages.
+- Validator V5: an XML1-origin entry whose XML1 weapon is a gun that names a style must carry exactly that
+  style (mapped) as its only fighting-style talent (`weapons.fightstyle_problems`; 20 entries checked). Run
+  offline against main's output it reports 15 entries; against this branch's, none.
+
+### In game (harness, windowed, XML2 Fix 1.3.1, own pipe, 2026-10-04)
+
+Negative control = the build of main; fix = this branch. Wolverine level 1 (90 HP), vulnerable, from a new game.
+haarp_ext04: the hero is put at `generator_fence_ha03` and steps out with one real 0.6 s key press (the spot itself
+is inside the generator box, where nothing could see him: 0 damage in 40 s), then stands for 40 s next to the two
+mp5 soldiers; HP read through the pipe at the observer's ~0.13 s sample rate. To keep him alive he is healed when low
+(staged: `restoreHealth` below 30 in the first four main and first three fix runs, `setHealth` to 90 below 45 in the rest).
+Left out: one run per build with screenshots every 0.5 s (slower sampling; 4.20 and 4.81 HP/s), one fix run where the
+hero died under the first heal method, one main run started while my other game still served the same pipe.
+
+| | main | fix |
+|---|---|---|
+| pose | villain idle, rifle in a raised fist, flash above the head | rifle held level in both hands, flash and shells at the gun |
+| damage per hit | 4.0-5.0 (mean 4.53, 248 hits) | 4.0-5.0 (mean 4.47, 283 hits) |
+| HP per second, 7 runs of 40 s | 5.26 mean (2.61-6.75) | 6.62 mean (5.89-8.51) |
+| bursts | 5-6 hits spread over 0.5-0.7 s; never 6+ hits within 0.5 s | 7 hits within 0.36-0.40 s (3-4 samples; once in one sample), stacked damage numbers |
+
+The burst against the first game's data (`ps_grso` power_boost): 7 shots of L1 (4-5) at 0.30-0.74 of `ea_power1`,
+whose animation is 0.20 s and plays at playspeed 0.125 (1.6 s), i.e. 0.48-1.18 s into the move, about 0.11 s apart,
+about 0.5 s from first to last. The fix lands 7 hits in 0.36-0.40 s of samples, consistent with that. The playspeed
+is honoured: with power_boost set to playspeed 1 in the fix build (staged edit, restored afterwards) no cluster above
+4 hits appeared in 2 runs. Damage per shot is the first game's in both builds. The higher HP per second comes from
+bursts that now play out in full; how often a soldier fires is still XML2's AI cadence (`aitype` / `aireusetime 3`,
+section 29), not XML1's weapon timing (`bursttime`, `recoiltime`), so the absolute rate is not established as the
+first game's.
+
+Also seen: GRSO mp5 soldiers in sewers3_1_1 (main: gun up in one hand, other arm spread; fix: rifle level, firing,
+stacked hits), the nuclear plant guards in nuke1_1 (main: villain stance, guns above the head; fix: rifle level,
+tracers, sparks on the hero), the HAARP flamer in haarp_ext01 now in the hip style (flame hits 18 every ~4 s, as in
+section 29). Police in nyc_fb2 keep their own idle (58_police's idle wins over the style's); they did not fight
+there. Not reached: Weapon X guards, laser / nullifier / lightning / freeze / knockback holders, police firing.
+
+Unchanged by construction (identical output files and stats entries against main): melee holders (HAARPSoldierMelee,
+NukeGuardMelee, WeapXGuardMelee, the GRSO batons and gloves), Mystique (no weapon on her entry; her style is
+unchanged), the scan-turret props (no entity file changes).
+
+Tests: `tests/unit/test_gun_fightstyles.py` (invented weapons, styles and entries: the gun rule, melee and unarmed
+entries, the `x1_` mapping of style, anim DB, `animations=` and package entries, the validator rule).

@@ -12,6 +12,14 @@ build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebui
   asks for, and they win over the second game's in the shared voice bank. A new check (V27) verifies every voice
   line. The sound prepare stage reruns once.
 
+- **Fixed: rifle soldiers stood unarmed with the gun stuck to a fist** (issue #52, part). The HAARP, nuclear-plant,
+  Weapon X and GRSO rifle soldiers now hold their rifles level and fire from the gun, with the first game's
+  idle, fire and crouch-fire animations, and their full 7-shot bursts play. Damage per shot is unchanged (4-5); at
+  the HAARP exterior two soldiers now take about 6.6 HP per second from a standing hero instead of about 5.3, because
+  their bursts land in full. As in the first game, an enemy's gun now replaces its own fighting style (the HAARP
+  flamethrowers and leaders fight in the hip-gun style). A new check reports a gun-armed enemy without its gun's
+  style.
+
 - **Fixed: invisible fires beyond HAARP's exterior walls** (issue #12): restore
   delayed start-on harm loops across imported content, including NYC, the Arbiter
   and sewers, and restart source-identified loops after scripted relocation.
