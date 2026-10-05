@@ -3395,6 +3395,45 @@ Magma, missile launchers, Mystique, Pyro, Sentinel grenades, and Shades. All nin
 now load their own style. Both projectile variants explicitly carry the projectile attack category.
 This is final-file validation, not a claim that projectile contact behavior has been playtested.
 
+### 29.3 Weapon events a style names itself: Mystique's pistols (issue #52)
+
+**Symptom (tester, builder 0.1.7).** In the first level (nyc/alison/nyc1_1_2b) Mystique's pistol attacks showed no
+bullets and did no damage.
+
+**Cause.** Section 29 rewrites only triggers literally named `weapon_fire`, and only in the variant styles of stats
+entries that carry a weapon. XML1's ps_mystique arms itself instead: two style events `left_gun` / `right_gun`
+inherit `weapon_fire` and name `weapon="wp_myst_pistol"` (the left one also `boltselect="Bip01 L Hand"`); her stats
+have no weapon. The 16 triggers of her two gun moves name those events, so in XMen2.exe every one resolved to the
+sound class (`ce_atk_weap`, section 29) and did nothing. No other XML1 style does this (ps_mastermold_two's gun events
+already inherit `beam`).
+
+**Fix.** `weapons.rewrite_weapon_events`, called by `characters._style_patch` on every converted style before the
+references are mapped: an `<event>` (root or move level) whose inherit chain reaches `weapon_fire` and names a
+bullet / beam weapon becomes a `beam` event with that weapon's data, exactly as `shot_triggers` builds a shot
+(`beambolt` = the event's `boltselect`, else the weapon's `actorbolt`; tracer, impact, damage code, range,
+`damageMod`). Event names stay, so no move gains a trigger for its shots; the weapon's muzzle flash + fire sound
+(`effect_sound`) go on the first shots of a move while it stays within 19 triggers (both of her gun moves have 17:
+the first left and the first right shot get them). Projectile / flame weapons named this way are counted and left
+(none on the disc). Count `weapon_events_to_beam` (2), report `detail['weapon_events']`.
+
+Validator (in V5): a stats entry's power style must not fire `weapon_fire` - through an event naming a weapon,
+or by name when the entry's XML1 weapon is a gun (error); a melee weapon is a warning (NukeGuardMelee: ps_grso with
+wp_baton, what XML1 did is not established); no weapon is allowlisted. On the unfixed output it reports Mystique's
+16 triggers (weapon_fire_left run offline on the main build's x1_ps_mystique, the style of MystiqueAct1 / Act2sim / Act3).
+
+**Verified in game (build of this branch vs main, harness pipe, Wolverine standing still, HP read through the test
+pipe every ~0.1 s, 60 s each, nyc1_1_2b: spawner acted, mystique_fight_start, myst_wp_none).** Main: 7 HP drops, all
+9.3-11.0 (her grenade, below); no 4-5 hits. This branch: muzzle flashes alternate between her two hands, tracers run
+to Wolverine with impact sparks and floating "5"s; 8 single hits of 4.2-4.6 (XML1's L1 = 4-5) plus 3 drops of
+9.2-10.2. Fewer hits than shots (6 per power_attack burst): not every shot of a burst connects, and hits closer
+together than a sample merge.
+
+**Her grenade (the same report: "showed its area and had no effect") is not reproduced.** On main, a standing
+Wolverine took 9.3-11.0 per explosion (7 in 60 s; the explosion and a floating "11" are in the frame), which is the
+spawn trigger's damage (L2 = 9-11, `usedamageasexplodeonly`). Neither research hypothesis (only the death effect
+plays; the attack data filters heroes) holds for a hero inside the radius (52). A hero who moves away from the
+landing spot is not hurt, as in XML1. Nothing changed.
+
 ---------------------------------------------------------------------------------------------------------------
 
 ## 30. XML1's inline NPC immunity talents as shared powerup talents (2026-10-01, combat audit G1)
@@ -4389,7 +4428,7 @@ The wall effect and its textures are present. Two engine behaviours hid it: the
 harm parser at 0x4396a0 clears the loop-on bit for positive firstact, and a running
 loop retains its old world placement after copyOriginAndAngles moves the entity.
 
-The exact HAARP exterior fire_wall definition gets firstact=0, keeping loopfxstarton
+The original fix gave the exact HAARP exterior fire_wall definition firstact=0, keeping loopfxstarton
 without entering XML2's smartfire damage mode. The wall is staged underground until
 its authored placement script moves it. This advances its initialization from the
 original one-second delay; placement timing, damage fields and the normal non-smart
@@ -4412,6 +4451,9 @@ floating damage values. Both completed the matching contact/exit sequence at 57 
 from 90. This is an isolated hazard/placement test, not a full campaign playthrough
 or a precise rate benchmark. Local captures and state records are retained outside Git;
 see docs/issue-12-validation.md. Extinguishing and save/reload remain separate checks.
+
+The general harm-loop conversion below (SPEC 51) supersedes
+the name/path restriction on startup. The relocation script handling remains necessary.
 
 ## 49. Conversation speaker HUD-head residency (2026-10-04, issue #13)
 
@@ -4479,7 +4521,232 @@ subtrees, ordering, idempotence, and a removed-head validator negative control.
 Generated packages change, so CONTENT_VERSION must advance at merge. The task
 coordinator owns that bump; this change intentionally leaves its value untouched.
 
-## Codex list without icons (number assigned at merge)
+## 51. Ordinary harm-loop startup (issue #12)
+
+`x1schema.convert_harm_loop_start` runs after entity class remapping on every
+imported XML1 tree. An entity qualifies when its class is affectableharment,
+loopfx is nonempty, loopfxstarton is true, and firstact is a finite positive
+number. Absent or explicitly false smartfire uses the ordinary harm path;
+enabled or unrecognized explicit smartfire configurations are retained.
+No entity name, map path or effect-name whitelist is used. In particular,
+non-fire loops with the same engine failure qualify too.
+
+The conversion sets only firstact to zero and records `harm_loop_start` in the
+schema change log. This includes the HAARP walls previously handled by SPEC 45.
+Their hide/move/show script wrappers are unchanged: starting a loop correctly
+does not fix its old world position after script relocation.
+
+The second failure is handled by a source-derived script pass: named instances
+of start-on, non-smart harm loops are collected from source map definitions,
+scoped to the matching maps/scripts directory. Their literal
+copyOriginAndAngles calls get hide/move/show wrappers. A preceding act of the
+same entity stays after hide and before move; move-only calls gain no act.
+Existing SPEC 45 blocks remain byte-identical. Names that also identify an
+unrelated instance in the same namespace fail conversion if moved. Authored-off
+loops and explicitly invisible definitions do not qualify. This does not infer
+dynamic targets or cross-directory script contexts. The current source inventory
+adds wrappers for six NYC placements, two Hive placements and three HAARP
+interior placements; the six existing HAARP exterior scripts remain unchanged.
+The extra script statements are checked by the existing script-pool validator.
+
+A controlled current-main NYC test confirmed this separate relocation failure
+on a fire with an empty firstact: the loop was invisible after relocation from
+underground and became visible after hide/show. This does not establish that
+every report of a fire appearing after circling has the same cause.
+
+XML1's action parser reads loopfxstarton at 0x28c66 independently of firstact
+at 0x28d32. The latter schedules an activation via 0x277e0 and the first-act
+callback at 0x27550. XML1's harm parser at 0x7c440 does not clear the loop bit.
+XML2's harm parser at 0x4396a0 clears the authored loop-on bit at 0x4399d9 when
+firstact is positive. Zero bypasses that branch. The builder therefore loses
+the initial activation delay (one second in the matching source definitions):
+damage can begin earlier, and the phase of repeated activations can shift.
+Damage values, repeat delays, contact settings, reaction powers, health and
+death scripts remain authored. Enabling smartfire is not a substitute: it
+selects a different damage scheduler (SPEC 45).
+
+A future, guarded XML2 Fix change could preserve the authored loop bit while
+retaining the delayed activation. It needs separate evaluation of the preceding
+disable call, smartfire/on-off timers, extinction and save/load, including XML2
+retail content. This builder change neither implements nor requires that patch.
+
+V25 independently scans decoded registered output for remaining ordinary harm
+entities in the dead form, failing with the file, entity, effect and delay.
+Identical XMLB/engb twins are reported once. Synthetic tests use invented hazard
+names and effects, cover remapped classes, explicit false smartfire, unrelated
+classes, authored-off loops, missing/malformed/zero/negative delays and idempotence.
+Runtime evidence and its limitations are recorded in docs/issue-12-validation.md. CONTENT_VERSION
+stays 11 for the unreleased content revision.
+
+## 52. Fall kill volumes (issue #22)
+
+Issue #22: XML1's lethal touch boxes survive conversion, but a hero can land alive
+inside one and become trapped outside the playable area. Keep the designers'
+boxes; do not infer a global floor height or replace the harm entity with script
+triggers.
+
+`x1schema.convert_fall_kill_volumes` applies only to map entities with the XML1
+lethal-touch signature: `affectableharment`, `damage="32000"`,
+`damagetype="dmg_direct"`, `actontouch="true"`, `nocollide="true"`. Matching is
+independent of entity names except for the specific deferred pair below. After normal class conversion, set
+`boxcollision="true"` and `smartent="false"`, the collision and residency flags
+used by XML2's native fall kill volumes. Preserve every other attribute and all
+instances, including bounds, positions, orientations, damage modifiers, targeting
+flags, and activation scripts. Ordinary fire/damage hazards and non-map entities
+are outside this rule. The conversion is idempotent and reports
+`fall_kill_volumes` in the schema counters.
+
+Source evidence: these volumes specify lethal direct damage without a hero-only
+team filter; some also invoke a script that hides the activator. Retaining the
+harm class, damage, and script preserves that authored behavior as far as the
+source data establishes it. Original Xbox runtime behavior for AI allies and
+knocked-in enemies has not been independently tested. No new hero-only targeting,
+invulnerability bypass, damage multiplier, or lethal script call is introduced.
+
+Runtime mechanism controls used the released xml2-fix 1.3.1. An unchanged native
+kill definition in a staged flat-corridor box killed a walking hero without a
+fall. Native `dmgmod_kill` can produce health near -1,000,000, so that number alone
+cannot distinguish a volume hit from the engine's void-fall handler. A HAARP
+negative control left Magma alive on the ravine floor after a real double jump
+and unable to return under movement input. Adding boxcollision alone still left
+a hero alive there. With both flags, a real double jump killed Wolverine with a
+32,000-point health loss. Teleports were setup only, not evidence of touch entry.
+Experimental XMLB writes must use `common.encode_xmlb`: unsorted attributes
+invalidate the engine's binary-search lookups and any resulting mechanism claim.
+
+V26 checks registered XML1-sourced map outputs for matching volumes missing
+either flag; identical localized twins are counted once. Deferred volumes are
+reported separately, and adding either enabling flag to one is an error. Its number is assigned
+at merge. Synthetic tests cover preservation of multiple instance bounds and
+activation scripts, class remapping, unrelated hazards, idempotence, sorted
+binary output, and validator negative controls for each flag. CONTENT_VERSION
+remains 11 under the maintainer's unreleased-version instruction.
+
+The generated build was also checked with Magma and Wolverine at HAARP (real
+jump input after position setup), and with Wolverine at `mount/mount/mount2`.
+The mountain negative control reached the engine void limit; the converted box
+instead dealt the original 32,000 damage inside its authored bounds. At HAARP,
+Iceman formed the ice bridge through power input, and Wolverine walked across
+with three AI teammates following; all four retained full health. Ordinary
+combat with existing enemies on the bridge approach likewise left the party
+alive. These are bounded harness checks, with scripted party/position setup,
+not a complete campaign or saved-game playthrough. An attempted closer-edge
+solo lure was navigation-limited and is not additional combat proof.
+
+The initial PR output contained 32 matching definitions and 41 instances across 30
+converted zones. Comparison of all 198 map trees found only the intended flag
+changes (32 smartent attributes, 31 boxcollision attributes; one box already
+had collision). V26 counted all 32 definitions once across localized twins;
+full build validation and the zones self-test passed.
+
+The reduced two-flag configuration also passed a staged flat-floor on-foot
+control: Wolverine lost exactly 32,000 HP at Z=0.16, with no fall.
+
+### Review follow-up: deferred flooded-room volume (issue #5)
+
+Leave only `kill_target` in `maps/arbiter/a_int/arb3_4` in its original form.
+`FALL_KILL_DEFERRED` identifies an exact map stem and entity name; other lethal
+entities in that map and same-name entities in other maps still receive the fix.
+This leaves 31 enabled definitions in 29 converted zones, with one definition
+explicitly deferred. No bounds, damage values or unrelated hazards change.
+
+Four-hero runtime review reproduced a regression: the player crossed a
+player-created ice bridge safely, while AI Wolverine took the flooded-room
+route and lost 32,000 HP. Restoring the original volume left the party alive;
+a separate real-input water entry left the player and an AI ally alive below
+the plane. Keep this volume deferred until issue #5 party handling and the
+crossing are revalidated. The bridge script itself removes the solo triggers,
+so this test proves an AI-routing interaction, not that missing solo mode alone
+explains all of it.
+
+The nuclear-plant pit `nuke_plant/nuke/nuke2_2a` remains enabled: its tested bridge
+crossing produced no AI kill-volume deaths. A level-1 attempt had ordinary enemy
+combat deaths; a repeat staged to level 17 separated those from lethal-volume
+hits. Some allies lagged on the bridge. An attempted Storm crossing did not
+maintain flight and is only a player-fall control, not evidence about flight
+routing. Original Xbox behavior and every possible party route remain unverified.
+
+Synthetic tests use invented map/entity identifiers to check exact-pair scope,
+source-attribute preservation, neighboring hazards, localized paths, validator
+deferral reporting and rejection of accidental reactivation.
+
+The revised generated build repeated the flooded-room bridge crossing with all
+four heroes alive, and HAARP still killed on a real double jump for 32,000 damage.
+A short control retained the earlier experiment's misspelled `damagemo` field:
+its definition attributes and instance bounds matched the saved experiment,
+but normal sorted encoding killed correctly. The saved experimental XMLB had
+unsorted attribute keys; it was not a valid negative control for the native flags.
+
+## 53. The first game's voice lines (2026-10-05, issue #49)
+
+XMen2.exe builds each character's sound table when the character loads (0x438d20, called from 0x4239be). For
+every event of the build's `shared_sounds` table it checks a name with the sound system's exists method (vtable
++0x34, 0x590120) and, when it exists, stores the handle from resolve (+0x38, 0x590bd0); a missing name stores the
+"none" handle and the line is skipped. The first six events (pain .. death) use `char/<sounddir>/<event>`, every
+later one (tauntkd, victory, sight, the team commands, lowhealth, epitaph, solo, xtreme, levelup, bored, the banter
+events) `char/<voice folder>/<event>`, the voice folder being the sounddir with its `_m/` as `_v/`
+(`simlookup.voice_dir`). The first game names the same lines `character/<voice folder>/<event>` in its global
+`x_voice` bank.
+
+Before: P2 recovered names for x_voice only as `character/x_voice/<word>` guesses, so P4 wrote no `char/` alias
+for them, and the merge into X-Men Legends II's `x_voice` kept X-Men Legends II's entries on every shared key. In
+game (the character sound-table builder traced at 0x438f9f / 0x438fbb): Wolverine and Jean answered none of their
+24 voice names; Cyclops and Blob answered only X-Men Legends II's lines (Cyclops 20 events plus 14 banter lines,
+Blob 7 events including canttalk / lowhealth / respaffirm, which the first game's Blob does not have). Offline, on
+the same bank: Emma, Gambit and Rogue silent too; Colossus, Iceman, Nightcrawler and Storm X-Men Legends II's lines,
+Beast 5 of them.
+
+Rules:
+- P2 `tables` (VERSION 4) tries `character/<voice folder>/<event>` for every XML1 herostat / npcstat sounddir and
+  every XML1 `shared_sounds` event, in the `x_voice` bank only (no other XML1 bank names one). Where such a name
+  shares a key with another guess (ELF hash collisions), the voice name wins. P4's existing rename then writes the
+  `char/` aliases (645 -> 2179 aliases).
+- P4 `sound` (VERSION 2) merges with a shadow list: `char/<voice folder>/<event>` for every first-game voice folder
+  and every event of both games' `shared_sounds`. X-Men Legends II's entries under those names (and their random
+  variants) keep their index and audio but move to a private key (`merge_zsnd.shadow_key`), so the first game's
+  entries are appended and answer instead. X-Men Legends II's lines for events the first game's character never had
+  (Cyclops's banter, Blob's low-health line) no longer play either: that character said nothing there. 854 keys
+  are shadowed. The media check of merged banks accepts exactly those private keys.
+
+**V27 voice lines** (validator): for every XML1 stats entry, every voice name the
+first game's `x_voice` answers must answer in `<out>`'s `x_voice` (error: silent), from an entry whose audio file
+index is past the retail bank's files (error: X-Men Legends II's line). On the unfixed build it reports the silent
+heroes; on the fixed build 0 errors.
+
+Bank: `x_voice.zss` 153,229,172 -> 153,278,260 bytes (key and entry tables only; the first game's audio was
+already in the bank under its `character/` keys). The sound prepare stage reruns once (43 s with the compiled
+kernel on an 8-thread machine, about 6 minutes with the numpy codec).
+
+Not established: which event the hero switch itself plays, and the run-time play path for a stored handle (the
+switch keys did not switch heroes in the opening NYC zones in the test harness, on either build).
+
+## 54. Popup dialog platforms (issue #50)
+
+Issue #50: seven of the first game's popup dialogs (six tutorial tips of the first mission and the mansion's
+second-floor hint) ship only `platform="xbox"`, `"ps2"` and `"gc"` variants. XMen2.exe's popup loader (0x5ebfd0)
+asks the platform test 0x4bd650 about every `<dialog>`: a missing or empty `platform` is accepted, a list (space,
+comma or tab separated, 0x68d618) is accepted only with a `PC` token (`_stricmp` against 0x68e9a0), anything else is
+skipped. With every variant skipped the panel opens empty, with the engine's default help line. A dialog's `filter`
+(0x5ec003) selects among variants too; a variant without one matches every filter.
+
+`x1schema.convert_dialog_platforms` (every XML1 text import under `dialogs/`) gives each filter group with no
+accepted variant an untagged copy of its `ps2` variant (else `xbox`, else the first), inserted after the group's
+last variant; the console variants are kept unchanged. The ps2 text is chosen because it is what X-Men Legends II
+itself shipped for PC: its platform-split hints end with an untagged variant, word for word the ps2 one in 9 of the
+10 that have a ps2 variant ("press" rather than the Xbox trigger "pull"). The conversion is idempotent and is
+counted as `dialog_pc_variant_added`.
+
+V28 (dialog platforms) checks every registered `Dialogs/` file (an identical `.XMLB` twin once) for a variant the
+platform test accepts per filter value.
+
+In game (xml2-fix 1.3.1, windowed harness): on the unfixed build the tips opened by tut4 and tut14 in the first zone
+and the mansion hint opened empty panels; on the fixed build all seven show their text (read from the game's popup
+record in memory, alongside the test pipe's popup state, not only from screenshots). The token-expanded button names
+read correctly with the keyboard and with a pad. Inherited wording that does not fit PC: the world-map tip names a
+PlayStation stick button and the grapple tip asks for an analog stick, which keyboard players do not have (X-Men
+Legends II's own PC automap hint has the same wording). Not changed: rewording game text is out of scope.
+
+## 55. Codex list without icons (issue #48)
 
 Issue #48: every first-game codex entry that is not a hero showed Cyclops' face. X-Men Legends II's
 `UI/menus/codex` list item (`MENU_ITEM_LISTCODEX`) has `icons="textures/ui/mini_convo_icons.png"` with an 8x8 grid,
@@ -4489,7 +4756,7 @@ was text only (no `icons` on its codex menus).
 
 `frontend.codex_menu_trees` writes `UI/menus/codex` (both halves, each from its own XML2 file) without the list's
 `icons`, `icons_cols` and `icons_rows` and without the `textures/ui/mini_convo_icons` precache; the list reads
-`icons` only when present (0x5c269e). `--frontend xml2` keeps XML2's menu. V-TBD (codex icons) checks that with
+`icons` only when present (0x5c269e). `--frontend xml2` keeps XML2's menu. V29 (codex icons) checks that with
 `--frontend xml1` both halves are the frontend module's and draw no icon cells.
 
 In game (xml2-fix 1.3.1): on main, an NPC entry (Professor X, unlocked with `unlockCharacter` as staged setup) showed

@@ -51,7 +51,7 @@ def validator(trees, owner='frontend', mode='xml1'):
     v = SimpleNamespace(ctx=SimpleNamespace(opt=lambda k: mode if k == 'frontend' else None))
     v.tree = lambda rel: trees.get(rel)
     v.entry = lambda rel: {'owner': owner} if rel in trees else None
-    ck = Check('V-TBD', 'codex icons')
+    ck = Check('V29', 'codex icons')
     VF.v_codex_icons(v, ck)
     return ck
 

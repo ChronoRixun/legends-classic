@@ -164,6 +164,122 @@ def charge_triggers(w: dict, t_fire: float) -> list:
     return _fx_sound(w, f'{t:g}', 'chargefx', 'chargesound', w.get('actorbolt', DEFAULT_BOLT))
 
 
+def _weapon_event_chain(events: dict, name: str):
+    """(True, weapon name or '', boltselect or '') when the named style event inherits XML1's `weapon_fire`
+    (directly or through other events of the same style); the nearest `weapon=` / `boltselect=` wins."""
+    weapon, bolt, seen = '', '', set()
+    while name and name.lower() not in seen:
+        seen.add(name.lower())
+        if name.lower() == 'weapon_fire':
+            return True, weapon, bolt
+        ev = events.get(name.lower())
+        if ev is None:
+            return False, '', ''
+        a = _lower(ev)
+        weapon = weapon or a.get('weapon', '')
+        bolt = bolt or a.get('boltselect', '')
+        name = a.get('inherit', '')
+    return False, '', ''
+
+
+def rewrite_weapon_events(root, weapons: dict, where: str = '') -> collections.Counter:
+    """XML1 styles can also NAME a weapon on an event of their own: ps_mystique's `left_gun` / `right_gun` are
+    `<event inherit="weapon_fire" weapon="wp_myst_pistol" [boltselect=...]>`, fired by plain triggers with those
+    names. XMen2.exe builds `weapon_fire` as a sound event (see the module doc), so every such shot did nothing.
+    Each such event (at the style root or inside a FightMove) becomes a `beam` event with the weapon's data,
+    exactly as `shot_triggers` builds a bullet / beam shot (beambolt = the event's `boltselect`, else the weapon's
+    `actorbolt`). The triggers keep their names, so no move gains a trigger for the shot itself; the weapon's
+    muzzle flash + fire sound (one `effect_sound`) go on the first shots of each move while it stays within
+    MAX_TRIGGERS. Projectile / flame weapons named this way are reported, not rewritten (none on the disc).
+    Returns counts; `root` is changed in place."""
+    rep = collections.Counter()
+    events = {}
+    for ev in root.iter('event'):
+        n = (_lower(ev).get('name') or '').lower()
+        if n and n not in events:
+            events[n] = ev
+    shots = {}                                # event name -> (weapon record, bolt) of each rewritten event
+    chains = {n: _weapon_event_chain(events, n) for n in events}      # before any event is rewritten
+    for n, ev in events.items():
+        found, wname, bolt = chains[n]
+        if not found or not wname:
+            continue
+        w = weapons.get(wname.lower())
+        if w is None:
+            rep['weapon_event_unknown_weapon'] += 1
+            continue
+        kind = (w.get('type') or '').lower()
+        if kind not in ('bullet', 'beam'):
+            rep[f'weapon_event_{kind or "untyped"}_kept'] += 1
+            continue
+        bolt = bolt or w.get('actorbolt', DEFAULT_BOLT)
+        beam = _beam(w, '0', bolt)
+        orig_name = _lower(ev).get('name')
+        ev.attrib.clear()
+        for k, v in beam.attrib.items():
+            if k not in ('name', 'time'):
+                ev.set(k, v)
+        ev.set('name', orig_name)
+        ev.set('inherit', 'beam')
+        for c in list(ev):
+            ev.remove(c)
+        for c in beam:
+            ev.append(c)
+        shots[n] = (w, bolt)
+        rep['weapon_event_to_beam'] += 1
+    if not shots:
+        return rep
+    for move in root.iter('FightMove'):
+        trigs = [c for c in move if c.tag.lower() == 'trigger']
+        fired = [c for c in trigs if (_lower(c).get('name') or '').lower() in shots]
+        if not fired:
+            continue
+        rep['weapon_event_moves'] += 1
+        rep['weapon_event_shots'] += len(fired)
+        room = MAX_TRIGGERS - len(trigs)
+        for c in fired:
+            if room <= 0:
+                break
+            w, bolt = shots[(_lower(c).get('name') or '').lower()]
+            fx = _fx_sound(w, _lower(c).get('time', '0'), 'muzzlefx', 'firesound', bolt)
+            for el in fx[:room]:
+                move.insert(list(move).index(c) + 1, el)
+                room -= 1
+                rep['weapon_event_fx_added'] += 1
+        if sum(1 for c in move if c.tag.lower() == 'trigger') > MAX_TRIGGERS:
+            rep['moves_over_trigger_cap'] += 1
+    return rep
+
+
+def weapon_fire_left(root) -> list:
+    """[('<move>:<trigger name>', names_a_weapon)] for every trigger of a style that still fires XML1's
+    `weapon_fire`, by its own name (names_a_weapon False: the stats entry's weapon would supply the shot) or through
+    style events inheriting it (True when the chain names a `weapon=`): validator V5 (SPEC 29.3)."""
+    if root is None:
+        return []
+    roots = list(root) if root.tag == 'xmlb_multiple_roots' else [root]
+    out = []
+    for top in roots:
+        events = {}
+        for ev in top.iter('event'):
+            n = (_lower(ev).get('name') or '').lower()
+            if n and n not in events:
+                events[n] = ev
+        for move in top.iter('FightMove'):
+            mname = _lower(move).get('name', '?')
+            for c in move:
+                if c.tag.lower() != 'trigger':
+                    continue
+                a = _lower(c)
+                n = (a.get('inherit') or a.get('name') or '').lower()
+                if a.get('type') or not n:
+                    continue
+                found, wname, _bolt = _weapon_event_chain(events, n)
+                if n == 'weapon_fire' or found:
+                    out.append((f'{mname}:{a.get("name") or n}', bool(wname)))
+    return out
+
+
 def apply(root, w: dict, where: str = '') -> collections.Counter:
     """replace every weapon_fire trigger of every FightMove with the weapon's triggers; for a continuous (flame)
     weapon also give the constant beam its firing interval. Returns counts; `root` is changed in place."""

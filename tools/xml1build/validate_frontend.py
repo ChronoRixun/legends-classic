@@ -710,7 +710,7 @@ def v17_review(v, ck):
 
 
 def v_codex_icons(v, ck):
-    """V-TBD (issue #48): with --frontend xml1 the codex menu (both halves) is the frontend module's, and its list
+    """V29 (issue #48): with --frontend xml1 the codex menu (both halves) is the frontend module's, and its list
     draws no icon cells - XML1's codex list was text only, and an entry without a stats textureicon draws cell 0."""
     if C.frontend_mode(v.ctx) != 'xml1':
         ck.note('--frontend xml2: XML2\'s codex menu kept (not checked)')

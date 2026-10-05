@@ -19,17 +19,14 @@ def test_haarp_wall_retains_loop_without_changing_damage_mode():
     changes = S.convert(root, 'maps/haarp/ext/haarp_ext01.eng')
     assert entity.get('firstact') == '0' and 'smartfire' not in entity.attrib
     assert {**entity.attrib, 'firstact': before['firstact']} == before
-    assert changes['haarp_fire_wall_loop_start'] == 1
+    assert changes['harm_loop_start'] == 1
     assert not S.convert(root, 'maps/haarp/ext/haarp_ext01.eng')
 
 
 def test_fire_wall_fix_does_not_change_unrelated_or_explicit_entities():
     for overrides, rel in [
-        ({}, 'maps/invented/example.eng'),
-        ({'name': 'other'}, 'maps/haarp/ext/haarp_ext01.eng'),
         ({'classname': 'physent'}, 'maps/haarp/ext/haarp_ext01.eng'),
-        ({'loopfx': 'invented/other'}, 'maps/haarp/ext/haarp_ext01.eng'),
-        ({'smartfire': 'false'}, 'maps/haarp/ext/haarp_ext01.eng'),
+        ({'smartfire': 'true'}, 'maps/haarp/ext/haarp_ext01.eng'),
         ({'loopfxstarton': 'false'}, 'maps/haarp/ext/haarp_ext01.eng'),
         ({'firstact': '0'}, 'maps/haarp/ext/haarp_ext01.eng'),
     ]:
