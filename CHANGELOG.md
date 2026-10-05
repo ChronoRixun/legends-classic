@@ -3,7 +3,7 @@
 The builder's releases, newest first. The version is `xml1-builder --version`; the content version is what a
 build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebuild.
 
-## Unreleased - content version 11
+## v0.1.8 - content version 11 (needs XML2 Fix 1.3.1)
 
 - **Changed: the HAARP exterior ravine kills only the hero you control** (issue #22). Falling or double-jumping
   into the ravine under the ice bridge still kills the hero a player controls (either player in co-op). A
@@ -95,6 +95,28 @@ build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebui
   enemy navigator (SPEC section 42). XML1 has no buoy data to convert. Generation respects native coordinate and
   pool limits, conservatively excludes gates/special transitions, and reports remaining coverage gaps.
   Empty navigation stays empty; per-zone build notes and validator warnings expose the limitations.
+
+- **Fixed: pits and chasms that a hero could land in alive and never leave** (issue #22). The first game's lethal
+  fall volumes work again in 29 zones (a double jump off the HAARP bridge, the mountain ledges, the nuclear-plant
+  pit); the Arbiter's flooded room is left as it was until its crossing is revalidated. A new check (V26) verifies
+  them (SPEC section 52).
+
+- **Fixed: heroes could not lift or throw objects or grab enemies, and a wall inside HAARP could not be broken**
+  (issue #51). Object weight and strength are mapped onto this engine's scales, every hero can grab, and the HAARP
+  barracks wall breaks, so the mission can be finished (SPEC section 59).
+
+### Known issues
+
+- With four heroes some zones run out of effect data: a fire shows only a glow, or a hero's power loses its
+  particles (issue #68; an engine limit, to be raised by a later XML2 Fix).
+- Walls that the first game reserves for power attacks also break to ordinary combos (the first game's rule comes
+  with a later XML2 Fix).
+- The 20 "lite" Xtraction points cannot save (issue #63), and Xtraction points open X-Men Legends II's world map
+  (issue #46).
+- The port is easier than the first game (issue #14).
+- Bedroom personal items show their picture but not their text (issue #47); the codex highlight bar sits slightly
+  off; a profile that already unlocked Magma keeps her.
+- At HAARP's ice bridge, face the icon from one or two body-lengths away when using Freeze Blast.
 
 ## v0.1.7 - content version 9 (needs XML2 Fix 1.3.0)
 
