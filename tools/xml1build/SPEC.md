@@ -4639,7 +4639,7 @@ either flag; identical localized twins are counted once. Deferred volumes are
 reported separately, and adding either enabling flag to one is an error. A volume listed in
 `FALL_KILL_LEADER_ONLY` must carry `actleader="true"` (without it the volume kills AI followers again), and
 a matching volume that is not listed must not carry it; the count is reported as `volumes_player_only`.
-Its number is assigned at merge. Synthetic tests cover preservation of multiple instance bounds and
+Synthetic tests cover preservation of multiple instance bounds and
 activation scripts, class remapping, unrelated hazards, idempotence, sorted
 binary output, and validator negative controls for each flag. CONTENT_VERSION
 remains 11 under the maintainer's unreleased-version instruction.
