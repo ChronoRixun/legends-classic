@@ -3395,6 +3395,45 @@ Magma, missile launchers, Mystique, Pyro, Sentinel grenades, and Shades. All nin
 now load their own style. Both projectile variants explicitly carry the projectile attack category.
 This is final-file validation, not a claim that projectile contact behavior has been playtested.
 
+### 29.3 Weapon events a style names itself: Mystique's pistols (issue #52)
+
+**Symptom (tester, builder 0.1.7).** In the first level (nyc/alison/nyc1_1_2b) Mystique's pistol attacks showed no
+bullets and did no damage.
+
+**Cause.** Section 29 rewrites only triggers literally named `weapon_fire`, and only in the variant styles of stats
+entries that carry a weapon. XML1's ps_mystique arms itself instead: two style events `left_gun` / `right_gun`
+inherit `weapon_fire` and name `weapon="wp_myst_pistol"` (the left one also `boltselect="Bip01 L Hand"`); her stats
+have no weapon. The 16 triggers of her two gun moves name those events, so in XMen2.exe every one resolved to the
+sound class (`ce_atk_weap`, section 29) and did nothing. No other XML1 style does this (ps_mastermold_two's gun events
+already inherit `beam`).
+
+**Fix.** `weapons.rewrite_weapon_events`, called by `characters._style_patch` on every converted style before the
+references are mapped: an `<event>` (root or move level) whose inherit chain reaches `weapon_fire` and names a
+bullet / beam weapon becomes a `beam` event with that weapon's data, exactly as `shot_triggers` builds a shot
+(`beambolt` = the event's `boltselect`, else the weapon's `actorbolt`; tracer, impact, damage code, range,
+`damageMod`). Event names stay, so no move gains a trigger for its shots; the weapon's muzzle flash + fire sound
+(`effect_sound`) go on the first shots of a move while it stays within 19 triggers (both of her gun moves have 17:
+the first left and the first right shot get them). Projectile / flame weapons named this way are counted and left
+(none on the disc). Count `weapon_events_to_beam` (2), report `detail['weapon_events']`.
+
+Validator (in V5): a stats entry's power style must not fire `weapon_fire` - through an event naming a weapon,
+or by name when the entry's XML1 weapon is a gun (error); a melee weapon is a warning (NukeGuardMelee: ps_grso with
+wp_baton, what XML1 did is not established); no weapon is allowlisted. On the unfixed output it reports Mystique's
+16 triggers (weapon_fire_left run offline on the main build's x1_ps_mystique, the style of MystiqueAct1 / Act2sim / Act3).
+
+**Verified in game (build of this branch vs main, harness pipe, Wolverine standing still, HP read through the test
+pipe every ~0.1 s, 60 s each, nyc1_1_2b: spawner acted, mystique_fight_start, myst_wp_none).** Main: 7 HP drops, all
+9.3-11.0 (her grenade, below); no 4-5 hits. This branch: muzzle flashes alternate between her two hands, tracers run
+to Wolverine with impact sparks and floating "5"s; 8 single hits of 4.2-4.6 (XML1's L1 = 4-5) plus 3 drops of
+9.2-10.2. Fewer hits than shots (6 per power_attack burst): not every shot of a burst connects, and hits closer
+together than a sample merge.
+
+**Her grenade (the same report: "showed its area and had no effect") is not reproduced.** On main, a standing
+Wolverine took 9.3-11.0 per explosion (7 in 60 s; the explosion and a floating "11" are in the frame), which is the
+spawn trigger's damage (L2 = 9-11, `usedamageasexplodeonly`). Neither research hypothesis (only the death effect
+plays; the attack data filters heroes) holds for a hero inside the radius (52). A hero who moves away from the
+landing spot is not hurt, as in XML1. Nothing changed.
+
 ---------------------------------------------------------------------------------------------------------------
 
 ## 30. XML1's inline NPC immunity talents as shared powerup talents (2026-10-01, combat audit G1)
@@ -4638,7 +4677,124 @@ its definition attributes and instance bounds matched the saved experiment,
 but normal sorted encoding killed correctly. The saved experimental XMLB had
 unsorted attribute keys; it was not a valid negative control for the native flags.
 
-## Gun soldiers fight in their gun's style (issue #52, section number assigned at merge)
+## 53. The first game's voice lines (2026-10-05, issue #49)
+
+XMen2.exe builds each character's sound table when the character loads (0x438d20, called from 0x4239be). For
+every event of the build's `shared_sounds` table it checks a name with the sound system's exists method (vtable
++0x34, 0x590120) and, when it exists, stores the handle from resolve (+0x38, 0x590bd0); a missing name stores the
+"none" handle and the line is skipped. The first six events (pain .. death) use `char/<sounddir>/<event>`, every
+later one (tauntkd, victory, sight, the team commands, lowhealth, epitaph, solo, xtreme, levelup, bored, the banter
+events) `char/<voice folder>/<event>`, the voice folder being the sounddir with its `_m/` as `_v/`
+(`simlookup.voice_dir`). The first game names the same lines `character/<voice folder>/<event>` in its global
+`x_voice` bank.
+
+Before: P2 recovered names for x_voice only as `character/x_voice/<word>` guesses, so P4 wrote no `char/` alias
+for them, and the merge into X-Men Legends II's `x_voice` kept X-Men Legends II's entries on every shared key. In
+game (the character sound-table builder traced at 0x438f9f / 0x438fbb): Wolverine and Jean answered none of their
+24 voice names; Cyclops and Blob answered only X-Men Legends II's lines (Cyclops 20 events plus 14 banter lines,
+Blob 7 events including canttalk / lowhealth / respaffirm, which the first game's Blob does not have). Offline, on
+the same bank: Emma, Gambit and Rogue silent too; Colossus, Iceman, Nightcrawler and Storm X-Men Legends II's lines,
+Beast 5 of them.
+
+Rules:
+- P2 `tables` (VERSION 4) tries `character/<voice folder>/<event>` for every XML1 herostat / npcstat sounddir and
+  every XML1 `shared_sounds` event, in the `x_voice` bank only (no other XML1 bank names one). Where such a name
+  shares a key with another guess (ELF hash collisions), the voice name wins. P4's existing rename then writes the
+  `char/` aliases (645 -> 2179 aliases).
+- P4 `sound` (VERSION 2) merges with a shadow list: `char/<voice folder>/<event>` for every first-game voice folder
+  and every event of both games' `shared_sounds`. X-Men Legends II's entries under those names (and their random
+  variants) keep their index and audio but move to a private key (`merge_zsnd.shadow_key`), so the first game's
+  entries are appended and answer instead. X-Men Legends II's lines for events the first game's character never had
+  (Cyclops's banter, Blob's low-health line) no longer play either: that character said nothing there. 854 keys
+  are shadowed. The media check of merged banks accepts exactly those private keys.
+
+**V27 voice lines** (validator): for every XML1 stats entry, every voice name the
+first game's `x_voice` answers must answer in `<out>`'s `x_voice` (error: silent), from an entry whose audio file
+index is past the retail bank's files (error: X-Men Legends II's line). On the unfixed build it reports the silent
+heroes; on the fixed build 0 errors.
+
+Bank: `x_voice.zss` 153,229,172 -> 153,278,260 bytes (key and entry tables only; the first game's audio was
+already in the bank under its `character/` keys). The sound prepare stage reruns once (43 s with the compiled
+kernel on an 8-thread machine, about 6 minutes with the numpy codec).
+
+Not established: which event the hero switch itself plays, and the run-time play path for a stored handle (the
+switch keys did not switch heroes in the opening NYC zones in the test harness, on either build).
+
+## 54. Popup dialog platforms (issue #50)
+
+Issue #50: seven of the first game's popup dialogs (six tutorial tips of the first mission and the mansion's
+second-floor hint) ship only `platform="xbox"`, `"ps2"` and `"gc"` variants. XMen2.exe's popup loader (0x5ebfd0)
+asks the platform test 0x4bd650 about every `<dialog>`: a missing or empty `platform` is accepted, a list (space,
+comma or tab separated, 0x68d618) is accepted only with a `PC` token (`_stricmp` against 0x68e9a0), anything else is
+skipped. With every variant skipped the panel opens empty, with the engine's default help line. A dialog's `filter`
+(0x5ec003) selects among variants too; a variant without one matches every filter.
+
+`x1schema.convert_dialog_platforms` (every XML1 text import under `dialogs/`) gives each filter group with no
+accepted variant an untagged copy of its `ps2` variant (else `xbox`, else the first), inserted after the group's
+last variant; the console variants are kept unchanged. The ps2 text is chosen because it is what X-Men Legends II
+itself shipped for PC: its platform-split hints end with an untagged variant, word for word the ps2 one in 9 of the
+10 that have a ps2 variant ("press" rather than the Xbox trigger "pull"). The conversion is idempotent and is
+counted as `dialog_pc_variant_added`.
+
+V28 (dialog platforms) checks every registered `Dialogs/` file (an identical `.XMLB` twin once) for a variant the
+platform test accepts per filter value.
+
+In game (xml2-fix 1.3.1, windowed harness): on the unfixed build the tips opened by tut4 and tut14 in the first zone
+and the mansion hint opened empty panels; on the fixed build all seven show their text (read from the game's popup
+record in memory, alongside the test pipe's popup state, not only from screenshots). The token-expanded button names
+read correctly with the keyboard and with a pad. Inherited wording that does not fit PC: the world-map tip names a
+PlayStation stick button and the grapple tip asks for an analog stick, which keyboard players do not have (X-Men
+Legends II's own PC automap hint has the same wording). Not changed: rewording game text is out of scope.
+
+## 55. Codex list without icons (issue #48)
+
+Issue #48: every first-game codex entry that is not a hero showed Cyclops' face. X-Men Legends II's
+`UI/menus/codex` list item (`MENU_ITEM_LISTCODEX`) has `icons="textures/ui/mini_convo_icons.png"` with an 8x8 grid,
+and the list draws for each entry the cell its stats' `textureicon` names. The port's heroes carry one; the first
+game's NPC stats have none (default.xbe has no such attribute), so they all drew cell 0. The first game's codex list
+was text only (no `icons` on its codex menus).
+
+`frontend.codex_menu_trees` writes `UI/menus/codex` (both halves, each from its own XML2 file) without the list's
+`icons`, `icons_cols` and `icons_rows` and without the `textures/ui/mini_convo_icons` precache; the list reads
+`icons` only when present (0x5c269e). `--frontend xml2` keeps XML2's menu. V29 (codex icons) checks that with
+`--frontend xml1` both halves are the frontend module's and draw no icon cells.
+
+In game (xml2-fix 1.3.1): on main, an NPC entry (Professor X, unlocked with `unlockCharacter` as staged setup) showed
+Cyclops' icon; on the fixed build the list shows no icons for heroes or that entry, and the highlight follows the
+keys. Without icons the entry text starts at the list's left edge while the focus bar keeps its old start, so the
+first letters of the focused entry sit left of the bar (reported, not changed). On both builds the 3D preview and
+the Details page stayed on the first entry after moving the selection with test-pipe keys or pad; this is not caused
+by the change and is not investigated here. Enemy entries were not reached in game: `unlockCharacter` did not list
+them.
+
+## 56. Personal items (issue #47)
+
+Issue #47: examining a bedroom item in the mansion's second-floor zones showed the zone's loading screen, and
+Wolverine's item a yellow/magenta panel. The first game's map entities call `personalItem('<hero>NN')` (36 names, in
+the `mansion*_2` zones). XMen2.exe's `personalItem` (0x49e570) opens the `personal` menu (PERSONAL_MENU), whose loader
+(0x5cedd0) reads `data/personal/<name>`: an `ITEM` with `texture` and `text`. Section 4.4 had kept X-Men Legends II's
+`Data/personal` (only a leftover `wolverine01`, naming a texture X-Men Legends II never shipped, drawn as the engine's
+default texture) and no `Textures/personal` existed, so a missing item left the menu manager's last image on screen.
+
+`frontend.write_personal_items` (both front ends; the items are in-zone data) writes every first-game
+`data/personal/*.eng` as `Data/personal/<name>.{XMLB,engb}` (schema conversion, text through `escape_menu_text`) and
+imports each item's texture IGB under the same name (`Textures/personal/*.IGB`, 36 files). X-Men Legends II's
+`wolverine01` is replaced. The menu (`UI/menus/personal`, `menu_personal.IGB`) stays X-Men Legends II's: it is the
+same PERSONAL_MENU as the first game's. This supersedes the "XML2's kept; deferred" entry for `personal/*` in 4.4,
+and with `--frontend xml2` the frontend module now writes these items (and nothing else).
+
+V30 (personal items) checks every `personalItem` literal in installed data and scripts: both halves of its data
+file are the frontend module's, have text without unescaped renderer codes, and name a texture whose IGB is in
+`<out>`.
+
+In game (xml2-fix 1.3.1): on main, Cyclops' first item showed the mansion loading screen and Wolverine's the
+yellow/magenta default texture; on the fixed build both show the first game's picture and close with the back key or
+the pad's B. Known gap: the item's text is not drawn. It is loaded (the word-wrapped text is in the game's memory
+while the menu is open), but no text box appears over the picture. Re-framing the menu IGB on X-Men Legends II's menu
+camera as done for the credits menus (21.2.1) did not draw it and hid the help line too, so it is not shipped; adding
+a text style to the text box or only moving the camera's near plane changed nothing. The cause is open.
+
+## 57. Gun soldiers fight in their gun's style (issue #52)
 
 ### The gap
 
@@ -4676,7 +4832,7 @@ with the other arm spread. Two things combined:
   packages change only by the rename, and the style's own package is new. Budgets, per zone against the build of main: IGB cache (`igb_budget.py check`),
   actor slots (V13) and the fight-style registry (V23) are unchanged in every one of the 198 zones: the packages
   already listed the rifle style, and the villain style was in none of these soldiers' packages.
-- Validator V5 (V-TBD): an XML1-origin entry whose XML1 weapon is a gun that names a style must carry exactly that
+- Validator V5: an XML1-origin entry whose XML1 weapon is a gun that names a style must carry exactly that
   style (mapped) as its only fighting-style talent (`weapons.fightstyle_problems`; 20 entries checked). Run
   offline against main's output it reports 15 entries; against this branch's, none.
 
