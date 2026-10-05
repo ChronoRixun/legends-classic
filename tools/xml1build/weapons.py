@@ -84,7 +84,7 @@ def _attack(w: dict, extra: dict) -> ET.Element:
     if w.get('range'):
         a['maxrange'] = w['range']
     a['damagescale'] = DAMAGE_SCALE
-    a['damagelevel'] = '1'
+    a['damagelevel'] = '0'                # XML1's weapons set none: the default 1 = level 0 here (issue #51)
     el = ET.Element('trigger', a)
     if w.get('damagemod'):
         ET.SubElement(el, 'damageMod', {'name': w['damagemod']})

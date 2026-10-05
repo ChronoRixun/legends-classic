@@ -186,7 +186,8 @@ EVENT_REBASE = {
     #        damagescale="none" maxrange="200" radius="50"/>  - same type; attacktype / angle / damagelevel /
     # radius equal; damagescale "none" is what XML2's hero blasts (Pyro / Sunfire ignite, Iceman ice pillar) use.
     # PowerAttack is no XMen2.exe attribute (only the unrelated enum string 'POWERATTACK' 0x68cf04).
-    'blast_ranged': Rebase('blast', (('damage', 'L3'), ('damagetype', 'dmg_fire'), ('maxrange', '50')),
+    'blast_ranged': Rebase('blast', (('damage', 'L3'), ('damagetype', 'dmg_fire'), ('maxrange', '50'),
+                                     ('damagelevel', '0')),
                            ('dmgmod_popup',),
                            "XML1 shared event (ce_atk_blast) XML2 lacks; XML2's own ps_gambit card_impact is XML1's "
                            "card_impact re-pointed at 'blast'"),
@@ -345,19 +346,50 @@ def _damage_mod(parent, name):
 #     weapon_fire trigger of a gun style with the weapon's own attack.
 X1_SHARED_EVENT_VALUES = {
     # event: (((attribute, XML1 value), ...), (damageMods))     the shipped XML2 value in the comment
-    'punch': ((('damage', 'L1'),), ()),                 # "2 3"
-    'kick': ((('damage', 'L1'),), ()),                  # "2 3"
-    'teleport_punch': ((('damage', 'L1'),), ()),        # "3 5"
-    'punch_heavy': ((('damage', 'L2'),), ()),           # "3 5"
-    'kick_heavy': ((('damage', 'L2'),), ()),            # "3 5"
-    'move_damage': ((('damage', 'L2'),), ()),           # "3 5"
-    'punch_veryheavy': ((('damage', 'L3'),), ()),       # "6 9"
-    'kick_veryheavy': ((('damage', 'L3'),), ()),        # "6 9"
-    'beam': ((('damage', 'L4'),), ()),                  # "3 5"
-    'fry': ((('damage', 'L4'),), ()),                   # "6 9"
-    'suspend': ((('damage', 'L4'),), ()),               # "6 9"
-    'throw': ((), ('dmgmod_auto_knockback',)),          # XML1 Damage="0" + this damageMod; XML2 has neither
+    # damagelevel: XML1's attack level on XMen2.exe's scale (x1schema.STRUCTURE_X1_TO_X2, issue #51): XML1's 1 (or
+    # its default 1) -> 0, so a punch does not break what XML1 made structure 2; XML2 ships 1 (teleport_punch 2).
+    'punch': ((('damage', 'L1'), ('damagelevel', '0')), ()),            # "2 3", 1
+    'kick': ((('damage', 'L1'), ('damagelevel', '0')), ()),             # "2 3", 1
+    'teleport_punch': ((('damage', 'L1'), ('damagelevel', '1')), ()),   # "3 5", 2 (XML1 2)
+    'punch_heavy': ((('damage', 'L2'), ('damagelevel', '0')), ()),      # "3 5", punch's 1
+    'kick_heavy': ((('damage', 'L2'), ('damagelevel', '0')), ()),       # "3 5", kick's 1
+    'move_damage': ((('damage', 'L2'), ('damagelevel', '0')), ()),      # "3 5", 1
+    'punch_veryheavy': ((('damage', 'L3'), ('damagelevel', '0')), ()),  # "6 9", punch's 1
+    'kick_veryheavy': ((('damage', 'L3'), ('damagelevel', '0')), ()),   # "6 9", kick's 1
+    'beam': ((('damage', 'L4'), ('damagelevel', '0')), ()),             # "3 5", 1
+    'fry': ((('damage', 'L4'), ('damagelevel', '0')), ()),              # "6 9", default 1
+    'suspend': ((('damage', 'L4'), ('damagelevel', '0')), ()),          # "6 9", 1
+    'throw': ((('damagelevel', '0'),), ('dmgmod_auto_knockback',)),     # XML1 Damage="0" + this damageMod; XML2 has neither
+    'weapon_fire': ((('damagelevel', '0'),), ()),                       # default 1 in both
+    'pickup_throw': ((('damagelevel', '0'),), ()),                      # default 1 (XML1 throws objects with `throw`)
 }
+def shared_events_on_x1_scale(root) -> dict:
+    """Issue #51: the shipped XML2 data/shared_combat_events on XML1's attack-level scale, in place: every event's
+    DamageLevel -> 1 if >= 2 else 0, and DamageLevel 0 on a ce_atk* event without one (the default 1, 0x4dc5d0).
+    The heroes' melee combos are XML2's shared_nodes, whose punches and kicks inherit these events; every event both
+    games define carries the same number (punch / kick / move_damage / beam / suspend 1, teleport_punch 2, XML2's
+    blast = XML1's blast_ranged 1), so XML1's conversion (x1schema.STRUCTURE_X1_TO_X2) applies. NOT idempotent
+    (teleport_punch 2 -> 1 -> 0): convert the base file. Returns {event name: 'old -> new'} of the changes."""
+    out = {}
+    for el in root.iter():
+        if _tag(el) != 'event':
+            continue
+        old = _get(el, 'damagelevel')
+        if old is not None:
+            try:
+                new = '1' if int(float(old)) >= 2 else '0'
+            except ValueError:
+                continue
+        elif (_get(el, 'type') or '').strip().lower().startswith('ce_atk'):
+            new = '0'
+        else:
+            continue
+        if new != old:
+            _set(el, 'damagelevel', new)
+            out[_get(el, 'name')] = f'{old} -> {new}'
+    return out
+
+
 X1_SHARED_KIND = 'x1_shared_value'      # Counter prefix (not 'combat_': combat_events_selftest T4/T5 count those)
 
 

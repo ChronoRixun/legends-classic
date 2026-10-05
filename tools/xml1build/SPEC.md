@@ -3301,7 +3301,7 @@ effect - checked in game below.
   (`variant_name`): the XML1 style with every `weapon_fire` trigger of every FightMove replaced by the weapon's own
   triggers (`apply`): bullet / beam -> a `beam` trigger (ce_atk_beam, one-call hit-scan: `beambolt`=actorbolt,
   `beameffect`=muzzleaccfx (the tracer), `hiteffect`=impactfx, `damage`=the weapon's code, `damagetype`,
-  `maxrange`=range, `damagescale="difficulty"`, `damagelevel="1"`, `<damageMod name=damagemod>`) plus one
+  `maxrange`=range, `damagescale="difficulty"`, `damagelevel="0"` (issue #51), `<damageMod name=damagemod>`) plus one
   `effect_sound` (muzzlefx + firesound on the bolt); flame -> the ps_pyro `flame_dmg` form (`noaimfx`,
   `useboltinfo`, `pierce`, `beameffect`=flame_shot) keeping the original trigger's tag (150: ch_constantbeam
   fires it every `timeinterval`, which `apply` sets to 0.1 s on the `setbeam="true"` beamdata trigger) and a
@@ -4510,3 +4510,38 @@ entry (GRAB_TALENT); the rule keeps XML2's definition (DESIGN 4.7's list again m
 Budgets: shared talents 61 -> 62, worst party 90 -> 91 of the 92 the danger-room margin allows. The shared `throw`
 event's %grab_scale_dmg reference now resolves (2 instead of 0), so thrown enemies take XML2's throw damage scale.
 Validator V-TBD (in V-H4): a playable hero without the talent, or no positive grab_scale_dmg, is an error.
+
+### TBD.3 Breaking objects (structure and attack level)
+
+Both exes block damage to an object when the hit's attack level is below its `structure` or the structure is at the
+top (XMen2.exe 0x498044: >= 2, parser clamp 2; XML1 0x92220: 10, clamp 10), except for exactly 1,000,000 damage or
+dmg_direct. XMen2.exe's level is CCombatSystem vtable slot 0x34 (0x44f770, called at 0x4501e9 and stored back into
+the hit at 0x4501fb): min(1, hit byte +0x2e + might_structure (+0x57b & 0xf) + round(damageLevel affecter)). The
+research's open point is settled by the code: the byte at +0x2e is the attack's own DamageLevel. The attack-data
+parser 0x4dbf70 stores the `DamageLevel` attribute at attack data +0x1c (0x4dc09a), the hit builder 0x4dc230 (called
+by the attack event at 0x4e2996) copies attack data +0x1c into hit +0x2e (0x4dc271), and the attack-data constructor
+0x4dc5d0 defaults it to 1 (0x4dc603). The attack target collector also skips objects whose structure is above that
+byte (0x4de501). XML1's level is the same sum on 0..10 (punch / kick events 1, hero powers 2-10, Might 3/6/8).
+
+XML1's numbers on XMen2.exe made every structure 2-9 object (1,062 physent instances, 177 structure-2 tile walls,
+...) unbreakable and let any attack (level >= 1, capped to 1) break every structure-1 object. The builder now maps
+both sides onto a two-step scale that keeps XML1's main boundary (a plain punch, level 1, does not break a
+structure-2 wall; a power, level >= 2, does): entity structure 0-1 -> 0, 2-9 -> 1, 10 -> 2 (convert_physics); attack
+DamageLevel 0-1 -> 0, >= 2 -> 1 in XML1 styles, plus DamageLevel 0 on a ce_atk* typed event without one
+(convert_damage_levels, before the combat rewrite); the SPEC 33 shared-event values and the blast_ranged rebase
+write DamageLevel 0 (teleport_punch 1); the XML2 data/shared_combat_events the build ships gets the same conversion
+(zones, combat_events.shared_events_on_x1_scale: punch / kick / move_damage / beam / blast / suspend 1 -> 0,
+teleport_punch 2 -> 1, typed events without one -> 0), because the heroes' melee combos are XML2's shared_nodes
+and inherit punch and kick from it; weapons.py's gun beams get DamageLevel 0 (XML1's weapons set none). Might keeps
+might_structure 1 (XML1's +3 already lifts a punch past structure 2) and the damageLevel affecter keeps its value.
+
+Remaining deviations (XMen2.exe has two breakable steps where XML1 has nine): an XML1 structure 3-9 object breaks
+with any level-2+ attack (XML1 needs the attack level to reach its structure), and an XML1 structure-1 object
+breaks with level-0 attacks too. Might rank 1 with a punch breaks every XML1 structure 2-9 object (XML1: 2-4). A
+punched object no longer gets the random level-scaled jolt XMen2.exe applies to hit objects with a level above 0
+(0x4519dc). XML2-authored styles the build keeps (XML2 fightstyles of NPCs) keep XML2's levels. The faithful fix is
+in XML2 Fix: keep XML1's 0..10 structure and level in a side table keyed by entity (byte +0x31c is tested for >= 2
+elsewhere: 0x42bdf0, 0x431c57, 0x450be7) and replace the comparison at 0x498044 and the target filter at 0x4de501
+with XML1's (level = DamageLevel + Might destruction + affecter, capped at 9, against structure < 10).
+Validator V-TBD: XML1-sourced entity definitions with structure above 2, and XML1 / hero styles with a DamageLevel
+above 1 or a typed attack without one, are errors.

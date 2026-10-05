@@ -46,8 +46,9 @@ own patch), and zones runs it on the world tables it merges itself, so every mod
    a shared combat event XML2's shipped table changed gets XML1's value (punch L1 = "4 5" instead of XML2's "2 3"),
    SPEC.md section 33; and convert_renderfx: XML1's ce_renderfx tint form -> XML2's add / remove="cloaked",
    SPEC.md section 31.
-5. Object physics scales (entity definitions): XML1's heaviness 0..5 -> XMen2.exe's 0..3 (convert_physics; issue
-   #51), so objects anyone lifted in XML1 can be lifted without Might again.
+5. Object physics scales (issue #51): entity heaviness 0..5 -> XMen2.exe's 0..3 and structure 0..10 -> 0..2
+   (convert_physics), and XML1 attack levels in styles (convert_damage_levels), so objects anyone lifted in XML1 can
+   be lifted without Might and a power, not a punch, breaks what XML1 made structure 2.
 """
 from __future__ import annotations
 
@@ -221,35 +222,111 @@ def heaviness_x1_to_x2(value):
     return str(HEAVINESS_X1_TO_X2[min(max(v, 0), len(HEAVINESS_X1_TO_X2) - 1)])
 
 
+#   * structure / attack level: both exes break an object only when the hit's attack level >= its structure and the
+#     structure is below the top (XMen2.exe 0x498044: 2 = unbreakable, parser clamp 2; XML1 0x92220: 10, clamp 10),
+#     unless the damage is exactly 1,000,000 or of type dmg_direct. XMen2.exe's level (0x44f770, CCombatSystem vtable
+#     slot 0x34) is min(1, hit byte +0x2e + might_structure + the damageLevel affecter), and the hit byte is the
+#     attack's DamageLevel (0x4dc271 copies attack data +0x1c into it; the attack data parser 0x4dbf70 writes
+#     DamageLevel there, the constructor 0x4dc5d0 defaults it to 1). XML1's level is the same sum on its scale
+#     (punches and kicks carry 1, hero powers 2-10, Might adds 3/6/8, Sharpness 3-7) against structure 0..10. With
+#     XML1's numbers copied, every structure 2-9 object was unbreakable and every attack (level >= 1 -> 1) broke
+#     every structure-1 object. The two-step remap keeps XML1's main boundary: a punch (level 1) does not break a
+#     structure-2 wall, a power (level >= 2) does; levels 0-1 -> 0 and >= 2 -> 1, structures 0-1 -> 0, 2-9 -> 1,
+#     10 -> 2. An attack event with a type and no DamageLevel starts from both exes' default 1 = level 0 here.
+STRUCTURE_X1_TO_X2 = (0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 2)
+
+
+def _ival(value):
+    try:
+        return int(float(str(value).strip()))
+    except ValueError:
+        return None
+
+
+def structure_x1_to_x2(value):
+    v = _ival(value)
+    return None if v is None else str(STRUCTURE_X1_TO_X2[min(max(v, 0), len(STRUCTURE_X1_TO_X2) - 1)])
+
+
+def damage_level_x1_to_x2(value):
+    v = _ival(value)
+    return None if v is None else ('1' if v >= 2 else '0')
+
+
 def convert_physics(root):
-    """XML1 -> XMen2.exe object physics scales on every entity definition (element with a classname), in place.
-    NOT idempotent (heaviness 2 -> 1 -> 0): convert() runs once on each freshly parsed XML1 tree. Returns a Counter."""
+    """XML1 -> XMen2.exe object physics scales on every entity definition (element with a classname), in place:
+    heaviness, structure and an entity's own damagelevel (projectiles). NOT idempotent (heaviness 2 -> 1 -> 0):
+    convert() runs once on each freshly parsed XML1 tree. Returns a Counter."""
     c = collections.Counter()
     for el in root.iter():
         if el.get('classname') is None:
             continue
-        old = el.get('heaviness')
-        if old is not None and old.strip():
-            new = heaviness_x1_to_x2(old)
-            if new is not None and new != old:
-                el.set('heaviness', new)
-                c['heaviness_rescaled'] += 1
+        for attr, fn in (('heaviness', heaviness_x1_to_x2), ('structure', structure_x1_to_x2),
+                         ('damagelevel', damage_level_x1_to_x2)):
+            old = el.get(attr)
+            if old is not None and old.strip():
+                new = fn(old)
+                if new is not None and new != old:
+                    el.set(attr, new)
+                    c[f'{attr}_rescaled'] += 1
+    return c
+
+
+ATTACK_TYPE_PREFIX = 'ce_atk'
+
+
+def convert_damage_levels(root):
+    """XML1 attack levels of one style tree -> XMen2.exe's (see STRUCTURE_X1_TO_X2), in place, before the combat
+    rewrite (whose shared-event values are already on XMen2.exe's scale): every <event> / <trigger> DamageLevel,
+    and DamageLevel 0 on an attack event or trigger with a ce_atk* type and none of its own (the default 1 of both
+    exes = an XML1 punch). NOT idempotent. Returns a Counter."""
+    c = collections.Counter()
+    for el in root.iter():
+        if not isinstance(el.tag, str) or el.tag.lower() not in ('event', 'trigger'):
+            continue
+        keys = {k.lower(): k for k in el.attrib}
+        if 'damagelevel' in keys:
+            k = keys['damagelevel']
+            old = el.get(k)
+            new = damage_level_x1_to_x2(old)
+            if new is not None:
+                del el.attrib[k]
+                el.set('damagelevel', new)
+                c['damagelevel_rescaled'] += 1
+        elif (el.get(keys.get('type', 'type')) or '').strip().lower().startswith(ATTACK_TYPE_PREFIX):
+            el.set('damagelevel', '0')
+            c['damagelevel_default_set'] += 1
     return c
 
 
 def physics_scale_problems(root):
-    """[(entity name, attribute, value)] of entity definitions whose heaviness is above XMen2.exe's 0..3 range: an
-    XML1 value that was not converted (convert_physics)."""
+    """[(entity name, attribute, value)] of entity definitions whose heaviness / structure is above XMen2.exe's range
+    (0..3 / 0..2): an XML1 value that was not converted (convert_physics)."""
     out = []
     for el in root.iter():
         if el.get('classname') is None:
             continue
-        v = el.get('heaviness')
-        try:
-            if v is not None and v.strip() and int(float(v)) > HEAVINESS_X1_TO_X2[-1]:
-                out.append((el.get('name'), 'heaviness', v))
-        except ValueError:
-            pass
+        for attr, top in (('heaviness', HEAVINESS_X1_TO_X2[-1]), ('structure', STRUCTURE_X1_TO_X2[-1])):
+            v = _ival(el.get(attr)) if (el.get(attr) or '').strip() else None
+            if v is not None and v > top:
+                out.append((el.get('name'), attr, el.get(attr)))
+    return out
+
+
+def damage_level_problems(root):
+    """[(tag, name, problem)] of one converted style tree: a DamageLevel above 1 (an XML1 value XMen2.exe caps to its
+    top level) or a ce_atk* typed attack with no DamageLevel (XMen2.exe's default 1 = a power-level hit)."""
+    out = []
+    for el in root.iter():
+        if not isinstance(el.tag, str) or el.tag.lower() not in ('event', 'trigger'):
+            continue
+        a = {k.lower(): v for k, v in el.attrib.items()}
+        if 'damagelevel' in a:
+            v = _ival(a['damagelevel'])
+            if v is not None and v > 1:
+                out.append((el.tag, a.get('name'), f'damagelevel={a["damagelevel"]}'))
+        elif (a.get('type') or '').strip().lower().startswith(ATTACK_TYPE_PREFIX):
+            out.append((el.tag, a.get('name'), f'type={a["type"]} without damagelevel'))
     return out
 
 
@@ -331,6 +408,7 @@ def convert(root, rel, weapon_models=None, x1_values=None):
     if n:
         c['haarp_fire_wall_loop_start'] += n
     if CE.is_style_rel(rel):
+        c.update(convert_damage_levels(root))           # XML1 levels first: the rewrite writes XMen2.exe's
         c.update(CE.rewrite_style(root))
         c.update(CE.apply_x1_shared_values(root, x1_values))
         c.update(convert_renderfx(root))

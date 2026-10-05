@@ -114,7 +114,9 @@ def test_shared_values_style_event_of_the_shared_name_shadows_it():
     root = ET.fromstring('<PowerStyle><event name="punch" inherit="punch" damage="7 8"/>'
                          '<FightMove name="a"><trigger time="0" name="punch"/></FightMove></PowerStyle>')
     c = CE.apply_x1_shared_values(root, X1_VALUES)
-    assert not c and root[1][0].get('damage') is None and root[0].get('damage') == '7 8'
+    # the style's own punch keeps its damage; only the attack level it inherits is put on XMen2.exe's scale (#51)
+    assert dict(c) == {'x1_shared_value:punch.damagelevel': 1} and root[0].get('damagelevel') == '0'
+    assert root[1][0].get('damage') is None and root[1][0].get('damagelevel') is None and root[0].get('damage') == '7 8'
 
 
 def test_x1schema_runs_the_rebase_first_then_the_values_on_styles_only():
