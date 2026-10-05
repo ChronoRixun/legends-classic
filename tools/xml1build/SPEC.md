@@ -4389,7 +4389,7 @@ The wall effect and its textures are present. Two engine behaviours hid it: the
 harm parser at 0x4396a0 clears the loop-on bit for positive firstact, and a running
 loop retains its old world placement after copyOriginAndAngles moves the entity.
 
-The exact HAARP exterior fire_wall definition gets firstact=0, keeping loopfxstarton
+The original fix gave the exact HAARP exterior fire_wall definition firstact=0, keeping loopfxstarton
 without entering XML2's smartfire damage mode. The wall is staged underground until
 its authored placement script moves it. This advances its initialization from the
 original one-second delay; placement timing, damage fields and the normal non-smart
@@ -4412,6 +4412,9 @@ floating damage values. Both completed the matching contact/exit sequence at 57 
 from 90. This is an isolated hazard/placement test, not a full campaign playthrough
 or a precise rate benchmark. Local captures and state records are retained outside Git;
 see docs/issue-12-validation.md. Extinguishing and save/reload remain separate checks.
+
+The general harm-loop conversion below (SPEC 51) supersedes
+the name/path restriction on startup. The relocation script handling remains necessary.
 
 ## 49. Conversation speaker HUD-head residency (2026-10-04, issue #13)
 
@@ -4479,7 +4482,163 @@ subtrees, ordering, idempotence, and a removed-head validator negative control.
 Generated packages change, so CONTENT_VERSION must advance at merge. The task
 coordinator owns that bump; this change intentionally leaves its value untouched.
 
-## (number assigned at merge). The first game's voice lines (2026-10-05, issue #49)
+## 51. Ordinary harm-loop startup (issue #12)
+
+`x1schema.convert_harm_loop_start` runs after entity class remapping on every
+imported XML1 tree. An entity qualifies when its class is affectableharment,
+loopfx is nonempty, loopfxstarton is true, and firstact is a finite positive
+number. Absent or explicitly false smartfire uses the ordinary harm path;
+enabled or unrecognized explicit smartfire configurations are retained.
+No entity name, map path or effect-name whitelist is used. In particular,
+non-fire loops with the same engine failure qualify too.
+
+The conversion sets only firstact to zero and records `harm_loop_start` in the
+schema change log. This includes the HAARP walls previously handled by SPEC 45.
+Their hide/move/show script wrappers are unchanged: starting a loop correctly
+does not fix its old world position after script relocation.
+
+The second failure is handled by a source-derived script pass: named instances
+of start-on, non-smart harm loops are collected from source map definitions,
+scoped to the matching maps/scripts directory. Their literal
+copyOriginAndAngles calls get hide/move/show wrappers. A preceding act of the
+same entity stays after hide and before move; move-only calls gain no act.
+Existing SPEC 45 blocks remain byte-identical. Names that also identify an
+unrelated instance in the same namespace fail conversion if moved. Authored-off
+loops and explicitly invisible definitions do not qualify. This does not infer
+dynamic targets or cross-directory script contexts. The current source inventory
+adds wrappers for six NYC placements, two Hive placements and three HAARP
+interior placements; the six existing HAARP exterior scripts remain unchanged.
+The extra script statements are checked by the existing script-pool validator.
+
+A controlled current-main NYC test confirmed this separate relocation failure
+on a fire with an empty firstact: the loop was invisible after relocation from
+underground and became visible after hide/show. This does not establish that
+every report of a fire appearing after circling has the same cause.
+
+XML1's action parser reads loopfxstarton at 0x28c66 independently of firstact
+at 0x28d32. The latter schedules an activation via 0x277e0 and the first-act
+callback at 0x27550. XML1's harm parser at 0x7c440 does not clear the loop bit.
+XML2's harm parser at 0x4396a0 clears the authored loop-on bit at 0x4399d9 when
+firstact is positive. Zero bypasses that branch. The builder therefore loses
+the initial activation delay (one second in the matching source definitions):
+damage can begin earlier, and the phase of repeated activations can shift.
+Damage values, repeat delays, contact settings, reaction powers, health and
+death scripts remain authored. Enabling smartfire is not a substitute: it
+selects a different damage scheduler (SPEC 45).
+
+A future, guarded XML2 Fix change could preserve the authored loop bit while
+retaining the delayed activation. It needs separate evaluation of the preceding
+disable call, smartfire/on-off timers, extinction and save/load, including XML2
+retail content. This builder change neither implements nor requires that patch.
+
+V25 independently scans decoded registered output for remaining ordinary harm
+entities in the dead form, failing with the file, entity, effect and delay.
+Identical XMLB/engb twins are reported once. Synthetic tests use invented hazard
+names and effects, cover remapped classes, explicit false smartfire, unrelated
+classes, authored-off loops, missing/malformed/zero/negative delays and idempotence.
+Runtime evidence and its limitations are recorded in docs/issue-12-validation.md. CONTENT_VERSION
+stays 11 for the unreleased content revision.
+
+## 52. Fall kill volumes (issue #22)
+
+Issue #22: XML1's lethal touch boxes survive conversion, but a hero can land alive
+inside one and become trapped outside the playable area. Keep the designers'
+boxes; do not infer a global floor height or replace the harm entity with script
+triggers.
+
+`x1schema.convert_fall_kill_volumes` applies only to map entities with the XML1
+lethal-touch signature: `affectableharment`, `damage="32000"`,
+`damagetype="dmg_direct"`, `actontouch="true"`, `nocollide="true"`. Matching is
+independent of entity names except for the specific deferred pair below. After normal class conversion, set
+`boxcollision="true"` and `smartent="false"`, the collision and residency flags
+used by XML2's native fall kill volumes. Preserve every other attribute and all
+instances, including bounds, positions, orientations, damage modifiers, targeting
+flags, and activation scripts. Ordinary fire/damage hazards and non-map entities
+are outside this rule. The conversion is idempotent and reports
+`fall_kill_volumes` in the schema counters.
+
+Source evidence: these volumes specify lethal direct damage without a hero-only
+team filter; some also invoke a script that hides the activator. Retaining the
+harm class, damage, and script preserves that authored behavior as far as the
+source data establishes it. Original Xbox runtime behavior for AI allies and
+knocked-in enemies has not been independently tested. No new hero-only targeting,
+invulnerability bypass, damage multiplier, or lethal script call is introduced.
+
+Runtime mechanism controls used the released xml2-fix 1.3.1. An unchanged native
+kill definition in a staged flat-corridor box killed a walking hero without a
+fall. Native `dmgmod_kill` can produce health near -1,000,000, so that number alone
+cannot distinguish a volume hit from the engine's void-fall handler. A HAARP
+negative control left Magma alive on the ravine floor after a real double jump
+and unable to return under movement input. Adding boxcollision alone still left
+a hero alive there. With both flags, a real double jump killed Wolverine with a
+32,000-point health loss. Teleports were setup only, not evidence of touch entry.
+Experimental XMLB writes must use `common.encode_xmlb`: unsorted attributes
+invalidate the engine's binary-search lookups and any resulting mechanism claim.
+
+V26 checks registered XML1-sourced map outputs for matching volumes missing
+either flag; identical localized twins are counted once. Deferred volumes are
+reported separately, and adding either enabling flag to one is an error. Its number is assigned
+at merge. Synthetic tests cover preservation of multiple instance bounds and
+activation scripts, class remapping, unrelated hazards, idempotence, sorted
+binary output, and validator negative controls for each flag. CONTENT_VERSION
+remains 11 under the maintainer's unreleased-version instruction.
+
+The generated build was also checked with Magma and Wolverine at HAARP (real
+jump input after position setup), and with Wolverine at `mount/mount/mount2`.
+The mountain negative control reached the engine void limit; the converted box
+instead dealt the original 32,000 damage inside its authored bounds. At HAARP,
+Iceman formed the ice bridge through power input, and Wolverine walked across
+with three AI teammates following; all four retained full health. Ordinary
+combat with existing enemies on the bridge approach likewise left the party
+alive. These are bounded harness checks, with scripted party/position setup,
+not a complete campaign or saved-game playthrough. An attempted closer-edge
+solo lure was navigation-limited and is not additional combat proof.
+
+The initial PR output contained 32 matching definitions and 41 instances across 30
+converted zones. Comparison of all 198 map trees found only the intended flag
+changes (32 smartent attributes, 31 boxcollision attributes; one box already
+had collision). V26 counted all 32 definitions once across localized twins;
+full build validation and the zones self-test passed.
+
+The reduced two-flag configuration also passed a staged flat-floor on-foot
+control: Wolverine lost exactly 32,000 HP at Z=0.16, with no fall.
+
+### Review follow-up: deferred flooded-room volume (issue #5)
+
+Leave only `kill_target` in `maps/arbiter/a_int/arb3_4` in its original form.
+`FALL_KILL_DEFERRED` identifies an exact map stem and entity name; other lethal
+entities in that map and same-name entities in other maps still receive the fix.
+This leaves 31 enabled definitions in 29 converted zones, with one definition
+explicitly deferred. No bounds, damage values or unrelated hazards change.
+
+Four-hero runtime review reproduced a regression: the player crossed a
+player-created ice bridge safely, while AI Wolverine took the flooded-room
+route and lost 32,000 HP. Restoring the original volume left the party alive;
+a separate real-input water entry left the player and an AI ally alive below
+the plane. Keep this volume deferred until issue #5 party handling and the
+crossing are revalidated. The bridge script itself removes the solo triggers,
+so this test proves an AI-routing interaction, not that missing solo mode alone
+explains all of it.
+
+The nuclear-plant pit `nuke_plant/nuke/nuke2_2a` remains enabled: its tested bridge
+crossing produced no AI kill-volume deaths. A level-1 attempt had ordinary enemy
+combat deaths; a repeat staged to level 17 separated those from lethal-volume
+hits. Some allies lagged on the bridge. An attempted Storm crossing did not
+maintain flight and is only a player-fall control, not evidence about flight
+routing. Original Xbox behavior and every possible party route remain unverified.
+
+Synthetic tests use invented map/entity identifiers to check exact-pair scope,
+source-attribute preservation, neighboring hazards, localized paths, validator
+deferral reporting and rejection of accidental reactivation.
+
+The revised generated build repeated the flooded-room bridge crossing with all
+four heroes alive, and HAARP still killed on a real double jump for 32,000 damage.
+A short control retained the earlier experiment's misspelled `damagemo` field:
+its definition attributes and instance bounds matched the saved experiment,
+but normal sorted encoding killed correctly. The saved experimental XMLB had
+unsorted attribute keys; it was not a valid negative control for the native flags.
+
+## 53. The first game's voice lines (2026-10-05, issue #49)
 
 XMen2.exe builds each character's sound table when the character loads (0x438d20, called from 0x4239be). For
 every event of the build's `shared_sounds` table it checks a name with the sound system's exists method (vtable
@@ -4510,7 +4669,7 @@ Rules:
   (Cyclops's banter, Blob's low-health line) no longer play either: that character said nothing there. 854 keys
   are shadowed. The media check of merged banks accepts exactly those private keys.
 
-**V-TBD voice lines** (validator; number assigned at merge): for every XML1 stats entry, every voice name the
+**V27 voice lines** (validator): for every XML1 stats entry, every voice name the
 first game's `x_voice` answers must answer in `<out>`'s `x_voice` (error: silent), from an entry whose audio file
 index is past the retail bank's files (error: X-Men Legends II's line). On the unfixed build it reports the silent
 heroes; on the fixed build 0 errors.

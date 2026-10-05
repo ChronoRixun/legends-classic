@@ -260,7 +260,7 @@ def script_sound_names(result):
 
 def sound_files(path):
     """{sound key: file index} of a bank (sound -> sample -> file), {} when it does not parse; for telling whose
-    audio answers a name in a merged bank (V-TBD voice lines)."""
+    audio answers a name in a merged bank (V27 voice lines)."""
     try:
         b = zsnd.load(str(path), strict=False)
         return {h: b.samples[s.u16(0)].u16(0) for s in b.sounds for h in s.hashes}

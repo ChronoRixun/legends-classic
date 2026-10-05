@@ -9,8 +9,16 @@ build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebui
   Wolverine, Jean, Emma, Gambit, Jubilee, Magma, Professor X, Psylocke and Rogue had no taunts, team commands,
   low-health or victory lines; Cyclops, Colossus, Iceman, Nightcrawler, Storm, Beast and villains such as Blob and
   Mystique used the second game's voice actors. The first game's lines are now found under the names the engine
-  asks for, and they win over the second game's in the shared voice bank. A new check (V-TBD) verifies every voice
+  asks for, and they win over the second game's in the shared voice bank. A new check (V27) verifies every voice
   line. The sound prepare stage reruns once.
+
+- **Fixed: invisible fires beyond HAARP's exterior walls** (issue #12): restore
+  delayed start-on harm loops across imported content, including NYC, the Arbiter
+  and sewers, and restart source-identified loops after scripted relocation.
+  This builder workaround advances the first activation by its authored delay
+  (one second in affected definitions); damage values, repeat intervals and
+  extinguish reactions stay unchanged. V25 rejects remaining dead startup forms.
+  Controlled movement, Iceman extinguishing and save/reload evidence is in `docs/issue-12-validation.md`.
 
 - **The first game's shared hero passives** (issue #34): critical strike (5 ranks, +2 to +10%, unlocking at levels
   1/7/12/17/22), might (3 ranks, heavier objects each rank), leadership (5 ranks of combo damage and combo XP) and
