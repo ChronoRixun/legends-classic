@@ -3809,20 +3809,37 @@ and the start / end of every reply-voice wait (the handle, its lifetime in ms an
 
 ### 34.2 The data side (this builder: `conversations.mark_auto_advance`, run by `scripts.rewrite_data_tree` on every XML1 conversation)
 
-A `<line>` is marked when it is flagged itself, or its enclosing `<startCondition>` is (every line of that tree), or its
-one and only `<response>` is (XML1 flags the `%BLANK%` under a flagged line, and 11 times the response alone).
+A `<line>` is marked when XML1 itself advances it without the player (its executable, re-read for issue #54 on
+2026-10-04): the line has a voice (`soundToPlay` not empty) AND either the line carries a `runWithoutUser` attribute,
+whatever its value, or the file's LAST `<startCondition>` has `runWithoutUser="true"`. In XML1's default.xbe: the
+line parser sets the line's flag when the attribute exists (0x619a6-0x619f1, value not read); the file loader
+(0x622f0) keeps ONE flag byte per conversation file (record +0xf0) and, inside its loop over the startConditions,
+clears it (0x62794) and sets it from that startCondition's value (0x627f8) each time, so the last startCondition
+decides for every line of the file (the startCondition object keeps only `runOnce` and `enableAI`); showing a line
+(0x62e20) arms the automatic advance only when the line has a voice (state bit 0x01, set nowhere else), and the
+per-frame update (0x658f3-0x659ad) advances only when that bit is set and the file byte or the line's flag is, once
+the voice has ended and the line's `timeDelay` has passed. A response's flag never arms anything (the reply voice
+path 0x60f00), so a line whose only flag is on its reply waits, and a line with no voice always waits.
 Responses are not marked. The magnitude: an existing positive `timeDelay` on the line (XML1's own 2 / 3, six lines) is
 kept; otherwise a reading time from the text after its `%SPEAKER%` token, 1 s + 0.06 s a character, clamped to 2..12 s
-(`reading_seconds`). The attribute is written under the engine's own name `timeDelay` (a `timedelay` of any other case
-is replaced); `runWithoutUser` itself stays in the file (the engine ignores it). Idempotent (a negative value is left
-alone; scripts_selftest runs `rewrite_data_tree` twice). Counts in XML1's English conversations (xml1_loose): 268 +
-37 flagged lines with one reply, 745 + 99 lines under flagged startConditions, 11 single flagged responses; the 2 + 4
-+ 40 menu lines inside flagged trees are marked too but never picked (they have several replies). Retail data has
-no negative `timeDelay` (XML1: 6 lines / 6 responses at 2 or 3; XML2: 2 / 2), so XML2's own data is untouched by the
-hook even with the keys on, and without the fix the number is as inert as it always was.
+(`reading_seconds`); every marked line has a voice, so the hook uses it only when the sound system never started that
+voice. The attribute is written under the engine's own name `timeDelay` (a `timedelay` of any other case is
+replaced); `runWithoutUser` itself stays in the file (the engine ignores it). Idempotent (a negative value is left
+alone; scripts_selftest runs `rewrite_data_tree` twice). Counts in XML1's 381 English conversations as built (1,888
+lines, SPEC 39's 13 copied lines included): 1,148 lines marked, 302 by their own flag and 846 by the file's last
+startCondition. The rule before 2026-10-04 (each startCondition's flag for its own tree, a single flagged reply, and
+lines with no voice) marked 1,219: 75 that XML1 leaves to the player (22 single-reply and 47 menu lines with no voice,
+5 voiced lines under a flagged startCondition that is not the file's last, 1 voiced line flagged only through its
+reply) and missed 4 that XML1 advances (voiced lines under an unflagged startCondition of a file whose last one is
+flagged, in mansion/man1a/1_2_37, mansion/man3/2_1_6 and mansion/man6/3_1_4). Retail data has no negative
+`timeDelay` (XML1: 6 lines / 6 responses at 2 or 3; XML2: 2 / 2), so XML2's own data is untouched by the hook even
+with the keys on, and without the fix the number is as inert as it always was. Not yet matched: after a voice the
+hook waits 0.25 s where XML1 waits the line's `timeDelay` (0.5 s when absent).
 
-Tests: `tests/unit/test_conversations_auto_advance.py` (which lines and why, the values, the floor / ceiling / token
-stripping, the engine's attribute name, responses untouched, idempotence). In game: 34.3.
+Tests: `tests/unit/test_conversations_auto_advance.py` (which lines and why: a flagged line with no voice, a flag on
+the only reply, the last startCondition deciding for the whole file, a line flag of any value; the values, the
+floor / ceiling / token stripping, the engine's attribute name, responses untouched, idempotence). In game: 34.3
+(which predates the 2026-10-04 rule).
 
 ### 34.3 In game (build/_fix130, harness pipe f130, save folder "X-Men Legends (f130 tests)", xml2-fix branch `conversations`, 2026-10-01)
 
