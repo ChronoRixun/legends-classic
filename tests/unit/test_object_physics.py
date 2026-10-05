@@ -50,3 +50,36 @@ def test_validator_rule_flags_an_unconverted_tree():
     assert S.physics_scale_problems(root) == [('crate', 'heaviness', '5')]
     S.convert(root, 'maps/invented/zone4.eng')
     assert S.physics_scale_problems(root) == []
+
+
+# ---------------------------------------------------------------------------------------------- grabbing enemies
+def _shared(value='2'):
+    root = ET.Element('talents')
+    t = ET.SubElement(root, 'talent', {'name': 'grab', 'hidden': 'true'})
+    tvs = ET.SubElement(t, 'talentvalues')
+    if value is not None:
+        ET.SubElement(tvs, 'talentvalue', {'level': '1', 'name': 'grab_scale_dmg', 'value': value})
+    return root
+
+
+def _hero(name, *talents, playable='true'):
+    st = ET.Element('stats', {'name': name, 'playable': playable} if playable else {'name': name})
+    for t in talents:
+        ET.SubElement(st, 'talent', {'level': '1', 'name': t})
+    return st
+
+
+def test_every_playable_hero_must_carry_the_grab_talent():
+    from xml1build import heroes as H
+    heroes = [_hero('InventedA', 'grab', 'invented_power'), _hero('InventedB', 'invented_power'),
+              _hero('default', playable=None)]
+    msgs = H.grab_problems(heroes, _shared())
+    assert len(msgs) == 1 and msgs[0].startswith('InventedB:')
+
+
+def test_the_shared_grab_talent_needs_a_positive_scale():
+    from xml1build import heroes as H
+    heroes = [_hero('InventedA', 'GRAB')]
+    assert H.grab_problems(heroes, _shared()) == []
+    for bad in (_shared('0'), _shared(None), ET.Element('talents'), None):
+        assert any(m.startswith('shared_talents:') for m in H.grab_problems(heroes, bad))

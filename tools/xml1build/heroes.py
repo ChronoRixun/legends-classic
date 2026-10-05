@@ -75,6 +75,36 @@ SHARED_CAP = 99              # 0x4c05d0 push 0x63: shared ids 0..98
 FILE_CAP = 100               # per-hero file ids (idx+1)*100 .. +99 (0x4bdc00)
 FILE_TALENT_MAX = 8          # DESIGN 4.2: <= 8 talents per hero file
 STATS_TALENT_MAX = 19        # a CStats holds <= 19 <talent> children (FUN_0043bb80, == 0x13)
+# Issue #51: XMen2.exe's ch_guard_decide (0x4ec090) grabs an enemy only when the hero's grab_scale_dmg talentvalue
+# (string 0x68edac) is above 0 (0x4ec3c6-0x4ec407; otherwise action 0x1a). XML2 gives it through the hidden shared
+# talent `grab` (talentvalue 2) that every XML2 hero carries at level 1. XML1 (0xd99d0) grabs with no such gate, so
+# every XML1 hero gets the same reference; shared_keep then keeps XML2's definition (DESIGN 4.7 listed it).
+GRAB_TALENT = 'grab'
+GRAB_TALENTVALUE = 'grab_scale_dmg'
+
+
+def grab_problems(hero_stats, shared_root):
+    """[message] when a playable hero (herostat <stats playable=true>) does not name GRAB_TALENT or shared_talents
+    does not define it with a positive grab_scale_dmg (the value 0x4ec3c6 tests), i.e. heroes cannot grab enemies."""
+    out = []
+    tal = None
+    if shared_root is not None:
+        tal = next((t for t in shared_root.iter('talent') if (t.get('name') or '').lower() == GRAB_TALENT), None)
+    vals = [] if tal is None else [tv.get('value') for tv in tal.iter('talentvalue')
+                                   if (tv.get('name') or '').lower() == GRAB_TALENTVALUE]
+    try:
+        ok = bool(vals) and all(float(v) > 0 for v in vals)
+    except (TypeError, ValueError):
+        ok = False
+    if not ok:
+        out.append(f'shared_talents: no {GRAB_TALENT} talent with a positive {GRAB_TALENTVALUE} (grabs fall back, '
+                   f'0x4ec3c6)')
+    for st in hero_stats:
+        if (st.get('playable') or '').lower() != 'true':
+            continue
+        if not any((t.get('name') or '').lower() == GRAB_TALENT for t in st.iter('talent')):
+            out.append(f'{st.get("name")}: no <talent name="{GRAB_TALENT}">: cannot grab enemies (0x4ec3c6)')
+    return out
 STATS_CAP = 296              # 0x44c1a7 cmp eax,0x129
 NAME_MAX_ROSTER = 18         # < 19 chars to appear in the roster screen (0x5db590 < 0x13)
 # talentvalue names: the registrar (talent-value manager vt+0x1c = 0x4c1860) refuses a name of 20+ chars
@@ -1719,9 +1749,8 @@ physical_resistant_share spawn_invis dr_stun sentinel_special boss_resistances m
 blob_butt blob_belly havok_beam havok_nova jug_punch jug_slam jug_armor marrow_shards marrow_armor marrow_xtreme
 steal_form pyro_flame pyro_firering pyro_firebat sabre_spin sabre_claw acrobatics toughness mutantmastery
 x1_npc_energy""".split())
-# DESIGN 4.7 also listed `grab` (47); in the built data nothing references it once XML2's heroes are gone (no
-# style <require>, no stats entry: XML2's fightstyle grab moves are not talent-gated), so the rule drops it (46).
-# In --hero-roster 21xml2 the XML2 pads reference it again and the rule keeps it. x1_npc_energy (SPEC 24) is the
+# DESIGN 4.7 also listed `grab` (47). Until issue #51 nothing referenced it once XML2's heroes were gone, so the rule
+# dropped it and no hero could grab an enemy (GRAB_TALENT); every hero entry now names it, so the rule keeps it. x1_npc_energy (SPEC 24) is the
 # characters module's NPC energy talent (npc_values.ENERGY_TALENT): kept while a stats entry names it (47).
 # SPEC 30: characters emits XML1's 14 distinct inline NPC immunity bodies as shared talents in XML2's boss_resistances
 # form (npc_values.immunity_plan names each body after the XML1 talent name most entries used); kept while a stats
@@ -1968,6 +1997,9 @@ class HeroBuilder:
             if lvl:
                 attrs['level'] = lvl
             ET.SubElement(e, 'talent', attrs)
+            n_tal += 1
+        if not any((t.get('name') or '').lower() == GRAB_TALENT for t in e.iter('talent')):
+            ET.SubElement(e, 'talent', {'level': '1', 'name': GRAB_TALENT})     # issue #51: grabbing enemies
             n_tal += 1
         if n_tal > STATS_TALENT_MAX:
             ctx.error(f'{name}: {n_tal} <talent> children (> {STATS_TALENT_MAX}, FUN_0043bb80)')
@@ -2827,6 +2859,9 @@ def _validate(ctx, report=None):
                 ln = (st.get('name') or '').lower()
                 if tn in SPECIAL_TALENT_NAMES and tn not in shared_names and tn not in file_names.get(ln, set()):
                     ck.error(f'{st.get("name")}: special talent {tn} (0x4be130) defined nowhere')
+        # V-TBD (issue #51): every playable hero can grab an enemy (GRAB_TALENT)
+        for msg in grab_problems(heros.get('engb', []), o.tree('Data/shared_talents.engb')):
+            ck.error(msg)
         # SPEC 50 (SPEC_heroes.md: the first game's shared hero passives): the kept definitions of
         # critical / might / leadership / flight carry XML1's rank counts, level gates and engine-form bodies
         # (SHARED_REAL_POWERUPS / SHARED_REAL_TALENTVALUES), not XML2's 15/2/15-rank versions

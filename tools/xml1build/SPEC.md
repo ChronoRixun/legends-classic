@@ -4497,3 +4497,16 @@ unliftable because XMen2.exe never lifts 3 (the `cmp ..., 3` at 0x427fa3); an XM
 would remove it, and XML1's heaviness 5 would then need `nopickup` (not set now: the same bit also excludes objects
 from the heaviness-limited object attacks at 0x4f2dee). Validator V-TBD: an XML1-sourced entity definition with a
 heaviness above 3 (a value the conversion did not touch) is an error.
+
+### TBD.2 Grabbing enemies (the shared `grab` talent)
+
+XMen2.exe's ch_guard_decide (0x4ec090) grabs a target only when the hero's `grab_scale_dmg` talentvalue (string
+0x68edac) is above 0.0 (0x4ec3c6-0x4ec407; the global mode byte 0x782728 can skip it) and the target passes
+0x429210; otherwise the handler takes action 0x1a. XML2 gives the value through the hidden shared talent `grab`
+(talentvalue grab_scale_dmg = 2) that each XML2 hero names at level 1. XML1's handler (0xd99d0) grabs any target
+passing the same target test (0x391a0) with no talent gate. The port named `grab` on no hero, so the shared_talents
+rule dropped it and no hero could grab. `heroes.hero_entry` now adds `<talent name="grab" level="1"/>` to every hero
+entry (GRAB_TALENT); the rule keeps XML2's definition (DESIGN 4.7's list again matches, V-H4 no longer warns).
+Budgets: shared talents 61 -> 62, worst party 90 -> 91 of the 92 the danger-room margin allows. The shared `throw`
+event's %grab_scale_dmg reference now resolves (2 instead of 0), so thrown enemies take XML2's throw damage scale.
+Validator V-TBD (in V-H4): a playable hero without the talent, or no positive grab_scale_dmg, is an error.
