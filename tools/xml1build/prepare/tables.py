@@ -36,7 +36,9 @@ from . import disc as P1
 from .. import common as C
 
 STAGE = 'tables'
-VERSION = 2            # 2: SPEC 37 (issue #8) - required="false" -> major="false"; updatedescription counted
+VERSION = 4            # 2: SPEC 37 (issue #8) - required="false" -> major="false"; updatedescription counted
+                       # 4: issue #49 - names_xml1 also tries character/<voice folder>/<event> (XML1's voice lines);
+                       #    skips 3, which PR #41 uses: a shared number would let one branch reuse the other's cache
 NEWLINE = '\r\n'
 # research-relative path -> file name in the stage directory (Sources.prepared overrides these)
 OUTPUTS = {'scripts/mission_plan.json': 'mission_plan.json', 'characters/collisions.json': 'collisions.json',
@@ -391,6 +393,32 @@ def _collect_xml1(loose, assets):
     return refs, scripts
 
 
+VOICE_STATS = ('data/herostat.eng', 'data/npcstat.eng')   # XML1 stats whose sounddirs name the voice folders
+SHARED_SOUNDS = 'data/shared_sounds.xml'                  # XML1's SOUNDTABLE: the character event names
+VOICE_BANK = 'x_voice'                                    # the global bank both games keep the voice lines in
+
+
+def xml1_voice_folders(loose: Path, assets: Path):
+    """(voice folders, events): every XML1 herostat / npcstat sounddir as the folder the engine looks its voice
+    events up in (simlookup.voice_dir: wolver_m -> wolver_v) and every event name of XML1's shared_sounds, both
+    sorted. XML1's x_voice bank names its lines 'character/<voice folder>/<event>' (issue #49); names_xml1 tries
+    those names and P4 `sound` lets these folders' XML1 entries win the merge. Loose wins over assets by rel."""
+    from ..lib.simlookup import voice_dir
+    dirs, events = set(), set()
+    for rel in VOICE_STATS + (SHARED_SOUNDS,):
+        p = next((r / rel for r in (loose, assets) if (r / rel).is_file()), None)
+        t = _load_tree_text(p) if p is not None else None
+        if t is None:
+            continue
+        for el in t.iter():
+            if rel == SHARED_SOUNDS:
+                events.update(v.strip().lower() for v in el.attrib.values() if re.fullmatch(r'[a-z0-9_]{2,32}',
+                                                                                           v.strip().lower()))
+            elif el.get('sounddir', '').strip():
+                dirs.add(voice_dir(el.get('sounddir')))
+    return sorted(dirs), sorted(events)
+
+
 def _exe_strings(path):
     d = open(path, 'rb').read()
     for m in re.finditer(rb'[\x20-\x7e]{4,}', d):
@@ -460,6 +488,8 @@ def names_xml1(loose: Path, assets: Path, xbox: Path, cancel=None):
             events.add(parts[-1])
             if len(parts) >= 3:
                 events.add('/'.join(parts[2:]))
+    vdirs, vevents = xml1_voice_folders(loose, assets)
+    voice = {f'{CHARPFX}{d}/{e}' for d in vdirs for e in vevents}
     pool_sorted = sorted(pool)
     pool_h = _elf_np(pool_sorted)
     events_sorted = sorted(events)
@@ -487,6 +517,10 @@ def names_xml1(loose: Path, assets: Path, xbox: Path, cancel=None):
                 extra.add(zone + '/' + n)
         extra.add('music/' + base)
         extra.update(CHARPFX + base + '/' + e for e in events_sorted)
+        # XML1's voice lines: 'character/<voice folder>/<event>' for every stats sounddir, in the global voice bank
+        # only (issue #49; no other XML1 bank names one)
+        if base == VOICE_BANK:
+            extra.update(voice)
         extra -= pool
         extra_sorted = sorted(extra)
         cands = pool_sorted + extra_sorted
@@ -506,7 +540,10 @@ def names_xml1(loose: Path, assets: Path, xbox: Path, cancel=None):
         names = {}
         for h, lst in assign.items():
             lst.sort()
-            names[h] = lst[-1][2]
+            # a voice name wins a key it shares with another guess (ELF hash collisions: a pool string or a
+            # 'character/x_voice/<word>' guess); the engine only ever looks the voice name up there
+            pick = [x for x in lst if x[2].split('/***RANDOM***/')[0] in voice] if base == VOICE_BANK else []
+            names[h] = (pick or lst)[-1][2]
             if len({x[2] for x in lst}) > 1:
                 ambiguous.append((rel, '%08x' % h, sorted({x[2] for x in lst})))
         # sample-file-name keyed sounds (XML1 layered death-style parts)
