@@ -58,7 +58,9 @@ own patch), and zones runs it on the world tables it merges itself, so every mod
    that have a ps2 variant ("press", "analog stick": no Xbox trigger "pull"). The console variants stay as they were.
 5. Object physics scales (issue #51): entity heaviness 0..5 -> XMen2.exe's 0..3 and structure 0..10 -> 0..2
    (convert_physics), so ordinary objects can be lifted and breakable walls can open. Attack levels retain
-   main behavior: level zero cannot damage living characters (0x4293e3). The punch/power wall rule needs an engine fix.
+   main behavior: level zero cannot damage living characters (0x4293e3). The punch/power wall rule is the engine
+   fix's (xml2-fix [Game] BreakRule=xml1): every definition whose structure is converted keeps XML1's number in
+   `xml1structure`, an attribute XMen2.exe never reads (SPEC "The first game's break rule").
 """
 from __future__ import annotations
 
@@ -252,15 +254,36 @@ def structure_x1_to_x2(value):
     return None if v is None else str(STRUCTURE_X1_TO_X2[min(max(v, 0), len(STRUCTURE_X1_TO_X2) - 1)])
 
 
+# XML1's own structure number (0..10, default.xbe's clamp), kept beside the converted one for xml2-fix's
+# [Game] BreakRule=xml1: XMen2.exe reads entity attributes by name (the physent parser asks for `structure` at
+# 0x49896d) and never lists them, so an attribute of another name reaches nobody but the fix, which asks the same
+# reader for it at the same place. With the key, an object breaks only to a hit of at least this level on XML1's
+# scale (a punch is 1; powers, Might and the damageLevel affecter go higher); without the key, or with an older fix,
+# the attribute is not read and the converted structure decides alone, as before.
+XML1_STRUCTURE_ATTR = 'xml1structure'
+XML1_STRUCTURE_MAX = len(STRUCTURE_X1_TO_X2) - 1
+
+
+def xml1_structure(value):
+    """XML1 structure text -> the number XML1 itself uses (str, clamped to 0..10), or None when it is not a number."""
+    v = _ival(value)
+    return None if v is None else str(min(max(v, 0), XML1_STRUCTURE_MAX))
+
+
 
 def convert_physics(root):
     """XML1 -> XMen2.exe object physics scales on every entity definition (element with a classname), in place:
-    heaviness and structure; attack damagelevel is unchanged. NOT idempotent (heaviness 2 -> 1 -> 0):
+    heaviness and structure; attack damagelevel is unchanged. A converted structure leaves XML1's number in
+    xml1structure (XML1_STRUCTURE_ATTR). NOT idempotent (heaviness 2 -> 1 -> 0):
     convert() runs once on each freshly parsed XML1 tree. Returns a Counter."""
     c = collections.Counter()
     for el in root.iter():
         if el.get('classname') is None:
             continue
+        kept = xml1_structure(el.get('structure')) if (el.get('structure') or '').strip() else None
+        if kept is not None and el.get(XML1_STRUCTURE_ATTR) is None:
+            el.set(XML1_STRUCTURE_ATTR, kept)
+            c['xml1structure_kept'] += 1
         for attr, fn in (('heaviness', heaviness_x1_to_x2), ('structure', structure_x1_to_x2)):
             old = el.get(attr)
             if old is not None and old.strip():
@@ -283,6 +306,26 @@ def physics_scale_problems(root):
             v = _ival(el.get(attr)) if (el.get(attr) or '').strip() else None
             if v is not None and v > top:
                 out.append((el.get('name'), attr, el.get(attr)))
+    return out
+
+
+
+def break_rule_problems(root):
+    """[(entity name, structure, xml1structure)] of entity definitions whose pair xml2-fix's BreakRule=xml1 cannot
+    use: a numeric structure without XML1's number beside it, a number outside 0..10, or a structure that is not what
+    XML1's number converts to (the fix then falls back to XMen2.exe's own rule for that object, and a plain punch
+    breaks what XML1 kept for powers)."""
+    out = []
+    for el in root.iter():
+        if el.get('classname') is None:
+            continue
+        s = _ival(el.get('structure')) if (el.get('structure') or '').strip() else None
+        raw = el.get(XML1_STRUCTURE_ATTR)
+        if s is None and raw is None:
+            continue
+        x = _ival(raw) if (raw or '').strip() else None
+        if s is None or x is None or not 0 <= x <= XML1_STRUCTURE_MAX or STRUCTURE_X1_TO_X2[x] != s:
+            out.append((el.get('name'), el.get('structure'), raw))
     return out
 
 

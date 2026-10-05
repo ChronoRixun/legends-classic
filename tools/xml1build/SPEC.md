@@ -4997,3 +4997,61 @@ than raising the byte's clamp globally. No XML2 Fix change is part of this build
 Remaining approximation: all source structure 2-9 objects map to one breakable class, so normal attacks can
 break more objects than in XML1. Class 10 remains immune; script flags and health still apply. Full original
 Might thresholds and the punch/power wall distinction remain deferred to the separate engine work above.
+
+## TBD. The first game's break rule (xml2-fix `[Game] BreakRule=xml1`; follow-up to issue #51; number assigned at merge)
+
+This is the engine work SPEC 59 deferred. It needs xml2-fix 1.3.2 (unreleased); a build made with it runs on 1.3.1
+exactly as before, because 1.3.1 reads neither the key nor the attribute.
+
+### TBD.1 The rule
+
+XML1 (default.xbe): the object damage function 0x92220 refuses a hit whose level (hit +0x14) is below the object's
+structure (+0x2c2), or whose target has structure above 9; the melee level 0x59a50 is the attack's authored
+`damagelevel` + {0, 3, 6, 8}[min(Might, 3)] + the `damageLevel` affecter, at most 9, with Might read by the same
+call (0xb1ba0) as the pickup gate. XMen2.exe cannot hold either number (SPEC 59): the hit byte is capped at 1 and
+characters compare it too, and the structure byte is clamped to 2 and tested for 2 in about thirty places.
+
+With `BreakRule=xml1` the fix adds XML1's comparison at the object gate (0x49805b) and changes neither byte:
+
+- **Structure.** `convert_physics` keeps XML1's number (clamped to 0..10, as default.xbe clamps it) in the new
+  entity attribute `xml1structure` next to the converted `structure`. XMen2.exe reads entity attributes by name
+  (0x49896d asks for `structure`) and never lists them, so only the fix sees it; the fix asks the same reader at
+  the same place and keeps the number by the object's handle. It uses the number only while the object's structure
+  byte is what `STRUCTURE_X1_TO_X2` gives for it, so a script that changes the byte later puts the object back
+  on XMen2.exe's rule.
+- **Attack level.** No new data. The authored `damagelevel` the builder passes through (SPEC 59: unchanged from
+  XML1 in styles, projectiles and entity definitions; the 59 shared combat events both games name carry the same
+  level or leave it to the default in both) is stored unclamped by XMen2.exe (0x4dc094) and copied into the hit;
+  only the melee sweep's level function (0x44f770, vtable slot 0x685a98) caps it. The fix reads the byte there,
+  returns the game's own result
+  unchanged, and remembers XML1's sum for that attack: authored + {0, 3, 6, 8} by the hero's lift value (the
+  `might_heaviness` sum, which is XML1's Might: heroes.py writes might_heaviness 1/2/3 for ranks 1/2/3) + the
+  `damageLevel` affecter, at most 9. A hit that never passes the sweep is judged by the level it carries.
+- **Nothing else.** The fix only refuses hits the game would let through on an object with a usable pair; what
+  characters, targeting and AI read is unchanged, and nothing is saved.
+
+Why an attribute and not a side file: it sits where `structure` sits (per definition, per zone, in the file the
+builder already writes and a mod can override), needs no key from a live object back to its definition and no
+second loader.
+
+`fix_ini.BREAK_RULE` ('xml1') is written to `[Game] BreakRule` for every XML1 build and is a port-owned key.
+`REQUIRED_XML2FIX` is not changed here (other open changes move it to 1.3.2).
+
+### TBD.2 Validator rule V-TBD
+
+An XML1-sourced entity definition with a `structure` must carry an `xml1structure` in 0..10 whose conversion is
+that `structure` (`x1schema.break_rule_problems`, counted as `x1_break_rule_unpaired`). A definition that fails it
+would silently fall back to XMen2.exe's rule: a plain punch would break it again.
+
+### TBD.3 What is and is not reproduced
+
+- Reproduced: every structure threshold 0..10 against melee hits, with XML1's Might shares (3/6/8) and the
+  `damageLevel` affecter (Sharpness and the like); enemies whose npcstat carries XML1's `might` talent get the
+  same share, as in XML1's data.
+- The heaviest objects stay as SPEC 59 left them: XMen2.exe never lifts heaviness 3 (0x427fa3), and 3 is also its
+  immovable class (0x496d90), so raising the lift limit is separate engine work.
+- Hits XMen2.exe builds itself (collision damage, thrown objects) carry its own small level numbers and are judged
+  with them. The push a refused hit gives a light object is XMen2.exe's rule, not XML1's.
+- An enemy attack that passes XMen2.exe's melee sweep gets the Might share (seen in game: HAARP soldiers, `might`
+  rank 1 in XML1's npcstat, hit a structure-2 wall at level 4). Which of an enemy's attacks pass the sweep here
+  and passed XML1's is not established attack by attack.

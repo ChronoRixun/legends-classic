@@ -5,6 +5,15 @@ build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebui
 
 ## Unreleased - content version 11
 
+- **Sturdier objects break as in the first game: to powers and Might, not to plain punches** (follow-up to issue
+  #51; takes effect with XML2 Fix 1.3.2). The first game gives every object a structure from 0 to 10 and breaks it
+  only with an attack of at least that level: a punch is 1, powers are higher, and Might adds 3, 6 or 8. The engine
+  only knows 0 to 2, so walls such as the one in HAARP's barracks either could not be broken at all or, since the
+  last fix, broke to any punch. Every object now also carries the first game's own number, and XML2 Fix compares it
+  with the first game's attack level: that wall takes Wolverine's Claw Flurry and shrugs off his punches, a desk
+  computer needs Might or a stronger power, crates and lockers still break to anything. Attacks on enemies are
+  unchanged. With XML2 Fix 1.3.1 the build plays as before. A new check verifies every object's pair of numbers.
+
 - **Fixed: the first game's heroes and villains were silent or spoke X-Men Legends II's lines** (issue #49).
   Wolverine, Jean, Emma, Gambit, Jubilee, Magma, Professor X, Psylocke and Rogue had no taunts, team commands,
   low-health or victory lines; Cyclops, Colossus, Iceman, Nightcrawler, Storm, Beast and villains such as Blob and

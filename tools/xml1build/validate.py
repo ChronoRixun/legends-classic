@@ -356,6 +356,7 @@ class Scan:
         self.turret_mount = {}     # norm rel -> [(entity name, missing flags)] remapped scan turrets not fixed-mount
         self.delayed_harm_loops = {}  # norm rel -> [(entity name, loop effect, firstact)]
         self.physics_scale = {}    # norm rel -> [(entity name, attribute, value)] XML1-scale object physics left
+        self.break_rule = {}       # norm rel -> [(entity name, structure, xml1structure)] pairs BreakRule=xml1 cannot use
         self.speakers = {}         # norm rel (conversations/) -> [(attr, %TOKEN%)]
         self.anim_enums = {}       # norm rel -> [(tag, attr, enum literal)]  animenum values + EA_* in any value
         self.zoneinfo_xtraction = {}   # norm rel (data/zoneinfo.*) -> [(zone, [attrs])] Xtraction network entries
@@ -531,6 +532,9 @@ class Validator:
                     ps = XS.physics_scale_problems(root)
                     if ps:
                         sc.physics_scale[n] = ps
+                    br = XS.break_rule_problems(root)
+                    if br:
+                        sc.break_rule[n] = br
                 if n.startswith('conversations/'):
                     sp = [(k, t) for el in root.iter() for k in SPEAKER_ATTRS for t in SPEAKER_RE.findall(el.get(k) or '')]
                     if sp:
@@ -960,6 +964,17 @@ class Validator:
                      f'XMen2.exe clamps (x1schema.convert_physics), e.g. {lst[:2]}')
             n_scale += len(lst)
         ck.set('x1_physics_scale_left', n_scale)
+        # V-TBD (SPEC "The first game's break rule"): an XML1-sourced entity definition with a structure carries
+        # XML1's own number in xml1structure, and its structure is what that number converts to. Otherwise xml2-fix's
+        # BreakRule=xml1 has nothing to compare for that object and a plain punch breaks it again.
+        n_break = 0
+        for n, lst in sorted(sc.break_rule.items()):
+            if n in sc.twins:
+                continue
+            ck.error(f'{sc.files[n]["rel"]}: {len(lst)} entity definition(s) whose structure and xml1structure do not '
+                     f'pair (x1schema.convert_physics), e.g. {lst[:2]}')
+            n_break += len(lst)
+        ck.set('x1_break_rule_unpaired', n_break)
 
     def fall_kill_volumes(self, ck):
         """V26: converted fall kill volumes must be active collision boxes."""
