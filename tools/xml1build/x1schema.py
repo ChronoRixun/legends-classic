@@ -366,10 +366,34 @@ FALL_KILL_DEFERRED = {
 }
 
 
-def fall_kill_volume_deferred(el, rel):
+# Lethal only to a hero a player controls. XMen2.exe's activation gate refuses
+# an "actleader" entity for every other toucher, so an AI follower who falls in
+# is left to the engine's own catch-up placement (SPEC 52, "Player-only ravine").
+FALL_KILL_LEADER_ONLY = {
+    'maps/haarp/ext/haarp_ext01': frozenset({'kill_target'}),
+}
+FALL_KILL_LEADER_FLAGS = {'actleader': 'true'}
+
+
+def _fall_kill_listed(table, el, rel):
     path = str(rel).replace('\\', '/').lower().lstrip('/')
     stem = path.rsplit('.', 1)[0]
-    return el.get('name') in FALL_KILL_DEFERRED.get(stem, ())
+    return el.get('name') in table.get(stem, ())
+
+
+def fall_kill_volume_deferred(el, rel):
+    return _fall_kill_listed(FALL_KILL_DEFERRED, el, rel)
+
+
+def fall_kill_volume_leader_only(el, rel):
+    return _fall_kill_listed(FALL_KILL_LEADER_ONLY, el, rel)
+
+
+def fall_kill_volume_flags(el, rel):
+    """The attributes an enabled volume must carry in the output."""
+    if fall_kill_volume_leader_only(el, rel):
+        return dict(FALL_KILL_FLAGS, **FALL_KILL_LEADER_FLAGS)
+    return FALL_KILL_FLAGS
 
 
 
@@ -391,8 +415,9 @@ def convert_fall_kill_volumes(root, rel):
     for el in fall_kill_volumes(root, rel):
         if fall_kill_volume_deferred(el, rel):
             continue
-        if any(el.get(k) != v for k, v in FALL_KILL_FLAGS.items()):
-            el.attrib.update(FALL_KILL_FLAGS)
+        flags = fall_kill_volume_flags(el, rel)
+        if any(el.get(k) != v for k, v in flags.items()):
+            el.attrib.update(flags)
             changed += 1
     return changed
 

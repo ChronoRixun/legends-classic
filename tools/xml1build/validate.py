@@ -350,7 +350,7 @@ class Scan:
         self.x1_sourced = 0      # registered XMLB-family files converted from an XML1 source file
         self.unknown_classes = {}  # norm rel -> [(entity name, classname)] XMen2.exe does not register (0x461080)
         self.color_channels = {}   # norm rel (effects/) -> [(tag, name)] still carrying XML1 red/green/blue
-        self.fall_kill_volumes = {}  # map rel -> [(name, missing XML2 flags, deferred)]
+        self.fall_kill_volumes = {}  # map rel -> [(name, missing XML2 flags, deferred, player-only state)]
         self.items = {}            # norm rel (data/items.*) -> root
         self.inv_items = {}        # norm rel -> [inventoryitem values]
         self.turret_mount = {}     # norm rel -> [(entity name, missing flags)] remapped scan turrets not fixed-mount
@@ -508,9 +508,14 @@ class Validator:
                         sc.color_channels[n] = cc
                 volumes = XS.fall_kill_volumes(root, n)
                 if volumes:
+                    # player-only state: (listed in FALL_KILL_LEADER_ONLY, carries every leader flag,
+                    # carries any leader flag)
                     sc.fall_kill_volumes[n] = [
                         (el.get('name'), [k for k, v in XS.FALL_KILL_FLAGS.items() if el.get(k) != v],
-                         XS.fall_kill_volume_deferred(el, n))
+                         XS.fall_kill_volume_deferred(el, n),
+                         (XS.fall_kill_volume_leader_only(el, n),
+                          all(el.get(k) == v for k, v in XS.FALL_KILL_LEADER_FLAGS.items()),
+                          any(el.get(k, '').lower() == 'true' for k in XS.FALL_KILL_LEADER_FLAGS)))
                         for el in volumes]
                 if n in ('data/items.xmlb', 'data/items.engb'):
                     sc.items[n] = root
@@ -962,13 +967,23 @@ class Validator:
         ck.set('x1_physics_scale_left', n_scale)
 
     def fall_kill_volumes(self, ck):
-        """V26: converted fall kill volumes must be active collision boxes."""
+        """V26: converted fall kill volumes must be active collision boxes; the listed player-only
+        volumes, and no others, carry the leader gate."""
         sc = self.scan
         for n, volumes in sorted(sc.fall_kill_volumes.items()):
             if n in sc.twins or not self.is_x1_source((self.reg.get(n) or {}).get('source')):
                 continue
             ck.count('files_checked')
-            for name, missing, deferred in volumes:
+            for name, missing, deferred, (leader_listed, leader_set, leader_any) in volumes:
+                if leader_listed and not deferred:
+                    ck.count('volumes_player_only')
+                    if not leader_set:
+                        ck.error(f'{sc.files[n]["rel"]}: player-only fall kill volume {name!r} lacks '
+                                 f'{", ".join(k + "=" + v for k, v in XS.FALL_KILL_LEADER_FLAGS.items())}'
+                                 f' (it would kill AI followers again)')
+                elif leader_any:
+                    ck.error(f'{sc.files[n]["rel"]}: fall kill volume {name!r} carries the player-only gate '
+                             f'but is not listed in x1schema.FALL_KILL_LEADER_ONLY')
                 if deferred:
                     ck.count('volumes_deferred')
                     if len(missing) < len(XS.FALL_KILL_FLAGS):

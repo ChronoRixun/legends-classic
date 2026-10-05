@@ -5,6 +5,13 @@ build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebui
 
 ## Unreleased - content version 11
 
+- **Changed: the HAARP exterior ravine kills only the hero you control** (issue #22). Falling or double-jumping
+  into the ravine under the ice bridge still kills the hero a player controls (either player in co-op). A
+  computer-controlled teammate who slips off a ledge there is no longer killed: he rejoins the party when you move
+  on, as before the kill volumes were restored. If you take control of a teammate who is already down there, he
+  dies at his first jump. The other pits are unchanged. The fall-volume check (V26) verifies the new marker
+  (SPEC 52, "Player-only ravine").
+
 - **Fixed: the first game's heroes and villains were silent or spoke X-Men Legends II's lines** (issue #49).
   Wolverine, Jean, Emma, Gambit, Jubilee, Magma, Professor X, Psylocke and Rogue had no taunts, team commands,
   low-health or victory lines; Cyclops, Colossus, Iceman, Nightcrawler, Storm, Beast and villains such as Blob and

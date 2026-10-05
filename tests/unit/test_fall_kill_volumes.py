@@ -129,3 +129,73 @@ def test_validator_reports_deferral_and_rejects_accidental_reactivation():
             root, entity = fixture(**changed_flags)
             check = check_fixture(Path(temp), root)
             assert len(check.errors) == 1
+
+
+def test_player_only_volume_gets_the_leader_gate_for_the_exact_pair_only():
+    from unittest.mock import patch
+    listed = {'maps/invented/gorge': frozenset({'pit_alpha'})}
+    for rel in ('maps/invented/gorge.eng', 'Maps\\Invented\\Gorge.XMLB'):
+        root, entity = fixture()
+        before = dict(entity.attrib)
+        instances = ET.tostring(root.find('entinst'))
+        other = ET.SubElement(root, 'entity', dict(before, name='pit_beta'))
+        with patch.object(S, 'FALL_KILL_LEADER_ONLY', listed):
+            changes = S.convert(root, rel)
+            assert changes['fall_kill_volumes'] == 2
+            assert entity.attrib == dict(before, boxcollision='true', smartent='false', actleader='true')
+            assert 'actleader' not in other.attrib
+            assert other.get('boxcollision') == 'true' and other.get('smartent') == 'false'
+            assert ET.tostring(root.find('entinst')) == instances
+            assert not S.convert(root, rel)
+        decoded = C.decode_xmlb(C.encode_xmlb(root))
+        assert not C.xmlb_attr_problems(decoded)
+        assert decoded.find('entity').attrib == entity.attrib
+    root, entity = fixture()
+    with patch.object(S, 'FALL_KILL_LEADER_ONLY', listed):
+        S.convert(root, 'maps/invented/other.eng')
+    assert 'actleader' not in entity.attrib and entity.get('boxcollision') == 'true'
+    # an already converted volume (two flags) that becomes listed still gains the gate
+    root, entity = fixture(boxcollision='true', smartent='false')
+    with patch.object(S, 'FALL_KILL_LEADER_ONLY', listed):
+        assert S.convert(root, 'maps/invented/gorge.eng')['fall_kill_volumes'] == 1
+    assert entity.get('actleader') == 'true'
+
+
+def test_player_only_registry_is_narrow_and_never_deferred():
+    assert len(S.FALL_KILL_LEADER_ONLY) == 1
+    for stem, names in S.FALL_KILL_LEADER_ONLY.items():
+        assert stem == stem.lower() and stem.startswith('maps/') and '.' not in stem
+        assert len(names) == 1
+        assert not names & S.FALL_KILL_DEFERRED.get(stem, frozenset())
+    assert S.FALL_KILL_LEADER_FLAGS == {'actleader': 'true'}
+
+
+def test_validator_requires_the_leader_gate_on_listed_volumes_and_nowhere_else():
+    from unittest.mock import patch
+    listed = {'maps/invented/cliff': frozenset({'pit_alpha'})}
+    with tempfile.TemporaryDirectory() as temp:
+        folder = Path(temp)
+        with patch.object(S, 'FALL_KILL_LEADER_ONLY', listed):
+            # lethal to everyone again (the gate was lost): error
+            root, entity = fixture(boxcollision='true', smartent='false')
+            bad = check_fixture(folder, root)
+            assert len(bad.errors) == 1 and 'actleader=true' in bad.errors[0]
+            assert bad.counts['volumes_player_only'] == 1
+            for wrong in ('false', 'TRUE '):
+                entity.set('actleader', wrong)
+                assert len(check_fixture(folder, root).errors) == 1
+            root, entity = fixture()
+            S.convert(root, 'maps/invented/cliff.eng')
+            good = check_fixture(folder, root)
+            assert not good.errors
+            assert good.counts['volumes_player_only'] == 1 and good.counts['volumes_checked'] == 1
+            # the gate does not excuse a missing collision flag
+            entity.set('smartent', 'true')
+            assert len(check_fixture(folder, root).errors) == 1
+        # not listed: a gate that spread to another volume is an error; without it the volume is fine
+        root, entity = fixture(boxcollision='true', smartent='false', actleader='true')
+        spread = check_fixture(folder, root)
+        assert len(spread.errors) == 1 and 'FALL_KILL_LEADER_ONLY' in spread.errors[0]
+        assert not spread.counts.get('volumes_player_only')
+        entity.attrib.pop('actleader')
+        assert not check_fixture(folder, root).errors
