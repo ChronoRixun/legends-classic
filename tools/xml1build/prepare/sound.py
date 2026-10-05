@@ -8,7 +8,9 @@ The XML1 Xbox ZSND banks (P1 xbox/sounds/zsds) as XML2 PC banks, in the layout t
                                  names_xml1.json, passed explicitly) + _convert_report.json
   merged/eng/<c1>/<c2>/<bank>    every converted bank whose name XML2 also ships, merged into XML2's bank (XML2
                                  entries win; merge_zsnd.merge, the loop of the retired research/sound/merge_all.py)
-                                 + _merge_report.json
+                                 + _merge_report.json; except XML1's voice folders (issue #49): every
+                                 'char/<voice folder>/<event>' of an XML1 herostat/npcstat sounddir is XML1's
+                                 (XML2's entries under those names are shadowed, voice_shadow_names)
   convert.log, merge.log         one line per bank (the research runs' stdout)
 
 The 61 music banks (*_a / *_c) are converted too although P5 `music` replaces them in every build: the build plans
@@ -22,7 +24,7 @@ after the roots are mapped and the timing / codec fields dropped). The audio cod
 kernel when it is built and passes its self-check, else numpy; both give the same bytes.
 
 Cache: <cache>/<disc_id>/prepared/sound-v<VERSION>-<key[:12]>/; key = VERSION + P1's key + the sha1 of P2's
-names_xml1.json + the listing (rel, size, mtime) of XML2's Sounds/eng."""
+names_xml1.json + the listing (rel, size, mtime) of XML2's Sounds/eng + the voice shadow names."""
 from __future__ import annotations
 
 import json
@@ -34,9 +36,10 @@ from . import (PrepareError, StageFailed, check_cancel, digest, find_ci, listing
                pool_map, publish, read_stage, rebase_paths, rmtree, sha1_file, write_json_crlf)
 from . import disc as P1, tables as P2
 from ..lib import adpcm, convert_zsnd, merge_zsnd, zsnd     # were research/sound
+from ..lib.zhash import elf_hash
 
 STAGE = 'sound'
-VERSION = 1
+VERSION = 2                                     # 2: issue #49 - XML1's voice folders win the x_voice merge
 IMA, MERGED = 'all_ima/eng', 'merged/eng'       # below the stage directory = research/sound/out/<...>
 ENCODER = 'auto'                                # greedy for stereo music, beam otherwise
 REKEY = [('character/', 'char/')]               # XML1 character sounds also answer to XML2's char/ names
@@ -97,9 +100,26 @@ def convert_all(zsds: str, dst: str, names: dict, jobs: int, *, log=print, cance
     return reports
 
 
-def merge_all(conv: str, out: str, xml2_eng: str, *, log=print, cancel=None, rebase=None):
+def voice_shadow_names(disc_dir, xml2) -> list:
+    """issue #49: 'char/<voice folder>/<event>' for every XML1 herostat / npcstat voice folder (P2.xml1_voice_folders)
+    x every event name of XML1's and XML2's shared_sounds. XMen2.exe looks a character's voice lines up under these
+    names in the global x_voice bank; for XML1's folders the merge lets XML1's entries win them (XML2's entries are
+    shadowed even where XML1 has no line for the event: the first game's character says nothing there)."""
+    disc_dir = Path(disc_dir)
+    dirs, events = P2.xml1_voice_folders(disc_dir / P1.LOOSE, disc_dir / P1.ASSETS)
+    ev = set(events)
+    p = find_ci(xml2, 'data', 'shared_sounds.xmlb')
+    if p is not None:
+        for el in P2.load_xmlb(p).iter():
+            ev.update(v.strip().lower() for v in el.attrib.values() if v.strip())
+    return sorted(f'char/{d}/{e}' for d in dirs for e in ev)
+
+
+def merge_all(conv: str, out: str, xml2_eng: str, *, log=print, cancel=None, rebase=None, shadow_names=()):
     """research/sound/merge_all.py as a function: every converted bank whose rel path XML2's Sounds/eng also has is
-    merged into XML2's bank (XML2 entries win); empty XML1 banks are skipped. Writes _merge_report.json."""
+    merged into XML2's bank (XML2 entries win, except the names in shadow_names: XML1's voice folders, issue #49);
+    empty XML1 banks are skipped. Writes _merge_report.json."""
+    shadow = sorted({elf_hash(n) for n in shadow_names})
     reps, lines = [], []
     for p in iter_banks(conv):
         check_cancel(cancel)
@@ -113,11 +133,11 @@ def merge_all(conv: str, out: str, xml2_eng: str, *, log=print, cancel=None, reb
             continue
         o = os.path.join(out, rel)
         os.makedirs(os.path.dirname(o), exist_ok=True)
-        r = merge_zsnd.merge(base, p, o)
+        r = merge_zsnd.merge(base, p, o, shadow=shadow)
         reps.append(r)
         lines.append('%-20s base %4d + appended %4d sounds (%d dup keys skipped), tracks %d -> %s bytes' % (
             rel, r['base_sounds'], r['appended_sounds'], r['skipped_duplicate_keys'], r['out_tracks'],
-            r['out_bytes']))
+            r['out_bytes']) + (' (%d XML2 keys shadowed)' % r['shadowed_keys'] if r['shadowed_keys'] else ''))
     os.makedirs(out, exist_ok=True)
     reps = rebase_paths(reps, rebase)
     write_json_crlf(os.path.join(out, MERGE_REPORT), reps)
@@ -125,10 +145,10 @@ def merge_all(conv: str, out: str, xml2_eng: str, *, log=print, cancel=None, reb
 
 
 # ============================================================================================== the stage
-def stage_key(disc_stage: dict, tables_dir: Path, xml2_eng: str) -> str:
+def stage_key(disc_stage: dict, tables_dir: Path, xml2_eng: str, shadow_names=()) -> str:
     return digest({'stage': STAGE, 'version': VERSION, 'disc': disc_stage.get('key'),
                    'names': sha1_file(Path(tables_dir) / P2.OUTPUTS['sound/names_xml1.json']),
-                   'xml2_sounds': listing_digest(xml2_eng)})
+                   'xml2_sounds': listing_digest(xml2_eng), 'voice_shadow': digest(list(shadow_names))})
 
 
 def run(disc_dir, tables_dir, xml2, *, jobs=None, log=print, cancel=None, progress=None, force=False) -> dict:
@@ -140,7 +160,8 @@ def run(disc_dir, tables_dir, xml2, *, jobs=None, log=print, cancel=None, progre
     if not dst or dst.get('stage') != P1.STAGE:
         raise RuntimeError(f'{disc_dir} is not a published P1 disc directory')
     xml2_eng = xml2_sounds(xml2)
-    key = stage_key(dst, tables_dir, xml2_eng)
+    shadow_names = voice_shadow_names(disc_dir, xml2)
+    key = stage_key(dst, tables_dir, xml2_eng, shadow_names)
     final = disc_dir.parent / 'prepared' / f'{STAGE}-v{VERSION}-{key[:12]}'
     st = read_stage(final)
     if st and st.get('key') == key and not force:
@@ -164,11 +185,12 @@ def run(disc_dir, tables_dir, xml2, *, jobs=None, log=print, cancel=None, progre
         raise StageFailed('E_PREPARE_SOUND', f'{len(bad)} bank(s) did not convert: {bad[:5]}', {'banks': bad})
     t = time.time()
     merged, lines = merge_all((partial / IMA).as_posix(), (partial / MERGED).as_posix(), xml2_eng, log=log,
-                              cancel=cancel, rebase=rebase)
+                              cancel=cancel, rebase=rebase, shadow_names=shadow_names)
     t_merge = round(time.time() - t, 1)
     (partial / 'merge.log').write_text(''.join(x + '\n' for x in lines), encoding='utf-8')
     counts = {'banks': len(reports), 'aliases': sum(r.get('aliases', 0) for r in reports),
               'bytes': sum(r.get('out_bytes', 0) for r in reports), 'merged': len(merged),
+              'voice_shadow_names': len(shadow_names), 'shadowed': sum(r.get('shadowed_keys', 0) for r in merged),
               'codec': sorted({r.get('codec') for r in reports if r.get('codec')})}
     stage = {'stage': STAGE, 'version': VERSION, 'key': key, 'disc_key': dst.get('key'), 'xml2_sounds': xml2_eng,
              'jobs': jobs, 'counts': counts,

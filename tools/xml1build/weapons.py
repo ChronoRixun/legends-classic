@@ -254,7 +254,7 @@ def rewrite_weapon_events(root, weapons: dict, where: str = '') -> collections.C
 def weapon_fire_left(root) -> list:
     """[('<move>:<trigger name>', names_a_weapon)] for every trigger of a style that still fires XML1's
     `weapon_fire`, by its own name (names_a_weapon False: the stats entry's weapon would supply the shot) or through
-    style events inheriting it (True when the chain names a `weapon=`): validator V-TBD (SPEC 29.3)."""
+    style events inheriting it (True when the chain names a `weapon=`): validator V5 (SPEC 29.3)."""
     if root is None:
         return []
     roots = list(root) if root.tag == 'xmlb_multiple_roots' else [root]
