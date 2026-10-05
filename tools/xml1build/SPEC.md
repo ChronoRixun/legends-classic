@@ -3303,7 +3303,7 @@ effect - checked in game below.
   (`variant_name`): the XML1 style with every `weapon_fire` trigger of every FightMove replaced by the weapon's own
   triggers (`apply`): bullet / beam -> a `beam` trigger (ce_atk_beam, one-call hit-scan: `beambolt`=actorbolt,
   `beameffect`=muzzleaccfx (the tracer), `hiteffect`=impactfx, `damage`=the weapon's code, `damagetype`,
-  `maxrange`=range, `damagescale="difficulty"`, `damagelevel="1"`, `<damageMod name=damagemod>`) plus one
+  `maxrange`=range, `damagescale="difficulty"`, `damagelevel="0"` (issue #51), `<damageMod name=damagemod>`) plus one
   `effect_sound` (muzzlefx + firesound on the bolt); flame -> the ps_pyro `flame_dmg` form (`noaimfx`,
   `useboltinfo`, `pierce`, `beameffect`=flame_shot) keeping the original trigger's tag (150: ch_constantbeam
   fires it every `timeinterval`, which `apply` sets to 0.1 s on the `setbeam="true"` beamdata trigger) and a
@@ -4920,3 +4920,80 @@ the repository). Rows naming no playable hero of the build (Forge, Healer) are d
 header (`menu_only_problems`, also **V-H14** on `<out>`); a planned catch-up not written. Counts:
 `mission_start_unlock_missions` (99), `menu_only_unlocks`, `catchup_unlock_scripts`. Unit tests:
 `tests/unit/test_mission_unlocks.py` (invented tables and bodies).
+
+## 59. Object physics on XMen2.exe's scales: lifting, grabbing, breakable walls (issue #51)
+
+### TBD.1 Lifting (heaviness)
+
+XML1 (default.xbe) clamps an entity's `heaviness` to 5 and its pickup gate (0x38400) lifts an object when
+heaviness < 5 and heaviness <= might + 1, where might is the hero's `might` talent rank (0xb1ba0, talent name
+string 0x3d3fb0): anyone lifts 0-1, Might rank 1/2/3 lifts 2/3/4, 5 is never lifted. XMen2.exe clamps heaviness to
+3 (physent parser 0x498900) and its gate (0x427f60, run by ch_guard_decide 0x4ec090) lifts when the object has no
+`nopickup` bit (+0x30d & 4), heaviness < 3 and heaviness <= the hero's lift value (0x427dc0: 0 unless the
+`might_heaviness` affecter raises it). XML1's values were copied unchanged, so a heaviness-1 trash can needed Might.
+
+`x1schema.convert_physics` maps the heaviness of every XML1 entity definition (any element with a classname;
+characters' stats are a different property and untouched): 0, 1 -> 0; 2 -> 1; 3 -> 2; 4, 5 -> 3. Anyone, Might 1
+and Might 2 lift exactly XML1's objects. Remaining deviation: XML1's heaviness 4 (cars, Might rank 3) stays
+unliftable because XMen2.exe never lifts 3 (the `cmp ..., 3` at 0x427fa3); an XML2 Fix byte patch of that limit to 4
+would remove it, and XML1's heaviness 5 would then need `nopickup` (not set now: the same bit also excludes objects
+from the heaviness-limited object attacks at 0x4f2dee). Validator rule: an XML1-sourced entity definition with a
+heaviness above 3 (a value the conversion did not touch) is an error.
+
+### TBD.2 Grabbing enemies (the shared `grab` talent)
+
+XMen2.exe's ch_guard_decide (0x4ec090) grabs a target only when the hero's `grab_scale_dmg` talentvalue (string
+0x68edac) is above 0.0 (0x4ec3c6-0x4ec407; the global mode byte 0x782728 can skip it) and the target passes
+0x429210; otherwise the handler takes action 0x1a. XML2 gives the value through the hidden shared talent `grab`
+(talentvalue grab_scale_dmg = 2) that each XML2 hero names at level 1. XML1's handler (0xd99d0) grabs any target
+passing the same target test (0x391a0) with no talent gate. The port named `grab` on no hero, so the shared_talents
+rule dropped it and no hero could grab. `heroes.hero_entry` now adds `<talent name="grab" level="1"/>` to every hero
+entry (GRAB_TALENT); the rule keeps XML2's definition (DESIGN 4.7's list again matches, V-H4 no longer warns).
+Budgets: shared talents 61 -> 62, worst party 90 -> 91 of the 92 the danger-room margin allows. The shared `throw`
+event's %grab_scale_dmg reference now resolves (2 instead of 0), so thrown enemies take XML2's throw damage scale.
+Validator rule (in V-H4): a playable hero without the talent, or no positive grab_scale_dmg, is an error.
+
+### TBD.3 Breakable walls and the ordinary-damage regression
+
+The object structure remap remains: XML1 0-1 -> 0, 2-9 -> 1, 10 -> 2. This opens routes blocked when XML1's
+structure 2-9 was copied into XMen2.exe, where structure >= 2 is unbreakable (0x498044). Lifting and the hidden
+grab talent remain as described above. **Plain combos can now break the remapped walls too.** The original
+punch-versus-power wall restriction is withdrawn; preserving ordinary character damage takes priority.
+
+The initial implementation also mapped attack levels 0-1 -> 0 and >= 2 -> 1, including shared events, styles,
+projectiles and gun beams. That broke normal attacks against living enemies. FUN_00429320 compares hit byte
++0x2e with character byte +0x31c at 0x4293e0-0x4293e9 and accepts only unsigned **greater than**, not equality.
+A level-zero hit against a normal structure-zero character returns false at 0x42947c. The separate bypass bits
+0x00200000 / 0x40000000 mean kill / no-protection; they are not suitable substitutes for normal attacks.
+
+Attack levels are restored to main behavior in every affected path. Shared combat events remain the base
+file; styles retain authored values and omitted engine defaults, shared-value rewriting retains its prior
+main behavior, projectiles retain their values, and generated gun beams use level 1. Damage amounts, types,
+rolls and modifiers are not changed to compensate. The validator no longer requires the rejected zero/one
+attack-level mapping. Synthetic regressions exercise default and explicit ordinary attacks through conversion,
+including projectiles, and preserve authored zero/power values rather than inventing attack levels.
+CONTENT_VERSION stays 11 (unreleased).
+
+Why levelling can hide this: the attack-data constructor defaults the level to 1 (0x4dc603), the hit builder
+copies it from attack data +0x1c to hit +0x2e (0x4dc271-0x4dc274), and FUN_0044f770 adds the attacker's
+might_structure nibble (actor+0x57b) and rounded damageLevel affecter (actor+0x530), capped at 1. The result is
+stored to hit +0x2e at 0x4501fb. Wolverine's Sharpness contributes +3 at its first rank: an auto-spent higher-level
+hero can turn the broken zero into one. Character level itself is not read by this attack-level calculation.
+
+### TBD.4 Engine work required for the wall rule (not implemented here)
+
+For unchanged character defense and attack semantics, a normal hit must exceed character structure 0. To spare
+an object remapped to structure 1, the hit must be below 1. No integer can satisfy both; the effective attack
+level is capped at 1. Changing damage type, adding kill/no-protection flags or weakening character defenses
+would alter main combat and is not a faithful builder fix.
+
+XML2 Fix would need a separate object-only attack-level representation/comparison. Retain XML1's original
+structure and attack levels in side data, compute the XML1 attack threshold (authored DamageLevel + Might
+break strength + affecters), and apply it both to object damage eligibility (0x498044) and object target
+collection (0x4de501). Preserve the original/default hit level for the living-character gate at 0x4293e3 and
+its damage/defense calculation. Audit the other structure-byte consumers (0x42bdf0, 0x431c57, 0x450be7) rather
+than raising the byte's clamp globally. No XML2 Fix change is part of this builder correction.
+
+Remaining approximation: all source structure 2-9 objects map to one breakable class, so normal attacks can
+break more objects than in XML1. Class 10 remains immune; script flags and health still apply. Full original
+Might thresholds and the punch/power wall distinction remain deferred to the separate engine work above.
