@@ -52,6 +52,7 @@ from . import scripts_lint as L
 from . import boss_phases as BP
 from . import start_fixes as SF
 from . import scripts_transform as T
+from . import ladder_motion as LM
 
 # ----------------------------------------------------------------------------------------------- constants
 RESEARCH_OUT = 'scripts/out'                      # under ctx.research
@@ -444,6 +445,9 @@ def _raw_lines(ctx, ref):
     if p is not None:
         return C.to_crlf(p.read_bytes().decode('latin-1')).split('\r\n')
     gen = _generated_zone_scripts(ctx).get(ref) or _forced_generated_scripts(ctx).get(ref)
+    if gen is None and ref in _ladder_floor_scripts(ctx):     # SPEC 46: the descent script as XML1 wrote it
+        p = _research_scripts(ctx)[_ladder_floor_scripts(ctx)[ref]]
+        return C.to_crlf(p.read_bytes().decode('latin-1')).split('\r\n')
     return list(gen['lines']) if gen is not None else None
 
 
@@ -554,6 +558,26 @@ def _spawn_script_owners(ctx) -> dict:
                      spawner_unwakeable(ctx, attrs)))
         return dict(owners)
     return _cached(ctx, 'spawn_script_owners', build)
+
+
+def _ladder_floor_scripts(ctx) -> dict:
+    """floor copy ref -> converted ladder descent ref (SPEC 46) for every XML1 monster spawner (English zone files)
+    that runs a ladder descent script without monster_spawnexactlocation: its spawn starts on the ground, so it
+    gets the unconverted descent script instead of the motion path."""
+    def build():
+        out = {}
+        research = _research_scripts(ctx)
+        rels = set(ctx.x1_rels('maps/'))
+        for rel in sorted(rels):
+            if not (rel.endswith('.eng') or (rel.endswith('.xml') and rel[:-4] + '.eng' not in rels)):
+                continue
+            text = ctx.x1_path(rel).read_bytes().decode('latin-1')
+            for m in _ENTITY_RE.finditer(text):
+                ref = LM.floor_spawn_ref(dict(_ATTR_RE.findall(m.group(0))))
+                if ref is not None and LM.floor_base(ref) in research:
+                    out[ref] = LM.floor_base(ref)
+        return out
+    return _cached(ctx, 'ladder_floor_scripts', build)
 
 
 def unwakeable_owner(ctx, ref) -> bool:
@@ -689,7 +713,7 @@ def planned_script_refs(ctx) -> set:
     scripts (act plan), the New Game hook and every XML2 base script (the base install is copied into <out>)."""
     return _cached(ctx, 'planned', lambda: set(_installable_refs(ctx)) | set(_generated_zone_scripts(ctx)) |
                    set(_forced_generated_scripts(ctx)) | _base_script_refs(ctx) | set(NEW_GAME_REFS) |
-                   set(frontend_scripts(ctx)))
+                   set(frontend_scripts(ctx)) | set(_ladder_floor_scripts(ctx)))
 
 
 def _exists_base(ctx, ref) -> bool:
@@ -1531,6 +1555,11 @@ def rewrite_data_tree(ctx, root, rel) -> int:
             if (script_attr or console) and new.strip().lower() not in BOOL_VALUES:
                 if '(' not in new and L.INLINE_SEP not in new:
                     new = _clean_ref(new)
+                    if kl == 'monster_spawnscript':
+                        floor = LM.floor_spawn_ref({**el.attrib, k: new})
+                        if floor is not None and floor in _ladder_floor_scripts(ctx):
+                            # SPEC 46: no exact location -> the spawn starts on the ground; no ladder path
+                            new = floor
                     if not script_exists(ctx, new) and _once(ctx, 'dead_ref', new):
                         ctx.note(f'{rel}: {k}="{v}": script {new} exists in neither XML1 nor XML2 '
                                  '(dead reference on the XML1 disc)')
@@ -1781,7 +1810,7 @@ def _xml1_objective_names(ctx) -> set:
 
 def _statement_count(ctx, ref):
     if _installable_refs(ctx).get(ref) is None and ref not in _generated_zone_scripts(ctx) and \
-            ref not in _forced_generated_scripts(ctx):
+            ref not in _forced_generated_scripts(ctx) and ref not in _ladder_floor_scripts(ctx):
         return 0
     return _cached(ctx, ('stmts', ref), lambda: sum(1 for _ in L.iter_statements(
         script_text(ctx, ref).split('\r\n'))))
@@ -1976,6 +2005,17 @@ def _install_scripts(ctx, det):
             continue
         text, info = _script_text(ctx, ref)
         ctx.write_script(C.script_rel(ref), text, source=f'xml1build.scripts:forced teams (end of {gen["side"]})')
+        installed.append(ref)
+        probs, _ = L.lint_script_bytes(C.to_crlf(text).encode('latin-1'), api)
+        for ln, kind, d in probs:
+            lint_bad.append(f'scripts/{ref}.py:{ln}: {kind}: {d}')
+    # SPEC 46: the unconverted descent script for ladder spawners whose spawn starts on the ground
+    for ref, base in sorted(_ladder_floor_scripts(ctx).items()):
+        if ctx.base_exists(C.script_rel(ref)) or ref in _installable_refs(ctx):
+            ctx.error(f'generated ladder floor script scripts/{ref}.py would overwrite an existing script')
+            continue
+        text, _ = _script_text(ctx, ref)
+        ctx.write_script(C.script_rel(ref), text, source=f'xml1build.scripts:ladder floor copy of {base} (SPEC 46)')
         installed.append(ref)
         probs, _ = L.lint_script_bytes(C.to_crlf(text).encode('latin-1'), api)
         for ln, kind, d in probs:

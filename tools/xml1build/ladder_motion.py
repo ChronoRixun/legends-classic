@@ -19,6 +19,46 @@ LADDERS = {
 TEMPLATE = 'motionpaths/common/cabinet_knockedover.igb'
 PATH_NODE = 'mp_cabinet'  # retained template node name, scoped by the generated file
 
+# A spawner without monster_spawnexactlocation never starts its soldier at the ladder top: both
+# games move the spawn to the nearest navigation point dropped onto the ground (SPEC 46). Such a
+# spawner runs this unconverted copy of the descent script, so no path drives it through the floor.
+FLOOR_SUFFIX = '_floor'
+
+
+def floor_ref(ref):
+    return ref + FLOOR_SUFFIX if ref in LADDERS else None
+
+
+def floor_base(ref):
+    """the converted descent script whose unconverted copy `ref` is, else None."""
+    base = ref[:-len(FLOOR_SUFFIX)] if ref.endswith(FLOOR_SUFFIX) else None
+    return base if base in LADDERS else None
+
+
+def _script_ref(value):
+    ref = (value or '').strip().replace('\\', '/').lower()
+    return ref[:-3] if ref.endswith('.py') else ref
+
+
+def exact_location(attrs):
+    return (attrs.get('monster_spawnexactlocation') or '').strip().lower() in ('true', '1')
+
+
+def floor_spawn_ref(attrs):
+    """attrs: one entity's attributes. The floor copy's ref for a monster spawner whose spawn script
+    is an authored ladder descent but which does not place its spawn at its own position; else None."""
+    attrs = {k.lower(): v for k, v in attrs.items()}
+    if (attrs.get('classname') or '').strip().lower() != 'monsterspawnerent' or exact_location(attrs):
+        return None
+    return floor_ref(_script_ref(attrs.get('monster_spawnscript')))
+
+
+def path_spawner_problems(root):
+    """names of the monster spawners in an XML tree that run a ladder path script without placing the
+    spawn at the ladder top (the regression SPEC 46's floor copy prevents)."""
+    return [el.get('name') for el in root.iter()
+            if floor_spawn_ref(el.attrib) is not None]
+
 
 def relative_keys(points, times):
     if (len(points) < 2 or len(points) != len(times) or times[0] != 0

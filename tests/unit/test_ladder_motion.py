@@ -58,3 +58,34 @@ def test_ladder_script_rejects_unrelated_signal_and_partial_rewrite():
             pass
         else:
             raise AssertionError('incomplete or mismatched ladder sequence accepted')
+
+
+def test_ground_spawner_gets_the_unconverted_descent_and_ladder_top_spawner_the_path():
+    ladder = 'sewers/grso/grso_ladder_down'
+    top = {'name': 'roof_guard', 'classname': 'monsterspawnerent', 'monster_spawnscript': ladder,
+           'monster_spawnexactlocation': 'true'}
+    ground = {'name': 'yard_guard', 'classname': 'monsterspawnerent', 'monster_spawnscript': r'Sewers\Grso\Grso_Ladder_Down.py'}
+    assert L.floor_spawn_ref(top) is None
+    assert L.floor_spawn_ref(dict(top, monster_spawnexactlocation='1')) is None
+    assert L.floor_spawn_ref(ground) == L.floor_ref(ladder) and L.floor_base(L.floor_ref(ladder)) == ladder
+    assert L.floor_spawn_ref(dict(ground, monster_spawnexactlocation='false')) == L.floor_ref(ladder)
+    assert L.floor_spawn_ref({'CLASSNAME': 'MonsterSpawnerEnt', 'MONSTER_SPAWNSCRIPT': ladder}) == L.floor_ref(ladder)
+    # other spawners, other scripts and the floor copy itself are never redirected
+    assert L.floor_spawn_ref(dict(ground, classname='gameent')) is None
+    assert L.floor_spawn_ref(dict(ground, monster_spawnscript='sewers/grso/some_other_script')) is None
+    assert L.floor_spawn_ref(dict(ground, monster_spawnscript=L.floor_ref(ladder))) is None
+    assert L.floor_base('sewers/grso/some_other_script_floor') is None
+    # the floor copy is the descent as written: the path rewrite leaves it alone
+    lines = ['setAIActive("_OWNER_", "FALSE" )', 'tag = getIDString("_OWNER_" )',
+             'playanim("EA_ZONE2", "_OWNER_", "NONE", tag )', 'waitsignal(tag )', 'setAIActive("_OWNER_", "TRUE" )']
+    assert L.rewrite_script(L.floor_ref(ladder), lines) == lines
+
+
+def test_validator_names_a_ground_spawner_left_on_the_path():
+    import xml.etree.ElementTree as ET
+    root = ET.fromstring(
+        '<world><entity name="top" classname="monsterspawnerent" monster_spawnscript="sewers/grso/grso_ladder_down" '
+        'monster_spawnexactlocation="true"/><entity name="low" classname="monsterspawnerent" '
+        'monster_spawnscript="sewers/grso/grso_ladder_down"/><entity name="fixed" classname="monsterspawnerent" '
+        'monster_spawnscript="sewers/grso/grso_ladder_down_floor"/></world>')
+    assert L.path_spawner_problems(root) == ['low']

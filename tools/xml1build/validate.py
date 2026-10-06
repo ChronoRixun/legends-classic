@@ -77,6 +77,7 @@ Checks (severity per SPEC 4.6: error = will not load or silently misbehaves; war
                 the registry the shipped ini asks xml2-fix for ([Limits] FightStyles, else XMen2.exe's 19): more
                 is an error (the hero seated last has no powers), exactly full a warning
   V25 harm loops (SPEC 51): no delayed start-on ordinary harm loops that XML2 disables
+  V-TBD ladder spawns (SPEC 46): no monster spawner without monster_spawnexactlocation runs a ladder motion path
 
 Inherited defects. Many findings are defects of the XML1 disc itself (a zone, conversation, dialog, script or
 sound bank XML1 references but never shipped; a line default.xbe already dropped). They are re-derived, not
@@ -115,6 +116,7 @@ from . import buoys as BY
 from . import automaps as AM             # V20 (SPEC 26): XML1 automaps as .zam
 from . import skins as SK                # V21 (SPEC 25): skin blend weights / skeleton against the anim DB
 from . import style_budget as SB         # V23 (SPEC 43): the fighting / power style registry per zone
+from . import ladder_motion as LM       # V-TBD (SPEC 46): ladder paths only from the ladder top
 from . import weapons as W              # V5 (SPEC 57, issue #52): a gun-armed entry carries its gun's fighting style
 
 MAX_REPORTED = 50                             # per check and severity, into ctx.error / ctx.warn
@@ -357,6 +359,7 @@ class Scan:
         self.inv_items = {}        # norm rel -> [inventoryitem values]
         self.turret_mount = {}     # norm rel -> [(entity name, missing flags)] remapped scan turrets not fixed-mount
         self.delayed_harm_loops = {}  # norm rel -> [(entity name, loop effect, firstact)]
+        self.ladder_floor_paths = {}  # norm rel -> [spawner name] running a ladder path without exact location
         self.physics_scale = {}    # norm rel -> [(entity name, attribute, value)] XML1-scale object physics left
         self.break_rule = {}       # norm rel -> [(entity name, structure, xml1structure)] pairs BreakRule=xml1 cannot use
         self.speakers = {}         # norm rel (conversations/) -> [(attr, %TOKEN%)]
@@ -531,6 +534,9 @@ class Validator:
                 loops = XS.delayed_harm_loops(root)
                 if loops:
                     sc.delayed_harm_loops[n] = loops
+                floor = LM.path_spawner_problems(root)
+                if floor:
+                    sc.ladder_floor_paths[n] = floor
                 if n.startswith('dialogs/'):
                     dp = XS.dialog_platform_problems(root)
                     if dp:
@@ -719,7 +725,8 @@ class Validator:
                                ('V27', 'voice lines', self.voice_lines),
                                ('V28', 'dialog platforms', self.dialog_platforms),
                                ('V29', 'codex icons', lambda ck: VF.v_codex_icons(self, ck)),
-                               ('V30', 'personal items', lambda ck: VF.v_personal_items(self, ck))):
+                               ('V30', 'personal items', lambda ck: VF.v_personal_items(self, ck)),
+                               ('V-TBD', 'ladder spawns', self.ladder_spawns)):
             ck = Check(cid, title)
             self.checks[cid] = ck
             t0 = time.time()
@@ -1028,6 +1035,20 @@ class Validator:
                          'clears the loop-on bit (invisible hazard)')
                 count += 1
         ck.set('dead_harm_loops', count)
+
+    def ladder_spawns(self, ck):
+        """V-TBD (SPEC 46): a monster spawner without monster_spawnexactlocation puts its spawn on the ground, so
+        it must not run a ladder motion-path script (the path would carry the soldier through the floor)."""
+        sc = self.scan
+        count = 0
+        for n, names in sorted(sc.ladder_floor_paths.items()):
+            if n in sc.twins:
+                continue
+            for name in names:
+                ck.error(f'{sc.files[n]["rel"]}: spawner {name!r} runs a ladder motion path but spawns on the '
+                         f'ground (no monster_spawnexactlocation; ladder_motion.floor_spawn_ref)')
+                count += 1
+        ck.set('ladder_paths_from_ground', count)
 
     def dialog_platforms(self, ck):
         """V28 (issue #50; SPEC 54): a popup dialog with only console variants (XML1's xbox / ps2 / gc) opens an empty

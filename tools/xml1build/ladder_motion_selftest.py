@@ -52,7 +52,30 @@ def check(out, source_root=None):
     world = C.decode_xmlb((out / 'Maps/sewers/grso/sewers3_1_2.engb').read_bytes())
     untouched = next(e for e in world.iter('entity') if e.get('name') == 'ladderdude02')
     assert untouched.get('monster_spawnscript') == 'object_ambi/sewers/grso_slide_down'
+    # Ground spawns (no exact location) run the unconverted descent; exact ones keep the path.
+    path_spawners = floor_spawners = 0
+    for engb in (out / 'Maps').rglob('*.engb'):
+        entities = [e for e in C.decode_xmlb(engb.read_bytes()).iter('entity')
+                    if (e.get('classname') or '').lower() == 'monsterspawnerent']
+        assert not L.path_spawner_problems(C.decode_xmlb(engb.read_bytes())), (engb.name, 'ground spawn on a path')
+        for e in entities:
+            script = (e.get('monster_spawnscript') or '').lower()
+            if script in L.LADDERS:
+                assert L.exact_location(e.attrib), (engb.name, e.get('name'))
+                path_spawners += 1
+            elif L.floor_base(script):
+                assert not L.exact_location(e.attrib), (engb.name, e.get('name'))
+                text = (out / C.script_rel(script)).read_text(encoding='latin-1')
+                base = (out / C.script_rel(L.floor_base(script))).read_text(encoding='latin-1')
+                assert 'startMotionPath' not in text and 'setNoClip' not in text and 'setNoCollide' not in text
+                assert L.rewrite_script(L.floor_base(script), text.splitlines()) == base.splitlines()
+                floor_spawners += 1
+    assert path_spawners and floor_spawners
+    world = C.decode_xmlb((out / 'Maps/sewers/grso/sewers3_1_3.engb').read_bytes())
+    ground = next(e for e in world.iter('entity') if e.get('name') == 'ladderdude01')
+    assert ground.get('monster_spawnscript') == L.floor_ref('sewers/grso/grso_ladder_down')
     print(f'PASS: {len(checked_paths)} authored motion paths, {affected} zone packages; original exceptional spawn retained')
+    print(f'PASS: {path_spawners} ladder-top spawners run the path, {floor_spawners} ground spawners the original descent')
     print('No runtime checks performed: slide timing, concurrent actors and save/reload remain manual.')
 
 

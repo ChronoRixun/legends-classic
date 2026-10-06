@@ -4500,6 +4500,19 @@ also check the native 16-path registry limit. Each path remains relative to its 
 so repeated spawns and differently oriented ladders share it. The bad sound-path
 spawnscript on sewers3_1_2's ladderdude02 is unchanged, as are ladder objectives.
 
+Only a spawner with `monster_spawnexactlocation` starts its soldier at the ladder top. Without
+it, both games place the spawn themselves: default.xbe's placement (0x34ab0) calls 0x34940 only
+when the flag is clear, which takes the nearest navigation point, traces 24 units up and down and
+sets the height to the ground plus 2 units. XMen2.exe places such a spawn the same way (measured
+on the floor at height 2 below a spawner at 173). In the first game such a soldier therefore
+starts on the floor under a working world trace, so the authored descent cannot carry it lower.
+Three of the sixteen ladder spawners lack the flag (one in sewers3_1_3, two in arb3_3). Each gets
+a generated copy of its descent script with the `_floor` suffix: the original statements, with no
+path, world-clip or collision change. Spawners with the flag keep the converted script. Without
+the copy the path took all five sewers3_1_3 soldiers 173 units through the floor to their deaths.
+Validator rule V-TBD (number assigned at merge): no monster spawner without the exact location
+runs a ladder motion-path script.
+
 XML2 Fix 1.3.2's opt-in `[Game] CharacterLadderPaths=1` is required. Characters
 do not schedule the generic native path evaluator, and their goal predicate bypasses
 it when no ordinary movement goal is set. The companion enables native scheduling
