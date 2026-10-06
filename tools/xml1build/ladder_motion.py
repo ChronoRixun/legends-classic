@@ -11,10 +11,13 @@ import struct
 
 from .igb_file import IgbFile, IgbError
 
-# script -> (source animation DB, clip, converted animation enum, generated path)
+# script -> (source animation DB, clip, converted animation enum, generated path).
+# grso_ladder_down01 is arb3_1's ladder_dude02 descent, the same text and clip as
+# arbiter/a_int/grso_ladder_down, so it is converted against the same generated path.
 LADDERS = {
     'sewers/grso/grso_ladder_down': ('mission_grso', 'mission2', 'EA_ZONE2', 'x1_ladders/sewers'),
     'arbiter/a_int/grso_ladder_down': ('mission_a_int', 'mission1', 'EA_ZONE1', 'x1_ladders/arbiter'),
+    'arbiter/a_int/grso_ladder_down01': ('mission_a_int', 'mission1', 'EA_ZONE1', 'x1_ladders/arbiter'),
 }
 TEMPLATE = 'motionpaths/common/cabinet_knockedover.igb'
 PATH_NODE = 'mp_cabinet'  # retained template node name, scoped by the generated file

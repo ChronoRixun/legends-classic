@@ -89,3 +89,16 @@ def test_validator_names_a_ground_spawner_left_on_the_path():
         'monster_spawnscript="sewers/grso/grso_ladder_down"/><entity name="fixed" classname="monsterspawnerent" '
         'monster_spawnscript="sewers/grso/grso_ladder_down_floor"/></world>')
     assert L.path_spawner_problems(root) == ['low']
+
+
+def test_arb3_1_duplicate_descent_script_is_listed_with_the_same_path():
+    """arb3_1's ladder_dude02 runs a copy of the Arbiter descent text under its own name."""
+    base, dup = 'arbiter/a_int/grso_ladder_down', 'arbiter/a_int/grso_ladder_down01'
+    assert L.LADDERS[dup] == L.LADDERS[base]
+    lines = ['setAIActive("_OWNER_", "FALSE" )', 'tag = getIDString("_OWNER_" )',
+             'playanim("EA_ZONE1", "_OWNER_", "NONE", tag )', 'waitsignal(tag )', 'setAIActive("_OWNER_", "TRUE" )']
+    out = L.rewrite_script(dup, lines)
+    assert [x for x in out if x.startswith(('playanim', 'waitsignal'))] == lines[2:4]
+    assert any('startMotionPath' in x and '"x1_ladders/arbiter/mp_cabinet"' in x for x in out)
+    assert L.rewrite_script(dup, out) == out
+    assert L.floor_ref(dup) == dup + L.FLOOR_SUFFIX and L.floor_base(dup + L.FLOOR_SUFFIX) == dup

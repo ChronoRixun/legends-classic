@@ -4491,8 +4491,10 @@ cabinet's transform and scale channel are removed, and duration follows the clip
 Unexpected interpolation, rotation, channel lengths or duration fail the build.
 No key coordinates or game binary are distributed in this repository.
 
-The two original descent scripts start the relative path before playing their original
-EA_ZONE animation and retain their original waitsignal expression. World clipping and entity collision are disabled
+Every listed descent script starts the relative path before playing its original
+EA_ZONE animation and retains its original waitsignal expression. arb3_1's ladder_dude02 runs the Arbiter
+descent under its own name (arbiter/a_int/grso_ladder_down01, the same text), so that script is listed too and
+shares the Arbiter path. World clipping and entity collision are disabled
 during the slide and restored after the signal. Entity collision alone does not bypass
 the world trace at the top of the ladder.
 The path, package entry and normal IGB budget are generated together. Affected zones

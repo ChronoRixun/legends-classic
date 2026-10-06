@@ -9,6 +9,7 @@ build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebui
   Before-and-after runtime verification is tracked with this issue PR.
   Spawners without the first game's exact-location flag place their soldiers on the floor, as the first game did;
   they keep the original descent script, so no path carries those soldiers through the floor (sewers3_1_3, arb3_3).
+  arb3_1's ladder-top soldier runs the Arbiter descent under a second script name; it now gets the same path.
 
 - Retain objective completion descriptions for the companion XML2 Fix 1.3.2 reader (SPEC 47), without changing saved objective ordering.
   Before-and-after runtime verification is tracked with this issue PR.
