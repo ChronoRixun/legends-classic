@@ -103,3 +103,17 @@ def test_second_run_is_a_no_op_and_unreadable_scripts_are_ignored():
     assert Z.pin_scripted_entities(root2, {'made/up/unreadable': None}) == [
         ('decor_crate', 'physent', 'named by a zone script'),
         ('floor_pad2', 'physent', 'actscript moves _OWNER_ on a motion path')]
+
+
+def test_a_hero_unlock_does_not_pin_an_entity_of_the_same_name():
+    # since 0.1.8 a mission zone's script unlocks its heroes; a spawner sharing a hero's name must stay smart, or it
+    # takes an ordinal and every saved zone record of the zone lands on the next entity
+    zone = """<world name="world">
+<entinst type="hero_x"><inst name="hero_x" pos="0 0 0"/></entinst>
+<entity name="hero_x" classname="monsterspawnerent" monster_name="someone"/>
+<entity name="crate_y" classname="physent"/>
+</world>"""
+    unlock = {'made/up/zone': 'unlockCharacter("hero_x", "" )\r\nunlockCharacter( "crate_y","")\r\n'}
+    assert Z.pin_scripted_entities(ET.fromstring(zone), unlock) == []
+    named = {'made/up/zone': 'unlockCharacter("crate_y", "" )\r\nact("hero_x", "hero_x" )\r\n'}
+    assert [n for n, _, _ in Z.pin_scripted_entities(ET.fromstring(zone), named)] == ['hero_x']

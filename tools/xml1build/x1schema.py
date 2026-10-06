@@ -431,15 +431,49 @@ def fall_kill_volumes(root, rel):
             and el.get('nocollide', '').lower() == 'true']
 
 
+# Saved zone records find a placed entity by its ordinal only: XMen2.exe numbers the placed entities that do not
+# stay smart in .engb entinst order at zone load (entity +0x6e), and a save restores each record's position and
+# state onto the entity holding the same ordinal. An affectableharment stays smart (no ordinal) unless smartent is
+# "false", so enabling a volume numbers it; in place, that moved every later ordinal by one and a save from an
+# earlier build put its records on the wrong entities (haarp_ext01: the Xtraction Point restored onto the zone
+# link's spot, the finish-objectives trigger onto a touch trigger's spot near the X-Jet). An enabled volume's
+# entinst therefore goes after every other entinst: the entities numbered before keep their ordinals (SPEC
+# "Saved zone records and entity ordinals").
+def _append_entinsts(root, types):
+    moved = [ei for ei in list(root) if ei.tag.lower() == 'entinst' and (ei.get('type') or '') in types]
+    for ei in moved:
+        root.remove(ei)
+        root.append(ei)
+    return len(moved)
+
+
+def numbered_entinst_tail_problems(root, rel):
+    """[message] for an enabled fall volume whose entinst is followed by an entinst of another type: its ordinal
+    then shifts the saved zone records of the entities after it."""
+    names = {el.get('name') for el in fall_kill_volumes(root, rel)
+             if not fall_kill_volume_deferred(el, rel) and el.get('smartent') == 'false'}
+    if not names:
+        return []
+    order = [ei.get('type') or '' for ei in root if ei.tag.lower() == 'entinst']
+    first = min((i for i, t in enumerate(order) if t in names), default=len(order))
+    late = sorted({t for t in order[first:] if t not in names})
+    return [f'{rel}: entinst {t!r} follows an enabled fall volume (its saved ordinal shifts)' for t in late]
+
+
 def convert_fall_kill_volumes(root, rel):
     changed = 0
+    enabled = set()
     for el in fall_kill_volumes(root, rel):
         if fall_kill_volume_deferred(el, rel):
             continue
         flags = fall_kill_volume_flags(el, rel)
+        enabled.add(el.get('name') or '')
         if any(el.get(k) != v for k, v in flags.items()):
             el.attrib.update(flags)
             changed += 1
+    if enabled and numbered_entinst_tail_problems(root, rel):
+        _append_entinsts(root, enabled)
+        changed = changed or 1
     return changed
 
 
