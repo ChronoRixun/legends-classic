@@ -4771,6 +4771,29 @@ sewers1_2_3. A deferred volume returns only with a real crossing of its room in 
 beside it, jump on its ramps), not on a damage reading inside the box. Navigation has no cells on ramps and
 props a hero can still stand on (the billboard), so the 150-unit margin is a screen, not a proof.
 
+### Crossing tests of the deferred volumes (2026-10-06)
+
+Method: a build with all seventeen deferred volumes enabled (test only), xml2-fix 1.3.1, windowed, a four-hero party
+(two heroes plus the escort where the zone forces its party), real keyboard input through the test pipe for every
+walk, jump and fight; the controlled hero steers from its own facing because the camera turns with it. Every party
+member's position and health was recorded on every state read (several thousand samples per room). Staged, and only
+as setup: new game, party, levelling, zone loads, start positions next to the room, revives and full-health resets
+between runs, and a survival heal (setHealth to full below 40 %) during fights, which cannot hide a 32,000 hit.
+"Closest" is the smallest horizontal distance from the box footprint while standing on the floor.
+
+| Volume | Box (top, thickness) and floor | Walked | Result |
+|---|---|---|---|
+| `sewers/hub/sewers1_1_4` `kill_target01` | top -49, 188 thick; no floor over it (a channel between two walkways at z 0) | north walkway end to end twice with the party, a Morlock fight beside the channel, jumps along the edge; south walkway only from a staged start | **PASS, enabled.** Four 32,000 hits, all inside the channel (z -54 to -74 at entry, under the floor): one deliberate jump, three the controlled hero walking or jumping off the unrailed edge. AI followers never entered; their closest was 37.5 units, on the floor. Nobody was hurt by the box on a walkway. The south walkway was not walked end to end (its two halves are not joined in the navigation data). |
+| `nyc/alison/nyc1_1_4` `kill_target01` | top 339, 300 thick, under the whole map; roofs 21 units above it, floor over 17 % of it | billboard ramp (z 360 -> 421 -> 364) walked three times, four jumps on and off it, Cyclops following | **Stays deferred.** No hit on the ramp (the player report was not reproduced); closest 21 units over the top. A staged drop over the street was killed at once (32,000 at z 244): the box is live and is a catch-all floor under the city, not a pit. The other roofs were not walked. |
+| `nuke_plant/nuke/nuke1_2` `kill_target01` | top -63, 53 thick; a patch of floor at -60 (3 above the top) in the coolant | the catwalk at y 1020 walked east | **FAIL, stays deferred.** Walking on along the catwalk (no jump) took Cyclops off its open end into the coolant: 32,000 at z -76. The navigation data carries that walk on to the -60 floor. |
+| `sewers/hub/sewers1_1_1` `kill_target02` | two pits, tops -68 / -55; walkways 56-68 above, partly railed | part of the west walkway, a long fight there | **Unfinished, stays deferred.** AI Wolverine stepped off an unrailed walkway edge during the fight and was killed (32,000 at z -79); the leader was held by Morlocks. The second pit, the east walkway and a deliberate fall were not done. |
+
+Not checked in game (stay deferred): `arb3_2`, `arb3_3`, `mount`, `nuke1_2` `kill_target02`, `nuke1_3`, `nuke2_2` (two),
+`nuke2_3`, `sewers3_1_1`, `sewers_marrow`, `sewers2_1_3`, `sewers1_2_4`. From the map data alone: `sewers1_2_4` (127
+units under an island floor) and `nuke1_3`'s three small boxes (208 under the floor) look like pits; `mount` has floor
+93 units below its box inside the footprint, and `arb3_2` and `nuke2_2`'s `kill_target01` have floor 4 and 40 units over
+the top: test those first for a walk through the box.
+
 ## 53. The first game's voice lines (2026-10-05, issue #49)
 
 XMen2.exe builds each character's sound table when the character loads (0x438d20, called from 0x4239be). For

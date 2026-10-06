@@ -366,7 +366,9 @@ FALL_KILL_DEFERRED = {
     # 0.1.9: a volume stays enabled only where every walkable cell above or beside it is at least 150 units
     # higher (a real pit). The others lie just under floors, ramps or ledges - nyc1_1_4's is a 300-unit slab
     # under the whole rooftop map that killed heroes on the billboard ramp - and wait for an in-game crossing
-    # test each (SPEC 52, "0.1.9: shallow volumes deferred").
+    # test each (SPEC 52, "0.1.9: shallow volumes deferred"). sewers1_1_4's channel passed it and is enabled again;
+    # nyc1_1_4 (a catch-all slab) and nuke1_2's kill_target01 (a walkway runs off into it) stay deferred, sewers1_1_1
+    # is unfinished and the rest untested (SPEC 52, "Crossing tests").
     'maps/nyc/alison/nyc1_1_4': frozenset({'kill_target01'}),
     'maps/arbiter/a_int/arb3_2': frozenset({'kill_target'}),
     'maps/arbiter/a_int/arb3_3': frozenset({'kill_target'}),
@@ -382,7 +384,6 @@ FALL_KILL_DEFERRED = {
     'maps/sewers/grso/sewers_marrow': frozenset({'kill_target01'}),
     'maps/sewers/healer/sewers2_1_3': frozenset({'kill_target02'}),
     'maps/sewers/hub/sewers1_1_1': frozenset({'kill_target02'}),
-    'maps/sewers/hub/sewers1_1_4': frozenset({'kill_target01'}),
     'maps/sewers/hub/sewers1_2_4': frozenset({'kill_target'}),
 }
 
