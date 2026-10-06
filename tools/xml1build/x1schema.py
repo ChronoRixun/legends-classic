@@ -60,7 +60,7 @@ own patch), and zones runs it on the world tables it merges itself, so every mod
    (convert_physics), so ordinary objects can be lifted and breakable walls can open. Attack levels retain
    main behavior: level zero cannot damage living characters (0x4293e3). The punch/power wall rule is the engine
    fix's (xml2-fix [Game] BreakRule=xml1): every definition whose structure is converted keeps XML1's number in
-   `xml1structure`, an attribute XMen2.exe never reads (SPEC 60).
+   `xml1structure`, an attribute XMen2.exe never reads (SPEC 62).
 """
 from __future__ import annotations
 
@@ -406,6 +406,27 @@ FALL_KILL_FLAGS = {'boxcollision': 'true', 'smartent': 'false'}
 # the crossings are revalidated: AI can follow a safe leader into their water.
 FALL_KILL_DEFERRED = {
     'maps/arbiter/a_int/arb3_4': frozenset({'kill_target'}),
+    # 0.1.9: a volume stays enabled only where every walkable cell above or beside it is at least 150 units
+    # higher (a real pit). The others lie just under floors, ramps or ledges - nyc1_1_4's is a 300-unit slab
+    # under the whole rooftop map that killed heroes on the billboard ramp - and wait for an in-game crossing
+    # test each (SPEC 52, "0.1.9: shallow volumes deferred").
+    'maps/nyc/alison/nyc1_1_4': frozenset({'kill_target01'}),
+    'maps/arbiter/a_int/arb3_2': frozenset({'kill_target'}),
+    'maps/arbiter/a_int/arb3_3': frozenset({'kill_target'}),
+    'maps/demo/a_int/arb3_2': frozenset({'kill_target'}),
+    'maps/demo/hub/sewers1_1_1': frozenset({'kill_target01'}),
+    'maps/demo/hub/sewers1_1_2': frozenset({'kill_target'}),
+    'maps/mount/mount/mount': frozenset({'kill_target'}),
+    'maps/nuke_plant/nuke/nuke1_2': frozenset({'kill_target01', 'kill_target02'}),
+    'maps/nuke_plant/nuke/nuke1_3': frozenset({'kill_target04'}),
+    'maps/nuke_plant/nuke/nuke2_2': frozenset({'kill_target', 'kill_target01'}),
+    'maps/nuke_plant/nuke/nuke2_3': frozenset({'kill_target01'}),
+    'maps/sewers/grso/sewers3_1_1': frozenset({'kill_target02'}),
+    'maps/sewers/grso/sewers_marrow': frozenset({'kill_target01'}),
+    'maps/sewers/healer/sewers2_1_3': frozenset({'kill_target02'}),
+    'maps/sewers/hub/sewers1_1_1': frozenset({'kill_target02'}),
+    'maps/sewers/hub/sewers1_1_4': frozenset({'kill_target01'}),
+    'maps/sewers/hub/sewers1_2_4': frozenset({'kill_target'}),
 }
 
 
@@ -453,15 +474,49 @@ def fall_kill_volumes(root, rel):
             and el.get('nocollide', '').lower() == 'true']
 
 
+# Saved zone records find a placed entity by its ordinal only: XMen2.exe numbers the placed entities that do not
+# stay smart in .engb entinst order at zone load (entity +0x6e), and a save restores each record's position and
+# state onto the entity holding the same ordinal. An affectableharment stays smart (no ordinal) unless smartent is
+# "false", so enabling a volume numbers it; in place, that moved every later ordinal by one and a save from an
+# earlier build put its records on the wrong entities (haarp_ext01: the Xtraction Point restored onto the zone
+# link's spot, the finish-objectives trigger onto a touch trigger's spot near the X-Jet). An enabled volume's
+# entinst therefore goes after every other entinst: the entities numbered before keep their ordinals (SPEC
+# "Saved zone records and entity ordinals").
+def _append_entinsts(root, types):
+    moved = [ei for ei in list(root) if ei.tag.lower() == 'entinst' and (ei.get('type') or '') in types]
+    for ei in moved:
+        root.remove(ei)
+        root.append(ei)
+    return len(moved)
+
+
+def numbered_entinst_tail_problems(root, rel):
+    """[message] for an enabled fall volume whose entinst is followed by an entinst of another type: its ordinal
+    then shifts the saved zone records of the entities after it."""
+    names = {el.get('name') for el in fall_kill_volumes(root, rel)
+             if not fall_kill_volume_deferred(el, rel) and el.get('smartent') == 'false'}
+    if not names:
+        return []
+    order = [ei.get('type') or '' for ei in root if ei.tag.lower() == 'entinst']
+    first = min((i for i, t in enumerate(order) if t in names), default=len(order))
+    late = sorted({t for t in order[first:] if t not in names})
+    return [f'{rel}: entinst {t!r} follows an enabled fall volume (its saved ordinal shifts)' for t in late]
+
+
 def convert_fall_kill_volumes(root, rel):
     changed = 0
+    enabled = set()
     for el in fall_kill_volumes(root, rel):
         if fall_kill_volume_deferred(el, rel):
             continue
         flags = fall_kill_volume_flags(el, rel)
+        enabled.add(el.get('name') or '')
         if any(el.get(k) != v for k, v in flags.items()):
             el.attrib.update(flags)
             changed += 1
+    if enabled and numbered_entinst_tail_problems(root, rel):
+        _append_entinsts(root, enabled)
+        changed = changed or 1
     return changed
 
 

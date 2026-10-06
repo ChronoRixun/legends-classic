@@ -4510,7 +4510,7 @@ Three of the sixteen ladder spawners lack the flag (one in sewers3_1_3, two in a
 a generated copy of its descent script with the `_floor` suffix: the original statements, with no
 path, world-clip or collision change. Spawners with the flag keep the converted script. Without
 the copy the path took all five sewers3_1_3 soldiers 173 units through the floor to their deaths.
-Validator rule V-TBD (number assigned at merge): no monster spawner without the exact location
+Validator rule V33: no monster spawner without the exact location
 runs a ladder motion-path script.
 
 XML2 Fix 1.3.2's opt-in `[Game] CharacterLadderPaths=1` is required. Characters
@@ -4746,7 +4746,7 @@ invalidate the engine's binary-search lookups and any resulting mechanism claim.
 
 V26 checks registered XML1-sourced map outputs for matching volumes missing
 either flag; identical localized twins are counted once. Deferred volumes are
-reported separately, and adding either enabling flag to one is an error. A volume listed in
+reported separately, and `smartent="false"` on one is an error (`boxcollision` alone is inert, and nuke1_2's `kill_target02` carries it in the source). A volume listed in
 `FALL_KILL_LEADER_ONLY` must carry `actleader="true"` (without it the volume kills AI followers again), and
 a matching volume that is not listed must not carry it; the count is reported as `volumes_player_only`.
 Synthetic tests cover preservation of multiple instance bounds and
@@ -4861,6 +4861,25 @@ A short control retained the earlier experiment's misspelled `damagemo` field:
 its definition attributes and instance bounds matched the saved experiment,
 but normal sorted encoding killed correctly. The saved experimental XMLB had
 unsorted attribute keys; it was not a valid negative control for the native flags.
+
+### 0.1.9: shallow volumes deferred (regression in 0.1.8)
+
+0.1.8 enabled 31 definitions on the strength of in-game checks in three rooms (HAARP's ravine, the mountain, one
+nuclear-plant pit). A player then reported that `maps/nyc/alison/nyc1_1_4` (the East Rooftops, the first level)
+could not be crossed: its `kill_target01` is one box of 3070 x 3100 x 300 under the whole map whose top (z 339) is
+about 10 units under the lowest rooftops, and the ramp down to the billboard dips into it. With `boxcollision` the
+box kills on entry; in its original form it never fired here.
+
+Rule from 0.1.9: a volume is enabled only if every navigation cell above its footprint, or within 80 units of it,
+is at least 150 units higher than the box top - a pit a hero can only reach by falling. Measured on the built
+maps (cell x, y times the grid's cell size; the cell's z as stored). Everything else is listed in
+`FALL_KILL_DEFERRED` with its exact map stem and entity name and keeps its XML1 form (inert on this engine), as
+before 0.1.8: nyc1_1_4, arb3_2, arb3_3, mount, nuke1_2 (two), nuke1_3, nuke2_2 (two), nuke2_3, sewers3_1_1,
+sewers_marrow, sewers2_1_3, sewers1_1_1, sewers1_1_4, sewers1_2_4 and the three demo copies. Enabled: haarp_ext01
+(player-only), haarp_ext03, icetunnel1, icetunnel2, nuke1_4, nuke2_2a, sewers3_1_3, sewers1_1_2, sewers1_2_1,
+sewers1_2_3. A deferred volume returns only with a real crossing of its room in game (walk every route over or
+beside it, jump on its ramps), not on a damage reading inside the box. Navigation has no cells on ramps and
+props a hero can still stand on (the billboard), so the 150-unit margin is a screen, not a proof.
 
 ## 53. The first game's voice lines (2026-10-05, issue #49)
 
@@ -5163,7 +5182,7 @@ might_structure nibble (actor+0x57b) and rounded damageLevel affecter (actor+0x5
 stored to hit +0x2e at 0x4501fb. Wolverine's Sharpness contributes +3 at its first rank: an auto-spent higher-level
 hero can turn the broken zero into one. Character level itself is not read by this attack-level calculation.
 
-### 59.4 Engine work required for the wall rule (not implemented here; done in SPEC 60)
+### 59.4 Engine work required for the wall rule (not implemented here; done in SPEC 62)
 
 For unchanged character defense and attack semantics, a normal hit must exceed character structure 0. To spare
 an object remapped to structure 1, the hit must be below 1. No integer can satisfy both; the effective attack
@@ -5181,12 +5200,82 @@ Remaining approximation: all source structure 2-9 objects map to one breakable c
 break more objects than in XML1. Class 10 remains immune; script flags and health still apply. Full original
 Might thresholds and the punch/power wall distinction remain deferred to the separate engine work above.
 
-## 60. The first game's break rule (xml2-fix `[Game] BreakRule=xml1`; follow-up to issue #51)
+## 60. Saved zone records and entity ordinals (issue #22)
+
+**Symptom.** A game saved on 0.1.7 and continued on 0.1.8: no Xtraction Point beside the X-Jet at the HAARP
+exterior, and "finish your objectives" pops up near the start of the zone.
+
+**Mechanism.** A save keeps up to five zone records. A record finds a placed entity by its ordinal only: at zone
+load XMen2.exe numbers, in `.engb` entinst order, every placed entity that does not stay smart (entity +0x6e,
+0x48624c), and the restore puts each record's position, orientation and state flags on the entity holding the same
+ordinal (the record's own name handles are not compared). Physical entities (physent, affectableharment,
+powertriggerent, ...) and monster spawners stay smart unless `smartent="false"` (a spawner also with
+`monster_smartent="false"`); gameent, waypointent, playerstartent, waterent and actionent are numbered either way.
+Measured on haarp_ext01 (51 live ordinals read from +0x6e, all equal to that rule's prediction).
+
+SPEC 52 gave the enabled fall volumes `smartent="false"`, numbering them in place: every later ordinal moved by
+one. Loading a save from an earlier build restored haarp_ext01's `xtraction_point` record of the zone link (the
+pad sat on the link's spot at the far end) and `finish_obj` onto the record of a touch trigger near the X-Jet.
+
+**Rule.** A builder change that numbers an entity XML1 left smart (or the reverse) must not move the ordinals of
+the entities after it: `x1schema.convert_fall_kill_volumes` moves the entinst of every enabled volume after all
+other entinsts, so XML1's own numbered entities keep the ordinals they had before SPEC 52. Deferred volumes keep
+their place (they stay smart). Check: `x1schema.numbered_entinst_tail_problems` (an entinst of another type after
+an enabled volume). Unit tests: `tests/unit/test_fall_kill_volumes.py` (invented zones).
+
+**Limits.** Saves made on 0.1.8 / 0.1.9 inside a zone with an enabled volume hold the shifted ordinals and are
+moved back by this change (0.1.9's deferrals already did the same to 0.1.8 saves in 17 zones). XMen2.exe cannot be
+told to match records by name without XML2 Fix (stable entity identity is open point U17 of the save-format work).
+
+**0.1.10: SPEC 35 pins from hero unlocks.** The other numbering change after 0.1.7 was `mansion/man7/subbasement7`:
+its zone script gained the issue #55 unlock catch-up (`unlockCharacter("phoenix", "" )` among others), SPEC 35's
+pin rule read the hero name as the name of the zone's Jean spawner `phoenix`, gave the spawner `smartent="false"`,
+and the spawner took ordinal 1 ahead of the zone's 24 numbered entities. `zones.script_name_literals` now skips the
+argument of `unlockCharacter` (a hero name, never an entity). Compared over every zone file, the numbered sequence
+of 0.1.10 equals 0.1.7's except for the enabled fall volumes appended at the end of their 10 zones. Validator V31
+runs `numbered_entinst_tail_problems` over every built map.
+
+## 61. Saved talent positions (issue #51)
+
+**Symptom.** A game saved on 0.1.7 and continued on 0.1.8: a hero's leadership rank shows as a grab rank,
+acrobatics as critical's neighbour, toughness / mutantmastery as the talent before them.
+
+**Mechanism.** A save's hero block holds the talent heap: entries of {u16 talent id, rank bytes}, no name. An id
+below 100 is the talent's position in `Data/shared_talents` (a hero's own talents are (stats index + 1) x 100 + the
+position in its talent file). Builder 0.1.8 changed the shared list: XML2's `fightstyle_gun_rifle` (slot 4) was
+pruned once issue #52 stopped naming it, `grab` came back at XML2's slot (9, issue #51) and
+`x1_fightstyle_gun_rifle` was added at 32 (between the first game's boss talents, in npcstat order). Slots 4-8
+moved down one, 32-60 up one: leadership (9) read as grab, acrobatics / toughness / mutantmastery (57-59) as the
+talent before each. Hero talent files, herostat order and every other positional table were unchanged.
+
+**Rule.** `save_positions.SHARED_TALENT_ORDER` is the order every release keeps: the 61 names of 0.1.5-0.1.7, then
+`grab` and `x1_fightstyle_gun_rifle` (0.1.8, in that order). `heroes.HeroBuilder` holds a name of that list that
+the keep rule would prune (keeps its definition; `fightstyle_gun_rifle` today) and writes the shared list in that
+order, other talents appended in build order. A release that adds a shared talent appends it to the list. 63
+shared talents; the worst four-hero party registers 63 + 29 = 92, the pool's limit with the Danger Room margin.
+Check: V31 (both halves in that order, a hole before the last pinned slot is an error). Unit tests:
+`tests/unit/test_save_positions.py` (the 61 slots pinned by name).
+
+**Limits.** A save made on 0.1.8 / 0.1.9 holds the 0.1.8 ids and is moved the other way: its id 8 (leadership)
+reads as fightstyle_nonhuman, 9 (grab, rank 1 for every hero) as leadership, 58-60 (acrobatics, toughness,
+mutantmastery) as toughness, mutantmastery and x1_npc_energy, and it has no grab (id 61) any more. Measured in game
+on a 0.1.8 save. Saves from before 0.1.8 have no grab talent at all (issue #51's grab is a herostat starting
+talent; a loaded heap replaces it); that needs a carrier outside this change.
+
+**Older saves (before 0.1.5).** The same kind of shift happened once before: builds before 0.1.5 shipped 47 shared
+talents (no SPEC 30 immunity bodies), with acrobatics, toughness and mutantmastery at 43-45. 0.1.5 inserted the 14
+immunity bodies among slots 25-56, so a hero heap begun before 0.1.5 has carried ids 43-45 since, and 0.1.5-0.1.7 (and this
+order) read them as `mastermold_special`, `physical_res` and `sabre_special`; the hero's real acrobatics / toughness
+/ mutantmastery (57-59) start at rank 0. Measured on real saves begun on a 47-talent build. Positions alone cannot
+serve both eras (ids 43-45 mean different talents in each); a remap needs a loader hook (XML2 Fix) or the
+save-format change.
+
+## 62. The first game's break rule (xml2-fix `[Game] BreakRule=xml1`; follow-up to issue #51)
 
 This is the engine work SPEC 59 deferred. It needs xml2-fix 1.3.2 (unreleased); a build made with it runs on 1.3.1
 exactly as before, because 1.3.1 reads neither the key nor the attribute.
 
-### 60.1 The rule
+### 62.1 The rule
 
 XML1 (default.xbe): the object damage function 0x92220 refuses a hit whose level (hit +0x14) is below the object's
 structure (+0x2c2), or whose target has structure above 9; the melee level 0x59a50 is the attack's authored
@@ -5220,13 +5309,13 @@ second loader.
 `fix_ini.BREAK_RULE` ('xml1') is written to `[Game] BreakRule` for every XML1 build and is a port-owned key.
 `REQUIRED_XML2FIX` is 1.3.2 (with SPEC 46-48).
 
-### 60.2 Validator rule V31
+### 62.2 Validator rule V32
 
 An XML1-sourced entity definition with a `structure` must carry an `xml1structure` in 0..10 whose conversion is
 that `structure` (`x1schema.break_rule_problems`, counted as `x1_break_rule_unpaired`). A definition that fails it
 would silently fall back to XMen2.exe's rule: a plain punch would break it again.
 
-### 60.3 What is and is not reproduced
+### 62.3 What is and is not reproduced
 
 - Reproduced: every structure threshold 0..10 against melee hits, with XML1's Might shares (3/6/8) and the
   `damageLevel` affecter (Sharpness and the like); enemies whose npcstat carries XML1's `might` talent get the

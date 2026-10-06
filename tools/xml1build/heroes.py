@@ -44,6 +44,7 @@ from . import common as C
 from . import combat_events as CE
 from . import npc_values as NV     # SPEC 24: value codes, the NPC energy talent
 from . import scripts_transform as ST   # SPEC 18.1: the renamed NPC doubles that speak (NPC_DOUBLE_SPEAKERS)
+from . import save_positions as SP     # saved talent positions: shared_talents keeps its save-stable order
 from .lib import x1names as N   # the XML1 namespace (was research/characters/x1names.py)
 
 # ------------------------------------------------------------------------------------------------ constants
@@ -1756,13 +1757,13 @@ x1_npc_energy""".split())
 # form (npc_values.immunity_plan names each body after the XML1 talent name most entries used); kept while a stats
 # entry names one (npc_values.is_immunity_talent): 47 -> 61.
 # Issue #52: the gun soldiers carry their gun's fighting style instead of their own (weapons.gun_fightstyle), and
-# the rifle style ships as x1_fightstyle_gun_rifle (x1names.X1_OWN_FIGHTSTYLES): it replaces XML2's
-# fightstyle_gun_rifle in the list, which nothing names any more (still 61).
+# the rifle style ships as x1_fightstyle_gun_rifle (x1names.X1_OWN_FIGHTSTYLES); XML2's fightstyle_gun_rifle, which
+# nothing names any more, keeps its slot for saved games (save_positions; held, not pruned): 63.
 SHARED_KEEP_IMMUNITIES = frozenset("""
 as_special avalanche_special blob_special forge_special havok_special juggernaut_special magnetoboss_special
 mastermold_special physical_res sabre_special sabretooth_special sentspider_special shadow_special toad_special
 """.split())
-SHARED_KEEP_EXPECTED = SHARED_KEEP_EXPECTED | SHARED_KEEP_IMMUNITIES
+SHARED_KEEP_EXPECTED = SHARED_KEEP_EXPECTED | SHARED_KEEP_IMMUNITIES | {'fightstyle_gun_rifle'}
 TV_LABEL = {'dmg': 'Damage', 'kb': 'Knockback', 'dlv': 'Destruction', 'lif': 'Seconds', 'pwr': 'Energy',
             'rng': 'Range', 'cnt': 'Count', 'lvl': 'Level', 'xdmg': 'Explosion Damage', 'xkb': 'Explosion Knockback'}
 
@@ -2469,6 +2470,14 @@ class HeroBuilder:
         # shared talents: prune to the rule-based keep list, real definitions for the three passives
         npc_root = ctx.read_out_xmlb('Data/npcstat.engb')
         keep, drop, stats_refs, style_reqs = self.shared_keep(hero_names, npc_root)
+        # saved talent positions: a save names shared talents by position, so a talent of the save-stable order
+        # that nothing references any more keeps its slot (fightstyle_gun_rifle since issue #52) instead of
+        # moving every later talent down
+        held = sorted(n for n in drop if n in SP.SHARED_TALENT_SLOTS)
+        for n in held:
+            del drop[n]
+            keep.append(n)
+        self.detail['shared_held'] = held
         keep_set = set(keep)
         delta_extra = sorted(keep_set - SHARED_KEEP_EXPECTED)
         delta_missing = sorted(SHARED_KEEP_EXPECTED - keep_set)
@@ -2491,7 +2500,8 @@ class HeroBuilder:
                     root.remove(t)
                     root.insert(idx, copy.deepcopy(real_defs[ln]))
                     changed = True
-            return changed
+            # saved talent positions: the 0.1.7 slots first, later additions appended (save_positions)
+            return SP.order_shared_talents(root) or changed
         ctx.patch_out_xmlb('Data/shared_talents', prune, exts=('.XMLB', '.engb'))
         hero_files = set().union(*self.hero_file_names.values()) if self.hero_file_names else set()
         dropped_refs = []

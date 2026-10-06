@@ -70,14 +70,16 @@ Checks (severity per SPEC 4.6: error = will not load or silently misbehaves; war
                 icons_rows and no mini_convo_icons precache
   V30 personal items (SPEC 56, validate_frontend.v_personal_items): every personalItem literal has
                 Data/personal/<item> from the first game (frontend), with text and a texture IGB in <out>
-  V31 break rule (SPEC 60, x1schema.break_rule_problems): every XML1-sourced entity definition with a structure
+  V31 save positions (SPEC 61): shared_talents in the save-stable order of
+                save_positions (new talents appended); no enabled fall kill volume numbered before another entinst
+  V32 break rule (SPEC 62, x1schema.break_rule_problems): every XML1-sourced entity definition with a structure
                 carries an xml1structure in 0..10 that converts to it (xml2-fix [Game] BreakRule=xml1)
   V23 fight styles (SPEC 43, style_budget.validate): per converted zone the distinct style files of the permanent
                 packages, the zone package, its CHRB characters' packages and the worst four-hero party against
                 the registry the shipped ini asks xml2-fix for ([Limits] FightStyles, else XMen2.exe's 19): more
                 is an error (the hero seated last has no powers), exactly full a warning
   V25 harm loops (SPEC 51): no delayed start-on ordinary harm loops that XML2 disables
-  V-TBD ladder spawns (SPEC 46): no monster spawner without monster_spawnexactlocation runs a ladder motion path
+  V33 ladder spawns (SPEC 46): no monster spawner without monster_spawnexactlocation runs a ladder motion path
 
 Inherited defects. Many findings are defects of the XML1 disc itself (a zone, conversation, dialog, script or
 sound bank XML1 references but never shipped; a line default.xbe already dropped). They are re-derived, not
@@ -116,8 +118,9 @@ from . import buoys as BY
 from . import automaps as AM             # V20 (SPEC 26): XML1 automaps as .zam
 from . import skins as SK                # V21 (SPEC 25): skin blend weights / skeleton against the anim DB
 from . import style_budget as SB         # V23 (SPEC 43): the fighting / power style registry per zone
-from . import ladder_motion as LM       # V-TBD (SPEC 46): ladder paths only from the ladder top
+from . import ladder_motion as LM       # V33 (SPEC 46): ladder paths only from the ladder top
 from . import weapons as W              # V5 (SPEC 57, issue #52): a gun-armed entry carries its gun's fighting style
+from . import save_positions as SP      # V31: identities a save keeps by position
 
 MAX_REPORTED = 50                             # per check and severity, into ctx.error / ctx.warn
 CONTENT_OWNERS = tuple(C.MODULE_ORDER)        # characters, scripts, zones, media
@@ -355,6 +358,7 @@ class Scan:
         self.unknown_classes = {}  # norm rel -> [(entity name, classname)] XMen2.exe does not register (0x461080)
         self.color_channels = {}   # norm rel (effects/) -> [(tag, name)] still carrying XML1 red/green/blue
         self.fall_kill_volumes = {}  # map rel -> [(name, missing XML2 flags, deferred, player-only state)]
+        self.entinst_tail = {}       # map rel -> [message] (V31: an enabled fall volume numbered before others)
         self.items = {}            # norm rel (data/items.*) -> root
         self.inv_items = {}        # norm rel -> [inventoryitem values]
         self.turret_mount = {}     # norm rel -> [(entity name, missing flags)] remapped scan turrets not fixed-mount
@@ -523,6 +527,9 @@ class Validator:
                           all(el.get(k) == v for k, v in XS.FALL_KILL_LEADER_FLAGS.items()),
                           any(el.get(k, '').lower() == 'true' for k in XS.FALL_KILL_LEADER_FLAGS)))
                         for el in volumes]
+                    tail = XS.numbered_entinst_tail_problems(root, n)
+                    if tail:
+                        sc.entinst_tail[n] = tail
                 if n in ('data/items.xmlb', 'data/items.engb'):
                     sc.items[n] = root
                 inv = [el.get('inventoryitem') for el in root.iter() if el.get('inventoryitem')]
@@ -726,7 +733,8 @@ class Validator:
                                ('V28', 'dialog platforms', self.dialog_platforms),
                                ('V29', 'codex icons', lambda ck: VF.v_codex_icons(self, ck)),
                                ('V30', 'personal items', lambda ck: VF.v_personal_items(self, ck)),
-                               ('V-TBD', 'ladder spawns', self.ladder_spawns)):
+                               ('V31', 'save positions', self.save_positions),
+                               ('V33', 'ladder spawns', self.ladder_spawns)):
             ck = Check(cid, title)
             self.checks[cid] = ck
             t0 = time.time()
@@ -978,7 +986,7 @@ class Validator:
                      f'XMen2.exe clamps (x1schema.convert_physics), e.g. {lst[:2]}')
             n_scale += len(lst)
         ck.set('x1_physics_scale_left', n_scale)
-        # V31 (SPEC 60): an XML1-sourced entity definition with a structure carries
+        # V32 (SPEC 62): an XML1-sourced entity definition with a structure carries
         # XML1's own number in xml1structure, and its structure is what that number converts to. Otherwise xml2-fix's
         # BreakRule=xml1 has nothing to compare for that object and a plain punch breaks it again.
         n_break = 0
@@ -1010,7 +1018,8 @@ class Validator:
                              f'but is not listed in x1schema.FALL_KILL_LEADER_ONLY')
                 if deferred:
                     ck.count('volumes_deferred')
-                    if len(missing) < len(XS.FALL_KILL_FLAGS):
+                    if 'smartent' not in missing:        # boxcollision alone is inert (SPEC 52) and one source
+                        #                                   box carries it itself; smartent=false makes it live
                         ck.error(f'{sc.files[n]["rel"]}: deferred fall kill volume {name!r} was reactivated '
                                  f'before issue #5 party handling was validated')
                     else:
@@ -1021,6 +1030,34 @@ class Validator:
                 if missing:
                     ck.error(f'{sc.files[n]["rel"]}: fall kill volume {name!r} lacks '
                              f'{", ".join(k + "=" + XS.FALL_KILL_FLAGS[k] for k in missing)}')
+
+    def save_positions(self, ck):
+        """V31 (SPEC 61): what a save names by position stays where earlier releases put it.
+        (a) shared_talents (both halves) in save_positions.SHARED_TALENT_ORDER, new talents after it: a saved
+        hero's talent id below 100 is the position. (b) no enabled fall kill volume numbered before another
+        entinst (x1schema.numbered_entinst_tail_problems): a zone record finds an entity by its ordinal."""
+        talents = self.stats()['talents']
+        for ext in ('.engb', '.xmlb'):
+            names = talents.get(ext)
+            if names is None:
+                ck.error(f'data/shared_talents{ext} missing or undecodable')
+                continue
+            errors, warnings = SP.shared_order_problems(names, f'data/shared_talents{ext}')
+            for m in errors:
+                ck.error(m)
+            for m in warnings:
+                ck.warn(m)
+            ck.set(f'shared_talents{ext}_pinned', sum(1 for n in names if n.lower() in SP.SHARED_TALENT_SLOTS))
+        if talents.get('.engb') and talents.get('.xmlb') and \
+                [n.lower() for n in talents['.engb']] != [n.lower() for n in talents['.xmlb']]:
+            ck.error('shared_talents XMLB and engb list their talents in different orders')
+        sc = self.scan
+        ck.set('zones_with_fall_volumes', len(sc.fall_kill_volumes))
+        for n, msgs in sorted(sc.entinst_tail.items()):
+            if n in sc.twins:
+                continue
+            for m in msgs:
+                ck.error(m)
 
     def harm_loop_startup(self, ck):
         """V25 (SPEC 51): no dead ordinary harm loops."""
@@ -1037,7 +1074,7 @@ class Validator:
         ck.set('dead_harm_loops', count)
 
     def ladder_spawns(self, ck):
-        """V-TBD (SPEC 46): a monster spawner without monster_spawnexactlocation puts its spawn on the ground, so
+        """V33 (SPEC 46): a monster spawner without monster_spawnexactlocation puts its spawn on the ground, so
         it must not run a ladder motion-path script (the path would carry the soldier through the floor)."""
         sc = self.scan
         count = 0

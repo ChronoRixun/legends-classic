@@ -258,13 +258,21 @@ PIN_SKIP_CLASSES = frozenset({'', 'playerstartent', 'waterent', 'tileent', 'came
 _OWNER_MP = re.compile(r'(?:start|set)MotionPath\s*\(\s*["\']_OWNER_["\']', re.I)
 
 
+# a hero name, not an entity: since 0.1.8 every mission zone's script unlocks its heroes (issue #55), and pinning
+# mansion/man7/subbasement7's spawner "phoenix" for it numbered the spawner first and moved every saved zone
+# record of that zone onto the next entity (SPEC 61)
+_HERO_NAME_CALL = re.compile(r'\bunlockCharacter\s*\([^()]*\)')
+
+
 def script_name_literals(texts):
     """The slash-free quoted strings of script sources, lower-case: the entity names a script can resolve
-    (engine pseudo-names such as _OWNER_ / _HERO1_ excluded; paths and sound names carry a slash)."""
+    (engine pseudo-names such as _OWNER_ / _HERO1_ excluded; paths and sound names carry a slash; the hero name
+    of unlockCharacter excluded)."""
     names = set()
     for text in texts:
         if not text:
             continue
+        text = _HERO_NAME_CALL.sub('', text)
         for m in _QUOTED.finditer(text):
             s = (m.group(1) if m.group(1) is not None else m.group(2)).strip()
             if s and '/' not in s and '\\' not in s and not s.startswith('_'):

@@ -119,7 +119,7 @@ CHARACTER_LADDER_PATHS = '1'
 # objective records unchanged). Off in xml2-fix unless set, so every XML1 build asks for it.
 OBJECTIVE_DESCRIPTIONS = '1'
 
-# xml2-fix 1.3.2 [Game] BreakRule (SPEC 60, issue #51's follow-up): XMen2.exe keeps an object's
+# xml2-fix 1.3.2 [Game] BreakRule (SPEC 62, issue #51's follow-up): XMen2.exe keeps an object's
 # structure in 0..2 and caps a melee hit's level at 1, so the converted structure (x1schema.convert_physics: XML1's
 # 2-9 -> 1) lets a plain punch break walls XML1 kept for powers. 'xml1' makes the fix compare XML1's hit level
 # (authored level + Might + the damageLevel affecter) with the xml1structure the build's entity definitions carry.
@@ -137,7 +137,7 @@ FORCED_TEAMS_VALUES = ('1', '0', 'off')
 # addSkillPoints, the conversation hooks [Game] AutoAdvance / ReplyVoices / ReplyCursor - SPEC 32, 34; v1.3.1:
 # [Limits] FightStyles - SPEC 43, [Game] GeometrySharingBlendIndices - SPEC 44; v1.3.2: [Game] CharacterLadderPaths -
 # SPEC 46, [Game] ObjectiveDescriptions - SPEC 47, the STAT pickup's addStatPoints - SPEC 48,
-# [Game] BreakRule - SPEC 60)
+# [Game] BreakRule - SPEC 62)
 REQUIRED_XML2FIX = '1.3.2'
 
 # every key the port may write (the builder drops the ones a build does not need); the launcher owns the rest
