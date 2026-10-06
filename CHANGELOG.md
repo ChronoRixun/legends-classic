@@ -3,6 +3,20 @@
 The builder's releases, newest first. The version is `xml1-builder --version`; the content version is what a
 build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebuild.
 
+## v0.1.10 - content version 13 (needs XML2 Fix 1.3.1)
+
+- **Fixed (0.1.8 regression): games saved before 0.1.8 lost or swapped hero skills.** The save names a hero's
+  shared skills by their place in a list, and 0.1.8 inserted Grab and the rifle fighting style in the middle of it
+  and dropped an unused rifle style: a saved Leadership rank came back as Grab, and Acrobatics, Toughness and
+  Mutant Mastery each as their neighbour. The list keeps its 0.1.7 order again, with the skills added since at the
+  end. Games saved on 0.1.5 to 0.1.7 load with the skills they had there; games saved on 0.1.8 or 0.1.9 are moved
+  the other way by this fix (see SPEC 61). A new check (V31) keeps the order.
+- **Fixed (0.1.8 regression): objects of an old save in the wrong places.** In zones with a restored fall volume
+  (the HAARP exterior and ice tunnels, two nuclear-plant and four sewer areas) and in the mansion sub-basement of
+  the last act, a game saved before 0.1.8 put saved object states on the wrong objects: at the HAARP exterior the
+  Xtraction Point was missing beside the X-Jet and the finish-objectives message appeared at the start. Saved
+  objects are found on their own objects again (V31 checks the order).
+
 ## v0.1.9 - content version 12 (needs XML2 Fix 1.3.1)
 
 - **Fixed (0.1.8 regression): the East Rooftops could not be crossed** (the first level; issue #22). One of the

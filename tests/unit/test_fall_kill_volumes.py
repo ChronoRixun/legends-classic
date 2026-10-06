@@ -201,3 +201,51 @@ def test_validator_requires_the_leader_gate_on_listed_volumes_and_nowhere_else()
         assert not spread.counts.get('volumes_player_only')
         entity.attrib.pop('actleader')
         assert not check_fixture(folder, root).errors
+
+
+def ordinal_fixture():
+    """invented zone: a numbered marker, the volume, then two more numbered markers"""
+    root = ET.Element('world')
+    for name in ('beacon_a', 'trigger_b', 'pad_c'):
+        ET.SubElement(root, 'entity', name=name, classname='gameent')
+    ET.SubElement(root, 'entity', name='pit_alpha', classname='affectableharment', damage='32000',
+                  damagetype='dmg_direct', actontouch='true', nocollide='true')
+    for t in ('beacon_a', 'pit_alpha', 'trigger_b', 'pad_c'):
+        ET.SubElement(ET.SubElement(root, 'entinst', type=t), 'inst', name=t + '_1', pos='0 0 0')
+    return root
+
+
+def entinst_order(root):
+    return [ei.get('type') for ei in root if ei.tag == 'entinst']
+
+
+def test_enabled_volume_goes_after_the_numbered_entities_it_would_shift():
+    root = ordinal_fixture()
+    rel = 'maps/invented/ridge.eng'
+    assert S.numbered_entinst_tail_problems(root, rel) == []        # still smart: no ordinal yet
+    counts = S.convert(root, rel)
+    assert counts['fall_kill_volumes'] == 1
+    # the volume is numbered now; every entity before keeps the ordinal an earlier build gave it
+    assert entinst_order(root) == ['beacon_a', 'trigger_b', 'pad_c', 'pit_alpha']
+    assert S.numbered_entinst_tail_problems(root, rel) == []
+    assert not S.convert(root, rel)                                    # idempotent, order kept
+
+
+def test_tail_check_names_the_entities_whose_ordinal_shifts():
+    root = ordinal_fixture()
+    rel = 'maps/invented/ridge.eng'
+    root.find("entity[@name='pit_alpha']").attrib.update(S.FALL_KILL_FLAGS)
+    problems = S.numbered_entinst_tail_problems(root, rel)
+    assert len(problems) == 2
+    assert any("'trigger_b'" in m for m in problems) and any("'pad_c'" in m for m in problems)
+
+
+def test_deferred_volume_stays_in_place():
+    root = ordinal_fixture()
+    rel = 'maps/invented/ridge.eng'
+    S.FALL_KILL_DEFERRED['maps/invented/ridge'] = frozenset({'pit_alpha'})
+    try:
+        assert not S.convert(root, rel)
+        assert entinst_order(root) == ['beacon_a', 'pit_alpha', 'trigger_b', 'pad_c']
+    finally:
+        del S.FALL_KILL_DEFERRED['maps/invented/ridge']

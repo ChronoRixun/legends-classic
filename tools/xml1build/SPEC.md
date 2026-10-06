@@ -5015,7 +5015,7 @@ header (`menu_only_problems`, also **V-H14** on `<out>`); a planned catch-up not
 
 ## 59. Object physics on XMen2.exe's scales: lifting, grabbing, breakable walls (issue #51)
 
-### TBD.1 Lifting (heaviness)
+### 59.1 Lifting (heaviness)
 
 XML1 (default.xbe) clamps an entity's `heaviness` to 5 and its pickup gate (0x38400) lifts an object when
 heaviness < 5 and heaviness <= might + 1, where might is the hero's `might` talent rank (0xb1ba0, talent name
@@ -5032,7 +5032,7 @@ would remove it, and XML1's heaviness 5 would then need `nopickup` (not set now:
 from the heaviness-limited object attacks at 0x4f2dee). Validator rule: an XML1-sourced entity definition with a
 heaviness above 3 (a value the conversion did not touch) is an error.
 
-### TBD.2 Grabbing enemies (the shared `grab` talent)
+### 59.2 Grabbing enemies (the shared `grab` talent)
 
 XMen2.exe's ch_guard_decide (0x4ec090) grabs a target only when the hero's `grab_scale_dmg` talentvalue (string
 0x68edac) is above 0.0 (0x4ec3c6-0x4ec407; the global mode byte 0x782728 can skip it) and the target passes
@@ -5045,7 +5045,7 @@ Budgets: shared talents 61 -> 62, worst party 90 -> 91 of the 92 the danger-room
 event's %grab_scale_dmg reference now resolves (2 instead of 0), so thrown enemies take XML2's throw damage scale.
 Validator rule (in V-H4): a playable hero without the talent, or no positive grab_scale_dmg, is an error.
 
-### TBD.3 Breakable walls and the ordinary-damage regression
+### 59.3 Breakable walls and the ordinary-damage regression
 
 The object structure remap remains: XML1 0-1 -> 0, 2-9 -> 1, 10 -> 2. This opens routes blocked when XML1's
 structure 2-9 was copied into XMen2.exe, where structure >= 2 is unbreakable (0x498044). Lifting and the hidden
@@ -5072,7 +5072,7 @@ might_structure nibble (actor+0x57b) and rounded damageLevel affecter (actor+0x5
 stored to hit +0x2e at 0x4501fb. Wolverine's Sharpness contributes +3 at its first rank: an auto-spent higher-level
 hero can turn the broken zero into one. Character level itself is not read by this attack-level calculation.
 
-### TBD.4 Engine work required for the wall rule (not implemented here)
+### 59.4 Engine work required for the wall rule (not implemented here)
 
 For unchanged character defense and attack semantics, a normal hit must exceed character structure 0. To spare
 an object remapped to structure 1, the hit must be below 1. No integer can satisfy both; the effective attack
@@ -5089,3 +5089,74 @@ than raising the byte's clamp globally. No XML2 Fix change is part of this build
 Remaining approximation: all source structure 2-9 objects map to one breakable class, so normal attacks can
 break more objects than in XML1. Class 10 remains immune; script flags and health still apply. Full original
 Might thresholds and the punch/power wall distinction remain deferred to the separate engine work above.
+
+## 60. Saved zone records and entity ordinals (issue #22)
+
+**Symptom.** A game saved on 0.1.7 and continued on 0.1.8: no Xtraction Point beside the X-Jet at the HAARP
+exterior, and "finish your objectives" pops up near the start of the zone.
+
+**Mechanism.** A save keeps up to five zone records. A record finds a placed entity by its ordinal only: at zone
+load XMen2.exe numbers, in `.engb` entinst order, every placed entity that does not stay smart (entity +0x6e,
+0x48624c), and the restore puts each record's position, orientation and state flags on the entity holding the same
+ordinal (the record's own name handles are not compared). Physical entities (physent, affectableharment,
+powertriggerent, ...) and monster spawners stay smart unless `smartent="false"` (a spawner also with
+`monster_smartent="false"`); gameent, waypointent, playerstartent, waterent and actionent are numbered either way.
+Measured on haarp_ext01 (51 live ordinals read from +0x6e, all equal to that rule's prediction).
+
+SPEC 52 gave the enabled fall volumes `smartent="false"`, numbering them in place: every later ordinal moved by
+one. Loading a save from an earlier build restored haarp_ext01's `xtraction_point` record of the zone link (the
+pad sat on the link's spot at the far end) and `finish_obj` onto the record of a touch trigger near the X-Jet.
+
+**Rule.** A builder change that numbers an entity XML1 left smart (or the reverse) must not move the ordinals of
+the entities after it: `x1schema.convert_fall_kill_volumes` moves the entinst of every enabled volume after all
+other entinsts, so XML1's own numbered entities keep the ordinals they had before SPEC 52. Deferred volumes keep
+their place (they stay smart). Check: `x1schema.numbered_entinst_tail_problems` (an entinst of another type after
+an enabled volume). Unit tests: `tests/unit/test_fall_kill_volumes.py` (invented zones).
+
+**Limits.** Saves made on 0.1.8 / 0.1.9 inside a zone with an enabled volume hold the shifted ordinals and are
+moved back by this change (0.1.9's deferrals already did the same to 0.1.8 saves in 17 zones). XMen2.exe cannot be
+told to match records by name without XML2 Fix (stable entity identity is open point U17 of the save-format work).
+
+**0.1.10: SPEC 35 pins from hero unlocks.** The other numbering change after 0.1.7 was `mansion/man7/subbasement7`:
+its zone script gained the issue #55 unlock catch-up (`unlockCharacter("phoenix", "" )` among others), SPEC 35's
+pin rule read the hero name as the name of the zone's Jean spawner `phoenix`, gave the spawner `smartent="false"`,
+and the spawner took ordinal 1 ahead of the zone's 24 numbered entities. `zones.script_name_literals` now skips the
+argument of `unlockCharacter` (a hero name, never an entity). Compared over every zone file, the numbered sequence
+of 0.1.10 equals 0.1.7's except for the enabled fall volumes appended at the end of their 10 zones. Validator V31
+runs `numbered_entinst_tail_problems` over every built map.
+
+## 61. Saved talent positions (issue #51)
+
+**Symptom.** A game saved on 0.1.7 and continued on 0.1.8: a hero's leadership rank shows as a grab rank,
+acrobatics as critical's neighbour, toughness / mutantmastery as the talent before them.
+
+**Mechanism.** A save's hero block holds the talent heap: entries of {u16 talent id, rank bytes}, no name. An id
+below 100 is the talent's position in `Data/shared_talents` (a hero's own talents are (stats index + 1) x 100 + the
+position in its talent file). Builder 0.1.8 changed the shared list: XML2's `fightstyle_gun_rifle` (slot 4) was
+pruned once issue #52 stopped naming it, `grab` came back at XML2's slot (9, issue #51) and
+`x1_fightstyle_gun_rifle` was added at 32 (between the first game's boss talents, in npcstat order). Slots 4-8
+moved down one, 32-60 up one: leadership (9) read as grab, acrobatics / toughness / mutantmastery (57-59) as the
+talent before each. Hero talent files, herostat order and every other positional table were unchanged.
+
+**Rule.** `save_positions.SHARED_TALENT_ORDER` is the order every release keeps: the 61 names of 0.1.5-0.1.7, then
+`grab` and `x1_fightstyle_gun_rifle` (0.1.8, in that order). `heroes.HeroBuilder` holds a name of that list that
+the keep rule would prune (keeps its definition; `fightstyle_gun_rifle` today) and writes the shared list in that
+order, other talents appended in build order. A release that adds a shared talent appends it to the list. 63
+shared talents; the worst four-hero party registers 63 + 29 = 92, the pool's limit with the Danger Room margin.
+Check: V31 (both halves in that order, a hole before the last pinned slot is an error). Unit tests:
+`tests/unit/test_save_positions.py` (the 61 slots pinned by name).
+
+**Limits.** A save made on 0.1.8 / 0.1.9 holds the 0.1.8 ids and is moved the other way: its id 8 (leadership)
+reads as fightstyle_nonhuman, 9 (grab, rank 1 for every hero) as leadership, 58-60 (acrobatics, toughness,
+mutantmastery) as toughness, mutantmastery and x1_npc_energy, and it has no grab (id 61) any more. Measured in game
+on a 0.1.8 save. Saves from before 0.1.8 have no grab talent at all (issue #51's grab is a herostat starting
+talent; a loaded heap replaces it); that needs a carrier outside this change.
+
+**Older saves (before 0.1.5).** The same kind of shift happened once before: builds before 0.1.5 shipped 47 shared
+talents (no SPEC 30 immunity bodies), with acrobatics, toughness and mutantmastery at 43-45. 0.1.5 inserted the 14
+immunity bodies among slots 25-56, so a hero heap begun before 0.1.5 has carried ids 43-45 since, and 0.1.5-0.1.7 (and this
+order) read them as `mastermold_special`, `physical_res` and `sabre_special`; the hero's real acrobatics / toughness
+/ mutantmastery (57-59) start at rank 0. Measured on real saves begun on a 47-talent build. Positions alone cannot
+serve both eras (ids 43-45 mean different talents in each); a remap needs a loader hook (XML2 Fix) or the
+save-format change.
+
