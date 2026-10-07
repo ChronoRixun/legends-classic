@@ -69,6 +69,16 @@ FORCE_PREFIXES = ('conversations/', 'dialogs/', 'subtitles/', 'data/entities/', 
 LANG_SKIP = ('.fre', '.ger')
 BOOL_VALUES = frozenset({'', 'true', 'false', '0', '1', 'none', 'null', 'yes', 'no'})
 
+# issue #74: the beacon models every Xtraction point entity names. XML2 retail ships same-named
+# puzzles/beacon_xtraction{,_noteamchange,_saveonly}.IGB whose glow material was stripped (one material,
+# no blend state / data pumps); XML1's four beacons carry the animated glow, so these models are
+# XML1-wins despite the SPEC 4.4 XML2-wins default for models (without the forced import the build
+# keeps the glow-less files; beacon_xtraction_mastermold only shipped because XML2 has no same-named
+# file there). V-TBD recomputes this list from the XML1 maps' xtraction entities.
+XTRACTION_BEACON_MODELS = ('models/puzzles/beacon_xtraction', 'models/puzzles/beacon_xtraction_mastermold',
+                           'models/puzzles/beacon_xtraction_noteamchange',
+                           'models/puzzles/beacon_xtraction_saveonly')
+
 EFFECT_ATTRS = frozenset({'acteffect', 'deatheffect', 'xdeatheffect', 'loopfx', 'ambienteffect', 'splasheffect',
                           'wakeeffect', 'trailfx', 'spawneffect', 'monster_spawneffect', 'monster_deatheffect'})
 SPAWN_ATTRS = frozenset({'deathspawn', 'xdeathspawn', 'actspawn', 'monster_deathspawn'})
@@ -2603,7 +2613,21 @@ class Zones:
                                'packages/generated/maps/package/permanent.fb',
                                only_kinds={'model', 'texture', 'effect'}, x1_only=True, label='permanent')
         self.counts['permanent_appended'] = n
+        self.force_xtraction_beacons()
         self.build_permanent_fightstyles()
+
+    def force_xtraction_beacons(self):
+        """issue #74: import XML1's four Xtraction beacon models XML1-wins. The zone packages already list
+        them (the zone refs collect every entity's model attribute); SPEC 4.4 would keep XML2's glow-less
+        same-named files, so the import here is forced and re-writes whatever the zone pass kept."""
+        for m in XTRACTION_BEACON_MODELS:
+            if self.x1_nonempty(m + '.igb'):
+                res = self.ctx.import_x1_asset(m + '.igb', force=True)
+                self.counts[f'xtraction_beacon_{res.status}'] += 1
+                if not res.ok:
+                    self.problem(f'xtraction_beacon_{res.status}', m, 'xtraction_beacons')
+            else:
+                self.problem('xtraction_beacon_missing', m, 'xtraction_beacons')
 
     def build_permanent_fightstyles(self):
         """XML1 keeps fightstyle_villain resident through maps/package/permanent_fightstyles (37 XML1 NPCs have

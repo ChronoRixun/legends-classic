@@ -3,6 +3,25 @@
 The builder's releases, newest first. The version is `xml1-builder --version`; the content version is what a
 build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebuild.
 
+## Unreleased
+
+- **Fixed: Rogue's Southern Strike dealt no damage at rank 1** (issue #78). The power's three punches only
+  knocked enemies down until the first point was spent. XML1's rank-1 swings inherit their damage from the
+  power's event (`Damage="L3"`, 15-18 at rank 1) and the style's rank rungs override the trigger only from
+  rank 2; the collapse wrote no value into the new rank-1 talentvalue slot, and its gap fill zeroed it. The
+  collapse now backfills leading ranks a trigger leaves unset from the same-named event's value (also fixes
+  the same shape in Cyclops' optic sweep and X-treme; powers whose rank-1 zero is genuine XML1 data, like
+  Phoenix's telekinesis lift, are unchanged).
+  A new check (V-TBD) rejects a zeroed rank-1 trigger damage/knockback talentvalue whose event carries a
+  non-zero value.
+- **Fixed: blue Xtraction points did not glow** (issue #74). The mansion sub-basements' purple point glowed
+  on PC but every blue point did not. XML2 retail ships same-named `puzzles/beacon_xtraction{,
+  _noteamchange,_saveonly}.IGB` whose glow material was stripped (one material; no blend state or data
+  pumps), and the builder's XML2-wins collision policy kept them over the first game's glow-carrying models;
+  only the Master Mold beacon shipped XML1's. The four XML1 beacon models are now force-imported. A new
+  check (V-TBD) compares the shipped beacons with the XML1 source and recomputes the referenced set from the
+  XML1 maps.
+
 ## v0.1.11 - content version 14 (needs XML2 Fix 1.3.1)
 
 - **Fixed: 20 Xtraction points could not save, including the first one in the game** (issue #63). The point in

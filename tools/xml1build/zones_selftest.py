@@ -53,7 +53,11 @@ EXPECTED_BASE_REPLACED = re.compile(
     r'maps/package/permanent_fightstyles|maps/menu/main_back)\.pkgb|'
     r'maps/menu/main_back\.(xmlb|chrb|igb|navb|boyb)|conversations/common/finish_obj\.(xmlb|engb)|'
     r'motionpaths/(common/cabinet_knockedover|common/table_knockedover|menus/main_back)\.igb|'
-    r'actors/zone_dr_mag03\.igb)$')            # section 16: XML1's dr_mag03 leaf equals an XML2 zone DB name
+    r'actors/zone_dr_mag03\.igb|'
+    r'models/puzzles/beacon_xtraction(_noteamchange|_saveonly)?\.igb)$'
+)            # section 16: XML1's dr_mag03 leaf equals an XML2 zone DB name; the three beacons XML2 retail
+               # same-names lost the glow material and are force-imported XML1-wins (issue #74, SPEC
+               # "(number assigned at merge)"); beacon_xtraction_mastermold overwrites no base file
 
 
 def fail(kind, msg):
