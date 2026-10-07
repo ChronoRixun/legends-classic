@@ -5435,6 +5435,11 @@ naming it and no portal model shown (`frontend.pda_portal_problems`). Unit tests
 Objectives, Small Map, Automap and Options worked, and nothing crashed with or without the portal's cooldown
 running. The builder's output is element for element the hand-made menu of that test.
 
+On the 0.1.12 candidate (windowed harness, real keys, own save folder): the pause menu in mansion/man1a/subbasement1a and nyc/alison/nyc1_1_2b has no Blink Portal; eight downs light Objectives, Team Management, Small Map,
+Automap, Options, Players, Load Game, Quit Game and wrap, eight ups the same in reverse (the empty slot is never lit);
+Objectives, Small Map, Automap and Options open and close. Quit Game and Load Game from it work. Not checked: the
+pad, two players, the Danger Room's pause menu.
+
 ## 65. The effect curve pool (xml2-fix 1.3.2 `[Limits] EffectCurves`)
 
 XMen2.exe keeps the animation curves of every loaded effect (a particle's size, transparency, rotation over its
