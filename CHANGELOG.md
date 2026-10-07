@@ -3,28 +3,38 @@
 The builder's releases, newest first. The version is `xml1-builder --version`; the content version is what a
 build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebuild.
 
-## Unreleased - content version 14 (needs XML2 Fix 1.3.2)
+## v0.1.12 - content version 15 (needs XML2 Fix 1.3.2)
 
-- Preserve authored ladder descent through source-derived relative motion paths and the XML2 Fix 1.3.2 CharacterLadderPaths companion (SPEC 46).
-  Before-and-after runtime verification is tracked with this issue PR.
-  Spawners without the first game's exact-location flag place their soldiers on the floor, as the first game did;
-  they keep the original descent script, so no path carries those soldiers through the floor (sewers3_1_3, arb3_3).
-  arb3_1's ladder-top soldier runs the Arbiter descent under a second script name; it now gets the same path.
+This build needs XML2 Fix 1.3.2 (the launcher installs it). With an older fix the game starts, but the ladder,
+objective, STAT, wall and effect changes below do nothing. Saves of earlier builds load as before.
 
-- Retain objective completion descriptions for the companion XML2 Fix 1.3.2 reader (SPEC 47), without changing saved objective ordering.
-  Before-and-after runtime verification is tracked with this issue PR.
-
-- STAT pickups grant an unspent attribute point through the companion XML2 Fix 1.3.2 function (SPEC 48).
-  Before-and-after runtime verification is tracked with this issue PR.
-
+- **Fixed: soldiers waiting at the top of a ladder now climb down** (issue #32). In the sewers and in the Arbiter's
+  levels the first game sends soldiers down a ladder into the fight; here they stayed up at the top, out of reach.
+  They now slide down as in the first game. Soldiers that the first game puts straight on the floor stay there.
+- **Objectives read as in the first game once they are done** (issue #8). The first game changes an objective's
+  text on the Objectives page when you complete it (for example after the fight with Mystique); here the page kept
+  the original instruction. It now shows the first game's completion text.
+- **Fixed: STAT pickups gave no point to spend** (issue #10). They raised Body by itself. Now the hero who picks one
+  up gets one attribute point to spend on the stats screen, as in the first game.
 - **Sturdier objects break as in the first game: to powers and Might, not to plain punches** (follow-up to issue
-  #51; takes effect with XML2 Fix 1.3.2). The first game gives every object a structure from 0 to 10 and breaks it
-  only with an attack of at least that level: a punch is 1, powers are higher, and Might adds 3, 6 or 8. The engine
-  only knows 0 to 2, so walls such as the one in HAARP's barracks either could not be broken at all or, since the
-  last fix, broke to any punch. Every object now also carries the first game's own number, and XML2 Fix compares it
-  with the first game's attack level: that wall takes Wolverine's Claw Flurry and shrugs off his punches, a desk
-  computer needs Might or a stronger power, crates and lockers still break to anything. Attacks on enemies are
-  unchanged. A new check verifies every object's pair of numbers.
+  #51). The first game gives every object a strength from 0 to 10 and breaks it only with an attack at least that
+  strong: a punch is 1, powers are higher, and Might adds 3, 6 or 8. The engine only knows 0 to 2, so walls such as
+  the one in HAARP's barracks either could not be broken at all or, since 0.1.8, broke to any punch. That wall now
+  takes Wolverine's Claw Flurry and shrugs off his punches, a desk computer needs Might or a stronger power, crates
+  and lockers still break to anything. Attacks on enemies are unchanged.
+- **Fixed: fires and powers without their particles in busy areas** (issue #68). With four heroes, some areas
+  needed more effect animations than the engine keeps: the effects loaded last were drawn without particles - the
+  burning bench in Central Park was a faint glow, and a hero's power could lose its sparks. The game now has room
+  for four times as many.
+- **Removed: the pause menu's Blink Portal** (issue #89). It is X-Men Legends II's: it opened a portal to that
+  game's towns, with no way back to this one except an earlier save (saving there overwrote the slot with a town
+  save). The first game had no portal. Its place in the pause menu is now an empty slot.
+- **The water channel in one of the first sewer areas is deadly again** (issue #22). 0.1.9 switched off 17 shallow
+  fall areas until each was checked in game; this one, between two walkways, was checked and kills a hero who falls
+  in, as in the first game.
+
+New build checks: V33 (every object carries the first game's strength next to the
+engine's), V34 (no soldier placed on the floor gets the ladder slide) and V35 (the pause menu has no portal).
 
 ## v0.1.11 - content version 14 (needs XML2 Fix 1.3.1)
 
