@@ -5470,3 +5470,58 @@ only, from nyc1_1_3's point on).
 
 **Still missing (as SPEC 62).** XML1's Load choice and the conditional Danger Room / Healer / Forge choices; those
 need a script function that builds XML1's menus, not an ini key.
+
+## 67. Recommended party before mission selection (issue #76)
+
+XML1's `beginmission` checks `keepheroes` at default.xbe 0x18db5b; when false it calls the party builder
+0x18d6d0 at 0x18db98 before executing `scriptstart` (0x18dbda). That builder seats REQUIRED entries, then
+RECOMMENDED entries (0x18d77e..0x18d7f2), clears RESTRICTED entries and pads from the original ini if necessary.
+HAARP's `data/missions/haarp.eng` has no REQUIRED entries, four RECOMMENDED entries, `maxheros=4`,
+`teamselect=true`, `keepheroes=false`. Their authored order is Cyclops, Iceman, Storm, Wolverine. The tester's
+list puts Storm first; the source data supports this roster but not that slot order.
+
+Previously `scripts.forced_party_plan` classified this as free, and `forced_party_in_bodies` emitted only a
+skinset block before `blackbirdMenu`. The preceding Magma-only briefing therefore supplied the menu's party.
+The forced-team design's worked HAARP check (FORCED_TEAMS_DESIGN 5) assumed this carried-over party; it missed
+the original engine's rebuild for free missions.
+
+**Conversion.** Each free mission whose `keepheroes` is explicitly false, final load opens `blackbirdMenu` or
+`loadMapChooseTeam`, and complete four-person party can be derived from REQUIRED/RECOMMENDED/RESTRICTED data
+receives `menu_seed` in the plan. Every name must be in the build's playable roster and the zone must exist.
+No ini padding is guessed. Other starts, continuations and partial lists keep their existing behavior.
+`menu_seed_block` adds guarded `seatParty` to the existing skinset block before the menu. Selection stays outside
+the guard; it opens with the recommended party, allows replacements and confirms the player's selection. This
+is a free party (`teamlock=0`), distinct from SPEC 19's forced seat/load/else block. With ForcedTeams off or the
+DLL absent the existing menu remains the fallback. `--forced-teams menu` emits no seed calls.
+
+SPEC 58 already unlocks Cyclops, Iceman, Phoenix (Jean Grey), Rogue and Storm at the mansion1 milestone; Wolverine
+was unlocked earlier. No reserve unlock changes are needed. Beast is outside that cumulative set and retains his
+original lab conversation unlock (or later milestone). An existing profile may already have later heroes unlocked;
+this change does not reset profiles or rewrite saves. It applies at a mission start, not when loading a save that
+is already inside HAARP.
+
+**V36** (run with V14). every installed begin-body copy with `menu_seed` must carry exactly the planned feature
+guard, party and skinset immediately before the original editable menu. Each seeded name must be a herostat hero.
+Regular forced seat blocks still pass V14c; seeded menus do not count as forced seat blocks. Synthetic tests in
+`test_mission_menu_party.py` cover data derivation, missing heroes, continuations, partial lists, nested copies,
+idempotence, feature on/off/absent, both menu functions, and missing/wrong/duplicate/incorrectly guarded seeds.
+Runtime validation remains for the release agent: fresh profile, skip optional mansion hero conversations, proceed
+through the first briefing, inspect the default four heroes and Jean/Rogue in reserve, replace a hero and confirm.
+Beast must still require the lab conversation before his later milestone. No game was run for this change.
+
+### 67.1 Facility-entry decline (issue #77): static result, runtime reproduction still required
+
+XML1 `scripts/haarp/ext/enter_haarp.py` builds a two-option popup: the first action begins `haarp_int`, the second
+is empty. P3 converts it to `dialogs/x1/p006` with the first option pointing to `x1/missions/begin_haarp_int` and
+no action on the second. Both generated XMLB/engb and the built 0.1.11 pair preserve that distinction; there is no
+parent `scriptok` or `scriptcancel`. The exterior trigger's actscript still points to `haarp/ext/enter_haarp`.
+
+The missing-attribute inheritance hypothesis was checked and rejected: XMen2.exe's attribute getter 0x564b70
+returns the supplied empty default, the option adder 0x5e9857 clears the empty action, and acceptance at
+0x5eb827 reads only the selected option's action. The final queue at 0x5eb8d0 only runs a non-empty action.
+Therefore no unconditional interior load or incorrect decline action was found in the converter. The synthetic
+popup/binary-roundtrip regression protects this contract; it does not reproduce or resolve the reported runtime
+failure. No speculative data change is made for #77. The release agent should reproduce in `haarp/ext/haarp_ext04`
+after the entrance trigger is enabled, select the second option with real input, and record the selected index,
+active dialog and zone before/after acceptance (including repeat touches while still outside). The expected
+result is to remain outside; the first option should enter `haarp/int/haarp2_1`.

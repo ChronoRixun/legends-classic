@@ -37,6 +37,10 @@ objective, STAT, wall, effect and Xtraction-menu changes below do nothing. Saves
   menu has no world map. The menu now offers the title, Change Team and Save only, from the first mission on.
   With the pause menu's Blink Portal gone (#89), no route into X-Men Legends II's towns is left. XML1's Load,
   Danger Room, Healer and Forge choices are still missing at every point (as in 0.1.11).
+- **The first HAARP mission starts with the first game's recommended team** (issue #76). Its team selection
+  opened with Magma, carried over from the briefing; the first game seats its recommended four (Cyclops, Iceman,
+  Storm and Wolverine) and lets you change them. Missions with a complete recommended team in the first game's
+  data do the same. Loading a save already inside HAARP is unchanged.
 
 New build checks: V33 (every object carries the first game's strength next to the
 engine's), V34 (no soldier placed on the floor gets the ladder slide) and V35 (the pause menu has no portal).

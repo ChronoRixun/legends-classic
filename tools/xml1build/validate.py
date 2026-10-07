@@ -86,6 +86,8 @@ Checks (severity per SPEC 4.6: error = will not load or silently misbehaves; war
   V35 pda portal (SPEC 64, issue #89; validate_frontend.v_pda_portal): both front ends: UI/menus/pda (both halves)
                 written by frontend without the Blink Portal (no label_option03, nothing links to it, its models
                 hidden)
+  V36 recommended party (SPEC 67, issue #76; reported with V14): a mission start seeded with the first game's
+                recommended party has exactly the guarded seatParty + skinset before its original editable menu
 
 Inherited defects. Many findings are defects of the XML1 disc itself (a zone, conversation, dialog, script or
 sound bank XML1 references but never shipped; a line default.xbe already dropped). They are re-derived, not
@@ -4038,6 +4040,11 @@ class Validator:
         for r in sorted(uses):
             for ln, d in ST.xml2fix_guard_problems(texts[r]):
                 ck.error(f'V14b: {self.idx.get(r)}:{ln}: {d}')
+        # V36 (issue #76; SPEC 67, run with V14): the recommended-party seed is distinct from a forced party.
+        for r, lines in texts.items():
+            for problem in ST.menu_seed_problems(lines, plan):
+                ck.error(f'V36: {self.idx.get(r)}: {problem}')
+        ck.set('recommended_party_missions', sum(bool(p.get('menu_seed')) for p in plan.values()))
         # ---- V14c / V14d: seat blocks and skinsets
         herostat = {}
         st = self.stats()['variants']
@@ -4100,6 +4107,15 @@ class Validator:
 
     def _v14c_seat(self, ck, S, plan, herostat, lines, stm, k, where, ref, seat_count):
         i, s = stm[k]
+        mis = self._marker_before(lines, i)
+        p = plan.get(mis or '')
+        # V36 above checks the full guarded seed and the subsequent editable menu.
+        # The regular V14c shape is for forced parties that bypass selection.
+        if p and p.get('menu_seed'):
+            names = self._STR_ARGS.findall(s)
+            if names != p['menu_seed'] or any(n not in herostat for n in names):
+                ck.error(f'V36: {where}:{i + 1}: invalid recommended-party seat {names}')
+            return
         prev = [x for _, x in stm[max(0, k - 3):k]]
         nxt = [x for _, x in stm[k + 1:k + 6 + 16]]
         # issue #55: the team-menu branch may first unlock the REQUIRED heroes XML1 only seats (menu_only_unlocks)
