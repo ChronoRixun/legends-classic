@@ -41,9 +41,16 @@ objective, STAT, wall, effect and Xtraction-menu changes below do nothing. Saves
   opened with Magma, carried over from the briefing; the first game seats its recommended four (Cyclops, Iceman,
   Storm and Wolverine) and lets you change them. Missions with a complete recommended team in the first game's
   data do the same. Loading a save already inside HAARP is unchanged.
+- **Fixed: Rogue's Southern Strike dealt no damage at rank 1** (issue #78). Its three punches only knocked enemies
+  down until a second point was spent. At rank 1 they now deal the first game's damage; Cyclops' Optic Sweep and
+  X-treme power had the same fault and are fixed too. Powers that do no damage at rank 1 in the first game stay so.
+- **Fixed: blue Xtraction points did not glow** (issue #74). Only the mansion sub-basements' purple point glowed;
+  the blue points used X-Men Legends II's models of the same name, which lack the glow. They now use the first
+  game's.
 
-New build checks: V33 (every object carries the first game's strength next to the
-engine's), V34 (no soldier placed on the floor gets the ladder slide) and V35 (the pause menu has no portal).
+New build checks: V33 (every object carries the first game's strength next to the engine's), V34 (no soldier
+placed on the floor gets the ladder slide), V35 (the pause menu has no portal), V36 (the recommended team before a
+mission's team selection) and V37 (the first game's Xtraction beacons; no power left without its rank-1 damage).
 
 ## v0.1.11 - content version 14 (needs XML2 Fix 1.3.1)
 

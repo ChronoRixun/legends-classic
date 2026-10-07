@@ -77,6 +77,12 @@ Checks (severity per SPEC 4.6: error = will not load or silently misbehaves; war
                 XML1's lite points
   V33 break rule (SPEC 63, x1schema.break_rule_problems): every XML1-sourced entity definition with a structure
                 carries an xml1structure in 0..10 that converts to it (xml2-fix [Game] BreakRule=xml1)
+  V37 xtraction beacons / rank-1 power damage (SPEC 68, issues #74, #78): (a) the four XML1 Xtraction beacon models
+                ship byte-identical to the XML1 source (XML2's same-named files lost the glow material) and the
+                XML1 maps name no beacon outside the shipped set; (b) a per-rank trigger damage / knockback
+                talentvalue with rank 1 zeroed while a later rank is non-zero must not have a same-named event
+                carrying a non-zero literal in the hero's powerstyle (XML1 inherits the event's value at ranks
+                the trigger leaves the attribute unset)
   V23 fight styles (SPEC 43, style_budget.validate): per converted zone the distinct style files of the permanent
                 packages, the zone package, its CHRB characters' packages and the worst four-hero party against
                 the registry the shipped ini asks xml2-fix for ([Limits] FightStyles, else XMen2.exe's 19): more
@@ -744,7 +750,8 @@ class Validator:
                                ('V31', 'save positions', self.save_positions),
                                ('V32', 'lite xtraction', self.lite_xtraction),
                                ('V34', 'ladder spawns', self.ladder_spawns),
-                               ('V35', 'pda portal', lambda ck: VF.v_pda_portal(self, ck))):
+                               ('V35', 'pda portal', lambda ck: VF.v_pda_portal(self, ck)),
+                               ('V37', 'xtraction beacons / rank-1 power damage', self.v37_beacons_rank_one)):
             ck = Check(cid, title)
             self.checks[cid] = ck
             t0 = time.time()
@@ -1098,6 +1105,107 @@ class Validator:
                         ck.error(f'{sc.files[n]["rel"]}: inline code {_short(code, 80)!r}: extractionPointLite '
                                  f'offers no Save (issue #63; prepare P3 writes extractionPoint)')
         ck.set('lite_xtraction_data_code_checked', n_code)
+
+    # ================================================================== V37 (issues #74, #78)
+    def v37_beacons_rank_one(self, ck):
+        """V37 (issues #74, #78): (a) the Xtraction beacon models ship XML1's glow-carrying IGBs, not XML2's
+        same-named stripped ones, and the XML1 maps name no beacon outside the shipped set; (b) no per-rank
+        trigger damage / knockback talentvalue is zeroed at rank 1 while its same-named event carries a
+        non-zero literal (XML1 inherits the event's value at ranks the trigger leaves the attribute unset)."""
+        self._v37_xtraction_beacons(ck)
+        self._v37_rank_one_damage(ck)
+
+    _BEACON_MODEL_RE = re.compile(r'model\s*=\s*"(puzzles/beacon_xtraction[a-z0-9_]*)"', re.I)
+
+    def _v37_xtraction_beacons(self, ck):
+        from . import zones as ZN               # noqa: WPS433 - zones owns the shipped list
+        shipped = {C.norm(m) for m in ZN.XTRACTION_BEACON_MODELS}
+        n_same = 0
+        for m in sorted(shipped):
+            src = self.ctx.x1_path(m + '.igb')
+            data = self.read(m + '.igb')
+            if src is None:
+                ck.error(f'{m}.igb is not in the XML1 data')
+            elif data is None:
+                ck.error(f'{m}.igb is not in <out>')
+            elif data != src.read_bytes():
+                ck.error(f'{m}.igb differs from the XML1 source: the build kept another file (XML2 retail\'s '
+                         f'same-named beacon IGB lost the glow material; issue #74)')
+            else:
+                n_same += 1
+        ck.set('xtraction_beacons_identical', n_same)
+        found = set()
+        for z in self.ctx.x1_zones():
+            p = self.ctx.x1_path(f'maps/{z}.eng') or self.ctx.x1_path(f'maps/{z}.xml')
+            if p is None:
+                continue
+            found |= {C.norm('models/' + m.group(1)) for m in self._BEACON_MODEL_RE.finditer(
+                p.read_bytes().decode('latin-1', 'replace'))}
+        for m in sorted(found - shipped):
+            ck.error(f'XML1 map references {m} as an Xtraction beacon, but the shipped set is {sorted(shipped)}: '
+                     f'it would fall back to a same-named XML2 file (issue #74)')
+        ck.set('xtraction_beacons_referenced', len(found))
+
+    def _v37_rank_one_damage(self, ck):
+        """rank-1 zeroing detector for trigger damage / knockback talentvalues (issue #78)."""
+        n_checked = 0
+        for n, e in sorted(self.reg.items()):
+            if e['owner'] != 'heroes' or not n.startswith('data/talents/') or not n.endswith('.xmlb'):
+                continue
+            root = self.tree(n)
+            if root is None:
+                continue
+            tables = {}
+            for tv in root.iter('talentvalue'):
+                if tv.get('name'):
+                    tables.setdefault(tv.get('name'), {})[tv.get('level')] = tv.get('value') or ''
+            zeroed = {}
+            for name, t in tables.items():
+                if '_dmg' not in name and '_kb' not in name:
+                    continue
+                if t.get('1') in (None, '0', '0 0', '0.0') and \
+                        any(self._first_num(v) not in (None, 0.0) for r, v in sorted(t.items()) if r != '1'):
+                    zeroed[name] = t
+            if not zeroed:
+                continue
+            hero = C.split_ext(n)[0].rsplit('/', 1)[-1]
+            ps = self.tree(f'data/powerstyles/x1_ps_{hero}.xmlb')
+            if ps is None:
+                continue
+            for fm in ps.iter('FightMove'):
+                events = {}
+                for ev in fm.iter('event'):
+                    if ev.get('name'):
+                        events.setdefault((ev.get('name') or '').lower(), ev)
+                for tr in fm.iter('trigger'):
+                    ref = (tr.get('damage') or '')
+                    self._v37_zero_ref(ck, zeroed, tr, events, 'damage', ref, n)
+                    ref = (tr.get('knockback') or '')
+                    self._v37_zero_ref(ck, zeroed, tr, events, 'knockback', ref, n)
+            n_checked += len(zeroed)
+        ck.set('rank_one_zeroed_tvs_checked', n_checked)
+
+    @staticmethod
+    def _first_num(v):
+        m = re.match(r'\s*(-?\d+(?:\.\d+)?)', v or '')
+        return float(m.group(1)) if m else None
+
+    def _v37_zero_ref(self, ck, zeroed, tr, events, attr, ref, talent_rel):
+        if not ref.startswith('%'):
+            return
+        name = ref[1:]
+        if name not in zeroed:
+            return
+        ev = events.get((tr.get('name') or '').lower())
+        if ev is None:
+            return
+        lit = ev.get(attr)
+        if lit is None or lit.startswith('%'):
+            return
+        if self._first_num(lit) not in (None, 0.0):
+            ck.error(f'{talent_rel}: {name} is 0 at rank 1 but the event {ev.get("name")!r} of trigger '
+                     f'{tr.get("name")!r} carries {attr}={lit!r}: rank 1 inherits the event in XML1 '
+                     f'(issue #78); later ranks: {[zeroed[name].get(r) for r in sorted(zeroed[name]) if r != "1"]}')
 
     def harm_loop_startup(self, ck):
         """V25 (SPEC 51): no dead ordinary harm loops."""

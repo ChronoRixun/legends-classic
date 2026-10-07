@@ -5525,3 +5525,78 @@ failure. No speculative data change is made for #77. The release agent should re
 after the entrance trigger is enabled, select the second option with real input, and record the selected index,
 active dialog and zone before/after acceptance (including repeat touches while still outside). The expected
 result is to remain outside; the first option should enter `haarp/int/haarp2_1`.
+
+## 68. Rank-1 power damage and the Xtraction beacons' glow (issues #78, #74)
+
+### Rank-1 trigger damage (issue #78)
+
+**What the first game does.** XML1 resolves a power trigger's attribute against its same-named `<event>` at
+run time: a trigger that does not set `Damage` / `Knockback` fires the event's attack with the event's value.
+Rogue's Southern Strike (`ps_rogue` `sstrike1`) declares `Damage="L3"` (15-18 per `data/values.xml`),
+`DamageLevel="2"`, `knockback="K1"` (40) on its `sstrike` event; the three swing triggers name `sstrike` and
+set only arc and height. The rank rungs (`sstrike2` .. `power_attack`) override the *trigger's* `Damage` /
+`knockback` from rank 2 (L4 .. H5). Rank 1 therefore deals the event's L3 damage; buying the first point
+(ranks are bought per point) raises it to L4.
+
+**What the port did.** `heroes.StyleCollapse._collapse` builds one output FightMove and a per-rank
+talentvalue per trigger attribute that changes across the rungs. The per-rank table holds only the ranks
+where the rung sets the attribute explicitly (2..11 here); `_tv`'s gap fill writes `'0'` into the leading
+ranks, and the backfill that exists for triggers *added* by a later rung does not run for triggers that fire
+from rank 1 (`present`). The converted `x1_ps_rogue` power1 kept the event's `damage="15 18"` but the three
+swings carried `%xro_strike_dmg_t3/t4/t5`, whose rank-1 slot was `'0'`; XMen2.exe reads the trigger's value,
+so at talent rank 1 the punches knocked down (the event's `dmgmod_auto_knockback` travels with the event)
+but dealt no damage. From rank 2 the talentvalues hold L4..H5 and damage worked. The same shape zeroed
+rank 1 of Cyclops' optic sweep (damage + knockback) and Cyclops' X-treme (damage + knockback, from the
+`cycxtreme` event's `Damage="M3"` / `knockback="K10"`). Powers whose rank-1 zero is genuine XML1 data are
+unchanged: Phoenix's telekinesis lift has an explicit `Damage="0"` at rank 1 (its trigger names no
+same-named event, so there is nothing to inherit), and the charged card / energy burst / slash knockbacks
+are explicit `knockback="0"` on the first five rungs - those powers gain knockback at rank 6, as on Xbox.
+
+**What the port does now.** In `_collapse`'s numeric per-rank branch, when the trigger fires from rank 1 but
+the attribute appears only from a later rung, the leading ranks are backfilled from the same-named `<event>`
+of that rank's effective move (resolved through `data/values.xml`), falling back to the previous `'0'` gap
+fill when the event does not carry the attribute. Southern Strike rank 1 now deals 15-18 (K1 knockback 40)
+exactly as XML1's event declares; ranks 2+ are unchanged. V37 scans the heroes-owned `data/talents/*.XMLB`
+for a damage/knockback talentvalue that is zeroed at rank 1 while a later rank is non-zero and errors when
+the hero powerstyle's same-named event carries a non-zero literal - the exact regression shape. Unit tests:
+`tests/unit/test_issues_74_78.py`.
+
+**Not done (later).** Trigger `damagelevel` stays on the existing DESIGN-4.4 fallback (top-rung literal)
+because XMen2.exe reads no keyed `damagelevel` talentvalue on triggers (not in `VALUE_REF_ATTRS`);
+per-rank *event* attribute variance is still collapsed to the rank-1 literal only. The FightMove-level
+attribute loop has the same leading-rank gap-fill but no event to inherit from was found there.
+
+**In game.** Not run in this change (data-level fix, no game launch). To verify: new game, leave Rogue at
+rank-1 Southern Strike, fight the Morlocks in the first sewer visit (sewers1_1_1) - the punches should
+remove health (15-18 per hit at level 1-3) while still knocking enemies down; after one point the damage
+must rise to L4 (25-31). Negative control on 0.1.11: same fight, rank-1 punches deal no health damage.
+
+### Xtraction beacon models (issue #74)
+
+**What the first game does.** Every Xtraction point entity names one of four beacon models under
+`models/puzzles/`: `beacon_xtraction` (the blue points), `beacon_xtraction_noteamchange` (the purple
+sub-basement points), `beacon_xtraction_saveonly` and `beacon_xtraction_mastermold`. The beacon IGBs carry
+the glow as model data: the blue beacon has four materials and a data-pump-driven glow layer (blend
+state/function, lighting state, texture-matrix state, transform sequences); the glow sprites are the
+embedded `xtraction_point` texture frames.
+
+**What the port did.** SPEC 4.4 is XML2-wins for models: zone `ensure_file` -> `import_asset` ->
+`import_x1_asset(force=False)` keeps the base install's file when XML2 retail has one at the destination.
+XML2 retail ships `beacon_xtraction`, `beacon_xtraction_noteamchange` and `beacon_xtraction_saveonly` IGBs
+with the glow layer stripped (one material; no blend or pump objects), so the build kept those and the blue
+points (and the save-only points) rendered without the glow. `beacon_xtraction_mastermold` exists only on
+the XML1 disc, so it fell through to a byte copy and always glowed. The purple sub-basement point glowed on
+PC because XML2's `_noteamchange` variant kept its glow material.
+
+**What the port does now.** `zones.force_xtraction_beacons` (from `build_permanent`) force-imports all four
+XML1 beacon models, overwriting the XML2-wins keep; the zone packages already list the models, so no
+package change is needed. V37 (a) compares the built `models/puzzles/beacon_xtraction*.IGB` bytes with the
+XML1 source and errors on any difference, and (b) re-derives the beacon set the XML1 zone files reference
+(`model="puzzles/beacon_xtraction*"`) and errors when a referenced beacon is outside the shipped set - a
+future map naming a new beacon would otherwise fall back to a same-named XML2 file. Unit tests:
+`tests/unit/test_issues_74_78.py`.
+
+**In game.** Not run in this change (data-level fix, no game launch). To verify: load any exterior zone with
+a blue point (e.g. the HAARP exterior by the X-Jet) and the mansion sub-basement 1a point; on the fixed
+build both glow; on 0.1.11 (negative control) the blue one does not. The glow is the rotating beacon light
+above the point.
