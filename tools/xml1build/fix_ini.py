@@ -5,7 +5,7 @@ keys:
 
   the port (this module)  the content requirements of a build - [Game] NewGameTeam / ResetUnlocks / SaveFolder /
                           ForcedTeams / PostgameScript / WindowTitle / EndHeroUnlock / MainMenuItems / NewGamePlus /
-                          ReviewStats / XPCurve / GeometrySharingBlendIndices, [Limits] ActorSlots /
+                          ReviewStats / Xtract / XPCurve / GeometrySharingBlendIndices, [Limits] ActorSlots /
                           ResourceNames / ItemEnhancements / FightStyles, [Online] GameVersion. They are
                           functions of the build's content (the menus it wrote, its report.json, its scripts), so the
                           builder (tools/xml1builder) writes them after a build, and tools/harness.py takes its
@@ -81,6 +81,14 @@ REVIEW_STATS = '0'
 REVIEW_MENU_FILE = ('UI', 'menus', 'review.XMLB')
 REVIEW_STATS_LABEL = 'option05_text'
 
+# xml2-fix [Game] Xtract (xml2-fix 1.3.2; SPEC: number assigned at merge, issue #46): XMen2.exe's extractionPoint
+# always adds an Xtract choice (id 2040, openmenu('worldmap')) that opens XML2's world map of its five town centres
+# (which the port's zoneinfo keeps because the engine's extraction needs them there - SPEC 15); XML1's Xtraction
+# menus had no world map. '0' jumps extractionPoint over the block that adds the choice, leaving the title, Change
+# Team and Save. Written for every XML1 build (the ones with PostgameScript); an xml2-fix older than 1.3.2 ignores
+# the key, and the menu keeps Xtract as before.
+XTRACT = '0'
+
 # xml2-fix [Game] XPCurve (SPEC 23, research/heroes/levels.md): the build's objectives, scripts and npcstat carry XML1's
 # XP amounts (act 9's crystal objectives 2,000,000, asteroid_m's setXP 1,125,000), which on XMen2.exe's curve take a
 # level-1 hero to 40; with XPCurve=xml1 the DLL uses XML1's level table (cap 45) and kill XP (half of each kill to
@@ -119,7 +127,7 @@ REQUIRED_XML2FIX = '1.3.1'
 
 # every key the port may write (the builder drops the ones a build does not need); the launcher owns the rest
 PORT_OWNED = {'Game': ('NewGameTeam', 'ResetUnlocks', 'SaveFolder', 'ForcedTeams', 'PostgameScript', 'WindowTitle',
-                       'EndHeroUnlock', 'MainMenuItems', 'NewGamePlus', 'ReviewStats', 'XPCurve',
+                       'EndHeroUnlock', 'MainMenuItems', 'NewGamePlus', 'ReviewStats', 'Xtract', 'XPCurve',
                        'GeometrySharingBlendIndices'),
               'Limits': ('ActorSlots', 'ResourceNames', 'ItemEnhancements', 'FightStyles'),
               'Online': ('GameVersion',)}
@@ -213,7 +221,8 @@ def build_forced_teams(out):
 
 
 def game_keys(*, xml1_opening=True, save_folder=None, forced_teams='1', add_hero=False, join_hero=True, postgame=None,
-              port_identity=False, main_menu_items=None, new_game_plus=None, review_stats=None, xp_curve=None) -> dict:
+              port_identity=False, main_menu_items=None, new_game_plus=None, review_stats=None, xtract=None,
+              xp_curve=None) -> dict:
     """the [Game] keys, in the order tools/harness.py always wrote them (a dict: insertion order)."""
     game = {}
     if xml1_opening:
@@ -242,6 +251,8 @@ def game_keys(*, xml1_opening=True, save_folder=None, forced_teams='1', add_hero
         game['NewGamePlus'] = new_game_plus
     if review_stats is not None:
         game['ReviewStats'] = review_stats
+    if xtract is not None:
+        game['Xtract'] = xtract
     if xp_curve:
         game['XPCurve'] = xp_curve
     return game
@@ -260,7 +271,7 @@ def port_keys(out, *, save_folder=PLAY_SAVE_FOLDER, eighth=True) -> dict:
     game = game_keys(xml1_opening=True, save_folder=save_folder, forced_teams=build_forced_teams(out) or 'off',
                      postgame=postgame, port_identity=bool(postgame), main_menu_items=menu,
                      new_game_plus=NEW_GAME_PLUS if menu else None, review_stats=build_review_stats(out),
-                     xp_curve=build_xp_curve(out))
+                     xtract=XTRACT if postgame else None, xp_curve=build_xp_curve(out))
     keys = {'Game': game, 'Limits': dict(LIMITS)}
     online = online_keys(port_identity=bool(postgame))
     if online:

@@ -3,6 +3,15 @@
 The builder's releases, newest first. The version is `xml1-builder --version`; the content version is what a
 build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebuild.
 
+## Unreleased
+
+- **Fixed: the Xtraction menu offered X-Men Legends II's Xtract world map** (issue #46). Every Xtraction point's
+  menu had an Xtract choice that opened X-Men Legends II's world map of its five town centres; the first game's
+  menu has no world map. The port's ini now writes `[Game] Xtract=0`, and with XML2 Fix 1.3.2 the menu offers the
+  title, Change Team and Save only, from the first mission on; an older XML2 Fix ignores the key and keeps Xtract.
+  With the pause menu's Blink Portal gone (#89), no route into X-Men Legends II's towns is left. XML1's Load,
+  Danger Room, Healer and Forge choices are still missing at every point (as in 0.1.11).
+
 ## v0.1.11 - content version 14 (needs XML2 Fix 1.3.1)
 
 - **Fixed: 20 Xtraction points could not save, including the first one in the game** (issue #63). The point in
