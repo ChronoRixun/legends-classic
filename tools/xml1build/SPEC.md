@@ -5018,10 +5018,35 @@ file are the frontend module's, have text without unescaped renderer codes, and 
 
 In game (xml2-fix 1.3.1): on main, Cyclops' first item showed the mansion loading screen and Wolverine's the
 yellow/magenta default texture; on the fixed build both show the first game's picture and close with the back key or
-the pad's B. Known gap: the item's text is not drawn. It is loaded (the word-wrapped text is in the game's memory
-while the menu is open), but no text box appears over the picture. Re-framing the menu IGB on X-Men Legends II's menu
-camera as done for the credits menus (21.2.1) did not draw it and hid the help line too, so it is not shipped; adding
-a text style to the text box or only moving the camera's near plane changed nothing. The cause is open.
+the pad's B.
+
+### The picture's size and the missing text (2026-10-07, in game on the 0.1.12 candidate)
+
+The engine draws the ITEM's texture as the menu's background sprite: the personal loader passes it to the menu's
+image setter (vt+0x84 = 0x5bb7b0, the same path as a menu's `image`), and the sprite is stretched over the whole
+512x384 virtual screen - the menu class's rect getter (0x5b7c60, vt+0x8c) feeds the manager a fixed 512x384, and
+the setter adds an aspect correction default.xbe does not have. default.xbe's setter (0x172880) adds the sprite at
+the rect its init sets instead: 256x128 at x 128..384, z 202..330 (bottom-up) - the first game's small picture over
+the menu IGB's desk backdrop. Both games ship the same `menu_personal.IGB` (XML2's is byte-identical to XML1's,
+camera and all), and the port's texture import was a byte copy, so the painted 512x256 art filled the screen ("too
+big") and covered the text area. The menu file is XML1's own, unchanged in XML2.
+
+`frontend` now re-composes every `Textures/personal/*.IGB` to 512x384 (`personal_art.recompose_igb`, pure Python -
+no imaging dependency): the art scaled into the first game's sprite window (rows 202..330, x 128..384 in the
+file's row order - the engine's v-flip shows it at z 202..330), its colours continued to the screen edges by a
+soft stretch of the art (the IGB's backdrop never shows: the sprite is opaque and ignores texture alpha - a
+fully transparent texture still drew opaque in game). The mip chain continues the halving to 1x1 under the same
+igImage count; a texture the reader cannot place falls back to the byte copy and is reported
+(`personal_textures_*_unframed`). V30 also checks the named texture's largest igImage is 512x384, so a future
+byte-copy regression fails validation.
+
+The item's text is still not drawn. It is loaded (the word-wrapped text is in memory while the menu is open), and
+no data-side change makes the text box appear: a missing texture (no sprite at all), a `style`, `animtext_scene`,
+or a re-framed IGB (21.2.1) each changed nothing (seen in game 2026-10-07; the menu reads `Data/personal/<item>`
+**.engb**, not the .XMLB - earlier probes that edited only the XMLB saw no effect at all). The MENU_ITEM_TEXTBOX
+draw (0x5c7a00) skips when the item's flags byte (+0x54) bit 2 is set or its +0x58 object is missing; why this
+menu's text box fails is engine-side and open (likely an XML2 Fix follow-up: the menu IGB's scene does not render
+around the sprite either - the margins behind it are black, so the box's anchor may never bind).
 
 ## 57. Gun soldiers fight in their gun's style (issue #52)
 

@@ -3,6 +3,15 @@
 The builder's releases, newest first. The version is `xml1-builder --version`; the content version is what a
 build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebuild.
 
+## Unreleased
+
+- **Fixed: the mansion bedrooms' personal items filled the screen** (issue #47, follow-up). 0.1.8 gave every item
+  its own picture, but the engine draws it as a background sprite stretched over the whole menu screen, so the
+  painted scene covered everything. Each picture is now re-framed to show inside the same window the first game
+  drew it in, with the scene's colours continuing to the edges. The item's description text still does not show:
+  the engine never draws this menu's text box (the cause is engine-side and still open; the text loads, and no
+  menu-data change makes it draw).
+
 ## v0.1.12 - content version 15 (needs XML2 Fix 1.3.2)
 
 This build needs XML2 Fix 1.3.2 (the launcher installs it). With an older fix the game starts, but the ladder,

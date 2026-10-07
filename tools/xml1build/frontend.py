@@ -74,9 +74,12 @@ before SPEC 21). With --frontend xml1 (the default) it writes A-E:
      leftover (wolverine01, naming a texture it never shipped: the engine's default texture was drawn) and no
      Textures/personal, so every other item showed the last image the menu manager had set - the mansion's loading
      screen. The ITEM schema is the same in both games (texture + text); the text is written with
-     escape_menu_text, the texture is XML1's IGB under the same name. UI/menus/personal and menu_personal.IGB stay
-     XML2's (the same PERSONAL_MENU as XML1's). Known gap (SPEC 56): XMen2.exe draws the item's
-     picture but not its text box - the text is loaded and word-wrapped in memory.
+     escape_menu_text. The texture is XML1's IGB under the same name, re-composed to the 512x384 the menu's
+     image sprite is stretched over (_import_personal_texture, personal_art): the engine draws it fullscreen,
+     where the first game's sprite was a 256x128 window over the menu IGB's backdrop (SPEC 56). UI/menus/personal
+     and menu_personal.IGB stay XML2's (the same PERSONAL_MENU as XML1's). Known gap (SPEC 56): XMen2.exe draws
+     the item's picture but not its text box - the text is loaded and word-wrapped in memory, and no data-side
+     change makes the box draw (engine-side, open).
 
   E. UI/menus/pda.{XMLB,engb} (both front ends: the pause menu in every zone, issue #89, SPEC 64): XML2's PDA_MENU
      without the Blink Portal entry (PDA_PORTAL_LABEL removed, its PDA_PORTAL_MODELS hidden, the up / down chain
@@ -1502,7 +1505,7 @@ def write_personal_items(ctx):
         if tex is None:
             rep['problems'].append(f'{PERSONAL_REL}/{name}: no texture')
             continue
-        st = _import_texture(ctx, tex + '.igb', tex)
+        st = _import_personal_texture(ctx, tex + '.igb', tex)
         rep['textures'][st] += 1
         if st not in ('present', 'written', 'kept_xml2'):
             rep['problems'].append(f'{PERSONAL_REL}/{name}: texture {tex} ({st})')
@@ -1527,6 +1530,28 @@ def _import_texture(ctx, x1_rel, out_noext):
     return res.status
 
 
+def _import_personal_texture(ctx, x1_rel, out_noext):
+    """import one item's texture re-composed to the 512x384 the menu's image sprite is stretched over
+    (personal_art.recompose_igb; SPEC 56). A texture it cannot recompose falls back to the byte copy, so the
+    picture still shows (too big, as before, and reported) rather than not at all."""
+    rel = C.norm(x1_rel)
+    rel = rel if rel.endswith('.igb') else rel + '.igb'
+    if ctx.registry.get(C.norm(out_noext) + '.igb') is not None or ctx.base_index.find(out_noext, ('.IGB',)):
+        return 'present'
+    src = ctx.x1_path(rel)
+    if src is None:
+        return 'missing'
+    from . import personal_art
+    try:
+        data, _rep = personal_art.recompose_igb(src.read_bytes())
+    except personal_art.G.IgbError:
+        res = ctx.import_x1_asset(rel, out_rel_noext=out_noext)
+        return res.status + '_unframed'
+    ctx.write_bytes(C.norm(out_noext) + '.igb', data,
+                    source='frontend:XML1 personal item picture re-framed to the menu sprite (SPEC 56)')
+    return 'written'
+
+
 def run(ctx):
     mode = C.frontend_mode(ctx)
     ctx.set_count('frontend_xml1', int(mode == 'xml1'))
@@ -1538,7 +1563,7 @@ def run(ctx):
     for st, n in prep['textures'].items():
         ctx.set_count(f'personal_textures_{st}', n)
     ctx.note(f'personal items: XML1\'s {len(prep["items"])} Data/personal items (XML2\'s leftover wolverine01 '
-             f'replaced) and their Textures/personal IGBs ({dict(prep["textures"])})')
+             f'replaced) and their Textures/personal IGBs re-framed to the menu sprite ({dict(prep["textures"])})')
     # ---- the pause menu without the Blink Portal (in-zone: both front ends; issue #89)
     write_pda_menu(ctx)
     if mode != 'xml1':
