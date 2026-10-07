@@ -350,7 +350,8 @@ def test_port_keys_from_a_synthetic_build():
         out = Path(td)
         assert FI.port_keys(out) == {'Game': {'NewGameTeam': 'wolverine', 'ResetUnlocks': '0',
                                               'SaveFolder': 'X-Men Legends', 'ForcedTeams': '1',
-                                              'GeometrySharingBlendIndices': '1'},
+                                              'GeometrySharingBlendIndices': '1', 'CharacterLadderPaths': '1',
+                                              'ObjectiveDescriptions': '1', 'BreakRule': 'xml1'},
                                      'Limits': {'ActorSlots': '127', 'ResourceNames': '1024', 'ItemEnhancements': '512',
                                                 'FightStyles': '32'}}
         menu = ET.Element('menu', type='MAIN_MENU')
@@ -629,3 +630,26 @@ def test_xml1_builds_ask_for_the_geometry_sharing_fix():
     assert FI.game_keys(xml1_opening=True)['GeometrySharingBlendIndices'] == '1'
     assert 'GeometrySharingBlendIndices' not in FI.game_keys(xml1_opening=False)
     assert 'GeometrySharingBlendIndices' in FI.PORT_OWNED['Game']
+
+
+def test_xml1_builds_ask_for_character_ladder_paths():
+    """SPEC 46: the key is XML1's (xml2-fix keeps ladder paths off without it); an XML2-opening ini has none."""
+    assert FI.game_keys(xml1_opening=True)['CharacterLadderPaths'] == '1'
+    assert 'CharacterLadderPaths' not in FI.game_keys(xml1_opening=False)
+    assert 'CharacterLadderPaths' in FI.PORT_OWNED['Game']
+
+
+def test_xml1_builds_ask_for_objective_descriptions():
+    """SPEC 47: the key is XML1's (xml2-fix keeps XML2's journal text without it); an XML2-opening ini has none."""
+    assert FI.game_keys(xml1_opening=True)['ObjectiveDescriptions'] == '1'
+    assert 'ObjectiveDescriptions' not in FI.game_keys(xml1_opening=False)
+    assert 'ObjectiveDescriptions' in FI.PORT_OWNED['Game']
+
+
+def test_xml1_builds_ask_for_the_first_games_break_rule():
+    """The key belongs to XML1 builds (their entity definitions carry xml1structure); an XML2-opening ini has none,
+    and the port owns the key, so a build that stops needing it drops it."""
+    assert FI.game_keys(xml1_opening=True)['BreakRule'] == 'xml1'
+    assert 'BreakRule' not in FI.game_keys(xml1_opening=False)
+    assert 'BreakRule' in FI.PORT_OWNED['Game']
+    assert FI.dropped_keys({'Game': {}})['Game'].count('BreakRule') == 1

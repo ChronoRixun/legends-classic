@@ -132,3 +132,57 @@ def test_conversion_preserves_projectile_character_damage_eligibility():
     root = zone({'name': 'invented_pellet', 'classname': 'projectileent', 'damagelevel': '1'})
     S.convert(root, 'data/entities/invented_projectiles.eng')
     assert int(root[0].get('damagelevel')) > 0
+
+
+# ------------------------------------------------------------------------------- XML1's structure, kept for xml2-fix
+def test_converted_structure_keeps_xml1s_number_beside_it():
+    root = zone(*({'name': f'wall{v}', 'classname': 'tileent', 'structure': str(v)} for v in range(11)))
+    changes = S.convert(root, 'maps/invented/zone7.eng')
+    e = by_name(root)
+    assert [e[f'wall{v}'].get(S.XML1_STRUCTURE_ATTR) for v in range(11)] == [str(v) for v in range(11)]
+    assert [e[f'wall{v}'].get('structure') for v in range(11)] == ['0', '0', '1', '1', '1', '1', '1', '1', '1', '1', '2']
+    assert changes['xml1structure_kept'] == 11
+    assert S.break_rule_problems(root) == []
+
+
+def test_xml1_structure_follows_xml1s_own_clamp_and_skips_what_is_not_a_number():
+    root = zone({'name': 'over', 'classname': 'physent', 'structure': '14'},
+                {'name': 'under', 'classname': 'physent', 'structure': '-3'},
+                {'name': 'blank', 'classname': 'physent', 'structure': ''},
+                {'name': 'token', 'classname': 'physent', 'structure': '%invented'},
+                {'name': 'none', 'classname': 'physent', 'heaviness': '2'})
+    stats = ET.SubElement(root, 'stats', {'name': 'invented_hero', 'structure': '4'})
+    S.convert(root, 'maps/invented/zone8.eng')
+    e = by_name(root)
+    assert (e['over'].get('structure'), e['over'].get(S.XML1_STRUCTURE_ATTR)) == ('2', '10')
+    assert (e['under'].get('structure'), e['under'].get(S.XML1_STRUCTURE_ATTR)) == ('0', '0')
+    for name in ('blank', 'token', 'none'):
+        assert S.XML1_STRUCTURE_ATTR not in e[name].attrib
+    assert S.XML1_STRUCTURE_ATTR not in stats.attrib and stats.get('structure') == '4'   # a character's stats
+    assert S.break_rule_problems(root) == []
+
+
+def test_an_authored_xml1_structure_is_not_overwritten():
+    root = zone({'name': 'kept', 'classname': 'physent', 'structure': '6', S.XML1_STRUCTURE_ATTR: '3'})
+    S.convert(root, 'maps/invented/zone9.eng')
+    assert (root[0].get('structure'), root[0].get(S.XML1_STRUCTURE_ATTR)) == ('1', '3')
+
+
+def test_validator_rule_flags_pairs_the_fix_cannot_use():
+    root = zone({'name': 'fine', 'classname': 'tileent', 'structure': '1', S.XML1_STRUCTURE_ATTR: '2'},
+                {'name': 'bare', 'classname': 'tileent', 'structure': '1'},
+                {'name': 'drift', 'classname': 'tileent', 'structure': '0', S.XML1_STRUCTURE_ATTR: '5'},
+                {'name': 'wide', 'classname': 'tileent', 'structure': '2', S.XML1_STRUCTURE_ATTR: '11'},
+                {'name': 'text', 'classname': 'tileent', 'structure': '1', S.XML1_STRUCTURE_ATTR: 'two'},
+                {'name': 'alone', 'classname': 'tileent', S.XML1_STRUCTURE_ATTR: '2'},
+                {'name': 'neither', 'classname': 'tileent'})
+    assert S.break_rule_problems(root) == [('bare', '1', None), ('drift', '0', '5'), ('wide', '2', '11'),
+                                           ('text', '1', 'two'), ('alone', None, '2')]
+
+
+def test_an_unconverted_tree_fails_the_pairing_rule_and_a_converted_one_passes():
+    root = zone({'name': 'wall', 'classname': 'tileent', 'structure': '2'},
+                {'name': 'crate', 'classname': 'physent', 'structure': '0'})
+    assert [p[0] for p in S.break_rule_problems(root)] == ['wall', 'crate']
+    S.convert(root, 'maps/invented/zone10.eng')
+    assert S.break_rule_problems(root) == []

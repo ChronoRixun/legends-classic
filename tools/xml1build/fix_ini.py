@@ -5,8 +5,9 @@ keys:
 
   the port (this module)  the content requirements of a build - [Game] NewGameTeam / ResetUnlocks / SaveFolder /
                           ForcedTeams / PostgameScript / WindowTitle / EndHeroUnlock / MainMenuItems / NewGamePlus /
-                          ReviewStats / XPCurve / GeometrySharingBlendIndices, [Limits] ActorSlots /
-                          ResourceNames / ItemEnhancements / FightStyles, [Online] GameVersion. They are
+                          ReviewStats / XPCurve / GeometrySharingBlendIndices / CharacterLadderPaths /
+                          ObjectiveDescriptions / BreakRule, [Limits]
+                          ActorSlots / ResourceNames / ItemEnhancements / FightStyles, [Online] GameVersion. They are
                           functions of the build's content (the menus it wrote, its report.json, its scripts), so the
                           builder (tools/xml1builder) writes them after a build, and tools/harness.py takes its
                           [Game] / [Limits] / [Online] lines from here too (the harness and the shipped build cannot
@@ -106,6 +107,26 @@ LIMITS = {'ActorSlots': '127', 'ResourceNames': '1024', 'ItemEnhancements': '512
 # set (stock XML2 is not known to need it), so every XML1 build asks for it.
 GEOMETRY_SHARING_BLEND_INDICES = '1'
 
+# xml2-fix 1.3.2 [Game] CharacterLadderPaths (SPEC 46, issue #32): the sewer and Arbiter ladder descents are driven by
+# two generated native motion paths (ladder_motion), but XMen2.exe never schedules the generic path evaluator for
+# characters. '1' makes the fix evaluate those two paths with the native movement timer; ordinary character
+# movement is unchanged. Off in xml2-fix unless set, so every XML1 build asks for it.
+CHARACTER_LADDER_PATHS = '1'
+
+# xml2-fix 1.3.2 [Game] ObjectiveDescriptions (SPEC 47, issue #8): XML1's objectives carry an updatedescription, the
+# journal text once the objective is complete, which XMen2.exe's parser ignores; the build keeps the attribute in the
+# missions and '1' makes the fix show it in both journal renderers while the objective's completion bit is set (saved
+# objective records unchanged). Off in xml2-fix unless set, so every XML1 build asks for it.
+OBJECTIVE_DESCRIPTIONS = '1'
+
+# xml2-fix 1.3.2 [Game] BreakRule (SPEC 63, issue #51's follow-up): XMen2.exe keeps an object's
+# structure in 0..2 and caps a melee hit's level at 1, so the converted structure (x1schema.convert_physics: XML1's
+# 2-9 -> 1) lets a plain punch break walls XML1 kept for powers. 'xml1' makes the fix compare XML1's hit level
+# (authored level + Might + the damageLevel affecter) with the xml1structure the build's entity definitions carry.
+# Off in xml2-fix unless set; a fix without the feature (before 1.3.2) ignores the key and the attribute, and objects
+# break as they do without it. Written for every XML1 build.
+BREAK_RULE = 'xml1'
+
 # xml2-fix [Game] ForcedTeams (SPEC 19): '1' = the scripts of a --forced-teams seat build seat XML1's parties
 # (xml2-fix forced_teams module), '0' = the functions exist but report off (team menu), 'off' = no key (nothing
 # patched). Every xml2-fix call sits behind xml2fixFeature("forcedteams") (validate V14b), so with ForcedTeams=0, a
@@ -114,13 +135,16 @@ FORCED_TEAMS_VALUES = ('1', '0', 'off')
 
 # the xml2-fix release a builder-made play build needs (every key above is in v1.2.0; v1.3.0: the SKILL pickup's
 # addSkillPoints, the conversation hooks [Game] AutoAdvance / ReplyVoices / ReplyCursor - SPEC 32, 34; v1.3.1:
-# [Limits] FightStyles - SPEC 43, [Game] GeometrySharingBlendIndices - SPEC 44)
-REQUIRED_XML2FIX = '1.3.1'
+# [Limits] FightStyles - SPEC 43, [Game] GeometrySharingBlendIndices - SPEC 44; v1.3.2: [Game] CharacterLadderPaths -
+# SPEC 46, [Game] ObjectiveDescriptions - SPEC 47, the STAT pickup's addStatPoints - SPEC 48,
+# [Game] BreakRule - SPEC 63)
+REQUIRED_XML2FIX = '1.3.2'
 
 # every key the port may write (the builder drops the ones a build does not need); the launcher owns the rest
 PORT_OWNED = {'Game': ('NewGameTeam', 'ResetUnlocks', 'SaveFolder', 'ForcedTeams', 'PostgameScript', 'WindowTitle',
                        'EndHeroUnlock', 'MainMenuItems', 'NewGamePlus', 'ReviewStats', 'XPCurve',
-                       'GeometrySharingBlendIndices'),
+                       'GeometrySharingBlendIndices', 'CharacterLadderPaths', 'ObjectiveDescriptions',
+                       'BreakRule'),
               'Limits': ('ActorSlots', 'ResourceNames', 'ItemEnhancements', 'FightStyles'),
               'Online': ('GameVersion',)}
 
@@ -223,6 +247,9 @@ def game_keys(*, xml1_opening=True, save_folder=None, forced_teams='1', add_hero
         if save_folder:
             game['SaveFolder'] = save_folder
         game['GeometrySharingBlendIndices'] = GEOMETRY_SHARING_BLEND_INDICES
+        game['CharacterLadderPaths'] = CHARACTER_LADDER_PATHS
+        game['ObjectiveDescriptions'] = OBJECTIVE_DESCRIPTIONS
+        game['BreakRule'] = BREAK_RULE
     if forced_teams in ('0', '1'):
         game['ForcedTeams'] = forced_teams
     if add_hero:

@@ -75,11 +75,14 @@ Checks (severity per SPEC 4.6: error = will not load or silently misbehaves; war
   V32 lite xtraction (SPEC 62, issue #63): no XML1 script or inline data code calls
                 extractionPointLite (XMen2.exe's is team change only, no Save); prepare P3 writes extractionPoint for
                 XML1's lite points
+  V33 break rule (SPEC 63, x1schema.break_rule_problems): every XML1-sourced entity definition with a structure
+                carries an xml1structure in 0..10 that converts to it (xml2-fix [Game] BreakRule=xml1)
   V23 fight styles (SPEC 43, style_budget.validate): per converted zone the distinct style files of the permanent
                 packages, the zone package, its CHRB characters' packages and the worst four-hero party against
                 the registry the shipped ini asks xml2-fix for ([Limits] FightStyles, else XMen2.exe's 19): more
                 is an error (the hero seated last has no powers), exactly full a warning
   V25 harm loops (SPEC 51): no delayed start-on ordinary harm loops that XML2 disables
+  V34 ladder spawns (SPEC 46): no monster spawner without monster_spawnexactlocation runs a ladder motion path
 
 Inherited defects. Many findings are defects of the XML1 disc itself (a zone, conversation, dialog, script or
 sound bank XML1 references but never shipped; a line default.xbe already dropped). They are re-derived, not
@@ -118,6 +121,7 @@ from . import buoys as BY
 from . import automaps as AM             # V20 (SPEC 26): XML1 automaps as .zam
 from . import skins as SK                # V21 (SPEC 25): skin blend weights / skeleton against the anim DB
 from . import style_budget as SB         # V23 (SPEC 43): the fighting / power style registry per zone
+from . import ladder_motion as LM       # V34 (SPEC 46): ladder paths only from the ladder top
 from . import weapons as W              # V5 (SPEC 57, issue #52): a gun-armed entry carries its gun's fighting style
 from . import save_positions as SP      # V31: identities a save keeps by position
 
@@ -362,7 +366,9 @@ class Scan:
         self.inv_items = {}        # norm rel -> [inventoryitem values]
         self.turret_mount = {}     # norm rel -> [(entity name, missing flags)] remapped scan turrets not fixed-mount
         self.delayed_harm_loops = {}  # norm rel -> [(entity name, loop effect, firstact)]
+        self.ladder_floor_paths = {}  # norm rel -> [spawner name] running a ladder path without exact location
         self.physics_scale = {}    # norm rel -> [(entity name, attribute, value)] XML1-scale object physics left
+        self.break_rule = {}       # norm rel -> [(entity name, structure, xml1structure)] pairs BreakRule=xml1 cannot use
         self.speakers = {}         # norm rel (conversations/) -> [(attr, %TOKEN%)]
         self.anim_enums = {}       # norm rel -> [(tag, attr, enum literal)]  animenum values + EA_* in any value
         self.zoneinfo_xtraction = {}   # norm rel (data/zoneinfo.*) -> [(zone, [attrs])] Xtraction network entries
@@ -538,6 +544,9 @@ class Validator:
                 loops = XS.delayed_harm_loops(root)
                 if loops:
                     sc.delayed_harm_loops[n] = loops
+                floor = LM.path_spawner_problems(root)
+                if floor:
+                    sc.ladder_floor_paths[n] = floor
                 if n.startswith('dialogs/'):
                     dp = XS.dialog_platform_problems(root)
                     if dp:
@@ -546,6 +555,9 @@ class Validator:
                     ps = XS.physics_scale_problems(root)
                     if ps:
                         sc.physics_scale[n] = ps
+                    br = XS.break_rule_problems(root)
+                    if br:
+                        sc.break_rule[n] = br
                 if n.startswith('conversations/'):
                     sp = [(k, t) for el in root.iter() for k in SPEAKER_ATTRS for t in SPEAKER_RE.findall(el.get(k) or '')]
                     if sp:
@@ -725,7 +737,8 @@ class Validator:
                                ('V29', 'codex icons', lambda ck: VF.v_codex_icons(self, ck)),
                                ('V30', 'personal items', lambda ck: VF.v_personal_items(self, ck)),
                                ('V31', 'save positions', self.save_positions),
-                               ('V32', 'lite xtraction', self.lite_xtraction)):
+                               ('V32', 'lite xtraction', self.lite_xtraction),
+                               ('V34', 'ladder spawns', self.ladder_spawns)):
             ck = Check(cid, title)
             self.checks[cid] = ck
             t0 = time.time()
@@ -977,6 +990,17 @@ class Validator:
                      f'XMen2.exe clamps (x1schema.convert_physics), e.g. {lst[:2]}')
             n_scale += len(lst)
         ck.set('x1_physics_scale_left', n_scale)
+        # V33 (SPEC 63): an XML1-sourced entity definition with a structure carries
+        # XML1's own number in xml1structure, and its structure is what that number converts to. Otherwise xml2-fix's
+        # BreakRule=xml1 has nothing to compare for that object and a plain punch breaks it again.
+        n_break = 0
+        for n, lst in sorted(sc.break_rule.items()):
+            if n in sc.twins:
+                continue
+            ck.error(f'{sc.files[n]["rel"]}: {len(lst)} entity definition(s) whose structure and xml1structure do not '
+                     f'pair (x1schema.convert_physics), e.g. {lst[:2]}')
+            n_break += len(lst)
+        ck.set('x1_break_rule_unpaired', n_break)
 
     def fall_kill_volumes(self, ck):
         """V26: converted fall kill volumes must be active collision boxes; the listed player-only
@@ -1082,6 +1106,20 @@ class Validator:
                          'clears the loop-on bit (invisible hazard)')
                 count += 1
         ck.set('dead_harm_loops', count)
+
+    def ladder_spawns(self, ck):
+        """V34 (SPEC 46): a monster spawner without monster_spawnexactlocation puts its spawn on the ground, so
+        it must not run a ladder motion-path script (the path would carry the soldier through the floor)."""
+        sc = self.scan
+        count = 0
+        for n, names in sorted(sc.ladder_floor_paths.items()):
+            if n in sc.twins:
+                continue
+            for name in names:
+                ck.error(f'{sc.files[n]["rel"]}: spawner {name!r} runs a ladder motion path but spawns on the '
+                         f'ground (no monster_spawnexactlocation; ladder_motion.floor_spawn_ref)')
+                count += 1
+        ck.set('ladder_paths_from_ground', count)
 
     def dialog_platforms(self, ck):
         """V28 (issue #50; SPEC 54): a popup dialog with only console variants (XML1's xbox / ps2 / gc) opens an empty

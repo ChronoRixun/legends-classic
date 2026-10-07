@@ -43,11 +43,13 @@ if __package__ in (None, ''):
     from xml1build import scripts as S                      # noqa: E402
     from xml1build import scripts_lint as L                 # noqa: E402
     from xml1build import scripts_transform as TR           # noqa: E402
+    from xml1build import ladder_motion as LM               # noqa: E402
 else:
     from . import common as C
     from . import scripts as S
     from . import scripts_lint as L
     from . import scripts_transform as TR
+    from . import ladder_motion as LM
 
 WORLD_TABLES = ('data/common_ents.xml', 'data/item_ents.xml', 'data/items.eng', 'data/shared_nodes.eng')
 DATA_PREFIXES = ('maps/', 'conversations/', 'dialogs/', 'data/entities/')
@@ -126,7 +128,8 @@ def t1_install(ctx, t, reg):
     fe_gen = S.frontend_scripts(ctx)                                 # SPEC 21 intro / postgame
     extra = sorted(k for k in owned if C.script_ref(k) not in research and C.script_ref(k) not in S.NEW_GAME_REFS
                    and C.script_ref(k) not in generated and C.script_ref(k) not in forced_gen
-                   and C.script_ref(k) not in fe_gen)
+                   and C.script_ref(k) not in fe_gen
+                   and LM.floor_base(C.script_ref(k)) is None)   # SPEC 46: unconverted descent copies
     if extra:
         t.fail(f'scripts owns .py files that are neither research outputs, generated zone-entry / forced-teams '
                f'scripts nor the New Game hook: {extra[:10]}')

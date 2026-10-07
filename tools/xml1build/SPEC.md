@@ -4474,6 +4474,118 @@ see docs/issue-12-validation.md. Extinguishing and save/reload remain separate c
 The general harm-loop conversion below (SPEC 51) supersedes
 the name/path restriction on startup. The relocation script handling remains necessary.
 
+## 46. Ladder descent uses the authored movement through a native motion path (issue #32)
+
+The sewer and Arbiter descent clips contain a Motion track with 31 translation keys
+and a 1.6-second descent. Their animation skeletons do not contain a Motion bone.
+XMen2.exe's motion setup (0x56a800) first searches the skeleton for that bone; only
+then does 0x56a620 extract the track's precomputed movement metadata. These XML1
+clips have neither the skeleton entry nor that metadata. Playing the pose animation
+alone therefore does not supply the character's descent to that reader.
+
+`ladder_motion` extracts the original Motion sequence from the player's mission_grso
+mission2 and mission_a_int mission1 clips. It generates two native motion paths using
+the player's common/cabinet_knockedover file as a structural template. Translation
+keys are relative to the first key; rotations and timestamps are retained. The
+cabinet's transform and scale channel are removed, and duration follows the clip.
+Unexpected interpolation, rotation, channel lengths or duration fail the build.
+No key coordinates or game binary are distributed in this repository.
+
+Every listed descent script starts the relative path before playing its original
+EA_ZONE animation and retains its original waitsignal expression. arb3_1's ladder_dude02 runs the Arbiter
+descent under its own name (arbiter/a_int/grso_ladder_down01, the same text), so that script is listed too and
+shares the Arbiter path. World clipping and entity collision are disabled
+during the slide and restored after the signal. Entity collision alone does not bypass
+the world trace at the top of the ladder.
+The path, package entry and normal IGB budget are generated together. Affected zones
+also check the native 16-path registry limit. Each path remains relative to its actor,
+so repeated spawns and differently oriented ladders share it. The bad sound-path
+spawnscript on sewers3_1_2's ladderdude02 is unchanged, as are ladder objectives.
+
+Only a spawner with `monster_spawnexactlocation` starts its soldier at the ladder top. Without
+it, both games place the spawn themselves: default.xbe's placement (0x34ab0) calls 0x34940 only
+when the flag is clear, which takes the nearest navigation point, traces 24 units up and down and
+sets the height to the ground plus 2 units. XMen2.exe places such a spawn the same way (measured
+on the floor at height 2 below a spawner at 173). In the first game such a soldier therefore
+starts on the floor under a working world trace, so the authored descent cannot carry it lower.
+Three of the sixteen ladder spawners lack the flag (one in sewers3_1_3, two in arb3_3). Each gets
+a generated copy of its descent script with the `_floor` suffix: the original statements, with no
+path, world-clip or collision change. Spawners with the flag keep the converted script. Without
+the copy the path took all five sewers3_1_3 soldiers 173 units through the floor to their deaths.
+Validator rule V34: no monster spawner without the exact location
+runs a ladder motion-path script.
+
+XML2 Fix 1.3.2's opt-in `[Game] CharacterLadderPaths=1` is required. Characters
+do not schedule the generic native path evaluator, and their goal predicate bypasses
+it when no ordinary movement goal is set. The companion enables native scheduling
+and path evaluation only for these two generated resources. It retains native timing,
+relative movement, and final callback handling; ordinary character movement is unchanged.
+The builder owns the key and requires 1.3.2. Version 1.3.1 remains reserved for the
+fighting-style registry and geometry-sharing changes.
+
+Controlled in-game before/after checks in Sewers and Arbiter show the original soldiers
+stranded above the floor and converted soldiers descending to it. Repeated overlapping
+Sewers spawns also land and restore collision. See `docs/issue-32-validation.md` for
+measurements and limits: these are isolated authored-spawner tests, not a campaign
+playthrough; saving during descent and reloading in another process remains unverified.
+
+## 47. Objective completion descriptions follow the saved completion state (issue #8)
+
+The builder retains XML1's updatedescription attribute for the companion XML2 Fix
+ObjectiveDescriptions reader. Prepare tables VERSION 3 invalidates stale P2/P3 outputs;
+the final mission installer also restores the attribute from the plan, so developer
+builds with older research output retain it. No objective is added, removed, reordered
+or regrouped. Conflicting completion strings for an existing shared objective are a
+build error rather than a silent change to saved objective identity. The current owned
+inputs have 31 distinct completion descriptions and no such conflicts.
+
+The companion fix captures this extra attribute while the native parser reads each
+objective. It keys bounded strings by the native unsigned state index at record+0x1a9:
+the engine sorts whole objective records after parsing, so record addresses are not
+stable keys. The slot is cleared on every allocation before attributes are read, which
+prevents stale text across acts and permits several mission files in one act.
+
+Both primary and secondary journal description operands are redirected to the stored completion text
+only while the existing state byte has its completion bit set. Otherwise it uses the
+original description. This covers script completions, automatic counted completions,
+completion reversal and state restored from a save without rewriting saved records.
+Titles, completion popups, XP, counters and objective visibility retain their native
+behavior. The parser, allocation and two journal hooks require retail code guards and are
+installed together; without [Game] ObjectiveDescriptions=1 the original engine runs.
+
+The builder writes that key and requires the planned XML2 Fix 1.3.2 release. The builder
+PR depends on its companion engine PR and must not be released against 1.3.0. This is
+independent of the 1.3.1 work (SPEC 43-44, V23).
+
+Synthetic tests cover prepared and developer mission metadata, unchanged ordering,
+conflict rejection and engine selection/reset rules. Executable guards are checked
+against an owned executable without running it. Controlled in-game primary journal completion and reversal now display the expected
+source wording. A counted objective reached native completion; its rendered display,
+secondary-objective rendering, act transitions and fresh-process save reload remain
+unverified. See `docs/issue-8-validation.md` for the test boundaries.
+
+## 48. STAT pickups grant an unspent attribute point (issue #10)
+
+The STAT item's activation now calls the companion xml2-fix addStatPoints function
+with _ACTIVATOR_ and one point. The player can choose which attribute to raise;
+the former fixed body boost is removed. Item identity, display/model references and
+pickup placement remain unchanged. The call is in the versioned API and is recognized
+by lint for both forced-team modes, like addSkillPoints.
+
+The engine function uses the same character-name resolver as addSkillPoints, then
+reads/writes the native saved attribute-point word at CStats+4+0x16 through the retail
+getter/setter. It does not change XP, levels, skill points or a fixed attribute.
+Amounts outside 1..20 and signed counter overflow are refused. The new function is
+appended to the registration table; existing function indices remain unchanged, and
+the total including native builtins is 318 of the engine's 320 names.
+
+Synthetic grant/amount/overflow tests and a native accessor test over a synthetic
+saved block cover the offline contract. A controlled original/candidate pickup test
+confirmed collector-only granting, unchanged XP/levels/skills and other heroes,
+fresh-process save persistence, and spending the point on Focus through the native
+stats screen. See `docs/issue-10-validation.md` for setup and limits. The builder requires the planned companion
+XML2 Fix 1.3.2 release; an old DLL cannot execute this new call.
+
 ## 49. Conversation speaker HUD-head residency (2026-10-04, issue #13)
 
 Issue #13: with forced parties disabled, a named speaker can be absent from both
@@ -5072,7 +5184,7 @@ might_structure nibble (actor+0x57b) and rounded damageLevel affecter (actor+0x5
 stored to hit +0x2e at 0x4501fb. Wolverine's Sharpness contributes +3 at its first rank: an auto-spent higher-level
 hero can turn the broken zero into one. Character level itself is not read by this attack-level calculation.
 
-### 59.4 Engine work required for the wall rule (not implemented here)
+### 59.4 Engine work required for the wall rule (not implemented here; done in SPEC 63)
 
 For unchanged character defense and attack semantics, a normal hit must exceed character structure 0. To spare
 an object remapped to structure 1, the hit must be below 1. No integer can satisfy both; the effective attack
@@ -5204,3 +5316,61 @@ in the same zone with the same party and the leader on the point (0.0 to 0.001 u
 full point by the HAARP X-Jet shows the same menu as before (its zone data is byte-identical in this respect). Not
 checked in game: the other 17 converted points (same entity form and the same call), two-player, and Xtract (world
 map, #46).
+
+## 63. The first game's break rule (xml2-fix `[Game] BreakRule=xml1`; follow-up to issue #51)
+
+This is the engine work SPEC 59 deferred. It needs xml2-fix 1.3.2 (unreleased); a build made with it runs on 1.3.1
+exactly as before, because 1.3.1 reads neither the key nor the attribute.
+
+### 63.1 The rule
+
+XML1 (default.xbe): the object damage function 0x92220 refuses a hit whose level (hit +0x14) is below the object's
+structure (+0x2c2), or whose target has structure above 9; the melee level 0x59a50 is the attack's authored
+`damagelevel` + {0, 3, 6, 8}[min(Might, 3)] + the `damageLevel` affecter, at most 9, with Might read by the same
+call (0xb1ba0) as the pickup gate. XMen2.exe cannot hold either number (SPEC 59): the hit byte is capped at 1 and
+characters compare it too, and the structure byte is clamped to 2 and tested for 2 in about thirty places.
+
+With `BreakRule=xml1` the fix adds XML1's comparison at the object gate (0x49805b) and changes neither byte:
+
+- **Structure.** `convert_physics` keeps XML1's number (clamped to 0..10, as default.xbe clamps it) in the new
+  entity attribute `xml1structure` next to the converted `structure`. XMen2.exe reads entity attributes by name
+  (0x49896d asks for `structure`) and never lists them, so only the fix sees it; the fix asks the same reader at
+  the same place and keeps the number by the object's handle. It uses the number only while the object's structure
+  byte is what `STRUCTURE_X1_TO_X2` gives for it, so a script that changes the byte later puts the object back
+  on XMen2.exe's rule.
+- **Attack level.** No new data. The authored `damagelevel` the builder passes through (SPEC 59: unchanged from
+  XML1 in styles, projectiles and entity definitions; the 59 shared combat events both games name carry the same
+  level or leave it to the default in both) is stored unclamped by XMen2.exe (0x4dc094) and copied into the hit;
+  only the melee sweep's level function (0x44f770, vtable slot 0x685a98) caps it. The fix reads the byte there,
+  returns the game's own result
+  unchanged, and remembers XML1's sum for that attack: authored + {0, 3, 6, 8} by the hero's lift value (the
+  `might_heaviness` sum, which is XML1's Might: heroes.py writes might_heaviness 1/2/3 for ranks 1/2/3) + the
+  `damageLevel` affecter, at most 9. A hit that never passes the sweep is judged by the level it carries.
+- **Nothing else.** The fix only refuses hits the game would let through on an object with a usable pair; what
+  characters, targeting and AI read is unchanged, and nothing is saved.
+
+Why an attribute and not a side file: it sits where `structure` sits (per definition, per zone, in the file the
+builder already writes and a mod can override), needs no key from a live object back to its definition and no
+second loader.
+
+`fix_ini.BREAK_RULE` ('xml1') is written to `[Game] BreakRule` for every XML1 build and is a port-owned key.
+`REQUIRED_XML2FIX` is 1.3.2 (with SPEC 46-48).
+
+### 63.2 Validator rule V33
+
+An XML1-sourced entity definition with a `structure` must carry an `xml1structure` in 0..10 whose conversion is
+that `structure` (`x1schema.break_rule_problems`, counted as `x1_break_rule_unpaired`). A definition that fails it
+would silently fall back to XMen2.exe's rule: a plain punch would break it again.
+
+### 63.3 What is and is not reproduced
+
+- Reproduced: every structure threshold 0..10 against melee hits, with XML1's Might shares (3/6/8) and the
+  `damageLevel` affecter (Sharpness and the like); enemies whose npcstat carries XML1's `might` talent get the
+  same share, as in XML1's data.
+- The heaviest objects stay as SPEC 59 left them: XMen2.exe never lifts heaviness 3 (0x427fa3), and 3 is also its
+  immovable class (0x496d90), so raising the lift limit is separate engine work.
+- Hits XMen2.exe builds itself (collision damage, thrown objects) carry its own small level numbers and are judged
+  with them. The push a refused hit gives a light object is XMen2.exe's rule, not XML1's.
+- An enemy attack that passes XMen2.exe's melee sweep gets the Might share (seen in game: HAARP soldiers, `might`
+  rank 1 in XML1's npcstat, hit a structure-2 wall at level 4). Which of an enemy's attacks pass the sweep here
+  and passed XML1's is not established attack by attack.
