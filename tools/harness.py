@@ -73,7 +73,7 @@ def dll_has(dll, marker):
 def ini_text(mode, width, height, pipe, xml1_opening=True, save_folder=None, limits=False, forced_teams='1',
              add_hero=False, postgame=None, main_menu_items=None, xp_curve=None, join_hero=True, pipe_name=None,
              online_server=None, log_network=False, new_game_plus=None, discord=None, port_identity=False,
-             review_stats=None, xtract=None):
+             review_stats=None, xtract=None, balance=False, fingerprint=None, balance_keys=None):
     """a whole test xml2-fix.ini: the harness's own [Display] / [Test] / [Discord] / [Debug] test settings around the
     port's [Game] / [Limits] / [Online] keys (fix_ini)."""
     lines = [MARKER, '[Display]', f'Mode={mode}', f'Width={width}', f'Height={height}', 'Topmost=0',
@@ -87,7 +87,8 @@ def ini_text(mode, width, height, pipe, xml1_opening=True, save_folder=None, lim
     if online_server:
         # every GameSpy host the game looks up resolves to this address (a local OpenSpy stack for online tests)
         online.append(f'Server={online_server}')
-    online += [f'{k}={v}' for k, v in FI.online_keys(port_identity=port_identity).items()]
+    online += [f'{k}={v}' for k, v in FI.online_keys(port_identity=port_identity, balance=balance,
+                                                     fingerprint=fingerprint).items()]
     if online:
         lines += ['[Online]'] + online + ['']
     game = FI.game_keys(xml1_opening=xml1_opening, save_folder=save_folder, forced_teams=forced_teams,
@@ -98,6 +99,12 @@ def ini_text(mode, width, height, pipe, xml1_opening=True, save_folder=None, lim
         lines += ['[Game]'] + [f'{k}={v}' for k, v in game.items()] + ['']
     if limits:
         lines += ['[Limits]'] + [f'{k}={v}' for k, v in FI.LIMITS.items()] + ['']
+    if balance:
+        # a balance build (xml1build.balance): the first game's combat numbers through xml2-fix [Balance]
+        lines += ['[Balance]'] + [f'{k}={v}' for k, v in (balance_keys or FI.balance_keys()).items()] + ['']
+    if port_identity:
+        # the LC save format (xml2-fix 1.4), as the shipped build's ini carries it (fix_ini.save_keys)
+        lines += ['[Save]'] + [f'{k}={v}' for k, v in FI.save_keys(port_identity=True).items()] + ['']
     if discord is not None:
         # xml2-fix Discord Rich Presence is on by default (the launcher's toggle writes this key); harness test games
         # leave Owen's Discord status alone unless --discord asks for it
@@ -128,7 +135,7 @@ def install(a):
                          # the default (on) unless --no-discord
                          True if a.discord else (False if (a.no_discord or not a.no_pipe) else None),
                          bool(postgame),        # an XML1 build: the port's title, ending and online version
-                         review_stats, xtract))
+                         review_stats, xtract, FI.build_balance(out), FI.content_fingerprint(out), FI.balance_keys(out)))
     if a.add_hero and a.forced_teams != '1':
         print('note: AddHero only acts with ForcedTeams=1 (xml2fixFeature("addhero") reports 0 otherwise)')
     print(f'harness installed in {out}: dinput.dll from {dll}; Mode={a.mode} {a.width}x{a.height} '

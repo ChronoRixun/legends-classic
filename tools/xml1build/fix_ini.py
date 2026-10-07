@@ -7,8 +7,8 @@ keys:
                           ForcedTeams / PostgameScript / WindowTitle / EndHeroUnlock / MainMenuItems / NewGamePlus /
                           ReviewStats / Xtract / XPCurve / GeometrySharingBlendIndices / CharacterLadderPaths /
                           ObjectiveDescriptions / BreakRule, [Limits]
-                          ActorSlots / ResourceNames / ItemEnhancements / FightStyles / EffectCurves, [Online]
-                          GameVersion. They are
+                          ActorSlots / ResourceNames / ItemEnhancements / FightStyles / EffectCurves, [Online] GameVersion /
+                          ContentFingerprint, [Save] Format. They are
                           functions of the build's content (the menus it wrote, its report.json, its scripts), so the
                           builder (tools/xml1builder) writes them after a build, and tools/harness.py takes its
                           [Game] / [Limits] / [Online] lines from here too (the harness and the shipped build cannot
@@ -30,6 +30,8 @@ import json
 import os
 import re
 from pathlib import Path
+
+from . import balance as BAL
 
 # The port's own save folder (xml2-fix [Game] SaveFolder): saves and settings.dat - the profile that keeps hero
 # unlocks from game to game, by herostat index - would otherwise be XML2's (Documents\Activision\X-Men Legends 2),
@@ -63,9 +65,17 @@ MAIN_MENU_FILE = ('UI', 'menus', 'main.XMLB')
 # The port's own identity in xml2-fix (a3b8567+), written for XML1 builds (the ones with PostgameScript): the window
 # title (the exe says X-Men Legends 2), no XML2 hero unlock + popup after the credits (Deadpool, 0x5b1d4a), and a
 # GameSpy game version of its own so port and XML2 lobbies never mix (research/online/port_online_test.md).
+# GameVersion changes whenever the build's content version or its save / combat rules do (SPEC-new-save 6, decision
+# D5: peers need the same content version AND content fingerprint; the string keeps lobbies apart before any
+# connection): X1.0 the port, X1.1 a balance test build, X1.2 builder 0.2.0 (the LC save format, balance on).
 PORT_WINDOW_TITLE = 'X-Men Legends'
 PORT_END_HERO_UNLOCK = '0'
-PORT_GAME_VERSION = 'X1.0'
+PORT_GAME_VERSION = 'X1.2'
+
+# xml2-fix 1.4 [Save] Format (SPEC 70; SPEC-new-save 1.5 / A11): the LC save format. The fix reads the build's
+# save tables (Data/lcsave/catalogue.lcc, legacy.lcm, the .lcbind files - xml1build.savefiles), converts the old
+# saves once at start-up and saves into SaveLC; a build without the key keeps the old format. Port builds only.
+SAVE_FORMAT = 'lc'
 
 # xml2-fix [Game] NewGamePlus (SPEC 21.2.2): the XML1 front end's Begin Story runs XMen2.exe's New Game without the
 # difficulty prompt (resetgame + setDifficultyLevel(1), xml1build.frontend.BEGIN_STORY_CMD), but once a win on Normal
@@ -151,8 +161,16 @@ FORCED_TEAMS_VALUES = ('1', '0', 'off')
 # addSkillPoints, the conversation hooks [Game] AutoAdvance / ReplyVoices / ReplyCursor - SPEC 32, 34; v1.3.1:
 # [Limits] FightStyles - SPEC 43, [Game] GeometrySharingBlendIndices - SPEC 44; v1.3.2: [Game] CharacterLadderPaths -
 # SPEC 46, [Game] ObjectiveDescriptions - SPEC 47, the STAT pickup's addStatPoints - SPEC 48,
-# [Game] BreakRule - SPEC 63, [Limits] EffectCurves - SPEC 65, [Game] Xtract - SPEC 66)
-REQUIRED_XML2FIX = '1.3.2'
+# [Game] BreakRule - SPEC 63, [Limits] EffectCurves - SPEC 65, [Game] Xtract - SPEC 66; v1.4: [Save] Format and the LC save tables - SPEC 70, [Balance] - SPEC 69)
+REQUIRED_XML2FIX = '1.4'
+
+# xml2-fix [Balance] (xml1build.balance; SPEC 69): the first game's combat numbers for a
+# balance build - one whose styles carry the power-attack marker (report.json build.balance 'xml1'). HeroStatScale
+# is heroes.STAT_SCALE, what the build multiplied XML1's hero stats by; NativeStatHeroes the two herostat entries
+# heroes.rescale_x1_hero_stats leaves at XML1's numbers (stats beyond XML1's 1..10 hero scale). Every build of a
+# release since 0.2.0 is a balance build, so lobbies never mix with the port's without [Balance] (GameVersion).
+BALANCE_HERO_STAT_SCALE = '4'
+BALANCE_NATIVE_STAT_HEROES = 'ProfXAstral,ProfXGladiator'
 
 # every key the port may write (the builder drops the ones a build does not need); the launcher owns the rest
 PORT_OWNED = {'Game': ('NewGameTeam', 'ResetUnlocks', 'SaveFolder', 'ForcedTeams', 'PostgameScript', 'WindowTitle',
@@ -160,7 +178,17 @@ PORT_OWNED = {'Game': ('NewGameTeam', 'ResetUnlocks', 'SaveFolder', 'ForcedTeams
                        'GeometrySharingBlendIndices', 'CharacterLadderPaths', 'ObjectiveDescriptions',
                        'BreakRule'),
               'Limits': ('ActorSlots', 'ResourceNames', 'ItemEnhancements', 'FightStyles', 'EffectCurves'),
-              'Online': ('GameVersion',)}
+              'Online': ('GameVersion', 'ContentFingerprint'),
+              'Save': ('Format',)}
+
+
+def port_owned() -> dict:
+    """PORT_OWNED, and with the balance switch on (xml1build.balance) the [Balance] section too. With the switch
+    off the port does not own that section at all: nothing of it is written or dropped."""
+    owned = dict(PORT_OWNED)
+    if BAL.enabled():
+        owned['Balance'] = tuple(BAL.BALANCE_KEYS) + BAL.TUNING_KEYS
+    return owned
 
 
 # ------------------------------------------------------------------------------------------------ reading the build
@@ -239,6 +267,26 @@ def build_xp_curve(out):
     return XP_CURVE if chosen == XP_CURVE else None
 
 
+def build_balance(out):
+    """True when <out> is a balance build: made with xml1build.balance's switch on (report.json build.balance)."""
+    b = build_record(out) or {}
+    return BAL.enabled() and str(b.get(BAL.REPORT_KEY) or '').lower() == BAL.REPORT_ON
+
+
+def balance_keys(out=None) -> dict:
+    """the [Balance] keys of a balance build: the first game's numbers."""
+    keys = dict(BAL.BALANCE_KEYS)
+    keys.update(HeroStatScale=BALANCE_HERO_STAT_SCALE, NativeStatHeroes=BALANCE_NATIVE_STAT_HEROES)
+    if out is not None:
+        from . import melee_weapons as MW
+        path = Path(out, 'Data', 'npcstat.engb')
+        if path.is_file():
+            value = MW.ini_value(_xmlb_decode(path.read_bytes()))
+            if value:
+                keys[MW.INI_KEY] = value
+    return keys
+
+
 def build_postgame(out):
     """POSTGAME_SCRIPT when the build wrote XML1's postgame script (an XML1 build), else None."""
     return POSTGAME_SCRIPT if Path(out, 'Scripts', *POSTGAME_SCRIPT.split('/')).with_suffix('.py').is_file() else None
@@ -291,9 +339,32 @@ def game_keys(*, xml1_opening=True, save_folder=None, forced_teams='1', add_hero
     return game
 
 
-def online_keys(*, port_identity=False) -> dict:
-    """the port's [Online] keys: its own GameSpy game version (port lobbies apart from XML2's)."""
-    return {'GameVersion': PORT_GAME_VERSION} if port_identity else {}
+def content_fingerprint(out):
+    """the build's content fingerprint (64 hex; lcsave.lcfiles: SHA-256 over the sorted (path, SHA-1) of
+    catalogue.lcc and every .lcbind - decision D5), or None when the build carries no save files (a build from
+    before SPEC 70)."""
+    try:
+        from lcsave import lcfiles                # tools/lcsave (tools/ is on sys.path with this package)
+    except ImportError:
+        return None
+    return lcfiles.content_fingerprint(str(out))
+
+
+def online_keys(*, port_identity=False, balance=False, fingerprint=None) -> dict:
+    """the port's [Online] keys: its own GameSpy game version (changes with the content version and the save /
+    combat rules - decision D5; since 0.2.0 one value for every build, balance always on) and, for a build with
+    the save tables, the content fingerprint a co-op peer must share (SPEC-new-save 6)."""
+    if not port_identity:
+        return {}
+    keys = {'GameVersion': PORT_GAME_VERSION}
+    if fingerprint:
+        keys['ContentFingerprint'] = fingerprint
+    return keys
+
+
+def save_keys(*, port_identity=False) -> dict:
+    """[Save] Format=lc: the LC save format (xml2-fix 1.4; SPEC 70), written for a port build."""
+    return {'Format': SAVE_FORMAT} if port_identity else {}
 
 
 def port_keys(out, *, save_folder=PLAY_SAVE_FOLDER, eighth=True) -> dict:
@@ -306,16 +377,22 @@ def port_keys(out, *, save_folder=PLAY_SAVE_FOLDER, eighth=True) -> dict:
                      new_game_plus=NEW_GAME_PLUS if menu else None, review_stats=build_review_stats(out),
                      xtract=XTRACT if postgame else None, xp_curve=build_xp_curve(out))
     keys = {'Game': game, 'Limits': dict(LIMITS)}
-    online = online_keys(port_identity=bool(postgame))
+    balance = build_balance(out)
+    online = online_keys(port_identity=bool(postgame), balance=balance, fingerprint=content_fingerprint(out))
     if online:
         keys['Online'] = online
+    save = save_keys(port_identity=bool(postgame))
+    if save:
+        keys['Save'] = save
+    if balance:
+        keys['Balance'] = balance_keys(out)
     return keys
 
 
 def dropped_keys(keys: dict) -> dict:
     """{section: [key, ...]}: the PORT_OWNED keys `keys` does not set (merge_ini's drop for a port write)."""
     out = {}
-    for section, owned in PORT_OWNED.items():
+    for section, owned in port_owned().items():
         have = {k.lower() for k in keys.get(section, {})}
         gone = [k for k in owned if k.lower() not in have]
         if gone:

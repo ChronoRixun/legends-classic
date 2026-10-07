@@ -46,6 +46,7 @@ import time
 from pathlib import Path
 
 from xml1build import common as C  # noqa: E402  (tools/ = this script's folder, sys.path[0]; the builder imports us)
+from xml1build import balance as BAL  # noqa: E402
 
 
 def parse_args(argv=None):
@@ -344,6 +345,9 @@ def main(argv=None):
         sources_meta.write_text(json.dumps(sources.describe(), indent=1), encoding='utf-8')
 
     selected = list(args.only) if args.only else list(C.MODULE_ORDER)
+    if 'savefiles' not in selected and any(m != 'savefiles' for m in selected):
+        # the .lcbind headers hash the finished data files: any content re-run makes them stale
+        selected = [m for m in C.MODULE_ORDER if m in selected or m == 'savefiles']
     opt_rerun = plan_content_opts(out, args, selected)
     if opt_rerun:
         selected = [m for m in C.MODULE_ORDER if m in selected or m in opt_rerun]
@@ -417,6 +421,8 @@ def main(argv=None):
                     'hero_roster': args.hero_roster, 'hero_icons': args.hero_icons, 'hero_bleed': args.hero_bleed,
                     'newgame': args.newgame, 'forced_teams': args.forced_teams, 'frontend': args.frontend,
                     'xp_curve': args.xp_curve, 'buoys': args.buoys,
+                    BAL.REPORT_KEY: BAL.REPORT_ON if BAL.enabled() else 'xml2',
+                    'content_fingerprint': ctx.shared.get('content_fingerprint'),
                     'start_party': args.start_party, 'start_skinset': args.start_skinset,
                     'files_registered': len(ctx.registry.entries), 'seconds': round(time.time() - t0, 1),
                     'shared_keys': sorted(ctx.shared)}

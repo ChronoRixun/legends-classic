@@ -147,7 +147,8 @@ are silent** (XML1's RatingMelee/RatingRanged/RatingSupport/RatingDurability, le
 
 Hero-only attributes and where they land:
 - `power1..power4` -> `FUN_004b7f30(CStats+0xc4 / +0xd9 / +0xee / +0x103, value)` (0x4ba0c7, 0x4ba0f3, 0x4ba11f, next
-  block): the four **assigned power slots**, 0x15 bytes each (0x14 chars + NUL). Also written at runtime by
+  block): the four **assigned power slots**, 0x15 bytes each (a 0x14-byte NUL-terminated name and a
+  flag byte whose bit 0 = usable: get 0x4b83b0, set 0x4b83e0; the power handler 0x4fd4de refuses a slot without it). Also written at runtime by
   `FUN_004b84b0(slot, name)` and searched by `FUN_004b8450(name)`; saved (5.1).
 - `autospend` -> CStatsHero vt+0x90(name) (decomp3.c:914). Classes come from `data/autospend.xmlb`
   (`FUN_0043d0c0`, 0x43d0eb): `<AutoSpend><CharacterClass name body mind speed strength><bonus rate start body mind

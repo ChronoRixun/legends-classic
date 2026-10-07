@@ -51,6 +51,7 @@ from . import common as C
 from . import combat_events as CE
 from . import npc_values as NV       # SPEC 24: XML1 value codes in the styles, the NPC energy pool
 from . import weapons as W           # SPEC 29: XML1 weapon definitions as style triggers (variant styles)
+from . import melee_weapons as MW    # SPEC 69.5: balance-only melee weapon metadata
 from . import scripts_transform as ST
 from .lib import x1names as N   # the XML1 namespace (was research/characters/x1names.py)
 
@@ -1508,6 +1509,9 @@ def run(ctx):
     if new_names | set(plan['keep_x2']) | {n.lower() for n in plan['herostat']} != plan['names']:
         ctx.error('internal: planned_stats names differ from the entries built')
 
+    # Inert weapon metadata: XML2 Fix adds it to matching attacks (no new talents).
+    MW.apply(b, new_entries, x1npc)
+
     # ---------------- npcstat in XML1 mode (each file from its own base)
     roots = {}
     for ext, root in base.items():
@@ -1561,6 +1565,7 @@ def run(ctx):
               'inline NPC immunity bodies are real definitions (SPEC 30)')
     _npc_immunities_report(ctx, b)
     _values(ctx, b)
+    _basic_attacks(ctx)
 
     # ---------------- packages
     stats_by_lname = {e.get('name').lower(): e for e, _ in new_entries}
@@ -1895,6 +1900,21 @@ def _check_caps(ctx, roots, hero_roots, b):
             ctx.error(f'shared_talents.{ext}: {n} talents > {TALENT_CAP} (ids 0..98, XMen2.exe 0x4c05d0)')
     ctx.log(f'stats names {len(set(s.get("name").lower() for s in hero_roots["engb"].iter("stats")) | set(s.get("name").lower() for s in roots["engb"].iter("stats")))}/{STATS_CAP}, '
             f'shared talents {tl[1]}/{TALENT_CAP}')
+
+
+def _basic_attacks(ctx):
+    """a balance build (xml1build.balance): XML1's values on the seven basic melee events of the shipped
+    data/shared_combat_events, so the XML2 fighting styles XML1's characters use punch as hard as in XML1."""
+    from . import balance
+    if not balance.enabled():
+        return
+    shared = ctx.read_base_xmlb(CE.SHARED_EVENTS_REL)
+    changed = balance.apply_basic_attack_values(shared, ctx.x1_values())
+    if changed:
+        ctx.write_xmlb('Data/shared_combat_events', shared, ('.XMLB',), source='xml1build.balance', replace=True)
+    ctx.set_count('x1_basic_attacks', sum(changed.values()))
+    ctx.note(f'balance: XML1\'s values on {sum(changed.values())} basic melee events of {CE.SHARED_EVENTS_REL} '
+             f'({sorted(k.split(":", 1)[1] for k in changed)})')
 
 
 def _values(ctx, b):

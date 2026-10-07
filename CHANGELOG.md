@@ -3,6 +3,30 @@
 The builder's releases, newest first. The version is `xml1-builder --version`; the content version is what a
 build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebuild.
 
+## Unreleased - 0.2.0 - content version 16 (needs XML2 Fix 1.4)
+
+- **A new save format; every old save is carried over once, automatically.** With XML2 Fix 1.4 the build starts
+  in the LC save format: at the first start the fix converts the old saves it finds, once per file, into the new
+  `SaveLC` folder - the old folder is never touched. Saves of every builder era load: heroes, levels, stats,
+  talents, inventory, mission progress, unlocks and the profile all carry over, including the talent moves of
+  0.1.8-0.1.9 (a save begun before 0.1.8 gets Grab back; the 0.1.8/0.1.9 moves are undone) and the older shift
+  from before 0.1.5. The new format names everything by a permanent id from a catalogue the build ships
+  (`Data\lcsave\catalogue.lcc`, `legacy.lcm` and a `.lcbind` beside every save-bound data file, checked at every
+  start), so future content can retain those save ids. The build writes `[Save] Format=lc`
+  and needs XML2 Fix 1.4 (SPEC 70, SPEC-new-save; the check V39).
+- **The first game's combat balance, on for every build** (issue #14). Enemy health and damage and the heroes'
+  strength bonus are the first game's again (enemy health per body point, the stat bonus, might, power attacks,
+  the melee hit chance and rounding through xml2-fix's `[Balance]` section), and the seven basic melee attacks
+  and the power-attack rule are in the build's data. Was prepared off by default; 0.2.0 turns the switch on
+  (`xml1build.balance.X1_BALANCE`, the test override dropped). SPEC 69; the check V38.
+- **Co-op compatibility metadata** (decision D5). `[Online] GameVersion` is `X1.2`, separating these lobbies
+  from earlier port generations. The ini records the save-table content fingerprint. Comparing peers
+  by content version and fingerprint needs the XML2 Fix network seam, which is not implemented in 1.4.
+- Power slots retain their usable flag through conversion, save and load (HERO 1.1).
+- Melee weapons contribute their authored fixed bonus before Strength and Might; damage rolls use inclusive
+  integers. The opening cop's punch is 7 or 9 damage (SPEC 69.5; V40).
+- Includes every 0.1.12 content and XML2 Fix 1.3.2 change listed below.
+
 ## v0.1.12 - content version 15 (needs XML2 Fix 1.3.2)
 
 This build needs XML2 Fix 1.3.2 (the launcher installs it). With an older fix the game starts, but the ladder,

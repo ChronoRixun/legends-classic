@@ -83,6 +83,13 @@ Checks (severity per SPEC 4.6: error = will not load or silently misbehaves; war
                 talentvalue with rank 1 zeroed while a later rank is non-zero must not have a same-named event
                 carrying a non-zero literal in the hero's powerstyle (XML1 inherits the event's value at ranks
                 the trigger leaves the attribute unset)
+  V38 balance (SPEC 69, balance.validate): a balance build has the power-attack
+                marker in its styles and XML1's values on the seven basic melee events of the shared combat
+                events; any other build has no marker
+  V39 save files (SPEC 70, savefiles.validate): the build carries catalogue.lcc, legacy.lcm and every .lcbind,
+                byte-identical to the set its own data produces, every key in the master catalogue
+  V40 melee weapons (SPEC 69.5, melee_weapons.validate): exact metadata on all and only the source armed NPCs,
+                both npcstat halves agree and their bounded ini serialization matches
   V23 fight styles (SPEC 43, style_budget.validate): per converted zone the distinct style files of the permanent
                 packages, the zone package, its CHRB characters' packages and the worst four-hero party against
                 the registry the shipped ini asks xml2-fix for ([Limits] FightStyles, else XMen2.exe's 19): more
@@ -121,6 +128,9 @@ import xmlb                                   # noqa: E402  tools/xmlb.py
 from .lib import x1names                      # noqa: E402  the XML1 namespace (was research/characters)
 from .lib.x1names import is_fightstyle_name   # noqa: E402  fightstyle_* / x1_fightstyle_* (issue #52)
 from . import validate_script as VS
+from . import balance as BAL
+from . import melee_weapons as MW
+from . import savefiles as SF
 from . import validate_sound as VSND
 from . import x1schema as XS
 from . import scripts_transform as ST      # section 18: the join zones' NPC double; V14 forced teams
@@ -751,7 +761,10 @@ class Validator:
                                ('V32', 'lite xtraction', self.lite_xtraction),
                                ('V34', 'ladder spawns', self.ladder_spawns),
                                ('V35', 'pda portal', lambda ck: VF.v_pda_portal(self, ck)),
-                               ('V37', 'xtraction beacons / rank-1 power damage', self.v37_beacons_rank_one)):
+                               ('V37', 'xtraction beacons / rank-1 power damage', self.v37_beacons_rank_one),
+                               ('V38', 'balance', lambda ck: BAL.validate(self, ck)),
+                               ('V40', 'melee weapons', lambda ck: MW.validate(self, ck)),
+                               ('V39', 'save files', lambda ck: SF.validate(self, ck))):
             ck = Check(cid, title)
             self.checks[cid] = ck
             t0 = time.time()
@@ -897,7 +910,7 @@ class Validator:
             if e['owner'] == 'characters' and e.get('overwrote_base') and \
                     re.match(r'(actors|hud|ui/hud/characters|ui/models/characters|textures/loading)/', n):
                 ck.error(f'{e["rel"]}: characters replaced an XML2 character asset (SPEC 5.1 forbids it)')
-            if n.startswith('data/herostat.') and e['owner'] != 'heroes':
+            if n.startswith('data/herostat.') and not n.endswith('.lcbind') and e['owner'] != 'heroes':
                 ck.warn(f'{e["rel"]}: herostat rewritten by {e["owner"]} (only the heroes module owns it; SPEC_heroes.md)')
         if ck.counts.get('forced_reimports'):
             ck.note(f'{ck.counts["forced_reimports"]} shared XML1 imports under {FORCE_PREFIXES} were re-imported by '
