@@ -6,7 +6,7 @@ build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebui
 ## v0.1.12 - content version 15 (needs XML2 Fix 1.3.2)
 
 This build needs XML2 Fix 1.3.2 (the launcher installs it). With an older fix the game starts, but the ladder,
-objective, STAT, wall and effect changes below do nothing. Saves of earlier builds load as before.
+objective, STAT, wall, effect and Xtraction-menu changes below do nothing. Saves of earlier builds load as before.
 
 - **Fixed: soldiers waiting at the top of a ladder now climb down** (issue #32). In the sewers and in the Arbiter's
   levels the first game sends soldiers down a ladder into the fight; here they stayed up at the top, out of reach.
@@ -32,6 +32,11 @@ objective, STAT, wall and effect changes below do nothing. Saves of earlier buil
 - **The water channel in one of the first sewer areas is deadly again** (issue #22). 0.1.9 switched off 17 shallow
   fall areas until each was checked in game; this one, between two walkways, was checked and kills a hero who falls
   in, as in the first game.
+- **Fixed: the Xtraction menu offered X-Men Legends II's Xtract world map** (issue #46). Every Xtraction point's
+  menu had an Xtract choice that opened X-Men Legends II's world map of its five town centres; the first game's
+  menu has no world map. The menu now offers the title, Change Team and Save only, from the first mission on.
+  With the pause menu's Blink Portal gone (#89), no route into X-Men Legends II's towns is left. XML1's Load,
+  Danger Room, Healer and Forge choices are still missing at every point (as in 0.1.11).
 
 New build checks: V33 (every object carries the first game's strength next to the
 engine's), V34 (no soldier placed on the floor gets the ladder slide) and V35 (the pause menu has no portal).

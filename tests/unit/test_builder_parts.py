@@ -374,14 +374,14 @@ def test_port_keys_from_a_synthetic_build():
         g = keys['Game']
         assert g['MainMenuItems'] == 'button1,button2,button3,button4,button5,button6,button8,button7'
         assert g['PostgameScript'] == FI.POSTGAME_SCRIPT and g['WindowTitle'] == 'X-Men Legends'
-        assert g['NewGamePlus'] == '0' and g['ReviewStats'] == '0' and g['XPCurve'] == 'xml1'
+        assert g['NewGamePlus'] == '0' and g['ReviewStats'] == '0' and g['XPCurve'] == 'xml1' and g['Xtract'] == '0'
         assert keys['Online'] == {'GameVersion': 'X1.0'} and set(g) <= set(FI.PORT_OWNED['Game'])
         # the harness builds its test ini from the same keys
         sys.path.insert(0, str(Path(C.__file__).resolve().parents[1]))
         import harness
         text = harness.ini_text('windowed', 1, 1, False, save_folder='X-Men Legends', limits=True, postgame=FI.POSTGAME_SCRIPT,
                                 main_menu_items=g['MainMenuItems'], xp_curve='xml1', new_game_plus='0',
-                                port_identity=True, review_stats='0')
+                                port_identity=True, review_stats='0', xtract='0')
         parsed = FI.parse_ini(text)
         assert parsed['Game'] == g and parsed['Limits'] == keys['Limits'] and parsed['Online'] == keys['Online']
 
@@ -653,3 +653,17 @@ def test_xml1_builds_ask_for_the_first_games_break_rule():
     assert 'BreakRule' not in FI.game_keys(xml1_opening=False)
     assert 'BreakRule' in FI.PORT_OWNED['Game']
     assert FI.dropped_keys({'Game': {}})['Game'].count('BreakRule') == 1
+
+
+def test_xml1_builds_ask_for_no_xtract_world_map():
+    """issue #46: an XML1 build's ini has the Xtraction Points offer no Xtract world map (xml2-fix 1.3.2 [Game]
+    Xtract=0); a build without XML1's postgame (no port build) carries no key, and the port owns it either way."""
+    assert FI.game_keys(xml1_opening=True, xtract=FI.XTRACT)['Xtract'] == '0'
+    assert 'Xtract' not in FI.game_keys(xml1_opening=True)
+    assert 'Xtract' in FI.PORT_OWNED['Game']
+    with tempfile.TemporaryDirectory() as td:
+        out = Path(td)
+        assert 'Xtract' not in FI.port_keys(out)['Game']                    # no postgame script: not an XML1 build
+        (out / 'Scripts' / 'x1' / 'menus').mkdir(parents=True)
+        (out / 'Scripts' / 'x1' / 'menus' / 'postgame.py').write_bytes(b'x')
+        assert FI.port_keys(out)['Game']['Xtract'] == '0'                   # an XML1 build: no world map anywhere

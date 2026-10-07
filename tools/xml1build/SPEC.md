@@ -5322,11 +5322,12 @@ forced mission, SPEC 19.8), as at every full point. The builder's own `addHero` 
 rejects any `extractionPointLite` call in an XML1 script or in XML1 inline data code (entity scripts, dialog
 options). `extractionPoint` is a popup blocker (V7, section 19). Unit tests: `tests/unit/test_lite_xtraction.py`.
 
-**Still missing (a later XML2 Fix change).** XML1's Load choice at every point, the Danger Room / Healer / Forge
-choices (sub-basements: all three; full points: by XML1's conditions, not decoded), and the removal of the Xtract
-world-map choice (#46). XML1's flag 1 is not honoured either: the sub-basement points offer Change Team where the
-first game did not (in free missions, where `teamlock` is 0). All of this needs a script function that builds XML1's
-menus (the research's design: XML1's flags kept and passed to it).
+**Still missing (a later XML2 Fix change).** XML1's Load choice at every point and the Danger Room / Healer / Forge
+choices (sub-basements: all three; full points: by XML1's conditions, not decoded). The Xtract world-map choice
+(#46) is gone with XML2 Fix 1.3.2 (`[Game] Xtract=0`; the section after this one). XML1's flag 1 is not honoured
+either: the sub-basement points offer Change Team where the first game did not (in free missions, where `teamlock`
+is 0). The rest needs a script function that builds XML1's menus (the research's design: XML1's flags kept and
+passed to it).
 
 **In game** (xml2-fix 1.3.1, windowed harness, own save folder; real keys through the test pipe for every use, menu
 choice, save, quit and load; staged: a new game, `seatParty` Wolverine + Cyclops, game flag `teamlock` as the
@@ -5424,7 +5425,7 @@ same change to each (`pda_without_portal`):
 
 The build reports an error, and writes nothing, when either half lacks the label or a model or the two halves would
 change differently. No text is changed. The recall itself stays in the engine (an XML2 Fix switch could disable its
-handler); the Xtraction menu's Xtract world map still reaches the same towns (#46).
+handler); the Xtraction menu's Xtract world map, which reached the same towns, is removed by SPEC 66 (#46).
 
 **Validator rule V35** (pda portal, `validate_frontend.v_pda_portal`, both front ends): both halves of
 `UI/menus/pda` are written by the frontend module, are a `PDA_MENU`, and have no `label_option03`, no `up` / `down`
@@ -5446,3 +5447,26 @@ nothing, the old size kept on any difference; see xml2-fix docs/effect-curves.md
 `fix_ini.LIMITS['EffectCurves']` = 3600 (a port-owned `[Limits]` key), written into every build's ini and by
 `tools/harness.py` like the other limits. An xml2-fix before 1.3.2 ignores the key and the pool stays at 900.
 `REQUIRED_XML2FIX` is 1.3.2.
+
+## 66. No Xtract world map at the Xtraction Points (issue #46)
+
+**What the first game does.** XML1's `extractionPoint` (default.xbe 0x9f110) builds its menu from the title, Change
+Team, Save and Load, and Danger Room / Healer / Forge under conditions (SPEC 62). There is no world map; XML1's
+strings have no id 2040.
+
+**What the port did.** XMen2.exe's `extractionPoint` (0x4a6b50) always adds an Xtract choice (id 2040, whose line
+is `openmenu('worldmap')`) between the title and Change Team. The world map lists X-Men Legends II's five town
+centres, which the port's zoneinfo has to keep for the engine's extraction (SPEC 15), so from the first mission on
+the menu offered a route into X-Men Legends II's towns (the other, the pause menu's Blink Portal, #89).
+
+**What the port does now.** `fix_ini` writes `[Game] Xtract=0` for every XML1 build (the ones with the postgame
+script; the key is in PORT_OWNED, and the harness writes it from the same place). With XML2 Fix 1.3.2 the fix's
+xtract module then jumps `extractionPoint` over the block that adds the choice (`eb 2d` at 0x4a6c7a, every retail
+byte it relies on guarded first): the menu offers the title, Change Team and Save only, and the world map and the
+town centres' zone data stay as they are. An older XML2 Fix ignores the key and the menu keeps Xtract, as before.
+Unit tests: `tests/unit/test_builder_parts.py` (`test_xml1_builds_ask_for_no_xtract_world_map`). Not in game in
+this change: the menu check is the release candidate's (xml2-fix `xtract` log line; title, Change Team and Save
+only, from nyc1_1_3's point on).
+
+**Still missing (as SPEC 62).** XML1's Load choice and the conditional Danger Room / Healer / Forge choices; those
+need a script function that builds XML1's menus, not an ini key.
