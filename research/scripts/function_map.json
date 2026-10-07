@@ -220,8 +220,8 @@
   "xml2_sig": "n(asss)",
   "xml1_script_calls": 0,
   "xml1_inline_data_calls": 20,
-  "xml2_replacement": "first 4 args kept",
-  "evidence": "XML1 sig asssss (xbe 0x9f4a0) vs XML2 asss (0x4a6d80); mapping of the flags unverified"
+  "xml2_replacement": "extractionPoint(owner), flags dropped (issue #63)",
+  "evidence": "XML1 sig asssss (xbe 0x9f4a0: Save and Load always, flags = Change Team / Danger Room / Healer / Forge) vs XML2 asss (0x4a6d80: hint, then team change only, no Save)"
  },
  "restartMission": {
   "xml1_sig": "n()",

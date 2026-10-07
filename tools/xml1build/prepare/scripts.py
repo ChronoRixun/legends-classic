@@ -63,7 +63,7 @@ from ..sources import REPO_ROOT
 import xmlb  # noqa: E402  tools/xmlb.py
 
 STAGE = 'scripts'
-VERSION = 1
+VERSION = 2                                          # 2: issue #63 (lite Xtraction points -> extractionPoint)
 OUT = 'out'                                          # the research layout: Sources overrides scripts/out with this
 REPORT_TXT, REPORT_JSON = 'rewrite_report.txt', 'rewrite_report.json'
 API_RELS = ('scripts/xml1_api.json', 'scripts/xml2_api.json')   # research-relative, packaged data
@@ -726,9 +726,15 @@ class Rewriter:
             STATS['rule blackbirdMenu code argument'] += 1
             return [call(name, argtxt(c.args[0], quote), q(new, '"' if quote == '"' else "'"),
                          argtxt(c.args[2], quote))]
-        if name == 'extractionPointLite' and len(c.args) == 6:
-            STATS['rule extractionPointLite 6->4 args'] += 1
-            return [call(name, *[argtxt(a, quote) for a in c.args[:4]])]
+        if name == 'extractionPointLite' and c.args:
+            # issue #63: XML1's lite point (xbe 0x9f4a0: owner + 5 flags) always offers Save and Load, plus Change
+            # Team (flag 1) and Danger Room / Healer / Forge (flags 2-4). XMen2.exe's extractionPointLite (0x4a6d80,
+            # owner + 3) is team change only, after an X-Men Legends II hint on first use. The full extractionPoint
+            # (0x4a6b50: title, Xtract, Change Team, Save) is the nearest XMen2.exe menu: every lite point becomes
+            # one. The flags are dropped: Load / Danger Room / Healer / Forge need an XML2 Fix menu (SPEC, "Lite
+            # Xtraction points").
+            STATS['rule extractionPointLite -> extractionPoint (flags dropped)'] += 1
+            return [call('extractionPoint', argtxt(c.args[0], quote))]
         if name in DROP:
             STATS[f'drop {name}'] += 1
             txt = f'{name}(' + ', '.join(a.text for a in c.args) + ')'

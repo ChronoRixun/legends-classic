@@ -3,6 +3,16 @@
 The builder's releases, newest first. The version is `xml1-builder --version`; the content version is what a
 build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebuild.
 
+## v0.1.11 - content version 14 (needs XML2 Fix 1.3.1)
+
+- **Fixed: 20 Xtraction points could not save, including the first one in the game** (issue #63). The point in
+  Central Park before the Mystique fight, the flashback and Danger Room side areas, the five Weapon X areas, all
+  eight mansion sub-basements and the two Master Mold areas only offered Change Team (after an X-Men Legends II
+  tip on first use). They now open the same Xtraction menu as every other point, with Save. Not yet as in the
+  first game: no Load, Danger Room, Healer or Forge choices at any Xtraction point, and the menu still has the
+  Xtract world-map choice (#46); both need an XML2 Fix change. A new check (V32) keeps the old menu out. The
+  scripts prepare stage reruns once.
+
 ## v0.1.10 - content version 13 (needs XML2 Fix 1.3.1)
 
 - **Fixed (0.1.8 regression): games saved before 0.1.8 lost or swapped hero skills.** The save names a hero's
