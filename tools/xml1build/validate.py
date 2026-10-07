@@ -72,6 +72,9 @@ Checks (severity per SPEC 4.6: error = will not load or silently misbehaves; war
                 Data/personal/<item> from the first game (frontend), with text and a texture IGB in <out>
   V31 save positions (SPEC 61): shared_talents in the save-stable order of
                 save_positions (new talents appended); no enabled fall kill volume numbered before another entinst
+  V32 lite xtraction (SPEC 62, issue #63): no XML1 script or inline data code calls
+                extractionPointLite (XMen2.exe's is team change only, no Save); prepare P3 writes extractionPoint for
+                XML1's lite points
   V23 fight styles (SPEC 43, style_budget.validate): per converted zone the distinct style files of the permanent
                 packages, the zone package, its CHRB characters' packages and the worst four-hero party against
                 the registry the shipped ini asks xml2-fix for ([Limits] FightStyles, else XMen2.exe's 19): more
@@ -721,7 +724,8 @@ class Validator:
                                ('V28', 'dialog platforms', self.dialog_platforms),
                                ('V29', 'codex icons', lambda ck: VF.v_codex_icons(self, ck)),
                                ('V30', 'personal items', lambda ck: VF.v_personal_items(self, ck)),
-                               ('V31', 'save positions', self.save_positions)):
+                               ('V31', 'save positions', self.save_positions),
+                               ('V32', 'lite xtraction', self.lite_xtraction)):
             ck = Check(cid, title)
             self.checks[cid] = ck
             t0 = time.time()
@@ -1034,6 +1038,36 @@ class Validator:
                 continue
             for m in msgs:
                 ck.error(m)
+
+    _LITE_XPOINT = re.compile(r'\bextractionPointLite\s*\(', re.I)
+
+    def lite_xtraction(self, ck):
+        """V32 (issue #63; SPEC 62): XMen2.exe's extractionPointLite (0x4a6d80) is team change
+        only, after an X-Men Legends II hint: XML1's lite Xtraction points always offered Save, so no XML1 script or
+        inline data code may call it (prepare P3 writes extractionPoint for them)."""
+        sc = self.scan
+        n_scripts = 0
+        for r in sorted(self.script_set()):
+            if not (self.exists(r) and self.is_x1(r)):
+                continue
+            n_scripts += 1
+            for i, s in self._statements(self.read(r).decode('latin-1').split('\r\n')):
+                if self._LITE_XPOINT.search(s):
+                    ck.error(f'{self.idx.get(r) or r}:{i + 1}: {_short(s)}: extractionPointLite offers no Save '
+                             f'(issue #63; prepare P3 writes extractionPoint)')
+        ck.set('lite_xtraction_scripts_checked', n_scripts)
+        n_code = 0
+        for table in (sc.inline, sc.runscripts):
+            for n, lst in self.data_items(table):
+                if not self.is_x1(n):
+                    continue
+                for item in lst:
+                    code = item[2] if isinstance(item, tuple) else item
+                    n_code += 1
+                    if self._LITE_XPOINT.search(code or ''):
+                        ck.error(f'{sc.files[n]["rel"]}: inline code {_short(code, 80)!r}: extractionPointLite '
+                                 f'offers no Save (issue #63; prepare P3 writes extractionPoint)')
+        ck.set('lite_xtraction_data_code_checked', n_code)
 
     def harm_loop_startup(self, ck):
         """V25 (SPEC 51): no dead ordinary harm loops."""

@@ -5160,3 +5160,47 @@ order) read them as `mastermold_special`, `physical_res` and `sabre_special`; th
 serve both eras (ids 43-45 mean different talents in each); a remap needs a loader hook (XML2 Fix) or the
 save-format change.
 
+## 62. Lite Xtraction points (issue #63)
+
+**What the first game does.** XML1 has two Xtraction functions. `extractionPoint(owner)` (default.xbe 0x9f110) is
+the full menu: a title, Change Team, Save and Load, and Danger Room / Healer / Forge under conditions.
+`extractionPointLite(owner, f1, f2, f3, f4, f5)` (0x9f4a0) always offers Save and Load, plus Change Team (f1) and
+Danger Room / Healer / Forge (f2-f4). Twenty zone entities use the lite form, in their `actscript`: the first point
+of the game (nyc1_1_2b), the flashback and Danger Room side zones (nyc_fb1, nyc_fb4, muir_in2, mag_nyc4), the five
+Weapon X zones (wx1_1, wx1_3, wx2_1, wx3_1, wx3_3), the eight mansion sub-basements and mastermold1/2. Their flags
+are `false` x5 (the first point, the side zones and Weapon X: Save and Load only; the model is
+`beacon_xtraction_saveonly`), `false, true, true, true, false` (the sub-basements: no Change Team; the model is
+`beacon_xtraction_noteamchange`) and `true, false, false, false, true` (Master Mold). No XML1 script file calls it.
+
+**What the port did.** Prepare P3 kept the first four arguments and called XMen2.exe's `extractionPointLite`
+(0x4a6d80, owner + 3 flags), which shows X-Men Legends II's `xpoint_lite_hint` on first use (game flag `danv`; it
+says such points cannot save) and from the second use a menu with the title and Change Team only (in game on 0.1.10
+at nyc1_1_2b, whose first flag is `false`: Change Team is offered anyway, so the flag does not gate it as earlier
+notes assumed). None of the 20 points could save.
+
+**What the port does now.** P3 (`Rewriter.rewrite_call`, P3 VERSION 2) writes XMen2.exe's full
+`extractionPoint(owner)` (0x4a6b50) for every XML1 `extractionPointLite` call; the flags are dropped. The 20 points
+open the same menu as every full point: title, Xtract (X-Men Legends II's world map, #46), Change Team and Save.
+With xml2-fix `ForcedTeams=1` the Change Team choice is greyed while game flag `teamlock` bit 1 is set (a seated
+forced mission, SPEC 19.8), as at every full point. The builder's own `addHero` emulation still emits
+`extractionPointLite("_ACTIVE_HERO_", ...)`, which T7 replaces at build time (SPEC_heroes). V32 (lite xtraction)
+rejects any `extractionPointLite` call in an XML1 script or in XML1 inline data code (entity scripts, dialog
+options). `extractionPoint` is a popup blocker (V7, section 19). Unit tests: `tests/unit/test_lite_xtraction.py`.
+
+**Still missing (a later XML2 Fix change).** XML1's Load choice at every point, the Danger Room / Healer / Forge
+choices (sub-basements: all three; full points: by XML1's conditions, not decoded), and the removal of the Xtract
+world-map choice (#46). XML1's flag 1 is not honoured either: the sub-basement points offer Change Team where the
+first game did not (in free missions, where `teamlock` is 0). All of this needs a script function that builds XML1's
+menus (the research's design: XML1's flags kept and passed to it).
+
+**In game** (xml2-fix 1.3.1, windowed harness, own save folder; real keys through the test pipe for every use, menu
+choice, save, quit and load; staged: a new game, `seatParty` Wolverine + Cyclops, game flag `teamlock` as the
+mission sets it, `loadMapKeepTeam` to the zone and `copyOriginAndAngles` of the leader onto the point). On 0.1.10
+(negative control) the nyc1_1_2b point showed the hint, then title + Change Team. On this change: nyc1_1_2b (the
+first point; `teamlock` 1, Change Team greyed), subbasement1a (`teamlock` 0, Change Team active) and wx1_1
+(`teamlock` 1) each opened title, Xtract, Change Team and Save Game with no hint; Save Game wrote a new slot
+(confirmed on screen and as a new save file), Quit Game went to the main menu, and Load Game of that slot came back
+in the same zone with the same party and the leader on the point (0.0 to 0.001 units from the saved position). The
+full point by the HAARP X-Jet shows the same menu as before (its zone data is byte-identical in this respect). Not
+checked in game: the other 17 converted points (same entity form and the same call), two-player, and Xtract (world
+map, #46).

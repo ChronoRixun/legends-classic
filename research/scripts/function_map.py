@@ -38,7 +38,7 @@ M = {
  'magnetoBall': ('removed', 'XML1 stub: xbe 0x2123a0'),
  'mission': ('comment (blackbird-menu mission state)', 'XML1 0x99420 -> mission manager vtbl+8(name,state); XML2 has no mission-list state'),
  'loadMap': ('loadMapKeepTeam(map)', 'XML1 loadMap sends "loadmap %s" (xbe 0x9a850, extra args default 0 0); XML2 loadMap sends "loadmapaddteam %s" (no such command registered) and loadMapKeepTeam sends "loadmap %s 0 0" (0x4a0cc0)'),
- 'extractionPointLite': ('first 4 args kept', 'XML1 sig asssss (xbe 0x9f4a0) vs XML2 asss (0x4a6d80); mapping of the flags unverified'),
+ 'extractionPointLite': ('extractionPoint(owner), flags dropped (issue #63)', 'XML1 sig asssss (xbe 0x9f4a0: Save and Load always, flags = Change Team / Danger Room / Healer / Forge) vs XML2 asss (0x4a6d80: hint, then team change only, no Save)'),
  'restartMission': ('(unused by XML1 content)', 'XML1 0x9a6e0 clears mission vars + "beginmission <current>"'),
 }
 out = {}
