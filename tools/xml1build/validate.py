@@ -83,6 +83,9 @@ Checks (severity per SPEC 4.6: error = will not load or silently misbehaves; war
                 is an error (the hero seated last has no powers), exactly full a warning
   V25 harm loops (SPEC 51): no delayed start-on ordinary harm loops that XML2 disables
   V34 ladder spawns (SPEC 46): no monster spawner without monster_spawnexactlocation runs a ladder motion path
+  V35 pda portal (SPEC 64, issue #89; validate_frontend.v_pda_portal): both front ends: UI/menus/pda (both halves)
+                written by frontend without the Blink Portal (no label_option03, nothing links to it, its models
+                hidden)
 
 Inherited defects. Many findings are defects of the XML1 disc itself (a zone, conversation, dialog, script or
 sound bank XML1 references but never shipped; a line default.xbe already dropped). They are re-derived, not
@@ -738,7 +741,8 @@ class Validator:
                                ('V30', 'personal items', lambda ck: VF.v_personal_items(self, ck)),
                                ('V31', 'save positions', self.save_positions),
                                ('V32', 'lite xtraction', self.lite_xtraction),
-                               ('V34', 'ladder spawns', self.ladder_spawns)):
+                               ('V34', 'ladder spawns', self.ladder_spawns),
+                               ('V35', 'pda portal', lambda ck: VF.v_pda_portal(self, ck))):
             ck = Check(cid, title)
             self.checks[cid] = ck
             t0 = time.time()

@@ -5374,3 +5374,52 @@ would silently fall back to XMen2.exe's rule: a plain punch would break it again
 - An enemy attack that passes XMen2.exe's melee sweep gets the Might share (seen in game: HAARP soldiers, `might`
   rank 1 in XML1's npcstat, hit a structure-2 wall at level 4). Which of an enemy's attacks pass the sweep here
   and passed XML1's is not established attack by attack.
+
+## 64. The pause menu without the Blink Portal (issue #89)
+
+**What the first game does.** XML1 has no portal: its pause menu offers Objectives, Characters, Load Game, Players,
+Options and Quit, and none of its scripts recall the team to a town.
+
+**What the port did.** Every zone's pause menu is X-Men Legends II's `UI/menus/pda` (a `PDA_MENU`), unchanged. Its
+third entry, `label_option03`, has no `usecmd`: XMen2.exe's PDA menu finds its entries by name (`label_option01` ..
+`label_option09` are strings in the exe) and opens the Blink Portal for that one. The portal loads the act's town
+centre from zoneinfo; for the first game's acts 1-5 those are X-Men Legends II's towns (zoneinfo still lists them,
+SPEC 15), where X-Men Legends II's own scripts run, the portal back is down and only an earlier save returns to
+the first game. The recall is active in every first-game zone (only X-Men Legends II's town scripts clear it).
+
+**What the port does now.** The frontend module writes the pause menu in both front ends (the zones are the first
+game's in both): `frontend.pda_menu_trees` reads XML2's two halves (`.XMLB` keys, `.engb` English) and applies the
+same change to each (`pda_without_portal`):
+
+- the label item `PDA_PORTAL_LABEL` (`label_option03`) is removed with its focus events, so the menu has nothing
+  to select or to open the portal with;
+- its panel models (`PDA_PORTAL_MODELS`: `option03`, `option03_light`, `option03_focus`, `pause_bracket_03`) stay,
+  with `hide="true"` and `enabled="false"`: the panel shows an empty slot between Team Management and the next
+  entry;
+- the items whose `up` / `down` named the label point past it (`label_option02.down` -> `label_option04`,
+  `label_option04.up` -> `label_option02` in XML2's menu).
+
+The build reports an error, and writes nothing, when either half lacks the label or a model or the two halves would
+change differently. No text is changed. The recall itself stays in the engine (an XML2 Fix switch could disable its
+handler); the Xtraction menu's Xtract world map still reaches the same towns (#46).
+
+**Validator rule V35** (pda portal, `validate_frontend.v_pda_portal`, both front ends): both halves of
+`UI/menus/pda` are written by the frontend module, are a `PDA_MENU`, and have no `label_option03`, no `up` / `down`
+naming it and no portal model shown (`frontend.pda_portal_problems`). Unit tests: `tests/unit/test_pda_portal.py`.
+
+**In game** (before this change, on a test copy with the same menu written by hand; issue #89): the entry was gone,
+Objectives, Small Map, Automap and Options worked, and nothing crashed with or without the portal's cooldown
+running. The builder's output is element for element the hand-made menu of that test.
+
+## 65. The effect curve pool (xml2-fix 1.3.2 `[Limits] EffectCurves`)
+
+XMen2.exe keeps the animation curves of every loaded effect (a particle's size, transparency, rotation over its
+life) in one pool of 900. A first-game zone's effects plus a four-hero party's powers need more (943 at
+nyc1_1_2b's bench fire; about 1050 in the heaviest zones measured), and past the pool the game hands out empty
+curves without a word: the effects loaded last draw no particles (the bench fire is a faint glow, or a hero's power
+loses its particles). xml2-fix 1.3.2 `[Limits] EffectCurves` moves the pool into a larger block of its own (all or
+nothing, the old size kept on any difference; see xml2-fix docs/effect-curves.md); curves are never saved.
+
+`fix_ini.LIMITS['EffectCurves']` = 3600 (a port-owned `[Limits]` key), written into every build's ini and by
+`tools/harness.py` like the other limits. An xml2-fix before 1.3.2 ignores the key and the pool stays at 900.
+`REQUIRED_XML2FIX` is 1.3.2.
