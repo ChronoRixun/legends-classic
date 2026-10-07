@@ -495,6 +495,47 @@ def skinset_block(ind, costume, heroes):
         f'{ind}if {FT_VAR} == 1', ind + IND + FT_KEEP, ind + IND + set_skinset_call(costume, heroes), f'{ind}endif']
 
 
+MENU_SEED_COMMENT = '# ( "x1: XML1 recommended party before team selection (issue 76)" )'
+
+
+def menu_seed_block(ind, seat, costume, heroes):
+    """Seed a free mission's menu without locking the team or skipping selection. Feature off keeps the existing menu."""
+    block = skinset_block(ind, costume, heroes)
+    block[0] = ind + MENU_SEED_COMMENT
+    block.insert(-2, ind + IND + seat_party_call(seat))
+    return block
+
+
+def menu_seed_problems(lines, plan):
+    """V-TBD: every begin-body copy needing a menu seed has exactly the guarded seed + original menu.
+    Check separately from forced seating: the menu stays outside the guard and the party remains editable.
+    """
+    strip = [s.strip() for s in lines]
+    problems = []
+    for i, line in enumerate(lines):
+        marker = BEGIN_MARKER.match(line)
+        if not marker:
+            continue
+        mission = marker.group('m').strip().lower()
+        row = plan.get(mission) or {}
+        if not row.get('menu_seed'):
+            continue
+        indent = line[:len(line) - len(line.lstrip())]
+        end = next((j for j in range(i + 1, len(lines)) if BEGIN_MARKER.match(lines[j])), len(lines))
+        want = [s.strip() for s in menu_seed_block('', row['menu_seed'], row['costume'], row['heroes'])]
+        hits = [j for j in range(i + 1, end) if lines[j] == indent + MENU_SEED_COMMENT]
+        if len(hits) != 1:
+            problems.append(f'{mission}: expected one recommended-party menu seed, got {len(hits)}')
+            continue
+        j = hits[0]
+        after = j + len(want)
+        fn, zone = body_load(lines[after]) if after < end else (None, None)
+        seats = sum(s.startswith('seatParty(') for s in strip[i + 1:end])
+        if seats != 1 or strip[j:after] != want or fn != row['load'] or zone != row['zone']:
+            problems.append(f'{mission}: recommended party/guard/menu differs from the plan')
+    return problems
+
+
 def push_block(ind=''):
     """XML1 beginSideMission, half 1 (design 3.4): the record is pushed before the side mission's seatParty."""
     return [ind + FT_PUSH_COMMENT] + feature_detect(FT_VAR, FT_FEATURE, ind) + [
@@ -531,10 +572,10 @@ def body_load(line):
 
 def forced_party_in_bodies(lines, bodies, plan):
     """-> (lines, [(mission, kind, zone)]). bodies: {mission: stripped body lines, marker first} as they are after
-    choose_team_in_bodies; plan: {mission: {'status', 'seat', 'costume', 'heroes'}}. Every occurrence of a body
+    choose_team_in_bodies; plan: {mission: {'status', 'seat', 'menu_seed', 'costume', 'heroes'}}. Every occurrence of a body
     (marker + exactly its statements, compared stripped) gets, at its final load statement:
       status 'seat'       the load (loadMapKeepTeam / loadMapChooseTeam "z") replaced by seat_block;
-      any other status    skinset_block inserted before the load (blackbirdMenu / loadMapKeepTeam / ...).
+      any other status    skinset_block (menu_seed_block when planned) inserted before the original load/menu.
     An occurrence already rewritten no longer matches its body, so the pass is idempotent."""
     strip = [l.strip() for l in lines]
     edits = []                                       # (index, remove_count, new_lines, record)
@@ -555,7 +596,10 @@ def forced_party_in_bodies(lines, bodies, plan):
         if p.get('status') == 'seat' and fn in ('loadMapKeepTeam', 'loadMapChooseTeam') and p.get('seat'):
             edits.append((j, 1, seat_block(ind, p['seat'], p['costume'], p['heroes'], zone), (mis, 'seat', zone)))
         else:
-            edits.append((j, 0, skinset_block(ind, p['costume'], p['heroes']), (mis, 'skinset', zone)))
+            seed = p.get('menu_seed')
+            block = menu_seed_block(ind, seed, p['costume'], p['heroes']) if seed else \
+                skinset_block(ind, p['costume'], p['heroes'])
+            edits.append((j, 0, block, (mis, 'skinset', zone)))
     out = list(lines)
     done = []
     for j, n, new, rec in sorted(edits, key=lambda e: -e[0]):

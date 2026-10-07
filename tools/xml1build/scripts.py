@@ -1036,16 +1036,30 @@ def _xml1_seat_list(info):
     return [h for h in slots if h not in res][:max(0, min(mx, FORCED_PARTY_SLOTS))]
 
 
+def _menu_seed_list(info, load):
+    """Issue #76: a selectable mission rebuilds its party too (XML1 0x18db96 -> 0x18d6d0).
+    Only complete, data-authored parties are handled here; partial lists need the original ini padding.
+    Continuations explicitly keeping heroes must keep the player's party.
+    """
+    attrs = info.get('attrs') or {}
+    if str(attrs.get('keepheroes', '')).lower() != 'false' or \
+            load not in ('blackbirdMenu', 'loadMapChooseTeam'):
+        return []
+    seat = _xml1_seat_list(info)
+    return seat if len(seat) == FORCED_PARTY_SLOTS else []
+
+
 def forced_party_plan(ctx) -> dict:
     """Pure (cached): the forced-team plan of all 101 XML1 missions (SPEC 19, design 3.1/3.3/3.5).
     {mission: {'act', 'forced': bool, 'seat': [names] (the XML1 builder's party minus JOIN_LATER), 'unseatable':
     [names not in this build's herostat], 'skinset': XML1 skinset, 'costume', 'heroes' (setSkinset args),
-    'load': the body's load function, 'zone': its zone, 'status'}} with status
+    'load': the body's load function, 'zone': its zone, 'menu_seed': [recommended names before an editable menu],
+    'status'}} with status
       'seat'   a forced mission whose party is seated (seat block),
       'menu'   forced, but a name is not a herostat hero of this build (profxgladiator in --hero-roster 21xml2,
                heroes.ROSTER_NPC): keeps the team menu (skinset block),
       'cut'    forced, its zone does not exist in XML1's data (skinset block; nothing may start it),
-      'free'   not forced (skinset block)."""
+      'free'   not forced (skinset block, optionally with a recommended-party seed)."""
     def build():
         forced = forced_hero_missions(ctx)
         heroes = _port_heroes(ctx)
@@ -1060,7 +1074,7 @@ def forced_party_plan(ctx) -> dict:
             zone = _zone_id(zone) if zone else None
             costume, hs = skinset_args(ctx, (info.get('attrs') or {}).get('skinset'))
             row = {'act': info.get('act'), 'forced': ml in forced, 'skinset': (info.get('attrs') or {}).get('skinset'),
-                   'costume': costume, 'heroes': hs, 'load': fn, 'zone': zone, 'seat': [], 'unseatable': [],
+                   'costume': costume, 'heroes': hs, 'load': fn, 'zone': zone, 'seat': [], 'menu_seed': [], 'unseatable': [],
                    'cut': bool(zone) and (zone not in zones or not _x1_zone_convertible(ctx, zone))}
             if ml in forced:
                 seat = [h for h in _xml1_seat_list(info) if h not in JOIN_LATER.get(ml, ())]
@@ -1074,6 +1088,9 @@ def forced_party_plan(ctx) -> dict:
                     row['status'] = 'seat'
             else:
                 row['status'] = 'free'
+                seed = _menu_seed_list(info, fn)
+                if not row['cut'] and all(h in heroes for h in seed):
+                    row['menu_seed'] = seed
             out[ml] = row
         return out
     return _cached(ctx, 'forced_party_plan', build)

@@ -3,6 +3,12 @@
 The builder's releases, newest first. The version is `xml1-builder --version`; the content version is what a
 build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebuild.
 
+## Unreleased
+
+- Seed the first HAARP mission's team selection from the original recommended party instead of carrying Magma
+  from the briefing (issue #76). Complete recommended parties on equivalent selectable starts use the same rule;
+  the team stays editable. Unit-tested and offline-validated; in-game confirmation pending.
+
 ## v0.1.11 - content version 14 (needs XML2 Fix 1.3.1)
 
 - **Fixed: 20 Xtraction points could not save, including the first one in the game** (issue #63). The point in

@@ -3996,6 +3996,11 @@ class Validator:
         for r in sorted(uses):
             for ln, d in ST.xml2fix_guard_problems(texts[r]):
                 ck.error(f'V14b: {self.idx.get(r)}:{ln}: {d}')
+        # V-TBD (issue #76): the recommended-party seed is distinct from a forced party.
+        for r, lines in texts.items():
+            for problem in ST.menu_seed_problems(lines, plan):
+                ck.error(f'V-TBD: {self.idx.get(r)}: {problem}')
+        ck.set('recommended_party_missions', sum(bool(p.get('menu_seed')) for p in plan.values()))
         # ---- V14c / V14d: seat blocks and skinsets
         herostat = {}
         st = self.stats()['variants']
@@ -4058,6 +4063,15 @@ class Validator:
 
     def _v14c_seat(self, ck, S, plan, herostat, lines, stm, k, where, ref, seat_count):
         i, s = stm[k]
+        mis = self._marker_before(lines, i)
+        p = plan.get(mis or '')
+        # V-TBD above checks the full guarded seed and the subsequent editable menu.
+        # The regular V14c shape is for forced parties that bypass selection.
+        if p and p.get('menu_seed'):
+            names = self._STR_ARGS.findall(s)
+            if names != p['menu_seed'] or any(n not in herostat for n in names):
+                ck.error(f'V-TBD: {where}:{i + 1}: invalid recommended-party seat {names}')
+            return
         prev = [x for _, x in stm[max(0, k - 3):k]]
         nxt = [x for _, x in stm[k + 1:k + 6 + 16]]
         # issue #55: the team-menu branch may first unlock the REQUIRED heroes XML1 only seats (menu_only_unlocks)
