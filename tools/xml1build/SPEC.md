@@ -4474,6 +4474,118 @@ see docs/issue-12-validation.md. Extinguishing and save/reload remain separate c
 The general harm-loop conversion below (SPEC 51) supersedes
 the name/path restriction on startup. The relocation script handling remains necessary.
 
+## 46. Ladder descent uses the authored movement through a native motion path (issue #32)
+
+The sewer and Arbiter descent clips contain a Motion track with 31 translation keys
+and a 1.6-second descent. Their animation skeletons do not contain a Motion bone.
+XMen2.exe's motion setup (0x56a800) first searches the skeleton for that bone; only
+then does 0x56a620 extract the track's precomputed movement metadata. These XML1
+clips have neither the skeleton entry nor that metadata. Playing the pose animation
+alone therefore does not supply the character's descent to that reader.
+
+`ladder_motion` extracts the original Motion sequence from the player's mission_grso
+mission2 and mission_a_int mission1 clips. It generates two native motion paths using
+the player's common/cabinet_knockedover file as a structural template. Translation
+keys are relative to the first key; rotations and timestamps are retained. The
+cabinet's transform and scale channel are removed, and duration follows the clip.
+Unexpected interpolation, rotation, channel lengths or duration fail the build.
+No key coordinates or game binary are distributed in this repository.
+
+Every listed descent script starts the relative path before playing its original
+EA_ZONE animation and retains its original waitsignal expression. arb3_1's ladder_dude02 runs the Arbiter
+descent under its own name (arbiter/a_int/grso_ladder_down01, the same text), so that script is listed too and
+shares the Arbiter path. World clipping and entity collision are disabled
+during the slide and restored after the signal. Entity collision alone does not bypass
+the world trace at the top of the ladder.
+The path, package entry and normal IGB budget are generated together. Affected zones
+also check the native 16-path registry limit. Each path remains relative to its actor,
+so repeated spawns and differently oriented ladders share it. The bad sound-path
+spawnscript on sewers3_1_2's ladderdude02 is unchanged, as are ladder objectives.
+
+Only a spawner with `monster_spawnexactlocation` starts its soldier at the ladder top. Without
+it, both games place the spawn themselves: default.xbe's placement (0x34ab0) calls 0x34940 only
+when the flag is clear, which takes the nearest navigation point, traces 24 units up and down and
+sets the height to the ground plus 2 units. XMen2.exe places such a spawn the same way (measured
+on the floor at height 2 below a spawner at 173). In the first game such a soldier therefore
+starts on the floor under a working world trace, so the authored descent cannot carry it lower.
+Three of the sixteen ladder spawners lack the flag (one in sewers3_1_3, two in arb3_3). Each gets
+a generated copy of its descent script with the `_floor` suffix: the original statements, with no
+path, world-clip or collision change. Spawners with the flag keep the converted script. Without
+the copy the path took all five sewers3_1_3 soldiers 173 units through the floor to their deaths.
+Validator rule V34: no monster spawner without the exact location
+runs a ladder motion-path script.
+
+XML2 Fix 1.3.2's opt-in `[Game] CharacterLadderPaths=1` is required. Characters
+do not schedule the generic native path evaluator, and their goal predicate bypasses
+it when no ordinary movement goal is set. The companion enables native scheduling
+and path evaluation only for these two generated resources. It retains native timing,
+relative movement, and final callback handling; ordinary character movement is unchanged.
+The builder owns the key and requires 1.3.2. Version 1.3.1 remains reserved for the
+fighting-style registry and geometry-sharing changes.
+
+Controlled in-game before/after checks in Sewers and Arbiter show the original soldiers
+stranded above the floor and converted soldiers descending to it. Repeated overlapping
+Sewers spawns also land and restore collision. See `docs/issue-32-validation.md` for
+measurements and limits: these are isolated authored-spawner tests, not a campaign
+playthrough; saving during descent and reloading in another process remains unverified.
+
+## 47. Objective completion descriptions follow the saved completion state (issue #8)
+
+The builder retains XML1's updatedescription attribute for the companion XML2 Fix
+ObjectiveDescriptions reader. Prepare tables VERSION 3 invalidates stale P2/P3 outputs;
+the final mission installer also restores the attribute from the plan, so developer
+builds with older research output retain it. No objective is added, removed, reordered
+or regrouped. Conflicting completion strings for an existing shared objective are a
+build error rather than a silent change to saved objective identity. The current owned
+inputs have 31 distinct completion descriptions and no such conflicts.
+
+The companion fix captures this extra attribute while the native parser reads each
+objective. It keys bounded strings by the native unsigned state index at record+0x1a9:
+the engine sorts whole objective records after parsing, so record addresses are not
+stable keys. The slot is cleared on every allocation before attributes are read, which
+prevents stale text across acts and permits several mission files in one act.
+
+Both primary and secondary journal description operands are redirected to the stored completion text
+only while the existing state byte has its completion bit set. Otherwise it uses the
+original description. This covers script completions, automatic counted completions,
+completion reversal and state restored from a save without rewriting saved records.
+Titles, completion popups, XP, counters and objective visibility retain their native
+behavior. The parser, allocation and two journal hooks require retail code guards and are
+installed together; without [Game] ObjectiveDescriptions=1 the original engine runs.
+
+The builder writes that key and requires the planned XML2 Fix 1.3.2 release. The builder
+PR depends on its companion engine PR and must not be released against 1.3.0. This is
+independent of the 1.3.1 work (SPEC 43-44, V23).
+
+Synthetic tests cover prepared and developer mission metadata, unchanged ordering,
+conflict rejection and engine selection/reset rules. Executable guards are checked
+against an owned executable without running it. Controlled in-game primary journal completion and reversal now display the expected
+source wording. A counted objective reached native completion; its rendered display,
+secondary-objective rendering, act transitions and fresh-process save reload remain
+unverified. See `docs/issue-8-validation.md` for the test boundaries.
+
+## 48. STAT pickups grant an unspent attribute point (issue #10)
+
+The STAT item's activation now calls the companion xml2-fix addStatPoints function
+with _ACTIVATOR_ and one point. The player can choose which attribute to raise;
+the former fixed body boost is removed. Item identity, display/model references and
+pickup placement remain unchanged. The call is in the versioned API and is recognized
+by lint for both forced-team modes, like addSkillPoints.
+
+The engine function uses the same character-name resolver as addSkillPoints, then
+reads/writes the native saved attribute-point word at CStats+4+0x16 through the retail
+getter/setter. It does not change XP, levels, skill points or a fixed attribute.
+Amounts outside 1..20 and signed counter overflow are refused. The new function is
+appended to the registration table; existing function indices remain unchanged, and
+the total including native builtins is 318 of the engine's 320 names.
+
+Synthetic grant/amount/overflow tests and a native accessor test over a synthetic
+saved block cover the offline contract. A controlled original/candidate pickup test
+confirmed collector-only granting, unchanged XP/levels/skills and other heroes,
+fresh-process save persistence, and spending the point on Focus through the native
+stats screen. See `docs/issue-10-validation.md` for setup and limits. The builder requires the planned companion
+XML2 Fix 1.3.2 release; an old DLL cannot execute this new call.
+
 ## 49. Conversation speaker HUD-head residency (2026-10-04, issue #13)
 
 Issue #13: with forced parties disabled, a named speaker can be absent from both
@@ -4771,6 +4883,29 @@ sewers1_2_3. A deferred volume returns only with a real crossing of its room in 
 beside it, jump on its ramps), not on a damage reading inside the box. Navigation has no cells on ramps and
 props a hero can still stand on (the billboard), so the 150-unit margin is a screen, not a proof.
 
+### Crossing tests of the deferred volumes (2026-10-06)
+
+Method: a build with all seventeen deferred volumes enabled (test only), xml2-fix 1.3.1, windowed, a four-hero party
+(two heroes plus the escort where the zone forces its party), real keyboard input through the test pipe for every
+walk, jump and fight; the controlled hero steers from its own facing because the camera turns with it. Every party
+member's position and health was recorded on every state read (several thousand samples per room). Staged, and only
+as setup: new game, party, levelling, zone loads, start positions next to the room, revives and full-health resets
+between runs, and a survival heal (setHealth to full below 40 %) during fights, which cannot hide a 32,000 hit.
+"Closest" is the smallest horizontal distance from the box footprint while standing on the floor.
+
+| Volume | Box (top, thickness) and floor | Walked | Result |
+|---|---|---|---|
+| `sewers/hub/sewers1_1_4` `kill_target01` | top -49, 188 thick; no floor over it (a channel between two walkways at z 0) | north walkway end to end twice with the party, a Morlock fight beside the channel, jumps along the edge; south walkway only from a staged start | **PASS, enabled.** Four 32,000 hits, all inside the channel (z -54 to -74 at entry, under the floor): one deliberate jump, three the controlled hero walking or jumping off the unrailed edge. AI followers never entered; their closest was 37.5 units, on the floor. Nobody was hurt by the box on a walkway. The south walkway was not walked end to end (its two halves are not joined in the navigation data). |
+| `nyc/alison/nyc1_1_4` `kill_target01` | top 339, 300 thick, under the whole map; roofs 21 units above it, floor over 17 % of it | billboard ramp (z 360 -> 421 -> 364) walked three times, four jumps on and off it, Cyclops following | **Stays deferred.** No hit on the ramp (the player report was not reproduced); closest 21 units over the top. A staged drop over the street was killed at once (32,000 at z 244): the box is live and is a catch-all floor under the city, not a pit. The other roofs were not walked. |
+| `nuke_plant/nuke/nuke1_2` `kill_target01` | top -63, 53 thick; a patch of floor at -60 (3 above the top) in the coolant | the catwalk at y 1020 walked east | **FAIL, stays deferred.** Walking on along the catwalk (no jump) took Cyclops off its open end into the coolant: 32,000 at z -76. The navigation data carries that walk on to the -60 floor. |
+| `sewers/hub/sewers1_1_1` `kill_target02` | two pits, tops -68 / -55; walkways 56-68 above, partly railed | part of the west walkway, a long fight there | **Unfinished, stays deferred.** AI Wolverine stepped off an unrailed walkway edge during the fight and was killed (32,000 at z -79); the leader was held by Morlocks. The second pit, the east walkway and a deliberate fall were not done. |
+
+Not checked in game (stay deferred): `arb3_2`, `arb3_3`, `mount`, `nuke1_2` `kill_target02`, `nuke1_3`, `nuke2_2` (two),
+`nuke2_3`, `sewers3_1_1`, `sewers_marrow`, `sewers2_1_3`, `sewers1_2_4`. From the map data alone: `sewers1_2_4` (127
+units under an island floor) and `nuke1_3`'s three small boxes (208 under the floor) look like pits; `mount` has floor
+93 units below its box inside the footprint, and `arb3_2` and `nuke2_2`'s `kill_target01` have floor 4 and 40 units over
+the top: test those first for a walk through the box.
+
 ## 53. The first game's voice lines (2026-10-05, issue #49)
 
 XMen2.exe builds each character's sound table when the character loads (0x438d20, called from 0x4239be). For
@@ -4883,10 +5018,35 @@ file are the frontend module's, have text without unescaped renderer codes, and 
 
 In game (xml2-fix 1.3.1): on main, Cyclops' first item showed the mansion loading screen and Wolverine's the
 yellow/magenta default texture; on the fixed build both show the first game's picture and close with the back key or
-the pad's B. Known gap: the item's text is not drawn. It is loaded (the word-wrapped text is in the game's memory
-while the menu is open), but no text box appears over the picture. Re-framing the menu IGB on X-Men Legends II's menu
-camera as done for the credits menus (21.2.1) did not draw it and hid the help line too, so it is not shipped; adding
-a text style to the text box or only moving the camera's near plane changed nothing. The cause is open.
+the pad's B.
+
+### The picture's size and the missing text (2026-10-07, in game on the 0.1.12 candidate)
+
+The engine draws the ITEM's texture as the menu's background sprite: the personal loader passes it to the menu's
+image setter (vt+0x84 = 0x5bb7b0, the same path as a menu's `image`), and the sprite is stretched over the whole
+512x384 virtual screen - the menu class's rect getter (0x5b7c60, vt+0x8c) feeds the manager a fixed 512x384, and
+the setter adds an aspect correction default.xbe does not have. default.xbe's setter (0x172880) adds the sprite at
+the rect its init sets instead: 256x128 at x 128..384, z 202..330 (bottom-up) - the first game's small picture over
+the menu IGB's desk backdrop. Both games ship the same `menu_personal.IGB` (XML2's is byte-identical to XML1's,
+camera and all), and the port's texture import was a byte copy, so the painted 512x256 art filled the screen ("too
+big") and covered the text area. The menu file is XML1's own, unchanged in XML2.
+
+`frontend` now re-composes every `Textures/personal/*.IGB` to 512x384 (`personal_art.recompose_igb`, pure Python -
+no imaging dependency): the art scaled into the first game's sprite window (rows 202..330, x 128..384 in the
+file's row order - the engine's v-flip shows it at z 202..330), its colours continued to the screen edges by a
+soft stretch of the art (the IGB's backdrop never shows: the sprite is opaque and ignores texture alpha - a
+fully transparent texture still drew opaque in game). The mip chain continues the halving to 1x1 under the same
+igImage count; a texture the reader cannot place falls back to the byte copy and is reported
+(`personal_textures_*_unframed`). V30 also checks the named texture's largest igImage is 512x384, so a future
+byte-copy regression fails validation.
+
+The item's text is still not drawn. It is loaded (the word-wrapped text is in memory while the menu is open), and
+no data-side change makes the text box appear: a missing texture (no sprite at all), a `style`, `animtext_scene`,
+or a re-framed IGB (21.2.1) each changed nothing (seen in game 2026-10-07; the menu reads `Data/personal/<item>`
+**.engb**, not the .XMLB - earlier probes that edited only the XMLB saw no effect at all). The MENU_ITEM_TEXTBOX
+draw (0x5c7a00) skips when the item's flags byte (+0x54) bit 2 is set or its +0x58 object is missing; why this
+menu's text box fails is engine-side and open (likely an XML2 Fix follow-up: the menu IGB's scene does not render
+around the sprite either - the margins behind it are black, so the box's anchor may never bind).
 
 ## 57. Gun soldiers fight in their gun's style (issue #52)
 
@@ -5072,7 +5232,7 @@ might_structure nibble (actor+0x57b) and rounded damageLevel affecter (actor+0x5
 stored to hit +0x2e at 0x4501fb. Wolverine's Sharpness contributes +3 at its first rank: an auto-spent higher-level
 hero can turn the broken zero into one. Character level itself is not read by this attack-level calculation.
 
-### 59.4 Engine work required for the wall rule (not implemented here)
+### 59.4 Engine work required for the wall rule (not implemented here; done in SPEC 63)
 
 For unchanged character defense and attack semantics, a normal hit must exceed character structure 0. To spare
 an object remapped to structure 1, the hit must be below 1. No integer can satisfy both; the effective attack
@@ -5187,11 +5347,12 @@ forced mission, SPEC 19.8), as at every full point. The builder's own `addHero` 
 rejects any `extractionPointLite` call in an XML1 script or in XML1 inline data code (entity scripts, dialog
 options). `extractionPoint` is a popup blocker (V7, section 19). Unit tests: `tests/unit/test_lite_xtraction.py`.
 
-**Still missing (a later XML2 Fix change).** XML1's Load choice at every point, the Danger Room / Healer / Forge
-choices (sub-basements: all three; full points: by XML1's conditions, not decoded), and the removal of the Xtract
-world-map choice (#46). XML1's flag 1 is not honoured either: the sub-basement points offer Change Team where the
-first game did not (in free missions, where `teamlock` is 0). All of this needs a script function that builds XML1's
-menus (the research's design: XML1's flags kept and passed to it).
+**Still missing (a later XML2 Fix change).** XML1's Load choice at every point and the Danger Room / Healer / Forge
+choices (sub-basements: all three; full points: by XML1's conditions, not decoded). The Xtract world-map choice
+(#46) is gone with XML2 Fix 1.3.2 (`[Game] Xtract=0`; the section after this one). XML1's flag 1 is not honoured
+either: the sub-basement points offer Change Team where the first game did not (in free missions, where `teamlock`
+is 0). The rest needs a script function that builds XML1's menus (the research's design: XML1's flags kept and
+passed to it).
 
 **In game** (xml2-fix 1.3.1, windowed harness, own save folder; real keys through the test pipe for every use, menu
 choice, save, quit and load; staged: a new game, `seatParty` Wolverine + Cyclops, game flag `teamlock` as the
@@ -5204,3 +5365,268 @@ in the same zone with the same party and the leader on the point (0.0 to 0.001 u
 full point by the HAARP X-Jet shows the same menu as before (its zone data is byte-identical in this respect). Not
 checked in game: the other 17 converted points (same entity form and the same call), two-player, and Xtract (world
 map, #46).
+
+## 63. The first game's break rule (xml2-fix `[Game] BreakRule=xml1`; follow-up to issue #51)
+
+This is the engine work SPEC 59 deferred. It needs xml2-fix 1.3.2 (unreleased); a build made with it runs on 1.3.1
+exactly as before, because 1.3.1 reads neither the key nor the attribute.
+
+### 63.1 The rule
+
+XML1 (default.xbe): the object damage function 0x92220 refuses a hit whose level (hit +0x14) is below the object's
+structure (+0x2c2), or whose target has structure above 9; the melee level 0x59a50 is the attack's authored
+`damagelevel` + {0, 3, 6, 8}[min(Might, 3)] + the `damageLevel` affecter, at most 9, with Might read by the same
+call (0xb1ba0) as the pickup gate. XMen2.exe cannot hold either number (SPEC 59): the hit byte is capped at 1 and
+characters compare it too, and the structure byte is clamped to 2 and tested for 2 in about thirty places.
+
+With `BreakRule=xml1` the fix adds XML1's comparison at the object gate (0x49805b) and changes neither byte:
+
+- **Structure.** `convert_physics` keeps XML1's number (clamped to 0..10, as default.xbe clamps it) in the new
+  entity attribute `xml1structure` next to the converted `structure`. XMen2.exe reads entity attributes by name
+  (0x49896d asks for `structure`) and never lists them, so only the fix sees it; the fix asks the same reader at
+  the same place and keeps the number by the object's handle. It uses the number only while the object's structure
+  byte is what `STRUCTURE_X1_TO_X2` gives for it, so a script that changes the byte later puts the object back
+  on XMen2.exe's rule.
+- **Attack level.** No new data. The authored `damagelevel` the builder passes through (SPEC 59: unchanged from
+  XML1 in styles, projectiles and entity definitions; the 59 shared combat events both games name carry the same
+  level or leave it to the default in both) is stored unclamped by XMen2.exe (0x4dc094) and copied into the hit;
+  only the melee sweep's level function (0x44f770, vtable slot 0x685a98) caps it. The fix reads the byte there,
+  returns the game's own result
+  unchanged, and remembers XML1's sum for that attack: authored + {0, 3, 6, 8} by the hero's lift value (the
+  `might_heaviness` sum, which is XML1's Might: heroes.py writes might_heaviness 1/2/3 for ranks 1/2/3) + the
+  `damageLevel` affecter, at most 9. A hit that never passes the sweep is judged by the level it carries.
+- **Nothing else.** The fix only refuses hits the game would let through on an object with a usable pair; what
+  characters, targeting and AI read is unchanged, and nothing is saved.
+
+Why an attribute and not a side file: it sits where `structure` sits (per definition, per zone, in the file the
+builder already writes and a mod can override), needs no key from a live object back to its definition and no
+second loader.
+
+`fix_ini.BREAK_RULE` ('xml1') is written to `[Game] BreakRule` for every XML1 build and is a port-owned key.
+`REQUIRED_XML2FIX` is 1.3.2 (with SPEC 46-48).
+
+### 63.2 Validator rule V33
+
+An XML1-sourced entity definition with a `structure` must carry an `xml1structure` in 0..10 whose conversion is
+that `structure` (`x1schema.break_rule_problems`, counted as `x1_break_rule_unpaired`). A definition that fails it
+would silently fall back to XMen2.exe's rule: a plain punch would break it again.
+
+### 63.3 What is and is not reproduced
+
+- Reproduced: every structure threshold 0..10 against melee hits, with XML1's Might shares (3/6/8) and the
+  `damageLevel` affecter (Sharpness and the like); enemies whose npcstat carries XML1's `might` talent get the
+  same share, as in XML1's data.
+- The heaviest objects stay as SPEC 59 left them: XMen2.exe never lifts heaviness 3 (0x427fa3), and 3 is also its
+  immovable class (0x496d90), so raising the lift limit is separate engine work.
+- Hits XMen2.exe builds itself (collision damage, thrown objects) carry its own small level numbers and are judged
+  with them. The push a refused hit gives a light object is XMen2.exe's rule, not XML1's.
+- An enemy attack that passes XMen2.exe's melee sweep gets the Might share (seen in game: HAARP soldiers, `might`
+  rank 1 in XML1's npcstat, hit a structure-2 wall at level 4). Which of an enemy's attacks pass the sweep here
+  and passed XML1's is not established attack by attack.
+
+## 64. The pause menu without the Blink Portal (issue #89)
+
+**What the first game does.** XML1 has no portal: its pause menu offers Objectives, Characters, Load Game, Players,
+Options and Quit, and none of its scripts recall the team to a town.
+
+**What the port did.** Every zone's pause menu is X-Men Legends II's `UI/menus/pda` (a `PDA_MENU`), unchanged. Its
+third entry, `label_option03`, has no `usecmd`: XMen2.exe's PDA menu finds its entries by name (`label_option01` ..
+`label_option09` are strings in the exe) and opens the Blink Portal for that one. The portal loads the act's town
+centre from zoneinfo; for the first game's acts 1-5 those are X-Men Legends II's towns (zoneinfo still lists them,
+SPEC 15), where X-Men Legends II's own scripts run, the portal back is down and only an earlier save returns to
+the first game. The recall is active in every first-game zone (only X-Men Legends II's town scripts clear it).
+
+**What the port does now.** The frontend module writes the pause menu in both front ends (the zones are the first
+game's in both): `frontend.pda_menu_trees` reads XML2's two halves (`.XMLB` keys, `.engb` English) and applies the
+same change to each (`pda_without_portal`):
+
+- the label item `PDA_PORTAL_LABEL` (`label_option03`) is removed with its focus events, so the menu has nothing
+  to select or to open the portal with;
+- its panel models (`PDA_PORTAL_MODELS`: `option03`, `option03_light`, `option03_focus`, `pause_bracket_03`) stay,
+  with `hide="true"` and `enabled="false"`: the panel shows an empty slot between Team Management and the next
+  entry;
+- the items whose `up` / `down` named the label point past it (`label_option02.down` -> `label_option04`,
+  `label_option04.up` -> `label_option02` in XML2's menu).
+
+The build reports an error, and writes nothing, when either half lacks the label or a model or the two halves would
+change differently. No text is changed. The recall itself stays in the engine (an XML2 Fix switch could disable its
+handler); the Xtraction menu's Xtract world map, which reached the same towns, is removed by SPEC 66 (#46).
+
+**Validator rule V35** (pda portal, `validate_frontend.v_pda_portal`, both front ends): both halves of
+`UI/menus/pda` are written by the frontend module, are a `PDA_MENU`, and have no `label_option03`, no `up` / `down`
+naming it and no portal model shown (`frontend.pda_portal_problems`). Unit tests: `tests/unit/test_pda_portal.py`.
+
+**In game** (before this change, on a test copy with the same menu written by hand; issue #89): the entry was gone,
+Objectives, Small Map, Automap and Options worked, and nothing crashed with or without the portal's cooldown
+running. The builder's output is element for element the hand-made menu of that test.
+
+On the 0.1.12 candidate (windowed harness, real keys, own save folder): the pause menu in mansion/man1a/subbasement1a and nyc/alison/nyc1_1_2b has no Blink Portal; eight downs light Objectives, Team Management, Small Map,
+Automap, Options, Players, Load Game, Quit Game and wrap, eight ups the same in reverse (the empty slot is never lit);
+Objectives, Small Map, Automap and Options open and close. Quit Game and Load Game from it work. Not checked: the
+pad, two players, the Danger Room's pause menu.
+
+## 65. The effect curve pool (xml2-fix 1.3.2 `[Limits] EffectCurves`)
+
+XMen2.exe keeps the animation curves of every loaded effect (a particle's size, transparency, rotation over its
+life) in one pool of 900. A first-game zone's effects plus a four-hero party's powers need more (943 at
+nyc1_1_2b's bench fire; about 1050 in the heaviest zones measured), and past the pool the game hands out empty
+curves without a word: the effects loaded last draw no particles (the bench fire is a faint glow, or a hero's power
+loses its particles). xml2-fix 1.3.2 `[Limits] EffectCurves` moves the pool into a larger block of its own (all or
+nothing, the old size kept on any difference; see xml2-fix docs/effect-curves.md); curves are never saved.
+
+`fix_ini.LIMITS['EffectCurves']` = 3600 (a port-owned `[Limits]` key), written into every build's ini and by
+`tools/harness.py` like the other limits. An xml2-fix before 1.3.2 ignores the key and the pool stays at 900.
+`REQUIRED_XML2FIX` is 1.3.2.
+
+## 66. No Xtract world map at the Xtraction Points (issue #46)
+
+**What the first game does.** XML1's `extractionPoint` (default.xbe 0x9f110) builds its menu from the title, Change
+Team, Save and Load, and Danger Room / Healer / Forge under conditions (SPEC 62). There is no world map; XML1's
+strings have no id 2040.
+
+**What the port did.** XMen2.exe's `extractionPoint` (0x4a6b50) always adds an Xtract choice (id 2040, whose line
+is `openmenu('worldmap')`) between the title and Change Team. The world map lists X-Men Legends II's five town
+centres, which the port's zoneinfo has to keep for the engine's extraction (SPEC 15), so from the first mission on
+the menu offered a route into X-Men Legends II's towns (the other, the pause menu's Blink Portal, #89).
+
+**What the port does now.** `fix_ini` writes `[Game] Xtract=0` for every XML1 build (the ones with the postgame
+script; the key is in PORT_OWNED, and the harness writes it from the same place). With XML2 Fix 1.3.2 the fix's
+xtract module then jumps `extractionPoint` over the block that adds the choice (`eb 2d` at 0x4a6c7a, every retail
+byte it relies on guarded first): the menu offers the title, Change Team and Save only, and the world map and the
+town centres' zone data stay as they are. An older XML2 Fix ignores the key and the menu keeps Xtract, as before.
+Unit tests: `tests/unit/test_builder_parts.py` (`test_xml1_builds_ask_for_no_xtract_world_map`). Not in game in
+this change: the menu check is the release candidate's (xml2-fix `xtract` log line; title, Change Team and Save
+only, from nyc1_1_3's point on).
+
+**Still missing (as SPEC 62).** XML1's Load choice and the conditional Danger Room / Healer / Forge choices; those
+need a script function that builds XML1's menus, not an ini key.
+
+## 67. Recommended party before mission selection (issue #76)
+
+XML1's `beginmission` checks `keepheroes` at default.xbe 0x18db5b; when false it calls the party builder
+0x18d6d0 at 0x18db98 before executing `scriptstart` (0x18dbda). That builder seats REQUIRED entries, then
+RECOMMENDED entries (0x18d77e..0x18d7f2), clears RESTRICTED entries and pads from the original ini if necessary.
+HAARP's `data/missions/haarp.eng` has no REQUIRED entries, four RECOMMENDED entries, `maxheros=4`,
+`teamselect=true`, `keepheroes=false`. Their authored order is Cyclops, Iceman, Storm, Wolverine. The tester's
+list puts Storm first; the source data supports this roster but not that slot order.
+
+Previously `scripts.forced_party_plan` classified this as free, and `forced_party_in_bodies` emitted only a
+skinset block before `blackbirdMenu`. The preceding Magma-only briefing therefore supplied the menu's party.
+The forced-team design's worked HAARP check (FORCED_TEAMS_DESIGN 5) assumed this carried-over party; it missed
+the original engine's rebuild for free missions.
+
+**Conversion.** Each free mission whose `keepheroes` is explicitly false, final load opens `blackbirdMenu` or
+`loadMapChooseTeam`, and complete four-person party can be derived from REQUIRED/RECOMMENDED/RESTRICTED data
+receives `menu_seed` in the plan. Every name must be in the build's playable roster and the zone must exist.
+No ini padding is guessed. Other starts, continuations and partial lists keep their existing behavior.
+`menu_seed_block` adds guarded `seatParty` to the existing skinset block before the menu. Selection stays outside
+the guard; it opens with the recommended party, allows replacements and confirms the player's selection. This
+is a free party (`teamlock=0`), distinct from SPEC 19's forced seat/load/else block. With ForcedTeams off or the
+DLL absent the existing menu remains the fallback. `--forced-teams menu` emits no seed calls.
+
+SPEC 58 already unlocks Cyclops, Iceman, Phoenix (Jean Grey), Rogue and Storm at the mansion1 milestone; Wolverine
+was unlocked earlier. No reserve unlock changes are needed. Beast is outside that cumulative set and retains his
+original lab conversation unlock (or later milestone). An existing profile may already have later heroes unlocked;
+this change does not reset profiles or rewrite saves. It applies at a mission start, not when loading a save that
+is already inside HAARP.
+
+**V36** (run with V14). every installed begin-body copy with `menu_seed` must carry exactly the planned feature
+guard, party and skinset immediately before the original editable menu. Each seeded name must be a herostat hero.
+Regular forced seat blocks still pass V14c; seeded menus do not count as forced seat blocks. Synthetic tests in
+`test_mission_menu_party.py` cover data derivation, missing heroes, continuations, partial lists, nested copies,
+idempotence, feature on/off/absent, both menu functions, and missing/wrong/duplicate/incorrectly guarded seeds.
+Runtime validation remains for the release agent: fresh profile, skip optional mansion hero conversations, proceed
+through the first briefing, inspect the default four heroes and Jean/Rogue in reserve, replace a hero and confirm.
+Beast must still require the lab conversation before his later milestone. No game was run for this change.
+
+### 67.1 Facility-entry decline (issue #77): static result, runtime reproduction still required
+
+XML1 `scripts/haarp/ext/enter_haarp.py` builds a two-option popup: the first action begins `haarp_int`, the second
+is empty. P3 converts it to `dialogs/x1/p006` with the first option pointing to `x1/missions/begin_haarp_int` and
+no action on the second. Both generated XMLB/engb and the built 0.1.11 pair preserve that distinction; there is no
+parent `scriptok` or `scriptcancel`. The exterior trigger's actscript still points to `haarp/ext/enter_haarp`.
+
+The missing-attribute inheritance hypothesis was checked and rejected: XMen2.exe's attribute getter 0x564b70
+returns the supplied empty default, the option adder 0x5e9857 clears the empty action, and acceptance at
+0x5eb827 reads only the selected option's action. The final queue at 0x5eb8d0 only runs a non-empty action.
+Therefore no unconditional interior load or incorrect decline action was found in the converter. The synthetic
+popup/binary-roundtrip regression protects this contract; it does not reproduce or resolve the reported runtime
+failure. No speculative data change is made for #77. The release agent should reproduce in `haarp/ext/haarp_ext04`
+after the entrance trigger is enabled, select the second option with real input, and record the selected index,
+active dialog and zone before/after acceptance (including repeat touches while still outside). The expected
+result is to remain outside; the first option should enter `haarp/int/haarp2_1`.
+
+## 68. Rank-1 power damage and the Xtraction beacons' glow (issues #78, #74)
+
+### Rank-1 trigger damage (issue #78)
+
+**What the first game does.** XML1 resolves a power trigger's attribute against its same-named `<event>` at
+run time: a trigger that does not set `Damage` / `Knockback` fires the event's attack with the event's value.
+Rogue's Southern Strike (`ps_rogue` `sstrike1`) declares `Damage="L3"` (15-18 per `data/values.xml`),
+`DamageLevel="2"`, `knockback="K1"` (40) on its `sstrike` event; the three swing triggers name `sstrike` and
+set only arc and height. The rank rungs (`sstrike2` .. `power_attack`) override the *trigger's* `Damage` /
+`knockback` from rank 2 (L4 .. H5). Rank 1 therefore deals the event's L3 damage; buying the first point
+(ranks are bought per point) raises it to L4.
+
+**What the port did.** `heroes.StyleCollapse._collapse` builds one output FightMove and a per-rank
+talentvalue per trigger attribute that changes across the rungs. The per-rank table holds only the ranks
+where the rung sets the attribute explicitly (2..11 here); `_tv`'s gap fill writes `'0'` into the leading
+ranks, and the backfill that exists for triggers *added* by a later rung does not run for triggers that fire
+from rank 1 (`present`). The converted `x1_ps_rogue` power1 kept the event's `damage="15 18"` but the three
+swings carried `%xro_strike_dmg_t3/t4/t5`, whose rank-1 slot was `'0'`; XMen2.exe reads the trigger's value,
+so at talent rank 1 the punches knocked down (the event's `dmgmod_auto_knockback` travels with the event)
+but dealt no damage. From rank 2 the talentvalues hold L4..H5 and damage worked. The same shape zeroed
+rank 1 of Cyclops' optic sweep (damage + knockback) and Cyclops' X-treme (damage + knockback, from the
+`cycxtreme` event's `Damage="M3"` / `knockback="K10"`). Powers whose rank-1 zero is genuine XML1 data are
+unchanged: Phoenix's telekinesis lift has an explicit `Damage="0"` at rank 1 (its trigger names no
+same-named event, so there is nothing to inherit), and the charged card / energy burst / slash knockbacks
+are explicit `knockback="0"` on the first five rungs - those powers gain knockback at rank 6, as on Xbox.
+
+**What the port does now.** In `_collapse`'s numeric per-rank branch, when the trigger fires from rank 1 but
+the attribute appears only from a later rung, the leading ranks are backfilled from the same-named `<event>`
+of that rank's effective move (resolved through `data/values.xml`), falling back to the previous `'0'` gap
+fill when the event does not carry the attribute. Southern Strike rank 1 now deals 15-18 (K1 knockback 40)
+exactly as XML1's event declares; ranks 2+ are unchanged. V37 scans the heroes-owned `data/talents/*.XMLB`
+for a damage/knockback talentvalue that is zeroed at rank 1 while a later rank is non-zero and errors when
+the hero powerstyle's same-named event carries a non-zero literal - the exact regression shape. Unit tests:
+`tests/unit/test_issues_74_78.py`.
+
+**Not done (later).** Trigger `damagelevel` stays on the existing DESIGN-4.4 fallback (top-rung literal)
+because XMen2.exe reads no keyed `damagelevel` talentvalue on triggers (not in `VALUE_REF_ATTRS`);
+per-rank *event* attribute variance is still collapsed to the rank-1 literal only. The FightMove-level
+attribute loop has the same leading-rank gap-fill but no event to inherit from was found there.
+
+**In game.** Not run in this change (data-level fix, no game launch). To verify: new game, leave Rogue at
+rank-1 Southern Strike, fight the Morlocks in the first sewer visit (sewers1_1_1) - the punches should
+remove health (15-18 per hit at level 1-3) while still knocking enemies down; after one point the damage
+must rise to L4 (25-31). Negative control on 0.1.11: same fight, rank-1 punches deal no health damage.
+
+### Xtraction beacon models (issue #74)
+
+**What the first game does.** Every Xtraction point entity names one of four beacon models under
+`models/puzzles/`: `beacon_xtraction` (the blue points), `beacon_xtraction_noteamchange` (the purple
+sub-basement points), `beacon_xtraction_saveonly` and `beacon_xtraction_mastermold`. The beacon IGBs carry
+the glow as model data: the blue beacon has four materials and a data-pump-driven glow layer (blend
+state/function, lighting state, texture-matrix state, transform sequences); the glow sprites are the
+embedded `xtraction_point` texture frames.
+
+**What the port did.** SPEC 4.4 is XML2-wins for models: zone `ensure_file` -> `import_asset` ->
+`import_x1_asset(force=False)` keeps the base install's file when XML2 retail has one at the destination.
+XML2 retail ships `beacon_xtraction`, `beacon_xtraction_noteamchange` and `beacon_xtraction_saveonly` IGBs
+with the glow layer stripped (one material; no blend or pump objects), so the build kept those and the blue
+points (and the save-only points) rendered without the glow. `beacon_xtraction_mastermold` exists only on
+the XML1 disc, so it fell through to a byte copy and always glowed. The purple sub-basement point glowed on
+PC because XML2's `_noteamchange` variant kept its glow material.
+
+**What the port does now.** `zones.force_xtraction_beacons` (from `build_permanent`) force-imports all four
+XML1 beacon models, overwriting the XML2-wins keep; the zone packages already list the models, so no
+package change is needed. V37 (a) compares the built `models/puzzles/beacon_xtraction*.IGB` bytes with the
+XML1 source and errors on any difference, and (b) re-derives the beacon set the XML1 zone files reference
+(`model="puzzles/beacon_xtraction*"`) and errors when a referenced beacon is outside the shipped set - a
+future map naming a new beacon would otherwise fall back to a same-named XML2 file. Unit tests:
+`tests/unit/test_issues_74_78.py`.
+
+**In game.** Not run in this change (data-level fix, no game launch). To verify: load any exterior zone with
+a blue point (e.g. the HAARP exterior by the X-Jet) and the mansion sub-basement 1a point; on the fixed
+build both glow; on 0.1.11 (negative control) the blue one does not. The glow is the rotating beacon light
+above the point.

@@ -75,11 +75,25 @@ Checks (severity per SPEC 4.6: error = will not load or silently misbehaves; war
   V32 lite xtraction (SPEC 62, issue #63): no XML1 script or inline data code calls
                 extractionPointLite (XMen2.exe's is team change only, no Save); prepare P3 writes extractionPoint for
                 XML1's lite points
+  V33 break rule (SPEC 63, x1schema.break_rule_problems): every XML1-sourced entity definition with a structure
+                carries an xml1structure in 0..10 that converts to it (xml2-fix [Game] BreakRule=xml1)
+  V37 xtraction beacons / rank-1 power damage (SPEC 68, issues #74, #78): (a) the four XML1 Xtraction beacon models
+                ship byte-identical to the XML1 source (XML2's same-named files lost the glow material) and the
+                XML1 maps name no beacon outside the shipped set; (b) a per-rank trigger damage / knockback
+                talentvalue with rank 1 zeroed while a later rank is non-zero must not have a same-named event
+                carrying a non-zero literal in the hero's powerstyle (XML1 inherits the event's value at ranks
+                the trigger leaves the attribute unset)
   V23 fight styles (SPEC 43, style_budget.validate): per converted zone the distinct style files of the permanent
                 packages, the zone package, its CHRB characters' packages and the worst four-hero party against
                 the registry the shipped ini asks xml2-fix for ([Limits] FightStyles, else XMen2.exe's 19): more
                 is an error (the hero seated last has no powers), exactly full a warning
   V25 harm loops (SPEC 51): no delayed start-on ordinary harm loops that XML2 disables
+  V34 ladder spawns (SPEC 46): no monster spawner without monster_spawnexactlocation runs a ladder motion path
+  V35 pda portal (SPEC 64, issue #89; validate_frontend.v_pda_portal): both front ends: UI/menus/pda (both halves)
+                written by frontend without the Blink Portal (no label_option03, nothing links to it, its models
+                hidden)
+  V36 recommended party (SPEC 67, issue #76; reported with V14): a mission start seeded with the first game's
+                recommended party has exactly the guarded seatParty + skinset before its original editable menu
 
 Inherited defects. Many findings are defects of the XML1 disc itself (a zone, conversation, dialog, script or
 sound bank XML1 references but never shipped; a line default.xbe already dropped). They are re-derived, not
@@ -118,6 +132,7 @@ from . import buoys as BY
 from . import automaps as AM             # V20 (SPEC 26): XML1 automaps as .zam
 from . import skins as SK                # V21 (SPEC 25): skin blend weights / skeleton against the anim DB
 from . import style_budget as SB         # V23 (SPEC 43): the fighting / power style registry per zone
+from . import ladder_motion as LM       # V34 (SPEC 46): ladder paths only from the ladder top
 from . import weapons as W              # V5 (SPEC 57, issue #52): a gun-armed entry carries its gun's fighting style
 from . import save_positions as SP      # V31: identities a save keeps by position
 
@@ -362,7 +377,9 @@ class Scan:
         self.inv_items = {}        # norm rel -> [inventoryitem values]
         self.turret_mount = {}     # norm rel -> [(entity name, missing flags)] remapped scan turrets not fixed-mount
         self.delayed_harm_loops = {}  # norm rel -> [(entity name, loop effect, firstact)]
+        self.ladder_floor_paths = {}  # norm rel -> [spawner name] running a ladder path without exact location
         self.physics_scale = {}    # norm rel -> [(entity name, attribute, value)] XML1-scale object physics left
+        self.break_rule = {}       # norm rel -> [(entity name, structure, xml1structure)] pairs BreakRule=xml1 cannot use
         self.speakers = {}         # norm rel (conversations/) -> [(attr, %TOKEN%)]
         self.anim_enums = {}       # norm rel -> [(tag, attr, enum literal)]  animenum values + EA_* in any value
         self.zoneinfo_xtraction = {}   # norm rel (data/zoneinfo.*) -> [(zone, [attrs])] Xtraction network entries
@@ -538,6 +555,9 @@ class Validator:
                 loops = XS.delayed_harm_loops(root)
                 if loops:
                     sc.delayed_harm_loops[n] = loops
+                floor = LM.path_spawner_problems(root)
+                if floor:
+                    sc.ladder_floor_paths[n] = floor
                 if n.startswith('dialogs/'):
                     dp = XS.dialog_platform_problems(root)
                     if dp:
@@ -546,6 +566,9 @@ class Validator:
                     ps = XS.physics_scale_problems(root)
                     if ps:
                         sc.physics_scale[n] = ps
+                    br = XS.break_rule_problems(root)
+                    if br:
+                        sc.break_rule[n] = br
                 if n.startswith('conversations/'):
                     sp = [(k, t) for el in root.iter() for k in SPEAKER_ATTRS for t in SPEAKER_RE.findall(el.get(k) or '')]
                     if sp:
@@ -725,7 +748,10 @@ class Validator:
                                ('V29', 'codex icons', lambda ck: VF.v_codex_icons(self, ck)),
                                ('V30', 'personal items', lambda ck: VF.v_personal_items(self, ck)),
                                ('V31', 'save positions', self.save_positions),
-                               ('V32', 'lite xtraction', self.lite_xtraction)):
+                               ('V32', 'lite xtraction', self.lite_xtraction),
+                               ('V34', 'ladder spawns', self.ladder_spawns),
+                               ('V35', 'pda portal', lambda ck: VF.v_pda_portal(self, ck)),
+                               ('V37', 'xtraction beacons / rank-1 power damage', self.v37_beacons_rank_one)):
             ck = Check(cid, title)
             self.checks[cid] = ck
             t0 = time.time()
@@ -977,6 +1003,17 @@ class Validator:
                      f'XMen2.exe clamps (x1schema.convert_physics), e.g. {lst[:2]}')
             n_scale += len(lst)
         ck.set('x1_physics_scale_left', n_scale)
+        # V33 (SPEC 63): an XML1-sourced entity definition with a structure carries
+        # XML1's own number in xml1structure, and its structure is what that number converts to. Otherwise xml2-fix's
+        # BreakRule=xml1 has nothing to compare for that object and a plain punch breaks it again.
+        n_break = 0
+        for n, lst in sorted(sc.break_rule.items()):
+            if n in sc.twins:
+                continue
+            ck.error(f'{sc.files[n]["rel"]}: {len(lst)} entity definition(s) whose structure and xml1structure do not '
+                     f'pair (x1schema.convert_physics), e.g. {lst[:2]}')
+            n_break += len(lst)
+        ck.set('x1_break_rule_unpaired', n_break)
 
     def fall_kill_volumes(self, ck):
         """V26: converted fall kill volumes must be active collision boxes; the listed player-only
@@ -1069,6 +1106,107 @@ class Validator:
                                  f'offers no Save (issue #63; prepare P3 writes extractionPoint)')
         ck.set('lite_xtraction_data_code_checked', n_code)
 
+    # ================================================================== V37 (issues #74, #78)
+    def v37_beacons_rank_one(self, ck):
+        """V37 (issues #74, #78): (a) the Xtraction beacon models ship XML1's glow-carrying IGBs, not XML2's
+        same-named stripped ones, and the XML1 maps name no beacon outside the shipped set; (b) no per-rank
+        trigger damage / knockback talentvalue is zeroed at rank 1 while its same-named event carries a
+        non-zero literal (XML1 inherits the event's value at ranks the trigger leaves the attribute unset)."""
+        self._v37_xtraction_beacons(ck)
+        self._v37_rank_one_damage(ck)
+
+    _BEACON_MODEL_RE = re.compile(r'model\s*=\s*"(puzzles/beacon_xtraction[a-z0-9_]*)"', re.I)
+
+    def _v37_xtraction_beacons(self, ck):
+        from . import zones as ZN               # noqa: WPS433 - zones owns the shipped list
+        shipped = {C.norm(m) for m in ZN.XTRACTION_BEACON_MODELS}
+        n_same = 0
+        for m in sorted(shipped):
+            src = self.ctx.x1_path(m + '.igb')
+            data = self.read(m + '.igb')
+            if src is None:
+                ck.error(f'{m}.igb is not in the XML1 data')
+            elif data is None:
+                ck.error(f'{m}.igb is not in <out>')
+            elif data != src.read_bytes():
+                ck.error(f'{m}.igb differs from the XML1 source: the build kept another file (XML2 retail\'s '
+                         f'same-named beacon IGB lost the glow material; issue #74)')
+            else:
+                n_same += 1
+        ck.set('xtraction_beacons_identical', n_same)
+        found = set()
+        for z in self.ctx.x1_zones():
+            p = self.ctx.x1_path(f'maps/{z}.eng') or self.ctx.x1_path(f'maps/{z}.xml')
+            if p is None:
+                continue
+            found |= {C.norm('models/' + m.group(1)) for m in self._BEACON_MODEL_RE.finditer(
+                p.read_bytes().decode('latin-1', 'replace'))}
+        for m in sorted(found - shipped):
+            ck.error(f'XML1 map references {m} as an Xtraction beacon, but the shipped set is {sorted(shipped)}: '
+                     f'it would fall back to a same-named XML2 file (issue #74)')
+        ck.set('xtraction_beacons_referenced', len(found))
+
+    def _v37_rank_one_damage(self, ck):
+        """rank-1 zeroing detector for trigger damage / knockback talentvalues (issue #78)."""
+        n_checked = 0
+        for n, e in sorted(self.reg.items()):
+            if e['owner'] != 'heroes' or not n.startswith('data/talents/') or not n.endswith('.xmlb'):
+                continue
+            root = self.tree(n)
+            if root is None:
+                continue
+            tables = {}
+            for tv in root.iter('talentvalue'):
+                if tv.get('name'):
+                    tables.setdefault(tv.get('name'), {})[tv.get('level')] = tv.get('value') or ''
+            zeroed = {}
+            for name, t in tables.items():
+                if '_dmg' not in name and '_kb' not in name:
+                    continue
+                if t.get('1') in (None, '0', '0 0', '0.0') and \
+                        any(self._first_num(v) not in (None, 0.0) for r, v in sorted(t.items()) if r != '1'):
+                    zeroed[name] = t
+            if not zeroed:
+                continue
+            hero = C.split_ext(n)[0].rsplit('/', 1)[-1]
+            ps = self.tree(f'data/powerstyles/x1_ps_{hero}.xmlb')
+            if ps is None:
+                continue
+            for fm in ps.iter('FightMove'):
+                events = {}
+                for ev in fm.iter('event'):
+                    if ev.get('name'):
+                        events.setdefault((ev.get('name') or '').lower(), ev)
+                for tr in fm.iter('trigger'):
+                    ref = (tr.get('damage') or '')
+                    self._v37_zero_ref(ck, zeroed, tr, events, 'damage', ref, n)
+                    ref = (tr.get('knockback') or '')
+                    self._v37_zero_ref(ck, zeroed, tr, events, 'knockback', ref, n)
+            n_checked += len(zeroed)
+        ck.set('rank_one_zeroed_tvs_checked', n_checked)
+
+    @staticmethod
+    def _first_num(v):
+        m = re.match(r'\s*(-?\d+(?:\.\d+)?)', v or '')
+        return float(m.group(1)) if m else None
+
+    def _v37_zero_ref(self, ck, zeroed, tr, events, attr, ref, talent_rel):
+        if not ref.startswith('%'):
+            return
+        name = ref[1:]
+        if name not in zeroed:
+            return
+        ev = events.get((tr.get('name') or '').lower())
+        if ev is None:
+            return
+        lit = ev.get(attr)
+        if lit is None or lit.startswith('%'):
+            return
+        if self._first_num(lit) not in (None, 0.0):
+            ck.error(f'{talent_rel}: {name} is 0 at rank 1 but the event {ev.get("name")!r} of trigger '
+                     f'{tr.get("name")!r} carries {attr}={lit!r}: rank 1 inherits the event in XML1 '
+                     f'(issue #78); later ranks: {[zeroed[name].get(r) for r in sorted(zeroed[name]) if r != "1"]}')
+
     def harm_loop_startup(self, ck):
         """V25 (SPEC 51): no dead ordinary harm loops."""
         sc = self.scan
@@ -1082,6 +1220,20 @@ class Validator:
                          'clears the loop-on bit (invisible hazard)')
                 count += 1
         ck.set('dead_harm_loops', count)
+
+    def ladder_spawns(self, ck):
+        """V34 (SPEC 46): a monster spawner without monster_spawnexactlocation puts its spawn on the ground, so
+        it must not run a ladder motion-path script (the path would carry the soldier through the floor)."""
+        sc = self.scan
+        count = 0
+        for n, names in sorted(sc.ladder_floor_paths.items()):
+            if n in sc.twins:
+                continue
+            for name in names:
+                ck.error(f'{sc.files[n]["rel"]}: spawner {name!r} runs a ladder motion path but spawns on the '
+                         f'ground (no monster_spawnexactlocation; ladder_motion.floor_spawn_ref)')
+                count += 1
+        ck.set('ladder_paths_from_ground', count)
 
     def dialog_platforms(self, ck):
         """V28 (issue #50; SPEC 54): a popup dialog with only console variants (XML1's xbox / ps2 / gc) opens an empty
@@ -3996,6 +4148,11 @@ class Validator:
         for r in sorted(uses):
             for ln, d in ST.xml2fix_guard_problems(texts[r]):
                 ck.error(f'V14b: {self.idx.get(r)}:{ln}: {d}')
+        # V36 (issue #76; SPEC 67, run with V14): the recommended-party seed is distinct from a forced party.
+        for r, lines in texts.items():
+            for problem in ST.menu_seed_problems(lines, plan):
+                ck.error(f'V36: {self.idx.get(r)}: {problem}')
+        ck.set('recommended_party_missions', sum(bool(p.get('menu_seed')) for p in plan.values()))
         # ---- V14c / V14d: seat blocks and skinsets
         herostat = {}
         st = self.stats()['variants']
@@ -4058,6 +4215,15 @@ class Validator:
 
     def _v14c_seat(self, ck, S, plan, herostat, lines, stm, k, where, ref, seat_count):
         i, s = stm[k]
+        mis = self._marker_before(lines, i)
+        p = plan.get(mis or '')
+        # V36 above checks the full guarded seed and the subsequent editable menu.
+        # The regular V14c shape is for forced parties that bypass selection.
+        if p and p.get('menu_seed'):
+            names = self._STR_ARGS.findall(s)
+            if names != p['menu_seed'] or any(n not in herostat for n in names):
+                ck.error(f'V36: {where}:{i + 1}: invalid recommended-party seat {names}')
+            return
         prev = [x for _, x in stm[max(0, k - 3):k]]
         nxt = [x for _, x in stm[k + 1:k + 6 + 16]]
         # issue #55: the team-menu branch may first unlock the REQUIRED heroes XML1 only seats (menu_only_unlocks)

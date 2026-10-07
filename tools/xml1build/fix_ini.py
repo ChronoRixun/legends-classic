@@ -5,8 +5,10 @@ keys:
 
   the port (this module)  the content requirements of a build - [Game] NewGameTeam / ResetUnlocks / SaveFolder /
                           ForcedTeams / PostgameScript / WindowTitle / EndHeroUnlock / MainMenuItems / NewGamePlus /
-                          ReviewStats / XPCurve / GeometrySharingBlendIndices, [Limits] ActorSlots /
-                          ResourceNames / ItemEnhancements / FightStyles, [Online] GameVersion. They are
+                          ReviewStats / Xtract / XPCurve / GeometrySharingBlendIndices / CharacterLadderPaths /
+                          ObjectiveDescriptions / BreakRule, [Limits]
+                          ActorSlots / ResourceNames / ItemEnhancements / FightStyles / EffectCurves, [Online]
+                          GameVersion. They are
                           functions of the build's content (the menus it wrote, its report.json, its scripts), so the
                           builder (tools/xml1builder) writes them after a build, and tools/harness.py takes its
                           [Game] / [Limits] / [Online] lines from here too (the harness and the shipped build cannot
@@ -81,6 +83,14 @@ REVIEW_STATS = '0'
 REVIEW_MENU_FILE = ('UI', 'menus', 'review.XMLB')
 REVIEW_STATS_LABEL = 'option05_text'
 
+# xml2-fix [Game] Xtract (xml2-fix 1.3.2; SPEC 66, issue #46): XMen2.exe's extractionPoint
+# always adds an Xtract choice (id 2040, openmenu('worldmap')) that opens XML2's world map of its five town centres
+# (which the port's zoneinfo keeps because the engine's extraction needs them there - SPEC 15); XML1's Xtraction
+# menus had no world map. '0' jumps extractionPoint over the block that adds the choice, leaving the title, Change
+# Team and Save. Written for every XML1 build (the ones with PostgameScript); an xml2-fix older than 1.3.2 ignores
+# the key, and the menu keeps Xtract as before.
+XTRACT = '0'
+
 # xml2-fix [Game] XPCurve (SPEC 23, research/heroes/levels.md): the build's objectives, scripts and npcstat carry XML1's
 # XP amounts (act 9's crystal objectives 2,000,000, asteroid_m's setXP 1,125,000), which on XMen2.exe's curve take a
 # level-1 hero to 40; with XPCurve=xml1 the DLL uses XML1's level table (cap 45) and kill XP (half of each kill to
@@ -97,7 +107,12 @@ BUILD_REPORT = ('_build', 'report.json')
 # 1.3.1: the fighting / power style registry 19 -> 32 (SPEC 43, issue #31: XML1's zones need up to 22 styles with a
 # four-hero party; the 20th was refused and the hero seated last had no powers). style_budget.capacity reads this
 # value for V23.
-LIMITS = {'ActorSlots': '127', 'ResourceNames': '1024', 'ItemEnhancements': '512', 'FightStyles': '32'}
+# 1.3.2: the effect animation curve pool 900 -> 3600 (EffectCurves; xml2-fix docs/effect-curves.md): a zone's
+# effects and a four-hero party's powers need more than 900 curves (943 at nyc1_1_2b's bench fire, up to about 1050
+# in the heaviest zones), and past the pool XMen2.exe hands out empty curves - the effects loaded last lose their
+# particles (the bench fire is a faint glow). Curves are not saved.
+LIMITS = {'ActorSlots': '127', 'ResourceNames': '1024', 'ItemEnhancements': '512', 'FightStyles': '32',
+          'EffectCurves': '3600'}
 
 # xml2-fix 1.3.1 [Game] GeometrySharingBlendIndices (SPEC 44, issue #11): XMen2.exe's geometry sharing reuses one
 # skinned mesh for another when positions and weights match although their packed blend indices differ; XML1's
@@ -105,6 +120,26 @@ LIMITS = {'ActorSlots': '127', 'ResourceNames': '1024', 'ItemEnhancements': '512
 # officer, the GRSO nullifier and flamethrower). '1' makes the fix compare the indices too. Off in xml2-fix unless
 # set (stock XML2 is not known to need it), so every XML1 build asks for it.
 GEOMETRY_SHARING_BLEND_INDICES = '1'
+
+# xml2-fix 1.3.2 [Game] CharacterLadderPaths (SPEC 46, issue #32): the sewer and Arbiter ladder descents are driven by
+# two generated native motion paths (ladder_motion), but XMen2.exe never schedules the generic path evaluator for
+# characters. '1' makes the fix evaluate those two paths with the native movement timer; ordinary character
+# movement is unchanged. Off in xml2-fix unless set, so every XML1 build asks for it.
+CHARACTER_LADDER_PATHS = '1'
+
+# xml2-fix 1.3.2 [Game] ObjectiveDescriptions (SPEC 47, issue #8): XML1's objectives carry an updatedescription, the
+# journal text once the objective is complete, which XMen2.exe's parser ignores; the build keeps the attribute in the
+# missions and '1' makes the fix show it in both journal renderers while the objective's completion bit is set (saved
+# objective records unchanged). Off in xml2-fix unless set, so every XML1 build asks for it.
+OBJECTIVE_DESCRIPTIONS = '1'
+
+# xml2-fix 1.3.2 [Game] BreakRule (SPEC 63, issue #51's follow-up): XMen2.exe keeps an object's
+# structure in 0..2 and caps a melee hit's level at 1, so the converted structure (x1schema.convert_physics: XML1's
+# 2-9 -> 1) lets a plain punch break walls XML1 kept for powers. 'xml1' makes the fix compare XML1's hit level
+# (authored level + Might + the damageLevel affecter) with the xml1structure the build's entity definitions carry.
+# Off in xml2-fix unless set; a fix without the feature (before 1.3.2) ignores the key and the attribute, and objects
+# break as they do without it. Written for every XML1 build.
+BREAK_RULE = 'xml1'
 
 # xml2-fix [Game] ForcedTeams (SPEC 19): '1' = the scripts of a --forced-teams seat build seat XML1's parties
 # (xml2-fix forced_teams module), '0' = the functions exist but report off (team menu), 'off' = no key (nothing
@@ -114,14 +149,17 @@ FORCED_TEAMS_VALUES = ('1', '0', 'off')
 
 # the xml2-fix release a builder-made play build needs (every key above is in v1.2.0; v1.3.0: the SKILL pickup's
 # addSkillPoints, the conversation hooks [Game] AutoAdvance / ReplyVoices / ReplyCursor - SPEC 32, 34; v1.3.1:
-# [Limits] FightStyles - SPEC 43, [Game] GeometrySharingBlendIndices - SPEC 44)
-REQUIRED_XML2FIX = '1.3.1'
+# [Limits] FightStyles - SPEC 43, [Game] GeometrySharingBlendIndices - SPEC 44; v1.3.2: [Game] CharacterLadderPaths -
+# SPEC 46, [Game] ObjectiveDescriptions - SPEC 47, the STAT pickup's addStatPoints - SPEC 48,
+# [Game] BreakRule - SPEC 63, [Limits] EffectCurves - SPEC 65, [Game] Xtract - SPEC 66)
+REQUIRED_XML2FIX = '1.3.2'
 
 # every key the port may write (the builder drops the ones a build does not need); the launcher owns the rest
 PORT_OWNED = {'Game': ('NewGameTeam', 'ResetUnlocks', 'SaveFolder', 'ForcedTeams', 'PostgameScript', 'WindowTitle',
-                       'EndHeroUnlock', 'MainMenuItems', 'NewGamePlus', 'ReviewStats', 'XPCurve',
-                       'GeometrySharingBlendIndices'),
-              'Limits': ('ActorSlots', 'ResourceNames', 'ItemEnhancements', 'FightStyles'),
+                       'EndHeroUnlock', 'MainMenuItems', 'NewGamePlus', 'ReviewStats', 'Xtract', 'XPCurve',
+                       'GeometrySharingBlendIndices', 'CharacterLadderPaths', 'ObjectiveDescriptions',
+                       'BreakRule'),
+              'Limits': ('ActorSlots', 'ResourceNames', 'ItemEnhancements', 'FightStyles', 'EffectCurves'),
               'Online': ('GameVersion',)}
 
 
@@ -213,7 +251,8 @@ def build_forced_teams(out):
 
 
 def game_keys(*, xml1_opening=True, save_folder=None, forced_teams='1', add_hero=False, join_hero=True, postgame=None,
-              port_identity=False, main_menu_items=None, new_game_plus=None, review_stats=None, xp_curve=None) -> dict:
+              port_identity=False, main_menu_items=None, new_game_plus=None, review_stats=None, xtract=None,
+              xp_curve=None) -> dict:
     """the [Game] keys, in the order tools/harness.py always wrote them (a dict: insertion order)."""
     game = {}
     if xml1_opening:
@@ -223,6 +262,9 @@ def game_keys(*, xml1_opening=True, save_folder=None, forced_teams='1', add_hero
         if save_folder:
             game['SaveFolder'] = save_folder
         game['GeometrySharingBlendIndices'] = GEOMETRY_SHARING_BLEND_INDICES
+        game['CharacterLadderPaths'] = CHARACTER_LADDER_PATHS
+        game['ObjectiveDescriptions'] = OBJECTIVE_DESCRIPTIONS
+        game['BreakRule'] = BREAK_RULE
     if forced_teams in ('0', '1'):
         game['ForcedTeams'] = forced_teams
     if add_hero:
@@ -242,6 +284,8 @@ def game_keys(*, xml1_opening=True, save_folder=None, forced_teams='1', add_hero
         game['NewGamePlus'] = new_game_plus
     if review_stats is not None:
         game['ReviewStats'] = review_stats
+    if xtract is not None:
+        game['Xtract'] = xtract
     if xp_curve:
         game['XPCurve'] = xp_curve
     return game
@@ -260,7 +304,7 @@ def port_keys(out, *, save_folder=PLAY_SAVE_FOLDER, eighth=True) -> dict:
     game = game_keys(xml1_opening=True, save_folder=save_folder, forced_teams=build_forced_teams(out) or 'off',
                      postgame=postgame, port_identity=bool(postgame), main_menu_items=menu,
                      new_game_plus=NEW_GAME_PLUS if menu else None, review_stats=build_review_stats(out),
-                     xp_curve=build_xp_curve(out))
+                     xtract=XTRACT if postgame else None, xp_curve=build_xp_curve(out))
     keys = {'Game': game, 'Limits': dict(LIMITS)}
     online = online_keys(port_identity=bool(postgame))
     if online:

@@ -652,7 +652,7 @@ FORCED_TEAMS_MODES = ('seat', 'menu')
 XML2FIX_API_JSON = 'scripts/xml2fix_api.json'     # under research/: the xml2-fix script functions (SPEC 19)
 # the xml2-fix functions every build's data may call, seat build or not (SPEC 32: addSkillPoints in the SKILL item's
 # onactivate); the rest are merged into the script API of --forced-teams seat builds only
-XML2FIX_ALWAYS_FUNCS = ('addSkillPoints',)
+XML2FIX_ALWAYS_FUNCS = ('addSkillPoints', 'addStatPoints')
 
 
 def forced_teams_mode(ctx) -> str:
