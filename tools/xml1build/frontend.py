@@ -1,8 +1,8 @@
 """xml1build.frontend - XML1's front end, Danger Room and Review data on XMen2.exe (SPEC.md section 21;
 research/frontend/M2_DESIGN.md sections A, B, C).
 
-Runs after media (common.MODULE_ORDER). With --frontend xml2 it writes only D (XML2's front end exactly as before
-SPEC 21). With --frontend xml1 (the default) it writes A-D:
+Runs after media (common.MODULE_ORDER). With --frontend xml2 it writes only D and E (XML2's front end exactly as
+before SPEC 21). With --frontend xml1 (the default) it writes A-E:
 
   A. Main menu (M2_DESIGN A.4.6, fallback A3; the renamed back-nodes of the first cut drew no text):
      * UI/menus/x1_menu_main.IGB = XML1's ui/menus/menu_main.igb (the 3D logo, XML1's button layout and lights;
@@ -77,6 +77,10 @@ SPEC 21). With --frontend xml1 (the default) it writes A-D:
      escape_menu_text, the texture is XML1's IGB under the same name. UI/menus/personal and menu_personal.IGB stay
      XML2's (the same PERSONAL_MENU as XML1's). Known gap (SPEC 56): XMen2.exe draws the item's
      picture but not its text box - the text is loaded and word-wrapped in memory.
+
+  E. UI/menus/pda.{XMLB,engb} (both front ends: the pause menu in every zone, issue #89, SPEC 64): XML2's PDA_MENU
+     without the Blink Portal entry (PDA_PORTAL_LABEL removed, its PDA_PORTAL_MODELS hidden, the up / down chain
+     re-linked past it). The first game had no portal; XML2's opens one to X-Men Legends II's towns.
 
 Providers (pure, usable before / without run): dr_reward_items(ctx), translate_equipment(ctx, item),
 xp_curve(ctx), trivia_acts(ctx), review_entries(ctx), review_menu_trees(ctx), menu_plan(), igb_string_fields(data),
@@ -1358,6 +1362,104 @@ def codex_icon_problems(root):
     return out
 
 
+# ------------------------------------------------------------------------------------ the pause menu's Blink Portal
+# Issue #89 (SPEC 64). The pause menu in every zone is XML2's UI/menus/pda (PDA_MENU). XMen2.exe's PDA menu finds
+# its entries by name (label_option01..09) and acts on some of them in its own code: label_option03 (no usecmd) is
+# X-Men Legends II's Blink Portal, which opens a portal to the act's town centre from zoneinfo - for the first
+# game's acts 1-5 X-Men Legends II's towns, with no way back but an earlier save. The first game had no portal (its
+# pause menu has no such entry, none of its scripts recall). Both front ends play the first game's zones, so the
+# port's pda is XML2's without the portal entry (both halves, .XMLB keys and .engb English, the same changes):
+#   - the label item PDA_PORTAL_LABEL is removed (with its focus events): nothing left to select or to act on;
+#   - its panel models PDA_PORTAL_MODELS stay in the menu, hidden and disabled (the slot is an empty gap);
+#   - the items whose up / down named the label point past it (the label's own down / up).
+PDA_MENU_REL = 'UI/menus/pda'
+PDA_MENU_TYPE = 'PDA_MENU'
+PDA_PORTAL_LABEL = 'label_option03'
+PDA_PORTAL_MODELS = ('option03', 'option03_light', 'option03_focus', 'pause_bracket_03')
+
+
+def pda_without_portal(root):
+    """Remove the Blink Portal entry from a PDA menu tree in place (see above). Returns the sorted change names
+    ('remove <label>', 'hide <model>', '<item>.up|down -> <name>'), or None when `root` is no PDA_MENU with the
+    portal label (nothing changed)."""
+    if root is None or (root.get('type') or '').upper() != PDA_MENU_TYPE:
+        return None
+    label = next((it for it in root.findall('item') if it.get('name') == PDA_PORTAL_LABEL), None)
+    if label is None:
+        return None
+    root.remove(label)
+    changes = [f'remove {PDA_PORTAL_LABEL}']
+    for it in root.iter('item'):
+        for way, past in (('up', label.get('up')), ('down', label.get('down'))):
+            if it.get(way) == PDA_PORTAL_LABEL:
+                if past and past != it.get('name'):
+                    it.set(way, past)
+                else:
+                    del it.attrib[way]
+                changes.append(f'{it.get("name")}.{way} -> {it.get(way)}')
+    for it in root.findall('item'):
+        if it.get('name') in PDA_PORTAL_MODELS:
+            it.set('hide', 'true')
+            it.set('enabled', 'false')
+            changes.append(f'hide {it.get("name")}')
+    return sorted(changes)
+
+
+def pda_menu_trees(ctx):
+    """(xmlb root, engb root, changes): XML2's UI/menus/pda halves without the Blink Portal entry
+    (pda_without_portal). changes = the sorted change names, the same for both halves or a list of both.
+    (None, None, []) when the base install lacks either half; a half without the entry gives None in changes."""
+    halves, changes = [], []
+    for ext in ('.XMLB', '.engb'):
+        try:
+            root = ctx.read_base_xmlb(PDA_MENU_REL + ext)
+        except (KeyError, FileNotFoundError, ValueError):
+            return None, None, []
+        changes.append(pda_without_portal(root))
+        halves.append(root)
+    return halves[0], halves[1], changes[0] if changes[0] == changes[1] else changes
+
+
+def pda_portal_problems(root):
+    """[str]: what in a PDA menu tree still offers the Blink Portal (the label item, a link to it, a shown model)."""
+    out = []
+    for it in root.iter('item'):
+        name = it.get('name')
+        if name == PDA_PORTAL_LABEL:
+            out.append(f'item {name!r} is in the menu')
+        out += [f'item {name!r} {way} -> {PDA_PORTAL_LABEL}' for way in ('up', 'down')
+                if it.get(way) == PDA_PORTAL_LABEL]
+        if name in PDA_PORTAL_MODELS and ((it.get('hide') or '').lower() != 'true'
+                                          or (it.get('enabled') or '').lower() != 'false'):
+            out.append(f'model {name!r} is shown')
+    return out
+
+
+def pda_portal_changes_ok(changes):
+    """True when `changes` (pda_menu_trees) is one list for both halves that removes the label and hides every
+    portal model."""
+    return (isinstance(changes, list) and all(isinstance(c, str) for c in changes)
+            and f'remove {PDA_PORTAL_LABEL}' in changes
+            and all(f'hide {m}' in changes for m in PDA_PORTAL_MODELS))
+
+
+def write_pda_menu(ctx):
+    """Write the pause menu without the Blink Portal (both front ends). Returns the change list, or None (error)."""
+    px, pg, changes = pda_menu_trees(ctx)
+    if px is None:
+        ctx.error(f'pause menu: {PDA_MENU_REL}.XMLB / .engb not in the base install')
+        return None
+    if not pda_portal_changes_ok(changes):
+        ctx.error(f'pause menu: XML2\'s {PDA_MENU_REL} changes {changes}, expected the removal of '
+                  f'{PDA_PORTAL_LABEL} and hidden {", ".join(PDA_PORTAL_MODELS)} in both halves')
+        return None
+    ctx.write_xmlb_pair(PDA_MENU_REL, px, pg, source='frontend:XML2\'s pause menu without the Blink Portal')
+    ctx.set_count('pda_portal_changes', len(changes))
+    ctx.note(f'pause menu: {PDA_MENU_REL} = XML2\'s without the Blink Portal entry ({"; ".join(changes)}): the '
+             f'first game had no portal and X-Men Legends II\'s leads to its towns (issue #89)')
+    return changes
+
+
 # ================================================================================================ D. personal items
 PERSONAL_DIR = 'data/personal'                     # XML1 assets/data/personal/<item>.eng; XMen2.exe 0x5cedd0
 PERSONAL_REL = 'Data/personal'
@@ -1437,6 +1539,8 @@ def run(ctx):
         ctx.set_count(f'personal_textures_{st}', n)
     ctx.note(f'personal items: XML1\'s {len(prep["items"])} Data/personal items (XML2\'s leftover wolverine01 '
              f'replaced) and their Textures/personal IGBs ({dict(prep["textures"])})')
+    # ---- the pause menu without the Blink Portal (in-zone: both front ends; issue #89)
+    write_pda_menu(ctx)
     if mode != 'xml1':
         ctx.note('--frontend xml2: XML2\'s main menu, intro, menu music, Danger Room and Review data are kept '
                  '(nothing written; SPEC 21 A/B fallback)')

@@ -1162,6 +1162,17 @@ class StyleCollapse:
         except KeyError:
             return v
 
+    def _event_value(self, move, trigger_name, attr):
+        """resolved value of `attr` on the move's <event> named like the trigger, or None. XML1 resolves a
+        trigger attribute the trigger does not set against its same-named event at run time (ps_rogue
+        sstrike1's swings fire the event's Damage="L3"); the rungs override it only from rank 2."""
+        e = next((x for x in move if x.tag.lower() == 'event' and (x.get('name') or '') == (trigger_name or '')),
+                 None)
+        if e is None or e.get(attr) is None:
+            return None
+        v = self._resolved(e.get(attr), attr)
+        return v if _numeric(v) else None
+
     # ---------------------------------------------------------------- collapse of one chain
     def _collapse(self, root_name, rungs, out_name, talent, memo):
         """rungs: [(rank, name)] sorted; returns the output FightMove."""
@@ -1258,6 +1269,14 @@ class StyleCollapse:
                     if not present:
                         for r in range(1, first):
                             per[r] = '0' if k == 'life' else res[first]
+                    else:
+                        # the tag fires from rank 1 but the attribute appears only from a later rung: ranks
+                        # before it inherit the same-named event's attribute in XML1 (issue #78: without the
+                        # backfill _tv's leading-rank fill zeroed Southern Strike's rank-1 damage)
+                        for r in range(1, min(per)):
+                            ev = self._event_value(eff[r], tgt.get('name'), k)
+                            if ev is not None:
+                                per[r] = ev
                     tgt.set(k, self._tv(talent, k, suffix, per, n))
                 else:
                     top = next(vals[r] for r in range(n, 0, -1) if vals[r] is not None)

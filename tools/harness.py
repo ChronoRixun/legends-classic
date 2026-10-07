@@ -73,7 +73,7 @@ def dll_has(dll, marker):
 def ini_text(mode, width, height, pipe, xml1_opening=True, save_folder=None, limits=False, forced_teams='1',
              add_hero=False, postgame=None, main_menu_items=None, xp_curve=None, join_hero=True, pipe_name=None,
              online_server=None, log_network=False, new_game_plus=None, discord=None, port_identity=False,
-             review_stats=None):
+             review_stats=None, xtract=None):
     """a whole test xml2-fix.ini: the harness's own [Display] / [Test] / [Discord] / [Debug] test settings around the
     port's [Game] / [Limits] / [Online] keys (fix_ini)."""
     lines = [MARKER, '[Display]', f'Mode={mode}', f'Width={width}', f'Height={height}', 'Topmost=0',
@@ -93,7 +93,7 @@ def ini_text(mode, width, height, pipe, xml1_opening=True, save_folder=None, lim
     game = FI.game_keys(xml1_opening=xml1_opening, save_folder=save_folder, forced_teams=forced_teams,
                         add_hero=add_hero, join_hero=join_hero, postgame=postgame, port_identity=port_identity,
                         main_menu_items=main_menu_items, new_game_plus=new_game_plus, review_stats=review_stats,
-                        xp_curve=xp_curve)
+                        xtract=xtract, xp_curve=xp_curve)
     if game:
         lines += ['[Game]'] + [f'{k}={v}' for k, v in game.items()] + ['']
     if limits:
@@ -118,6 +118,7 @@ def install(a):
     new_game_plus = NEW_GAME_PLUS if main_menu_items else None   # ... and its New Game: no New Game+ choice (XML1)
     xp_curve = build_xp_curve(out)             # XML1's XP amounts: XML1's levels and kill XP through xml2-fix
     review_stats = build_review_stats(out)     # XML1's review menu (no Stats tab): the tab change wraps at 4
+    xtract = FI.XTRACT if postgame else None   # an XML1 build: no Xtract world map at the Xtraction Points (xml2-fix 1.3.2)
     with open(os.path.join(out, 'xml2-fix.ini'), 'w', encoding='utf-8', newline='') as f:
         save_folder = a.save_folder or (PLAY_SAVE_FOLDER if a.no_pipe else TEST_SAVE_FOLDER)
         f.write(ini_text(a.mode, a.width, a.height, not a.no_pipe, not a.stock_opening, save_folder, not a.stock_limits,
@@ -127,7 +128,7 @@ def install(a):
                          # the default (on) unless --no-discord
                          True if a.discord else (False if (a.no_discord or not a.no_pipe) else None),
                          bool(postgame),        # an XML1 build: the port's title, ending and online version
-                         review_stats))
+                         review_stats, xtract))
     if a.add_hero and a.forced_teams != '1':
         print('note: AddHero only acts with ForcedTeams=1 (xml2fixFeature("addhero") reports 0 otherwise)')
     print(f'harness installed in {out}: dinput.dll from {dll}; Mode={a.mode} {a.width}x{a.height} '
@@ -135,7 +136,7 @@ def install(a):
           f'AddHero={1 if a.add_hero else 0} JoinHero={0 if a.no_join_hero else "(default 1)"} '
           f'PostgameScript={postgame or "(none)"} '
           f'MainMenuItems={main_menu_items or "(none)"} NewGamePlus={new_game_plus or "(none)"} '
-          f'XPCurve={xp_curve or "(none)"} ReviewStats={review_stats or "(none)"}')
+          f'XPCurve={xp_curve or "(none)"} ReviewStats={review_stats or "(none)"} Xtract={xtract or "(none)"}')
 
 
 def remove(a):
