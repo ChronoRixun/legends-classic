@@ -353,7 +353,7 @@ def test_port_keys_from_a_synthetic_build():
                                               'GeometrySharingBlendIndices': '1', 'CharacterLadderPaths': '1',
                                               'ObjectiveDescriptions': '1', 'BreakRule': 'xml1'},
                                      'Limits': {'ActorSlots': '127', 'ResourceNames': '1024', 'ItemEnhancements': '512',
-                                                'FightStyles': '32'}}
+                                                'FightStyles': '32', 'EffectCurves': '3600'}}
         menu = ET.Element('menu', type='MAIN_MENU')
         for i in range(1, 9):
             attrs = {'name': f'button{i}', 'text': f't{i}'}

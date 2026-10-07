@@ -7,7 +7,8 @@ keys:
                           ForcedTeams / PostgameScript / WindowTitle / EndHeroUnlock / MainMenuItems / NewGamePlus /
                           ReviewStats / XPCurve / GeometrySharingBlendIndices / CharacterLadderPaths /
                           ObjectiveDescriptions / BreakRule, [Limits]
-                          ActorSlots / ResourceNames / ItemEnhancements / FightStyles, [Online] GameVersion. They are
+                          ActorSlots / ResourceNames / ItemEnhancements / FightStyles / EffectCurves, [Online]
+                          GameVersion. They are
                           functions of the build's content (the menus it wrote, its report.json, its scripts), so the
                           builder (tools/xml1builder) writes them after a build, and tools/harness.py takes its
                           [Game] / [Limits] / [Online] lines from here too (the harness and the shipped build cannot
@@ -98,7 +99,12 @@ BUILD_REPORT = ('_build', 'report.json')
 # 1.3.1: the fighting / power style registry 19 -> 32 (SPEC 43, issue #31: XML1's zones need up to 22 styles with a
 # four-hero party; the 20th was refused and the hero seated last had no powers). style_budget.capacity reads this
 # value for V23.
-LIMITS = {'ActorSlots': '127', 'ResourceNames': '1024', 'ItemEnhancements': '512', 'FightStyles': '32'}
+# 1.3.2: the effect animation curve pool 900 -> 3600 (EffectCurves; xml2-fix docs/effect-curves.md): a zone's
+# effects and a four-hero party's powers need more than 900 curves (943 at nyc1_1_2b's bench fire, up to about 1050
+# in the heaviest zones), and past the pool XMen2.exe hands out empty curves - the effects loaded last lose their
+# particles (the bench fire is a faint glow). Curves are not saved.
+LIMITS = {'ActorSlots': '127', 'ResourceNames': '1024', 'ItemEnhancements': '512', 'FightStyles': '32',
+          'EffectCurves': '3600'}
 
 # xml2-fix 1.3.1 [Game] GeometrySharingBlendIndices (SPEC 44, issue #11): XMen2.exe's geometry sharing reuses one
 # skinned mesh for another when positions and weights match although their packed blend indices differ; XML1's
@@ -137,7 +143,7 @@ FORCED_TEAMS_VALUES = ('1', '0', 'off')
 # addSkillPoints, the conversation hooks [Game] AutoAdvance / ReplyVoices / ReplyCursor - SPEC 32, 34; v1.3.1:
 # [Limits] FightStyles - SPEC 43, [Game] GeometrySharingBlendIndices - SPEC 44; v1.3.2: [Game] CharacterLadderPaths -
 # SPEC 46, [Game] ObjectiveDescriptions - SPEC 47, the STAT pickup's addStatPoints - SPEC 48,
-# [Game] BreakRule - SPEC 63)
+# [Game] BreakRule - SPEC 63, [Limits] EffectCurves)
 REQUIRED_XML2FIX = '1.3.2'
 
 # every key the port may write (the builder drops the ones a build does not need); the launcher owns the rest
@@ -145,7 +151,7 @@ PORT_OWNED = {'Game': ('NewGameTeam', 'ResetUnlocks', 'SaveFolder', 'ForcedTeams
                        'EndHeroUnlock', 'MainMenuItems', 'NewGamePlus', 'ReviewStats', 'XPCurve',
                        'GeometrySharingBlendIndices', 'CharacterLadderPaths', 'ObjectiveDescriptions',
                        'BreakRule'),
-              'Limits': ('ActorSlots', 'ResourceNames', 'ItemEnhancements', 'FightStyles'),
+              'Limits': ('ActorSlots', 'ResourceNames', 'ItemEnhancements', 'FightStyles', 'EffectCurves'),
               'Online': ('GameVersion',)}
 
 
