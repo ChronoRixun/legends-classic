@@ -59,6 +59,7 @@ from . import scripts_transform as ST     # section 18: the join zones' NPC doub
 from . import buoys as BY                # section 42: generated long-range walk networks
 from . import automaps as AM              # section 26: XML1 automap textures -> Automaps/<zone>.zam
 from . import settle as SE                # issue #81: native floor sweeps for raised ordinary props
+from . import talent_sets as TS           # SPEC <number assigned at merge>: NPC-only talents in per-set files
 
 # ---------------------------------------------------------------------------------------------- constants
 PATCH_ZONE = 'zones.zone'            # import_x1_asset patch keys (deterministic patches -> cacheable imports)
@@ -160,6 +161,65 @@ ITEM_ENHANCEMENT_POOL = int(_FIX_LIMITS.get('ItemEnhancements', ITEM_ENHANCEMENT
 
 def item_enhancements(el):
     return sum(1 for e in el.iter() if isinstance(e.tag, str) and e.tag.lower() == 'enhancement')
+
+
+def zone_npc_talent_entries(ctx, zone, chr_names, script_refs=(), text_of=None):
+    """the npc set-file rels (talent_sets.zone_set_files) the zone package must list so every
+    stats-template character that can appear in the zone resolves its talents outside shared_talents:
+    CHRB characters, map spawner entities and spawn lists, the scripts' literal spawn calls (closure),
+    and the Danger Room courses whose arena maps to the zone. heroes.py writes the files; both this
+    function and V-TBD compute the same roster, so a future uncovered source fails the build."""
+    from . import npc_values as NV
+    try:
+        npc = ctx.read_out_xmlb('Data/npcstat.engb')
+    except Exception:          # noqa: BLE001 - characters has not written npcstat: nothing to add
+        return []
+    if npc is None:
+        return []
+    try:
+        x1h = ctx.read_x1_xml('data/herostat.eng')
+        hero_refs = {(t.get('name') or '').lower() for t in x1h.iter() if t.tag.lower() == 'talent'}
+    except Exception:          # noqa: BLE001
+        hero_refs = set()
+    npc_refs = {}
+    stats_origin = {n: (s.get('origin') or '') for n, s in (getattr(ctx, 'shared', None) or {}).get('stats', {}).items()}
+    for st in npc.iter('stats'):
+        ln = (st.get('name') or '').lower()
+        # untouched XML2 leftovers (holocaust, scarabapoc ...) stay exactly as retail: their dangling
+        # refs are not this port's to resolve and heroes.py writes no set files for them (V-TBD's
+        # canon-against-base test excludes the same entries)
+        if ln and stats_origin.get(ln) != 'xml2':
+            npc_refs[ln] = {(t.get('name') or '').lower() for t in st.iter('talent')}
+    roster = {n.lower() for n in (chr_names or ()) if n}
+    for ext in ('.engb', '.xmlb'):
+        try:
+            root = ctx.read_out_xmlb(f'maps/{zone}{ext}')
+        except Exception:      # noqa: BLE001 - one half may be absent
+            root = None
+        roster |= TS.map_spawn_roster(root)
+    try:
+        dr = ctx.read_x1_xml('data/dangerroom.eng')
+    except Exception:          # noqa: BLE001 - no Danger Room table: no course roster
+        dr = None
+    roster |= TS.dangerroom_zone_roster(dr, zone)
+    if text_of is not None:
+        refs = TS.script_closure_refs([C.script_ref(r) for r in script_refs], text_of)
+        roster |= TS.script_zone_roster({r: text_of(r) for r in refs}, lambda n: n in npc_refs)
+    moving = [TS.npc_moving(npc_refs[n], hero_refs, TS.X2_BASE_TALENTS, NV.ENERGY_TALENT)
+              for n in sorted(roster) if n in npc_refs]
+    rels = set(TS.zone_set_files(moving))
+    # heroes used as NPCs (cutscene and spawner instances) carry their own talent file, like the
+    # hero precache of section 28; without it the hero-NPC's stats talents resolve nowhere
+    try:
+        from . import heroes as H
+        heroes_roster = H.hero_plan(ctx)['heroes']
+    except Exception:          # noqa: BLE001 - synthetic validators/builders without a full ctx
+        heroes_roster = ()
+    for n in roster:
+        for h in heroes_roster:
+            if h.lower() == n:
+                rels.add(f'data/talents/{h}')
+    return sorted(rels)
 
 
 def enhancement_pool_cut(top, pool=None):
@@ -1642,6 +1702,40 @@ class Zones:
                 names = [d]
         return names
 
+    # ---------------------------------------------------------------- retained XML2 zone packages
+    def patch_retained_packages(self):
+        """Retained XML2 zones keep their base packages and maps, but the port's stats replaced XML2's:
+        a retained spawner whose stats name moved to a talent set would bind nothing. List the same
+        roster's set files (and hero-NPC files) in the retained package, ahead of its styles."""
+        ctx = self.ctx
+        xml1 = set(self.converted) | set(self.skipped) | set(self.frontend)
+        done = 0
+        for rel in sorted(ctx.base_index.under('packages/generated/maps')):
+            if not rel.lower().endswith('.pkgb'):
+                continue
+            zone = C.norm(rel)[len('packages/generated/maps/'):-len('.pkgb')]
+            if zone in xml1:
+                continue
+            try:
+                root = ctx.read_out_xmlb(rel)
+            except Exception:      # noqa: BLE001 - no out copy: the sweep/V2 reports it
+                continue
+            if any((e.tag or '').lower() == 'xml_talents' for e in root):
+                continue           # already lists talents (a converted or already-patched package)
+            script_refs = {C.script_ref(e.get('filename')) for e in root
+                           if (e.tag or '').lower() == 'script' and e.get('filename')}
+            entries = zone_npc_talent_entries(ctx, zone, (), script_refs, self.script_text)
+            if not entries:
+                continue
+            for rel_entry in reversed(entries):
+                root.insert(0, ET.Element('xml_talents', {'filename': rel_entry}))
+            ctx.write_xmlb(rel[:-len('.PKGB')], root, ('.PKGB',),
+                           source='zones:retained npc talent sets')
+            self.counts['retained_talent_set_packages'] += 1
+            done += 1
+        if done:
+            ctx.note(f'retained XML2 zone packages patched with npc talent sets: {done}')
+
     # ------------------------------------------------------------------ one zone
     def zone_sources(self, zone):
         bundle = self.ctx.zone_bundle(zone)
@@ -1910,6 +2004,22 @@ class Zones:
             lits |= self.script_literals(r)
         tiles = st.get('tiles') or {'folders': {}, 'used': {}, 'insts': 0, 'bad': []}
         tiles_used = set().union(*tiles['used'].values()) if tiles['used'] else set()
+
+        # SPEC <number assigned at merge> (the TalentRegistry fix): an NPC-only talent set file rides the
+        # ZONE package - XMen2.exe processes a zone package's xml_talents entries (section 28's hero
+        # precache exists for exactly that) but ignores them on a spawned monster's own character
+        # package. The roster is every stats template that can appear here: CHRB characters, map
+        # spawners and spawn lists, the zone scripts' literal spawn calls (closure, so act scripts and
+        # boss phases count), and the Danger Room courses whose arena maps to this zone (audit
+        # 2026-10-08: every converted-map miss sat in course spawners). A zone-level selector drops a
+        # set file only when the names it contributes are already supplied by other retained files.
+        roster_scripts = set(script_refs)
+        for kind, fn in self.prov.zone_package_extras(self.ctx, zone):
+            if kind.lower() == 'script':
+                roster_scripts.add(C.script_ref(fn))
+        for rel in zone_npc_talent_entries(ctx, zone, chr_names, roster_scripts, self.script_text):
+            if pkg.add('xml_talents', rel, extra=True):
+                self.counts['npc_talent_set_zone_entries'] += 1
 
         for p, kind in bundle:
             k = kind.lower()
@@ -2829,6 +2939,7 @@ def run(ctx):
     for z, why in sorted(Z.skipped.items()):
         ctx.note(f'zone skipped: {z}: {why}')
 
+    Z.patch_retained_packages()
     Z.build_zoneinfo()
     Z.build_world_tables()
     Z.build_permanent()

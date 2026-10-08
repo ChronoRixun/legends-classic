@@ -618,6 +618,15 @@ def v19_immunities(v, ck):
     for ext in ('.xmlb', '.engb'):
         t = v.tree(f'data/shared_talents{ext}')
         defs = {(x.get('name') or '').lower(): x for x in t.iter('talent')} if t is not None else {}
+        for rel in v.idx.under('data/talents'):
+            ln = rel.lower()
+            base = ln.rsplit('/', 1)[-1]
+            if not ln.endswith(ext) or not (base.startswith('npc_') or 'npc_generic' in base):
+                continue
+            nt = v.tree(rel)
+            if nt is not None:
+                for x in nt.iter('talent'):
+                    defs.setdefault((x.get('name') or '').lower(), x)
         def_rows = {n: definition_rows(x) for n, x in defs.items()}
         n_entries = n_refs = 0
         used, referenced = set(), set()

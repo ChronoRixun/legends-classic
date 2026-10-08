@@ -22,9 +22,12 @@ Runs after `characters` and before `scripts` / `zones` / `media` (common.MODULE_
     <talent> children naming dropped shared talents removed; one speaker entry <hero>_x1double per renamed NPC
     double that speaks in a conversation, and one per NPC that speaks under its own XML1 name (SPEC 18.1,
     scripts_transform.speaker_stats_entries);
-  * Data/shared_talents.{XMLB,engb} pruned 88 -> 47 so that shared + the 4 party files stay under XMen2.exe's
-    100 registered-talent pool (0x4bdfe4 / 0x4be7e4 / 0x4be044 cmp ecx,0x64; silent drop at 0x4c0080);
-    toughness / mutantmastery / acrobatics get XML1's real definitions.
+  * Data/shared_talents.{XMLB,engb} pruned to the names heroes and XML2 base definitions need so that shared +
+    the party / NPC files of every zone stay under XMen2.exe's 100 registered-talent pool and 9-file list
+    (0x4bdfe4 / 0x4be7e4 / 0x4be044 cmp ecx,0x64, loader 0x4c0460; silent drop at 0x4c0080);
+    toughness / mutantmastery / acrobatics get XML1's real definitions; the NPC-only specials (sabre_claw,
+    pyro_flame, ... XML1 kept inline in each NPC's stats entry) move to per-set files under data/talents/npc/
+    listed by the NPCs' own character packages (talent_sets, SPEC 75).
 
 Every XMen2.exe fact used here is cited in DESIGN.md section 2 (E1..E20) and research/heroes/engine.md. Nothing
 here launches the game. Provider: hero_plan(ctx) is pure (cached in ctx.shared['heroes_plan']).
@@ -46,6 +49,7 @@ from . import hero_icons as HI        # issues #53/#73: the talent-icon atlases 
 from . import npc_values as NV     # SPEC 24: value codes, the NPC energy talent
 from . import scripts_transform as ST   # SPEC 18.1: the renamed NPC doubles that speak (NPC_DOUBLE_SPEAKERS)
 from . import save_positions as SP     # saved talent positions: shared_talents keeps its save-stable order
+from . import talent_sets as TS        # SPEC 75: NPC-only talents in per-set files
 from .lib import x1names as N   # the XML1 namespace (was research/characters/x1names.py)
 
 # ------------------------------------------------------------------------------------------------ constants
@@ -1761,29 +1765,31 @@ def convert_shared_real(name, src, values, icons='xml1', bleed='on'):
 
 
 # ------------------------------------------------------------------------------------------------ builder
-# DESIGN 4.7: the shared_talents keep list the rule-based prune must reproduce (a delta is a warning)
+# DESIGN 4.7 + the TalentRegistry fix (SPEC 75): the shared_talents keep list the
+# rule-based prune must reproduce (a delta is a warning). The NPC-only specials moved to data/talents/npc/ set
+# files; what stays is what heroes / hero styles reference plus the XML2 base definitions the NPCs keep using.
 SHARED_KEEP_EXPECTED = frozenset("""
-fightstyle_finesse1 fightstyle_hero fightstyle_wrestling fightstyle_psionic x1_fightstyle_gun_rifle fightstyle_gun_hip
-fightstyle_baton fightstyle_huge fightstyle_nonhuman fightstyle_villain leadership grab critical might flight
+fightstyle_finesse1 fightstyle_hero fightstyle_wrestling fightstyle_psionic fightstyle_gun_hip
+fightstyle_baton fightstyle_huge fightstyle_nonhuman leadership grab critical might flight
 energy_resistant mental_resistant physical_resistant energy_resistant_share mental_resistant_share
-physical_resistant_share spawn_invis dr_stun sentinel_special boss_resistances monst_dmg_high aval_crack aval_quake
-blob_butt blob_belly havok_beam havok_nova jug_punch jug_slam jug_armor marrow_shards marrow_armor marrow_xtreme
-steal_form pyro_flame pyro_firering pyro_firebat sabre_spin sabre_claw acrobatics toughness mutantmastery
-x1_npc_energy""".split())
+physical_resistant_share spawn_invis dr_stun sentinel_special boss_resistances monst_dmg_high acrobatics toughness
+mutantmastery x1_npc_energy""".split())
 # DESIGN 4.7 also listed `grab` (47). Until issue #51 nothing referenced it once XML2's heroes were gone, so the rule
 # dropped it and no hero could grab an enemy (GRAB_TALENT); every hero entry now names it, so the rule keeps it. x1_npc_energy (SPEC 24) is the
 # characters module's NPC energy talent (npc_values.ENERGY_TALENT): kept while a stats entry names it (47).
 # SPEC 30: characters emits XML1's 14 distinct inline NPC immunity bodies as shared talents in XML2's boss_resistances
 # form (npc_values.immunity_plan names each body after the XML1 talent name most entries used); kept while a stats
-# entry names one (npc_values.is_immunity_talent): 47 -> 61.
-# Issue #52: the gun soldiers carry their gun's fighting style instead of their own (weapons.gun_fightstyle), and
-# the rifle style ships as x1_fightstyle_gun_rifle (x1names.X1_OWN_FIGHTSTYLES); XML2's fightstyle_gun_rifle, which
-# nothing names any more, keeps its slot for saved games (save_positions; held, not pruned): 63.
+# entry names one (npc_values.is_immunity_talent). The TalentRegistry fix (SPEC 75) moves
+# them with the other NPC-only specials into data/talents/npc set files, so they are no longer shared keep names.
 SHARED_KEEP_IMMUNITIES = frozenset("""
 as_special avalanche_special blob_special forge_special havok_special juggernaut_special magnetoboss_special
 mastermold_special physical_res sabre_special sabretooth_special sentspider_special shadow_special toad_special
 """.split())
-SHARED_KEEP_EXPECTED = SHARED_KEEP_EXPECTED | SHARED_KEEP_IMMUNITIES | {'fightstyle_gun_rifle'}
+# Issue #52: the gun soldiers carry their gun's fighting style instead of their own (weapons.gun_fightstyle), and
+# the rifle style ships as x1_fightstyle_gun_rifle; under the TalentRegistry fix it moves to npc_generic. Nothing
+# names XML2's fightstyle_gun_rifle any more, so it leaves the pool: 0.2.0 saves store names and old saves convert
+# through the era tables (save_positions), so no slot is held.
+SHARED_KEEP_EXPECTED = SHARED_KEEP_EXPECTED | set()
 TV_LABEL = {'dmg': 'Damage', 'kb': 'Knockback', 'dlv': 'Destruction', 'lif': 'Seconds', 'pwr': 'Energy',
             'rng': 'Range', 'cnt': 'Count', 'lvl': 'Level', 'xdmg': 'Explosion Damage', 'xkb': 'Explosion Knockback'}
 
@@ -2384,13 +2390,17 @@ class HeroBuilder:
 
     # ---------------------------------------------------------------- shared talents (4.7) and npcstat (4.10)
     def shared_keep(self, hero_names, npc_root):
-        """the rule-based keep list, computed from the build (DESIGN 4.7)."""
+        """the rule-based keep list, computed from the build (DESIGN 4.7). Returns (keep, drop, stats_refs,
+        style_reqs, hero_refs, npc_refs); hero_refs / npc_refs are the <talent> names of the herostat entries
+        and of the npcstat entries (the NPC-only partition, talent_sets, moves those to per-set files)."""
         ctx = self.ctx
         stats_refs = set()
+        hero_refs, npc_refs = set(), set()
         styles, fightstyles = set(), set()
         for e in self.entries['engb']:
             for t in e.iter('talent'):
                 stats_refs.add((t.get('name') or '').lower())
+                hero_refs.add((t.get('name') or '').lower())
             if e.get('powerstyle'):
                 styles.add(e.get('powerstyle').lower())
         for st in npc_root.iter('stats'):
@@ -2399,6 +2409,7 @@ class HeroBuilder:
             for t in st.iter('talent'):
                 n = (t.get('name') or '').lower()
                 stats_refs.add(n)
+                npc_refs.add(n)
                 if N.is_fightstyle_name(n):
                     fightstyles.add(n)
             if st.get('powerstyle'):
@@ -2453,7 +2464,7 @@ class HeroBuilder:
                 keep.append(ln)
             else:
                 drop[ln] = ('empty NPC definition (references removed)' if ln in stats_refs else 'unreferenced')
-        return keep, drop, stats_refs, style_reqs
+        return keep, drop, stats_refs, style_reqs, hero_refs, npc_refs
 
     def shared_definition(self, name):
         """SHARED_REAL_DEFS: XML1's real definition in XML2 form (convert_shared_real)."""
@@ -2512,16 +2523,37 @@ class HeroBuilder:
         self.detail['npcstat_removed'] = sorted(set(removed))
         # shared talents: prune to the rule-based keep list, real definitions for the three passives
         npc_root = ctx.read_out_xmlb('Data/npcstat.engb')
-        keep, drop, stats_refs, style_reqs = self.shared_keep(hero_names, npc_root)
-        # saved talent positions: a save names shared talents by position, so a talent of the save-stable order
-        # that nothing references any more keeps its slot (fightstyle_gun_rifle since issue #52) instead of
-        # moving every later talent down
-        held = sorted(n for n in drop if n in SP.SHARED_TALENT_SLOTS)
-        for n in held:
-            del drop[n]
-            keep.append(n)
-        self.detail['shared_held'] = held
+        keep, drop, stats_refs, style_reqs, hero_refs, npc_refs = self.shared_keep(hero_names, npc_root)
+        # NPC-only talents leave shared_talents for per-set files (talent_sets): a kept name that only npcstat
+        # entries reference costs every zone a registry slot while the few zones that spawn the NPC need it.
+        # Hero-referenced names, XML2 base definitions and the NPC energy pool (SPEC 24, ~100 NPCs carry it, so
+        # a file would load in nearly every zone) stay. Saves do not hold NPC-only talents; the new save format
+        # stores hero talents by name and old saves convert through the frozen per-era tables (lcsave legacy).
+        # The partition inputs are the XML1 herostat references and talent_sets.X2_BASE_TALENTS - the SAME
+        # definition zones.py uses to list the set files in the zone packages, so both modules agree on the
+        # file name of every NPC's set.
+        x1h = ctx.read_x1_xml('data/herostat.eng')
+        x1_hero_refs = {(t.get('name') or '').lower() for t in x1h.iter() if t.tag.lower() == 'talent'}
+        move = TS.partition_moves(keep, x1_hero_refs, npc_refs, TS.X2_BASE_TALENTS, NV.ENERGY_TALENT)
+        move_set = set(move)
+        keep = [n for n in keep if n not in move_set]
         keep_set = set(keep)
+        # every npcstat talent reference resolves: in shared_talents or in the NPC's own set file (V44
+        # enforces exactly this partition); references keep their names so the zones module's set-file name
+        # (computed from the same partition before heroes strips anything) still matches
+        npc_refs_by = {}
+        for st in npc_root.iter('stats'):
+            ln = (st.get('name') or '').lower()
+            if ln:
+                npc_refs_by[ln] = {(t.get('name') or '').lower() for t in st.iter('talent')}
+        pool_set = set()
+        for refs in npc_refs_by.values():
+            pool_set |= TS.npc_moving(refs, x1_hero_refs, TS.X2_BASE_TALENTS, NV.ENERGY_TALENT)
+        pool_set |= move_set
+        for n in pool_set:
+            drop.pop(n, None)
+        self.detail['shared_moved'] = move
+        self.detail['shared_moved_dangling'] = sorted(pool_set - move_set)
         delta_extra = sorted(keep_set - SHARED_KEEP_EXPECTED)
         delta_missing = sorted(SHARED_KEEP_EXPECTED - keep_set)
         if delta_extra or delta_missing:
@@ -2529,23 +2561,56 @@ class HeroBuilder:
                      f'(the computed list is written)')
         real_defs = {n: self.shared_definition(n) for n in SHARED_REAL_DEFS if n in keep_set and n in self.x1_shared}
 
-        def prune(root):
-            changed = False
-            for t in list(root):
-                if t.tag != 'talent':
-                    continue
-                ln = (t.get('name') or '').lower()
-                if ln not in keep_set:
-                    root.remove(t)
-                    changed = True
-                elif ln in real_defs:
-                    idx = list(root).index(t)
-                    root.remove(t)
-                    root.insert(idx, copy.deepcopy(real_defs[ln]))
-                    changed = True
-            # saved talent positions: the 0.1.7 slots first, later additions appended (save_positions)
-            return SP.order_shared_talents(root) or changed
-        ctx.patch_out_xmlb('Data/shared_talents', prune, exts=('.XMLB', '.engb'))
+        moved_defs = {}       # ext -> {name: definition element} of the talents that left shared
+        for ext in ('.XMLB', '.engb'):
+            box = {}
+
+            def prune(root, ext=ext, box=box):
+                changed = False
+                for t in list(root):
+                    if t.tag != 'talent':
+                        continue
+                    ln = (t.get('name') or '').lower()
+                    if ln not in keep_set:
+                        root.remove(t)
+                        changed = True
+                        if ln in pool_set:
+                            box[ln] = copy.deepcopy(t)
+                    elif ln in real_defs:
+                        idx = list(root).index(t)
+                        root.remove(t)
+                        root.insert(idx, copy.deepcopy(real_defs[ln]))
+                        changed = True
+                # survivors keep the save-stable relative order; names that moved out are reported by V31
+                return SP.order_shared_talents(root) or changed
+            ctx.patch_out_xmlb('Data/shared_talents', prune, exts=(ext,))
+            moved_defs[ext] = box
+
+        # per-set talent files: XML1 kept these definitions inline in each NPC's stats entry; on the XML2 engine
+        # each distinct set ships as one file under data/talents/npc/, listed by the zone package (zones.py)
+        # before the package's styles bind, and by the NPCs' own character packages for the spawn-time path
+        npc_refs_by_name = {}
+        stats_origin = {n: (s.get('origin') or '') for n, s in (ctx.shared.get('stats') or {}).items()}
+        for st in npc_root.iter('stats'):
+            ln = (st.get('name') or '').lower()
+            # untouched XML2 leftovers (holocaust, scarabapoc ...) stay exactly as retail: their dangling
+            # talent refs are not this port's to resolve and their packages are not republished (V4)
+            if ln and ln not in hero_names and stats_origin.get(ln) != 'xml2':
+                npc_refs_by_name[ln] = [(t.get('name') or '').lower() for t in st.iter('talent')]
+        set_files = TS.file_sets(npc_refs_by_name, pool_set)
+        for rel, s in sorted(set_files.items()):
+            stem = 'Data/talents/' + rel[len('data/talents/'):]
+            for ext in ('.XMLB', '.engb'):
+                root = ET.Element('talents')
+                for n in sorted(s):
+                    d = moved_defs[ext].get(n)
+                    if d is None:
+                        # a dangling npc-only reference: empty definition, exactly what ensure_talent wrote
+                        d = ET.Element('talent', {'name': n})
+                        ET.SubElement(d, 'level')
+                    root.append(copy.deepcopy(d))
+                ctx.write_xmlb(stem, root, (ext,), source='xml1build.heroes', replace=True)
+        ctx.set_count('npc_talent_set_files', len(set_files))
         hero_files = set().union(*self.hero_file_names.values()) if self.hero_file_names else set()
         dropped_refs = []
 
@@ -2556,14 +2621,44 @@ class HeroBuilder:
                     if t.tag == 'talent':
                         ln = (t.get('name') or '').lower()
                         # a dropped shared talent (also the profx_* now defined only in ProfXAstral's file: an NPC
-                        # cannot reach a per-hero file, and ps_profxgladiator's moves carry no talent requires)
-                        if ln in drop:
+                        # cannot reach a per-hero file, and ps_profxgladiator's moves carry no talent requires);
+                        # pool names stay: the NPC's own package loads their set file
+                        if ln in drop and ln not in pool_set:
                             st.remove(t)
                             dropped_refs.append((st.get('name'), ln))
                             changed = True
             return changed
         ctx.patch_out_xmlb('Data/npcstat', strip_refs, exts=('.XMLB', '.engb'))
         self.detail['npc_talent_refs_dropped'] = [list(x) for x in dropped_refs]
+        # the NPCs' character packages (characters.py's, and the _xml spawn packages) list the set file first;
+        # written under the characters owner - they are characters' files with one entry added
+        patched_pkgs = 0
+        owners = collections.defaultdict(set)
+        for lname, refs in npc_refs_by_name.items():
+            s = TS.npc_set(refs, pool_set)
+            if s:
+                owners[TS.set_file(s)].add(lname)
+        pkg_keys = [k for k in ctx.out_index.keys() if k.startswith('packages/generated/characters/')]
+        old_module = ctx.module
+        ctx.module = 'characters'
+        try:
+            for rel, s in sorted(set_files.items()):
+                for lname in sorted(owners.get(rel, ())):
+                    prefix = f'packages/generated/characters/{lname}_'
+                    for k in pkg_keys:
+                        if not k.startswith(prefix) or not k.endswith('.pkgb'):
+                            continue
+                        actual = ctx.out_index.get(k)
+                        root = ctx.read_out_xmlb(actual)
+                        if any((e.tag or '').lower() == 'xml_talents' and
+                               (e.get('filename') or '').lower() == rel for e in root):
+                            continue
+                        root.insert(0, ET.Element('xml_talents', {'filename': rel}))
+                        ctx.write_bytes(actual, C.encode_xmlb(root), source='xml1build.heroes', replace=True)
+                        patched_pkgs += 1
+        finally:
+            ctx.module = old_module
+        ctx.set_count('npc_talent_set_packages', patched_pkgs)
         speakers = self.add_double_speakers(roots)
         self.detail['npc_double_speakers'] = speakers
         self.detail['shared_keep'] = keep
