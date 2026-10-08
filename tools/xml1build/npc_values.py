@@ -115,11 +115,42 @@ def resolve_style(root, values, where=''):
     return c, problems
 
 
+# entity attributes XML1's entity parser reads as ONE number through the values getter with a null maximum
+# pointer: the grenade parser resolves explodedamage and stores only the code's minimum (default.xbe
+# 0x97940-0x97953, the word at entity +0x338), with no RNG draw - so a ported 'min max' range would roll where
+# XML1 dealt the minimum every time. The validator (weapons.validate, V-TBD) refuses a range here.
+SINGLE_VALUE_ENTITY_ATTRS = ('explodedamage',)
+
+
+def collapse_single_value_entity_attrs(root) -> None:
+    """'lo hi' -> 'lo' for SINGLE_VALUE_ENTITY_ATTRS on every element of an entity tree, in place (idempotent;
+    values that are not a two-number range are left alone)."""
+    if root is None:
+        return
+    for e in root.iter():
+        if not isinstance(e.tag, str):
+            continue
+        for k, v in list(e.attrib.items()):
+            if k.lower() not in SINGLE_VALUE_ENTITY_ATTRS:
+                continue
+            parts = (v or '').split()
+            if len(parts) != 2:
+                continue
+            try:
+                float(parts[0])
+                float(parts[1])
+            except ValueError:
+                continue
+            e.set(k, parts[0])
+
+
 def resolve_entity_codes(ctx, root, rel):
     """Use the same value-code conversion for every importer of an XML1 entity file.
 
     Zones may take ownership of a file previously written by characters. Both must resolve the
-    codes, or that later import silently restores values XMen2.exe interprets as zero.
+    codes, or that later import silently restores values XMen2.exe interprets as zero. After the
+    resolution, the single-value entity attributes keep XML1's minimum only
+    (collapse_single_value_entity_attrs).
     """
     n = str(rel).replace('\\', '/').lower()
     if not n.startswith('data/entities/'):
@@ -128,6 +159,7 @@ def resolve_entity_codes(ctx, root, rel):
     result = resolve_style(root, Values(ctx.read_x1_xml('data/values.xml')), f'{n}:')
     for problem in result[1]:
         ctx.error(f'Entity value code: {problem}')
+    collapse_single_value_entity_attrs(root)
     return result
 
 

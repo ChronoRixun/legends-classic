@@ -6185,3 +6185,50 @@ unchanged; revision5/LC23 is appended after LC22, CONTENT_VERSION remains16 for 
 Restoring the shared ordering restores the original native shared IDs; hero held names/ranks/flags must
 still pass the full82-save Python/C++ corpus. Runtime registry checks and real boss/course observations
 are required before claiming the correction accepted.
+
+
+## 76. Gun weapons roll XML1's minimum-based +/-30 % draw; explosive entities carry the single minimum
+
+**Symptom.** The port's NPC gun shots dealt too much damage on average: the HAARP leader's freeze gun that the
+first game rolls at 34-64 (mean 49) hit for the whole authored L5 code range 50-63 (mean 56.5, ~15 % higher),
+and its minimum was far higher (34 vs 50 pre-Might). Thrown explosives (flashbangs, grenades) rolled their
+explodedamage range where the first game dealt the code's minimum only (flashbang 15-18 instead of 15).
+
+**Mechanism.** XML1's weapon parser resolves the damage code through the values getter with a NULL maximum
+pointer and stores only the minimum (default.xbe 0xbc2ef-0xbc30d, the word at weapon prototype +0x1c6; the
+authored maximum is discarded at parse time). Every fire path then makes ONE integer RNG draw between
+trunc(min x 0.7f) and trunc(min x 1.3f) - the binary32 constants at 0x3ca9d8 and 0x3d4a60, the draw at
+0x1233c0, executed at 0xbcc47-0xbcc99 before the weapon-type dispatch, so it is shared by bullet, projectile,
+beam and flame weapons. The port instead resolved the whole code range into the generated trigger, and with
+DamageRolls=xml1 the engine rolled that whole range. The same mismatch existed for the style events that name
+a weapon (ps_mystique's pistols, SPEC 29.3), and for the nullifier's literal damage=10000 (a number resolves
+to min=max=10000, so the original draws 6999-12999). The entity parser reads explodedamage the same single-
+value way (0x97940-0x97953 stores the minimum at entity +0x338, no draw), so the ported 'min max' range on
+grenade_ents/missilelauncher_ents/mystique_ents/sentin_grenade_ents exploded where XML1 dealt the minimum.
+
+**Rule.** `weapons.gun_damage_range(values, damage)` computes the draw bounds 'lo hi' from the declaration's
+resolved minimum with the binary32 constants (`GUN_DRAW_LO`/`GUN_DRAW_HI`, NOT idealized 0.7/1.3: the x87
+product of 50 x 0.7f truncates to 34, not 35). `weapons.apply` and `weapons.rewrite_weapon_events` take the
+values table (`characters` passes `ctx.x1_values()`); when a weapon's damage resolves, the shot trigger/event
+carries the draw bounds instead of the code, so the existing Might/rounding/balance hooks apply to the right
+range and no balance setting re-applies the +/-30 % (xml2-fix only redirects the roll to an inclusive integer
+draw between the written bounds and adds Might's rank bonus - it never rescales the bounds). Melee weapons are
+untouched (WEAPON_TYPES only). `npc_values.collapse_single_value_entity_attrs` runs in
+`resolve_entity_codes` (both entity importers) and keeps only the resolved minimum for
+`SINGLE_VALUE_ENTITY_ATTRS` (= explodedamage, the attribute the first game's parser is proved to read as one
+number); styles and power damage ranges are NOT collapsed. A non-resolving declaration stays as written and
+is reported by the existing value-code checks.
+
+**Check.** V-TBD (`weapons.validate`; validator number and this section's number are assigned at merge):
+every gun-shot trigger of a built style (beam/projectile trigger or rewritten beam event with the
+damagescale=difficulty + damagelevel=1 fingerprint) must carry a range that is exactly the draw of some whole
+minimum, and a powerstyle named for an XML1 weapon (`weapons.variant_name`, a non-default grenade suffix
+aside) must carry exactly that weapon's draw; a built entity file's single-value attributes must hold one
+number, never a 'min max' range. Unit tests: `tests/unit/test_gun_damage.py` (invented weapons, codes and
+entities); `test_compatibility_regressions.py` covers both entity importers doing the same conversion.
+
+**Limits.** The endpoint arithmetic is the static binary32/x87 result (34-64 for L5); a one-point endpoint
+difference (35-65) would need a live Xbox trace, as the research report notes - the mean inflation fix does
+not depend on it. The entity `damage` attribute itself stays a range in the port: on weapon shots the gun's
+attack overrides it (both engines), and the bare-entity difference is left to a separate task. XML2's own
+retail entities/styles keep their retail ranges (the check only inspects files the build wrote).
