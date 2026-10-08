@@ -3,6 +3,7 @@ import copy
 import json
 import os
 import tempfile
+import shutil
 from test_lcsave import make_build, make_old_save, _era_model
 from lcsave import binds, catalogue, legacy, container, convert, oldsave, layout as L, keys
 
@@ -192,3 +193,59 @@ def test_native_whole_build_counts_refuse_future_tables():
                 except convert.ConvertError as e: assert 'native' in str(e), (label, str(e))
                 else: assert False, label + ' oversized build accepted'
             finally: setattr(obj, attr, original)
+
+
+def test_review_discard_releases_exclusive_world_items():
+    with tempfile.TemporaryDirectory() as d:
+        env = _env(d); _, saved = _converted(env)
+        for reason in ('hash', 'names', 'incomplete'):
+            f = container.read_file(saved)
+            r = f['sections']['ZONE']['data']['records'][0]
+            if reason == 'hash': r['content_hash'] = bytes(20)
+            elif reason == 'names': r['states'][0]['placement_index'] = 999
+            else: r['capture_flags'] = 1
+            # A world item not owned by any record must remain intact.
+            world = f['sections']['ITEM']['data']['world']
+            extra = copy.deepcopy(world[0]); extra['handle'] = 6; world.append(extra)
+            restored, notes = convert.reverse_slot(container.write_file(L.KIND_CAMPAIGN, _secs(f), f['header']), env)
+            assert restored['zones'] == [], reason
+            assert [w['slot'] for w in restored['items']['world']] == [6], reason
+            assert any('record not applied' in n for n in notes), reason
+
+
+def test_review_discard_preserves_shared_world_items():
+    with tempfile.TemporaryDirectory() as d:
+        env = _env(d); _, saved = _converted(env)
+        maps = os.path.join(env.binds.build, 'Maps', 'zone', 'x')
+        shutil.copyfile(os.path.join(maps, 'y.engb'), os.path.join(maps, 'z.engb'))
+        f = container.read_file(saved)
+        records = f['sections']['ZONE']['data']['records']
+        survivor = copy.deepcopy(records[0])
+        survivor['zone'] = next(i for i, z in convert.PositionTables(env)._zone.items() if z == 'zone/x/z')
+        survivor['content_hash'] = bytes.fromhex(env.binds.zone_numbering('zone/x/z')['sha1'])
+        records.append(survivor); records[0]['capture_flags'] = 1
+        restored, _ = convert.reverse_slot(container.write_file(L.KIND_CAMPAIGN, _secs(f), f['header']), env)
+        assert len(restored['zones']) == 1
+        assert [w['slot'] for w in restored['items']['world']] == [5]
+
+
+def test_review_duplicate_destination_refuses_without_stream():
+    with tempfile.TemporaryDirectory() as d:
+        env = _env(d); _, saved = _converted(env)
+        f = container.read_file(saved)
+        states = f['sections']['ZONE']['data']['records'][0]['states']
+        duplicate = copy.deepcopy(states[0]); duplicate['ordinal'] = 4; duplicate['payload'] = b'\x99' * 8
+        states.append(duplicate)
+        try: convert.reverse_slot(container.write_file(L.KIND_CAMPAIGN, _secs(f), f['header']), env)
+        except convert.ConvertError as e: assert 'duplicate destination placement' in str(e)
+        else: assert False, 'two ordinals overwrote one destination'
+
+
+def test_review_unknown_flags_refuse_even_with_changed_hash():
+    with tempfile.TemporaryDirectory() as d:
+        env = _env(d); _, saved = _converted(env)
+        f = container.read_file(saved)
+        f['sections']['ZONE']['data']['records'][0].update(capture_flags=4, content_hash=bytes(20))
+        try: convert.reverse_slot(container.write_file(L.KIND_CAMPAIGN, _secs(f), f['header']), env)
+        except convert.ConvertError as e: assert 'unsupported capture status bits' in str(e)
+        else: assert False, 'unknown flags discarded instead of refused'

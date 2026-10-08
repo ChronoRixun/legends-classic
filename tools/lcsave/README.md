@@ -41,3 +41,8 @@ KEYS or self-contained data, not undocumented mutable-list references.
 Synthetic byte-parity acceptance covers two campaign KEEP resaves, per-capture metadata/tombstones, identical-name
 twins with a skipped factory, profile import and two profile resaves. W11 and actual engine acceptance remain
 separate release gates. Native demand estimates include restore equipment conservatively.
+
+Revision 2.4 review follow-up: reverse translation removes only world-item handles exclusively owned by discarded
+zone records; shared and unowned handles remain. Native preflight rejects duplicate numbered placement destinations.
+Unsupported capture bits refuse even when the placement hash differs. Conversation/zone reset explanations remain
+in the reverse reader's notes for callers to surface. No wire layout or section version changes.
