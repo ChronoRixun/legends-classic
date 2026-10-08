@@ -620,7 +620,8 @@ def v19_immunities(v, ck):
         defs = {(x.get('name') or '').lower(): x for x in t.iter('talent')} if t is not None else {}
         for rel in v.idx.under('data/talents'):
             ln = rel.lower()
-            if not ln.endswith(ext) or ('/npc/' not in ln and 'npc_generic' not in ln):
+            base = ln.rsplit('/', 1)[-1]
+            if not ln.endswith(ext) or not (base.startswith('npc_') or 'npc_generic' in base):
                 continue
             nt = v.tree(rel)
             if nt is not None:

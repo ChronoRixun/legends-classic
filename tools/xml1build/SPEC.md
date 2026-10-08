@@ -6151,15 +6151,20 @@ engine.
 heroes.HeroBuilder prunes shared_talents to the names playable heroes and their styles reference, XML2 base
 definitions the NPCs keep using, and the NPC energy pool (npc_values.ENERGY_TALENT, SPEC 24: ~100 NPCs carry
 it, so a per-set file would load in nearly every zone). Every pruned name that npcstat entries still reference
-moves to one small file per distinct reference set under data/talents/npc (generic combat subsets share
-data/talents/npc_generic), built by talent_sets from ONE partition both modules compute (XML1-herostat
-references, talent_sets.X2_BASE_TALENTS, the energy pool). The NPCs' ZONE package lists each CHRB character's
-set file as an xml_talents entry ahead of its styles (zones.py, beside the section 28 hero precache): XMen2.exe
-processes a zone package's xml_talents entries at zone load, while a spawned monster's own character package is
-read for its actor resources and its xml_talents entries are ignored (verified live 2026-10-08: set-bearing NPCs
-spawned with unloaded set files until the files moved to the zone package). The NPCs' character packages carry
-the same entry for the spawn-time path where an engine build honors it. Hero-as-NPC packages already carry the
-hero's own talent file and are unchanged.
+moves to one small FLAT file per distinct reference set beside the hero files (data/talents/npc_<set>,
+generic combat subsets share data/talents/npc_generic), built by talent_sets from ONE partition every consumer
+computes (XML1-herostat references, talent_sets.X2_BASE_TALENTS, the energy pool). Files stay flat because
+XMen2.exe's zone-package xml_talents loader resolves no subdirectory paths (verified live 2026-10-08 with
+probe files: flat names including '+' load from a zone package; data/talents/npc/<name> entries never
+registered, and a spawned monster's own character package has its xml_talents ignored). The zone roster is
+every stats template that can appear: CHRB characters, map spawner entities and spawn lists, the zone scripts'
+literal spawn calls (closure, so act scripts and boss phases count), the Danger Room courses whose arena maps
+to the zone, and heroes used as NPCs (their own talent file, as the section 28 precache intends). A zone-level
+selector (talent_sets.zone_set_files) drops a set file only when every name it contributes is already supplied
+by other retained files - arena_astm1 folds npc_generic into Vulcan's set and stays at 9 files. Retained XML2
+zone packages get the same entries (zones.patch_retained_packages): their spawners resolve to the port's stats
+whose talents moved. V-TBD recomputes the same roster and fails the build when a required file is not listed
+or a zone exceeds 100 names / 9 files.
 
 Saves: hero heaps may hold only hero-referenced shared names, so the move changes no held identity; the 0.2.0
 LC format stores talents by name, and older saves convert through the frozen per-era tables (SPEC 70), so the

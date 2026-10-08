@@ -21,6 +21,7 @@ import itertools
 from . import common as C
 from . import style_budget as SB
 from . import actor_budget as AB
+from . import npc_values as NV
 from . import talent_sets as TS
 
 TALENTS = 100
@@ -156,9 +157,55 @@ def validate(v, ck):
             ck.error(f'{rel}: defines {sorted(got)}, the npcstat partition expects {sorted(set(s))}')
     for rel in built_sets:
         ln = rel.lower()
-        if '/npc/' in ln or 'npc_generic' in ln:
+        base = ln.rsplit('/', 1)[-1]
+        if base.startswith('npc_') or 'npc_generic' in base:
             if C.norm(rel[:-5]) not in {C.norm(r) for r in set_files}:
                 ck.warn(f'{rel}: no npcstat entry demands this set file (dead weight in the build)')
+
+    # the same roster zones.py packs: CHRB + map spawners/spawn lists + script-closure spawns +
+    # Danger Room courses of this arena. The zone package must list every set file the selector
+    # keeps, so a future uncovered character source fails the build here.
+    try:
+        x1h = v.ctx.read_x1_xml('data/herostat.eng')
+        hero_refs = {(t.get('name') or '').lower() for t in x1h.iter() if t.tag.lower() == 'talent'}
+    except Exception:          # noqa: BLE001
+        hero_refs = set()
+
+    def _script_text_of(ref):
+        r = C.norm(ref)
+        cands = []
+        out_rel = v.ctx.out_index.get(C.script_ref(r)) if hasattr(v.ctx, 'out_index') else None
+        if out_rel:
+            cands.append(v.ctx.out / out_rel)
+        try:
+            cands.append(v.ctx.research_path('scripts/out/scripts') / (r + '.py'))
+        except Exception:      # noqa: BLE001
+            pass
+        try:
+            p = v.ctx.x1_path(f'scripts/{r}.py')
+            if p is not None:
+                cands.append(p)
+        except Exception:      # noqa: BLE001
+            pass
+        for c in cands:
+            if c.is_file():
+                try:
+                    return c.read_text(encoding='utf-8', errors='replace')
+                except OSError:
+                    return None
+        return None
+
+    def zone_roster(zone, pkg):
+        roster = set(SB._chr_names(v, zone))
+        for ext in ('.engb', '.xmlb'):
+            roster |= TS.map_spawn_roster(v.tree(f'maps/{zone}{ext}'))
+        roster |= TS.dangerroom_zone_roster(v.tree('data/dangerroom.engb'), zone)
+        refs = [C.script_ref(fn) for kind, fn in pkg or () if (kind or '').lower() == 'script']
+        if refs:
+            closed = TS.script_closure_refs(refs, _script_text_of)
+            roster |= TS.script_zone_roster({r: _script_text_of(r) for r in closed},
+                                            lambda n: n in npc_refs)
+        return roster
 
     def npc_set_file(name):
         s = TS.npc_set(npc_refs.get(name, ()), moving)
@@ -166,21 +213,52 @@ def validate(v, ck):
 
     by_name = v.stats()['by_name']
     high = 0
-    for zone in sorted(v.converted_zones()):
+    zone_list = sorted(v.converted_zones())
+    retained_zones = []
+    try:
+        converted_set = set(v.converted_zones())
+        for rel in v.idx.under('packages/generated/maps'):
+            if rel.lower().endswith('.pkgb'):
+                zone = C.norm(rel)[len('packages/generated/maps/'):-len('.pkgb')]
+                if zone not in converted_set:
+                    retained_zones.append(zone)
+    except Exception:          # noqa: BLE001
+        retained_zones = []
+    zone_list = sorted(set(zone_list) | set(retained_zones))
+    for zone in zone_list:
         pkg = v.zone_pkg(zone)
         if pkg is None:
             continue
         base = permanent | count(package_talents(pkg))
-        for name in SB._chr_names(v, zone):
+        roster = zone_roster(zone, pkg)
+        required = {}
+        for name in sorted(roster):
             stat = by_name.get(name)
-            if stat is not None and name not in hero_names:
+            if stat is not None and name in hero_names:
                 skin = (stat[1].get('skin') or '').strip()
                 if skin:
                     base.update(entries(SB.CHARACTER_PKG.format(name=name, skin=skin, nc='')))
-            else:
-                rel = npc_set_file(name)
-                if rel:
-                    base.add(C.norm(rel))
+                continue
+            refs = npc_refs.get(name)
+            if refs:
+                required[name] = TS.npc_moving(refs, hero_refs, TS.X2_BASE_TALENTS, NV.ENERGY_TALENT)
+        kept = TS.zone_set_files([s for s in required.values() if s])
+        zone_talent_entries = {C.norm(t) for k, t in (pkg or ()) if (k or '').lower() == 'xml_talents' and t}
+        for rel in sorted(kept):
+            base.add(C.norm(rel))
+            if C.norm(rel) not in zone_talent_entries:
+                who = sorted(n for n, s in required.items() if s and TS.set_file(s) == rel)
+                ck.error(f"{zone}: {rel} is not listed in the zone package, but {', '.join(who)} "
+                         f"can appear here (roster: CHRB / map spawners / scripts / Danger Room courses); "
+                         f"its talents would register nowhere")
+        for name in sorted(roster):
+            if name in hero_names:
+                rel = C.norm(f'data/talents/{name}')
+                base.add(rel)
+                if rel not in zone_talent_entries:
+                    ck.error(f"{zone}: {rel} is not listed in the zone package, but the hero appears here "
+                             f"as an NPC (roster: CHRB / map spawners / scripts / Danger Room courses); "
+                             f"the NPC copy's talents would register nowhere")
         total, party = worst_party(base, parties[AB.combat_off(pkg)], counts)
         if total['talents'] > high:
             ck.details['worst_demand'] = {'zone': zone, 'party': list(party),

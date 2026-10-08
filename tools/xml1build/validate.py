@@ -1126,7 +1126,8 @@ class Validator:
         if idx is not None:
             for rel in idx.under('data/talents'):
                 ln = rel.lower()
-                if not ln.endswith('.engb') or ('/npc/' not in ln and 'npc_generic' not in ln):
+                base = ln.rsplit('/', 1)[-1]
+                if not ln.endswith('.engb') or not (base.startswith('npc_') or 'npc_generic' in base):
                     continue
                 t = self.tree(rel)
                 if t is not None:

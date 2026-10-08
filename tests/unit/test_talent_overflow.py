@@ -16,7 +16,7 @@ def test_npc_set_and_set_file():
     assert TS.set_file(frozenset({'fightstyle_villain'})) == TS.GENERIC_FILE
     assert TS.set_file(frozenset({'physical_res', 'x1_fightstyle_gun_rifle'})) == TS.GENERIC_FILE
     own = TS.set_file(frozenset({'zz_claw', 'zz_spin'}))
-    assert own == TS.NPC_DIR + '/zz_claw+zz_spin'
+    assert own == 'data/talents/npc_zz_claw+zz_spin'
     assert TS.set_file(frozenset({'fightstyle_villain', 'zz_claw'})) != TS.GENERIC_FILE
 
 
@@ -32,7 +32,7 @@ def test_file_sets_groups_identical_refs():
     }
     sets = TS.file_sets(npc_refs, {'zz_claw', 'zz_spin', 'x1_fightstyle_gun_rifle',
                                    'fightstyle_villain', 'physical_res'})
-    assert sets == {TS.NPC_DIR + '/zz_claw+zz_spin': frozenset({'zz_claw', 'zz_spin'}),
+    assert sets == {'data/talents/npc_zz_claw+zz_spin': frozenset({'zz_claw', 'zz_spin'}),
                     TS.GENERIC_FILE: frozenset({'x1_fightstyle_gun_rifle', 'fightstyle_villain', 'physical_res'})}
 
 
@@ -45,6 +45,79 @@ def test_partition_moves_keeps_hero_base_and_energy():
     assert TS.partition_moves(keep, hero_refs, npc_refs, x2_base, energy) == ['fightstyle_villain', 'zz_claw']
     # a name no npc references never moves (it is dropped, not filed)
     assert TS.partition_moves({'zz_claw'}, set(), set(), set(), energy) == []
+
+
+# -------------------------------------------------------------------------------------------------- zone rosters
+class _E:
+    """tiny element stand-in for the roster scanners."""
+
+    def __init__(self, tag, _children=(), **attrs):
+        self.tag = tag
+        self._a = {k: v for k, v in attrs.items() if v is not None}
+        self._c = list(_children)
+
+    def get(self, k, d=None):
+        return self._a.get(k, d)
+
+    def iter(self):
+        yield self
+        for c in self._c:
+            yield from c.iter()
+
+
+def test_map_spawn_roster_takes_every_character_attr():
+    root = _E('world', _children=[_E('entity', classname='worldent'),
+                                  _E('entity', classname='monsterspawnerent', character='AA_Brute'),
+                                  _E('entinst', type='sp_aa'),
+                                  _E('entity', charactername='bb_gunner')])
+    assert TS.map_spawn_roster(root) == {'aa_brute', 'bb_gunner'}
+    assert TS.map_spawn_roster(None) == set()
+
+
+def test_dangerroom_zone_roster_follows_arena_mapping():
+    spawner = _E('SPAWNER', character='Aa_Boss')
+    mustdie = _E('MUSTDIE', character='bb_lackey')
+    course = _E('COURSE', name='ZZ001', arena='Test Pit', _children=[spawner, mustdie])
+    other_sp = _E('SPAWNER', character='cc_elsewhere')
+    other = _E('COURSE', name='ZZ002', arena='Elsewhere', _children=[other_sp])
+    arena = _E('ARENA', title='Test Pit', zone='arena/arena_test')
+    arena2 = _E('ARENA', title='Elsewhere', zone='arena/arena_other')
+    root = _E('DANGERROOM', _children=[arena, arena2, course, other])
+    assert TS.dangerroom_zone_roster(root, 'arena/arena_test') == {'aa_boss', 'bb_lackey'}
+    assert TS.dangerroom_zone_roster(root, 'arena/arena_other') == {'cc_elsewhere'}
+    assert TS.dangerroom_zone_roster(root, 'arena/missing') == set()
+
+
+def test_script_zone_roster_recognizes_spawn_calls_only():
+    texts = {'x1/test': 'spawn("aa_brute")\nspawnInto("arena/arena_test", "bb_lackey")\n'
+                        'waittimed(1.0)\nstartConversation("x1/hi")\n'}
+    got = TS.script_zone_roster(texts, lambda n: n in {'aa_brute', 'bb_lackey'})
+    assert got == {'aa_brute', 'bb_lackey'}
+
+
+def test_script_closure_follows_literal_script_calls():
+    texts = {'x1/a': 'callscript("x1/b")\nspawn("aa_boss")',
+             'x1/b': 'act("sp_x", "sp_x")\ncallscript("x1/c")',
+             'x1/c': 'spawn("bb_add")'}
+    closed = TS.script_closure_refs(['x1/a'], lambda r: texts.get(r))
+    assert closed == {'x1/a', 'x1/b', 'x1/c'}
+    got = TS.script_zone_roster({r: texts[r] for r in closed}, lambda n: True)
+    assert got == {'aa_boss', 'bb_add'}
+
+
+def test_zone_set_files_drops_only_fully_covered_files():
+    jugg = frozenset({'zz_punch', 'zz_slam', 'zz_armor'})
+    vulcan = frozenset({'zz_flame', 'zz_fring', 'zz_fbat', 'fightstyle_villain'})
+    generic = frozenset({'fightstyle_villain'})
+    kept = TS.zone_set_files([jugg, vulcan, generic])
+    assert set(kept) == {TS.set_file(jugg), TS.set_file(vulcan)}
+    # a file with a unique name is always kept
+    toad = frozenset({'zz_toad'})
+    kept = TS.zone_set_files([generic, toad])
+    assert set(kept) == {TS.GENERIC_FILE, TS.set_file(toad)}
+    # identical sets collapse to one file
+    kept = TS.zone_set_files([jugg, frozenset({'zz_slam', 'zz_punch', 'zz_armor'})])
+    assert len(kept) == 1
 
 
 # ------------------------------------------------------------------------------------------------ demand model
@@ -186,7 +259,7 @@ class FakeV:
 def test_validate_resolves_npc_refs_and_flags_missing_sets():
     shared = ['s1', 's2', 'drone_energy']
     npc = {'aa_brute': ['s1', 'zz_claw'], 'bb_plain': ['s2']}
-    sets = {TS.NPC_DIR + '/zz_claw': ['zz_claw']}
+    sets = {'data/talents/npc_zz_claw': ['zz_claw']}
     v = FakeV(shared, npc, sets)
     ck = FakeCheck()
     TB.validate(v, ck)

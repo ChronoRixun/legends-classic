@@ -8,11 +8,17 @@ build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebui
 - **The TalentRegistry no longer overflows at xjet/blackbird_arbiter.** XMen2.exe silently refuses talent
   registration past 100 unique names or 9 distinct files; the arbiter demanded 116 (63 shared + the zone's
   four NPC heroes + the party) and the party's last heroes lost every power. NPC-only special talents (XML1
-  kept them inline in each NPC's stats entry) move out of shared_talents into small per-set files under
-  `Data\talents\npc` listed by the NPCs' own character packages; the shared pool drops 63 -> 29 names and the
-  worst zone demands 82 names / 9 files. Validator rule V-TBD (number assigned at merge) recomputes every
-  zone's demand; saves are unaffected (the LC format stores talent names, old saves convert through the era
-  tables).
+  kept them inline in each NPC's stats entry) move out of shared_talents into small flat per-set files beside
+  the hero files (`Data\talents\npc_<set>`, generic subsets share `npc_generic`); the shared pool drops
+  63 -> 28 names and the worst zone demands 81 names / 9 files. Every zone package lists the set files of
+  every stats template that can appear there - CHRB characters, map spawners, script spawns, Danger Room
+  course rosters, retained XML2 zones - because the engine only honours zone-package `xml_talents` (flat
+  paths; subdirectories and spawned monsters' own packages never register) and a zone-level selector folds a
+  set file away only when the names it contributes are already supplied by other retained files.
+  Validator rule V-TBD (number assigned at merge) recomputes that roster per zone and fails the build on any
+  miss or over-cap demand; a static audit of all 367 built maps reports zero missing
+  power/combat-style/immunity references. Saves are unaffected (the LC format stores talent names, old saves
+  convert through the era tables).
 - **A new save format; every old save is carried over once, automatically.** With XML2 Fix 1.4 the build starts
   in the LC save format: at the first start the fix converts the old saves it finds, once per file, into the new
   `SaveLC` folder - the old folder is never touched. Saves of every builder era load: heroes, levels, stats,
