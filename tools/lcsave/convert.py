@@ -899,7 +899,7 @@ def reverse_slot(new_bytes, env, template=None):
         grades[pos.grade(g['grade'])] = g['value']
     m['danger_room'] = dict(courses=courses, course_residue=[0] * (L.OLD_DR_COURSES - len(courses)), grades=grades)
     m['review'] = dict(unlocked=pos.review_words(S['REVW']['unlocked']), seen=pos.review_words(S['REVW']['seen']))
-    zs, zones = pos.zone_records(S['ZONE']['records'], notes)
+    zs, zones = pos.zone_records(S['ZONE']['records'], notes, m['items']['world'])
     m['zone_strings'] = zs
     m['zones'] = zones
     m['profile'] = pos.profile(S)
@@ -1156,11 +1156,15 @@ class PositionTables:
         p['pad_220'] = 0; p['highest_level'] = P['highest_level']; p['flags_229'] = P['flags']; p['pad_22a'] = [0, 0]
         return p
 
-    def zone_records(self, recs, notes):
-        """ZREC list -> (zone string table, old zone records) with the engine's layouts refilled"""
+    def zone_records(self, recs, notes, world):
+        """Refill native zone layouts and remove world handles owned exclusively by discarded records."""
         strings = dict(generation=0, offsets=[0] * L.OLD_ZONE_STRING_SLOTS, used=2, arena=bytearray(L.OLD_ZONE_ARENA))
         strings['offsets'][0] = 1
         interned = {}
+        def dependencies(record):
+            return {struct.unpack('<I', s['payload'][:4])[0] for s in record['states'] if s['payload_kind'] == PAYLOAD_WORLD_ITEM}
+        owned = {h for r in recs for h in dependencies(r)}
+        applied = set()
 
         def intern(text):
             if text == '':
@@ -1248,6 +1252,9 @@ class PositionTables:
             if z['conversation'] != list(r['conversation']):
                 notes.append(f'zone {zone!r}: conversation digest unknown or changed: bits reset')
             zones.append(z)
+            applied.update(dependencies(r))
+        # Shared handles and items not owned by any zone survive; rejected zones release exclusive dependencies.
+        world[:] = [w for w in world if w['slot'] not in owned or w['slot'] in applied]
         strings['arena'] = bytes(strings['arena'])
         return strings, zones
 
@@ -1517,6 +1524,7 @@ def validate_native_sections(S, env):
                 raise ConvertError('unsupported native fog')
             if len(z['conversation']) != 5: raise ConvertError('native conversation word count')
             ords = []
+            placements = set()
             if len(z['states']) >= L.OLD_ZONE_STATES: raise ConvertError('native state pool exhausted')
             for state in z['states']:
                 bound(state['list'], 1, 3, 'state list')
@@ -1526,6 +1534,8 @@ def validate_native_sections(S, env):
                 bound(state['flags_a'], 0, 255, 'state flags'); bound(state['flags_b'], 0, 255, 'state flags')
                 if state['list'] == 1:
                     bound(state['ordinal'], 1, L.OLD_ZONE_ORDINALS, 'ordinal'); ords.append(state['ordinal'])
+                    if state['placement_index'] in placements: raise ConvertError('duplicate destination placement')
+                    placements.add(state['placement_index'])
                 if state['payload_kind'] == 2:
                     if len(state['payload']) != 13 or not state['flags_a'] & 1: raise ConvertError('world payload contract')
                     handle, quantity = struct.unpack('<Ii', state['payload'][:8])
