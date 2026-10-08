@@ -375,7 +375,7 @@ def test_port_keys_from_a_synthetic_build():
         assert g['MainMenuItems'] == 'button1,button2,button3,button4,button5,button6,button8,button7'
         assert g['PostgameScript'] == FI.POSTGAME_SCRIPT and g['WindowTitle'] == 'X-Men Legends'
         assert g['NewGamePlus'] == '0' and g['ReviewStats'] == '0' and g['XPCurve'] == 'xml1' and g['Xtract'] == '0'
-        assert keys['Online'] == {'GameVersion': 'X1.2'} and set(g) <= set(FI.PORT_OWNED['Game'])
+        assert keys['Online'] == {'GameVersion': FI.PORT_GAME_VERSION} and set(g) <= set(FI.PORT_OWNED['Game'])
         assert keys['Save'] == {'Format': 'lc'} and 'Format' in FI.PORT_OWNED['Save']
         # the harness builds its test ini from the same keys
         sys.path.insert(0, str(Path(C.__file__).resolve().parents[1]))

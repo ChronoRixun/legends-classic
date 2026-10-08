@@ -66,11 +66,12 @@ MAIN_MENU_FILE = ('UI', 'menus', 'main.XMLB')
 # title (the exe says X-Men Legends 2), no XML2 hero unlock + popup after the credits (Deadpool, 0x5b1d4a), and a
 # GameSpy game version of its own so port and XML2 lobbies never mix (research/online/port_online_test.md).
 # GameVersion changes whenever the build's content version or its save / combat rules do (SPEC-new-save 6, decision
-# D5: peers need the same content version AND content fingerprint; the string keeps lobbies apart before any
-# connection): X1.0 the port, X1.1 a balance test build, X1.2 builder 0.2.0 (the LC save format, balance on).
+# D5: an append-only official identity history assigns each immutable content/catalogue envelope a unique
+# four-character token. Historical X1.* tokens remain reserved (release_identity.py).
 PORT_WINDOW_TITLE = 'X-Men Legends'
 PORT_END_HERO_UNLOCK = '0'
-PORT_GAME_VERSION = 'X1.2'
+from . import release_identity as RI
+PORT_GAME_VERSION = RI.game_version()
 
 # xml2-fix 1.4 [Save] Format (SPEC 70; SPEC-new-save 1.5 / A11): the LC save format. The fix reads the build's
 # save tables (Data/lcsave/catalogue.lcc, legacy.lcm, the .lcbind files - xml1build.savefiles), converts the old
@@ -356,7 +357,7 @@ def online_keys(*, port_identity=False, balance=False, fingerprint=None) -> dict
     the save tables, the content fingerprint a co-op peer must share (SPEC-new-save 6)."""
     if not port_identity:
         return {}
-    keys = {'GameVersion': PORT_GAME_VERSION}
+    keys = {'GameVersion': RI.game_version()}
     if fingerprint:
         keys['ContentFingerprint'] = fingerprint
     return keys
@@ -379,6 +380,8 @@ def port_keys(out, *, save_folder=PLAY_SAVE_FOLDER, eighth=True) -> dict:
     keys = {'Game': game, 'Limits': dict(LIMITS)}
     balance = build_balance(out)
     online = online_keys(port_identity=bool(postgame), balance=balance, fingerprint=content_fingerprint(out))
+    if postgame and (Path(out) / 'Data/lcsave/catalogue.lcc').is_file():
+        online['GameVersion'] = RI.manifest(out)['game_version']
     if online:
         keys['Online'] = online
     save = save_keys(port_identity=bool(postgame))
@@ -522,5 +525,12 @@ def write_port_keys(out, keys: dict | None = None) -> dict:
     """merge the port's keys (default: port_keys(out)) into <out>/xml2-fix.ini, dropping the PORT_OWNED keys it does
     not need; the launcher's keys stay. Returns the keys written."""
     keys = port_keys(out) if keys is None else keys
+    if keys.get('Save', {}).get('Format') == 'lc' and (Path(out) / 'Data/lcsave/catalogue.lcc').is_file():
+        import json
+        identity = RI.manifest(out)
+        keys.setdefault('Online', {})['GameVersion'] = identity['game_version']
+        archive = Path(out) / '_build' / 'lc-release-identity.json'
+        archive.parent.mkdir(parents=True, exist_ok=True)
+        archive.write_text(json.dumps(identity, indent=2, sort_keys=True) + '\n', encoding='utf-8')
     merge_ini(Path(out) / 'xml2-fix.ini', keys, dropped_keys(keys))
     return keys
