@@ -5886,3 +5886,21 @@ to floor height alive, with the native evaluator active.
 Staged: access to the Xtraction beacon and combat encounter, facing, the isolated claw test's enemy-targeting
 flag, and the ladder test's zone/approach/top-spawner activation. Powers, menu saving/loading, floor-trigger
 walking and attacks use real input. This is short single-player acceptance, not a campaign or co-op proof.
+
+## Save guard release identities and registry demand (number assigned at merge)
+
+V-TBD: talent_budget.validate counts the unique registered talent names and distinct talent files of permanent,
+zone, NPC and the worst four-hero party packages for every converted zone, including arenas. Both capacities are
+enforced independently (100 names/objects/handles; 9 files). Duplicate file/name loads are reuse, not extra slots.
+The old shared-plus-four-heroes margin alone does not cover zone/NPC demand. Exceeding either budget is a build
+error, naming the zone and relevant party. Missing/unreadable talent data is also a build error. A registry raise
+needs its separate relocation proof; this rule does not change the talent-ID radix or the LC layout.
+
+fix_ini assigns GameVersion from release_identity.HISTORY. History is append-only; previously issued tokens and
+content/catalogue tuples are never reused. The 0.2.0b candidate envelope (16,2) is assigned LC20 with its immutable
+bind manifest; historical X1.* tokens remain reserved. Final integration must append its final version tuple,
+token and pinned bind manifest. A build with an unassigned identity or a changed pinned bind manifest refuses
+identity publication. _build/lc-release-identity.json archives the identity and hashes of its save-binding files.
+Offline loading across content versions remains allowed when the saved identities resolve. Mods may add cosmetic,
+UI or script content; unsupported bound-file overlays/ID-0 keys are refused by the DLL. No full-content hash field
+is added to the save.

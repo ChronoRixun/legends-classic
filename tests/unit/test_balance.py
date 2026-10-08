@@ -182,14 +182,14 @@ def test_ini_keys_only_for_a_balance_build_with_the_switch_on():
         with switched(False):
             for out in (plain, bal):                                     # switch off: no balance keys anywhere
                 keys = FI.port_keys(out)
-                assert 'Balance' not in keys and keys['Online'] == {'GameVersion': 'X1.2'}
+                assert 'Balance' not in keys and keys['Online'] == {'GameVersion': FI.PORT_GAME_VERSION}
             assert 'Balance' not in FI.port_owned() and FI.port_owned() == FI.PORT_OWNED
             assert 'Balance' not in FI.dropped_keys({'Game': {}})
         with switched(True):
             keys = FI.port_keys(plain)
-            assert 'Balance' not in keys and keys['Online'] == {'GameVersion': 'X1.2'}
+            assert 'Balance' not in keys and keys['Online'] == {'GameVersion': FI.PORT_GAME_VERSION}
             keys = FI.port_keys(bal)
-            assert keys['Online'] == {'GameVersion': 'X1.2'}             # one version: every build is a balance build
+            assert keys['Online'] == {'GameVersion': FI.PORT_GAME_VERSION}             # one version: every build is a balance build
             assert keys['Balance'] == {'EnemyHealthPerBody': '10', 'HeroStatScale': str(H.STAT_SCALE),
                                        'NativeStatHeroes': 'ProfXAstral,ProfXGladiator', 'StrengthBonus': '0.1',
                                        'MindBonus': '0.1', 'MightBonus': '0.05', 'PowerAttacks': 'xml1',
@@ -202,7 +202,7 @@ def test_ini_keys_only_for_a_balance_build_with_the_switch_on():
             sys.path.insert(0, str(Path(C.__file__).resolve().parents[1]))
             import harness
             text = harness.ini_text('windowed', 1280, 720, True, port_identity=True, balance=True)
-            assert FI.parse_ini(text)['Balance'] == keys['Balance'] and 'GameVersion=X1.2' in text
+            assert FI.parse_ini(text)['Balance'] == keys['Balance'] and f'GameVersion={FI.PORT_GAME_VERSION}' in text
             assert '[Balance]' not in harness.ini_text('windowed', 1280, 720, True, port_identity=True)
 
 
