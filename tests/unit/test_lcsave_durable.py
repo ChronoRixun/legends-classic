@@ -249,3 +249,36 @@ def test_review_unknown_flags_refuse_even_with_changed_hash():
         try: convert.reverse_slot(container.write_file(L.KIND_CAMPAIGN, _secs(f), f['header']), env)
         except convert.ConvertError as e: assert 'unsupported capture status bits' in str(e)
         else: assert False, 'unknown flags discarded instead of refused'
+
+
+def test_native_dangling_unnumbered_world_state_is_not_a_save_refusal():
+    with tempfile.TemporaryDirectory() as d:
+        env = _env(d); _, saved = _converted(env)
+        for kind in ('smart', 'dynamic'):
+            native = make_old_save(def_count=len(env.binds.item))
+            z = native['zones'][0]
+            native['items']['world'] = [dict(slot=h, instance=copy.deepcopy(native['items']['world'][0]['instance'])) for h in range(13)]
+            z['states'][4].update(payload=b'\x0d\x01'+bytes(6), flags_a=1, flags_b=7)
+            z['dynamic_count'] = int(kind == 'dynamic')
+            z['smart_count'] = int(kind == 'smart'); z['smart'][0] = 4
+            result = convert.old_stream_to_new(oldsave.write_slot(native), env, zone_captures=convert.loaded_zone_metadata(saved, env), require_capture_metadata=True, now=0)
+            assert result.refused is None, (kind, result.refused)
+            assert not any(result.dropped.values()), result.dropped
+            assert any('dangling world item slot 13' in n and 'native load' in n for n in result.notes)
+            records = container.read_file(result.file_bytes)['sections']['ZONE']['data']['records']
+            assert all(s['payload_kind'] != 2 for r in records for s in r['states'])
+            rebuilt, _ = convert.reverse_slot(result.file_bytes, env)
+            assert rebuilt['zones'][0]['dynamic_count'] == rebuilt['zones'][0]['smart_count'] == 0
+            assert len(rebuilt['items']['world']) == 13
+            imported = convert.convert_slot(oldsave.write_slot(native), 'synthetic.save', env, now=0)
+            assert imported.refused is None and imported.dropped['states'] == 1
+            assert container.read_file(imported.file_bytes)['sections']['LGCY']['data']['other_dropped'] == 1
+
+
+def test_native_dangling_numbered_world_state_still_refuses():
+    with tempfile.TemporaryDirectory() as d:
+        env = _env(d); _, saved = _converted(env)
+        native = make_old_save(def_count=len(env.binds.item))
+        native['zones'][0]['states'][1].update(payload=b'\x0d\x01'+bytes(6), flags_a=1)
+        result = convert.old_stream_to_new(oldsave.write_slot(native), env, zone_captures=convert.loaded_zone_metadata(saved, env), require_capture_metadata=True, now=0)
+        assert result.refused and result.file_bytes is None

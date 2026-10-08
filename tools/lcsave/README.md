@@ -46,3 +46,8 @@ Revision 2.4 review follow-up: reverse translation removes only world-item handl
 zone records; shared and unowned handles remain. Native preflight rejects duplicate numbered placement destinations.
 Unsupported capture bits refuse even when the placement hash differs. Conversation/zone reset explanations remain
 in the reverse reader's notes for callers to surface. No wire layout or section version changes.
+
+Native save follow-up: dangling unnumbered dynamic/smart item states are omitted with an explicit result note when
+their world-item slot is absent, matching the native loader's absent-instance case. Numbered identity loss and
+other unhandled drops still refuse. Valid world items and carried/key-item counts are preserved. Legacy imports
+keep the historical recorded-drop/LGCY policy; field widths and section versions are unchanged.
