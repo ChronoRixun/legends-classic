@@ -284,6 +284,33 @@ def test_native_dangling_numbered_world_state_still_refuses():
         assert result.refused and result.file_bytes is None
 
 
+def test_native_dead_numbered_missing_item_preserves_removed_identity():
+    # Native factory gate 0x465c35 checks flags_b bit 8 before item restoration:
+    # a dead numbered record removes the authored entity without reading its item slot.
+    with tempfile.TemporaryDirectory() as d:
+        env = _env(d); _, saved = _converted(env)
+        captures = convert.loaded_zone_metadata(saved, env)
+        for flags_b in (0, 7, 16, 23):
+            native = make_old_save(def_count=len(env.binds.item))
+            native['zones'][0]['states'][1].update(payload=b'\x0d\x01'+bytes(6), flags_a=1, flags_b=flags_b)
+            raw = oldsave.write_slot(native)
+            result = convert.old_stream_to_new(raw, env, zone_captures=captures, require_capture_metadata=True, now=0)
+            assert result.refused is None, result.refused
+            assert not any(result.dropped.values()), result.dropped
+            assert any('dead numbered item' in n and 'slot 13' in n for n in result.notes)
+            rec = next(s for s in container.read_file(result.file_bytes)['sections']['ZONE']['data']['records'][0]['states'] if s['ordinal'] == 1 and s['list'] == 1)
+            assert rec['placement_index'] == captures[0]['entities'][0]['placement_index']
+            assert rec['flags_b'] == flags_b and rec['flags_a'] == 0
+            assert rec['payload_kind'] == 1 and rec['payload'] == bytes(8)
+            rebuilt, _ = convert.reverse_slot(result.file_bytes, env)
+            z = rebuilt['zones'][0]; tombstone = z['states'][z['ordinal_map'][0]]
+            assert z['ordinal_map'][0] and not (tombstone['flags_b'] & 8)
+            assert not (tombstone['flags_a'] & 1)
+            assert z['states'][z['ordinal_map'][1]]['payload'] == b'\x11' * 8
+            legacy = convert.convert_slot(raw, 'synthetic.save', env, now=0)
+            assert legacy.refused is None and legacy.dropped['states'] == 1
+
+
 def test_native_transfer_metadata_preserves_state_and_is_inferred():
     with tempfile.TemporaryDirectory() as d:
         env = _env(d)

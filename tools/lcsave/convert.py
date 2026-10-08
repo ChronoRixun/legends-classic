@@ -395,8 +395,15 @@ def _zone_record(env, res, old, z, index, candidate_eras, what, captures=None, r
             slot = p[0]
             qty = struct.unpack('<h', p[1:3])[0]
             if slot not in world_handles:
+                # Native factory 0x465c35 checks numbered alive bit 8 before
+                # virtual item restore. Retain the removed placement without
+                # a stale item payload the engine will never read.
+                if captures is not None and kind == STATE_NUMBERED and not (s['flags_b'] & 8):
+                    rec.update(flags_a=0, payload_kind=PAYLOAD_ENGINE, payload=bytes(8))
+                    res.notes.append(f'{what}: dead numbered item slot {slot}: removed placement retained without stale item reference (native load skips item restore)')
+                    return rec
                 # Native item restore tolerates absent slots. Omit only unnumbered ghosts;
-                # numbered identity loss and the historical importer drop policy stay strict.
+                # live numbered identity loss and the historical importer drop policy stay strict.
                 if captures is not None and kind != STATE_NUMBERED:
                     res.notes.append(f'{what}: dangling world item slot {slot}: unnumbered item state omitted (native load has no item instance)')
                     return None
