@@ -6138,7 +6138,7 @@ is reported separately. `[Limits] EffectCurves=3600` remains the shipped effect-
 ## 74. Save guard release identities and registry demand
 
 V44: talent_budget.validate counts the unique registered talent names and distinct talent files of permanent,
-zone, NPC and the worst four-hero party packages for every converted and retained zone, including arenas (complete roster in section 75). Both capacities are
+zone, NPC and the possible seated-party packages for every converted and retained zone, including arenas (complete roster in section 75). Both capacities are
 enforced independently (100 names/objects/handles; 9 files). Duplicate file/name loads are reuse, not extra slots.
 The old shared-plus-four-heroes margin alone does not cover zone/NPC demand. Exceeding either budget is a build
 error, naming the zone and relevant party. Missing/unreadable talent data is also a build error. A registry raise
@@ -6154,40 +6154,34 @@ UI or script content; unsupported bound-file overlays/ID-0 keys are refused by t
 is added to the save.
 
 
-## 75. The TalentRegistry budget and the NPC talent-set split
+## 75. Minimal TalentRegistry correction (supersedes the NPC-file split)
 
-XMen2.exe's TalentRegistry admits 100 registered talent names from 9 distinct files: registration (0x4c0080)
-refuses a 101st unique name silently, and the file loader (0x4c0460) refuses a 10th distinct file; the shared
-loader (0x4c05d0) itself admits only ids 0..98. Builder 0.1.x hoisted every XML1 NPC-only special talent
-(sabre_claw, pyro_flame, jug_punch ...) into Data/shared_talents so they registered everywhere; xjet/
-blackbird_arbiter therefore demanded 116 unique names with a four-hero party (63 shared + 24 for the zone's
-four NPC heroes + 29 for the party) and the party's last-seated heroes lost every power, silently. The first
-game kept those definitions inline in each NPC's own stats entry; this change restores that shape on the XML2
-engine.
+The 121-zone live sweep falsified the per-set model: formatted talent paths use a 64-byte buffer
+(0x4c062d/0x4c04c9), unknown file names all start at the default stats ID interval100
+(0x4bdc00/0x4c0644), and occupied IDs refuse new names even below the100-name capacity (0x4c018b).
+A listed file and a quiet full-pool refusal log do not prove its definitions registered.
 
-heroes.HeroBuilder prunes shared_talents to the names playable heroes and their styles reference, XML2 base
-definitions the NPCs keep using, and the NPC energy pool (npc_values.ENERGY_TALENT, SPEC 24: ~100 NPCs carry
-it, so a per-set file would load in nearly every zone). Every pruned name that npcstat entries still reference
-moves to one small FLAT file per distinct reference set beside the hero files (data/talents/npc_<set>,
-generic combat subsets share data/talents/npc_generic), built by talent_sets from ONE partition every consumer
-computes (XML1-herostat references, talent_sets.X2_BASE_TALENTS, the energy pool). Files stay flat because
-XMen2.exe's zone-package xml_talents loader resolves no subdirectory paths (verified live 2026-10-08 with
-probe files: flat names including '+' load from a zone package; data/talents/npc/<name> entries never
-registered, and a spawned monster's own character package has its xml_talents ignored). The zone roster is
-every stats template that can appear: CHRB characters, map spawner entities and spawn lists, the zone scripts'
-literal spawn calls (closure, so act scripts and boss phases count), the Danger Room courses whose arena maps
-to the zone, and heroes used as NPCs (their own talent file, as the section 28 precache intends). A zone-level
-selector (talent_sets.zone_set_files) drops a set file only when every name it contributes is already supplied
-by other retained files - arena_astm1 folds npc_generic into Vulcan's set and stays at 9 files. Retained XML2
-zone packages get the same entries (zones.patch_retained_packages): their spawners resolve to the port's stats
-whose talents moved. V44 recomputes the same roster and fails the build when a required file is not listed
-or a zone exceeds 100 names / 9 files.
+Restore the63-name0.1.12 shared list and order, including NPC powers/immunities and the held rifle-style
+slot. No NPC set or union files are emitted/listed. Hero files and the engine limits100names/9files remain.
+The complete roster collector survives: CHRB, map spawners/spawn lists, literal script closure spawns and
+Danger Room courses. Hero NPC precache still occurs before its power style (section28).
 
-Saves: hero heaps may hold only hero-referenced shared names, so the move changes no held identity; the 0.2.0
-LC format stores talents by name, and older saves convert through the frozen per-era tables (SPEC 70), so the
-surviving shared_talents order is a sanity rule, not a save pin (save_positions). V44 (number assigned at
-merge) recomputes the demand of every converted zone under this model and fails the build over 100 names or 9
-files; exactly-full is a warning because a scripted spawn outside the CHRB roster can still load a file.
-Static worst case after the split: 81 names / 9 files at xjet/blackbird_arbiter (was 116). A registry raise
-(XML2 Fix `[Limits] TalentRegistry`) remains possible but needs the relocation proof its design lists; this
-rule keeps the engine at 100/9.
+The reviewed noncombat prop table `talent_budget.PROP_HERO_ROLES` identifies the Arbiter's Cyclops,
+Phoenix, Storm and Wolverine. Only when the complete zone plus its possible seated-party demand
+exceeds a capacity does the emitter remove these props' unnecessary zone talent precache as a group.
+Fighting/seatable NPCs and forced-party files are retained. The party loads its own files normally.
+V44 independently reconstructs candidates, explains every dropped file/reason, and rejects unjustified
+omissions or retained overflow. Story missions use their forced seats plus later joins; unforced missions
+keep the worst-four-hero bound. The default build uses ForcedTeams=1; menu-mode builds retain the
+unconstrained bound and must pass it independently.
+
+V44 checks names<=100, files<=9, every full `data/talents/<name>.xmlb` path<=63bytes, no nested loader
+paths and at most one unknown/default-ID-interval file per zone. It rejects stale NPC set/union output,
+checks converted NPC references against loaded shared/hero definitions, and keeps untouched retail NPC
+leftovers outside the port's authored-reference error policy.
+
+Save metadata is regenerated by the normal build. Catalogue domains and frozen legacy eras remain
+unchanged; revision5/LC23 is appended after LC22, CONTENT_VERSION remains16 for this pending release.
+Restoring the shared ordering restores the original native shared IDs; hero held names/ranks/flags must
+still pass the full82-save Python/C++ corpus. Runtime registry checks and real boss/course observations
+are required before claiming the correction accepted.
