@@ -51,3 +51,8 @@ Native save follow-up: dangling unnumbered dynamic/smart item states are omitted
 their world-item slot is absent, matching the native loader's absent-instance case. Numbered identity loss and
 other unhandled drops still refuse. Valid world items and carried/key-item counts are preserved. Legacy imports
 keep the historical recorded-drop/LGCY policy; field widths and section versions are unchanged.
+
+Native-transfer follow-up: `native_zone_metadata` validates current-table names/ordinals, marks inferred flag2
+provenance with zero conversation digest, and retains object/fog data without relabeling it as observed. Its helper
+path bypasses conversation hashing; ordinary save/import/bind generation still hashes by default. No wire layout,
+section version or content identity changes.

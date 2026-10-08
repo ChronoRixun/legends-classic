@@ -1378,12 +1378,12 @@ def _retain_sections(sections, retained_file, kind):
     return out
 
 
-def _current_environment(env):
+def _current_environment(env, *, hash_conversations=True):
     import copy
     from .legacy import Era
     _validate_native_build(env.binds)
     current = copy.copy(env)
-    current.ref = env.binds.hash_tables()
+    current.ref = env.binds.hash_tables() if hash_conversations else env.binds.hash_tables(include_conversation_digest=False)
     current.ref['content_version'] = env.catalogue.data.get('content_version', 0)
     cv = current.ref['content_version']
     current.model = dict(reference=current.ref, eras={str(cv): dict(hero_shared_holdable={})})
@@ -1393,13 +1393,13 @@ def _current_environment(env):
 
 def old_stream_to_new(old_bytes, env, *, retained_file=b'', now=None, zone_captures=None,
                       require_capture_metadata=False, campaign_serial=0, save_sequence=1,
-                      writer_version=0x01040000, writer='XML2 Fix', slot=0, mods=(), origin=0):
+                      writer_version=0x01040000, writer='XML2 Fix', slot=0, mods=(), origin=0, _hash_conversations=True):
     res = Result()
     try:
         if len(old_bytes) == L.OLD_PAYLOAD:
             old_bytes = bytes(0x80) + struct.pack('<I', L.OLD_PAYLOAD) + old_bytes
         old = oldsave.read_slot(old_bytes)
-        current = _current_environment(env)
+        current = _current_environment(env, hash_conversations=_hash_conversations)
         context = dict(zone_captures=zone_captures or [], require_capture_metadata=require_capture_metadata)
         sections = _translate(old, current, res, '', old_bytes, slot, now, context)
         if any(res.dropped.values()):
@@ -1556,6 +1556,24 @@ def validate_native_sections(S, env):
     if len(Scores) > L.OLD_HIGH_SCORES: raise ConvertError('native profile score count')
     for score in Scores:
         if len(score['party_a']) > 6 or len(score['party_b']) > 6: raise ConvertError('native profile party count')
+
+def native_zone_metadata(old_stream, env):
+    """Validated current-build associations for a native transfer without an LC sidecar; inferred only."""
+    result = old_stream_to_new(old_stream, env, now=0, _hash_conversations=False)
+    if result.refused:
+        raise ConvertError(result.refused)
+    # Avoid reverse_slot here: it hashes all conversation files and can delay a cold online join.
+    f = read_file(result.file_bytes)
+    zones = {env.catalogue.lookup('ZONE', key_hash(z)): z for z in env.binds.zone_names}
+    captures = []
+    for record in f['sections']['ZONE']['data']['records']:
+        captures.append(dict(zone=zones[record['zone']], time_stamp=record['time_stamp'],
+                             placement_sha1=record['content_hash'], capture_flags=2, conversation_digest=bytes(32),
+                             entities=[dict(ordinal=s['ordinal'], placement_index=s['placement_index'],
+                                            definition_name=record['names'][s['def_name']], instance_name=record['names'][s['inst_name']])
+                                       for s in record['states'] if s['list'] == STATE_NUMBERED]))
+    return captures
+
 
 def loaded_zone_metadata(new_bytes, env):
     """Applied cached captures, with ordinals aligned to the reconstructed native map."""

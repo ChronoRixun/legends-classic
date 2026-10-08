@@ -282,3 +282,41 @@ def test_native_dangling_numbered_world_state_still_refuses():
         native['zones'][0]['states'][1].update(payload=b'\x0d\x01'+bytes(6), flags_a=1)
         result = convert.old_stream_to_new(oldsave.write_slot(native), env, zone_captures=convert.loaded_zone_metadata(saved, env), require_capture_metadata=True, now=0)
         assert result.refused and result.file_bytes is None
+
+
+def test_native_transfer_metadata_preserves_state_and_is_inferred():
+    with tempfile.TemporaryDirectory() as d:
+        env = _env(d)
+        native = make_old_save(def_count=len(env.binds.item))
+        native['zones'][0]['states'][1]['payload'] = b'\xa5' * 8
+        native['zones'][0]['fog'] = b'\x55' * L.OLD_FOG_BYTES
+        raw = oldsave.write_slot(native)
+        for stream in (raw, raw[0x84:]):
+            captures = convert.native_zone_metadata(stream, env)
+            assert len(captures) == 1 and captures[0]['capture_flags'] == 2
+            assert captures[0]['conversation_digest'] == bytes(32)
+            assert captures[0]['entities'][0]['ordinal'] == 1
+            result = convert.old_stream_to_new(stream, env, zone_captures=captures, require_capture_metadata=True, now=0)
+            assert result.refused is None, result.refused
+            restored, _ = convert.reverse_slot(result.file_bytes, env)
+            z = restored['zones'][0]
+            assert z['states'][z['ordinal_map'][0]]['payload'] == b'\xa5' * 8
+            assert z['fog'] == b'\x55' * L.OLD_FOG_BYTES
+            assert oldsave.write_slot(native) == raw
+
+
+def test_native_transfer_metadata_refuses_wrong_numbering():
+    with tempfile.TemporaryDirectory() as d:
+        env = _env(d); native = make_old_save(def_count=len(env.binds.item))
+        native['zones'][0]['states'][1]['def_name'] = native['zones'][0]['states'][3]['def_name']
+        try: convert.native_zone_metadata(oldsave.write_slot(native), env)
+        except convert.ConvertError: pass
+        else: assert False, 'unverifiable native numbering accepted'
+
+
+def test_native_transfer_metadata_does_not_hash_conversations():
+    with tempfile.TemporaryDirectory() as d:
+        env = _env(d); native = make_old_save(def_count=len(env.binds.item))
+        def forbidden_hash(): raise AssertionError('native transfer should not hash conversation files')
+        env.binds.conversation_digest = forbidden_hash
+        assert len(convert.native_zone_metadata(oldsave.write_slot(native), env)) == 1
