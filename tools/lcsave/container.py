@@ -259,7 +259,12 @@ def write_file(kind, sections, header):
     save_sequence). -> bytes"""
     payloads = []
     for tag, major, minor, flags, data in sections:
-        payloads.append((tag, major, minor, flags, encode_section(tag, data), len(data.get(next((n for n, _ in SECTIONS[tag][1]), '_'), [])) if SECTIONS[tag][1] else 0))
+        if isinstance(data, bytes):
+            payloads.append((tag, major, minor, flags, data, 0))
+        elif '_opaque_payload' in data:
+            payloads.append((tag, major, minor, flags, data['_opaque_payload'], data['_opaque_records']))
+        else:
+            payloads.append((tag, major, minor, flags, encode_section(tag, data), len(data.get(next((n for n, _ in SECTIONS[tag][1]), '_'), [])) if SECTIONS[tag][1] else 0))
     table_off = L.NEW_HEADER_SIZE
     off = table_off + L.NEW_SECTION_ENTRY_SIZE * len(payloads)
     entries = bytearray()
