@@ -256,24 +256,24 @@ class FakeV:
         return None
 
 
-def test_validate_resolves_npc_refs_and_flags_missing_sets():
-    shared = ['s1', 's2', 'drone_energy']
+def test_validate_resolves_shared_npc_refs_and_forbids_set_files():
+    shared = ['s1', 's2', 'drone_energy', 'zz_claw']
     npc = {'aa_brute': ['s1', 'zz_claw'], 'bb_plain': ['s2']}
-    sets = {'data/talents/npc_zz_claw': ['zz_claw']}
+    sets = {}
     v = FakeV(shared, npc, sets)
     ck = FakeCheck()
     TB.validate(v, ck)
     assert not ck.errors, ck.errors
-    assert ck.sets['npc_set_files'] == 1
-    # a ref that resolves nowhere demands a set file the build must ship
+    assert ck.sets['npc_set_files'] == 0
+    # A dangling converted NPC reference is an error even before its zone is visited.
     npc_bad = {'aa_brute': ['s1', 'zz_claw'], 'cc_lost': ['s2', 'nowhere']}
     ck = FakeCheck()
     TB.validate(FakeV(shared, npc_bad, sets), ck)
     assert any('nowhere' in e for e in ck.errors), ck.errors
-    # a demanded set file missing from the build is an error
+    # A stale per-set output must not accidentally ship alongside the restored shared pool.
     ck = FakeCheck()
-    TB.validate(FakeV(shared, npc, {}), ck)
-    assert any('missing from the build' in e for e in ck.errors)
+    TB.validate(FakeV(shared, npc, {'data/talents/npc_zz_claw': ['zz_claw']}), ck)
+    assert any('forbidden' in e for e in ck.errors)
 
 
 # ------------------------------------------------------------------------------------------------ save_positions
@@ -318,14 +318,15 @@ def test_review_validator_reads_installed_script_roster():
         class Index:
             def get(self, name):
                 return 'Scripts/invented/spawn.py' if name.lower() == 'scripts/invented/spawn.py' else None
-        v = FakeV(['s1'], {'invented_beast': ['zz_claw']}, {'data/talents/npc_zz_claw': ['zz_claw']})
+        v = FakeV(['s1'], {'invented_beast': ['zz_claw']}, {})
         v.ctx = SimpleNamespace(out=out, out_index=Index())
         v.converted_zones = lambda: ['invented/yard']
         v.zone_pkg = lambda zone: [('script', 'invented/spawn')]
         ck = FakeCheck()
         TB.validate(v, ck)
-        assert any('npc_zz_claw is not listed in the zone package' in e for e in ck.errors), ck.errors
-        v.zone_pkg = lambda zone: [('script', 'invented/spawn'), ('xml_talents', 'data/talents/npc_zz_claw')]
+        assert any('invented/yard: npcstat invented_beast' in e for e in ck.errors), ck.errors
+        v._shared.append('zz_claw')
+        v._stats['talents']['.engb'].append('zz_claw')
         ck = FakeCheck()
         TB.validate(v, ck)
         assert not ck.errors, ck.errors

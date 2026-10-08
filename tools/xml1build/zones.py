@@ -164,32 +164,24 @@ def item_enhancements(el):
 
 
 def zone_npc_talent_entries(ctx, zone, chr_names, script_refs=(), text_of=None):
-    """the npc set-file rels (talent_sets.zone_set_files) the zone package must list so every
-    stats-template character that can appear in the zone resolves its talents outside shared_talents:
-    CHRB characters, map spawner entities and spawn lists, the scripts' literal spawn calls (closure),
-    and the Danger Room courses whose arena maps to the zone. heroes.py writes the files; both this
-    function and V-TBD compute the same roster, so a future uncovered source fails the build."""
-    from . import npc_values as NV
+    """Hero NPC files needed by the complete CHRB/spawner/script/course roster.
+
+    NPC-only powers and immunities remain shared; no per-NPC files are produced.
+    Final package emission applies the reviewed noncombat prop budget policy.
+    """
     try:
         npc = ctx.read_out_xmlb('Data/npcstat.engb')
     except Exception:          # noqa: BLE001 - characters has not written npcstat: nothing to add
         return []
     if npc is None:
         return []
+    npc_refs = {(st.get('name') or '').lower(): set() for st in npc.iter('stats')}
     try:
-        x1h = ctx.read_x1_xml('data/herostat.eng')
-        hero_refs = {(t.get('name') or '').lower() for t in x1h.iter() if t.tag.lower() == 'talent'}
-    except Exception:          # noqa: BLE001
-        hero_refs = set()
-    npc_refs = {}
-    stats_origin = {n: (s.get('origin') or '') for n, s in (getattr(ctx, 'shared', None) or {}).get('stats', {}).items()}
-    for st in npc.iter('stats'):
-        ln = (st.get('name') or '').lower()
-        # untouched XML2 leftovers (holocaust, scarabapoc ...) stay exactly as retail: their dangling
-        # refs are not this port's to resolve and heroes.py writes no set files for them (V-TBD's
-        # canon-against-base test excludes the same entries)
-        if ln and stats_origin.get(ln) != 'xml2':
-            npc_refs[ln] = {(t.get('name') or '').lower() for t in st.iter('talent')}
+        from . import heroes as H
+        heroes_roster = H.hero_plan(ctx)['heroes']
+    except Exception:          # synthetic callers without a complete roster plan
+        heroes_roster = ()
+    known = set(npc_refs) | {h.lower() for h in heroes_roster}
     roster = {n.lower() for n in (chr_names or ()) if n}
     for ext in ('.engb', '.xmlb'):
         try:
@@ -204,17 +196,10 @@ def zone_npc_talent_entries(ctx, zone, chr_names, script_refs=(), text_of=None):
     roster |= TS.dangerroom_zone_roster(dr, zone)
     if text_of is not None:
         refs = TS.script_closure_refs([C.script_ref(r) for r in script_refs], text_of)
-        roster |= TS.script_zone_roster({r: text_of(r) for r in refs}, lambda n: n in npc_refs)
-    moving = [TS.npc_moving(npc_refs[n], hero_refs, TS.X2_BASE_TALENTS, NV.ENERGY_TALENT)
-              for n in sorted(roster) if n in npc_refs]
-    rels = set(TS.zone_set_files(moving))
+        roster |= TS.script_zone_roster({r: text_of(r) for r in refs}, lambda n: n in known)
+    rels = set()   # NPC-only talents remain in the save-stable shared pool.
     # heroes used as NPCs (cutscene and spawner instances) carry their own talent file, like the
     # hero precache of section 28; without it the hero-NPC's stats talents resolve nowhere
-    try:
-        from . import heroes as H
-        heroes_roster = H.hero_plan(ctx)['heroes']
-    except Exception:          # noqa: BLE001 - synthetic validators/builders without a full ctx
-        heroes_roster = ()
     for n in roster:
         for h in heroes_roster:
             if h.lower() == n:
@@ -2150,7 +2135,9 @@ class Zones:
         else:
             ctx.warn(f'{zone}: package reference closure did not settle after 8 passes')
         self.conversation_heads(zone, pkg)
-        return pkg.root(tail=[('boy', stem)])
+        root = pkg.root(tail=[('boy', stem)])
+        from . import talent_budget as TB
+        return TB.prune_zone_precache(ctx, zone, root)
 
     def conversation_heads(self, zone, pkg):
         """Precache final named speakers after the script/data reference closure.
