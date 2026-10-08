@@ -19,7 +19,7 @@ from . import oldsave
 from .binds import Binds, KEY_ITEM_NAMES, TRIVIA_PER_ACT, REVIEW_PER_CATEGORY, COSTUME_SLOT_COUNT
 from .catalogue import Catalogue
 from .container import write_file, read_file, SECTION_FLAGS, SECTION_MINOR, CAMPAIGN_SECTIONS
-from .keys import key_hash, make_id, DOMAIN_NUMBER, id_domain, DOMAINS
+from .keys import key_hash, make_id, DOMAIN_NUMBER, id_domain, DOMAINS, canonical_key
 from .legacy import load_eras, eras_of, talent_era, zone_record_eras, CONTENT_TO_RELEASE
 from . import CONVERTER_VERSION
 
@@ -64,7 +64,8 @@ class Environment:
         return v
 
     def name_of(self, tag, hash_hex):
-        return self._names.get(tag, {}).get(hash_hex)
+        name = self._names.get(tag, {}).get(hash_hex)
+        return name.replace('%2f', '/').replace('%25', '%') if name is not None else None
 
 
 def _name_index(b):
@@ -73,7 +74,7 @@ def _name_index(b):
 
     def put(tag, fields):
         if fields and all(f is not None for f in fields):
-            out[tag][key_hash(*fields)] = '/'.join(str(f) for f in fields)
+            out[tag][key_hash(*fields)] = canonical_key(*fields).decode('cp1252')
     for i in range(len(b.stat)):
         put('STAT', b.key_stat(i))
     for i in range(len(b.item)):
@@ -335,12 +336,20 @@ def _bits(words, n_bits):
 
 
 # ------------------------------------------------------------------------------------------------ zones
-def _zone_record(env, res, old, z, index, candidate_eras, what):
+def _zone_record(env, res, old, z, index, candidate_eras, what, captures=None, require_capture_metadata=False):
     """old zone record -> ZREC, or None (dropped, reason noted). Needs the build (names, numbering)."""
     strings = old['zone_strings']
     zone = oldsave.zone_string(strings, z['name_handle']).lower()
     if env.binds is None:
         raise ConvertError('zone records need the build (--build) to verify their entities')
+    matches = [c for c in (captures or []) if c['zone'].lower() == zone and c['time_stamp'] == z['time_stamp']]
+    if len(matches) > 1:
+        raise ConvertError(f'{what}: duplicate capture metadata')
+    capture = matches[0] if matches else None
+    if require_capture_metadata and capture is None:
+        raise ConvertError(f'{what}: missing observed capture metadata')
+    if capture and (capture['capture_flags'] & ~3 or capture['capture_flags'] & 1):
+        raise ConvertError(f'{what}: unsupported or incomplete capture')
     zone_hash = key_hash(zone)
     zid = env.id_of('ZONE', zone_hash)
     if zid is None:
@@ -359,7 +368,7 @@ def _zone_record(env, res, old, z, index, candidate_eras, what):
             s = z['states'][idx]
             names_by_ordinal[k] = (key_hash(oldsave.zone_string(strings, s['def_name'])),
                                    key_hash(oldsave.zone_string(strings, s['inst_name'])))
-    eras = zone_record_eras(names_by_ordinal, zone_hash, candidate_eras, ref_hashes)
+    eras = candidate_eras[:1] if capture else zone_record_eras(names_by_ordinal, zone_hash, candidate_eras, ref_hashes)
     if not eras:
         res.notes.append(f'{what}: zone {zone!r}: no builder release numbers its {len(names_by_ordinal)} numbered '
                          f'entities as the record does: record dropped (the zone starts fresh)')
@@ -369,11 +378,11 @@ def _zone_record(env, res, old, z, index, candidate_eras, what):
     names = ['']
     name_index = {'': 0}
 
-    def nm(handle):
-        t = oldsave.zone_string(strings, handle)
+    def name_text(t):
         if t not in name_index:
             name_index[t] = len(names); names.append(t)
         return name_index[t]
+    def nm(handle): return name_text(oldsave.zone_string(strings, handle))
     states = []
     world_handles = {w['slot'] for w in old['items']['world']}
 
@@ -396,7 +405,7 @@ def _zone_record(env, res, old, z, index, candidate_eras, what):
             rec['payload'] = p
         return rec
     for k in sorted(names_by_ordinal):
-        if delta is None:
+        if delta is None or capture:
             ref_k = k
         else:
             m, ambiguous = delta
@@ -406,10 +415,27 @@ def _zone_record(env, res, old, z, index, candidate_eras, what):
                 res.notes.append(f'{what}: zone {zone!r} ordinal {k}: the entity has no unambiguous counterpart in the '
                                  f'build (builder {era.release} numbering): state dropped')
                 continue
-        t, n, placement = num['numbered'][ref_k - 1]
+        if capture:
+            entities = [e for e in capture['entities'] if e['ordinal'] == k]
+            if len(entities) != 1 or (key_hash(entities[0]['definition_name']), key_hash(entities[0]['instance_name'])) != names_by_ordinal[k]:
+                raise ConvertError(f'{what}: captured entity association missing or differs')
+            placement = entities[0]['placement_index']
+        else:
+            t, n, placement = num['numbered'][ref_k - 1]
         r = state_rec(z['states'][z['ordinal_map'][k - 1]], STATE_NUMBERED, ref_k, placement)
         if r:
             states.append(r)
+    if capture:
+        ordinals, placements = set(), set()
+        for e in capture['entities']:
+            ordinal, placement = e['ordinal'], e['placement_index']
+            if not 1 <= ordinal <= L.OLD_ZONE_ORDINALS or ordinal in ordinals or placement in placements:
+                raise ConvertError(f'{what}: invalid or duplicate observed entity association')
+            ordinals.add(ordinal); placements.add(placement)
+            if not z['ordinal_map'][ordinal - 1]:
+                states.append(dict(list=1, entity_tag=0, ordinal=ordinal, placement_index=placement,
+                    def_name=name_text(e['definition_name']), inst_name=name_text(e['instance_name']), flags_a=0, flags_b=0,
+                    position=[0., 0., 0.], payload_kind=1, payload=bytes(8)))
     for idx in z['dynamic'][:z['dynamic_count']]:
         r = state_rec(z['states'][idx], STATE_DYNAMIC)
         if r:
@@ -418,10 +444,12 @@ def _zone_record(env, res, old, z, index, candidate_eras, what):
         r = state_rec(z['states'][idx], STATE_SMART)
         if r:
             states.append(r)
+    if len(states) >= L.OLD_ZONE_STATES: raise ConvertError('capture identities exceed native state capacity')
     digest = era.conversation_digest or ('0' * 64)
-    rec = dict(zone=zid, identity_mode=IDENTITY_MODE_ORDINAL, content_hash=bytes.fromhex(num['sha1']),
-               time_stamp=z['time_stamp'], flag=z['flag'], capture_flags=0, conversation=list(z['conversation']),
-               conversation_digest=bytes.fromhex(digest), names=names, states=states,
+    capture_digest = capture['conversation_digest'] if capture else bytes.fromhex(digest)
+    rec = dict(zone=zid, identity_mode=IDENTITY_MODE_ORDINAL, content_hash=capture['placement_sha1'] if capture else bytes.fromhex(num['sha1']),
+               time_stamp=z['time_stamp'], flag=z['flag'], capture_flags=capture['capture_flags'] if capture else 2, conversation=list(z['conversation']),
+               conversation_digest=capture_digest, names=names, states=states,
                fog=dict(encoding=FOG_ENCODING_ENGINE, width=FOG_SIDE, height=FOG_SIDE, data=z['fog']))
     res.era.setdefault('zones', []).append(dict(zone=zone, era=era.cv, numbered=len(names_by_ordinal),
                                                 dynamic=z['dynamic_count'], smart=z['smart_count']))
@@ -433,7 +461,7 @@ def convert_slot(old_bytes, original_name, env, slot=0, now=None, campaign_seria
     res = Result()
     try:
         old = oldsave.read_slot(old_bytes)
-        sections = _translate(old, env, res, original_name, old_bytes, slot)
+        sections = _translate(old, env, res, original_name, old_bytes, slot, now)
         sections = add_keys_section(sections, env)
         header = dict(writer_version=(CONVERTER_VERSION[0] << 24) | (CONVERTER_VERSION[1] << 16) | (CONVERTER_VERSION[2] << 8) | WRITER_KIND_PYTHON,
                       content_version=env.model['reference'].get('content_version', 0),
@@ -447,7 +475,7 @@ def convert_slot(old_bytes, original_name, env, slot=0, now=None, campaign_seria
     return res
 
 
-def _translate(old, env, res, original_name, old_bytes, slot, now=None):
+def _translate(old, env, res, original_name, old_bytes, slot, now=None, context=None):
     # ---- fingerprint (5.4 step 3)
     ref = env.ref
     nheroes = len(old['heroes'])
@@ -493,7 +521,7 @@ def _translate(old, env, res, original_name, old_bytes, slot, now=None):
     # zone records: each record names its own era by the entity names it stores
     zone_recs = []
     for i, z in enumerate(old['zones']):
-        out = _zone_record(env, res, old, z, i, eras_ok, f'zone record {i}')
+        out = _zone_record(env, res, old, z, i, eras_ok, f'zone record {i}', (context or {}).get('zone_captures'), (context or {}).get('require_capture_metadata', False))
         if out is None:
             res.dropped['zone_records'] += 1
             continue
@@ -757,7 +785,7 @@ def add_keys_section(sections, env):
         if ent is None:
             continue
         tag, e = ent
-        text = env.name_of(tag, e['hash']) or ''
+        text = env._names.get(tag, {}).get(e['hash'], '')
         keys.append(dict(id=v, domain=DOMAIN_NUMBER[tag], key=text))
     out = list(sections)
     out.insert(1, ('KEYS', 1, 0, SECTION_FLAGS['KEYS'], dict(keys=keys)))
@@ -788,6 +816,7 @@ def reverse_slot(new_bytes, env, template=None):
     if b is None:
         raise ConvertError('the reverse reader needs the build (--build)')
     pos = PositionTables(env)
+    validate_native_sections(S, env)
     notes = []
     m = {}
     m['description'] = S['META']['description']
@@ -812,12 +841,12 @@ def reverse_slot(new_bytes, env, template=None):
     ds = [0] * (2 * L.OLD_DEF_STATE_PAIRS)
     for e in I['def_state']:
         i = pos.item(e['item'])
-        ds[2 * i] = e['quantity'] & 0xff; ds[2 * i + 1] = e['flag']
+        ds[2 * i] = e['quantity']; ds[2 * i + 1] = e['flag']
     keyc = [0] * 6
     for e in I['key_counts']:
         n = pos.item_name(e['item'])
-        if n in KEY_ITEM_NAMES:
-            keyc[KEY_ITEM_NAMES.index(n)] = e['quantity']
+        if n not in KEY_ITEM_NAMES: raise ConvertError('key counter definition is not a native key item')
+        keyc[KEY_ITEM_NAMES.index(n)] = e['quantity']
     m['items'] = dict(def_count=len(b.item), def_state=ds, tech_bits=I['tech_bits'], health_items=I['health_items'],
                       energy_items=I['energy_items'], key_counts=keyc,
                       carried=[pos.instance(x) for x in I['instances']],
@@ -888,6 +917,10 @@ def reverse_slot(new_bytes, env, template=None):
     m['town_centres'] = mask
     if template is not None:
         _apply_template(m, template)
+    try:
+        oldsave.write_slot(m)  # verify all unmasked scalar widths and fixed layouts before exposing a native model
+    except (ValueError, struct.error, OverflowError) as e:
+        raise ConvertError(str(e)) from e
     return m, notes
 
 
@@ -979,12 +1012,27 @@ def _template_block(h, th):
     e['flags'] = (e['flags'] & 0x1f) | (te['flags'] & 0xe0)
 
 
+def _validate_native_build(b):
+    # Native installation budgets; reader ceilings remain unchanged (SPEC 2.16).
+    budgets = ((len(b.item), 160, 'item definitions'), (b.hero_count, 21, 'hero records'),
+               (len(b.stat), 297, 'stats slots including reserved zero'), (len(b.name_a), 32, 'flat names'),
+               (len(b.trit), 128, 'special items'))
+    for count, maximum, what in budgets:
+        if count > maximum: raise ConvertError(f'native {what} budget exceeded ({maximum})')
+    for names in b.name_b.values():
+        if len(names) > 4: raise ConvertError('native category name budget exceeded (4)')
+    for costumes in b.costume.values():
+        if len(costumes) > 10 or any(slot < 0 or slot >= 10 for slot in costumes):
+            raise ConvertError('native costume budget exceeded (10 slots)')
+
+
 class PositionTables:
     """id -> position for the reverse direction (the build's binds through the catalogue)"""
 
     def __init__(self, env):
         self.env = env
         b = env.binds
+        _validate_native_build(b)
         self.b = b
         cat = env.catalogue
         T = b.hash_tables()
@@ -1013,22 +1061,31 @@ class PositionTables:
             raise ConvertError(f'{what}: id {v:#x} is not in this build (parked / unknown)')
         return table[v]
 
-    def stat(self, v): return self._get(self._stat, v, 'character')
-    def item(self, v): return self._get(self._item, v, 'item')
+    def _native(self, value, low, high, what):
+        if not low <= value <= high: raise ConvertError(f'native {what} index outside {low}..{high}')
+        return value
+
+    def stat(self, v): return self._native(self._get(self._stat, v, 'character'), 1, 296, 'stats')
+    def item(self, v): return self._native(self._get(self._item, v, 'item'), 0, 159, 'item definition')
     def item_name(self, v): return self.b.item[self.item(v)]
     def course(self, v): return self._get(self._course, v, 'course')
     def grade(self, v): return self._get(self._grade, v, 'grade')
     def xpoint(self, v): return self._get(self._xp, v, 'town centre')
     def trivia(self, v): return self._get(self._triv, v, 'trivia')
     def zone_name(self, v): return self._get(self._zone, v, 'zone')
-    def costume_slot(self, v): return self._get(self._cost, v, 'costume')
+    def costume_slot(self, v): return self._native(self._get(self._cost, v, 'costume'), 0, 9, 'costume')
 
     def instance(self, r):
-        inst = dict(definition=self.item(r['definition']), name_a=self._get(self._nama, r['name_a'], 'item name') if r['name_a'] else 0xff,
-                    name_b=self._get(self._namb, r['name_b'], 'item name') if r['name_b'] else 0xff,
-                    special=self._get(self._trit, r['special'], 'special item') if r['special'] else 0xff, location=r['location'])
+        inst = dict(definition=self.item(r['definition']), name_a=self._native(self._get(self._nama, r['name_a'], 'item name'), 0, 31, 'flat name') if r['name_a'] else 0xff,
+                    name_b=self._native(self._get(self._namb, r['name_b'], 'item name'), 0, 3, 'category name') if r['name_b'] else 0xff,
+                    special=self._native(self._get(self._trit, r['special'], 'special item'), 0, 127, 'special item') if r['special'] else 0xff, location=r['location'])
         for lst in ('prefixes', 'own', 'suffixes'):
             inst[lst] = [dict(record=self._get(self._enh, e['enhancement'], 'enhancement'), value=e['value']) for e in r[lst]]
+        if r['name_b']:
+            category = self.b.item_class[inst['definition']]
+            hashes = self.b.hash_tables()['NAMB'].get(category or '', [])
+            allowed = {self.env.id_of('NAMB', h) for h in hashes}
+            if r['name_b'] not in allowed: raise ConvertError('item name category does not match definition')
         return inst
 
     def hero_block(self, h):
@@ -1130,8 +1187,28 @@ class PositionTables:
                 raise ConvertError(f'zone {zone!r} has no placement file in this build')
             if r['identity_mode'] != IDENTITY_MODE_ORDINAL:
                 raise ConvertError('identity mode 1 (entity tags) is not implemented by the reverse reader')
+            if r['capture_flags'] & 2: notes.append(f'zone {zone!r}: legacy capture provenance inferred (unknown completeness)')
+            if r['capture_flags'] & ~3:
+                raise ConvertError('unsupported capture status bits')
+            if r['capture_flags'] & 1:
+                notes.append(f'zone {zone!r}: incomplete capture: record not applied')
+                continue
             if r['content_hash'] != bytes.fromhex(num['sha1']):
                 notes.append(f'zone {zone!r}: placement file changed since the record was made: record not applied')
+                continue
+            mapped = {}
+            for state in r['states']:
+                if state['list'] != STATE_NUMBERED:
+                    continue
+                matches = [k + 1 for k, (dn, inn, pi) in enumerate(num['numbered']) if pi == state['placement_index'] and
+                           key_hash(dn) == key_hash(r['names'][state['def_name']]) and key_hash(inn) == key_hash(r['names'][state['inst_name']])]
+                if len(matches) != 1:
+                    notes.append(f'zone {zone!r}: entity placement/name changed: record not applied')
+                    break
+                mapped[state['ordinal']] = matches[0]
+            else:
+                matches = None
+            if matches is not None:
                 continue
             states = [dict(def_name=0, inst_name=0, payload=b'\0' * 8, flags_a=0, flags_b=0, position=[0, 0, 0])]
             ordinal_map = [0] * L.OLD_ZONE_ORDINALS
@@ -1146,12 +1223,12 @@ class PositionTables:
                     payload = bytes([slot]) + struct.pack('<h', qty) + s['payload'][8:13]
                 else:
                     payload = s['payload'][:8]
-                posi = [max(-32767, min(32767, int(round(x)))) for x in s['position']]
+                posi = [int(round(x)) for x in s['position']]
                 idx = len(states)
                 states.append(dict(def_name=intern(r['names'][s['def_name']]), inst_name=intern(r['names'][s['inst_name']]),
                                    payload=payload, flags_a=s['flags_a'] & 0xff, flags_b=s['flags_b'] & 0xff, position=posi))
                 if s['list'] == STATE_NUMBERED:
-                    k = s['ordinal']
+                    k = mapped[s['ordinal']]
                     if not 1 <= k <= L.OLD_ZONE_ORDINALS:
                         raise ConvertError(f'ordinal {k} outside the engine map')
                     if k > len(num['numbered']):
@@ -1166,8 +1243,10 @@ class PositionTables:
             z = dict(name_handle=intern(zone), states=states, pad_4804=0, state_count=1 + len(r['states']), ordinal_map=ordinal_map,
                      pad_4a0c=0, dynamic=dynamic + [0] * (L.OLD_ZONE_DYNAMIC - len(dynamic)), pad_4c68=0, dynamic_count=len(dynamic),
                      smart=smart + [0] * (L.OLD_ZONE_SMART - len(smart)), pad_5270=0, smart_count=len(smart),
-                     fog=r['fog']['data'], conversation=list(r['conversation']), time_stamp=r['time_stamp'], flag=r['flag'],
+                     fog=r['fog']['data'], conversation=list(r['conversation']) if r['conversation_digest'] != bytes(32) and r['conversation_digest'] == bytes.fromhex(self.b.conversation_digest()) else [0] * 5, time_stamp=r['time_stamp'], flag=r['flag'],
                      pad_55dd=[0, 0, 0])
+            if z['conversation'] != list(r['conversation']):
+                notes.append(f'zone {zone!r}: conversation digest unknown or changed: bits reset')
             zones.append(z)
         strings['arena'] = bytes(strings['arena'])
         return strings, zones
@@ -1261,3 +1340,223 @@ def verify_corpus(folder, env, out_dir):
         results[rel] = dict(status=status, era=rep.get('era'), notes=rep.get('notes'))
         print(rel, '->', status)
     return results
+
+# Runtime/tool mirror of the native library's durable saver contract.
+def _retain_sections(sections, retained_file, kind):
+    if not retained_file:
+        return sections
+    prior = read_file(retained_file, kind)
+    out = list(sections)
+    opaque = False
+    for tag in prior['order']:
+        sec = prior['sections'][tag]; e = sec['entry']
+        if tag == 'LGCY' or (sec['data'] is None and e['flags'] & L.SECTION_KEEP):
+            out.append((tag, e['major'], e['minor'], e['flags'], dict(_opaque_payload=sec['payload'], _opaque_records=e['records'])))
+            opaque |= sec['data'] is None
+    if opaque:
+        if 'KEYS' not in prior['sections']:
+            raise ConvertError('opaque KEEP without KEYS contract cannot be resaved')
+        old_keys = prior['sections']['KEYS']['data']
+        if old_keys.get('_extra') or any(k.get('_extra') for k in old_keys['keys']):
+            raise ConvertError('opaque KEEP with extended KEYS contract cannot be resaved')
+        for tag, _, _, _, data in out:
+            if tag == 'KEYS':
+                prefix = list(prior['sections']['KEYS']['data']['keys'])
+                data['keys'] = prefix + [k for k in data['keys'] if not any(all(k[n] == old[n] for n in ('id', 'domain', 'key')) for old in prefix)]
+    return out
+
+
+def _current_environment(env):
+    import copy
+    from .legacy import Era
+    _validate_native_build(env.binds)
+    current = copy.copy(env)
+    current.ref = env.binds.hash_tables()
+    current.ref['content_version'] = env.catalogue.data.get('content_version', 0)
+    cv = current.ref['content_version']
+    current.model = dict(reference=current.ref, eras={str(cv): dict(hero_shared_holdable={})})
+    current.eras = [Era(current.model, str(cv))]
+    return current
+
+
+def old_stream_to_new(old_bytes, env, *, retained_file=b'', now=None, zone_captures=None,
+                      require_capture_metadata=False, campaign_serial=0, save_sequence=1,
+                      writer_version=0x01040000, writer='XML2 Fix', slot=0, mods=(), origin=0):
+    res = Result()
+    try:
+        if len(old_bytes) == L.OLD_PAYLOAD:
+            old_bytes = bytes(0x80) + struct.pack('<I', L.OLD_PAYLOAD) + old_bytes
+        old = oldsave.read_slot(old_bytes)
+        current = _current_environment(env)
+        context = dict(zone_captures=zone_captures or [], require_capture_metadata=require_capture_metadata)
+        sections = _translate(old, current, res, '', old_bytes, slot, now, context)
+        if any(res.dropped.values()):
+            raise ConvertError('native save translation would drop state; original retained')
+        sections = [s for s in sections if s[0] != 'LGCY']
+        for tag, _, _, _, data in sections:
+            if tag == 'META': data.update(origin=origin, writer=writer, mods=list(mods))
+        sections = _retain_sections(add_keys_section(sections, env), retained_file, L.KIND_CAMPAIGN)
+        header = dict(writer_version=writer_version, content_version=current.ref['content_version'],
+                      catalogue_revision=env.catalogue.revision, campaign_serial=campaign_serial, save_sequence=save_sequence)
+        res.file_bytes = write_file(L.KIND_CAMPAIGN, sections, header)
+        read_file(res.file_bytes, L.KIND_CAMPAIGN)
+    except (ValueError, IndexError, KeyError) as e:
+        res.refused = str(e); res.file_bytes = None
+    return res
+
+
+def _profile_file(old_bytes, original_name, env, *, converter, retained_file=b'', now=None, writer_version=None, writer=None, slot=0):
+    res = Result()
+    try:
+        if len(old_bytes) == L.OLD_PROFILE_PAYLOAD:
+            old_bytes = bytes(0x80) + struct.pack('<I', L.OLD_PROFILE_PAYLOAD) + old_bytes
+        description, p = oldsave.read_profile_file(old_bytes)
+        current = env if converter else _current_environment(env)
+        era = current.eras[0]
+        sections = [('META', 1, 0, L.SECTION_REQUIRED, dict(saved_at=now if now is not None else int((time.time() + 11644473600) * 10000000),
+                    description=description, origin=int(converter), zone=0, act=0, difficulty=0, play_time=0., writer=writer or ('lcsave 0.1.0' if converter else 'XML2 Fix'), slot=slot, mods=[]))]
+        sections += profile_sections(p, current, res, era)
+        if converter:
+            sections.append(('LGCY', 1, 0, L.SECTION_KEEP, dict(original_name=original_name, original_size=len(old_bytes),
+                sha1=hashlib.sha1(old_bytes).digest(), start_era=era.cv, writer_era=era.cv, def_count_byte=0,
+                zone_records_dropped=0, world_items_dropped=0, zone_vars_dropped=0, other_dropped=0, notes=[])))
+        sections = _retain_sections(add_keys_section(sections, env), retained_file, L.KIND_PROFILE)
+        header = dict(writer_version=writer_version if writer_version is not None else (0x00010001 if converter else 0x01040000),
+                      content_version=current.ref.get('content_version', 0), catalogue_revision=env.catalogue.revision, campaign_serial=0, save_sequence=0)
+        res.file_bytes = write_file(L.KIND_PROFILE, sections, header)
+        read_file(res.file_bytes, L.KIND_PROFILE)
+    except (ValueError, IndexError, KeyError) as e:
+        res.refused = str(e); res.file_bytes = None
+    return res
+
+
+def convert_profile(old_bytes, original_name, env, **kwargs):
+    return _profile_file(old_bytes, original_name, env, converter=True, **kwargs)
+
+
+def old_profile_to_new(old_bytes, env, **kwargs):
+    return _profile_file(old_bytes, '', env, converter=False, **kwargs)
+
+
+def reverse_profile(new_bytes, env):
+    f = read_file(new_bytes, L.KIND_PROFILE)
+    sections = {t: s['data'] for t, s in f['sections'].items() if s['data'] is not None}
+    validate_native_sections(sections, env)
+    return sections['META']['description'], PositionTables(env).profile(sections)
+
+
+def validate_native_sections(S, env):
+    import math
+    def bound(v, lo, hi, what):
+        if not lo <= v <= hi:
+            raise ConvertError(f'{what} outside native range {lo}..{hi}')
+    def unique(rows, key, what):
+        vals = [r[key] for r in rows]
+        if len(vals) != len(set(vals)): raise ConvertError(f'duplicate {what}')
+    def finite(v):
+        if isinstance(v, dict):
+            for x in v.values(): finite(x)
+        elif isinstance(v, list):
+            for x in v: finite(x)
+        elif isinstance(v, float) and not math.isfinite(v):
+            raise ConvertError('nonfinite native value')
+    finite(S)
+    pos = PositionTables(env)
+    if 'GAME' in S:
+        g = S['GAME']
+        for n, hi in (('team_potion', 3), ('counter_a', 31), ('counter_b', 31), ('flags', 1023)):
+            bound(g[n], 0, hi, n)
+        miss = S['MISS']; depth = miss['stack_depth']
+        bound(depth, 0, L.OLD_SIDE_FRAMES, 'mission stack depth')
+        if len(miss['snapshots']) != depth + 1: raise ConvertError('mission stack snapshots do not match depth')
+        for snap in miss['snapshots']:
+            unique(snap['seats'], 'seat', 'seat'); unique(snap['objectives'], 'objective', 'objective')
+            for seat in snap['seats']:
+                bound(seat['seat'], 0, 3, 'seat')
+            for o in snap['objectives']:
+                bound(o['counter'], 0, 63, 'objective counter'); bound(o['flags'], 0, 3, 'objective flags')
+        unique(S['HERO']['heroes'], 'hero', 'hero')
+        for index, hero in enumerate(S['HERO']['heroes'], 1):
+            if pos.stat(hero['hero']) != index: raise ConvertError('hero block order/identity differs from native table')
+            owner = env.binds.stat[index]
+            allowed = {env.id_of('COST', keys_hash) for keys_hash in env.binds.hash_tables()['COST'].get(key_hash(owner), {}).values()}
+            if hero['costume'] not in allowed or any(c not in allowed for c in hero['costumes_unlocked']):
+                raise ConvertError('costume does not belong to hero')
+        unique(S['DNGR']['courses'], 'course', 'course'); unique(S['DNGR']['grades'], 'grade', 'grade')
+        if len(S['HERO']['heroes']) != env.binds.hero_count: raise ConvertError('hero block count differs from build')
+        unique(S['REST']['records'], 'owner', 'restore owner')
+        items = S['ITEM']
+        for e in items['def_state']: bound(e['quantity'], 0, 255, 'item quantity')
+        unique(items['def_state'], 'item', 'definition state'); unique(items['key_counts'], 'item', 'key counter')
+        unique(items['world'], 'handle', 'world item handle')
+        handles = {w['handle'] for w in items['world']}
+        for handle in handles: bound(handle, 0, 149, 'world handle')
+        if len(handles) > 150: raise ConvertError('world item pool exhausted')
+        instances = list(items['instances']) + [w['instance'] for w in items['world']]
+        for hero in S['HERO']['heroes'] + S['REST']['records']:
+            bound(hero['player_seat'], -1, 3, 'player seat'); bound(hero['flags'], 0, 31, 'hero flags')
+            unique(hero['talents'], 'talent', 'talent')
+            owner = pos.stat(hero.get('hero', hero.get('owner')))
+            for t in hero['talents']:
+                tid = pos._get(pos._tal, t['talent'], 'talent')
+                if tid >= 100 and tid // 100 != owner + 1: raise ConvertError('talent does not belong to hero')
+            for talent in hero['talents']:
+                for field, hi in (('rank', 63), ('pending', 63), ('cap', 3), ('base', 3)):
+                    bound(talent[field], 0, hi, 'talent ' + field)
+            instances.extend(hero['equipped'])
+        if len(instances) > 256: raise ConvertError('native instance pool exhausted')
+        attached = sum(len(i[n]) for i in instances for n in ('prefixes', 'own', 'suffixes'))
+        if attached > 375: raise ConvertError('native attached enhancement pool exhausted')
+        era = _current_environment(env).eras[0]
+        for instance in instances:
+            _cross_check_instance(env, era, pos.instance(instance), 'item')
+        unique(S['ZONE']['records'], 'zone', 'zone record')
+        if len(S['ZONE']['records']) > 5: raise ConvertError('native zone cache exhausted')
+        for z in S['ZONE']['records']:
+            if z['fog']['encoding'] != 1 or z['fog']['width'] != 82 or z['fog']['height'] != 82 or len(z['fog']['data']) != L.OLD_FOG_BYTES:
+                raise ConvertError('unsupported native fog')
+            if len(z['conversation']) != 5: raise ConvertError('native conversation word count')
+            ords = []
+            if len(z['states']) >= L.OLD_ZONE_STATES: raise ConvertError('native state pool exhausted')
+            for state in z['states']:
+                bound(state['list'], 1, 3, 'state list')
+                for n in ('def_name', 'inst_name'): bound(state[n], 0, len(z['names']) - 1, 'state name index')
+                for x in state['position']:
+                    if not -32768 <= x <= 32767 or x != round(x): raise ConvertError('state position not representable')
+                bound(state['flags_a'], 0, 255, 'state flags'); bound(state['flags_b'], 0, 255, 'state flags')
+                if state['list'] == 1:
+                    bound(state['ordinal'], 1, L.OLD_ZONE_ORDINALS, 'ordinal'); ords.append(state['ordinal'])
+                if state['payload_kind'] == 2:
+                    if len(state['payload']) != 13 or not state['flags_a'] & 1: raise ConvertError('world payload contract')
+                    handle, quantity = struct.unpack('<Ii', state['payload'][:8])
+                    if handle not in handles: raise ConvertError('state world item reference missing')
+                    bound(quantity, -32768, 32767, 'world quantity')
+                elif state['payload_kind'] != 1 or len(state['payload']) != 8 or state['flags_a'] & 1:
+                    raise ConvertError('engine payload contract')
+            if len(ords) != len(set(ords)): raise ConvertError('duplicate ordinal')
+            for kind, cap in ((2, L.OLD_ZONE_DYNAMIC), (3, L.OLD_ZONE_SMART)):
+                if sum(s['list'] == kind for s in z['states']) > cap: raise ConvertError('native state list exhausted')
+    O, P, Scores = S['PRFO'], S['PRFP'], S['PRFS']['scores']
+    bound(O['options'], 0, 0xffffff, 'profile options')
+    if len(Scores) > L.OLD_HIGH_SCORES: raise ConvertError('native profile score count')
+    for score in Scores:
+        if len(score['party_a']) > 6 or len(score['party_b']) > 6: raise ConvertError('native profile party count')
+
+def loaded_zone_metadata(new_bytes, env):
+    """Applied cached captures, with ordinals aligned to the reconstructed native map."""
+    native, _ = reverse_slot(new_bytes, env)
+    applied = {oldsave.zone_string(native['zone_strings'], z['name_handle']) for z in native['zones']}
+    f = read_file(new_bytes)
+    records = f['sections']['ZONE']['data']['records']
+    pos = PositionTables(env)
+    out = []
+    for r in records:
+        zone = pos.zone_name(r['zone'])
+        if zone not in applied: continue
+        num = env.binds.zone_numbering(zone)['numbered']
+        entities = [dict(ordinal=next(k + 1 for k, (_, _, pi) in enumerate(num) if pi == s['placement_index']),
+                        placement_index=s['placement_index'], definition_name=r['names'][s['def_name']], instance_name=r['names'][s['inst_name']])
+                    for s in r['states'] if s['list'] == 1]
+        out.append(dict(zone=zone, time_stamp=r['time_stamp'], placement_sha1=r['content_hash'],
+                        conversation_digest=r['conversation_digest'], capture_flags=r['capture_flags'] | (2 if f['sections']['META']['data']['origin'] == 1 or r['conversation_digest'] == bytes(32) else 0), entities=entities))
+    return out

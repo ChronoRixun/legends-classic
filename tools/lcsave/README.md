@@ -23,3 +23,21 @@ build's data, the placed-entity ordinal rule), `catalogue`, `legacy` (era model 
 Tests: `python tests/unit/run.py -k test_lcsave` (invented build and saves). Specification: the save-format pass
 documents (SPEC-new-save revision 2.3, SPEC-old-save revision 2.1) in the coordinator's notes; the port design for
 XML2 Fix is CONVERTER-PORT.md beside them.
+
+
+## Revision 2.4 Core change list
+
+Field widths stay unchanged. Writers record/retain per-zone placement/hash/conversation provenance and capture
+status: mask 1 incomplete, mask 2 historical/inferred. Observed removed numbered entities have explicit STATE
+tombstones. Cached records retain their own provenance. Zero/different conversation digests reset conversation
+bits, and unsupported semantic/native ranges refuse before narrowing. Non-converter translation never borrows the
+importer's drop policy.
+
+Campaign/profile resaves retain LGCY and unknown KEEP payloads with the original KEYS index prefix. Profile imports
+now emit LGCY. Python writes canonical KEYS text, matching the native codec. Full parking remains deferred while
+unresolved identities refuse intact; it must precede content retirement. Opaque extensions use stable IDs/pinned
+KEYS or self-contained data, not undocumented mutable-list references.
+
+Synthetic byte-parity acceptance covers two campaign KEEP resaves, per-capture metadata/tombstones, identical-name
+twins with a skipped factory, profile import and two profile resaves. W11 and actual engine acceptance remain
+separate release gates. Native demand estimates include restore equipment conservatively.

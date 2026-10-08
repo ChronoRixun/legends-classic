@@ -367,8 +367,13 @@ class Binds:
         content)"""
         root = os.path.join(self.build, 'Conversations')
         h = hashlib.sha256()
-        for p in sorted(glob.glob(os.path.join(root, '**', '*'), recursive=True)):
-            if os.path.isfile(p):
-                rel = os.path.relpath(p, root).replace(os.sep, '/').lower()
-                h.update(rel.encode('utf-8') + b'\0' + hashlib.sha1(open(p, 'rb').read()).digest())
+        paths = sorted((os.path.relpath(p, root).replace(os.sep, '/').lower(), p)
+                       for p in glob.glob(os.path.join(root, '**', '*'), recursive=True) if os.path.isfile(p))
+        previous = None
+        for rel, p in paths:
+            if rel == previous:
+                raise ValueError('duplicate conversation path after case normalization')
+            previous = rel
+            with open(p, 'rb') as f:
+                h.update(rel.encode('utf-8') + b'\0' + hashlib.sha1(f.read()).digest())
         return h.hexdigest()
