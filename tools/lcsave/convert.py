@@ -395,6 +395,11 @@ def _zone_record(env, res, old, z, index, candidate_eras, what, captures=None, r
             slot = p[0]
             qty = struct.unpack('<h', p[1:3])[0]
             if slot not in world_handles:
+                # Native item restore tolerates absent slots. Omit only unnumbered ghosts;
+                # numbered identity loss and the historical importer drop policy stay strict.
+                if captures is not None and kind != STATE_NUMBERED:
+                    res.notes.append(f'{what}: dangling world item slot {slot}: unnumbered item state omitted (native load has no item instance)')
+                    return None
                 res.dropped['states'] += 1
                 res.notes.append(f'{what}: a state owns world item slot {slot} that the item section does not list: dropped')
                 return None
