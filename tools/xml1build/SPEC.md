@@ -6152,10 +6152,14 @@ heroes.HeroBuilder prunes shared_talents to the names playable heroes and their 
 definitions the NPCs keep using, and the NPC energy pool (npc_values.ENERGY_TALENT, SPEC 24: ~100 NPCs carry
 it, so a per-set file would load in nearly every zone). Every pruned name that npcstat entries still reference
 moves to one small file per distinct reference set under data/talents/npc (generic combat subsets share
-data/talents/npc_generic), built by talent_sets. Each NPC's character packages - including the <name>_xml
-spawn packages - list its set file as a first xml_talents entry, so the talents register before the package's
-styles bind (the zone-package precache rule of section 28). Hero-as-NPC packages already carry the hero's own
-talent file and are unchanged.
+data/talents/npc_generic), built by talent_sets from ONE partition both modules compute (XML1-herostat
+references, talent_sets.X2_BASE_TALENTS, the energy pool). The NPCs' ZONE package lists each CHRB character's
+set file as an xml_talents entry ahead of its styles (zones.py, beside the section 28 hero precache): XMen2.exe
+processes a zone package's xml_talents entries at zone load, while a spawned monster's own character package is
+read for its actor resources and its xml_talents entries are ignored (verified live 2026-10-08: set-bearing NPCs
+spawned with unloaded set files until the files moved to the zone package). The NPCs' character packages carry
+the same entry for the spawn-time path where an engine build honors it. Hero-as-NPC packages already carry the
+hero's own talent file and are unchanged.
 
 Saves: hero heaps may hold only hero-referenced shared names, so the move changes no held identity; the 0.2.0
 LC format stores talents by name, and older saves convert through the frozen per-era tables (SPEC 70), so the

@@ -59,6 +59,7 @@ from . import scripts_transform as ST     # section 18: the join zones' NPC doub
 from . import buoys as BY                # section 42: generated long-range walk networks
 from . import automaps as AM              # section 26: XML1 automap textures -> Automaps/<zone>.zam
 from . import settle as SE                # issue #81: native floor sweeps for raised ordinary props
+from . import talent_sets as TS           # SPEC <number assigned at merge>: NPC-only talents in per-set files
 
 # ---------------------------------------------------------------------------------------------- constants
 PATCH_ZONE = 'zones.zone'            # import_x1_asset patch keys (deterministic patches -> cacheable imports)
@@ -160,6 +161,31 @@ ITEM_ENHANCEMENT_POOL = int(_FIX_LIMITS.get('ItemEnhancements', ITEM_ENHANCEMENT
 
 def item_enhancements(el):
     return sum(1 for e in el.iter() if isinstance(e.tag, str) and e.tag.lower() == 'enhancement')
+
+
+def zone_npc_talent_entries(ctx, chr_names):
+    """the npc set-file rels (talent_sets) of the zone's CHRB characters that reference talents outside
+    shared_talents: heroes.py writes the files; the zone package lists them so the engine registers them
+    at zone load (the spawn-time monster package path ignores xml_talents entries)."""
+    from . import npc_values as NV
+    if not chr_names:
+        return []
+    try:
+        npc = ctx.read_out_xmlb('Data/npcstat.engb')
+    except Exception:          # noqa: BLE001 - characters has not written npcstat: nothing to add
+        return []
+    try:
+        x1h = ctx.read_x1_xml('data/herostat.eng')
+        hero_refs = {(t.get('name') or '').lower() for t in x1h.iter() if t.tag.lower() == 'talent'}
+    except Exception:          # noqa: BLE001
+        hero_refs = set()
+    npc_refs = {}
+    for st in npc.iter('stats'):
+        ln = (st.get('name') or '').lower()
+        if ln:
+            npc_refs[ln] = {(t.get('name') or '').lower() for t in st.iter('talent')}
+    files = TS.npc_talent_files(npc_refs, hero_refs, None, NV.ENERGY_TALENT)
+    return sorted({files[n] for n in (c.lower() for c in chr_names) if n in files})
 
 
 def enhancement_pool_cut(top, pool=None):
@@ -1910,6 +1936,14 @@ class Zones:
             lits |= self.script_literals(r)
         tiles = st.get('tiles') or {'folders': {}, 'used': {}, 'insts': 0, 'bad': []}
         tiles_used = set().union(*tiles['used'].values()) if tiles['used'] else set()
+
+        # SPEC <number assigned at merge> (the TalentRegistry fix): an NPC-only talent set file rides the
+        # ZONE package - XMen2.exe processes a zone package's xml_talents entries (section 28's hero
+        # precache exists for exactly that) but ignores them on a spawned monster's own character
+        # package. Listed before the bundle's styles so the talents register before styles bind.
+        for rel in zone_npc_talent_entries(ctx, chr_names):
+            if pkg.add('xml_talents', rel, extra=True):
+                self.counts['npc_talent_set_zone_entries'] += 1
 
         for p, kind in bundle:
             k = kind.lower()

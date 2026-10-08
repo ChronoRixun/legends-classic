@@ -32,6 +32,35 @@ def npc_set(refs, moving):
     return frozenset(r for r in (refs or ()) if r in moving)
 
 
+# XML2's own shared_talents names (the base install's 34): save-stable, never part of the NPC move
+X2_BASE_TALENTS = frozenset("""
+fightstyle_finesse1 fightstyle_hero fightstyle_wrestling fightstyle_psionic fightstyle_gun_rifle
+fightstyle_gun_hip fightstyle_baton fightstyle_staff fightstyle_huge fightstyle_nonhuman mutantmaster leadership
+block grab critical might flight psionic_fury energy_resistant mental_resistant physical_resistant
+energy_resistant_share mental_resistant_share physical_resistant_share spawn_invis knock_resist dr_stun
+sentinel_special boss_resistances corrupt_vampire deadpool_regen blimpyboy monst_dmg_high monst_dmg_low
+""".split())
+
+
+def npc_moving(refs, hero_refs, x2_base=None, energy_talent=''):
+    """one entry's moving set under the single partition both the zones module and heroes use: its talent
+    references minus names the XML1 heroes reference (those stay reachable for heroes), XML2 base
+    definitions and the NPC energy pool (which stays in shared_talents)."""
+    base = X2_BASE_TALENTS if x2_base is None else x2_base
+    return frozenset(r for r in (refs or ())
+                     if r not in hero_refs and r not in base and r != (energy_talent or '').lower())
+
+
+def npc_talent_files(npc_refs, hero_refs, x2_base=None, energy_talent=''):
+    """{npcstat name: its set-file rel} for every entry with a non-empty moving set."""
+    out = {}
+    for name, refs in npc_refs.items():
+        s = npc_moving(refs, hero_refs, x2_base, energy_talent)
+        if s:
+            out[name] = set_file(s)
+    return out
+
+
 def set_file(talent_set):
     """the data/talents rel of a non-empty moving set ('' for an empty one). Generic subsets share npc_generic;
     every other set gets one file named by its sorted talents, so distinct sets never share a file."""
@@ -46,10 +75,8 @@ def set_file(talent_set):
 def partition_moves(keep, hero_refs, npc_refs, x2_shared_names, energy_talent):
     """the kept shared names that move to npc set files: kept names only npcstat entries reference - no hero
     stats/style, no XML2 base definition (those stay save-stable in shared), not the NPC energy pool."""
-    energy_talent = (energy_talent or '').lower()
-    return sorted(n for n in keep
-                  if n in npc_refs and n not in hero_refs and n not in x2_shared_names
-                  and n != energy_talent)
+    npc_only = {n for n in npc_refs if npc_moving({n}, hero_refs, x2_shared_names, energy_talent)}
+    return sorted(n for n in keep if n in npc_only)
 
 
 def file_sets(npc_refs, moving):

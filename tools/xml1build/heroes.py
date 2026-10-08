@@ -2529,18 +2529,30 @@ class HeroBuilder:
         # Hero-referenced names, XML2 base definitions and the NPC energy pool (SPEC 24, ~100 NPCs carry it, so
         # a file would load in nearly every zone) stay. Saves do not hold NPC-only talents; the new save format
         # stores hero talents by name and old saves convert through the frozen per-era tables (lcsave legacy).
-        move = TS.partition_moves(keep, hero_refs, npc_refs, self.x2_shared_names, NV.ENERGY_TALENT)
+        # The partition inputs are the XML1 herostat references and talent_sets.X2_BASE_TALENTS - the SAME
+        # definition zones.py uses to list the set files in the zone packages, so both modules agree on the
+        # file name of every NPC's set.
+        x1h = ctx.read_x1_xml('data/herostat.eng')
+        x1_hero_refs = {(t.get('name') or '').lower() for t in x1h.iter() if t.tag.lower() == 'talent'}
+        move = TS.partition_moves(keep, x1_hero_refs, npc_refs, TS.X2_BASE_TALENTS, NV.ENERGY_TALENT)
         move_set = set(move)
         keep = [n for n in keep if n not in move_set]
-        for n in move:
+        keep_set = set(keep)
+        # every npcstat talent reference resolves: in shared_talents or in the NPC's own set file (V-TBD
+        # enforces exactly this partition); references keep their names so the zones module's set-file name
+        # (computed from the same partition before heroes strips anything) still matches
+        npc_refs_by = {}
+        for st in npc_root.iter('stats'):
+            ln = (st.get('name') or '').lower()
+            if ln:
+                npc_refs_by[ln] = {(t.get('name') or '').lower() for t in st.iter('talent')}
+        pool_set = set()
+        for refs in npc_refs_by.values():
+            pool_set |= TS.npc_moving(refs, x1_hero_refs, TS.X2_BASE_TALENTS, NV.ENERGY_TALENT)
+        pool_set |= move_set
+        for n in pool_set:
             drop.pop(n, None)
         self.detail['shared_moved'] = move
-        keep_set = set(keep)
-        # previously-dangling npc-only references (XML2 leftovers such as ScarabApoc's elemental_resistant)
-        # join the sets with an empty definition, so every npcstat talent reference resolves: in
-        # shared_talents or in the NPC's own set file (V-TBD enforces exactly this partition)
-        pool_set = move_set | {n for n in npc_refs
-                               if n not in keep_set and n not in self.x2_shared_names and n != NV.ENERGY_TALENT}
         self.detail['shared_moved_dangling'] = sorted(pool_set - move_set)
         delta_extra = sorted(keep_set - SHARED_KEEP_EXPECTED)
         delta_missing = sorted(SHARED_KEEP_EXPECTED - keep_set)
@@ -2575,8 +2587,8 @@ class HeroBuilder:
             moved_defs[ext] = box
 
         # per-set talent files: XML1 kept these definitions inline in each NPC's stats entry; on the XML2 engine
-        # each distinct set ships as one file under data/talents/npc/, listed first by the character packages of
-        # the NPCs that use it so the talents register before the package's styles bind (zones.py section 28)
+        # each distinct set ships as one file under data/talents/npc/, listed by the zone package (zones.py)
+        # before the package's styles bind, and by the NPCs' own character packages for the spawn-time path
         npc_refs_by_name = {}
         stats_origin = {n: (s.get('origin') or '') for n, s in (ctx.shared.get('stats') or {}).items()}
         for st in npc_root.iter('stats'):
