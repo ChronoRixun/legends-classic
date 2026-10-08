@@ -62,20 +62,23 @@ def test_ordering_puts_the_018_list_back_and_appends_new_talents():
     assert all(len(list(t)) == 1 for t in root)            # definitions moved whole
 
 
-def test_order_problems_name_the_first_moved_slot():
+def test_order_problems_reject_a_reordered_survivor():
     good = V017 + ['grab', 'x1_fightstyle_gun_rifle', 'made_up_new_talent']
     assert SP.shared_order_problems(good) == ([], [])
     moved = V017[:9] + ['grab'] + V017[9:] + ['x1_fightstyle_gun_rifle']
     errors, _ = SP.shared_order_problems(moved)
-    assert len(errors) == 1 and 'slot 9' in errors[0] and "'grab'" in errors[0]
+    assert len(errors) == 1 and 'pinned order' in errors[0]
 
 
-def test_a_dropped_slot_is_an_error_a_missing_tail_a_warning():
+def test_a_dropped_or_moved_slot_is_a_warning_not_a_save_error():
+    # 0.2.0 stores talent names in saves, so a name leaving shared is not a rank move; survivors keep order
     hole = [n for n in V017 if n != 'fightstyle_gun_rifle'] + ['grab', 'x1_fightstyle_gun_rifle']
-    errors, _ = SP.shared_order_problems(hole)
-    assert any("['fightstyle_gun_rifle'] missing" in m for m in errors)
+    errors, warnings = SP.shared_order_problems(hole)
+    assert not errors and any('fightstyle_gun_rifle' in m and 'unreferenced' in m for m in warnings)
     errors, warnings = SP.shared_order_problems(V017)
     assert not errors and warnings and 'grab' in warnings[0]
+    errors, warnings = SP.shared_order_problems(hole, moved=('fightstyle_gun_rifle',))
+    assert not errors and any('npc set file' in m for m in warnings)
 
 
 def v31(talents, tail=None):
@@ -93,7 +96,7 @@ def test_v31_checks_both_halves_and_the_fall_volume_tail():
     assert not v31({'.engb': good, '.xmlb': list(good)}).errors
     swapped = good[:4] + [good[5], good[4]] + good[6:]
     check = v31({'.engb': good, '.xmlb': swapped})
-    assert any('shared_talents.xmlb' in m and 'slot 4' in m for m in check.errors)
+    assert any('shared_talents.xmlb' in m and 'pinned order' in m for m in check.errors)
     assert any('different orders' in m for m in check.errors)
     check = v31({'.engb': good, '.xmlb': list(good)},
                 tail={'maps/invented/ridge.engb': ["maps/invented/ridge.engb: entinst 'pad_c' follows ..."]})

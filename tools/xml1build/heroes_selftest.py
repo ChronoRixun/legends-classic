@@ -259,9 +259,17 @@ info.append(f'HH: {len(pk)} character packages ({n_cost} distinct costume skins)
 # ------------------------------------------------------------------ HI
 shared = [(t.get('name') or '').lower() for t in load('Data/shared_talents.engb').iter('talent')]
 delta = sorted(set(shared) ^ H.SHARED_KEEP_EXPECTED)
-info.append(f'HI: shared_talents {len(shared)}; delta vs DESIGN 4.7 (47): {delta}')
-if delta and delta != ['grab']:
-    err(f'HI shared keep list differs from DESIGN 4.7 beyond the documented grab: {delta}')
+info.append(f'HI: shared_talents {len(shared)}; delta vs the TalentRegistry-fix keep set: {delta}')
+npc_pool = [n for n in shared if n in H.SP.SHARED_TALENT_SLOTS and n not in H.SHARED_KEEP_EXPECTED]
+if delta or npc_pool:
+    err(f'HI shared keep list differs from the expected set: delta {delta}, unexpected survivors {npc_pool}')
+moved = sorted(set(detail['shared_moved']))
+info.append(f'HI: {len(moved)} NPC-only talents moved to npc set files')
+if set(moved) - set(H.SP.SHARED_TALENT_ORDER):
+    err(f'HI moved talents are not save-order names: {sorted(set(moved) - set(H.SP.SHARED_TALENT_ORDER))}')
+set_files = sorted(k for k in mine if k.lower().startswith('data/talents/npc') and k.lower().endswith('.engb'))
+if not set_files:
+    err('HI no npc talent set files were written')
 if len(shared) != len(set(shared)):
     err('HI duplicate shared talents')
 

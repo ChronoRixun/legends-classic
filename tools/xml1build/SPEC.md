@@ -6135,3 +6135,33 @@ The builder owns this key and removes it when a build no longer asks for it.
 `[Balance] HeroHealthPerBody=2.5` compensates for the fourfold hero stat scale: the native max-health
 rule gives level-1 Wolverine (scaled Body 20) 80 HP. This is a formula check; final runtime acceptance
 is reported separately. `[Limits] EffectCurves=3600` remains the shipped effect-curve pool.
+
+
+## <number assigned at merge>. The TalentRegistry budget and the NPC talent-set split
+
+XMen2.exe's TalentRegistry admits 100 registered talent names from 9 distinct files: registration (0x4c0080)
+refuses a 101st unique name silently, and the file loader (0x4c0460) refuses a 10th distinct file; the shared
+loader (0x4c05d0) itself admits only ids 0..98. Builder 0.1.x hoisted every XML1 NPC-only special talent
+(sabre_claw, pyro_flame, jug_punch ...) into Data/shared_talents so they registered everywhere; xjet/
+blackbird_arbiter therefore demanded 116 unique names with a four-hero party (63 shared + 24 for the zone's
+four NPC heroes + 29 for the party) and the party's last-seated heroes lost every power, silently. The first
+game kept those definitions inline in each NPC's own stats entry; this change restores that shape on the XML2
+engine.
+
+heroes.HeroBuilder prunes shared_talents to the names playable heroes and their styles reference, XML2 base
+definitions the NPCs keep using, and the NPC energy pool (npc_values.ENERGY_TALENT, SPEC 24: ~100 NPCs carry
+it, so a per-set file would load in nearly every zone). Every pruned name that npcstat entries still reference
+moves to one small file per distinct reference set under data/talents/npc (generic combat subsets share
+data/talents/npc_generic), built by talent_sets. Each NPC's character packages - including the <name>_xml
+spawn packages - list its set file as a first xml_talents entry, so the talents register before the package's
+styles bind (the zone-package precache rule of section 28). Hero-as-NPC packages already carry the hero's own
+talent file and are unchanged.
+
+Saves: hero heaps may hold only hero-referenced shared names, so the move changes no held identity; the 0.2.0
+LC format stores talents by name, and older saves convert through the frozen per-era tables (SPEC 70), so the
+surviving shared_talents order is a sanity rule, not a save pin (save_positions). V-TBD (number assigned at
+merge) recomputes the demand of every converted zone under this model and fails the build over 100 names or 9
+files; exactly-full is a warning because a scripted spawn outside the CHRB roster can still load a file.
+Static worst case after the split: 82 names / 9 files at xjet/blackbird_arbiter (was 116). A registry raise
+(XML2 Fix `[Limits] TalentRegistry`) remains possible but needs the relocation proof its design lists; this
+rule keeps the engine at 100/9.

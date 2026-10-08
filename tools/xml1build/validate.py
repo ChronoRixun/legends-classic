@@ -95,6 +95,10 @@ Checks (severity per SPEC 4.6: error = will not load or silently misbehaves; war
                 packages, the zone package, its CHRB characters' packages and the worst four-hero party against
                 the registry the shipped ini asks xml2-fix for ([Limits] FightStyles, else XMen2.exe's 19): more
                 is an error (the hero seated last has no powers), exactly full a warning
+  V-TBD talent registry (SPEC <number assigned at merge>, talent_budget.validate): per converted zone the unique
+                registered talent names and distinct talent files of the permanent, zone, CHRB character and
+                worst four-hero party packages, with the NPC-only talents in their data/talents/npc set files
+                (TalentRegistry fix): over 100 names or 9 files an error, exactly full a warning
   V25 harm loops (SPEC 51): no delayed start-on ordinary harm loops that XML2 disables
   V34 ladder spawns (SPEC 46): no monster spawner without monster_spawnexactlocation runs a ladder motion path
   V35 pda portal (SPEC 64, issue #89; validate_frontend.v_pda_portal): both front ends: UI/menus/pda (both halves)
@@ -142,6 +146,7 @@ from . import npc_values as NV           # V19 (SPEC 24): value codes XMen2.exe 
 from . import buoys as BY
 from . import automaps as AM             # V20 (SPEC 26): XML1 automaps as .zam
 from . import skins as SK                # V21 (SPEC 25): skin blend weights / skeleton against the anim DB
+from . import talent_budget as TB        # V-TBD (number assigned at merge): TalentRegistry demand per zone
 from . import style_budget as SB         # V23 (SPEC 43): the fighting / power style registry per zone
 from . import ladder_motion as LM       # V34 (SPEC 46): ladder paths only from the ladder top
 from . import weapons as W              # V5 (SPEC 57, issue #52): a gun-armed entry carries its gun's fighting style
@@ -775,6 +780,7 @@ class Validator:
                                ('V21', 'skins', lambda ck: SK.validate(self, ck)),
                                ('V22', 'buoys', lambda ck: BY.validate(self, ck)),
                                ('V23', 'fight styles', lambda ck: SB.validate(self, ck)),
+                               ('V-TBD', 'talent registry demand', lambda ck: TB.validate(self, ck)),
                                ('V24', 'conversation portraits', self.conversation_portraits),
                                ('V25', 'harm loop startup', self.harm_loop_startup),
                                ('V26', 'fall kill volumes', self.fall_kill_volumes),
@@ -1110,19 +1116,40 @@ class Validator:
                     ck.error(f'{sc.files[n]["rel"]}: fall kill volume {name!r} lacks '
                              f'{", ".join(k + "=" + XS.FALL_KILL_FLAGS[k] for k in missing)}')
 
+    def _npc_pool_names(self):
+        """talent names defined by the built npc per-set files (data/talents/npc*, the TalentRegistry fix)."""
+        cache = getattr(self, '_npc_pool_cache', None)
+        if cache is not None:
+            return cache
+        out = set()
+        idx = getattr(self, 'idx', None)
+        if idx is not None:
+            for rel in idx.under('data/talents'):
+                ln = rel.lower()
+                if not ln.endswith('.engb') or ('/npc/' not in ln and 'npc_generic' not in ln):
+                    continue
+                t = self.tree(rel)
+                if t is not None:
+                    out.update((el.get('name') or '').lower() for el in t.iter() if el.tag.lower() == 'talent')
+        self._npc_pool_cache = out
+        return out
+
     def save_positions(self, ck):
         """V31 (SPEC 61): what a save names by position stays where earlier releases put it.
-        (a) shared_talents (both halves) in save_positions.SHARED_TALENT_ORDER, new talents after it: a saved
-        hero's talent id below 100 is the position. (b) no enabled fall kill volume numbered before another
+        (a) shared_talents (both halves): from 0.2.0 the LC save stores talent names, so the 0.1.x slot pin is a
+        sanity rule (survivors keep the pinned relative order); names the TalentRegistry fix moved to npc set
+        files, or that nothing references, are warnings. (b) no enabled fall kill volume numbered before another
         entinst (x1schema.numbered_entinst_tail_problems): a zone record finds an entity by its ordinal.
         (c) newly resident props follow all pre-existing placements, even in zones without fall volumes."""
         talents = self.stats()['talents']
+        moved = {n.lower() for n in SP.SHARED_TALENT_ORDER} - {n.lower() for n in talents.get('.engb') or ()}
+        moved &= {n.lower() for n in self._npc_pool_names()}
         for ext in ('.engb', '.xmlb'):
             names = talents.get(ext)
             if names is None:
                 ck.error(f'data/shared_talents{ext} missing or undecodable')
                 continue
-            errors, warnings = SP.shared_order_problems(names, f'data/shared_talents{ext}')
+            errors, warnings = SP.shared_order_problems(names, f'data/shared_talents{ext}', moved)
             for m in errors:
                 ck.error(m)
             for m in warnings:
@@ -1920,11 +1947,13 @@ class Validator:
                 t = self.tree(f'data/talents/{name}.engb')
             hero_talent_files[name] = {x.get('name', '').lower() for x in t.iter('talent')} if t is not None else set()
         own_t = hero_talent_files[name]
+        npc_t = self._npc_pool_names()
         for c in el:
             if c.tag == 'talent':
                 tn = (c.get('name') or '').lower()
-                if tn and tn not in shared_t and tn not in own_t:
-                    out.append(('soft', f'talent {tn!r} is neither in shared_talents nor in data/talents/{name}'))
+                if tn and tn not in shared_t and tn not in own_t and tn not in npc_t:
+                    out.append(('soft', f'talent {tn!r} is neither in shared_talents, data/talents/{name} '
+                                        f'nor an npc set file'))
                 if is_fightstyle_name(tn) and not (self.exists(f'data/fightstyles/{tn}.xmlb') or
                                                         self.exists(f'data/fightstyles/{tn}.engb')):
                     out.append(('soft', f'fightstyle talent {tn}: Data/fightstyles/{tn} missing'))

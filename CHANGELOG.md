@@ -5,6 +5,14 @@ build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebui
 
 ## Unreleased - 0.2.0 - content version 16 (needs XML2 Fix 1.4)
 
+- **The TalentRegistry no longer overflows at xjet/blackbird_arbiter.** XMen2.exe silently refuses talent
+  registration past 100 unique names or 9 distinct files; the arbiter demanded 116 (63 shared + the zone's
+  four NPC heroes + the party) and the party's last heroes lost every power. NPC-only special talents (XML1
+  kept them inline in each NPC's stats entry) move out of shared_talents into small per-set files under
+  `Data\talents\npc` listed by the NPCs' own character packages; the shared pool drops 63 -> 29 names and the
+  worst zone demands 82 names / 9 files. Validator rule V-TBD (number assigned at merge) recomputes every
+  zone's demand; saves are unaffected (the LC format stores talent names, old saves convert through the era
+  tables).
 - **A new save format; every old save is carried over once, automatically.** With XML2 Fix 1.4 the build starts
   in the LC save format: at the first start the fix converts the old saves it finds, once per file, into the new
   `SaveLC` folder - the old folder is never touched. Saves of every builder era load: heroes, levels, stats,
