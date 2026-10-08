@@ -730,6 +730,25 @@ def v_codex_icons(v, ck):
             ck.error(f'{rel}: no {F.CODEX_LIST_TYPE} item')
         ck.count('codex_menu_halves')
 
+
+def v_pda_portal(v, ck):
+    """V35 (issue #89; SPEC 64): in both front ends the pause menu (UI/menus/pda, both halves) is the frontend
+    module's and offers no Blink Portal - no portal label item, nothing navigates to it, its panel models hidden.
+    XML2's entry opens a portal to X-Men Legends II's towns; the first game had none."""
+    for ext in ('.XMLB', '.engb'):
+        rel = F.PDA_MENU_REL + ext
+        root = _tree(v, rel)
+        if root is None:
+            ck.error(f'{rel}: missing or does not decode')
+            continue
+        if not _registered_by(v, rel, 'frontend'):
+            ck.error(f'{rel}: not written by the frontend module (XML2\'s pause menu has the Blink Portal)')
+        if (root.get('type') or '').upper() != F.PDA_MENU_TYPE:
+            ck.error(f'{rel}: type {root.get("type")!r}, expected {F.PDA_MENU_TYPE}')
+        for p in F.pda_portal_problems(root):
+            ck.error(f'{rel}: {p} (the Blink Portal leads to X-Men Legends II\'s towns, issue #89)')
+        ck.count('pda_menu_halves')
+
 def v_personal_items(v, ck):
     """V30 (issue #47): every personalItem('<item>') literal in installed content has Data/personal/<item>
     (.XMLB and .engb) written by the frontend module, with text and a texture whose IGB is in <out>; a missing

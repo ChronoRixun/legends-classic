@@ -3,6 +3,55 @@
 The builder's releases, newest first. The version is `xml1-builder --version`; the content version is what a
 build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebuild.
 
+## v0.1.12 - content version 15 (needs XML2 Fix 1.3.2)
+
+This build needs XML2 Fix 1.3.2 (the launcher installs it). With an older fix the game starts, but the ladder,
+objective, STAT, wall, effect and Xtraction-menu changes below do nothing. Saves of earlier builds load as before.
+
+- **Fixed: soldiers waiting at the top of a ladder now climb down** (issue #32). In the sewers and in the Arbiter's
+  levels the first game sends soldiers down a ladder into the fight; here they stayed up at the top, out of reach.
+  They now slide down as in the first game. Soldiers that the first game puts straight on the floor stay there.
+- **Objectives read as in the first game once they are done** (issue #8). The first game changes an objective's
+  text on the Objectives page when you complete it (for example after the fight with Mystique); here the page kept
+  the original instruction. It now shows the first game's completion text.
+- **Fixed: STAT pickups gave no point to spend** (issue #10). They raised Body by itself. Now the hero who picks one
+  up gets one attribute point to spend on the stats screen, as in the first game.
+- **Sturdier objects break as in the first game: to powers and Might, not to plain punches** (follow-up to issue
+  #51). The first game gives every object a strength from 0 to 10 and breaks it only with an attack at least that
+  strong: a punch is 1, powers are higher, and Might adds 3, 6 or 8. The engine only knows 0 to 2, so walls such as
+  the one in HAARP's barracks either could not be broken at all or, since 0.1.8, broke to any punch. That wall now
+  takes Wolverine's Claw Flurry and shrugs off his punches, a desk computer needs Might or a stronger power, crates
+  and lockers still break to anything. Attacks on enemies are unchanged.
+- **Fixed: fires and powers without their particles in busy areas** (issue #68). With four heroes, some areas
+  needed more effect animations than the engine keeps: the effects loaded last were drawn without particles - the
+  burning bench in Central Park was a faint glow, and a hero's power could lose its sparks. The game now has room
+  for four times as many.
+- **Removed: the pause menu's Blink Portal** (issue #89). It is X-Men Legends II's: it opened a portal to that
+  game's towns, with no way back to this one except an earlier save (saving there overwrote the slot with a town
+  save). The first game had no portal. Its place in the pause menu is now an empty slot.
+- **The water channel in one of the first sewer areas is deadly again** (issue #22). 0.1.9 switched off 17 shallow
+  fall areas until each was checked in game; this one, between two walkways, was checked and kills a hero who falls
+  in, as in the first game.
+- **Fixed: the Xtraction menu offered X-Men Legends II's Xtract world map** (issue #46). Every Xtraction point's
+  menu had an Xtract choice that opened X-Men Legends II's world map of its five town centres; the first game's
+  menu has no world map. The menu now offers the title, Change Team and Save only, from the first mission on.
+  With the pause menu's Blink Portal gone (#89), no route into X-Men Legends II's towns is left. XML1's Load,
+  Danger Room, Healer and Forge choices are still missing at every point (as in 0.1.11).
+- **The first HAARP mission starts with the first game's recommended team** (issue #76). Its team selection
+  opened with Magma, carried over from the briefing; the first game seats its recommended four (Cyclops, Iceman,
+  Storm and Wolverine) and lets you change them. Missions with a complete recommended team in the first game's
+  data do the same. Loading a save already inside HAARP is unchanged.
+- **Fixed: Rogue's Southern Strike dealt no damage at rank 1** (issue #78). Its three punches only knocked enemies
+  down until a second point was spent. At rank 1 they now deal the first game's damage; Cyclops' Optic Sweep and
+  X-treme power had the same fault and are fixed too. Powers that do no damage at rank 1 in the first game stay so.
+- **Fixed: blue Xtraction points did not glow** (issue #74). Only the mansion sub-basements' purple point glowed;
+  the blue points used X-Men Legends II's models of the same name, which lack the glow. They now use the first
+  game's.
+
+New build checks: V33 (every object carries the first game's strength next to the engine's), V34 (no soldier
+placed on the floor gets the ladder slide), V35 (the pause menu has no portal), V36 (the recommended team before a
+mission's team selection) and V37 (the first game's Xtraction beacons; no power left without its rank-1 damage).
+
 ## v0.1.11 - content version 14 (needs XML2 Fix 1.3.1)
 
 - **Fixed: 20 Xtraction points could not save, including the first one in the game** (issue #63). The point in
