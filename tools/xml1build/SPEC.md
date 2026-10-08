@@ -5064,13 +5064,15 @@ igImage count; a texture the reader cannot place falls back to the byte copy and
 (`personal_textures_*_unframed`). V30 also checks the named texture's largest igImage is 512x384, so a future
 byte-copy regression fails validation.
 
-The item's text is still not drawn. It is loaded (the word-wrapped text is in memory while the menu is open), and
-no data-side change makes the text box appear: a missing texture (no sprite at all), a `style`, `animtext_scene`,
-or a re-framed IGB (21.2.1) each changed nothing (seen in game 2026-10-07; the menu reads `Data/personal/<item>`
-**.engb**, not the .XMLB - earlier probes that edited only the XMLB saw no effect at all). The MENU_ITEM_TEXTBOX
-draw (0x5c7a00) skips when the item's flags byte (+0x54) bit 2 is set or its +0x58 object is missing; why this
-menu's text box fails is engine-side and open (likely an XML2 Fix follow-up: the menu IGB's scene does not render
-around the sprite either - the margins behind it are black, so the box's anchor may never bind).
+The item's text was hidden behind the image, rather than missing from the textbox. The earlier anchor-binding
+hypothesis is withdrawn: live probes show its hidden flag clear, binding/type-5 component present, and wrapped
+text populated. PERSONAL_MENU inherits image depth -10 at constructor 0x5b7c30; its description is at depth 0,
+so the opaque fullscreen sprite covers it. XML2 Fix 1.4's default-on `[Game] PersonalItemText` wraps only the
+personal-menu factory call (0x5b84e9), keeps the native constructor, verifies the personal vtable/default depth,
+and changes that inherited signed depth to +10. The subsequent menu parser still applies authored depth overrides.
+The shared textbox renderer and other image menus are unchanged. The menu reads Data/personal/<item>.engb;
+both its description and the builder's smaller picture window can now be visible. DLL docs/personal-item-text.md
+records the guards, native rules and bounded in-game proof.
 
 ## 57. Gun soldiers fight in their gun's style (issue #52)
 
@@ -5956,6 +5958,21 @@ to floor height alive, with the native evaluator active.
 Staged: access to the Xtraction beacon and combat encounter, facing, the isolated claw test's enemy-targeting
 flag, and the ladder test's zone/approach/top-spawner activation. Powers, menu saving/loading, floor-trigger
 walking and attacks use real input. This is short single-player acceptance, not a campaign or co-op proof.
+
+### 70.5 Revision 2.4 Core integration (2026-10-07)
+
+The builder's LC codecs write canonical KEYS bytes, matching C++ exactly, including documentary catalogue text.
+Continuing saves retain LGCY, unknown KEEP sections and the original KEYS prefix; unknown identities refuse intact
+until full parking is implemented. The DLL records per-capture opened placement hashes, numbered identities,
+conversation digest and completeness flags, with explicit removed-entity tombstones. Real resetgame separates
+new campaign retention/serials from the independent profile. Native capacity preflight rejects unrepresentable
+streams before narrowing. Tests/unit/test_lcsave_durable.py and the native durable parity vectors cover these
+contracts; the existing V39 continues to validate regenerated catalogue/bind/legacy files.
+
+The format remains major 1 with the existing field widths and HERO 1.1; CONTENT_VERSION remains 16 for this
+unreleased 0.2.0 integration. No new validator number is allocated. W11 remains open: native completion and manual
+save check are narrower evidence, not a full side-effect-free post-load observer. Newer-file/refusal latches,
+effective mod-bind policy, network/co-op/DR acceptance and TalentRegistry work remain separate pending branches.
 
 ## 71. Spawn-floor residency (issue #81)
 

@@ -22,6 +22,8 @@ build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebui
 - **Co-op compatibility metadata** (decision D5). `[Online] GameVersion` is `X1.2`, separating these lobbies
   from earlier port generations. The ini records the save-table content fingerprint. Comparing peers
   by content version and fingerprint needs the XML2 Fix network seam, which is not implemented in 1.4.
+- Continuing LC saves retain legacy/KEEP payloads and documentary keys. Core capture metadata records opened
+  placements, numbered identities and completeness; Python/C++ canonical KEYS bytes match (SPEC 70.5).
 - Power slots retain their usable flag through conversion, save and load (HERO 1.1).
 - Melee weapons contribute their authored fixed bonus before Strength and Might; damage rolls use inclusive
   integers. The opening cop's punch is 7 or 9 damage (SPEC 69.5; V40).
@@ -40,9 +42,8 @@ build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebui
 - **Fixed: the mansion bedrooms' personal items filled the screen** (issue #47, follow-up). 0.1.8 gave every item
   its own picture, but the engine draws it as a background sprite stretched over the whole menu screen, so the
   painted scene covered everything. Each picture is now re-framed to show inside the same window the first game
-  drew it in, with the scene's colours continuing to the edges. The item's description text still does not show:
-  the engine never draws this menu's text box (the cause is engine-side and still open; the text loads, and no
-  menu-data change makes it draw).
+  drew it in, with the scene's colours continuing to the edges. XML2 Fix's default-on PersonalItemText fix
+  places this menu's opaque background behind its description, so the text is visible too.
 - **Fixed: hero power icons show the first game's complete art inside round frames** (issues #53, #73).
   The first game's four 64px icons were read as 32px quarter-crops and drawn square over the round frames.
   The builder now resamples each complete icon into the second game's 128px 4x4 sheet layout, preserves
