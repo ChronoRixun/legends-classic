@@ -47,3 +47,26 @@ jobs:
             # first push of a branch, a force-push whose old tip is gone, or a manual run: the whole history
             guard --history
           fi
+
+  # Contributors run the guard through pre-commit with whatever Python they have (its header promises 3.8+, standard
+  # library only) and on Windows as well as Linux: the self-test and the tracked-file check on both systems, on the
+  # oldest Python setup-python still ships for current runners and on the builder's own.
+  portability:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python-version: ["3.9", "3.14"]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Guard self-test
+        run: python tools/check_no_game_content.py --self-test
+
+      - name: Every tracked file
+        run: python tools/check_no_game_content.py --all --format github

@@ -1,6 +1,5 @@
 """Invented navigation grids, input mappings and gate checks only."""
 import xml.etree.ElementTree as ET
-import math
 from autopilot_nav import nav_data, Routes, calibrated, movement, assist_refusal
 
 

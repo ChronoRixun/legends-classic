@@ -6,6 +6,7 @@ import json
 import os
 import struct
 import tempfile
+import unittest
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -31,9 +32,44 @@ def _boom(x):
     return x
 
 
-def test_pool_map_order_budget_and_errors():
+def _need_process_pool():
+    """pool_map's pool path needs what multiprocessing.Pool needs: a working semaphore (sem_open: a writable
+    /dev/shm on Linux) and, for the default start method, pipes / a local socket to its workers. Sandboxes and some
+    containers lack one of them - Pool() then raises OSError / ImportError before any work is queued, which says
+    nothing about pool_map. Anything that fails after the pool exists still fails the test."""
+    import multiprocessing
+    try:
+        pool = multiprocessing.Pool(1)
+    except (OSError, ImportError) as e:
+        raise unittest.SkipTest(f'no process pool on this machine ({type(e).__name__}: {e})')
+    pool.terminate()
+    pool.join()
+
+
+def test_pool_map_in_process():
+    """jobs <= 1 (or a single item) runs in this process: the same order, progress and errors, no pool needed."""
     items = [5, 4, 3, 2, 1]
-    assert prepare.pool_map(_square, items, 1) == [25, 16, 9, 4, 1]
+    seen = []
+    assert prepare.pool_map(_square, items, 1, progress=lambda d, t, u: seen.append((d, t, u))) == [25, 16, 9, 4, 1]
+    assert seen == [(i, 5, 'items') for i in range(1, 6)]
+    assert prepare.pool_map(_square, [7], 8) == [49]
+    try:
+        prepare.pool_map(_boom, [1, 2, 3], 1)
+    except ValueError as e:
+        assert 'boom' in str(e)
+    else:
+        raise AssertionError('an exception must reach the caller')
+    try:
+        prepare.pool_map(_square, [1, 2], 1, cancel=lambda: True)
+    except prepare.Cancelled:
+        pass
+    else:
+        raise AssertionError('cancel must stop the loop')
+
+
+def test_pool_map_order_budget_and_errors():
+    _need_process_pool()
+    items = [5, 4, 3, 2, 1]
     seen = []
     got = prepare.pool_map(_square, items, 3, cost=lambda x: 100 * x, budget=450,
                            progress=lambda d, t, u: seen.append((d, t)))

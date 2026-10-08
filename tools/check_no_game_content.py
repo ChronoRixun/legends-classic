@@ -59,7 +59,6 @@ from __future__ import annotations
 
 import argparse
 import fnmatch
-import json
 import os
 import re
 import shutil
