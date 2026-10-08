@@ -3,6 +3,7 @@ Data/shared_talents, so every release keeps the 0.1.7 slots and appends what it 
 engine identifiers the builder writes (no game text); the extra talents are invented."""
 import xml.etree.ElementTree as ET
 from types import SimpleNamespace
+import xmlb
 
 from xml1build import save_positions as SP
 from xml1build.validate import Check, Validator
@@ -98,3 +99,31 @@ def test_v31_checks_both_halves_and_the_fall_volume_tail():
                 tail={'maps/invented/ridge.engb': ["maps/invented/ridge.engb: entinst 'pad_c' follows ..."]})
     assert len(check.errors) == 1 and 'pad_c' in check.errors[0]
     assert v31({'.engb': None, '.xmlb': good}).errors
+
+
+def test_v31_rejects_new_resident_prop_before_existing_instance():
+    # Removing V31's prop-tail check would allow an old save's ordinal to move
+    # even in a zone with no fall volumes. Exercise V31 itself, not V-TBD.
+    root = ET.Element('world')
+    ET.SubElement(root, 'entity', name='invented_new', classname='physent',
+                  smartent='false', xml1settle='true')
+    ET.SubElement(root, 'entity', name='invented_old', classname='gameent')
+    added = ET.SubElement(root, 'entinst', type='invented_new')
+    ET.SubElement(added, 'inst', name='added', pos='1 2 3')
+    old = ET.SubElement(root, 'entinst', type='invented_old')
+    ET.SubElement(old, 'inst', name='kept', pos='4 5 6')
+    good = V017 + ['grab', 'x1_fightstyle_gun_rifle']
+    validator = Validator.__new__(Validator)
+    validator._stats = {'talents': {'.engb': good, '.xmlb': list(good)}}
+    validator._scan = SimpleNamespace(fall_kill_volumes={}, entinst_tail={}, twins=set(),
+        files={'maps/invented/yard.engb': {'root': 'world'}})
+    # Scan metadata holds a tag string; the real tree reader decodes file bytes.
+    validator.read = lambda name: xmlb.encode(root) if name == 'maps/invented/yard.engb' else None
+    check = Check('V31', 'save positions')
+    validator.save_positions(check)
+    assert any('saved ordinals' in message for message in check.errors)
+    root.remove(added)
+    root.append(added)
+    check = Check('V31', 'save positions')
+    validator.save_positions(check)
+    assert not check.errors

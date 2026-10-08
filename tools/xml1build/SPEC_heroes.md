@@ -61,7 +61,7 @@ shared keep / drop lists with reasons; npcstat removals; heads). `_build/heroes_
 | option | values | effect |
 |---|---|---|
 | `--hero-roster` | `21` (default), `17`, `21xml2` | `21`: default + 15 XML1 heroes + hidden `Magneto` + `x1pad1..3` + ProfXGladiator (3.1); `17`: no pads, 18 entries (memory-safe by analysis, engine.md 1.5, never exercised - validate V5 then accepts 1..21 heroes); `21xml2`: XML2's Deadpool, Ironman, Professorx, Sunfire as pads, copied verbatim from the base files (their XML2 talent files / packages stay; `resetgame` unlocks Sunfire), no ProfXGladiator (astral_sk / boss_shadowking then keep the team menu) |
-| `--hero-icons` | `xml1` (default), `generic` | talent `icon_texture`: XML1's 2x2 `textures/ui/<hero>_all.png` atlases (icons 0..3) or XML2's `textures/ui/talent_icons.png` (power1..3/9 -> cells 0..3, passives cell 4; the style `iconfile` and the four `powerN` icons follow) - the fallback if the 2x2 grid renders wrong (7.2 #4) |
+| `--hero-icons` | `xml1` (default), `generic` | talent `icon_texture`: XML1's `textures/ui/<hero>_all.png` atlases (icons 0..3) re-laid as the 4x4 alpha-blended sheets XMen2.exe renders (hero_icons.py, section 4a; issues #53/#73), or XML2's `textures/ui/talent_icons.png` (power1..3/9 -> cells 0..3, passives cell 4; the style `iconfile` and the four `powerN` icons follow) - the fallback if the converted atlas renders wrong (7.2 #4) |
 | `--hero-bleed` | `on` (default), `off` | Wolverine's `wolv_sharpness` bleed (XML1 `powerup="none" func_damage="damageaddbleed"`) as an XML2 `add_harming` powerup (UNVERIFIED) or dropped |
 | `--newgame` | `chooseteam` (default), `keepteam` | recorded for `scripts`; `keepteam` needs the xml2-fix proxy pointer patch (roster.md option C) and is refused by V-H10 until it exists |
 
@@ -147,6 +147,30 @@ chance=C/100`, bleed `none/damageaddbleed` -> `class="add_harming" damagepercent
 attribute). Attributes in XMen2.exe's affecter table that no XML2 retail style uses (`damageLevel`, `atk_knockback`)
 are emitted as DESIGN says and warned as UNVERIFIED; `atk_damage_scale` is not in the table (it would parse as `none`)
 and is rewritten to scale `atk_damage` before conversion (SPEC 22). <= 8 talents per file (cap 100).
+
+## 4a. Talent-icon atlases (issues #53/#73, hero_icons.py)
+
+XMen2.exe's HUD and skills screen read **32x32 icon cells** from the hero's `icon_texture` sheet
+(engine.md 3.4, talent reader 0x4be4c0/0x4be480; retail sheets are 128x128 with a 4x4 grid). XML1's
+`textures/ui/<hero>_all.igb` instead holds four 64x64 icons in a 2x2 grid. Raw import produces quarter-crops
+of one icon; its opaque square alpha covers the round `talent_icon_back` plate (issues #53/#73). The crops
+are XML1 art, not substituted XML2 art.
+
+`--hero-icons xml1` resamples each complete 64x64 icon into a 32x32 cell, places the four icons in cells
+0..3 of a **128x128 4x4 sheet**, and bakes circular alpha into each cell. The compressed image rows are
+**bottom-up**: decode and flip before relayout, then flip back before encoding. A 256px sheet with 64px
+cells still quarter-crops in game, and a top-down output puts its art outside the cells the reader uses.
+All IGB metadata and object references stay unchanged. In particular, **igTextureAttr slot 12 is an
+igObjectRefMetaField pointing at igImage**, not a blend mode (its different values in the two games are
+different reference indices); overwriting it can crash loading. Texture alpha supplies the round crop.
+
+The skills screen also reads passive index 4 from the hero sheet even when its talent names the generic
+texture. Cell 4 therefore carries the intended generic passive art from the player's own XML2
+`talent_icons` sheet, with circular alpha; cells 5..15 stay transparent. This avoids blank passive rows.
+
+`ICON_ATLAS` shares ProfXAstral's atlas with the gladiator. Reused converted sheets are detected by their
+pixel layout, alpha and valid image reference, rather than dimensions (raw and converted sheets are both
+128px). V-H15 checks these invariants and rejects unconverted sheets.
 
 **Xtreme ranks (deviation, section 8):** an XML1 xtreme talent has 1 level, but its FightMove chain has 6 rungs
 gated on the character level (`XTL2..6` = 20/25/30/35/40 or the `XLT` typos). The talent gets ranks 2..6 whose
@@ -312,6 +336,7 @@ without ctx.shared):
 | V-H12 | T7: both add_cyclops scripts carry the join pattern and no `extractionPointLite`; both zone guards exist | error |
 | V-H13 | mission-start unlocks (issue #55, `scripts.mission_start_unlocks`: every mission's cumulative set of XML1's unlock table up to its `missions.xml` `charunlock` milestone, read from the player's default.xbe): each hero is a playable herostat hero; every copy of every begin body in `<out>` (`x1/missions/begin_<m>` + the inlined copies) unlocks each hero of its set exactly once in its header (`scripts_transform.unlock_problems`) | error |
 | V-H14 | issue #55 (SPEC 58): in a `--forced-teams seat` build, no begin body that carries the seat block unlocks, in its header, a REQUIRED hero XML1 only seats (`scripts.menu_only_unlock_map`: Magma before her `dr_mag2` milestone, the Professor X forms, Cyclops at the two joins); that unlock lives in the team-menu branch (`scripts_transform.menu_only_problems`) | error |
+| V-H15 | issues #53/#73 (SPEC_heroes section 4a): with `--hero-icons xml1`, every `textures/ui/<atlas>_all.IGB` in `<out>` is a 128px bottom-up 4x4 sheet with circular alpha, transparent unused cells and a valid texture-to-image object reference | error |
 
 `tools/xml1build/heroes_selftest.py <out>` (HA-HK, DESIGN 5.3): XMLB round trip of every heroes-owned file; V-H1..
 V-H13 recomputed; every talentvalue at rank r equals the XML1 rung r's resolved value (an independent walk of the
@@ -375,8 +400,8 @@ Deferred to v2: Rogue's decide step (`ch_roguedecide` is not registered, E14; th
 Jubilee `charged_throw` got XML2's `ch_pickup_throw`, SPEC 22); astral solo mode (T10) (flashback
 party save / restore, T9, is built by SPEC 19: xml2-fix `pushParty` / `popParty`, and without the DLL the return
 opens the team menu at the caller zone, T9's simplest variant); XML1 Danger Room courses; XML1 team
-bonuses; talent icon re-atlassing (`--hero-icons generic` is the fallback); Psylocke blades 2/3 (BoltOn `<require>`
-UNVERIFIED); NPC damage vs XML1 hero stats; `--newgame keepteam` (option C proxy patch).
+bonuses; Psylocke blades 2/3 (BoltOn `<require>` UNVERIFIED); NPC damage vs XML1 hero stats; `--newgame keepteam`
+(option C proxy patch).
 
 In-game checks, in order (DESIGN 7.2, trimmed to what the build needs; `build/_heroes` = `--no-movies` full build):
 
@@ -385,8 +410,9 @@ In-game checks, in order (DESIGN 7.2, trimmed to what the build needs; `build/_h
    Defaultman / x1pad entry); note which are unlocked (Wolverine, Cyclops, Storm + up to 6 more settles byte
    [0x6f3c2d]). A placeholder listed -> E4's "no team hides the entry" is wrong: fall back to `build/_heroes17`.
 3. Confirm with Wolverine alone: nyc1_1_1 loads with XML1 Wolverine (claw bolt-ons, XML1 idle), HUD head 14301.
-4. Fight, open the skills screen: 4 powers + passives listed, `wolv_slash` rank 1 buyable, the 2x2 icons whole
-   (quartered / wrong -> `build/_heroes_generic`).
+4. Fight, open the skills screen: 4 powers + passives listed, `wolv_slash` rank 1 buyable, the power icons whole
+   and round over the back plate, XML1's own art (quartered crops / squares over the frames -> issues #53/#73;
+   `build/_heroes_generic` isolates a converter regression).
 5. Use power1..3 and the xtreme (cheat levels): XML1 animations / effects, numbers change with rank.
 6. Cyclops beam at rank 6+: piercing (piercechance UNVERIFIED -> literal `pierce="true"` fallback).
 7. Level up 3-4 times: autospend, no crash on the level-up notify.

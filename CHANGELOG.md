@@ -3,6 +3,64 @@
 The builder's releases, newest first. The version is `xml1-builder --version`; the content version is what a
 build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebuild.
 
+## Unreleased - 0.2.0 - content version 16 (needs XML2 Fix 1.4)
+
+- **A new save format; every old save is carried over once, automatically.** With XML2 Fix 1.4 the build starts
+  in the LC save format: at the first start the fix converts the old saves it finds, once per file, into the new
+  `SaveLC` folder - the old folder is never touched. Saves of every builder era load: heroes, levels, stats,
+  talents, inventory, mission progress, unlocks and the profile all carry over, including the talent moves of
+  0.1.8-0.1.9 (a save begun before 0.1.8 gets Grab back; the 0.1.8/0.1.9 moves are undone) and the older shift
+  from before 0.1.5. The new format names everything by a permanent id from a catalogue the build ships
+  (`Data\lcsave\catalogue.lcc`, `legacy.lcm` and a `.lcbind` beside every save-bound data file, checked at every
+  start), so future content can retain those save ids. The build writes `[Save] Format=lc`
+  and needs XML2 Fix 1.4 (SPEC 70, SPEC-new-save; the check V39).
+- **The first game's combat balance, on for every build** (issue #14). Enemy health and damage and the heroes'
+  strength bonus are the first game's again (enemy health per body point, the stat bonus, might, power attacks,
+  the melee hit chance and rounding through xml2-fix's `[Balance]` section), and the seven basic melee attacks
+  and the power-attack rule are in the build's data. Was prepared off by default; 0.2.0 turns the switch on
+  (`xml1build.balance.X1_BALANCE`, the test override dropped). SPEC 69; the check V38.
+- **Co-op compatibility metadata** (decision D5). `[Online] GameVersion` is `X1.2`, separating these lobbies
+  from earlier port generations. The ini records the save-table content fingerprint. Comparing peers
+  by content version and fingerprint needs the XML2 Fix network seam, which is not implemented in 1.4.
+- Power slots retain their usable flag through conversion, save and load (HERO 1.1).
+- Melee weapons contribute their authored fixed bonus before Strength and Might; damage rolls use inclusive
+  integers. The opening cop's punch is 7 or 9 damage (SPEC 69.5; V40).
+- Includes every 0.1.12 content and XML2 Fix 1.3.2 change listed below.
+- **Fixed: Mystique's pistols lose their sound part-way through a burst** (issue #83). In the first game every
+  shot of her gun bursts plays the fire sound (it rides the weapon's fire event); the port must spend a trigger
+  per shot on it, and the engine allows 19 per move, so after the first two shots the rest of a burst went
+  silent. The builder now reclaims the mid-move holster/redraw of her gun models (the guns stay in hand) so
+  every shot of power_attack carries its muzzle flash + fire sound; power_smash's ten shots still exceed what
+  19 triggers can hold and four of them sound. The HAARP officer's nullifier was checked at the same time: it
+  fires the first game's own sound, as loud there as here.
+- **Checked: the health / energy pack sound** (issue #82). The port plays the first game's own pack recordings
+  (the merged bank's entries are the same audio the Xbox ships) at the original 22050 Hz; verified in game
+  through a DirectSound trace of the engine's sound calls. No cause for the reported "sometimes lower pitched"
+  was found in the port's data or playback.
+- **Fixed: the mansion bedrooms' personal items filled the screen** (issue #47, follow-up). 0.1.8 gave every item
+  its own picture, but the engine draws it as a background sprite stretched over the whole menu screen, so the
+  painted scene covered everything. Each picture is now re-framed to show inside the same window the first game
+  drew it in, with the scene's colours continuing to the edges. The item's description text still does not show:
+  the engine never draws this menu's text box (the cause is engine-side and still open; the text loads, and no
+  menu-data change makes it draw).
+- **Fixed: hero power icons show the first game's complete art inside round frames** (issues #53, #73).
+  The first game's four 64px icons were read as 32px quarter-crops and drawn square over the round frames.
+  The builder now resamples each complete icon into the second game's 128px 4x4 sheet layout, preserves
+  bottom-up image storage, and bakes circular alpha into the icons. The intended generic passive fallback
+  is included in cell 4 so the skills screen retains its passive icons. Image references stay unchanged.
+  Validator V-H15 checks the converted pixel layout and references; synthetic regression tests cover the
+  layout, orientation, image references and bright-colour codec interpolation.
+
+- **Soldier grenade choices** (issue #36). Holder-specific movesets carry the grenade named by the weapon
+  or unanimous spawner override; nuclear-plant guards receive their missing grenade moveset. Matched HAARP
+  checks confirm the freeze-gun leader's flashbang drains energy with a white flash while soldiers retain
+  ordinary damage grenades. The original explosion modifiers are preserved. Confusion behavior remains
+  unverified. SPEC 72 and validator V43 cover styles, packages and modifiers.
+
+- Resident props selected for floor placement preserve the original numbered-instance prefix (#81; SPEC 71, V31/V41).
+- Port builds enable `[Game] ConfirmationRelease=1` (#77) and retain `[Limits] EffectCurves=3600`.
+- Hero health uses `[Balance] HeroHealthPerBody=2.5`: scaled level-1 Wolverine has 80 HP.
+
 ## v0.1.12 - content version 15 (needs XML2 Fix 1.3.2)
 
 This build needs XML2 Fix 1.3.2 (the launcher installs it). With an older fix the game starts, but the ladder,
@@ -61,7 +119,6 @@ mission's team selection) and V37 (the first game's Xtraction beacons; no power 
   first game: no Load, Danger Room, Healer or Forge choices at any Xtraction point, and the menu still has the
   Xtract world-map choice (#46); both need an XML2 Fix change. A new check (V32) keeps the old menu out. The
   scripts prepare stage reruns once.
-
 ## v0.1.10 - content version 13 (needs XML2 Fix 1.3.1)
 
 - **Fixed (0.1.8 regression): games saved before 0.1.8 lost or swapped hero skills.** The save names a hero's

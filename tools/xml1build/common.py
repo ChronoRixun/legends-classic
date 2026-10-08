@@ -53,7 +53,9 @@ import xmlb                    # noqa: E402  tools/xmlb.py
 from .lib import sweeplib      # noqa: E402  robust XML1 text-XML parser (was research/sweep)
 from .lib import x1names       # noqa: E402  skin/animdb/style namespace (was research/characters)
 
-MODULE_ORDER = ('characters', 'heroes', 'scripts', 'zones', 'media', 'frontend')   # content modules, in run order
+MODULE_ORDER = ('characters', 'heroes', 'scripts', 'zones', 'media', 'frontend',
+                'savefiles')                   # content modules, in run order (savefiles last: the .lcbind
+                                               # headers carry the SHA-1 of the finished data files)
 POST_STEPS = ('testhooks', 'validate')                          # run after the content modules
 BUILD_OWNER = 'build'                                           # owner name used by build_xml1.py itself
 
@@ -815,6 +817,7 @@ class BuildContext:
         self._sound_plan = None
         self._weapon_models = None
         self._x1_values = None          # heroes.Values of XML1's data/values.xml (x1schema, SPEC 33)
+        self._x1_balance = None         # balance tables for x1schema (a balance build only)
         self.schema_log = {}                 # x1schema change kind -> {x1 rel: count} (every module's imports)
 
     # ------------------------------------------------------------------ options / logging / report
@@ -974,14 +977,33 @@ class BuildContext:
             self._x1_values = Values(root) if root is not None else False
         return self._x1_values or None
 
+    def x1_balance(self):
+        """(XML1's shared events' PowerAttack, the shipped shared events' damagescale) for a balance build
+        (xml1build.balance, cached), else None: x1schema marks XML1's power attacks with them."""
+        from . import balance, combat_events
+        if not balance.enabled():
+            return None
+        if self._x1_balance is None:
+            try:
+                x1_shared = self.read_x1_xml('data/shared_combat_events.xml')
+            except KeyError:
+                x1_shared = None
+            try:
+                shared = self.read_base_xmlb(combat_events.SHARED_EVENTS_REL)
+            except KeyError:
+                shared = None
+            self._x1_balance = (balance.x1_power_events(x1_shared), balance.shared_scales(shared))
+        return self._x1_balance
+
     def x1_schema(self, root, x1_rel):
         """Apply xml1build.x1schema.convert (XML1 -> XML2 entity classes / renamed attributes / effect colours)
         to an XML1 text tree in place and log the changes in ctx.schema_log. Every XML1 text file the build
         writes goes through this (import_x1_asset calls it; modules that write XML1 trees themselves call it)."""
         from . import x1schema
         from . import combat_events
-        ch = x1schema.convert(root, x1_rel, self.weapon_models(),
-                              self.x1_values() if combat_events.is_style_rel(x1_rel) else None)
+        style = combat_events.is_style_rel(x1_rel)
+        ch = x1schema.convert(root, x1_rel, self.weapon_models(), self.x1_values() if style else None,
+                              self.x1_balance() if style else None)
         if ch:
             key = norm(x1_rel)
             with self._lock:

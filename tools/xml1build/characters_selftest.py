@@ -263,7 +263,10 @@ info.append(f'E: {nren} renamed IGBs checked')
 
 # ------------------------------------------------------------------ F
 intended = {'data/npcstat.xmlb', 'data/npcstat.engb', 'data/shared_talents.xmlb', 'data/shared_talents.engb',
-            'data/values.xmlb', 'data/boltonactoranims.xmlb'}
+            'data/values.xmlb', 'data/boltonactoranims.xmlb',
+            # SPEC 69: a balance build writes XML1's seven basic-attack values into the shipped shared events
+            # (balance.apply_basic_attack_values; V38 checks it is exactly those)
+            'data/shared_combat_events.xmlb', 'data/shared_combat_events.engb'}
 # the replaced tables must keep every XML2 entry except npcstat's dropped ones (append-only merges)
 for rel, tag in (('Data/values.XMLB', 'value'), ('Data/boltonactoranims.XMLB', 'actor_skin'),
                  ('Data/shared_talents.XMLB', 'talent'), ('Data/shared_talents.engb', 'talent')):

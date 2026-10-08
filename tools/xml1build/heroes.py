@@ -42,6 +42,7 @@ from pathlib import Path
 
 from . import common as C
 from . import combat_events as CE
+from . import hero_icons as HI        # issues #53/#73: the talent-icon atlases as 4x4 alpha-blended sheets
 from . import npc_values as NV     # SPEC 24: value codes, the NPC energy talent
 from . import scripts_transform as ST   # SPEC 18.1: the renamed NPC doubles that speak (NPC_DOUBLE_SPEAKERS)
 from . import save_positions as SP     # saved talent positions: shared_talents keeps its save-stable order
@@ -1818,6 +1819,7 @@ class HeroBuilder:
         self.hero_file_names = collections.defaultdict(set)
         self.import_stats = collections.defaultdict(set)
         self.counts = collections.Counter()
+        self._icon_regen = set()                      # atlases converted to the 4x4 sheet this build (one per atlas)
 
     # ---------------------------------------------------------------- helpers
     def exists(self, rel):
@@ -1856,6 +1858,28 @@ class HeroBuilder:
         if res.status in ('missing', 'empty'):
             ctx.warn(f'{why}: {rel} is {res.status} on the XML1 disc')
         return res
+
+    def _regen_icon_atlas(self, atlas):
+        """issues #53/#73: replace the just-imported 2x2 128x128 XML1 atlas with the 128x128 4x4 circular-alpha sheet
+        XMen2.exe's talent-icon reader renders (hero_icons.py). Skips a sheet an earlier build already converted
+        (a re-run's copy step reuses it: copy_file does not re-copy) and reports every other failure as an error,
+        so the build can never stamp an unconverted atlas."""
+        if atlas in self._icon_regen:
+            return
+        self._icon_regen.add(atlas)
+        rel = f'textures/ui/{atlas}_all.IGB'
+        try:
+            data = self.ctx.out_path(rel).read_bytes()
+            if HI.is_regenerated(data):
+                self.detail.setdefault('hero_icon_atlases', []).append(f'{rel} (already converted)')
+                return
+            passive = self.ctx.out_path('textures/ui/talent_icons.IGB').read_bytes()
+            out = HI.regenerate(data, passive)
+            prior = self.ctx.registry.get(rel) or {}
+            self.ctx.write_bytes(rel, out, source=prior.get('source'), replace=True, shared=True)
+            self.detail.setdefault('hero_icon_atlases', []).append(rel)
+        except (OSError, HI.HeroIconError) as e:
+            self.ctx.error(f'{rel}: icon atlas regeneration failed: {e}')
 
     def _talents_info(self, st):
         info = {}
@@ -2641,6 +2665,9 @@ def run(ctx):
     for h in b.plan['heroes']:
         b.convert_hero(h.lower())
     b.write_all()
+    if b.icons == 'xml1':
+        for atlas in sorted({ICON_ATLAS.get(h.lower(), h.lower()) for h in b.plan['heroes']}):
+            b._regen_icon_atlas(atlas)
     ctx.log(f'{len(b.talent_files)} heroes converted, {len(b.packages)} packages, herostat {len(b.plan["order"])} entries '
             f'(mode {b.plan["mode"]}), icons {b.icons}, bleed {b.bleed}')
 
@@ -3275,6 +3302,25 @@ def _validate(ctx, report=None):
             ck.error(f'{rel}: {p}')
     ck.counts['seat_only_missions'] = len(only)
     ck.counts['seat_only_scripts_checked'] = n
+
+    # ---- V-H15 (issues #53/#73): 32px cells, circular alpha, and a valid image reference
+    ck = Check('V-H15')
+    checks.append(ck)
+    if icons_mode(ctx) == 'xml1':
+        atlases = sorted({ICON_ATLAS.get(h.lower(), h.lower()) for h in plan['heroes']})
+        ck.counts['atlases'] = len(atlases)
+        for atlas in atlases:
+            rel = f'textures/ui/{atlas}_all.igb'
+            p = o.idx.path(rel)
+            if p is None:
+                ck.error(f'{rel} missing (the talent icons have no converted atlas)')
+                continue
+            try:
+                if not HI.is_regenerated(p.read_bytes()):
+                    ck.error(f'{rel}: expected 128px bottom-up 4x4 sheet with circular alpha, transparent unused '
+                             'cells and a valid texture-to-image object reference (issues #53/#73)')
+            except OSError as e:
+                ck.error(f'{rel}: unreadable: {e}')
     return checks, budgets
 
 

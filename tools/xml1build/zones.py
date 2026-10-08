@@ -58,6 +58,7 @@ from . import actor_budget as AB          # section 14: XMen2.exe's 40-slot acto
 from . import scripts_transform as ST     # section 18: the join zones' NPC double
 from . import buoys as BY                # section 42: generated long-range walk networks
 from . import automaps as AM              # section 26: XML1 automap textures -> Automaps/<zone>.zam
+from . import settle as SE                # issue #81: native floor sweeps for raised ordinary props
 
 # ---------------------------------------------------------------------------------------------- constants
 PATCH_ZONE = 'zones.zone'            # import_x1_asset patch keys (deterministic patches -> cacheable imports)
@@ -1252,6 +1253,29 @@ class Zones:
         if pins:
             self.pinned[zone] = pins
             self.counts['entities_pinned'] += len(pins)
+        # Use source collision geometry to select only unsupported raised props.
+        # Native load sweeps determine their final position; no height is baked in.
+        map_path = ctx.x1_path(f'maps/{zone}.igb')
+        if map_path is not None:
+            def read_model(rel):
+                path = ctx.x1_path(rel)
+                if path is None:
+                    path = ctx.base_index.path(rel)
+                if path is None:
+                    raise ValueError('model is absent')
+                return path.read_bytes()
+            try:
+                rows = SE.survey(root, SE.collision_triangles(map_path.read_bytes()), SE.bounds_reader(read_model))
+                st['spawn_settle'] = rows
+                self.counts['spawn_settle_instances'] += SE.convert(root, rows)
+                for row in rows:
+                    self.counts['spawn_settle_' + row['status']] += 1
+            except (ValueError, OSError, KeyError, TypeError) as exc:
+                st['spawn_settle_deferred'] = str(exc)
+                for row in st.get('spawn_settle', []):
+                    if row['status'] == 'settle':
+                        row['status'] = 'conversion_deferred'
+                ctx.warn(f'{zone}: spawn-floor survey deferred: {exc}')
         for el in root.iter():
             if el.tag.lower() == 'precache':
                 t = (el.get('type') or '').lower()
@@ -1764,7 +1788,9 @@ class Zones:
                              'actors_pruned': self.pruned_actors.get(zone, []),
                              'automap': self.automaps.get(zone),
                              'base_world_attrs': st['base_world_attrs'], 'mapped_refs': st.get('mapped_refs'),
-                             'rewritten': st.get('rewritten')}
+                             'rewritten': st.get('rewritten'),
+                             'spawn_settle': st.get('spawn_settle', []),
+                             'spawn_settle_deferred': st.get('spawn_settle_deferred')}
 
     # ---- SPEC 21 (--frontend xml1): XML1's menu backdrop replaces XML2's menu/main_back
     MENU_ZONE_XML2_KINDS = ('bigconvmap',)                  # flag entries of the replaced XML2 package that are kept

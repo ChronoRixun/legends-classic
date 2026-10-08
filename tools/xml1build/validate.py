@@ -71,7 +71,8 @@ Checks (severity per SPEC 4.6: error = will not load or silently misbehaves; war
   V30 personal items (SPEC 56, validate_frontend.v_personal_items): every personalItem literal has
                 Data/personal/<item> from the first game (frontend), with text and a texture IGB in <out>
   V31 save positions (SPEC 61): shared_talents in the save-stable order of
-                save_positions (new talents appended); no enabled fall kill volume numbered before another entinst
+                save_positions (new talents appended); no enabled fall kill volume or new settled prop numbered
+                before an existing entinst
   V32 lite xtraction (SPEC 62, issue #63): no XML1 script or inline data code calls
                 extractionPointLite (XMen2.exe's is team change only, no Save); prepare P3 writes extractionPoint for
                 XML1's lite points
@@ -83,6 +84,13 @@ Checks (severity per SPEC 4.6: error = will not load or silently misbehaves; war
                 talentvalue with rank 1 zeroed while a later rank is non-zero must not have a same-named event
                 carrying a non-zero literal in the hero's powerstyle (XML1 inherits the event's value at ranks
                 the trigger leaves the attribute unset)
+  V38 balance (SPEC 69, balance.validate): a balance build has the power-attack
+                marker in its styles and XML1's values on the seven basic melee events of the shared combat
+                events; any other build has no marker
+  V39 save files (SPEC 70, savefiles.validate): the build carries catalogue.lcc, legacy.lcm and every .lcbind,
+                byte-identical to the set its own data produces, every key in the master catalogue
+  V40 melee weapons (SPEC 69.5, melee_weapons.validate): exact metadata on all and only the source armed NPCs,
+                both npcstat halves agree and their bounded ini serialization matches
   V23 fight styles (SPEC 43, style_budget.validate): per converted zone the distinct style files of the permanent
                 packages, the zone package, its CHRB characters' packages and the worst four-hero party against
                 the registry the shipped ini asks xml2-fix for ([Limits] FightStyles, else XMen2.exe's 19): more
@@ -121,6 +129,9 @@ import xmlb                                   # noqa: E402  tools/xmlb.py
 from .lib import x1names                      # noqa: E402  the XML1 namespace (was research/characters)
 from .lib.x1names import is_fightstyle_name   # noqa: E402  fightstyle_* / x1_fightstyle_* (issue #52)
 from . import validate_script as VS
+from . import balance as BAL
+from . import melee_weapons as MW
+from . import savefiles as SF
 from . import validate_sound as VSND
 from . import x1schema as XS
 from . import scripts_transform as ST      # section 18: the join zones' NPC double; V14 forced teams
@@ -256,6 +267,14 @@ def _stem(rel):
 
 def _canon(el):
     return (el.tag, tuple(sorted(el.attrib.items())), tuple(_canon(c) for c in el))
+
+
+def _num(v, default=0.0):
+    """a style attribute as a number (missing / unparsable -> default)."""
+    try:
+        return float(v)
+    except (TypeError, ValueError):
+        return default
 
 
 def _short(v, n=90):
@@ -407,6 +426,7 @@ class Validator:
         self._zone_ids = None
         self._x1checker = None
         self._x1weapons = None
+        self._x1gren = None
         self._obj_refs = collections.defaultdict(set)      # objective name -> files (XML1 code)
         self._act_refs = collections.defaultdict(set)      # setCurrentAct literal -> files (XML1 code)
         self._x1_zone_set = None
@@ -721,6 +741,21 @@ class Validator:
                 for w in root.iter() if w.tag.lower() == 'weapon' and w.get('name')}
         return self._x1weapons
 
+    def x1_grenade_overrides(self):
+        """XML1 monsterspawnerent monster_grenade votes by character: {character lower: grenade} where every
+        spawner agrees (issue #36; the same tally characters.load_grenade_overrides folds into the builds)."""
+        if self._x1gren is None:
+            roots = []
+            for rel in self.ctx.x1_rels('maps/'):
+                if not rel.lower().endswith('.eng'):
+                    continue
+                try:
+                    roots.append((rel, self.ctx.read_x1_xml(rel)))
+                except (KeyError, ValueError):
+                    continue
+            self._x1gren = {ch: next(iter(gs)) for ch, gs in W.grenade_override_votes(roots).items() if len(gs) == 1}
+        return self._x1gren
+
     # ------------------------------------------------------------------ running / reporting
     def run_all(self):
         for cid, title, fn in (('V1', 'proxy', self.v1_proxy), ('V2', 'registry', self.v2_registry),
@@ -751,7 +786,11 @@ class Validator:
                                ('V32', 'lite xtraction', self.lite_xtraction),
                                ('V34', 'ladder spawns', self.ladder_spawns),
                                ('V35', 'pda portal', lambda ck: VF.v_pda_portal(self, ck)),
-                               ('V37', 'xtraction beacons / rank-1 power damage', self.v37_beacons_rank_one)):
+                               ('V37', 'xtraction beacons / rank-1 power damage', self.v37_beacons_rank_one),
+                               ('V38', 'balance', lambda ck: BAL.validate(self, ck)),
+                               ('V40', 'melee weapons', lambda ck: MW.validate(self, ck)),
+                               ('V39', 'save files', lambda ck: SF.validate(self, ck)),
+                               ('V41', 'spawn-floor residency', self.spawn_floor_residency)):
             ck = Check(cid, title)
             self.checks[cid] = ck
             t0 = time.time()
@@ -772,6 +811,29 @@ class Validator:
                 self._banks.save()
             except OSError as ex:
                 self.ctx.note(f'sound cache not saved: {ex}')
+
+    def spawn_floor_residency(self, ck):
+        """Issue #81: cheap output checks for the new numbered prop tail."""
+        from . import settle as SE
+        for zone in sorted(self.zone_ids):
+            root = self.tree(f'maps/{zone}.engb')
+            if root is None:
+                root = self.tree(f'maps/{zone}.xmlb')
+            if root is None:
+                continue
+            for problem in SE.problems(root):
+                ck.error(f'{zone}: {problem}')
+            defs = {e.get('name'): e for e in root.iter('entity')}
+            added = sum(len(g.findall('inst')) for g in root.findall('entinst')
+                        if defs.get(g.get('type')) is not None and defs[g.get('type')].get(SE.MARKER) == 'true')
+            if added > SE.MAX_NEW_RESIDENTS:
+                ck.error(f'{zone}: spawn-floor residency exceeds {SE.MAX_NEW_RESIDENTS} new instances')
+            residents = sum(len(g.findall('inst')) for g in root.findall('entinst')
+                            if defs.get(g.get('type')) is not None
+                            and defs[g.get('type')].get('smartent', '').strip().lower() in ('false', '0'))
+            if added and residents > SE.MAX_RESIDENTS:
+                ck.error(f'{zone}: spawn-floor residency exceeds {SE.MAX_RESIDENTS} explicit residents')
+            ck.count('settled_instances', added)
 
     def report(self):
         ctx = self.ctx
@@ -897,7 +959,7 @@ class Validator:
             if e['owner'] == 'characters' and e.get('overwrote_base') and \
                     re.match(r'(actors|hud|ui/hud/characters|ui/models/characters|textures/loading)/', n):
                 ck.error(f'{e["rel"]}: characters replaced an XML2 character asset (SPEC 5.1 forbids it)')
-            if n.startswith('data/herostat.') and e['owner'] != 'heroes':
+            if n.startswith('data/herostat.') and not n.endswith('.lcbind') and e['owner'] != 'heroes':
                 ck.warn(f'{e["rel"]}: herostat rewritten by {e["owner"]} (only the heroes module owns it; SPEC_heroes.md)')
         if ck.counts.get('forced_reimports'):
             ck.note(f'{ck.counts["forced_reimports"]} shared XML1 imports under {FORCE_PREFIXES} were re-imported by '
@@ -1052,7 +1114,8 @@ class Validator:
         """V31 (SPEC 61): what a save names by position stays where earlier releases put it.
         (a) shared_talents (both halves) in save_positions.SHARED_TALENT_ORDER, new talents after it: a saved
         hero's talent id below 100 is the position. (b) no enabled fall kill volume numbered before another
-        entinst (x1schema.numbered_entinst_tail_problems): a zone record finds an entity by its ordinal."""
+        entinst (x1schema.numbered_entinst_tail_problems): a zone record finds an entity by its ordinal.
+        (c) newly resident props follow all pre-existing placements, even in zones without fall volumes."""
         talents = self.stats()['talents']
         for ext in ('.engb', '.xmlb'):
             names = talents.get(ext)
@@ -1075,6 +1138,15 @@ class Validator:
                 continue
             for m in msgs:
                 ck.error(m)
+        from . import settle as SE
+        for n in sorted(getattr(sc, 'files', {})):
+            if not n.startswith('maps/') or n in sc.twins:
+                continue
+            root = self.tree(n)
+            if root is None:
+                continue
+            for message in SE.numbered_tail_problems(root):
+                ck.error(f'{n}: {message}')
 
     _LITE_XPOINT = re.compile(r'\bextractionPointLite\s*\(', re.I)
 
@@ -1526,6 +1598,25 @@ class Validator:
                         ck.error(f'{fname}:{el.get("name")} (xml1): fighting style: {m}')
                     if W.gun_fightstyle(self.x1_weapons().get(wname)):
                         ck.count('gun_entries_with_weapon_fightstyle')
+                # V43 (issue #36): an entry whose XML1 weapon / a unanimous spawner monster_grenade override
+                # names a non-default grenade carries the grenade-suffixed weapon variant powerstyle
+                if name in x1:
+                    wrec = self.x1_weapons().get(wname)
+                    eff = W.effective_grenade(wrec, self.x1_grenade_overrides().get(name, ''))
+                    base_ps = (x1[name][1].get('powerstyle') or (wrec or {}).get('powerstyle') or '')
+                    want_ps = W.grenade_powerstyle_want(base_ps, wname, wrec,
+                                                        self.x1_grenade_overrides().get(name, ''), C.map_powerstyle)
+                    if want_ps:
+                        ck.count('grenade_variants_checked')
+                        got = (el.get('powerstyle') or '').lower()
+                        if got != want_ps:
+                            ck.error(f'{fname}:{el.get("name")} (xml1): grenade: XML1 throws {eff!r} (weapon '
+                                     f'{wname!r} / spawner override), so powerstyle must be {want_ps!r}, not {got!r}')
+                    want_ms = W.grenade_moveset_want(x1[name][1].get('moveset1') or '', wrec,
+                                                     self.x1_grenade_overrides().get(name, ''), C.map_fightstyle)
+                    if want_ms and (el.get('moveset1') or '').lower() != want_ms:
+                        ck.error(f'{fname}:{el.get("name")} (xml1): grenade entity source moveset1 must be '
+                                 f'{want_ms!r}, not {el.get("moveset1")!r}')
             xe = xmlb_by.get(name)
             if xe is not None:
                 for a in ('skin', 'characteranims', 'powerstyle', 'sounddir', 'moveset1'):
@@ -1560,6 +1651,77 @@ class Validator:
                          f'namespace name is {mapped!r}; XML2 would load its own same-named asset or nothing)')
         ck.set('unmapped_x1_refs', n_bad)
         self._x1_namespace_files(ck)
+        self._grenade_variant_files(ck)
+
+    def _grenade_variant_files(self, ck):
+        """V43 (issue #36): every shipped weapon-variant powerstyle that carries a power_grenade throw names
+        the entity that throw throws: the grenade_projectile trigger's entity is one of XML1's grenade_ents
+        entities, and a variant whose name ends in _<grenade> (weapons.variant_grenade) throws exactly that; the
+        throw outranks every other AI-selected move of the style (at equal priority XMen2.exe's AI never picks it)."""
+        ent_rel = next((r for r in ('data/entities/grenade_ents.eng', 'data/entities/grenade_ents.xml')
+                        if self.ctx.x1_path(r)), None)
+        if ent_rel is None:
+            ck.warn('grenade_ents absent from the XML1 disc; grenade throw files not checked')
+            return
+        root = self.ctx.read_x1_xml(ent_rel)
+        grenades = {e.get('name', '').strip().lower() for e in root.iter() if e.tag.lower() == 'entity'}
+        n = 0
+        for rel in self.idx.under('data/powerstyles/'):
+            stem = rel.rsplit('/', 1)[-1].rsplit('.', 1)[0].lower()
+            if not stem.startswith('x1_'):
+                continue
+            p = self.idx.path(rel)
+            if p is None:
+                continue
+            want = W.variant_grenade(stem, grenades)
+            found = False
+            moves = list(C.decode_xmlb(p.read_bytes()).iter('FightMove'))
+            rivals = [_num(mv.get('priority')) for mv in moves
+                      if mv.get('aitype') and (mv.get('name') or '').lower() != W.GRENADE_MOVE]
+            for mv in moves:
+                if (mv.get('name') or '').lower() != W.GRENADE_MOVE:
+                    continue
+                found = True
+                if rivals and _num(mv.get('priority')) <= max(rivals):
+                    ck.error(f'{rel}: {W.GRENADE_MOVE} priority {mv.get("priority")!r} does not outrank the '
+                             f"style's other AI moves ({max(rivals):g}): the AI never throws")
+                for c in mv.iter('trigger'):
+                    a = {k.lower(): v for k, v in c.attrib.items()}
+                    if (a.get('name') or '').lower() != W.GRENADE_TRIGGER:
+                        continue
+                    n += 1
+                    ent = (a.get('entity') or '').lower()
+                    if ent not in grenades:
+                        ck.error(f'{rel}: {W.GRENADE_MOVE} throws unknown entity {ent!r}')
+                    elif want and ent != want:
+                        ck.error(f'{rel}: grenade variant {stem!r} throws {ent!r}, not {want!r}')
+            if want and not found:
+                ck.error(f'{rel}: grenade variant {stem!r} has no {W.GRENADE_MOVE} move')
+        for rel in self.idx.under('data/fightstyles/'):
+            stem = rel.rsplit('/', 1)[-1].rsplit('.', 1)[0].lower()
+            want = W.variant_grenade(stem, grenades) if stem.startswith('x1_') else ''
+            if not want:
+                continue
+            tree = self.tree(rel)
+            throws = [t for t in tree.iter() if t.tag.lower() == 'trigger'
+                      and (t.get('name') or '').lower() == W.GRENADE_TRIGGER]
+            if not throws or any((t.get('entity') or '').lower() != want for t in throws):
+                ck.error(f'{rel}: grenade moveset variant must throw {want!r}')
+            if (tree.get('name') or '').lower() != stem:
+                ck.error(f'{rel}: grenade moveset registered name must be {stem!r}')
+            n += 1
+        authored = next((e for e in root.iter() if (e.get('name') or '').lower() == 'flashbang'), None)
+        if authored is not None:
+            want_mods = (authored.get('explodedamagemods') or '').lower().split()
+            for rel in self.idx.under('data/entities/'):
+                if rel.rsplit('/', 1)[-1].rsplit('.', 1)[0].lower() != 'grenade_ents':
+                    continue
+                for el in self.tree(rel).iter():
+                    if (el.get('name') or '').lower() == 'flashbang' and \
+                            (el.get('explodedamagemods') or '').lower().split() != want_mods:
+                        ck.error(f'{rel}: flashbang explosion modifiers differ from XML1; retain the authored '
+                                 'energy drain rather than substituting health damage')
+        ck.set('grenade_variant_files_checked', n)
 
     def _x1_namespace_files(self, ck):
         """SPEC 5.1.1: every non-empty XML1 character-namespace IGB exists in <out> under its mapped name (numeric
@@ -1647,8 +1809,7 @@ class Validator:
         s = (x1el.get('skin') or '').strip()
         return bool(s) and (el.get('skin') or '').strip() == C.map_skin(s)
 
-    @staticmethod
-    def _namespace_problems(el, x1el):
+    def _namespace_problems(self, el, x1el):
         """XML1-origin stats entry vs its XML1 source: skin / characteranims / powerstyle must be the mapped
         XML1 values (map_skin +14000, map_animdb x1_, map_powerstyle x1_)."""
         out = []
@@ -1666,6 +1827,16 @@ class Validator:
                 want = W.variant_name(want, (x1el.get('weapon') or '').strip())
                 if have == fn(src):
                     continue                        # a melee weapon: the plain mapped style
+                # issue #36: a non-default grenade (spawner monster_grenade override > weapon grenade=)
+                # suffixed the variant (V43 checks the thrown entity); the plain SPEC 29 name stays valid
+                # for a default-gr holder of the same weapon
+                if have != want:
+                    wrec = self.x1_weapons().get((x1el.get('weapon') or '').strip().lower())
+                    eff = W.effective_grenade(wrec, self.x1_grenade_overrides().get(
+                        (x1el.get('name') or '').lower(), ''))
+                    if eff and eff.lower() != W.DEFAULT_GRENADE \
+                            and have == W.variant_grenade_name(want, eff):
+                        continue
             if have != want:
                 out.append(f'{attr}={have!r}, but XML1 {attr}={src!r} maps to {want!r}')
         return out
@@ -1731,6 +1902,12 @@ class Validator:
             elif plain:
                 out.append(('allow', f'powerstyle {ps}: {len(plain)} weapon_fire trigger(s), no shot in XMen2.exe',
                             'the XML1 entry has no weapon: its weapon_fire had nothing to fire in XML1 either'))
+            # V42 (SPEC 29.4, issue #83): gun-shot triggers must not go without their fire sound while the
+            # move still spends triggers on a mid-move bolton holster/redraw cycle
+            silent = W.silent_shots(self.tree(f'data/powerstyles/{ps}.xmlb'))
+            if silent:
+                out.append(('soft', f'powerstyle {ps}: {len(silent)} gun shot(s) carry no fire sound while a '
+                                    f'mid-move bolton holster cycle spends their slots: {silent[:4]}'))
         ms = el.get('moveset1')
         if ms and not (self.exists(f'data/fightstyles/{ms}.xmlb') or self.exists(f'data/fightstyles/{ms}.engb')):
             out.append(('soft', f'moveset1 Data/fightstyles/{ms} missing'))

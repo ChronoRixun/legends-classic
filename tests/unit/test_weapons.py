@@ -206,3 +206,35 @@ def test_weapon_fire_left_finds_plain_and_event_shots():
     assert W.weapon_fire_left(root) == [('power_attack:left_pop', True), ('power_attack:right_pop', True),
                                         ('power_attack:weapon_fire', False)]
     assert W.weapon_fire_left(None) == []
+
+
+def test_burst_sound_reclaims_a_midmove_bolton_holster_cycle():
+    """issue #83: XML1 puts the fire sound on the weapon_fire EVENT, so every shot of a burst sounds; the port
+    must spend triggers per shot, so a move whose shots do not fit drops a mid-move bolton holster/redraw
+    cycle (the weapon stays attached) to give every shot its muzzle flash + fire sound."""
+    root = ET.Element('PowerStyle')
+    ET.SubElement(root, 'event', {'name': 'left_pop', 'inherit': 'weapon_fire', 'weapon': 'wp_toy_pistol',
+                                  'boltselect': 'Bip01 L Hand'})
+    ET.SubElement(root, 'event', {'name': 'right_pop', 'inherit': 'weapon_fire', 'weapon': 'wp_toy_pistol'})
+    m = ET.SubElement(root, 'FightMove', {'name': 'power_attack', 'animenum': 'ea_power1', 'aitype': 'beam'})
+    for slot in ('ebolton_weapon', 'ebolton_altweapon'):
+        ET.SubElement(m, 'trigger', {'name': 'bolton', 'time': '0.08', 'boltslot': slot})
+    for slot in ('ebolton_weapon', 'ebolton_altweapon'):
+        ET.SubElement(m, 'trigger', {'name': 'removebolton', 'time': '0.18', 'boltslot': slot})
+    ET.SubElement(m, 'trigger', {'name': 'toss', 'time': '0.2'})
+    for slot in ('ebolton_weapon', 'ebolton_altweapon'):
+        ET.SubElement(m, 'trigger', {'name': 'bolton', 'time': '0.45', 'boltslot': slot})
+    for i in range(6):
+        ET.SubElement(m, 'trigger', {'name': 'left_pop' if i % 2 == 0 else 'right_pop', 'time': f'{0.5 + i / 25:g}'})
+    for slot in ('ebolton_weapon', 'ebolton_altweapon'):
+        ET.SubElement(m, 'trigger', {'name': 'removebolton', 'time': '0.92', 'boltslot': slot})
+    rep = W.rewrite_weapon_events(root, TOYS)
+    trig = [c for c in m if c.tag == 'trigger']
+    assert len(trig) <= W.MAX_TRIGGERS                     # the reclaimed slots went to the burst's sound
+    assert len([c for c in trig if c.get('name') == 'effect_sound']) == 6
+    assert rep['weapon_event_bolton_churn_dropped'] == 2   # one holster+redraw pair per boltslot
+    assert [c.get('name') for c in trig].count('left_pop') == 3
+    fx = [c for c in trig if c.get('name') == 'effect_sound']
+    assert len(fx) == 6 and all(c.get('sound') == 'test/toy_bang' for c in fx)
+    assert not [c for c in trig if c.get('name') == 'removebolton' and c.get('time') == '0.18']
+    assert [c.get('name') for c in trig].count('removebolton') == 2   # only the move-end holster remains

@@ -749,6 +749,23 @@ def v_pda_portal(v, ck):
             ck.error(f'{rel}: {p} (the Blink Portal leads to X-Men Legends II\'s towns, issue #89)')
         ck.count('pda_menu_halves')
 
+def _personal_texture_size(v, rel):
+    """(w, h) of the texture IGB's largest igImage, or None when unreadable."""
+    from . import igb_file as G
+    p = v.idx.path(C.norm(rel))
+    if p is None:
+        return None
+    try:
+        g = G.IgbFile(p.read_bytes())
+    except (G.IgbError, OSError):
+        return None
+    images = g.objects_of('igImage')
+    if not images:
+        return None
+    base = max(images, key=lambda o: o.get(2) * o.get(3))
+    return base.get(2), base.get(3)
+
+
 def v_personal_items(v, ck):
     """V30 (issue #47): every personalItem('<item>') literal in installed content has Data/personal/<item>
     (.XMLB and .engb) written by the frontend module, with text and a texture whose IGB is in <out>; a missing
@@ -787,5 +804,12 @@ def v_personal_items(v, ck):
                 ck.error(f'personalItem({lit!r}): texture {tex}.IGB ({", ".join(rels)}) is not in <out> (the engine '
                          f'draws its default texture)')
                 problems += 1
+            else:
+                size = _personal_texture_size(v, f'{tex}.igb')
+                if size is not None and size != (512, 384):
+                    ck.error(f'personalItem({lit!r}): texture {tex}.IGB ({", ".join(rels)}) is {size[0]}x{size[1]}'
+                             f', not 512x384 re-framed for the menu image sprite (frontend re-composes it; the '
+                             f'engine stretches the sprite over the whole 512x384 virtual screen)')
+                    problems += 1
         if not problems:
             ck.count('personal_items_ok')

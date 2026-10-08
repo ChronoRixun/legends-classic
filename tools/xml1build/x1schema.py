@@ -67,6 +67,7 @@ from __future__ import annotations
 import collections
 import math
 
+from . import balance as BAL
 from . import combat_events as CE
 
 # XMen2.exe entity classes (registered through 0x461080; each name is a 4-aligned .rdata string, e.g. physent at
@@ -498,6 +499,9 @@ def numbered_entinst_tail_problems(root, rel):
              if not fall_kill_volume_deferred(el, rel) and el.get('smartent') == 'false'}
     if not names:
         return []
+    # Issue #81 appends newly numbered props after the existing fall-volume tail.
+    # They do not shift the volumes' old ordinals, or any other existing ordinal.
+    names.update(el.get('name') for el in root.iter('entity') if el.get('xml1settle') == 'true')
     order = [ei.get('type') or '' for ei in root if ei.tag.lower() == 'entinst']
     first = min((i for i, t in enumerate(order) if t in names), default=len(order))
     late = sorted({t for t in order[first:] if t not in names})
@@ -527,9 +531,11 @@ def is_effect_rel(rel):
     return r.startswith('effects/')
 
 
-def convert(root, rel, weapon_models=None, x1_values=None):
+def convert(root, rel, weapon_models=None, x1_values=None, x1_balance=None):
     """Apply every conversion that applies to XML1 file `rel`. x1_values: heroes.Values of XML1's data/values.xml
-    (resolves the codes section 33 writes; None writes the codes). Returns a Counter of change kinds."""
+    (resolves the codes section 33 writes; None writes the codes). x1_balance: (balance.x1_power_events of XML1's
+    shared events, balance.shared_scales of the shipped ones) for a balance build, which marks XML1's power attacks
+    (balance.mark_power_attacks); None for every other build. Returns a Counter of change kinds."""
     c = collections.Counter()
     if root is None:
         return c
@@ -552,8 +558,12 @@ def convert(root, rel, weapon_models=None, x1_values=None):
         if n:
             c['dialog_pc_variant_added'] += n
     if CE.is_style_rel(rel):
+        # XML1's PowerAttack flags, read before the rewrite re-points XML1-only shared names at XML2's
+        power = BAL.x1_power_elements(root, x1_balance[0]) if x1_balance else None
         c.update(CE.rewrite_style(root))
         c.update(CE.apply_x1_shared_values(root, x1_values))
+        if x1_balance:
+            c.update(BAL.mark_power_attacks(root, power, x1_balance[1]))
         c.update(convert_renderfx(root))
     return c
 
