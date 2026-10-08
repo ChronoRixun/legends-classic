@@ -333,7 +333,7 @@ class Binds:
         return out
 
     # ---- the complete hash tables (what the era model stores)
-    def hash_tables(self):
+    def hash_tables(self, *, include_conversation_digest=True):
         """{domain: [key hash by position]} for the list-shaped domains, plus the structured ones"""
         T = {}
         T['STAT'] = [key_hash(*self.key_stat(i)) if self.key_stat(i) else None for i in range(len(self.stat))]
@@ -358,7 +358,7 @@ class Binds:
         T['ITEM_own'] = [list(x) for x in self.item_own]
         T['TRIT_own'] = [list(x) for x in self.trit_own]
         T['ENHC_ranges'] = dict(prefix=list(self.prefix_range), suffix=list(self.suffix_range), trit=list(self.trit_range))
-        T['conversation_digest'] = self.conversation_digest()
+        T['conversation_digest'] = self.conversation_digest() if include_conversation_digest else '00' * 32
         return T
 
     def conversation_digest(self):

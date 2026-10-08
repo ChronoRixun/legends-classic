@@ -1034,13 +1034,14 @@ def _validate_native_build(b):
 class PositionTables:
     """id -> position for the reverse direction (the build's binds through the catalogue)"""
 
-    def __init__(self, env):
+    def __init__(self, env, *, hash_conversations=True):
         self.env = env
         b = env.binds
         _validate_native_build(b)
         self.b = b
         cat = env.catalogue
-        T = b.hash_tables()
+        self._hash_conversations = hash_conversations
+        T = b.hash_tables() if hash_conversations else b.hash_tables(include_conversation_digest=False)
         self._stat = {cat.lookup('STAT', h): i for i, h in enumerate(T['STAT']) if h}
         self._item = {cat.lookup('ITEM', h): i for i, h in enumerate(T['ITEM'])}
         self._enh = {cat.lookup('ENHC', h): i for i, h in enumerate(T['ENHC'])}
@@ -1088,7 +1089,7 @@ class PositionTables:
             inst[lst] = [dict(record=self._get(self._enh, e['enhancement'], 'enhancement'), value=e['value']) for e in r[lst]]
         if r['name_b']:
             category = self.b.item_class[inst['definition']]
-            hashes = self.b.hash_tables()['NAMB'].get(category or '', [])
+            hashes = (self.b.hash_tables() if self._hash_conversations else self.b.hash_tables(include_conversation_digest=False))['NAMB'].get(category or '', [])
             allowed = {self.env.id_of('NAMB', h) for h in hashes}
             if r['name_b'] not in allowed: raise ConvertError('item name category does not match definition')
         return inst
@@ -1378,12 +1379,12 @@ def _retain_sections(sections, retained_file, kind):
     return out
 
 
-def _current_environment(env):
+def _current_environment(env, *, hash_conversations=True):
     import copy
     from .legacy import Era
     _validate_native_build(env.binds)
     current = copy.copy(env)
-    current.ref = env.binds.hash_tables()
+    current.ref = env.binds.hash_tables() if hash_conversations else env.binds.hash_tables(include_conversation_digest=False)
     current.ref['content_version'] = env.catalogue.data.get('content_version', 0)
     cv = current.ref['content_version']
     current.model = dict(reference=current.ref, eras={str(cv): dict(hero_shared_holdable={})})
@@ -1393,13 +1394,13 @@ def _current_environment(env):
 
 def old_stream_to_new(old_bytes, env, *, retained_file=b'', now=None, zone_captures=None,
                       require_capture_metadata=False, campaign_serial=0, save_sequence=1,
-                      writer_version=0x01040000, writer='XML2 Fix', slot=0, mods=(), origin=0):
+                      writer_version=0x01040000, writer='XML2 Fix', slot=0, mods=(), origin=0, _hash_conversations=True):
     res = Result()
     try:
         if len(old_bytes) == L.OLD_PAYLOAD:
             old_bytes = bytes(0x80) + struct.pack('<I', L.OLD_PAYLOAD) + old_bytes
         old = oldsave.read_slot(old_bytes)
-        current = _current_environment(env)
+        current = _current_environment(env, hash_conversations=_hash_conversations)
         context = dict(zone_captures=zone_captures or [], require_capture_metadata=require_capture_metadata)
         sections = _translate(old, current, res, '', old_bytes, slot, now, context)
         if any(res.dropped.values()):
@@ -1457,7 +1458,7 @@ def reverse_profile(new_bytes, env):
     return sections['META']['description'], PositionTables(env).profile(sections)
 
 
-def validate_native_sections(S, env):
+def validate_native_sections(S, env, *, hash_conversations=True):
     import math
     def bound(v, lo, hi, what):
         if not lo <= v <= hi:
@@ -1473,7 +1474,7 @@ def validate_native_sections(S, env):
         elif isinstance(v, float) and not math.isfinite(v):
             raise ConvertError('nonfinite native value')
     finite(S)
-    pos = PositionTables(env)
+    pos = PositionTables(env, hash_conversations=hash_conversations)
     if 'GAME' in S:
         g = S['GAME']
         for n, hi in (('team_potion', 3), ('counter_a', 31), ('counter_b', 31), ('flags', 1023)):
@@ -1491,7 +1492,7 @@ def validate_native_sections(S, env):
         for index, hero in enumerate(S['HERO']['heroes'], 1):
             if pos.stat(hero['hero']) != index: raise ConvertError('hero block order/identity differs from native table')
             owner = env.binds.stat[index]
-            allowed = {env.id_of('COST', keys_hash) for keys_hash in env.binds.hash_tables()['COST'].get(key_hash(owner), {}).values()}
+            allowed = {env.id_of('COST', keys_hash) for keys_hash in (env.binds.hash_tables() if hash_conversations else env.binds.hash_tables(include_conversation_digest=False))['COST'].get(key_hash(owner), {}).values()}
             if hero['costume'] not in allowed or any(c not in allowed for c in hero['costumes_unlocked']):
                 raise ConvertError('costume does not belong to hero')
         unique(S['DNGR']['courses'], 'course', 'course'); unique(S['DNGR']['grades'], 'grade', 'grade')
@@ -1519,7 +1520,7 @@ def validate_native_sections(S, env):
         if len(instances) > 256: raise ConvertError('native instance pool exhausted')
         attached = sum(len(i[n]) for i in instances for n in ('prefixes', 'own', 'suffixes'))
         if attached > 375: raise ConvertError('native attached enhancement pool exhausted')
-        era = _current_environment(env).eras[0]
+        era = _current_environment(env, hash_conversations=hash_conversations).eras[0]
         for instance in instances:
             _cross_check_instance(env, era, pos.instance(instance), 'item')
         unique(S['ZONE']['records'], 'zone', 'zone record')
@@ -1556,6 +1557,25 @@ def validate_native_sections(S, env):
     if len(Scores) > L.OLD_HIGH_SCORES: raise ConvertError('native profile score count')
     for score in Scores:
         if len(score['party_a']) > 6 or len(score['party_b']) > 6: raise ConvertError('native profile party count')
+
+def native_zone_metadata(old_stream, env):
+    """Validated current-build associations for a native transfer without an LC sidecar; inferred only."""
+    result = old_stream_to_new(old_stream, env, now=0, _hash_conversations=False)
+    if result.refused:
+        raise ConvertError(result.refused)
+    # Avoid reverse_slot here: it hashes all conversation files and can delay a cold online join.
+    f = read_file(result.file_bytes)
+    validate_native_sections({tag: sec['data'] for tag, sec in f['sections'].items() if sec['data'] is not None}, env, hash_conversations=False)
+    zones = {env.catalogue.lookup('ZONE', key_hash(z)): z for z in env.binds.zone_names}
+    captures = []
+    for record in f['sections']['ZONE']['data']['records']:
+        captures.append(dict(zone=zones[record['zone']], time_stamp=record['time_stamp'],
+                             placement_sha1=record['content_hash'], capture_flags=2, conversation_digest=bytes(32),
+                             entities=[dict(ordinal=s['ordinal'], placement_index=s['placement_index'],
+                                            definition_name=record['names'][s['def_name']], instance_name=record['names'][s['inst_name']])
+                                       for s in record['states'] if s['list'] == STATE_NUMBERED]))
+    return captures
+
 
 def loaded_zone_metadata(new_bytes, env):
     """Applied cached captures, with ordinals aligned to the reconstructed native map."""
