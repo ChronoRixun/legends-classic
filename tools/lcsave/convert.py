@@ -9,6 +9,7 @@ D12 (declared limits: the old caps), LGCY record per file.
 """
 from __future__ import annotations
 
+import copy
 import hashlib
 import os
 import struct
@@ -468,6 +469,41 @@ def _zone_record(env, res, old, z, index, candidate_eras, what, captures=None, r
     return rec, era
 
 
+# XML1 campaign directories reached only after the first mansion's HAARP departure.
+# Do not use act, hero unlocks, tour completion, training or flashback zones as progress.
+_FORGE_LATER_DIRS = (
+    'haarp/ext/', 'haarp/int/', 'haarp/ice_sq/',
+    'mansion/man2/', 'mansion/man3/', 'mansion/man4/', 'mansion/man5/',
+    'mansion/man6/', 'mansion/man7/', 'mansion/man8/',
+    'muir_is/muir1/', 'muir_is/muir2/', 'muir_is/muir3/',
+    'sewers/hub/', 'sewers/healer/', 'sewers/grso/', 'arbiter/deck/', 'arbiter/a_int/',
+    'nuke_plant/nuke/', 'astral/ast1/', 'astral/ast3/', 'astral/savepx/',
+    'weapon_x/old/', 'weapon_x/secret/', 'mount/mount/', 'nyc/riots/',
+    'hive/h_ext/', 'hive/h_int/', 'astroid_m/visit1/', 'mastermold/',
+)
+_FORGE_IMPORT_NOTE = 'Forge contact unlock granted (0.1.x builds did not record it)'
+
+
+def _legacy_forge_recovery(old, env, res, game_vars):
+    # Zone names are carried directly by every supported native era, independently of
+    # objective numbering. A retained record/return frame proves progress in a hub too.
+    zones = [old['mission']['zone']]
+    zones += [s['zone'] for s in old['side']['frames'][:old['side']['count']]]
+    zones += [oldsave.zone_string(old['zone_strings'], z['name_handle']) for z in old['zones']]
+    if not any((z.lower().startswith(_FORGE_LATER_DIRS) or z.lower() in ('arbiter/arb_fd1', 'arbiter/arb_fd2')) and env.id_of('ZONE', key_hash(z)) is not None for z in zones):
+        return
+    target = next((v for v in game_vars if v['name'].lower() == 'x1v03'), None)
+    if target is None:
+        if len(game_vars) >= L.OLD_SCRIPT_GAME_VARS:
+            raise ConvertError('Forge contact unlock: game-variable store is full')
+        target = dict(name='x1v03', value=0)
+        game_vars.append(target)
+    # Script bit indices are ONE based: ftalk at bit 31 is mask 0x40000000.
+    if not target['value'] & 0x40000000:
+        target['value'] |= 0x40000000
+        res.notes.append(_FORGE_IMPORT_NOTE)
+
+
 # ------------------------------------------------------------------------------------------------ main
 def convert_slot(old_bytes, original_name, env, slot=0, now=None, campaign_serial=None):
     res = Result()
@@ -669,6 +705,8 @@ def _translate(old, env, res, original_name, old_bytes, slot, now=None, context=
     sv = old['script_vars']
     zone_vars = [dict(name=v['name'], value=oldsave.script_var_value(v)) for v in sv['zone'] if v['name']]
     game_vars = [dict(name=v['name'], value=oldsave.script_var_value(v)) for v in sv['game'] if v['name']]
+    if context is None:
+        _legacy_forge_recovery(old, env, res, game_vars)
     sections.append(('SVAR', 1, 0, 0, dict(zone_vars=zone_vars, game_vars=game_vars)))
     # ---- XTRC
     xp = []
@@ -1285,7 +1323,7 @@ def verify_file(old_path, env, out_dir=None):
     compare that too (SPEC 5.5 steps 2-3). -> report dict:
       semantic_diff      old dump (era tables) vs new dump (catalogue): must be empty
       reverse_identical  reverse(new) rebuilt the original bytes exactly (expected only when every era of the
-                         save is the reference era and nothing was dropped)
+                         save is the reference era and nothing was dropped or repaired)
       reverse_semantic   dump of the reversed stream (read as the reference era) vs the new dump: must be empty
       reverse_diff_fields the model fields that differ byte-wise (talent ids, definition indices that the era
                          mapping moved; zone blocks are compared through the dumps only)"""
@@ -1299,7 +1337,15 @@ def verify_file(old_path, env, out_dir=None):
     old = oldsave.read_slot(buf)
     d_old = dump_old(old, env, era_hint=res.era)
     d_new = dump_new(res.file_bytes, env)
-    rep['semantic_diff'] = semantic_diff(d_old, d_new)
+    # The maintained migration changes one script flag deliberately. Compare all
+    # other semantics against the untouched old dump and disclose the repair.
+    expected = copy.deepcopy(d_old)
+    rep['legacy_repairs'] = [_FORGE_IMPORT_NOTE] if _FORGE_IMPORT_NOTE in res.notes else []
+    if rep['legacy_repairs']:
+        variables = expected['script_vars']['game']
+        name = next((n for n in variables if n.lower() == 'x1v03'), 'x1v03')
+        variables[name] = variables.get(name, 0) | 0x40000000
+    rep['semantic_diff'] = semantic_diff(expected, d_new)
     back, notes = reverse_slot(res.file_bytes, env, template=old)
     rep['reverse_notes'] = notes
     rebuilt = oldsave.write_slot(back)
@@ -1307,7 +1353,7 @@ def verify_file(old_path, env, out_dir=None):
     ref_cv = env.ref['content_version']
     rep['reverse_expected_identical'] = (res.era['start'] == ref_cv and res.era['items'] == ref_cv
                                          and all(z['era'] == ref_cv for z in res.era.get('zones', []))
-                                         and not any(res.dropped.values()))
+                                         and not any(res.dropped.values()) and not rep['legacy_repairs'])
     if not rep['reverse_identical']:
         rep['reverse_first_diff'] = next((i for i in range(len(buf)) if buf[i] != rebuilt[i]), None)
         rep['reverse_diff_fields'] = _diff_fields(old, back)
