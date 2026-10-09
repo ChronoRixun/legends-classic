@@ -5,6 +5,10 @@ build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebui
 
 ## Unreleased - 0.2.0 - content version 16 (needs XML2 Fix 1.4)
 
+- Restore equipment-shop access from Xtraction points after contacting Forge (issue #95). The companion
+  XML2 Fix menu hook keeps native Save and team handling, and respects each lite point's original shop
+  permission. The option uses the port's existing shop adapter. SPEC (number assigned at merge); V-TBD.
+
 - **NPC gun damage rolls the first game's minimum-based +/-30 % draw.** The first game stores only the
   weapon damage code's minimum and rolls one integer draw between trunc(min x 0.7f) and trunc(min x 1.3f) on
   every shot (all gun types); the port instead rolled the whole authored code range, inflating gun damage by

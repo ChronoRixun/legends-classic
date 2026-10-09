@@ -795,6 +795,7 @@ class Validator:
                                ('V30', 'personal items', lambda ck: VF.v_personal_items(self, ck)),
                                ('V31', 'save positions', self.save_positions),
                                ('V32', 'lite xtraction', self.lite_xtraction),
+                               ('V-TBD', 'Xtraction service routing', self.xtraction_services),
                                ('V34', 'ladder spawns', self.ladder_spawns),
                                ('V35', 'pda portal', lambda ck: VF.v_pda_portal(self, ck)),
                                ('V37', 'xtraction beacons / rank-1 power damage', self.v37_beacons_rank_one),
@@ -1211,6 +1212,24 @@ class Validator:
                         ck.error(f'{sc.files[n]["rel"]}: inline code {_short(code, 80)!r}: extractionPointLite '
                                  f'offers no Save (issue #63; prepare P3 writes extractionPoint)')
         ck.set('lite_xtraction_data_code_checked', n_code)
+
+    def xtraction_services(self, ck):
+        """Issue #95: source point calls in maps must go through generated helpers in seat builds."""
+        if C.forced_teams_mode(self.ctx) != 'seat':
+            ck.set('xtraction_service_inline_checked', 0)
+            return
+        n_code = 0
+        for n, lst in self.data_items(self.scan.inline):
+            if not n.startswith('maps/') or not self.is_x1(n):
+                continue
+            for _, attr, code in lst:
+                if attr.lower() != 'actscript':
+                    continue
+                n_code += 1
+                if re.search(r'\bextractionPoint(?:Lite|Services)?\s*\(', code or '', re.I):
+                    ck.error(f'{self.scan.files[n]["rel"]}: Xtraction actscript bypasses its services helper '
+                             '(issue #95; point-local permission / contact unlock)')
+        ck.set('xtraction_service_inline_checked', n_code)
 
     # ================================================================== V37 (issues #74, #78)
     def v37_beacons_rank_one(self, ck):

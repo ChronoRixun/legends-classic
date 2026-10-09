@@ -73,7 +73,7 @@ WAITS = {'waittimed', 'waitsignal'}
 # ran 0.4 s after the close), so no call that opens a menu or reloads may follow a popup on any path through the
 # same script (if / else branches apart) without a waittimed between them.
 POPUP_CALLS = {'createPopupDialogXml', 'createPopupDialogXmlFilter'}
-POPUP_BLOCKERS = {'extractionPoint', 'extractionPointChange', 'extractionPointLite', 'joinHero', 'popParty',
+POPUP_BLOCKERS = {'extractionPoint', 'extractionPointServices', 'extractionPointChange', 'extractionPointLite', 'joinHero', 'popParty',
                   'blackbirdMenu', 'loadMap', 'loadMapKeepTeam', 'loadMapChooseTeam', 'loadMapAddTeam', 'loadZone', 'restorelastzone',
                   'beginMission', 'beginMissionHack', 'openmenu', 'shopMenu', 'stashMenu', 'codexMenu', 'reviewMenu',
                   'dangerRoomMenu', 'triviaMenu', 'startGameDiffDialog', 'mainMenuExit', 'mainMenuExitDialog'}

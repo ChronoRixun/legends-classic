@@ -61,6 +61,12 @@
    "ret": "n",
    "func": "xml2-fix",
    "table": "xml2-fix"
+  },
+  "extractionPointServices": {
+   "args": "ai",
+   "ret": "n",
+   "func": "xml2-fix",
+   "table": "xml2-fix"
   }
  }
 }

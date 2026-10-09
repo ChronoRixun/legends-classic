@@ -617,6 +617,8 @@ def _script_text(ctx, ref, mode=None):
             return None, {}
         info = dict(info)
         lines = text.split('\r\n')
+        if mode != 'seat':
+            lines = T.xtraction_menu_fallback(lines)
         bodies = _forced_hero_bodies(ctx)
         if bodies:
             lines, ch = T.choose_team_in_bodies(lines, bodies)

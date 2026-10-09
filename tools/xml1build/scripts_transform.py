@@ -438,16 +438,36 @@ def choose_team_in_bodies(lines, bodies):
 # the build merges into the API of --forced-teams seat builds): name -> (ret, args)
 XML2FIX_API = {'xml2fixFeature': ('i', 's'), 'seatParty': ('n', 'ssss'), 'setSkinset': ('n', 'ss'),
                'pushParty': ('n', 'a'), 'popParty': ('n', 's'), 'addHero': ('i', 's'), 'getPartyMember': ('s', 'i'),
-               'joinHero': ('i', 's'), 'addSkillPoints': ('n', 'ai'), 'addStatPoints': ('n', 'ai')}
+               'joinHero': ('i', 's'), 'addSkillPoints': ('n', 'ai'), 'addStatPoints': ('n', 'ai'),
+               'extractionPointServices': ('n', 'ai')}
 # xml2-fix functions data may call directly (SPEC 32: the SKILL item's onactivate): not forced-teams features, registered
 # with the rest whatever [Game] ForcedTeams says, inert without the DLL (the engine drops a call it doesn't know)
 XML2FIX_DATA_FUNCS = frozenset(C.XML2FIX_ALWAYS_FUNCS)
+
+
+def xtraction_menu_fallback(lines):
+    """Menu builds keep the native branch of P3's services helper, without companion calls."""
+    collapsed, i = [], 0
+    while i < len(lines):
+        if re.match(r'\s*x1_services\s*=\s*xml2fixFeature\(', lines[i]):
+            if i + 6 >= len(lines) or lines[i + 4].strip() != 'else' or lines[i + 6].strip() != 'endif':
+                raise ValueError('unexpected Xtraction services helper shape')
+            indent = lines[i][:len(lines[i]) - len(lines[i].lstrip())]
+            collapsed.append(indent + lines[i + 5].strip())
+            i += 7
+        else:
+            collapsed.append(lines[i])
+            i += 1
+    return collapsed
+
+
 FT_VAR, AH_VAR, JH_VAR = 'x1ft', 'x1ah', 'x1jh'
 FT_FEATURE, AH_FEATURE, JH_FEATURE = 'forcedteams', 'addhero', 'joinhero'
-FEATURES = (FT_FEATURE, AH_FEATURE, JH_FEATURE)
+FEATURES = (FT_FEATURE, AH_FEATURE, JH_FEATURE, 'xtractionshop')
 # the function each xml2-fix call needs switched on (the 'then' branch of 'if <v> == 1', <v> = xml2fixFeature(f))
 GUARD_OF = {'seatParty': FT_FEATURE, 'setSkinset': FT_FEATURE, 'pushParty': FT_FEATURE, 'popParty': FT_FEATURE,
-            'addHero': AH_FEATURE, 'getPartyMember': None, 'joinHero': JH_FEATURE}
+            'addHero': AH_FEATURE, 'getPartyMember': None, 'joinHero': JH_FEATURE,
+            'extractionPointServices': 'xtractionshop'}
 IND = '     '                                  # BehavEd's block indentation
 # a no-op (0x5aaff0) that keeps a branch non-empty when the DLL is absent and its xml2-fix calls are dropped at compile
 # (XML2 retail scripts never have an empty block; research rewrite_scripts keeps blocks non-empty the same way)

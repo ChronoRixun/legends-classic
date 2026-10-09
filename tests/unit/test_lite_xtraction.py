@@ -40,11 +40,14 @@ def test_prepare_writes_the_full_point_for_every_lite_call():
         out = Path(td) / 'out'
         lines, rep, counts = P3.Rewriter(loose, assets, plan, api1, api2).write(str(out))
         inline = json.loads((out / 'inline_rewrites.json').read_text(encoding='utf-8'))
-        assert inline == {LITE_DATA: "extractionPoint('_OWNER_' )"}       # the entity's actscript form
+        helper = inline[LITE_DATA]
+        assert helper.startswith('x1/')
+        assert 'extractionPointServices("_OWNER_", 0 )' in (out / f'scripts/{helper}.py').read_text()
         z = (out / 'scripts/inv/outpost1.py').read_bytes().decode('latin-1')
         assert 'extractionPointLite' not in z
-        assert z.split('\r\n')[:2] == ['extractionPoint("invented_beacon" )', 'extractionPoint("invented_beacon")']
-        assert rep['stats']['rule extractionPointLite -> extractionPoint (flags dropped)'] == 2
+        assert 'extractionPoint("invented_beacon" )' in z
+        assert 'extractionPointServices("invented_beacon", 0 )' in z
+        assert rep['stats']['rule Xtraction point services'] == 3
     assert P3.VERSION >= 2                                                  # cached P3 outputs are rebuilt once
 
 
