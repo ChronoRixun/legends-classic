@@ -6326,3 +6326,28 @@ campaign whose saved zone/history proves progress beyond the first mansion visit
 zones). This recovers the contact unlock omitted by old port builds. The repair changes only x1v03 script bit31,
 records an import ledger note, and never runs for a new game or LC resave. Point-local service permissions and
 normal first-mansion contact progression remain as specified above. No generated content changes.
+
+
+## 80. Legacy streamed states for newly pinned placements
+
+The save loader must account for an entity changing from streamed to numbered placement between builder
+releases. An imported zone can retain a smart or dynamic state for such an entity while its numbered slot is
+absent. Applying inferred zero-slot removal semantics alone discards an existing cutscene target.
+
+At reverse/load time, a legacy-import record (META origin 1) or inferred record (capture flag 2) may associate
+an unnumbered state with the current numbering only when its definition/instance key pair identifies exactly
+one current placement and exactly one unnumbered saved state. An explicit numbered state, including a dead
+state, takes precedence. Observed native records without legacy provenance are not promoted. Missing or
+ambiguous states retain the existing removal policy; the loader does not reset the whole zone or create a
+missing entity.
+
+A promoted state leaves its unnumbered list, occupies the matching numbered slot, and gains native alive
+bit 8 because membership in an unnumbered capture list proves existence even while dormant. Other flags,
+position and payload are preserved. Loaded capture metadata describes the reconstructed numbered map so
+actual factory ordinals can still be matched by placement. A later save records the promoted placement as
+numbered; explicit removal remains authoritative on subsequent loads.
+
+This is mirrored in Python tools/lcsave/convert.py and XML2 Fix reverse.cpp/api_engine.cpp. Existing imports
+receive the repair when loaded; converter output, wire revision, catalogue and generated build files do not
+change. Synthetic tests cover dormant smart/dynamic states, earlier imports with zero capture status,
+explicit tombstones, duplicate saved/current identities, observed-capture exclusion and resave persistence.

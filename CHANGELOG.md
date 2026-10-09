@@ -5,6 +5,11 @@ build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebui
 
 ## Unreleased - 0.2.0 - content version 16 (needs XML2 Fix 1.4)
 
+- Preserve existing streamed cutscene entities when loading legacy saves into builds that pin them. The
+  companion XML2 Fix loader associates unique saved states with their current numbered placements;
+  explicit removed states remain removed. Existing LC imports benefit without reconversion.
+
+
 - **Pyro reaches his intended fight position** (issue #93). The HAARP intro finishes his scripted approach at
   its existing doorway waypoint after spawning him. XML2 world collision had stopped him behind the doorway
   before the fire barriers rose. The barriers, allegiance, combat moves and death-script progression retain

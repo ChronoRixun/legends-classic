@@ -949,7 +949,7 @@ def reverse_slot(new_bytes, env, template=None):
         grades[pos.grade(g['grade'])] = g['value']
     m['danger_room'] = dict(courses=courses, course_residue=[0] * (L.OLD_DR_COURSES - len(courses)), grades=grades)
     m['review'] = dict(unlocked=pos.review_words(S['REVW']['unlocked']), seen=pos.review_words(S['REVW']['seen']))
-    zs, zones = pos.zone_records(S['ZONE']['records'], notes, m['items']['world'])
+    zs, zones = pos.zone_records(S['ZONE']['records'], notes, m['items']['world'], S['META']['origin'] == 1)
     m['zone_strings'] = zs
     m['zones'] = zones
     m['profile'] = pos.profile(S)
@@ -1207,7 +1207,7 @@ class PositionTables:
         p['pad_220'] = 0; p['highest_level'] = P['highest_level']; p['flags_229'] = P['flags']; p['pad_22a'] = [0, 0]
         return p
 
-    def zone_records(self, recs, notes, world):
+    def zone_records(self, recs, notes, world, legacy_import=False):
         """Refill native zone layouts and remove world handles owned exclusively by discarded records."""
         strings = dict(generation=0, offsets=[0] * L.OLD_ZONE_STRING_SLOTS, used=2, arena=bytearray(L.OLD_ZONE_ARENA))
         strings['offsets'][0] = 1
@@ -1265,10 +1265,11 @@ class PositionTables:
                 matches = None
             if matches is not None:
                 continue
+            promoted = _legacy_pinned_states(r, num['numbered'], set(mapped.values()), legacy_import)
             states = [dict(def_name=0, inst_name=0, payload=b'\0' * 8, flags_a=0, flags_b=0, position=[0, 0, 0])]
             ordinal_map = [0] * L.OLD_ZONE_ORDINALS
             dynamic, smart = [], []
-            for s in r['states']:
+            for state_index, s in enumerate(r['states']):
                 if len(states) >= L.OLD_ZONE_STATES:
                     raise ConvertError('more states than the engine record holds')
                 if s['payload_kind'] == PAYLOAD_WORLD_ITEM:
@@ -1289,6 +1290,13 @@ class PositionTables:
                     if k > len(num['numbered']):
                         raise ConvertError(f'ordinal {k} beyond the zone numbering ({len(num["numbered"])})')
                     ordinal_map[k - 1] = idx
+                elif state_index in promoted:
+                    k = promoted[state_index]
+                    if not 1 <= k <= L.OLD_ZONE_ORDINALS:
+                        raise ConvertError('promoted ordinal outside the engine map')
+                    ordinal_map[k - 1] = idx
+                    states[idx]['flags_b'] |= 8  # an unnumbered list entry proves existence, even while dormant
+                    notes.append(f'zone {zone!r}: legacy unnumbered state restored as numbered placement {k}')
                 elif s['list'] == STATE_DYNAMIC:
                     dynamic.append(idx)
                 else:
@@ -1630,6 +1638,21 @@ def native_zone_metadata(old_stream, env):
     return captures
 
 
+def _legacy_pinned_states(record, numbered, occupied, legacy_import=False):
+    """Unique legacy unnumbered placements newly pinned by the build. Explicit numbered states win."""
+    if not (legacy_import or record['capture_flags'] & 2):
+        return {}
+    candidates = {}
+    for i, state in enumerate(record['states']):
+        if state['list'] not in (STATE_DYNAMIC, STATE_SMART):
+            continue
+        pair = (key_hash(record['names'][state['def_name']]), key_hash(record['names'][state['inst_name']]))
+        matches = [k + 1 for k, (dn, inn, _) in enumerate(numbered) if (key_hash(dn), key_hash(inn)) == pair]
+        if len(matches) == 1 and matches[0] not in occupied:
+            candidates[i] = matches[0]
+    return {i: k for i, k in candidates.items() if list(candidates.values()).count(k) == 1}
+
+
 def loaded_zone_metadata(new_bytes, env):
     """Applied cached captures, with ordinals aligned to the reconstructed native map."""
     native, _ = reverse_slot(new_bytes, env)
@@ -1642,9 +1665,11 @@ def loaded_zone_metadata(new_bytes, env):
         zone = pos.zone_name(r['zone'])
         if zone not in applied: continue
         num = env.binds.zone_numbering(zone)['numbered']
-        entities = [dict(ordinal=next(k + 1 for k, (_, _, pi) in enumerate(num) if pi == s['placement_index']),
-                        placement_index=s['placement_index'], definition_name=r['names'][s['def_name']], instance_name=r['names'][s['inst_name']])
-                    for s in r['states'] if s['list'] == 1]
+        restored = next(z for z in native['zones'] if oldsave.zone_string(native['zone_strings'], z['name_handle']) == zone)
+        entities = [dict(ordinal=k + 1, placement_index=num[k][2],
+                        definition_name=oldsave.zone_string(native['zone_strings'], restored['states'][idx]['def_name']),
+                        instance_name=oldsave.zone_string(native['zone_strings'], restored['states'][idx]['inst_name']))
+                    for k, idx in enumerate(restored['ordinal_map']) if idx]
         out.append(dict(zone=zone, time_stamp=r['time_stamp'], placement_sha1=r['content_hash'],
                         conversation_digest=r['conversation_digest'], capture_flags=r['capture_flags'] | (2 if f['sections']['META']['data']['origin'] == 1 or r['conversation_digest'] == bytes(32) else 0), entities=entities))
     return out
