@@ -5,6 +5,11 @@ build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebui
 
 ## Unreleased - 0.2.0 - content version 16 (needs XML2 Fix 1.4)
 
+- **Pyro reaches his intended fight position** (issue #93). The HAARP intro finishes his scripted approach at
+  its existing doorway waypoint after spawning him. XML2 world collision had stopped him behind the doorway
+  before the fire barriers rose. The barriers, allegiance, combat moves and death-script progression retain
+  their authored settings. V-TBD checks the intro correction and its waypoint.
+
 - **NPC gun damage rolls the first game's minimum-based +/-30 % draw.** The first game stores only the
   weapon damage code's minimum and rolls one integer draw between trunc(min x 0.7f) and trunc(min x 1.3f) on
   every shot (all gun types); the port instead rolled the whole authored code range, inflating gun damage by

@@ -155,6 +155,7 @@ from . import talent_budget as TB        # V44 (SPEC 75): complete-roster Talent
 from . import style_budget as SB         # V23 (SPEC 43): the fighting / power style registry per zone
 from . import ladder_motion as LM       # V34 (SPEC 46): ladder paths only from the ladder top
 from . import weapons as W              # V5 (SPEC 57, issue #52): a gun-armed entry carries its gun's fighting style
+from . import scripted_approaches as SA  # V-TBD: authored scripted approach completion
 from . import save_positions as SP      # V31: identities a save keeps by position
 
 MAX_REPORTED = 50                             # per check and severity, into ctx.error / ctx.warn
@@ -802,7 +803,8 @@ class Validator:
                                ('V40', 'melee weapons', lambda ck: MW.validate(self, ck)),
                                ('V39', 'save files', lambda ck: SF.validate(self, ck)),
                                ('V41', 'spawn-floor residency', self.spawn_floor_residency),
-                               ('V45', 'gun damage roll', lambda ck: W.validate(self, ck))):
+                               ('V45', 'gun damage roll', lambda ck: W.validate(self, ck)),
+                               ('V-TBD', 'scripted boss approach', lambda ck: SA.validate(self, ck))):
             ck = Check(cid, title)
             self.checks[cid] = ck
             t0 = time.time()

@@ -6232,3 +6232,27 @@ difference (35-65) would need a live Xbox trace, as the research report notes - 
 not depend on it. The entity `damage` attribute itself stays a range in the port: on weapon shots the gun's
 attack overrides it (both engines), and the bare-entity difference is left to a separate task. XML2's own
 retail entities/styles keep their retail ranges (the check only inspects files the build wrote).
+## (number assigned at merge). Scripted boss approach completion (issue #93)
+
+`scripted_approaches` handles only `haarp/int/pyro_intro`. Its authored spawner activates Pyro north of the
+doorway, then his spawn script assigns the `door_spot` waypoint path. On XML2 he stops north of the doorway
+while the waypoint action is already within activation distance. The barriers consequently rise with him on
+the wrong side. Runtime movement tracing at retail `0x42b7bb` reports the blocker as the zone's `world`
+entity, with a wall normal `(0,-1,0)`; Pyro and his fire volumes retain `altenemy` without team inversion.
+The same-team danger-notice gate is not the divergence demonstrated by this encounter.
+
+After the intro's unique spawner activation, the conversion inserts a `0.100` game-time wait and
+`copyOriginAndAngles` to the existing `wp_door_spot01`. The wait permits actor birth and the original spawn
+script to assign its path first. This finishes the scripted approach at its authored destination; it bypasses
+the blocked portion of the cutscene walk. The waypoint action, barriers, boss AI, health, damage, pain phases
+and death script remain authoritative. No collision or AI-notification attribute is added to a harm entity,
+and no map coordinate or relocated hero start is introduced.
+The existing script-reference pinning pass also writes `smartent=false` on this waypoint; it changes only
+this zone's map pair and keeps the marker available to the new direct script reference.
+
+The rewrite preserves conditional scope and CRLF, is idempotent, and fails closed if the reviewed spawner
+activation is absent or ambiguous. It applies to this intro only. V-TBD checks the ordered wait/placement in
+the written script and one matching map instance with a finite three-coordinate position. Synthetic tests
+use invented encounter names. This corrects the intro's placement; it does not repair XML2 world geometry
+or infer how every XML1 scripted path traversed that geometry. Loading a save already inside the fight
+does not rerun the intro, so such a save requires a separate recovery policy.

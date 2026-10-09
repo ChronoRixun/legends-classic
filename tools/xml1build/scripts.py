@@ -50,6 +50,7 @@ from . import common as C
 from . import conversations as CV
 from . import scripts_lint as L
 from . import boss_phases as BP
+from . import scripted_approaches as SA
 from . import start_fixes as SF
 from . import scripts_transform as T
 from . import ladder_motion as LM
@@ -490,6 +491,7 @@ def _base_text(ctx, ref):
                 info['bounded_loops'] = bl
                 info['bounded_loops_skipped'] = sk
         text = BP.rewrite_script(ref, text)
+        text = SA.rewrite_script(ref, text)
         return text, info
     return _cached(ctx, ('base_text', ref), build)
 
