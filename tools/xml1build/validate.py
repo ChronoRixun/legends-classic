@@ -155,6 +155,7 @@ from . import talent_budget as TB        # V44 (SPEC 75): complete-roster Talent
 from . import style_budget as SB         # V23 (SPEC 43): the fighting / power style registry per zone
 from . import ladder_motion as LM       # V34 (SPEC 46): ladder paths only from the ladder top
 from . import weapons as W              # V5 (SPEC 57, issue #52): a gun-armed entry carries its gun's fighting style
+from . import scripted_approaches as SA  # V47 (SPEC 78): authored scripted approach completion
 from . import save_positions as SP      # V31: identities a save keeps by position
 
 MAX_REPORTED = 50                             # per check and severity, into ctx.error / ctx.warn
@@ -795,6 +796,7 @@ class Validator:
                                ('V30', 'personal items', lambda ck: VF.v_personal_items(self, ck)),
                                ('V31', 'save positions', self.save_positions),
                                ('V32', 'lite xtraction', self.lite_xtraction),
+                               ('V48', 'Xtraction service routing', self.xtraction_services),
                                ('V34', 'ladder spawns', self.ladder_spawns),
                                ('V35', 'pda portal', lambda ck: VF.v_pda_portal(self, ck)),
                                ('V37', 'xtraction beacons / rank-1 power damage', self.v37_beacons_rank_one),
@@ -802,7 +804,9 @@ class Validator:
                                ('V40', 'melee weapons', lambda ck: MW.validate(self, ck)),
                                ('V39', 'save files', lambda ck: SF.validate(self, ck)),
                                ('V41', 'spawn-floor residency', self.spawn_floor_residency),
-                               ('V45', 'gun damage roll', lambda ck: W.validate(self, ck))):
+                               ('V45', 'gun damage roll', lambda ck: W.validate(self, ck)),
+                               ('V47', 'scripted boss approach', lambda ck: SA.validate(self, ck)),
+                               ('V46', 'pickup models', self.v46_pickup_models)):
             ck = Check(cid, title)
             self.checks[cid] = ck
             t0 = time.time()
@@ -846,6 +850,38 @@ class Validator:
             if added and residents > SE.MAX_RESIDENTS:
                 ck.error(f'{zone}: spawn-floor residency exceeds {SE.MAX_RESIDENTS} explicit residents')
             ck.count('settled_instances', added)
+
+    _ENGINE_ITEMS = {'money'}        # XMen2.exe resolves MONEY natively; neither game lists it in Data/items
+    _ITEMS_PKG = 'packages/generated/items.pkgb'
+
+    def v46_pickup_models(self, ck):
+        """V46 (issues #96, #98): every item a registered entity names through inventoryitem must carry a
+        pickup model in Data/items and that model must ship in the items package (loaded at game start).
+        A placed world pickup (inventoryent) takes its model from the items table; a model-less entry renders
+        as the engine's missing-model marker (the floating yellow question mark: the HAARP and asteroid
+        keycards XML2's same-named entries ship without a model)."""
+        sc = self.scan
+        refs = sorted({(v or '').strip().lower() for vals in sc.inv_items.values() for v in vals}
+                     - self._ENGINE_ITEMS)
+        ck.set('referenced_items', len(refs))
+        models = {}
+        for n, root in sc.items.items():
+            for el in root.iter():
+                if el.tag.lower() == 'item' and el.get('name'):
+                    models[el.get('name').strip().lower()] = (el.get('model') or '').strip()
+        pkg_models = {C.norm(f) for k, f in sc.pkg.get(self._ITEMS_PKG, ()) if k.lower() == 'model'}
+        ck.set('items_table_entries', len(models))
+        for name in refs:
+            if name not in models:
+                ck.error(f'inventoryitem={name!r} is referenced but has no entry in Data/items')
+                continue
+            if not models[name]:
+                ck.error(f'item {name!r} has no pickup model in Data/items (world pickups render as the '
+                         f"missing-model marker; issues #96/#98)")
+                continue
+            stem = C.split_ext(C.norm('models/' + models[name]))[0]
+            if stem not in {C.split_ext(p)[0] for p in pkg_models}:
+                ck.error(f'item {name!r} model {models[name]!r} is not packaged in {self._ITEMS_PKG}')
 
     def report(self):
         ctx = self.ctx
@@ -1211,6 +1247,24 @@ class Validator:
                         ck.error(f'{sc.files[n]["rel"]}: inline code {_short(code, 80)!r}: extractionPointLite '
                                  f'offers no Save (issue #63; prepare P3 writes extractionPoint)')
         ck.set('lite_xtraction_data_code_checked', n_code)
+
+    def xtraction_services(self, ck):
+        """Issue #95: source point calls in maps must go through generated helpers in seat builds."""
+        if C.forced_teams_mode(self.ctx) != 'seat':
+            ck.set('xtraction_service_inline_checked', 0)
+            return
+        n_code = 0
+        for n, lst in self.data_items(self.scan.inline):
+            if not n.startswith('maps/') or not self.is_x1(n):
+                continue
+            for _, attr, code in lst:
+                if attr.lower() != 'actscript':
+                    continue
+                n_code += 1
+                if re.search(r'\bextractionPoint(?:Lite|Services)?\s*\(', code or '', re.I):
+                    ck.error(f'{self.scan.files[n]["rel"]}: Xtraction actscript bypasses its services helper '
+                             '(issue #95; point-local permission / contact unlock)')
+        ck.set('xtraction_service_inline_checked', n_code)
 
     # ================================================================== V37 (issues #74, #78)
     def v37_beacons_rank_one(self, ck):

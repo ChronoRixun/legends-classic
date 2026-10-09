@@ -5366,9 +5366,11 @@ says such points cannot save) and from the second use a menu with the title and 
 at nyc1_1_2b, whose first flag is `false`: Change Team is offered anyway, so the flag does not gate it as earlier
 notes assumed). None of the 20 points could save.
 
-**What the port does now.** P3 (`Rewriter.rewrite_call`, P3 VERSION 2) writes XMen2.exe's full
-`extractionPoint(owner)` (0x4a6b50) for every XML1 `extractionPointLite` call; the flags are dropped. The 20 points
-open the same menu as every full point: title, Xtract (X-Men Legends II's world map, #46), Change Team and Save.
+**The 0.1.12 conversion.** P3 (`Rewriter.rewrite_call`, P3 VERSION 2) wrote XMen2.exe's full
+`extractionPoint(owner)` (0x4a6b50) for every XML1 `extractionPointLite` call; the flags were dropped. The 20 points
+opened the same menu as every full point: title, Xtract (X-Men Legends II's world map, #46), Change Team and Save.
+The issue #95 change below now routes the points through a services helper and preserves their fourth flag for
+the equipment shop; the native handler still supplies Save and team handling.
 With xml2-fix `ForcedTeams=1` the Change Team choice is greyed while game flag `teamlock` bit 1 is set (a seated
 forced mission, SPEC 19.8), as at every full point. The builder's own `addHero` emulation still emits
 `extractionPointLite("_ACTIVE_HERO_", ...)`, which T7 replaces at build time (SPEC_heroes). V32 (lite xtraction)
@@ -5396,8 +5398,8 @@ The two Master Mold points are the only ones with f5 set, and f5's meaning is no
 #88 is resolved, do not save there; the fix may be to leave these two on a non-saving menu. Reports from other
 points are wanted before more work (maintainer's decision).
 
-**Still missing (a later XML2 Fix change).** XML1's Load choice at every point and the Danger Room / Healer / Forge
-choices (sub-basements: all three; full points: by XML1's conditions, not decoded). The Xtract world-map choice
+**Still missing (a later XML2 Fix change).** XML1's Load choice at every point and the Danger Room / Healer
+choices. Forge is restored by the issue #95 companion change below. The Xtract world-map choice
 (#46) is gone with XML2 Fix 1.3.2 (`[Game] Xtract=0`; the section after this one). XML1's flag 1 is not honoured
 either: the sub-basement points offer Change Team where the first game did not (in free missions, where `teamlock`
 is 0). The rest needs a script function that builds XML1's menus (the research's design: XML1's flags kept and
@@ -5547,7 +5549,7 @@ Unit tests: `tests/unit/test_builder_parts.py` (`test_xml1_builds_ask_for_no_xtr
 this change: the menu check is the release candidate's (xml2-fix `xtract` log line; title, Change Team and Save
 only, from nyc1_1_3's point on).
 
-**Still missing (as SPEC 62).** XML1's Load choice and the conditional Danger Room / Healer / Forge choices; those
+**Still missing (as SPEC 62).** XML1's Load choice and the conditional Danger Room / Healer choices; those
 need a script function that builds XML1's menus, not an ini key.
 
 ## 67. Recommended party before mission selection (issue #76)
@@ -6232,3 +6234,88 @@ difference (35-65) would need a live Xbox trace, as the research report notes - 
 not depend on it. The entity `damage` attribute itself stays a range in the port: on weapon shots the gun's
 attack overrides it (both engines), and the bare-entity difference is left to a separate task. XML2's own
 retail entities/styles keep their retail ranges (the check only inspects files the build wrote).
+
+## 77. Same-name items keep XML2's entry but take XML1's pickup model (issues #96, #98)
+
+**Symptom.** World-placed keycard pickups rendered as the engine's missing-model marker - a floating yellow
+question mark where the model should be - while the objective hint arrow pointed at them correctly: the
+HAARP train-car keycard of the Maintenance Garage (issue #98) and the proximity keycard a leader drops
+(issue #96). The tester could still pick the invisible marker up.
+
+**Mechanism.** XML1's zones place these pickups as `inventoryent` entities with an `inventoryitem` name and
+NO model attribute; the running game resolves the pickup's model from the items table (XML1's items.eng:
+KEYCARD1/2/3 -> `pickups/key_green`). XML2's own items table ships same-named KEYCARD1/2/3 entries WITHOUT a
+model - XML2 never places them in the world. The world-table merge keeps XML2's entry for every same-named
+item (SPEC 4.4 xml2-wins), so the converted zones' keycards resolved to a model-less item and XMen2.exe
+drew its missing-model placeholder. The engine reads the zone's .engb as well as the .XMLB, so both halves
+of Data/items carry the fill.
+
+**Rule.** In `zones.build_world_tables`, for the items table only, a same-name XML2 entry with no `model`
+attribute (or an empty one) takes the model of XML1's original entry (`zones.fill_item_model`); XML2's own
+model, when it has one, always wins and other tables are untouched. Every filled model is added to the
+items package's `only_files` (it ships in packages/generated/items.PKGB, loaded at game start) and is
+reported in the build note.
+
+**Check.** V46: every item name a registered XMLB references through `inventoryitem` must
+exist in Data/items, carry a model, and have that model packaged in packages/generated/items.PKGB; `money`
+alone is allowlisted (XMen2.exe resolves MONEY natively; neither game lists it in the items table). Unit
+tests: `tests/unit/test_pickup_models.py` (invented items).
+
+**Limits.** The fill covers the items table only; entities that name a model directly (most pickups carry
+the model inline) are covered by the existing package reference checks. The engine-side behaviour (model
+lookup from the items table for inventoryent) is XML1/XML2-shared and was not re-verified against
+XMen2.exe in this task; the V46 data check and the staged live look at the keycard are the evidence.
+
+## 78. Scripted boss approach completion (issue #93)
+
+`scripted_approaches` handles only `haarp/int/pyro_intro`. Its authored spawner activates Pyro north of the
+doorway, then his spawn script assigns the `door_spot` waypoint path. On XML2 he stops north of the doorway
+while the waypoint action is already within activation distance. The barriers consequently rise with him on
+the wrong side. Runtime movement tracing at retail `0x42b7bb` reports the blocker as the zone's `world`
+entity, with a wall normal `(0,-1,0)`; Pyro and his fire volumes retain `altenemy` without team inversion.
+The same-team danger-notice gate is not the divergence demonstrated by this encounter.
+
+After the intro's unique spawner activation, the conversion inserts a `0.100` game-time wait and
+`copyOriginAndAngles` to the existing `wp_door_spot01`. The wait permits actor birth and the original spawn
+script to assign its path first. This finishes the scripted approach at its authored destination; it bypasses
+the blocked portion of the cutscene walk. The waypoint action, barriers, boss AI, health, damage, pain phases
+and death script remain authoritative. No collision or AI-notification attribute is added to a harm entity,
+and no map coordinate or relocated hero start is introduced.
+The existing script-reference pinning pass also writes `smartent=false` on this waypoint; it changes only
+this zone's map pair and keeps the marker available to the new direct script reference.
+
+The rewrite preserves conditional scope and CRLF, is idempotent, and fails closed if the reviewed spawner
+activation is absent or ambiguous. It applies to this intro only. V47 checks the ordered wait/placement in
+the written script and one matching map instance with a finite three-coordinate position. Synthetic tests
+use invented encounter names. This corrects the intro's placement; it does not repair XML2 world geometry
+or infer how every XML1 scripted path traversed that geometry. Loading a save already inside the fight
+does not rerun the intro, so such a save requires a separate recovery policy.
+
+## 79. Equipment shop from Xtraction points (issue #95)
+
+XML1's full point handler (default.xbe 0x9f110) adds string 2005 when the campaign registry's
+in-campaign test for the equipment vendor succeeds (0x9f3ff-0x9f43e, registry vt+0x38).
+It opens an equipment-shop menu, rather than travelling to a workshop map. The lite handler
+(0x9f4a0) also requires its fourth service flag. XML2's full handler (0x4a6b50) has no such
+option; disabling its world map does not add services.
+
+Prepare P3 VERSION 5 writes a generated helper for each source point. Full points permit the
+shop; lite points preserve flag 4. The source contact script's existing ftalk store supplies
+the unlock, using its planned storage, without adding a saved flag or changing the packing.
+That store is cleared at the first mansion mission's start, and remains set across away
+missions. The helper calls extractionPointServices(owner, permission) behind the
+xml2fixFeature("xtractionshop") guard. Menu builds collapse the helper to its native fallback.
+Other lite permissions retain the existing section 62 behavior.
+
+The companion XML2 Fix registers extractionPointServices n(ai), wraps the same forced-team
+handler as the native point, and appends the source label before the native dialog finalizes.
+[Game] XtractionShop=1 enables the guarded hook; default 0 keeps the menu unchanged. The
+builder owns and writes this key. Permission lives only around one native handler call,
+so a prior point cannot enable another point's shop. Save and Change Team remain native.
+The action is shopMenu('equip'), the existing port adapter: XML2 has only its shared shop
+menu, and cannot open XML1's separate equipment-shop menu file.
+
+V48 rejects source point calls left directly in XML1 map actscripts in seat builds; they
+must route through generated helpers. V14 checks the function signature and feature guard,
+and V7 treats it as a popup blocker. Synthetic tests use invented point and storage names.
+No content-version increment in this implementation wave; integration assigns it.

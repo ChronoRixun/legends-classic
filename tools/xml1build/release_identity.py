@@ -19,7 +19,7 @@ class Identity:
 
 # Historical lobby tokens stay reserved even though these pre-LC builds had no catalogue.
 # A token reservation is an identity in the history; it cannot be assigned again.
-CURRENT_CATALOGUE_REVISION = 5
+CURRENT_CATALOGUE_REVISION = 6
 
 HISTORY = (
     Identity('port-before-LC', 0, 0, 'X1.0'),
@@ -29,6 +29,7 @@ HISTORY = (
     Identity('0.2.0-integrated-guards', 16, 3, 'LC21', '8c1737d887e8113887fdff56004bf931995c31b30b359bb894fb3c245af9fa72'),
     Identity('0.2.0-integrated-talents', 16, 4, 'LC22', 'b6f19256b5b2e9d0bce31e622404cbe173891e0ccfe216ab0707db1a525f1d50'),
     Identity('0.2.0-talents-minimal', 16, 5, 'LC23', '7d62fba81dd1cf58ea375311d8697d34cf6c213a16e25d0a0f8ab57b0d736e0f'),
+    Identity('0.2.0-candidate-e', 16, 6, 'LC24', '8ecd8ea2e8f4172ae9b7b7ea57b6f29c30dd9eb832f8dc187a4787e0aaab9c53'),
 )
 
 

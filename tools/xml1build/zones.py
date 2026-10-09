@@ -159,6 +159,21 @@ from .fix_ini import LIMITS as _FIX_LIMITS                   # noqa: E402 - the 
 ITEM_ENHANCEMENT_POOL = int(_FIX_LIMITS.get('ItemEnhancements', ITEM_ENHANCEMENT_POOL_STOCK))
 
 
+def fill_item_model(existing, x1):
+    """Issues #96/#98: a same-name item XML2 already ships (the keycards) has no pickup model of its own -
+    XML2 never places it in the world, while XML1's zones drop it as a world inventoryent whose model comes
+    from the items table. Without the fill the placed pickup renders as the engine's missing-model marker.
+    Returns the normalized model stem to package, or None when nothing was filled. XML2's own model, when it
+    has one, always wins."""
+    if x1 is None:
+        return None
+    model = (x1.get('model') or '').strip()
+    if model and not (existing.get('model') or '').strip():
+        existing.set('model', model)
+        return C.norm('models/' + strip_ext(model))
+    return None
+
+
 def item_enhancements(el):
     return sum(1 for e in el.iter() if isinstance(e.tag, str) and e.tag.lower() == 'enhancement')
 
@@ -2627,7 +2642,11 @@ class Zones:
             C.map_tree_refs(x1root)
             self.prov.rewrite_data_tree(ctx, x1root, x1rel)
             x1top = C.iter_roots(x1root)[0]
+            x1_by_name = {}
             if name == 'items':
+                # same-name items XML2 already ships keep XML2's entry below; the original XML1 entries stay
+                # reachable here so a pickup model XML2's entry lacks can be filled (issues #96/#98)
+                x1_by_name = {(c.get('name') or '').lower(): c for c in x1top if c.get('name')}
                 have = set()
                 for ext in ('.XMLB', '.engb'):
                     if ctx.base_exists(f'Data/items{ext}'):
@@ -2644,28 +2663,38 @@ class Zones:
                 ctx.error(f'world table Data/{name}: not in the base install')
                 continue
             trees, added_names, xml2_wins, unnamed = {}, [], 0, 0
+            filled_models = set()
             for ext in exts:
                 tree = ctx.read_base_xmlb(f'Data/{name}{ext}')
                 top = C.iter_roots(tree)[0]
-                have = {(c.get('name') or '').lower() for c in top if c.get('name')}
+                have = {(c.get('name') or '').lower(): c for c in top if c.get('name')}
                 for c in x1top:
                     nm = c.get('name')
                     if not nm:
                         unnamed += ext == exts[0]
                         continue
-                    if nm.lower() in have:
+                    low = nm.lower()
+                    if have.get(low) is not None:
                         xml2_wins += ext == exts[0]
                         continue
-                    top.append(copy.deepcopy(c))
-                    have.add(nm.lower())
+                    new = copy.deepcopy(c)
+                    top.append(new)
+                    have[low] = new
                     if ext == exts[0]:
                         added_names.append(nm)
+                if name == 'items':   # issues #96/#98: XML2's same-name entry may lack the pickup model
+                    for low, src in x1_by_name.items():
+                        filled = fill_item_model(have[low], src) if low in have else None
+                        if filled:
+                            filled_models.add(filled)
                 trees[ext] = tree
             if len(exts) == 2:
                 ctx.write_xmlb_pair(f'Data/{name}', trees['.XMLB'], trees['.engb'], source=f'zones:{x1rel}')
             else:
                 ctx.write_xmlb(f'Data/{name}', trees[exts[0]], tuple(exts), source=f'zones:{x1rel}')
             self.counts[f'{name}_added'] = len(added_names)
+            if name == 'items':
+                self.counts['items_model_filled'] = len(filled_models)
             if name == 'items':                     # SPEC 32.1: what the 375-record enhancement pool cuts off
                 lost = enhancement_pool_cut(C.iter_roots(trees[exts[0]])[0])
                 self.counts['items_beyond_enhancement_pool'] = len(lost)
@@ -2674,7 +2703,9 @@ class Zones:
                              f'({ITEM_ENHANCEMENT_POOL}, 0x4804a6) overflows at {lost[0][0]} ({lost[0][1]} used before '
                              f'it), and the load stops there: {[n for n, _ in lost]}')
             ctx.note(f'Data/{name}: {len(added_names)} XML1 entries added, {xml2_wins} same-name entries kept '
-                     f'as XML2, {unnamed} unnamed XML1 children skipped')
+                     f'as XML2, {unnamed} unnamed XML1 children skipped'
+                     + (f', {len(filled_models)} same-name pickup models filled from XML1 '
+                        f'({sorted(filled_models)})' if name == 'items' and filled_models else ''))
             # package: XML2's generated PKGB + missing entries of the XML1 bundle + files the added entries use
             added = [c for c in x1top if c.get('name') in set(added_names)]
             if name in ('common_ents', 'item_ents'):
@@ -2684,8 +2715,9 @@ class Zones:
                         if v:
                             self.item_refs[v.lower()].add(f'data/{name}')
             only_files = None
-            if name == 'items':                     # only the pickup models of the items actually appended
+            if name == 'items':                     # pickup models of appended items and gap-filled same-name items
                 only_files = {C.norm('models/' + strip_ext(c.get('model'))) for c in added if c.get('model')}
+                only_files |= filled_models
             self.merge_package(f'Packages/generated/{name}', f'packages/generated/{name}.fb',
                                skip={f'data/{name}'}, extra_refs=[r for c in added for r in self.extract_refs(c)],
                                label=name, only_files=only_files)

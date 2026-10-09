@@ -48,7 +48,7 @@ Unsupported capture bits refuse even when the placement hash differs. Conversati
 in the reverse reader's notes for callers to surface. No wire layout or section version changes.
 
 Native save follow-up: dangling unnumbered dynamic/smart item states are omitted with an explicit result note when
-their world-item slot is absent, matching the native loader's absent-instance case. Numbered identity loss and
+their world-item slot is absent, matching the native loader's absent-instance case. Live numbered identity loss and
 other unhandled drops still refuse. Valid world items and carried/key-item counts are preserved. Legacy imports
 keep the historical recorded-drop/LGCY policy; field widths and section versions are unchanged.
 
@@ -56,3 +56,8 @@ Native-transfer follow-up: `native_zone_metadata` validates current-table names/
 provenance with zero conversation digest, and retains object/fog data without relabeling it as observed. Its helper
 path bypasses conversation hashing; ordinary save/import/bind generation still hashes by default. No wire layout,
 section version or content identity changes.
+
+Dead numbered missing-item follow-up: native factory 0x465c35 checks `flags_b & 8` before restoring an item.
+With that bit clear, native recording keeps the removed placement/name identity as a tombstone and clears its
+unreachable item flag/payload, with an explicit ledger note. It preserves position and other `flags_b` bits.
+Alive numbered dangling references still refuse. Historical imports and the revision 2.4 wire layout are unchanged.

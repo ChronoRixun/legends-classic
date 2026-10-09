@@ -5,12 +5,28 @@ build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebui
 
 ## Unreleased - 0.2.0 - content version 16 (needs XML2 Fix 1.4)
 
+- **Pyro reaches his intended fight position** (issue #93). The HAARP intro finishes his scripted approach at
+  its existing doorway waypoint after spawning him. XML2 world collision had stopped him behind the doorway
+  before the fire barriers rose. The barriers, allegiance, combat moves and death-script progression retain
+  their authored settings. V47 checks the intro correction and its waypoint.
+
+- **World-placed keycards show their model instead of the missing-model marker** (issues #96, #98). The
+  HAARP train-car keycard and the dropped proximity/ID keycards are placed as world pickups whose model
+  comes from the items table; XML2's same-named items table entries ship no model (XML2 never places them),
+  and the xml2-wins merge kept that gap - the pickups rendered as a floating yellow question mark under a
+  correct hint arrow. A same-name items-table entry with no model now takes XML1's model, the model ships
+  in the items package, and a validator refuses any referenced item without a packaged pickup model.
+  SPEC 77; the check V46.
+- Restore equipment-shop access from Xtraction points after contacting Forge (issue #95). The companion
+  XML2 Fix menu hook keeps native Save and team handling, and respects each lite point's original shop
+  permission. The option uses the port's existing shop adapter. SPEC 79; V48.
+
 - **NPC gun damage rolls the first game's minimum-based +/-30 % draw.** The first game stores only the
   weapon damage code's minimum and rolls one integer draw between trunc(min x 0.7f) and trunc(min x 1.3f) on
   every shot (all gun types); the port instead rolled the whole authored code range, inflating gun damage by
   roughly 13-15 % on average (the HAARP leader's freeze gun 34-64, mean 49, instead of 50-63, mean 56.5).
   Generated gun-shot triggers now carry the draw's bounds, and thrown explosives' `explodedamage` carries the
-  code's minimum only, as XML1's entity parser reads it (flashbang 15, not 15-18). SPEC 76; the check V-TBD.
+  code's minimum only, as XML1's entity parser reads it (flashbang 15, not 15-18). SPEC 76; the check V45.
 - **Correct the Arbiter talent overflow while retaining the original shared pool.** NPC powers and immunities
   remain in the save-stable63-name shared list. Per-set/union NPC files are not shipped: engine filename
   truncation and default-ID collisions made that approach unsafe. Only reviewed noncombat Arbiter props'
