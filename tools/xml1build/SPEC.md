@@ -6319,3 +6319,10 @@ V48 rejects source point calls left directly in XML1 map actscripts in seat buil
 must route through generated helpers. V14 checks the function signature and feature guard,
 and V7 treats it as a popup blocker. Synthetic tests use invented point and storage names.
 No content-version increment in this implementation wave; integration assigns it.
+
+
+Section 79 migration policy: the one-time pre-LC save importer grants the existing Forge-contact flag to a
+campaign whose saved zone/history proves progress beyond the first mansion visit (HAARP or later main-campaign
+zones). This recovers the contact unlock omitted by old port builds. The repair changes only x1v03 script bit31,
+records an import ledger note, and never runs for a new game or LC resave. Point-local service permissions and
+normal first-mansion contact progression remain as specified above. No generated content changes.

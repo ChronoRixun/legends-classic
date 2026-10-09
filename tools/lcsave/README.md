@@ -61,3 +61,16 @@ Dead numbered missing-item follow-up: native factory 0x465c35 checks `flags_b & 
 With that bit clear, native recording keeps the removed placement/name identity as a tombstone and clears its
 unreachable item flag/payload, with an explicit ledger note. It preserves position and other `flags_b` bits.
 Alive numbered dangling references still refuse. Historical imports and the revision 2.4 wire layout are unchanged.
+
+Legacy Forge contact recovery (maintainer import policy): only pre-LC campaign imports receive the one-based
+`x1v03` bit 31 (`0x40000000`) when a catalogue-known current zone, used side-mission return frame, or retained
+zone record proves the campaign reached HAARP or a later main-campaign directory. Later mansion hubs count;
+NYC's opening mission, the first mansion, training/flashbacks and unknown zones alone do not. The source
+first-mansion briefing starts HAARP; subsequent missions preserve the contact flag. Zone names are stored
+literally in every supported legacy era, so the gate does not depend on era-specific objective numbering.
+An already-set flag is unchanged. A missing word is appended if the native 100-variable store has room;
+otherwise import refuses rather than losing an unrelated variable. Only the flag changes, and the import's
+LGCY/external ledger records once: "Forge contact unlock granted (0.1.x builds did not record it)".
+Native saving, new games and LC resaves never run this repair. Previously imported LC files are not repaired
+retroactively. The Python verifier lists this deliberate change in `legacy_repairs` while checking all other
+semantics. No wire layout, section version, catalogue or content-version change is needed.
