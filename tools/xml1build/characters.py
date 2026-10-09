@@ -512,7 +512,7 @@ class _Builder:
     def _style_patch(self, root, rel=''):
         # SPEC 29.3: style events that name an XML1 weapon (ps_mystique's left_gun / right_gun) -> beam events
         # (before map_tree_refs, as weapons.apply for the variants: the added effect / sound paths get mapped too)
-        wrep = W.rewrite_weapon_events(root, self.x1_weapons)
+        wrep = W.rewrite_weapon_events(root, self.x1_weapons, values=self.ctx.x1_values())
         if wrep:
             with self.lock:
                 self.weapon_event_reports[C.norm(rel)] = dict(wrep)
@@ -630,7 +630,7 @@ class _Builder:
             result = None
         else:
             def patch(root, r=rel, w=weapon, nm=name, g=grenade):
-                rep = W.apply(root, w, where=nm, grenade=g)
+                rep = W.apply(root, w, where=nm, grenade=g, values=self.ctx.x1_values())
                 with self.lock:
                     self.weapon_reports[nm] = (weapon_name, lname, dict(rep))
                 self._style_patch(root, r)

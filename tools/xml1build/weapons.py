@@ -222,6 +222,34 @@ def _lower(el) -> dict:
     return {k.lower(): v for k, v in el.attrib.items()}
 
 
+# XML1's gun damage draw (default.xbe, shared by every weapon type's fire path): the weapon parser resolves the
+# damage code through the values getter with a NULL maximum pointer and stores only the minimum (0xbc2ef-0xbc30d,
+# the parsed word at prototype +0x1c6); at fire time 0xbcc47-0xbcc99 loads that minimum and makes ONE integer
+# RNG draw (0x1233c0) between trunc(min x 0.7f) and trunc(min x 1.3f) - the binary32 constants at 0x3ca9d8 and
+# 0x3d4a60 - which becomes the attack's damage. The authored code maximum is never a bound, so the trigger the
+# builder writes carries the draw's bounds instead of the code's range.
+GUN_DRAW_LO = 0.699999988079071            # default.xbe 0x3ca9d8: binary32 0.7 (not idealized 0.7)
+GUN_DRAW_HI = 1.2999999523162842           # default.xbe 0x3d4a60: binary32 1.3 (not idealized 1.3)
+
+
+def gun_damage_range(values, damage):
+    """XML1's gun-draw bounds 'lo hi' for a weapon damage declaration (a value code or a plain number),
+    computed from the declaration's resolved MINIMUM as the fire path draws it. None when the minimum does
+    not resolve (the declaration stays as written and npc_values.resolve_style reports it as today).
+    `values`: heroes.Values of XML1's data/values.xml; None-safe (a caller without a table gets None)."""
+    if values is None:
+        return None
+    try:
+        resolved = values.resolve(damage)
+    except (KeyError, TypeError, AttributeError):
+        return None
+    try:
+        minimum = float(str(resolved).split()[0])
+    except (TypeError, ValueError):
+        return None
+    return f'{int(minimum * GUN_DRAW_LO)} {int(minimum * GUN_DRAW_HI)}'
+
+
 def _attack(w: dict, extra: dict) -> ET.Element:
     """an attack trigger with the weapon's damage data (+ its damageMod child) and `extra`."""
     a = dict(extra)
@@ -358,7 +386,7 @@ def _drop_bolton_churn(move, dry=False) -> int:
     return len(drop)
 
 
-def rewrite_weapon_events(root, weapons: dict, where: str = '') -> collections.Counter:
+def rewrite_weapon_events(root, weapons: dict, where: str = '', values=None) -> collections.Counter:
     """XML1 styles can also NAME a weapon on an event of their own: ps_mystique's `left_gun` / `right_gun` are
     `<event inherit="weapon_fire" weapon="wp_myst_pistol" [boltselect=...]>`, fired by plain triggers with those
     names. XMen2.exe builds `weapon_fire` as a sound event (see the module doc), so every such shot did nothing.
@@ -369,7 +397,8 @@ def rewrite_weapon_events(root, weapons: dict, where: str = '') -> collections.C
     MAX_TRIGGERS triggers, so when the shots do not all fit, a mid-move bolton holster/redraw cycle is dropped
     first (the weapon stays attached) to give every shot its sound, as XML1's weapon_fire event did (issue #83);
     shots beyond the cap still go without. Projectile / flame weapons named this way are reported, not
-    rewritten (none on the disc).
+    rewritten (none on the disc). `values`: heroes.Values - when given, each rewritten event carries the XML1
+    gun draw of its weapon's damage minimum (gun_damage_range), as weapons.apply does for the variants.
     Returns counts; `root` is changed in place."""
     rep = collections.Counter()
     events = {}
@@ -387,6 +416,11 @@ def rewrite_weapon_events(root, weapons: dict, where: str = '') -> collections.C
         if w is None:
             rep['weapon_event_unknown_weapon'] += 1
             continue
+        if values is not None and w.get('damage'):
+            drawn = gun_damage_range(values, w['damage'])
+            if drawn is not None:
+                w = dict(w, damage=drawn)
+                rep['gun_damage_drawn'] += 1
         kind = (w.get('type') or '').lower()
         if kind not in ('bullet', 'beam'):
             rep[f'weapon_event_{kind or "untyped"}_kept'] += 1
@@ -496,7 +530,7 @@ def weapon_fire_left(root) -> list:
     return out
 
 
-def apply(root, w: dict, where: str = '', grenade: str = '') -> collections.Counter:
+def apply(root, w: dict, where: str = '', grenade: str = '', values=None) -> collections.Counter:
     """replace every weapon_fire trigger of every FightMove with the weapon's triggers; for a continuous (flame)
     weapon also give the constant beam its firing interval. Then carry the soldier's grenade throw (issue #36):
     XML1's holders of a grenade= weapon throw that grenade from moveset_grenade. Runtime traces execute the
@@ -504,12 +538,19 @@ def apply(root, w: dict, where: str = '', grenade: str = '') -> collections.Coun
     entity (XML1's aitype "grenade", at the retained priority above the guns).
     `grenade`: the effective entity
     (the spawner override beats the weapon's grenade=); '' = the weapon's own grenade=; a variant whose effective
-    grenade is non-default is named for it by the caller (weapons.variant_grenade_name). Returns counts;
+    grenade is non-default is named for it by the caller (weapons.variant_grenade_name). `values`: heroes.Values
+    of XML1's values table - when given, the weapon's damage declaration becomes the XML1 gun draw of its
+    minimum (gun_damage_range; the shot carries the draw's bounds, not the code's range). Returns counts;
     `root` is changed in place."""
     rep = collections.Counter()
     kind = (w.get('type') or '').lower()
     if kind not in WEAPON_TYPES:
         return rep
+    if values is not None and w.get('damage'):
+        drawn = gun_damage_range(values, w['damage'])
+        if drawn is not None:
+            w = dict(w, damage=drawn)
+            rep['gun_damage_drawn'] += 1
     for move in root.iter('FightMove'):
         trigs = [c for c in move if c.tag.lower() == 'trigger']
         fires = [c for c in trigs if (_lower(c).get('name') or '').lower() == 'weapon_fire']
@@ -571,3 +612,125 @@ def apply(root, w: dict, where: str = '', grenade: str = '') -> collections.Coun
         rep['grenade_move_added'] = 1
         rep[f'grenade_{g.lower()}'] = 1
     return rep
+
+
+# ------------------------------------------------------------------------------------------ validator (V45)
+
+def _gun_shot_els(root) -> list:
+    """every element of a built style tree that _attack wrote: a beam / projectile shot trigger, or a beam
+    event rewritten from a style-named weapon (SPEC 29.3). XML1's own power beams (ps_havok's name="beam")
+    carry no damagescale / damagelevel, so the fingerprint (damagescale=difficulty + damagelevel=1 + damage)
+    matches gun shots only."""
+    out = []
+    if root is None:
+        return out
+    for e in root.iter():
+        if not isinstance(e.tag, str):
+            continue
+        a = _lower(e)
+        if (a.get('damagescale') or '').lower() != DAMAGE_SCALE or a.get('damagelevel') != '1' \
+                or not a.get('damage'):
+            continue
+        if e.tag.lower() == 'trigger' and (a.get('name') or '').lower() in ('beam', 'projectile'):
+            out.append(e)
+        elif e.tag.lower() == 'event' and (a.get('inherit') or '').lower() == 'beam':
+            out.append(e)
+    return out
+
+
+def _is_gun_draw(lo: int, hi: int) -> bool:
+    """True when (lo, hi) is XML1's draw of some whole-number minimum: an m with trunc(m x 0.7f) == lo and
+    trunc(m x 1.3f) == hi. Such an m lies within +/-3 of lo / 0.7f (the m interval is ~1.43 wide)."""
+    centre = round(lo / GUN_DRAW_LO)
+    return any(int(m * GUN_DRAW_LO) == lo and int(m * GUN_DRAW_HI) == hi
+               for m in range(max(0, centre - 3), centre + 4))
+
+
+def validate(v, ck) -> None:
+    """V45 (SPEC 76): XML1's weapon fire rolls ONE integer draw between
+    trunc(min x 0.7f) and trunc(min x 1.3f) of the damage code's MINIMUM (default.xbe 0xbcc47-0xbcc99; the
+    authored maximum is never a bound), so (1) every gun-shot trigger of a built style must carry a range
+    that is exactly that draw of some minimum, and (2) a powerstyle named for an XML1 weapon
+    (weapons.variant_name, a non-default grenade suffix aside) must carry exactly that weapon's draw.
+    XML1's entity parser reads explodedamage as ONE number - the code's minimum (0x97940-0x97953) - so
+    (3) a built entity file's single-value attributes must hold one number, never a 'min max' range."""
+    ctx = v.ctx
+    from . import heroes as H                  # noqa: WPS433 - heroes imports this package's modules lazily too
+    from . import npc_values as NV             # noqa: WPS433 - the single-value entity attribute names
+    try:
+        values = H.Values(ctx.read_x1_xml('data/values.xml'))
+    except Exception:          # noqa: BLE001 - no XML1 source readable: the draw cannot be recomputed
+        ck.warn('XML1 data/values.xml not readable: gun damage rolls (SPEC 29) unverified')
+        return
+    x1_weapons = {}
+    try:
+        root = ctx.read_x1_xml('data/weapons/weapons.eng')
+        x1_weapons = {(w.get('name') or '').lower(): {k.lower(): val for k, val in w.attrib.items()}
+                      for w in root.iter() if isinstance(w.tag, str) and w.tag.lower() == 'weapon' and w.get('name')}
+    except Exception:          # noqa: BLE001
+        ck.warn('XML1 data/weapons/weapons.eng not readable: weapon-variant draws (SPEC 29) unverified')
+    grenades = set()
+    try:
+        ent_rel = next((r for r in ('data/entities/grenade_ents.eng', 'data/entities/grenade_ents.xml')
+                        if ctx.x1_path(r)), None)
+        if ent_rel is not None:
+            grenades = {(e.get('name') or '').strip().lower()
+                        for e in ctx.read_x1_xml(ent_rel).iter()
+                        if isinstance(e.tag, str) and e.tag.lower() == 'entity' and e.get('name')}
+    except Exception:          # noqa: BLE001
+        grenades = set()
+    for rel in v.idx.under('data/powerstyles/'):
+        if v.entry(rel) is None or not rel.lower().endswith(('.xmlb', '.engb')):
+            continue                       # XML2 retail styles: not gun conversions
+        root = v.tree(rel)
+        shots = _gun_shot_els(root)
+        if not shots:
+            continue
+        for e in shots:
+            ck.count('gun_shot_triggers_checked')
+            parts = (e.get('damage') or '').split()
+            nums = []
+            if len(parts) == 2:
+                try:
+                    nums = [float(parts[0]), float(parts[1])]
+                except ValueError:
+                    pass
+            if len(nums) != 2 or nums[0] != int(nums[0]) or nums[1] != int(nums[1]) \
+                    or not _is_gun_draw(int(nums[0]), int(nums[1])):
+                ck.error(f'{rel}: gun shot damage {e.get("damage")!r} is not XML1\'s draw trunc(min*0.7f)..'
+                         f'trunc(min*1.3f) of one minimum (SPEC 29)')
+        if not x1_weapons:
+            continue
+        name = rel.rsplit('/', 1)[-1].rsplit('.', 1)[0].lower()
+        g = variant_grenade(name, grenades)
+        if g:
+            name = name[:-(len(g) + 1)]
+        for wname, wrec in x1_weapons.items():
+            if (wrec.get('type') or '').lower() not in WEAPON_TYPES:
+                continue
+            suffix = wname[3:] if wname.startswith('wp_') else wname
+            if not (name.startswith('x1_') and name.endswith('_' + suffix)):
+                continue
+            ck.count('gun_variant_styles_checked')
+            want = gun_damage_range(values, wrec.get('damage'))
+            if want is None:
+                ck.warn(f'{rel}: {wname} damage {wrec.get("damage")!r} does not resolve; its draw not checked')
+                break
+            for e in shots:
+                if e.get('damage') != want:
+                    ck.error(f'{rel}: {wname} gun shot damage {e.get("damage")!r}, {want!r} expected '
+                             f"(XML1's draw of the damage declaration's minimum, SPEC 29)")
+            break
+    n = 0
+    for rel in v.idx.under('data/entities/'):
+        if v.entry(rel) is None or not rel.lower().endswith(('.xmlb', '.engb')):
+            continue                       # XML2 retail entities keep the retail range
+        for e in v.tree(rel).iter():
+            if not isinstance(e.tag, str):
+                continue
+            for k, val in e.attrib.items():
+                if k.lower() in NV.SINGLE_VALUE_ENTITY_ATTRS and len((val or '').split()) == 2:
+                    n += 1
+                    ck.error(f'{rel}: <{e.tag} {k}="{val}"> must be XML1\'s single minimum, not a range '
+                            '(the XML1 entity parser reads one number; SPEC 29)')
+    ck.set('entity_single_value_attrs_checked', n)

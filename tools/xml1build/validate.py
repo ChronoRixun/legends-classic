@@ -106,6 +106,11 @@ Checks (severity per SPEC 4.6: error = will not load or silently misbehaves; war
                 hidden)
   V36 recommended party (SPEC 67, issue #76; reported with V14): a mission start seeded with the first game's
                 recommended party has exactly the guarded seatParty + skinset before its original editable menu
+  V45 gun damage roll (SPEC 76, weapons.validate): every built gun-shot trigger
+                carries XML1's weapon-fire draw - one integer range trunc(min*0.7f)..trunc(min*1.3f) of the damage
+                declaration's minimum (default.xbe 0xbcc47-0xbcc99) - a powerstyle named for an XML1 weapon carries
+                exactly that weapon's draw, and a built entity file's single-value attributes (explodedamage)
+                hold XML1's minimum, never a 'min max' range
 
 Inherited defects. Many findings are defects of the XML1 disc itself (a zone, conversation, dialog, script or
 sound bank XML1 references but never shipped; a line default.xbe already dropped). They are re-derived, not
@@ -796,7 +801,8 @@ class Validator:
                                ('V38', 'balance', lambda ck: BAL.validate(self, ck)),
                                ('V40', 'melee weapons', lambda ck: MW.validate(self, ck)),
                                ('V39', 'save files', lambda ck: SF.validate(self, ck)),
-                               ('V41', 'spawn-floor residency', self.spawn_floor_residency)):
+                               ('V41', 'spawn-floor residency', self.spawn_floor_residency),
+                               ('V45', 'gun damage roll', lambda ck: W.validate(self, ck))):
             ck = Check(cid, title)
             self.checks[cid] = ck
             t0 = time.time()

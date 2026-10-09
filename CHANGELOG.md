@@ -5,6 +5,12 @@ build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebui
 
 ## Unreleased - 0.2.0 - content version 16 (needs XML2 Fix 1.4)
 
+- **NPC gun damage rolls the first game's minimum-based +/-30 % draw.** The first game stores only the
+  weapon damage code's minimum and rolls one integer draw between trunc(min x 0.7f) and trunc(min x 1.3f) on
+  every shot (all gun types); the port instead rolled the whole authored code range, inflating gun damage by
+  roughly 13-15 % on average (the HAARP leader's freeze gun 34-64, mean 49, instead of 50-63, mean 56.5).
+  Generated gun-shot triggers now carry the draw's bounds, and thrown explosives' `explodedamage` carries the
+  code's minimum only, as XML1's entity parser reads it (flashbang 15, not 15-18). SPEC 76; the check V-TBD.
 - **Correct the Arbiter talent overflow while retaining the original shared pool.** NPC powers and immunities
   remain in the save-stable63-name shared list. Per-set/union NPC files are not shipped: engine filename
   truncation and default-ID collisions made that approach unsafe. Only reviewed noncombat Arbiter props'
