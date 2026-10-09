@@ -11,11 +11,10 @@ It is a builder, not a download: every file of the result is made on your comput
 This project ships no game content - no game files, no parts of them, no modified executables - and the builder
 makes no network connections.
 
-> **Status: first public test builds (builder 0.1.7, launcher 0.2.1).** Every mission and the ending run in automated
-> tests on the developer's PC (a full hand-played run is under way), the builder (`xml1-builder`) makes that build
-> from a disc image and an X-Men Legends II install in a few minutes, and the
-> [Ultimate Legends](https://github.com/ChronoRixun/ultimate-legends) launcher does it in a few clicks. Known bugs
-> and what is next: [Status](#status). Help and bug reports: the [community Discord](https://discord.gg/tFxwHtZv8k).
+> **Status: public test builds.** Published versions: builder **0.1.12**, XML2 Fix **1.3.2** and launcher
+> **0.3.0**. Builder **0.2.0** / XML2 Fix **1.4.0** are unreleased; their changes below describe the prepared
+> release branches, not downloads already available. Automated campaign checks are not a complete manual
+> playthrough. Help and bug reports: [community Discord](https://discord.gg/tFxwHtZv8k).
 
 ## What you need
 
@@ -23,7 +22,7 @@ makes no network connections.
 |---|---|
 | **X-Men Legends for the original Xbox** | your own disc, made into a disc image: a full Redump-style `.iso` or an XISO both work. [How to image your own disc](docs/DUMPING.md). The PlayStation 2 and GameCube versions are different games under the hood and aren't supported (the builder recognises them and says so); compressed images (CCI / CSO) need decompressing first. |
 | **X-Men Legends II: Rise of Apocalypse for PC** | installed, English, with the retail `XMen2.exe` (the builder checks it) and unmodified game files. Your install is only read, never changed. |
-| **[xml2-fix](https://github.com/ChronoRixun/xml2-fix) 1.3.2 or later** | the in-memory engine fixes the port relies on (new-game party, forced parties, the first game's level curve, bigger zones, its own save folder, display options). The Ultimate Legends launcher installs it for you. Each builder needs a minimum version: see [Versions that go together](#versions-that-go-together). |
+| **[xml2-fix](https://github.com/ChronoRixun/xml2-fix) matching your builder** | the in-memory engine fixes the port relies on (new-game party, forced parties, the first game's level curve, bigger zones, its own save folder, display options). The Ultimate Legends launcher installs it for you. Each builder needs a minimum version: see [Versions that go together](#versions-that-go-together). |
 | **Windows 10 or 11, 64-bit** | the released builder is a Windows program. From source it is plain Python + numpy, written to run on Linux too (its tests run there in CI; a full Linux build is untested so far). |
 | **Disk space** | about 8 GB while building with movies (the game ~4.6 GB + a build cache ~3.2 GB you can delete afterwards), about 6 GB without movies. |
 | **Time** | the first build converts every sound bank: about 6-8 minutes on a current 8-core PC. Rebuilds with the cache take 2-3 minutes. |
@@ -67,12 +66,28 @@ xml1-builder clean   --out "C:\Games\X-Men Legends (Port)"
 | `verify` | checks a build against its record: up to date, needs a rebuild, damaged, incomplete; writes `_build\verify-report.json`. `--deep` also re-checks every file inside the disc image. |
 | `clean` | deletes exactly what the builder made - never your saves; mods only with `--mods`; `--dry-run` only counts. |
 
-Then copy `dinput.dll` from the [latest xml2-fix release](https://github.com/ChronoRixun/xml2-fix/releases/latest)
+Then copy `dinput.dll` from the [xml2-fix release](https://github.com/ChronoRixun/xml2-fix/releases)
+that matches your builder (0.1.12 needs 1.3.2; unreleased 0.2.0 needs 1.4.0)
 into the output folder and start `XMen2.exe` there. The builder has already written the `xml2-fix.ini` settings the
 port needs (`--no-ini` leaves the file alone; the keys are in `_build\stamp.json`).
 
 The release zip is not code-signed yet, so Windows SmartScreen or an antivirus may warn about it: compare the
 SHA-256 with the release page, or build it yourself from source ([docs/BUILDING.md](docs/BUILDING.md)).
+
+### Steam Deck / Proton
+
+These releases are Windows programs. Running them through Proton is a compatibility path, not a native
+Linux release or a fully tested Deck configuration. For a direct Steam shortcut to the game, put the DLL
+beside the executable and, if the fix is not loaded, try this in the shortcut's Launch Options:
+
+```text
+WINEDLLOVERRIDES="dinput=n,b" %command%
+```
+
+Check for `xml2-fix.log` in the game folder to confirm the DLL loaded. Keep the same Proton prefix when
+updating: saves are under that prefix's Windows Documents folder (which may be redirected).
+See [Proton's runtime configuration](https://github.com/ValveSoftware/Proton#runtime-config-options)
+for Steam Launch Options. Controller and Discord behavior under Proton has not been verified here.
 
 ### First start
 
@@ -95,6 +110,45 @@ Windows Update) stops the question, and *Skip this installation* lets the game s
 
 Saves go to `Documents\Activision\X-Men Legends`, separate from X-Men Legends II's.
 
+## Saves in builder 0.2.0 / XML2 Fix 1.4 (unreleased)
+
+Update the builder, rebuild the port, and install XML2 Fix **1.4.0** into the rebuilt game's folder.
+Updating the DLL alone does not create the required save catalogue and bindings. Back up the whole
+`Documents\Activision\X-Men Legends` profile folder before updating (Documents can be redirected;
+`[Game] SaveFolder` can choose another root).
+
+The build sets `[Save] Format=lc`. On the first start, when the profile or save menu first reads files,
+old campaigns and the profile are imported from `Save` into sibling `SaveLC`, once per file. Originals
+are never modified. Campaigns become `saveslot<N>.lcsave`, the profile `profile.lcsave`; the import ledger
+is `SaveLC\legacy-import.txt`. An occupied slot uses another free slot; with all ten occupied an import
+waits. Import failures appear in the ledger, log and an in-game notice. Supported old saves retain their
+heroes, stats, talents, inventory, progress and unlocks; earlier talent-number changes are translated.
+Changed zone or conversation data can reset only its affected state, with notices. This is not a promise
+that every custom save or future removal will remain compatible.
+
+Overwriting keeps the previous intact file as `.lcsave.bak`. A missing or damaged primary can load from
+that backup. An intact save requiring a newer reader is refused rather than replaced by an older backup.
+Before replacing a newer writer/content/catalogue file, the fix protects it as `.lcsave.newer`, including
+one found only in `.bak`. An identical protected copy is reused; conflicting or unreadable copies block
+the write. Deliberate campaign Delete removes its primary and `.bak`, but retains `.newer`.
+
+If a save/load is refused, preserve the slot and all backups, copy the whole `SaveLC` folder, and check
+`xml2-fix.log` and the import ledger. Correct the version pair, rebuild damaged content, or remove the
+unsupported mod named by the message, then restart. A refused save has not recorded the latest progress.
+Pre-LC releases cannot read `.lcsave`; going back to an old build uses old originals without later progress.
+
+Cosmetic, UI and script mods remain allowed within LC identity rules. Overrides of save-bound data,
+numbered entities, map placements, unknown identities or unverifiable package references can refuse LC
+activation or saving. This is not unrestricted campaign-mod support. Details are in XML2 Fix 1.4's `docs/save-format.md` and `docs/save-guards.md`.
+
+For online co-op, all players need the **same builder/content, XML2 Fix and combat/mod settings**.
+The current 0.2.0 source assigns lobby token **LC23** (content 16, catalogue 5). Matching tokens separate
+lobby generations; they do not compare every content file or enforce a complete peer fingerprint check.
+Ordinary synchronized saves and a client cold solo reload/resave passed private local tests in upstream
+candidate reports. **A save after destroying some objects online can still be refused; the existing save
+file is kept.** The witnessed case followed a disconnect; a companion fix is not in these release heads.
+Cross-machine internet play and a full manual campaign remain unverified.
+
 ## Status
 
 Verified in game on the developer's PC (mostly by automated runs that drive the game through xml2-fix's test pipe):
@@ -112,34 +166,20 @@ Verified in game on the developer's PC (mostly by automated runs that drive the 
   disc image in about 6.5 minutes and verified every file; a new game there played from the intro through several
   zones. The files matched the developer's own builds one for one.
 
-Fixed in later builders (the launcher offers the rebuild when the content version rises, or run
-`xml1-builder build` again - see [CHANGELOG.md](CHANGELOG.md)):
+Recent published fixes (rebuild to receive changed content; see [CHANGELOG.md](CHANGELOG.md)):
 
-- **Builder 0.1.7 (content version 9): Magneto's shield never held; Shadow King's first form sat on a pillar where
-  hits never registered, and his fight could end unfinished after killing his images in the wrong order; arriving
-  in the mansion after that mission dropped the hero out of the level; Emma Frost's introduction ended before her
-  questions.** All fixed; the boss fights and the mansion arrival were checked by hand. Master Mold's warp-core
-  shield is still missing (issue #27).
-- **Builder 0.1.6 (content version 8, with XML2 Fix 1.3.0): conversations that advanced by themselves in the first
-  game waited for Enter on every line; spoken replies were cut off; SKILL pickups gave XP instead of a skill point;
-  most Danger Room reward items never loaded.** All four fixed, two of them through new engine hooks in the fix.
-- **Builder 0.1.5 (content version 7): balance - a SKILL pickup levelled the whole roster, bosses could be stunned
-  and knocked down like henchmen, and melee did X-Men Legends II's damage numbers instead of the first game's.** All
-  three restored to the first game's behaviour (SPEC sections 30-33).
-- **Builder 0.1.4 (content version 6): projectile and explosion damage from the first game's data read as zero** -
-  freeze and knockback gun shots, grenades, incendiaries, missiles, and Magma's, Pyro's, Mystique's and the Shades'
-  thrown attacks did no damage. They do now, with the first game's numbers; expect those fights to hurt.
-- **Builder 0.1.3 (content version 5): with builder 0.1.2, in zones with gun soldiers the third and fourth heroes
-  of the party had no power wheel** (holding the power key did nothing for them; the next zone restored it). A
-  packaging slip in 0.1.2; fixed, and the builder now refuses to produce it.
-- **Builder 0.1.2 (content version 4): the first game's gun soldiers fired blanks** - the GRSO rifles, lasers,
-  lightning and nullifier guns, the HAARP soldiers and flamethrowers, the pistol thugs did no damage and showed no
-  tracer, sound or flame (the flamethrower's flame was invisible). They now fire, hit and are drawn, with the first
-  game's damage numbers; expect the HAARP exterior to be harder than it was.
-- **Builder 0.1.1 (content version 3): a hero's powers vanished from the power wheel after loading a save in a few
-  zones** (nyc1_1_3 and 1_1_2b for Cyclops, the two Danger Room flashback zones with him, the sewer hub zone where
-  Gambit is met, nuke2_2 for Colossus, the Blackbird arbiter zone). Leaving the zone brought them back; nothing was
-  lost.
+- **0.1.12 / content 15:** ladder descents, completed objective descriptions, STAT attribute points,
+  power/Might-only break rules, effect particles in busy areas, recommended mission teams, rank-1 power damage,
+  Xtraction beacon glow, and removal of the sequel's Xtract world map and Blink Portal.
+- **0.1.11 / content 14:** Save is available at the twenty formerly restricted Xtraction points.
+- **0.1.10:** older hero talent indices translate across the 0.1.8 changes.
+- Earlier releases fixed power-wheel loss, NPC gun/projectile damage, conversation timing, skill pickups,
+  Danger Room rewards, and several boss and mansion progression problems.
+
+Prepared for **0.2.0 / content 16**, requiring **XML2 Fix 1.4.0** (unreleased): the LC save format above,
+first-game combat balance, permanent save identities and registry guards, numbered prop floor placement,
+personal-item picture framing/text depth, complete power icons, confirmation-button release handling,
+weapon bonuses and integer damage rolls. Mystique's long smash burst remains only partly sounded.
 
 ### What isn't there
 
@@ -160,17 +200,11 @@ need new engine hooks in xml2-fix), the port plays without them:
 - **The first game's loot and shops.** Random drops are X-Men Legends II's, not the first game's equipment. The Healer
   opens a shop, but it is X-Men Legends II's (generated stock, its prices and its training services); Forge's
   workshop is absent ([#6](https://github.com/ChronoRixun/legends-classic/issues/6)).
-- **Saving at some Xtraction points.** Twenty of the first game's Xtraction points, the first one in the game and
-  the mansion sub-basement among them, offer Change Team only: they cannot save or load. Other Xtraction points
-  also offer an "Xtract" world map the first game never had
-  ([#63](https://github.com/ChronoRixun/legends-classic/issues/63),
-  [#46](https://github.com/ChronoRixun/legends-classic/issues/46)).
-- **Difficulty.** The port is easier than the first game: enemies have less health and hit for less, and heroes hit
-  harder ([#14](https://github.com/ChronoRixun/legends-classic/issues/14)).
-- **Walls that need a power attack.** Breakable walls the first game reserves for a power attack also break to
-  ordinary combos ([#51](https://github.com/ChronoRixun/legends-classic/issues/51)).
-- **Objective completion text.** Objectives keep their first description when the first game would have changed it
-  ([#8](https://github.com/ChronoRixun/legends-classic/issues/8)).
+- **Xtraction services.** Save works at every point since 0.1.11; the sequel's Xtract world map is removed
+  in 0.1.12. The first game's Load, Danger Room, Healer and Forge choices are still absent
+  ([#95](https://github.com/ChronoRixun/legends-classic/issues/95)).
+- **Difficulty.** Published 0.1.12 still differs from the first game's balance; 0.2.0 enables the prepared
+  first-game combat rules ([#14](https://github.com/ChronoRixun/legends-classic/issues/14)).
 - **Talent costs are X-Men Legends II's**: the first game's two-point Xtreme and Legend ranks cost one point
   ([#15](https://github.com/ChronoRixun/legends-classic/issues/15)).
 
@@ -186,9 +220,9 @@ need new engine hooks in xml2-fix), the port plays without them:
 
 ### Versions that go together
 
-A build records the xml2-fix version it needs (`_build\stamp.json`, `requires`). With an older fix the game still
-starts but the new keys do nothing: for example the fourth hero's powers or the enemy outlines can go wrong, without an
-error. The launcher installs the latest fix.
+A build records the xml2-fix version it needs (`_build\stamp.json`, `requires`). Use the matching pair.
+An older DLL can ignore required keys and produce incorrect behavior; it cannot provide LC saves.
+The launcher installs published fixes, so it cannot supply unreleased 1.4.0 before publication.
 
 | Builder | Content version | Needs xml2-fix | Notes |
 |---|---|---|---|
@@ -198,7 +232,8 @@ error. The launcher installs the latest fix.
 | 0.1.6 - 0.1.7 | 8 - 9 | 1.3.0 | conversation hooks, skill points, the item-enhancement pool |
 | 0.1.0 - 0.1.5 | 2 - 7 | 1.2.0 | |
 
-Launcher: any release runs every builder; on Proton (Steam Deck, Linux) 0.2.1 or later.
+Launcher: published 0.3.0 supports this setup flow; builder unpacking under Proton needs 0.2.1 or later.
+Main also has additional fixes that are not in the 0.3.0 tag; see its README.
 
 ## Roadmap
 
@@ -214,7 +249,7 @@ Launcher: any release runs every builder; on Proton (Steam Deck, Linux) 0.2.1 or
 | | the launcher's setup wizard and game page | done |
 | | this public repository, the community Discord | done |
 | | release testing on a clean PC (Windows Sandbox): the builder alone, and the launcher's one-click setup | done |
-| M4 | **Public test period**: the fixes the play-throughs turn up (0.1.1: the power-wheel bug above; 0.1.2: the silent gun soldiers; 0.1.3: the missing power wheels; 0.1.4: zero-damage projectiles; 0.1.5: skill pickups, boss immunities, melee numbers; 0.1.6: conversations, skill points, Danger Room rewards; 0.1.7: Magneto and Shadow King, the Emma conversation, the mansion arrival), then a balance pass (melee versus powers against the first game's enemy values) | now |
+| M4 | **Public test period**: fixes from playthroughs through 0.1.12; 0.2.0 prepares new saves and first-game combat balance | now |
 | later | settings separate from X-Men Legends II's; compressed disc images; online play across the internet tested | ideas |
 
 ## Repository layout

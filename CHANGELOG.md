@@ -98,7 +98,7 @@ build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebui
   the melee hit chance and rounding through xml2-fix's `[Balance]` section), and the seven basic melee attacks
   and the power-attack rule are in the build's data. Was prepared off by default; 0.2.0 turns the switch on
   (`xml1build.balance.X1_BALANCE`, the test override dropped). SPEC 69; the check V38.
-- **Co-op compatibility metadata** (decision D5). `[Online] GameVersion` is `X1.2`, separating these lobbies
+- **Co-op compatibility metadata** (decision D5). `[Online] GameVersion` is `LC23` (content 16, catalogue 5), separating these lobbies
   from earlier port generations. The ini records the save-table content fingerprint. Comparing peers
   by content version and fingerprint needs the XML2 Fix network seam, which is not implemented in 1.4.
 - Continuing LC saves retain legacy/KEEP payloads and documentary keys. Core capture metadata records opened
