@@ -5,6 +5,13 @@ build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebui
 
 ## Unreleased - 0.2.0 - content version 16 (needs XML2 Fix 1.4)
 
+- **World-placed keycards show their model instead of the missing-model marker** (issues #96, #98). The
+  HAARP train-car keycard and the dropped proximity/ID keycards are placed as world pickups whose model
+  comes from the items table; XML2's same-named items table entries ship no model (XML2 never places them),
+  and the xml2-wins merge kept that gap - the pickups rendered as a floating yellow question mark under a
+  correct hint arrow. A same-name items-table entry with no model now takes XML1's model, the model ships
+  in the items package, and a validator refuses any referenced item without a packaged pickup model.
+  SPEC 77; the check V-TBD.
 - **NPC gun damage rolls the first game's minimum-based +/-30 % draw.** The first game stores only the
   weapon damage code's minimum and rolls one integer draw between trunc(min x 0.7f) and trunc(min x 1.3f) on
   every shot (all gun types); the port instead rolled the whole authored code range, inflating gun damage by

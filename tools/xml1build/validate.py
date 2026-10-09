@@ -802,7 +802,8 @@ class Validator:
                                ('V40', 'melee weapons', lambda ck: MW.validate(self, ck)),
                                ('V39', 'save files', lambda ck: SF.validate(self, ck)),
                                ('V41', 'spawn-floor residency', self.spawn_floor_residency),
-                               ('V45', 'gun damage roll', lambda ck: W.validate(self, ck))):
+                               ('V45', 'gun damage roll', lambda ck: W.validate(self, ck)),
+                               ('V46', 'pickup models', self.v46_pickup_models)):
             ck = Check(cid, title)
             self.checks[cid] = ck
             t0 = time.time()
@@ -846,6 +847,38 @@ class Validator:
             if added and residents > SE.MAX_RESIDENTS:
                 ck.error(f'{zone}: spawn-floor residency exceeds {SE.MAX_RESIDENTS} explicit residents')
             ck.count('settled_instances', added)
+
+    _ENGINE_ITEMS = {'money'}        # XMen2.exe resolves MONEY natively; neither game lists it in Data/items
+    _ITEMS_PKG = 'packages/generated/items.pkgb'
+
+    def v46_pickup_models(self, ck):
+        """V46 (issues #96, #98): every item a registered entity names through inventoryitem must carry a
+        pickup model in Data/items and that model must ship in the items package (loaded at game start).
+        A placed world pickup (inventoryent) takes its model from the items table; a model-less entry renders
+        as the engine's missing-model marker (the floating yellow question mark: the HAARP and asteroid
+        keycards XML2's same-named entries ship without a model)."""
+        sc = self.scan
+        refs = sorted({(v or '').strip().lower() for vals in sc.inv_items.values() for v in vals}
+                     - self._ENGINE_ITEMS)
+        ck.set('referenced_items', len(refs))
+        models = {}
+        for n, root in sc.items.items():
+            for el in root.iter():
+                if el.tag.lower() == 'item' and el.get('name'):
+                    models[el.get('name').strip().lower()] = (el.get('model') or '').strip()
+        pkg_models = {C.norm(f) for k, f in sc.pkg.get(self._ITEMS_PKG, ()) if k.lower() == 'model'}
+        ck.set('items_table_entries', len(models))
+        for name in refs:
+            if name not in models:
+                ck.error(f'inventoryitem={name!r} is referenced but has no entry in Data/items')
+                continue
+            if not models[name]:
+                ck.error(f'item {name!r} has no pickup model in Data/items (world pickups render as the '
+                         f"missing-model marker; issues #96/#98)")
+                continue
+            stem = C.split_ext(C.norm('models/' + models[name]))[0]
+            if stem not in {C.split_ext(p)[0] for p in pkg_models}:
+                ck.error(f'item {name!r} model {models[name]!r} is not packaged in {self._ITEMS_PKG}')
 
     def report(self):
         ctx = self.ctx

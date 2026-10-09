@@ -6232,3 +6232,34 @@ difference (35-65) would need a live Xbox trace, as the research report notes - 
 not depend on it. The entity `damage` attribute itself stays a range in the port: on weapon shots the gun's
 attack overrides it (both engines), and the bare-entity difference is left to a separate task. XML2's own
 retail entities/styles keep their retail ranges (the check only inspects files the build wrote).
+
+## 77. Same-name items keep XML2's entry but take XML1's pickup model (issues #96, #98)
+
+**Symptom.** World-placed keycard pickups rendered as the engine's missing-model marker - a floating yellow
+question mark where the model should be - while the objective hint arrow pointed at them correctly: the
+HAARP train-car keycard of the Maintenance Garage (issue #98) and the proximity keycard a leader drops
+(issue #96). The tester could still pick the invisible marker up.
+
+**Mechanism.** XML1's zones place these pickups as `inventoryent` entities with an `inventoryitem` name and
+NO model attribute; the running game resolves the pickup's model from the items table (XML1's items.eng:
+KEYCARD1/2/3 -> `pickups/key_green`). XML2's own items table ships same-named KEYCARD1/2/3 entries WITHOUT a
+model - XML2 never places them in the world. The world-table merge keeps XML2's entry for every same-named
+item (SPEC 4.4 xml2-wins), so the converted zones' keycards resolved to a model-less item and XMen2.exe
+drew its missing-model placeholder. The engine reads the zone's .engb as well as the .XMLB, so both halves
+of Data/items carry the fill.
+
+**Rule.** In `zones.build_world_tables`, for the items table only, a same-name XML2 entry with no `model`
+attribute (or an empty one) takes the model of XML1's original entry (`zones.fill_item_model`); XML2's own
+model, when it has one, always wins and other tables are untouched. Every filled model is added to the
+items package's `only_files` (it ships in packages/generated/items.PKGB, loaded at game start) and is
+reported in the build note.
+
+**Check.** V-TBD (the check V46): every item name a registered XMLB references through `inventoryitem` must
+exist in Data/items, carry a model, and have that model packaged in packages/generated/items.PKGB; `money`
+alone is allowlisted (XMen2.exe resolves MONEY natively; neither game lists it in the items table). Unit
+tests: `tests/unit/test_pickup_models.py` (invented items).
+
+**Limits.** The fill covers the items table only; entities that name a model directly (most pickups carry
+the model inline) are covered by the existing package reference checks. The engine-side behaviour (model
+lookup from the items table for inventoryent) is XML1/XML2-shared and was not re-verified against
+XMen2.exe in this task; the V46 data check and the staged live look at the keycard are the evidence.
