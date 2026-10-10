@@ -5869,6 +5869,15 @@ D1-D13), generated from the build's own data by tools/lcsave at the end of the c
 fix_ini writes `[Save] Format=lc` for a port build (PORT_OWNED; `lc`, not the draft `lc1` of SPEC-new-save A11 -
 the name was free to choose before implementation) and raises REQUIRED_XML2FIX to 1.4.
 
+**Later-feature classification.** #6 loot / shops uses keyed packed `DEFSTATE` records in LC (reader ceiling
+65536 definitions). The 160-definition limit is the native engine budget checked by
+`convert.py::_validate_native_build` during native reconstruction. The current build has 88 definitions;
+adding the original's 116-item loot table would exceed 160 and needs an engine / DLL limit raise plus a converter
+budget change, with no LC format change. For #35 talent costs, `TAL` stores ranks, `HREC` stores level and unspent
+skill points, and the header stores `content_version`: a later two-point rank cost can grandfather or reprice
+existing saves by content version without a new field; policy is deferred until #35 lands. #5 solo mode changes
+runtime party behaviour only and persists nothing new.
+
 ### 70.1 The byte-level choices SPEC-new-save leaves open
 
 Decided here (the writers and readers are tools/lcsave/lcfiles.py; a C++ reader is written from this text):
