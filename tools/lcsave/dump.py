@@ -63,13 +63,13 @@ def _talents_old(env, era, stats_index, a):
     return sorted(out, key=lambda t: str(t['talent']))
 
 
-def _hero_old(env, era, stats_index, h):
+def _hero_old(env, era, item_era, stats_index, h):
     a, eq = h['attributes'], h['equipment']
     d = dict(hero=_era_name(env, era, 'STAT', 'STAT', stats_index), level=a['level'], experience=eq['experience'],
              traits=[[a['trait_base'][i], a['trait_pending'][i], a['trait_bonus'][i], a['trait_bonus2'][i]] for i in range(4)],
              skill_points=a['skill_points'], trait_points=a['trait_points'], ai=[a['ai_level'], a['ai_attack']],
              talents=_talents_old(env, era, stats_index, a),
-             equipped=[_instance_old(env, era, i) for i in eq['equipped']],
+             equipped=[_instance_old(env, item_era, i) for i in eq['equipped']],
              vitals=[eq['vitals_valid'] & 1, round(eq['health'], 3), round(eq['energy'], 3), eq['player_seat']],
              counters=[eq['ack_level'], eq['health_boosts'], eq['energy_boosts'], eq['levels_purchased'], eq['points_bought'],
                        eq['respec_count'], eq['skirmish_boost'], eq['flags'] & 0x1f])
@@ -136,14 +136,14 @@ def dump_old(old, env, era_hint):
                                  for i in range(L.OLD_DEF_STATE_PAIRS) if it['def_state'][2 * i] or it['def_state'][2 * i + 1]},
                       carried=[_instance_old(env, era_i, x) for x in it['carried']],
                       world={str(w['slot']): _instance_old(env, era_i, w['instance']) for w in it['world']})
-    d['heroes'] = [_hero_old(env, era_t, n + 1, h) for n, h in enumerate(old['heroes'])]
+    d['heroes'] = [_hero_old(env, era_t, era_i, n + 1, h) for n, h in enumerate(old['heroes'])]
     for h, oh in zip(d['heroes'], old['heroes']):
         h['powers'] = {str(i): dict(name=n, flags=f) for i, (n, f) in enumerate(zip(oh['powers'], oh['power_flags']))
                        if n or f != L.POWER_USABLE}
         h['costume'] = oh['costume']
         h['costumes_unlocked'] = [b for b in range(32) if oh['costume_mask'] >> b & 1]
     d['unlocked'] = [_era_name(env, era_t, 'STAT', 'STAT', i) for i in old['unlocked']['entries'][:old['unlocked']['count']]]
-    d['restore'] = dict(valid=old['restore_flag'], records={str(n): _hero_old(env, era_t, n, r) for n, r in enumerate(old['restore'])
+    d['restore'] = dict(valid=old['restore_flag'], records={str(n): _hero_old(env, era_t, era_i, n, r) for n, r in enumerate(old['restore'])
                                                              if r['attributes']['count'] or r['equipment']['equipped'] or r['equipment']['experience']})
     d['mission'] = _snapshot_old(env, era_t, old['mission'])
     d['side'] = [_snapshot_old(env, era_t, old['side']['frames'][i]) for i in range(old['side']['count'])]

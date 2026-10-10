@@ -220,7 +220,7 @@ def _cross_check_instance(env, era, inst, what):
                                f'{inst["definition"]} in builder {era.release} (the item table of another release?)')
 
 
-def _hero_record(env, res, era, block_index, stats_index, h, what):
+def _hero_record(env, res, era, item_era, block_index, stats_index, h, what):
     a, eq = h['attributes'], h['equipment']
     stat_hash = _era_list(env, era, 'STAT', stats_index, f'{what}: stats index')
     rec = dict(hero=_id(env, res, 'STAT', stat_hash, what))
@@ -256,7 +256,7 @@ def _hero_record(env, res, era, block_index, stats_index, h, what):
         talents.append(dict(talent=_id(env, res, 'TALN', h_, what), rank=f['rank'], pending=f['pending'], cap=f['cap'],
                             base=f['base'], byte5=f['byte5']))
     rec['talents'] = talents
-    rec['equipped'] = [_instance_keys(env, res, era, inst, f'{what}: equipped item {i}') for i, inst in enumerate(eq['equipped'])]
+    rec['equipped'] = [_instance_keys(env, res, item_era, inst, f'{what}: equipped item {i}') for i, inst in enumerate(eq['equipped'])]
     rec.update(vitals_valid=eq['vitals_valid'] & 1, health=eq['health'], energy=eq['energy'], player_seat=eq['player_seat'],
                experience=eq['experience'], ack_level=eq['ack_level'], health_boosts=eq['health_boosts'],
                energy_boosts=eq['energy_boosts'], levels_purchased=eq['levels_purchased'], points_bought=eq['points_bought'],
@@ -273,8 +273,8 @@ def power_records(names, flags):
     return [dict(button=i, name=n, flags=f) for i, (n, f) in enumerate(zip(names, flags)) if n or f != L.POWER_USABLE]
 
 
-def _hero_full(env, res, era, block_index, stats_index, h, what):
-    rec = _hero_record(env, res, era, block_index, stats_index, h, what)
+def _hero_full(env, res, era, item_era, block_index, stats_index, h, what):
+    rec = _hero_record(env, res, era, item_era, block_index, stats_index, h, what)
     rec['powers'] = power_records(h['powers'], h['power_flags'])
     stat_hash = era.table('STAT')[stats_index]
     cost = era.table('COST').get(stat_hash, {})
@@ -639,7 +639,7 @@ def _translate(old, env, res, original_name, old_bytes, slot, now=None, context=
                                            energy_items=it['energy_items'], def_state=def_state, key_counts=key_counts,
                                            instances=instances, world=world)))
     # ---- HERO
-    heroes = [_hero_full(env, res, era_tal, n, n + 1, h, f'hero block {n}') for n, h in enumerate(old['heroes'])]
+    heroes = [_hero_full(env, res, era_tal, era_items, n, n + 1, h, f'hero block {n}') for n, h in enumerate(old['heroes'])]
     sections.append(('HERO', 1, SECTION_MINOR['HERO'], 0, dict(heroes=heroes)))
     # ---- ULCK
     stat = era_tal.table('STAT')
@@ -654,7 +654,7 @@ def _translate(old, env, res, original_name, old_bytes, slot, now=None, context=
     for n, r in enumerate(old['restore']):
         if _is_default_restore(r):
             continue
-        rec = _hero_record(env, res, era_tal, n, n, r, f'restore record {n}') if n > 0 else None
+        rec = _hero_record(env, res, era_tal, era_items, n, n, r, f'restore record {n}') if n > 0 else None
         if rec is None:
             res.dropped['other'] += 1
             res.notes.append('restore record 0 (the reserved stats entry) is not default: dropped')

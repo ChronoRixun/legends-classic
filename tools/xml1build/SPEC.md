@@ -5985,6 +5985,24 @@ unreleased 0.2.0 integration. No new validator number is allocated. W11 remains 
 save check are narrower evidence, not a full side-effect-free post-load observer. Newer-file/refusal latches,
 effective mod-bind policy, network/co-op/DR acceptance and TalentRegistry work remain separate pending branches.
 
+
+### 70.6 Legacy equipment eras and restore-bank evidence
+
+Legacy conversion carries the detected talent/start era separately from the item/writer era. Every item
+instance, including HERO equipped lists and REST bank equipment, uses the detected item era for definition,
+name, special-item and enhancement identities and own-record checks. Talents, hero identities and costumes
+continue to use the start era. The old semantic dump uses the same split so verification names equipped items
+correctly. Item-era detection uses the serialized definition count and the own-record checks of all inventory,
+world, hero and restore-bank instances.
+
+Talent-era evidence is keyed by explicit stats-table index: main hero block n uses n+1; restore-bank record n
+uses n. Evidence from both representations of one owner is merged once. Unexplained talent evidence reports
+stats indices. Synthetic regressions cover different talent/item eras with a moved equipped definition in both
+banks, restore slot 16 versus stats index 17, and exact Python/C++ legacy-import parity.
+
+This is a converter correction: LC major/minor versions, catalogue, wire revision and CONTENT_VERSION remain
+unchanged. The existing save-file validation (V39) remains applicable; no generated-content rule is added.
+
 ## 71. Spawn-floor residency (issue #81)
 
 XML1's base entity parser (default.xbe 0x67534-0x67559) defaults `smartent` to
