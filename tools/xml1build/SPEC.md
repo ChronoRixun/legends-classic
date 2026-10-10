@@ -2666,7 +2666,7 @@ inherit (1): only their dead `level` goes, `life` stays a native update. Counts 
 
 | id | check | severity |
 |---|---|---|
-| V19 | `npc_values.verify_exe`: the 5-row value table 0x6da240, the resolver's 5-name loop and the energy constants equal the install's XMen2.exe. No style file the build wrote (Data/powerstyles, fightstyles, shared_nodes; XMLB and engb) holds a value code XMen2.exe reads as 0 (any L/M/H/K/P/A/BST/XTL/XLT/DMG shape but DMG2/3/4, K2, K3); XML2 retail files are allowlisted per file, XMen2.exe's own five are notes. `x1_npc_energy` is defined once per shared_talents file with the right values for every rank used, and every XML1-origin npcstat entry with a mind carries it at rank = mind (none on XML2 entries). | error |
+| V19 | `npc_values.verify_exe`: the 5-row value table 0x6da240, the resolver's 5-name loop and the energy constants equal the install's XMen2.exe. No style file, entity file or inline map entity the build wrote (XMLB and engb) holds a value code XMen2.exe reads as 0 (any L/M/H/K/P/A/BST/XTL/XLT/DMG shape but DMG2/3/4, K2, K3); XML2 retail files are allowlisted per file, XMen2.exe's own five are notes. `x1_npc_energy` is defined once per shared_talents file with the right values for every rank used, and every XML1-origin npcstat entry with a mind carries it at rank = mind (none on XML2 entries). | error |
 | V18 | `x1_powerup_update`: a tag-only update of an inherited powerup trigger still carrying `level` / `affect_type` / `level_max` / `scope_*` (24.4). | error |
 
 V-H5 now flags any code shape in a hero style (`npc_values.is_code`; it missed the `+` codes before).
@@ -3375,6 +3375,16 @@ and `K10` in the shipped freeze/knockback entity files. XMen2.exe does not resol
 (section 24; the projectile parser uses the same value resolver, weapon_events.md section 4).
 Both importers now call `npc_values.resolve_entity_codes`. Unknown codes report a build error.
 V19 checks the final registered entity files as well as styles, including single and multiple XMLB roots.
+
+Zone conversion also resolves numeric codes in every inline `<entity>` declaration, using the same resolver
+and scalar `explodedamage` minimum. Zone instance names (such as an `entinst` type shaped like a value code)
+are never numeric inputs. V19 checks final registered map XMLB/ENGB declarations for unresolved codes and
+refuses explosion ranges. Resolution changes attributes in place; declaration and placement order stay
+unchanged, preserving save ordinals. Regenerate the affected zones and run `savefiles` (automatically selected
+after a content pass); a normal zone pass also needs the character modules that supply its weapon-variant plan:
+prepared source/cache stages are unchanged, but the map bytes must be regenerated. The automatic
+savefiles pass rechecks the save-bound Data files; this numeric-only map repair leaves those bindings unchanged.
+The release integrator assigns the content-version bump; this repair does not alter LC identities or layout.
 
 `characters.style_packages` also used the original bundle unchanged for weapon variants. All nine
 variant packages named the original style internally, even though the character and zone packages

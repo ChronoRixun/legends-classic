@@ -145,7 +145,7 @@ def collapse_single_value_entity_attrs(root) -> None:
 
 
 def resolve_entity_codes(ctx, root, rel):
-    """Use the same value-code conversion for every importer of an XML1 entity file.
+    """Use the same value-code conversion for entity files and inline map declarations.
 
     Zones may take ownership of a file previously written by characters. Both must resolve the
     codes, or that later import silently restores values XMen2.exe interprets as zero. After the
@@ -153,14 +153,29 @@ def resolve_entity_codes(ctx, root, rel):
     (collapse_single_value_entity_attrs).
     """
     n = str(rel).replace('\\', '/').lower()
-    if not n.startswith('data/entities/'):
+    inline = n.startswith('maps/')
+    if not inline and not n.startswith('data/entities/'):
         return None
     from .heroes import Values                    # local import: heroes imports npc_values
-    result = resolve_style(root, Values(ctx.read_x1_xml('data/values.xml')), f'{n}:')
-    for problem in result[1]:
+    # A zone's entinst type (e.g. A1) is an entity name, not a numeric value. Only
+    # declarations go through the entity parser; never resolve the entire map tree.
+    trees = inline_entities(root) if inline else [root]
+    values = Values(ctx.read_x1_xml('data/values.xml'))
+    counts, problems = collections.Counter(), []
+    for tree in trees:
+        c, bad = resolve_style(tree, values, f'{n}:')
+        counts.update(c)
+        problems.extend(bad)
+        collapse_single_value_entity_attrs(tree)
+    for problem in problems:
         ctx.error(f'Entity value code: {problem}')
-    collapse_single_value_entity_attrs(root)
-    return result
+    return counts, problems
+
+
+def inline_entities(root):
+    """Map-local declarations, including single and multiple XMLB roots, in source order."""
+    return [e for e in root.iter() if isinstance(e.tag, str) and e.tag.lower() == 'entity'] \
+        if root is not None else []
 
 
 def code_findings(root):
@@ -545,6 +560,30 @@ def validate_entity_codes(v, ck):
     ck.set('entity_value_codes_left', len(seen))
 
 
+def validate_inline_entity_codes(v, ck):
+    """V19: final converted maps obey the same numeric contract as entity files."""
+    seen = set()
+    for rel in sorted(v.idx.under('maps/'), key=str.lower):
+        if not rel.lower().endswith(('.xmlb', '.engb')) or v.entry(rel) is None:
+            continue                               # unchanged XML2 maps retain retail behavior
+        ck.count('inline_entity_files_checked')
+        for entity in inline_entities(v.tree(rel)):
+            found, _ = code_findings(entity)
+            for where, tag, attr, value in found:
+                key = (str(Path(rel).with_suffix('')).lower(), where, tag, attr.lower(), value)
+                if key in seen:
+                    continue
+                seen.add(key)
+                ck.error(f'{rel}:{where} <{tag} {attr}="{value}">: inline entity value code '
+                         'XMen2.exe reads as 0; resolve during zone conversion (SPEC 29.2)')
+            for e in entity.iter():
+                for attr, value in e.attrib.items():
+                    if attr.lower() in SINGLE_VALUE_ENTITY_ATTRS and len((value or '').split()) == 2:
+                        ck.error(f'{rel}:{entity.get("name")} <{e.tag} {attr}="{value}"> must be '
+                                 "XML1's single minimum, not a range (SPEC 29.2)")
+    ck.set('inline_entity_value_codes_left', len(seen))
+
+
 def v19(v, ck):
     """V19 NPC value codes and energy (SPEC 24): the name table / energy constants equal the install's XMen2.exe;
     no style file the build wrote holds a value code XMen2.exe reads as 0 (XML2 retail files are allowlisted
@@ -593,6 +632,7 @@ def v19(v, ck):
     for stem, n in sorted(retail.items()):
         ck.allow(f'{stem}: {n} value code(s)', 'XML2 retail style file, unchanged (XMen2.exe ships it so)')
     validate_entity_codes(v, ck)
+    validate_inline_entity_codes(v, ck)
     # ---- the NPC energy talent
     st = v.stats()
     x1 = v.x1_stats()

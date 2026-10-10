@@ -60,6 +60,7 @@ from . import buoys as BY                # section 42: generated long-range walk
 from . import automaps as AM              # section 26: XML1 automap textures -> Automaps/<zone>.zam
 from . import settle as SE                # issue #81: native floor sweeps for raised ordinary props
 from . import talent_sets as TS           # SPEC <number assigned at merge>: NPC-only talents in per-set files
+from . import npc_values as NV            # SPEC 29.2: inline entities use the same values as entity files
 
 # ---------------------------------------------------------------------------------------------- constants
 PATCH_ZONE = 'zones.zone'            # import_x1_asset patch keys (deterministic patches -> cacheable imports)
@@ -1306,6 +1307,8 @@ class Zones:
             self.counts['starts_allinone'] += allinone
         st['mapped_refs'] = C.map_tree_refs(root)
         st['rewritten'] = self.prov.rewrite_data_tree(ctx, root, zx)
+        codes, _ = NV.resolve_entity_codes(ctx, root, zx)
+        self.counts['inline_entity_codes_resolved'] += sum(n for k, n in codes.items() if k.startswith('code:'))
         inline = rename_npc_inline_refs(zone, root)                     # section 18.1: its inline code follows
         if inline:
             self.counts['npc_double_inline_refs'] += inline

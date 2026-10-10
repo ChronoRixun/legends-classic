@@ -52,7 +52,7 @@ Checks (severity per SPEC 4.6: error = will not load or silently misbehaves; war
   V17 review (SPEC 21): review_paths (caps, textures, movies, imageViewer literals, loading screens), codex,
                 trivia, credits
   V18 combat events (SPEC 22, combat_events.v18): style triggers / events / handlers / affecters against XMen2.exe
-  V19 npc values (SPEC 24, npc_values.v19): no style value code XMen2.exe reads as 0; the NPC energy talent and
+  V19 npc values (SPEC 24, npc_values.v19): no style, entity-file or inline-map value code XMen2.exe reads as 0; the NPC energy talent and
                 every XML1-origin npcstat entry's rank (= its mind)
   V20 automaps (SPEC 26, automaps.v20): a .zam and one last <zam> entry for every converted zone with an XML1
                 automap texture (none elsewhere, no textures/automap entries); every zam parses as the loader

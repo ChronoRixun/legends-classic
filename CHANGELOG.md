@@ -5,6 +5,10 @@ build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebui
 
 ## Unreleased - 0.2.0 - content version 16 (needs XML2 Fix 1.4)
 
+- Resolve XML1 numeric value codes in map-local entity declarations, restoring explosion damage on
+  Avalanche rocks, Magneto props, and other inline projectiles. Explosion damage keeps the original scalar
+  minimum; V19 rejects unresolved inline codes and ranges. Entity and placement order are preserved.
+
 - Import equipped legacy items using the detected item era, including restore-bank equipment, when the
   campaign's talent era differs. Attribute restore-bank talent evidence to its actual stats-table owner.
   The companion XML2 Fix converter and semantic dump apply the same corrections; no save-format change.
