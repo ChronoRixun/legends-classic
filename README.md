@@ -201,12 +201,13 @@ need new engine hooks in xml2-fix), the port plays without them:
   opens a shop, but it is X-Men Legends II's (generated stock, its prices and its training services); Forge's
   workshop is absent ([#6](https://github.com/ChronoRixun/legends-classic/issues/6)).
 - **Xtraction services.** Save works at every point since 0.1.11; the sequel's Xtract world map is removed
-  in 0.1.12. The first game's Load, Danger Room, Healer and Forge choices are still absent
+  in 0.1.12, and 0.2.0 brings back Forge's Workshop where the first game offered it. The first game's Load,
+  Danger Room and Healer choices are still absent
   ([#95](https://github.com/ChronoRixun/legends-classic/issues/95)).
 - **Difficulty.** Published 0.1.12 still differs from the first game's balance; 0.2.0 enables the prepared
   first-game combat rules ([#14](https://github.com/ChronoRixun/legends-classic/issues/14)).
 - **Talent costs are X-Men Legends II's**: the first game's two-point Xtreme and Legend ranks cost one point
-  ([#15](https://github.com/ChronoRixun/legends-classic/issues/15)).
+  ([#35](https://github.com/ChronoRixun/legends-classic/issues/35)).
 
 ### Known limitations
 
@@ -249,8 +250,30 @@ Main also has additional fixes that are not in the 0.3.0 tag; see its README.
 | | the launcher's setup wizard and game page | done |
 | | this public repository, the community Discord | done |
 | | release testing on a clean PC (Windows Sandbox): the builder alone, and the launcher's one-click setup | done |
-| M4 | **Public test period**: fixes from playthroughs through 0.1.12; 0.2.0 prepares new saves and first-game combat balance | now |
-| later | settings separate from X-Men Legends II's; compressed disc images; online play across the internet tested | ideas |
+| M4 | **Public test period**: fixes from playthroughs through 0.1.12; 0.2.0 brings the new save format and the first game's combat balance | now |
+| M5 | **Complete**: the first game's mechanics this engine lacks (see [What isn't there](#what-isnt-there)) | next |
+| M6 | **Classic look**: the first game's menus, fonts, colours and HUD | planned |
+| 1.0 | **Finished**: a full campaign played by hand on a release build with nothing blocking, checked on the Steam Deck, co-op checked on one PC and across the internet | goal |
+| later | settings separate from X-Men Legends II's; compressed disc images | ideas |
+
+What comes next, by version (plans move with what testing finds):
+
+- **0.2.x** - the remaining bug reports, in small releases, and a first look back at the original: the first game's
+  main menu with its own panels, fonts and colours, and a widescreen layout of it.
+- **0.3** - complete, part one: Master Mold's warp-core shield and the scan turrets
+  ([#27](https://github.com/ChronoRixun/legends-classic/issues/27),
+  [#4](https://github.com/ChronoRixun/legends-classic/issues/4)), solo mode
+  ([#5](https://github.com/ChronoRixun/legends-classic/issues/5)) and breakable enemy parts
+  ([#3](https://github.com/ChronoRixun/legends-classic/issues/3)).
+- **0.4** - classic look: the rest of the menus (pause, characters, Review, shops, loading) and the HUD, made from
+  your own disc's art.
+- **0.5** - complete, part two: the first game's loot and shops
+  ([#6](https://github.com/ChronoRixun/legends-classic/issues/6)), two-point Xtreme and Legend ranks
+  ([#35](https://github.com/ChronoRixun/legends-classic/issues/35)), walls that need a power attack
+  ([#51](https://github.com/ChronoRixun/legends-classic/issues/51)) and changing objective text
+  ([#8](https://github.com/ChronoRixun/legends-classic/issues/8)).
+- **0.5 to 1.0** - whatever is still open from these lists, and whatever the playthroughs turn up next: there will
+  be more.
 
 ## Repository layout
 
