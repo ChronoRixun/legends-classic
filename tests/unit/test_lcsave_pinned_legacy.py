@@ -1,6 +1,9 @@
 """Legacy streamed placements promoted only when their current identity is unique."""
 import copy
 import tempfile
+from pathlib import Path
+import xml.etree.ElementTree as ET
+import xmlb
 from test_lcsave_durable import _env, _converted, _secs
 from lcsave import container, convert, layout as L
 
@@ -17,6 +20,41 @@ def fixture(env, kind=3):
 
 def packed(f):
     return container.write_file(L.KIND_CAMPAIGN, _secs(f), f['header'])
+
+
+def unnamed_fixture(d):
+    """An unrelated, unoccupied numbered placement has no instance name."""
+    env = _env(d)
+    f, record, target, ordinal, placement = fixture(env)
+    path = Path(env.binds.build) / 'Maps/zone/x/y.engb'
+    root = xmlb.decode(path.read_bytes())
+    ET.SubElement(ET.SubElement(root, 'entinst', type='gate'), 'inst')
+    path.write_bytes(xmlb.encode(root))
+    env.binds._zones.clear()
+    numbering = env.binds.zone_numbering('zone/x/y')
+    assert numbering['numbered'][-1][1] is None
+    record['content_hash'] = bytes.fromhex(numbering['sha1'])
+    return env, f, record, target, ordinal, placement
+
+
+def test_unnamed_unoccupied_placement_does_not_block_promotion():
+    with tempfile.TemporaryDirectory() as d:
+        env, f, _, target, ordinal, placement = unnamed_fixture(d)
+        native, _ = convert.reverse_slot(packed(f), env)
+        z = native['zones'][0]
+        assert z['states'][z['ordinal_map'][ordinal - 1]]['flags_b'] == 11
+        assert z['ordinal_map'][len(env.binds.zone_numbering('zone/x/y')['numbered']) - 1] == 0
+        assert any(e['ordinal'] == ordinal and e['placement_index'] == placement
+                   for e in convert.loaded_zone_metadata(packed(f), env)[0]['entities'])
+
+
+def test_missing_placement_definition_name_matches_empty_string():
+    with tempfile.TemporaryDirectory() as d:
+        env = _env(d)
+        _, record, target, _, _ = fixture(env)
+        record['names'][target['def_name']] = ''
+        name = record['names'][target['inst_name']]
+        assert convert._legacy_pinned_states(record, [(None, name, 0)], set()) == {record['states'].index(target): 1}
 
 
 def test_legacy_streamed_placement_restores_alive_and_metadata():

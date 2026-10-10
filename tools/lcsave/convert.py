@@ -1647,7 +1647,7 @@ def _legacy_pinned_states(record, numbered, occupied, legacy_import=False):
         if state['list'] not in (STATE_DYNAMIC, STATE_SMART):
             continue
         pair = (key_hash(record['names'][state['def_name']]), key_hash(record['names'][state['inst_name']]))
-        matches = [k + 1 for k, (dn, inn, _) in enumerate(numbered) if (key_hash(dn), key_hash(inn)) == pair]
+        matches = [k + 1 for k, (dn, inn, _) in enumerate(numbered) if (key_hash(dn or ''), key_hash(inn or '')) == pair]
         if len(matches) == 1 and matches[0] not in occupied:
             candidates[i] = matches[0]
     return {i: k for i, k in candidates.items() if list(candidates.values()).count(k) == 1}
