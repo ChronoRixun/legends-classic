@@ -118,6 +118,11 @@ def install(a):
     dll = os.path.abspath(a.dll)
     if not os.path.isfile(dll):
         sys.exit(f'{dll} not found - build xml2-fix branch display first (cmake --build build --config Release)')
+    if not a.stock_limits:
+        try:
+            FI.check_move_trigger_dll(dll, {'Limits': FI.LIMITS})
+        except ValueError as exc:
+            sys.exit(str(exc))
     shutil.copy2(dll, os.path.join(out, 'dinput.dll'))
     postgame = None if a.stock_opening else FI.build_postgame(out)   # an XML1 build: the campaign ends with XML1's
     # the XML1 front end's main menu: the mouse and Quit through xml2-fix (Play Online's mouse slot with a DLL for it)

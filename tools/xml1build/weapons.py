@@ -24,16 +24,23 @@ style with every `weapon_fire` trigger replaced by the weapon's own (`apply` bel
 stats entry at it (its character package follows). One XML1 style serves many weapons (ps_grso: mp5, laser,
 lightning, nullifier, freeze, knockback, superlaser), hence variants. Value codes stay codes here (L1..L5, K10):
 npc_values.resolve_style turns them into XML1's numbers afterwards (SPEC 24), in the styles and in the two
-projectile entity files. A FightMove holds at most 19 triggers (0x4f6aa7), so a burst of 7 weapon_fire triggers
-gets 2 triggers per shot: the attack and one effect_sound (muzzle flash + fire sound in one).
+projectile entity files. The stock FightMove holds 19 triggers (0x4f6aa7). Port builds request MoveTriggers=64 from the companion
+XML2 Fix patch, preserving authored events plus the attack and one effect_sound per shot.
 """
 from __future__ import annotations
 
 import collections
 import xml.etree.ElementTree as ET
+from . import fix_ini
 
 WEAPON_TYPES = frozenset({'bullet', 'beam', 'flame', 'projectile'})   # melee weapons change nothing in the style
-MAX_TRIGGERS = 19                                                      # XMen2.exe 0x4f6aa7: the 20th is freed
+STOCK_TRIGGERS = 19                             # XMen2.exe 0x4f6aa7: the 20th is freed
+MAX_TRIGGERS = int(fix_ini.LIMITS['MoveTriggers']) # companion XML2 Fix, default 64
+
+
+def trigger_capacity() -> int:
+    """The same capacity requested by the emitted ini; a missing key leaves the engine stock."""
+    return int(fix_ini.LIMITS.get('MoveTriggers', STOCK_TRIGGERS))
 DEFAULT_BOLT = 'Bip01 R Hand'
 FLAME_INTERVAL = '0.1'            # ch_constantbeam fires the tag-150 beam this often (XML2's ps_pyro: 0.08 s)
 LOOP_TAG = '100'                  # the tag ch_constantbeam loops as a sound while the beam is on
@@ -386,7 +393,7 @@ def _drop_bolton_churn(move, dry=False) -> int:
     return len(drop)
 
 
-def rewrite_weapon_events(root, weapons: dict, where: str = '', values=None) -> collections.Counter:
+def rewrite_weapon_events(root, weapons: dict, where: str = '', values=None, *, max_triggers=None) -> collections.Counter:
     """XML1 styles can also NAME a weapon on an event of their own: ps_mystique's `left_gun` / `right_gun` are
     `<event inherit="weapon_fire" weapon="wp_myst_pistol" [boltselect=...]>`, fired by plain triggers with those
     names. XMen2.exe builds `weapon_fire` as a sound event (see the module doc), so every such shot did nothing.
@@ -400,6 +407,7 @@ def rewrite_weapon_events(root, weapons: dict, where: str = '', values=None) -> 
     rewritten (none on the disc). `values`: heroes.Values - when given, each rewritten event carries the XML1
     gun draw of its weapon's damage minimum (gun_damage_range), as weapons.apply does for the variants.
     Returns counts; `root` is changed in place."""
+    max_triggers = trigger_capacity() if max_triggers is None else max_triggers
     rep = collections.Counter()
     events = {}
     for ev in root.iter('event'):
@@ -449,14 +457,14 @@ def rewrite_weapon_events(root, weapons: dict, where: str = '', values=None) -> 
             continue
         rep['weapon_event_moves'] += 1
         rep['weapon_event_shots'] += len(fired)
-        room = MAX_TRIGGERS - len(trigs)
+        room = max_triggers - len(trigs)
         if room < len(fired):
             # XML1 played the fire sound on EVERY shot of the burst (it rides the weapon_fire event); reclaim
             # a mid-move holster/redraw cycle so as many shots as possible carry their sound (issue #83).
             reclaimed = _drop_bolton_churn(move)
             rep['weapon_event_bolton_churn_dropped'] += reclaimed // 2
             trigs = [c for c in move if c.tag.lower() == 'trigger']
-            room = MAX_TRIGGERS - len(trigs)
+            room = max_triggers - len(trigs)
         for c in fired:
             if room <= 0:
                 break
@@ -466,15 +474,27 @@ def rewrite_weapon_events(root, weapons: dict, where: str = '', values=None) -> 
                 move.insert(list(move).index(c) + 1, el)
                 room -= 1
                 rep['weapon_event_fx_added'] += 1
-        if sum(1 for c in move if c.tag.lower() == 'trigger') > MAX_TRIGGERS:
+        if sum(1 for c in move if c.tag.lower() == 'trigger') > max_triggers:
             rep['moves_over_trigger_cap'] += 1
     return rep
 
 
-def silent_shots(root) -> list:
-    """V42 (SPEC 29.4): ['<move>:<trigger name>'] for gun-shot triggers whose shot carries no fire sound while
-    the same FightMove still spends triggers on a mid-move bolton holster/redraw cycle (a removebolton whose
-    boltslot is re-added later in the move). The reclaimed slots belong to the burst's sound (issue #83)."""
+def named_weapon_events(root) -> set:
+    """Names whose authored event chain binds a weapon; ordinary beam events are not weapon shots."""
+    if root is None:
+        return set()
+    events = {}
+    for ev in root.iter('event'):
+        name = (_lower(ev).get('name') or '').lower()
+        if name and name not in events:
+            events[name] = ev
+    return {name for name in events if (chain := _weapon_event_chain(events, name))[0] and chain[1]}
+
+
+def silent_shots(root, *, event_names=None) -> list:
+    """V42: missing fire sound on converted gun shots. With MoveTriggers raised, every shot
+    must sound; stock fallback reports missing sounds while a holster/redraw cycle spends slots.
+    Returns ['<move>:<trigger name>']."""
     if root is None:
         return []
     out = []
@@ -483,6 +503,8 @@ def silent_shots(root) -> list:
                    for ev in top.iter('event')
                    if (_lower(ev).get('inherit') or '').lower() == 'beam'
                    and (_lower(ev).get('attacktype') or '').lower() == 'beam'}
+        if event_names is not None:
+            shot_ev &= event_names
         if not shot_ev:
             continue
         for move in top.iter('FightMove'):
@@ -495,7 +517,7 @@ def silent_shots(root) -> list:
                      if after.get(id(c)) is None or (_lower(after[id(c)]).get('name') or '').lower() != 'effect_sound']
             if not quiet:
                 continue
-            if _drop_bolton_churn(move, dry=True):
+            if trigger_capacity() > STOCK_TRIGGERS or _drop_bolton_churn(move, dry=True):
                 mname = _lower(move).get('name', '?')
                 out += [f'{mname}:{(_lower(c).get("name") or "?")}' for c in quiet]
     return out
@@ -530,7 +552,7 @@ def weapon_fire_left(root) -> list:
     return out
 
 
-def apply(root, w: dict, where: str = '', grenade: str = '', values=None) -> collections.Counter:
+def apply(root, w: dict, where: str = '', grenade: str = '', values=None, *, max_triggers=None) -> collections.Counter:
     """replace every weapon_fire trigger of every FightMove with the weapon's triggers; for a continuous (flame)
     weapon also give the constant beam its firing interval. Then carry the soldier's grenade throw (issue #36):
     XML1's holders of a grenade= weapon throw that grenade from moveset_grenade. Runtime traces execute the
@@ -542,6 +564,7 @@ def apply(root, w: dict, where: str = '', grenade: str = '', values=None) -> col
     of XML1's values table - when given, the weapon's damage declaration becomes the XML1 gun draw of its
     minimum (gun_damage_range; the shot carries the draw's bounds, not the code's range). Returns counts;
     `root` is changed in place."""
+    max_triggers = trigger_capacity() if max_triggers is None else max_triggers
     rep = collections.Counter()
     kind = (w.get('type') or '').lower()
     if kind not in WEAPON_TYPES:
@@ -566,9 +589,9 @@ def apply(root, w: dict, where: str = '', grenade: str = '', values=None) -> col
                 if kind == 'flame':
                     repl = flame_triggers(w, t, a.get('tag'))
                 else:
-                    # the fire sound + muzzle flash on every shot while the move's 19 triggers allow it, else
+                    # the fire sound + muzzle flash on every shot while the configured capacity allows it, else
                     # on every other shot of a burst
-                    budget = MAX_TRIGGERS - others - len(fires) * 2
+                    budget = max_triggers - others - len(fires) * 2
                     with_fx = first or budget >= 0 or (fires.index(c) % 2 == 0)
                     repl = shot_triggers(w, t, with_fx)
                     if a.get('tag'):
@@ -590,7 +613,7 @@ def apply(root, w: dict, where: str = '', grenade: str = '', values=None) -> col
         for c in new_children:
             move.append(c)
         n = sum(1 for c in move if c.tag.lower() == 'trigger')
-        if n > MAX_TRIGGERS:
+        if n > max_triggers:
             rep['moves_over_trigger_cap'] += 1
         ma = _lower(move)
         if not ma.get('aitype'):                      # let XML2's AI pick the move (see AI_TYPE)
