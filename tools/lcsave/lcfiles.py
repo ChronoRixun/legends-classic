@@ -31,10 +31,12 @@ Bind-row group / position per domain (the engine's numbering, SPEC-new-save 3.2)
   DRGR  group 0, position = grade index
   REVW  group = category index (0 load, 1 cin, 2 comic, 3 concept, 4 stat), position within the category
   XPNT  group 0, position
-  TRIV  group = act, position = question index within the act (engine bit = (act - 1) * 50 + position)
+  TRIV  group = act, position = question index within the act; rule 1 uses the legacy sparse bit,
+        rule 2 uses the zero-based rank of (act, position) in numeric sorted order (compact native bits)
   ZONE  no bind list (saves name zones by string); the legacy map names zones by catalogue id
 
-Bind rule: 1 for every list of this release (the first numbered version of the SPEC 3.2 rules).
+Bind rule: 1 except TRIV rule 2 in builds whose trivia root declares persistence="compact".
+The rule changes native bitmap positions only; catalogue keys and LC save identities do not change.
 """
 from __future__ import annotations
 
@@ -174,12 +176,12 @@ def read_catalogue_lcc(buf):
 
 
 # ------------------------------------------------------------------------------------------------ .lcbind
-def write_lcbind(data_sha1, lists):
+def write_lcbind(data_sha1, lists, *, rules=None):
     """data_sha1: 20 bytes of the data file the bind describes; lists: [(domain tag, [(group, position, id,
-    key bytes)])] - written in ascending domain-number order, bind rule BIND_RULE."""
+    key bytes)])] - written in ascending domain-number order; rules optionally overrides BIND_RULE per tag."""
     body = bytes(data_sha1)
     for tag, rows in sorted(lists, key=lambda kv: DOMAIN_NUMBER[kv[0]]):
-        body += tag.encode('ascii') + _u32(BIND_RULE) + _u32(len(rows))
+        body += tag.encode('ascii') + _u32((rules or {}).get(tag, BIND_RULE)) + _u32(len(rows))
         for group, position, ident, key in rows:
             body += _u32(group) + _u32(position) + _u32(ident) + _str(key)
     return _with_header(LCB_MAGIC, (), body)
@@ -430,8 +432,8 @@ def bind_files(build, cat=None):
 
     out = {}
 
-    def emit(path, lists):
-        out[os.path.relpath(path, build).replace(os.sep, '/')[:-5] + '.lcbind'] = write_lcbind(_file_sha1(path), lists)
+    def emit(path, lists, *, rules=None):
+        out[os.path.relpath(path, build).replace(os.sep, '/')[:-5] + '.lcbind'] = write_lcbind(_file_sha1(path), lists, rules=rules)
 
     p = _load(build, 'Data', 'items')
     items = []
@@ -494,7 +496,7 @@ def bind_files(build, cat=None):
 
     p = _load(build, 'Data', 'trivia')
     triv = [row('TRIV', a, i, b.key_trivia(a, i)) for (a, i) in sorted(b.trivia)]
-    emit(p, [('TRIV', triv)])
+    emit(p, [('TRIV', triv)], rules={'TRIV': 2} if b.trivia_compact else None)
 
     return out, problems
 

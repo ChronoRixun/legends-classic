@@ -5,6 +5,9 @@ build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebui
 
 ## Unreleased - 0.2.0 - content version 16 (needs XML2 Fix 1.4)
 
+- Persist trivia answers in every campaign act. New builds use compact native trivia bits with the
+  companion XML2 Fix hooks; LC question identities and legacy sparse-save imports remain unchanged.
+
 - Import equipped legacy items using the detected item era, including restore-bank equipment, when the
   campaign's talent era differs. Attribute restore-bank talent evidence to its actual stats-table owner.
   The companion XML2 Fix converter and semantic dump apply the same corrections; no save-format change.

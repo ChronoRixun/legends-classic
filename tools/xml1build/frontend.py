@@ -1146,7 +1146,7 @@ def trivia_tree(ctx):
     acts = trivia_acts(ctx) or [1]
     base, extra = divmod(len(qs), len(acts))
     sizes = [base + (1 if i < extra else 0) for i in range(len(acts))]
-    root = ET.Element('trivia')
+    root = ET.Element('trivia', persistence='compact')
     split = {}
     i = 0
     escaped = 0

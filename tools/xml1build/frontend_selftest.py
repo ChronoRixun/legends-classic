@@ -457,6 +457,8 @@ def u7_review(ctx):
 
 def u8_trivia(ctx):
     root, rep = F.trivia_tree(ctx)
+    if root.get('persistence') != 'compact' or len(list(root.iter('question'))) > 250:
+        fail('U8', 'trivia persistence is not compact or exceeds the native budget')
     if rep.get('split') != {1: 9, 3: 9, 5: 8, 6: 8, 8: 8, 9: 8}:
         fail('U8', f'split {rep.get("split")}')
     for q in root.iter('question'):
