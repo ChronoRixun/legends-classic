@@ -87,6 +87,11 @@ renumber these identities. Only an exact current package-ranking digest permits 
 conversation-tree digests are legacy provenance keys, never evidence that current ranks match. The pinned
 release snapshot for the previously shipped global digest also protects earlier native LC resaves.
 
+Metadata regeneration reads and validates the previous `conversation.lcm`, retaining every recorded
+layout before appending historical and current layouts. Recorded keys are immutable: a conflicting mapping
+or damaged prior sidecar stops regeneration without overwriting history. Releases must carry this sidecar
+forward with their metadata; deleting it loses snapshots absent from the historical model.
+
 `conversation.lcm` emits both historical global keys and qualified package keys, plus the writing build's
 current package snapshots. A different package ranking maps surviving identities into their current positions;
 removed or unassigned identities get individual ledger notes. Unknown/zero provenance drops heard words with

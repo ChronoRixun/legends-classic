@@ -511,7 +511,15 @@ def write_build_files(build, content_version, cat=None, model=None):
     files[CATALOGUE_LCC.replace(os.sep, '/')] = write_catalogue_lcc(cat, key_text_index(b), content_version)
     files[LEGACY_LCM.replace(os.sep, '/')] = write_legacy_lcm(model, cat)
     from .conversations import current_tables
-    files[CONVERSATION_LCM.replace(os.sep, '/')] = write_conversation_lcm(model, current=current_tables(build, b.all_zone_files()))
+    # Recorded native package layouts are release history, even when absent from
+    # the legacy-era model. Read the prior sidecar before generating its successor.
+    previous = {}
+    previous_path = os.path.join(build, CONVERSATION_LCM)
+    if os.path.isfile(previous_path):
+        with open(previous_path, 'rb') as f:
+            previous = read_conversation_lcm(f.read())
+    files[CONVERSATION_LCM.replace(os.sep, '/')] = write_conversation_lcm(
+        model, current=current_tables(build, b.all_zone_files()), previous=previous)
     return files, problems
 
 
@@ -534,10 +542,15 @@ def content_fingerprint(build):
     return h.hexdigest()
 
 
-def write_conversation_lcm(model, current=None):
+def write_conversation_lcm(model, current=None, previous=None):
+    """Append recorded layouts; a provenance key must never change its meaning."""
     from .conversations import historical_tables
-    tables = historical_tables(model)
-    tables.update(current or {})
+    tables = dict(previous or {})
+    for incoming in (historical_tables(model), current or {}):
+        for key, bits in incoming.items():
+            if key in tables and tables[key] != bits:
+                raise LCFileError('conversation.lcm: conflicting recorded conversation mapping')
+            tables[key] = bits
     body = b''
     for (digest, zone), bits in sorted(tables.items()):
         if len(bits) > 128 or len(bits) % 4 or len(set(bits)) != len(bits):

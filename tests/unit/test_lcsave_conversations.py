@@ -156,3 +156,64 @@ def test_package_snapshot_carries_native_layout_beyond_legacy_eras():
         fresh = convert.Environment(env.binds.build, eras_path=os.path.join(d, 'eras.json'), catalogue_path=os.path.join(d, 'cat.json'))
         restored, _ = convert.reverse_slot(saved, fresh)
         assert restored['zones'][0]['conversation'] == [0xf000, 0, 0, 0, 0]
+
+
+def rebuild_metadata(env, model):
+    # A new process must discover previous snapshots from disk, not cached tables.
+    root = os.path.dirname(env.binds.build)
+    fresh = convert.Environment(env.binds.build, eras_path=os.path.join(root, 'eras.json'),
+        catalogue_path=os.path.join(root, 'cat.json'))
+    cat = catalogue.Catalogue.load(os.path.join(root, 'cat.json'))
+    files, problems = lcfiles.write_build_files(fresh.binds.build, 13, cat=cat, model=model)
+    assert not problems, problems
+    for rel, blob in files.items():
+        path = os.path.join(fresh.binds.build, rel)
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, 'wb') as f: f.write(blob)
+        assert open(path, 'rb').read() == blob
+    return fresh
+
+
+def test_metadata_rebuild_preserves_previous_native_package_snapshots():
+    with tempfile.TemporaryDirectory() as d:
+        env, saved, model = fixture(d, words=(0xf0, 0, 0, 0, 0), change_conversation=False)
+        native, _ = convert.reverse_slot(saved, env)
+        saved = convert.old_stream_to_new(oldsave.write_slot(native), env, now=0,
+            zone_captures=convert.loaded_zone_metadata(saved, env), require_capture_metadata=True).file_bytes
+        path = os.path.join(env.binds.build, lcfiles.CONVERSATION_LCM)
+        previous = lcfiles.read_conversation_lcm(open(path, 'rb').read())
+        recorded = container.read_file(saved)['sections']['ZONE']['data']['records'][0]
+        key = (recorded['conversation_digest'].hex(), keys.key_hash('zone/x/y'))
+        assert key in previous and key not in conversations.historical_tables(model)
+        for names, expected in [(('alpha', 'beta', 'middle', 'zulu'), 0xf000),
+                                (('alpha', 'beta', 'gamma', 'middle', 'zulu'), 0xf0000)]:
+            _package(env.binds.build, names)
+            rebuild_metadata(env, model)
+            tables = lcfiles.read_conversation_lcm(open(path, 'rb').read())
+            assert all(tables.get(key) == bits for key, bits in previous.items()), 'metadata rebuild discarded recorded snapshots'
+            previous = tables
+            snapshot = open(path, 'rb').read()
+            rebuild_metadata(env, model)
+            assert open(path, 'rb').read() == snapshot, 'unchanged rebuild is not deterministic'
+            fresh = convert.Environment(env.binds.build, eras_path=os.path.join(d, 'eras.json'), catalogue_path=os.path.join(d, 'cat.json'))
+            restored, notes = convert.reverse_slot(saved, fresh)
+            assert restored['zones'][0]['conversation'] == [expected, 0, 0, 0, 0]
+            assert not any('provenance unknown' in n for n in notes)
+
+
+def test_metadata_rebuild_rejects_damaged_or_conflicting_prior_sidecar():
+    with tempfile.TemporaryDirectory() as d:
+        env, _, model = fixture(d)
+        path = os.path.join(env.binds.build, lcfiles.CONVERSATION_LCM)
+        original = open(path, 'rb').read()
+        tables = lcfiles.read_conversation_lcm(original)
+        key = next(iter(tables))
+        tables[key] = [keys.key_hash('conflicting', str(k)) for k in range(4)]
+        conflict = lcfiles.write_conversation_lcm({'eras': {}}, previous=tables)
+        for bad in (original[:-1], conflict):
+            with open(path, 'wb') as f: f.write(bad)
+            assert open(path, 'rb').read() == bad
+            try: rebuild_metadata(env, model)
+            except lcfiles.LCFileError: pass
+            else: assert False, 'invalid prior history silently overwritten'
+            assert open(path, 'rb').read() == bad
