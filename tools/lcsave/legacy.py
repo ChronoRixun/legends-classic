@@ -80,10 +80,10 @@ def eras_of(model):
 
 # ------------------------------------------------------------------------------------------------ detection
 def shared_ids_by_hero(old):
-    """{hero block index: {shared talent ids}} over the hero blocks and the restore records"""
+    """{stats index: {shared talent ids}} over the hero blocks and the restore records"""
     out = {}
     for n, h in enumerate(old['heroes']):
-        out[n] = {e['id'] for e in h['attributes']['talents'][:h['attributes']['count']] if e['id'] < 100}
+        out[n + 1] = {e['id'] for e in h['attributes']['talents'][:h['attributes']['count']] if e['id'] < 100}
     for n, r in enumerate(old['restore']):
         ids = {e['id'] for e in r['attributes']['talents'][:r['attributes']['count']] if e['id'] < 100}
         if ids:
@@ -101,8 +101,7 @@ def talent_era(old, eras, ref_stat_hashes):
         table = era.table('TALN_shared')
         good = total = 0
         unexplained = []
-        for block, ids in held.items():
-            stats_index = block + 1 if block < len(old['heroes']) else block
+        for stats_index, ids in held.items():
             hero_hash = ref_stat_hashes[stats_index] if stats_index < len(ref_stat_hashes) else None
             holdable = set(era.hero_shared_holdable.get(hero_hash or '', []))
             for tid in ids:
@@ -110,7 +109,7 @@ def talent_era(old, eras, ref_stat_hashes):
                 if tid < len(table) and tid in holdable:
                     good += 1
                 else:
-                    unexplained.append((block, tid))
+                    unexplained.append((stats_index, tid))
         scores[era.cv] = (good, total, unexplained)
         if best is None or good > scores[best.cv][0]:
             best = era

@@ -5,6 +5,11 @@ build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebui
 
 ## Unreleased - 0.2.0 - content version 16 (needs XML2 Fix 1.4)
 
+- Import equipped legacy items using the detected item era, including restore-bank equipment, when the
+  campaign's talent era differs. Attribute restore-bank talent evidence to its actual stats-table owner.
+  The companion XML2 Fix converter and semantic dump apply the same corrections; no save-format change.
+
+
 - Preserve existing streamed cutscene entities when loading legacy saves into builds that pin them. The
   companion XML2 Fix loader associates unique saved states with their current numbered placements;
   explicit removed states remain removed. Existing LC imports benefit without reconversion.
