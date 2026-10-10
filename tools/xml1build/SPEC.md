@@ -6385,5 +6385,6 @@ explicit tombstones, duplicate saved/current identities, observed-capture exclus
 Savefiles emits `Data/lcsave/conversation.lcm`, documented in tools/lcsave/README.md. V39 parses and compares
 it to the computed hash-only era map. Engine consumed-start lanes follow loaded file name rank, four per file.
 Reverse translation carries old marks by conversation-file/lane identity; removal gets a specific note, and
-unknown nonzero provenance refuses without replacing the save. Loaded metadata rebases the conversation
+unknown nonzero provenance drops heard words with a note and continues loading. New provenance hashes the
+zone's exact file/lane ranking; global file digests are legacy map keys and never enable positional reuse. Loaded metadata rebases the conversation
 digest to the reconstructed words. LC wire fields and existing catalogue ids remain unchanged.

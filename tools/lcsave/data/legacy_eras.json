@@ -1,4 +1,10 @@
 {
+"conversation_snapshots": [
+{
+"conversation_bits": "same",
+"conversation_digest": "f6af69dede345e647cb2416b7e9c7eb7a435240d2e65c62d75fb14723c834024"
+}
+],
 "eras": {
 "11": {
 "COST": "same",

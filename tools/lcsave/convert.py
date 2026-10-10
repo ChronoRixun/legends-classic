@@ -57,6 +57,9 @@ class Environment:
         self.conversation_tables = historical_tables(self.model)
         self.catalogue = Catalogue.load(catalogue_path) if catalogue_path else Catalogue.load()
         self.binds = Binds(build) if build else None
+        if self.binds:
+            from .conversations import current_tables
+            self.conversation_tables.update(current_tables(self.binds.build, self.binds.all_zone_files()))
         self._names = {}
         if self.binds:
             for tag, hashes in _name_index(self.binds).items():
@@ -462,6 +465,9 @@ def _zone_record(env, res, old, z, index, candidate_eras, what, captures=None, r
     if len(states) >= L.OLD_ZONE_STATES: raise ConvertError('capture identities exceed native state capacity')
     digest = era.conversation_digest or ('0' * 64)
     capture_digest = capture['conversation_digest'] if capture else bytes.fromhex(digest)
+    if capture is None and captures is not None:
+        from .conversations import zone_digest
+        capture_digest = bytes.fromhex(zone_digest(env.binds.build, zone))
     rec = dict(zone=zid, identity_mode=IDENTITY_MODE_ORDINAL, content_hash=capture['placement_sha1'] if capture else bytes.fromhex(num['sha1']),
                time_stamp=z['time_stamp'], flag=z['flag'], capture_flags=capture['capture_flags'] if capture else 2, conversation=list(z['conversation']),
                conversation_digest=capture_digest, names=names, states=states,
@@ -1083,6 +1089,10 @@ class PositionTables:
 
     def __init__(self, env, *, hash_conversations=True):
         self.env = env
+        from .lcfiles import CONVERSATION_LCM, read_conversation_lcm
+        sidecar = os.path.join(env.binds.build, CONVERSATION_LCM)
+        if os.path.isfile(sidecar):
+            env.conversation_tables.update(read_conversation_lcm(open(sidecar, 'rb').read()))
         b = env.binds
         _validate_native_build(b)
         self.b = b
@@ -1211,16 +1221,18 @@ class PositionTables:
         return p
 
     def conversation_words(self, r, zone, notes):
-        from .conversations import remap, zone_bits
+        from .conversations import remap, zone_bits, package_digest
         words = list(r['conversation'])
         recorded = r['conversation_digest'].hex()
         if not any(words): return words
-        current = self._conversation_digest
-        if recorded != '00' * 32 and recorded == current: return words
+        target = zone_bits(self.b.build, zone)
+        current = package_digest(key_hash(zone), target)
+        if recorded == current: return words
         source = self.env.conversation_tables.get((recorded, key_hash(zone)))
         if source is None:
-            raise ConvertError(f'zone {zone}: conversation mapping unavailable: heard marks retained in source save')
-        try: return remap(words, source, zone_bits(self.b.build, zone), zone, notes)
+            notes.append(f'zone {zone}: conversation provenance unknown: heard marks dropped')
+            return [0] * 5
+        try: return remap(words, source, target, zone, notes)
         except ValueError as e: raise ConvertError(str(e)) from e
 
     def zone_records(self, recs, notes, world, legacy_import=False):
@@ -1674,7 +1686,7 @@ def loaded_zone_metadata(new_bytes, env):
     f = read_file(new_bytes)
     records = f['sections']['ZONE']['data']['records']
     pos = PositionTables(env)
-    current_digest = bytes.fromhex(pos._conversation_digest)
+    from .conversations import zone_digest
     out = []
     for r in records:
         zone = pos.zone_name(r['zone'])
@@ -1686,5 +1698,5 @@ def loaded_zone_metadata(new_bytes, env):
                         instance_name=oldsave.zone_string(native['zone_strings'], restored['states'][idx]['inst_name']))
                     for k, idx in enumerate(restored['ordinal_map']) if idx]
         out.append(dict(zone=zone, time_stamp=r['time_stamp'], placement_sha1=r['content_hash'],
-                        conversation_digest=current_digest, capture_flags=r['capture_flags'] | (2 if f['sections']['META']['data']['origin'] == 1 or r['conversation_digest'] == bytes(32) else 0), entities=entities))
+                        conversation_digest=bytes.fromhex(zone_digest(env.binds.build, zone)), capture_flags=r['capture_flags'] | (2 if f['sections']['META']['data']['origin'] == 1 or r['conversation_digest'] == bytes(32) else 0), entities=entities))
     return out

@@ -13,7 +13,7 @@ def _package(build, names):
     _xmlb(os.path.join(build, 'Packages', 'generated', 'maps', 'zone', 'x', 'y.pkgb'), root)
 
 
-def fixture(root, names=('middle', 'zulu'), current=('alpha', 'middle', 'zulu'), words=(0x90, 0, 0, 0, 0)):
+def fixture(root, names=('middle', 'zulu'), current=('alpha', 'middle', 'zulu'), words=(0x90, 0, 0, 0, 0), change_conversation=True):
     build = make_build(os.path.join(root, 'build'))
     _package(build, names)
     b = binds.Binds(build)
@@ -29,7 +29,8 @@ def fixture(root, names=('middle', 'zulu'), current=('alpha', 'middle', 'zulu'),
     assert saved.refused is None, saved.refused
     _package(build, current)
     # A new writer has changed dialogue content, as in an actual builder-era migration.
-    with open(os.path.join(build, 'Conversations', 'c.engb'), 'wb') as f: f.write(b'changed invented conversation')
+    if change_conversation:
+        with open(os.path.join(build, 'Conversations', 'c.engb'), 'wb') as f: f.write(b'changed invented conversation')
     for rel, blob in lcfiles.write_build_files(build, 13, cat=cat, model=model)[0].items():
         path = os.path.join(build, rel); os.makedirs(os.path.dirname(path), exist_ok=True)
         with open(path, 'wb') as f: f.write(blob)
@@ -60,25 +61,30 @@ def test_metadata_rebases_digest_for_two_consecutive_saves():
             restored, _ = convert.reverse_slot(saved, env)
             assert restored['zones'][0]['conversation'] == [0x900, 0, 0, 0, 0]
             captures = convert.loaded_zone_metadata(saved, env)
-            assert captures[0]['conversation_digest'] == bytes.fromhex(env.binds.conversation_digest())
+            assert captures[0]['conversation_digest'] == bytes.fromhex(conversations.zone_digest(env.binds.build, 'zone/x/y'))
             result = convert.old_stream_to_new(oldsave.write_slot(restored), env, now=0, retained_file=saved,
                                                zone_captures=captures, require_capture_metadata=True)
             assert result.refused is None, result.refused
             saved = result.file_bytes
 
 
-def test_unknown_or_unassigned_heard_mark_refuses_without_mutating_source():
+def test_unknown_or_unassigned_heard_marks_drop_with_notes_without_mutating_source():
     with tempfile.TemporaryDirectory() as d:
         env, saved, _ = fixture(d, words=(0, 0, 0, 0, 1))
         original = saved
-        try: convert.reverse_slot(saved, env)
-        except convert.ConvertError as e: assert 'no historical identity' in str(e)
-        else: assert False, 'unmapped mark silently lost'
+        restored, notes = convert.reverse_slot(saved, env)
+        assert restored['zones'][0]['conversation'] == [0] * 5
+        assert any('historical identity unknown: heard mark dropped' in n for n in notes)
         assert saved == original
-        env.conversation_tables.clear()
-        try: convert.reverse_slot(saved, env)
-        except convert.ConvertError as e: assert 'mapping unavailable' in str(e)
-        else: assert False, 'unknown provenance silently lost'
+        from test_lcsave_durable import _secs
+        from lcsave import layout as L
+        f = container.read_file(saved)
+        f['sections']['ZONE']['data']['records'][0]['conversation_digest'] = b'x' * 32
+        unknown = container.write_file(L.KIND_CAMPAIGN, _secs(f), f['header'])
+        restored, notes = convert.reverse_slot(unknown, env)
+        assert restored['zones'][0]['conversation'] == [0] * 5
+        assert any('conversation provenance unknown: heard marks dropped' in n for n in notes)
+        assert saved == original
 
 
 def test_sidecar_bounds_crc_duplicates_and_era_conflicts():
@@ -108,4 +114,45 @@ def test_zero_unknown_provenance_rebases_metadata_as_inferred():
         saved = container.write_file(L.KIND_CAMPAIGN, _secs(f), f['header'])
         captures = convert.loaded_zone_metadata(saved, env)
         assert captures[0]['capture_flags'] == 2
-        assert captures[0]['conversation_digest'] == bytes.fromhex(env.binds.conversation_digest())
+        assert captures[0]['conversation_digest'] == bytes.fromhex(conversations.zone_digest(env.binds.build, 'zone/x/y'))
+
+
+def test_package_only_change_remaps_native_saved_marks():
+    with tempfile.TemporaryDirectory() as d:
+        env, saved, _ = fixture(d, current=('middle', 'zulu'), words=(0xf0, 0, 0, 0, 0), change_conversation=False)
+        restored, _ = convert.reverse_slot(saved, env)
+        captures = convert.loaded_zone_metadata(saved, env)
+        result = convert.old_stream_to_new(oldsave.write_slot(restored), env, now=0,
+            zone_captures=captures, require_capture_metadata=True)
+        assert result.refused is None, result.refused
+        digest = env.binds.conversation_digest()
+        _package(env.binds.build, ('alpha', 'middle', 'zulu'))
+        assert env.binds.conversation_digest() == digest
+        restored, notes = convert.reverse_slot(result.file_bytes, env)
+        assert restored['zones'][0]['conversation'] == [0xf00, 0, 0, 0, 0], restored['zones'][0]['conversation']
+        assert any('remapped to current package' in n for n in notes)
+
+
+def test_package_only_change_remaps_legacy_global_provenance():
+    with tempfile.TemporaryDirectory() as d:
+        env, saved, _ = fixture(d, words=(0xf0, 0, 0, 0, 0), change_conversation=False)
+        old_digest = container.read_file(saved)['sections']['ZONE']['data']['records'][0]['conversation_digest'].hex()
+        assert env.binds.conversation_digest() == old_digest
+        restored, _ = convert.reverse_slot(saved, env)
+        assert restored['zones'][0]['conversation'] == [0xf00, 0, 0, 0, 0]
+
+
+def test_package_snapshot_carries_native_layout_beyond_legacy_eras():
+    with tempfile.TemporaryDirectory() as d:
+        env, saved, _ = fixture(d, words=(0xf0, 0, 0, 0, 0), change_conversation=False)
+        native, _ = convert.reverse_slot(saved, env)
+        assert native['zones'][0]['conversation'] == [0xf00, 0, 0, 0, 0]
+        captures = convert.loaded_zone_metadata(saved, env)
+        saved = convert.old_stream_to_new(oldsave.write_slot(native), env, now=0,
+            zone_captures=captures, require_capture_metadata=True).file_bytes
+        original_digest = env.binds.conversation_digest()
+        _package(env.binds.build, ('alpha', 'beta', 'middle', 'zulu'))
+        assert original_digest == env.binds.conversation_digest()
+        fresh = convert.Environment(env.binds.build, eras_path=os.path.join(d, 'eras.json'), catalogue_path=os.path.join(d, 'cat.json'))
+        restored, _ = convert.reverse_slot(saved, fresh)
+        assert restored['zones'][0]['conversation'] == [0xf000, 0, 0, 0, 0]

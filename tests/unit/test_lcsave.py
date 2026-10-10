@@ -145,6 +145,9 @@ def make_build(folder, shared=SHARED, items=ITEMS, zone_entities=None, hero_extr
     _xmlb(os.path.join(D, 'zoneinfo.engb'), zi)
     os.makedirs(os.path.join(folder, 'Conversations'), exist_ok=True)
     open(os.path.join(folder, 'Conversations', 'c.engb'), 'wb').write(b'conv')
+    pkg = ET.Element('packagedef'); ET.SubElement(pkg, 'xml', filename='conversations/c')
+    for name in ('y.pkgb', 'z.pkgb'):
+        _xmlb(os.path.join(folder, 'Packages', 'generated', 'maps', 'zone', 'x', name), pkg)
     # the zone: definitions and placed instances
     w = ET.Element('world')
     defs = [('gate', 'gameent', {}), ('crate', 'physent', {}), ('crate_pinned', 'physent', {'smartent': 'false'}),

@@ -510,7 +510,8 @@ def write_build_files(build, content_version, cat=None, model=None):
     files, problems = bind_files(build, cat)
     files[CATALOGUE_LCC.replace(os.sep, '/')] = write_catalogue_lcc(cat, key_text_index(b), content_version)
     files[LEGACY_LCM.replace(os.sep, '/')] = write_legacy_lcm(model, cat)
-    files[CONVERSATION_LCM.replace(os.sep, '/')] = write_conversation_lcm(model)
+    from .conversations import current_tables
+    files[CONVERSATION_LCM.replace(os.sep, '/')] = write_conversation_lcm(model, current=current_tables(build, b.all_zone_files()))
     return files, problems
 
 
@@ -533,9 +534,10 @@ def content_fingerprint(build):
     return h.hexdigest()
 
 
-def write_conversation_lcm(model):
+def write_conversation_lcm(model, current=None):
     from .conversations import historical_tables
     tables = historical_tables(model)
+    tables.update(current or {})
     body = b''
     for (digest, zone), bits in sorted(tables.items()):
         if len(bits) > 128 or len(bits) % 4 or len(set(bits)) != len(bits):
