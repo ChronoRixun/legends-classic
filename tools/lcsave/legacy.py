@@ -149,6 +149,11 @@ def build_era_entry(binds, ref_tables, ref_binds):
         e[d] = 'same' if T[d] == ref_tables[d] else T[d]
     e['hero_count'] = T['hero_count']
     e['conversation_digest'] = T['conversation_digest']
+    from .conversations import build_tables
+    # Packages define the native conversation rank. Historical maps store identities only.
+    if os.path.isdir(os.path.join(binds.build, 'Packages', 'generated', 'maps')):
+        bits = build_tables(binds.build, binds.all_zone_files())
+        e['conversation_bits'] = 'same' if bits == ref_tables.get('conversation_bits') else bits
     # shared talents each hero's herostat lists (the talent names a hero can hold), by era position
     import xmlb  # noqa: E402 (tools/ on sys.path)
     hs = xmlb.decode(open(os.path.join(binds.build, 'Data', 'herostat.engb'), 'rb').read())

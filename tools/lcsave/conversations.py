@@ -1,0 +1,67 @@
+"""Native heard marks: four consumption lanes per alphabetically ranked conversation file.
+
+The lanes count consumed run-once starts, not line ids (engine 0x45c56e / 0x45c679).
+A stable file identity and lane carry the native semantics across package reorderings.
+Historical tables contain hashes only; missing/ambiguous provenance refuses nonzero marks.
+"""
+import os
+import xmlb
+from .keys import key_hash
+
+
+def zone_bits(build, zone):
+    path = os.path.join(build, 'Packages', 'generated', 'maps', *zone.lower().split('/')) + '.pkgb'
+    if not os.path.isfile(path):
+        raise ValueError('conversation mapping: zone package missing')
+    root = xmlb.decode(open(path, 'rb').read())
+    files = set()
+    for node in root.iter():
+        attrs = {k.lower(): v for k, v in node.attrib.items()}
+        name = attrs.get('filename', '').replace('\\', '/').lower()
+        if name.startswith('conversations/'):
+            if node.tag.lower() != 'xml':
+                raise ValueError('conversation mapping: unsupported package resource')
+            for ext in ('.engb', '.xmlb', '.eng', '.xml'):
+                if name.endswith(ext): name = name[:-len(ext)]; break
+            files.add(name[len('conversations/'):])
+    if len(files) > 32:
+        raise ValueError('conversation mapping: more than 32 loaded files')
+    return [key_hash(name, str(lane)) for name in sorted(files) for lane in range(4)]
+
+
+def build_tables(build, zones):
+    return {key_hash(zone): zone_bits(build, zone) for zone in sorted(zones)
+            if os.path.isfile(os.path.join(build, 'Packages', 'generated', 'maps', *zone.lower().split('/')) + '.pkgb')}
+
+
+def historical_tables(model):
+    out = {}
+    for era in model['eras'].values():
+        digest = era.get('conversation_digest')
+        tables = era.get('conversation_bits', {})
+        if tables == 'same': tables = model['reference']['conversation_bits']
+        for zone, bits in tables.items():
+            key = (digest, zone)
+            if key in out and out[key] != bits:
+                raise ValueError('conversation mapping: conflicting eras for one digest and zone')
+            out[key] = bits
+    return out
+
+
+def remap(words, source, target, zone, notes):
+    if len(words) != 5: raise ValueError('conversation mapping: expected five words')
+    if len(set(source)) != len(source) or len(set(target)) != len(target):
+        raise ValueError('conversation mapping: duplicate identity')
+    positions = {identity: bit for bit, identity in enumerate(target)}
+    out = [0] * 5
+    for bit in range(160):
+        if not words[bit // 32] & (1 << (bit % 32)): continue
+        if bit >= len(source):
+            raise ValueError('conversation mapping: set bit has no historical identity')
+        identity = source[bit]
+        new = positions.get(identity)
+        if new is None:
+            notes.append(f'zone {zone}: conversation identity {identity}: absent in current package: heard mark dropped')
+        else:
+            out[new // 32] |= 1 << (new % 32)
+    return out

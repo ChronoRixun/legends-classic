@@ -81,6 +81,8 @@ def validate(v, ck):
                 LF.read_lcbind(got)
             elif rel.endswith('.lcc'):
                 LF.read_catalogue_lcc(got)
+            elif rel.endswith('/conversation.lcm'):
+                LF.read_conversation_lcm(got)
             elif rel.endswith('.lcm'):
                 LF.read_legacy_lcm(got)
         except LF.LCFileError as e:

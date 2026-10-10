@@ -41,7 +41,7 @@ def test_canonical_keys_text():
     assert convert._name_index(Fake())['STAT'][keys.key_hash('Shared/MixedCase', '50%')] == 'shared%2fmixedcase/50%25'
 
 
-def test_capture_unknown_and_conversation_reset():
+def test_capture_unknown_and_conversation_refuses_nonzero():
     with tempfile.TemporaryDirectory() as d:
         env = _env(d); raw, saved = _converted(env)
         f = container.read_file(saved)
@@ -49,9 +49,9 @@ def test_capture_unknown_and_conversation_reset():
         assert z['capture_flags'] == 2
         z['conversation_digest'] = bytes(32)
         patched = container.write_file(L.KIND_CAMPAIGN, _secs(f), f['header'])
-        restored, notes = convert.reverse_slot(patched, env)
-        assert restored['zones'][0]['conversation'] == [0] * 5
-        assert any('conversation' in n for n in notes)
+        try: convert.reverse_slot(patched, env)
+        except convert.ConvertError as e: assert 'conversation mapping unavailable' in str(e)
+        else: assert False, 'unknown heard marks silently reset'
 
 
 def test_native_rejects_quantity_stack_position_and_names():
@@ -81,7 +81,8 @@ def test_keep_twice_pins_keys_and_lgcy():
         lgcy = container.read_file(saved)['sections']['LGCY']['payload']
         for _ in range(2):
             restored, _ = convert.reverse_slot(saved, env)
-            res = convert.old_stream_to_new(oldsave.write_slot(restored), env, retained_file=saved, now=0)
+            res = convert.old_stream_to_new(oldsave.write_slot(restored), env, retained_file=saved, now=0,
+                                             zone_captures=convert.loaded_zone_metadata(saved, env), require_capture_metadata=True)
             assert res.refused is None, res.refused
             saved = res.file_bytes
             f = container.read_file(saved)
@@ -109,7 +110,7 @@ def test_observed_mapping_tombstone_and_cached_provenance():
         captures = convert.loaded_zone_metadata(saved, env)
         assert captures
         captures[0]['capture_flags'] = 0
-        captures[0]['conversation_digest'] = b'c' * 32
+        captures[0]['conversation_digest'] = bytes.fromhex(env.binds.conversation_digest())
         m = oldsave.read_slot(raw)
         # Native ordinal 1 is the second factory's instance, ordinal 2 is absent/dead.
         m['zones'][0]['ordinal_map'][0], m['zones'][0]['ordinal_map'][1] = m['zones'][0]['ordinal_map'][1], 0
@@ -128,7 +129,7 @@ def test_observed_mapping_tombstone_and_cached_provenance():
         for _ in range(2):
             r = convert.old_stream_to_new(oldsave.write_slot(restored), env, zone_captures=cached, require_capture_metadata=True, now=0)
             assert r.refused is None, r.refused
-            assert container.read_file(r.file_bytes)['sections']['ZONE']['data']['records'][0]['conversation_digest'] == b'c' * 32
+            assert container.read_file(r.file_bytes)['sections']['ZONE']['data']['records'][0]['conversation_digest'] == bytes.fromhex(env.binds.conversation_digest())
         assert convert.old_stream_to_new(raw, env, require_capture_metadata=True).refused
         captures[0]['capture_flags'] = 1
         assert convert.old_stream_to_new(raw, env, zone_captures=captures, require_capture_metadata=True).refused
@@ -315,6 +316,8 @@ def test_native_transfer_metadata_preserves_state_and_is_inferred():
     with tempfile.TemporaryDirectory() as d:
         env = _env(d)
         native = make_old_save(def_count=len(env.binds.item))
+        # Native transfer has no authenticated conversation provenance. Entity/fog coverage uses no heard marks.
+        native['zones'][0]['conversation'] = [0] * 5
         native['zones'][0]['states'][1]['payload'] = b'\xa5' * 8
         native['zones'][0]['fog'] = b'\x55' * L.OLD_FOG_BYTES
         raw = oldsave.write_slot(native)

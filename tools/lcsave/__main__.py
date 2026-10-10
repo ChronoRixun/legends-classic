@@ -27,6 +27,9 @@ from lcsave import binds, catalogue as catmod, convert, dump as dumpmod, legacy,
 def cmd_eras(a):
     ref = binds.Binds(a.reference)
     ref_tables = ref.hash_tables()
+    from .conversations import build_tables
+    if os.path.isdir(os.path.join(ref.build, 'Packages', 'generated', 'maps')):
+        ref_tables['conversation_bits'] = build_tables(ref.build, ref.all_zone_files())
     ref_tables['content_version'] = a.content_version
     model = {'reference': ref_tables, 'reference_release': a.reference_release, 'eras': {}}
     for spec in a.era:
@@ -123,6 +126,7 @@ def cmd_savefiles(a):
                 try:
                     (lcfiles.read_lcbind if rel.endswith('.lcbind')
                      else lcfiles.read_catalogue_lcc if rel.endswith('.lcc')
+                     else lcfiles.read_conversation_lcm if rel.endswith('/conversation.lcm')
                      else lcfiles.read_legacy_lcm)(blob)
                 except lcfiles.LCFileError as e:
                     bad.append(f'{rel}: {e}')
