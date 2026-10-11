@@ -6388,3 +6388,19 @@ This is mirrored in Python tools/lcsave/convert.py and XML2 Fix reverse.cpp/api_
 receive the repair when loaded; converter output, wire revision, catalogue and generated build files do not
 change. Synthetic tests cover dormant smart/dynamic states, earlier imports with zero capture status,
 explicit tombstones, duplicate saved/current identities, observed-capture exclusion and resave persistence.
+
+
+## Explosive first-contact compatibility (number assigned at merge)
+
+The port requests `[Game] ExplosiveFirstHit=1` from the companion XML2 Fix. The first game's
+explosion getter increments the projectile attack sequence unconditionally; the PC getter does
+so only with `explosionhitsfirstvictim`. The companion guarded branch patch supplies the original
+rule to every call of the native explosion getter, including guided and inline projectiles.
+`fix_ini.PORT_OWNED` includes the key so ordinary INI merges enable it for the first-game opening
+and drop it when that opening is absent. Stock openings do not request it.
+
+No entity/declaration/placement order, scalar blast value, activation flag or save format changes.
+V-TBD: the synthetic INI contract checks ownership, opt-in defaults and the stock-opening fallback.
+A visual explosion is not damage evidence: compare actual health/energy and separate contact,
+blast, other enemies and falling damage. The rule does not change explosion activation.
+The release integrator assigns the content version; this restoration does not bump it locally.
