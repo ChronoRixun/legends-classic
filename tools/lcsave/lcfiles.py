@@ -50,6 +50,7 @@ from .keys import DOMAINS, DOMAIN_NUMBER, canonical_key, key_hash, make_id, crc3
 
 LCC_MAGIC = b'LCCAT2\0\0'
 LCM_MAGIC = b'LCLGM1\0\0'
+CONVERSATION_MAGIC = b'LCCONV1\0'
 LCB_MAGIC = b'LCBIND1\0'
 BIND_RULE = 1
 # catalogue.lcc carries plain keys generated from the writing build's own data (decision D3): an entry whose key
@@ -58,6 +59,7 @@ NAMB_CATEGORIES = {'belt': 1, 'gloves': 2, 'armor': 3}
 LC_DIR = ('Data', 'lcsave')                      # where catalogue.lcc and legacy.lcm go inside a build
 CATALOGUE_LCC = os.path.join(*LC_DIR, 'catalogue.lcc')
 LEGACY_LCM = os.path.join(*LC_DIR, 'legacy.lcm')
+CONVERSATION_LCM = os.path.join(*LC_DIR, 'conversation.lcm')
 
 
 class LCFileError(ValueError):
@@ -508,6 +510,16 @@ def write_build_files(build, content_version, cat=None, model=None):
     files, problems = bind_files(build, cat)
     files[CATALOGUE_LCC.replace(os.sep, '/')] = write_catalogue_lcc(cat, key_text_index(b), content_version)
     files[LEGACY_LCM.replace(os.sep, '/')] = write_legacy_lcm(model, cat)
+    from .conversations import current_tables
+    # Recorded native package layouts are release history, even when absent from
+    # the legacy-era model. Read the prior sidecar before generating its successor.
+    previous = {}
+    previous_path = os.path.join(build, CONVERSATION_LCM)
+    if os.path.isfile(previous_path):
+        with open(previous_path, 'rb') as f:
+            previous = read_conversation_lcm(f.read())
+    files[CONVERSATION_LCM.replace(os.sep, '/')] = write_conversation_lcm(
+        model, current=current_tables(build, b.all_zone_files()), previous=previous)
     return files, problems
 
 
@@ -528,3 +540,37 @@ def content_fingerprint(build):
         rel = os.path.relpath(p, build).replace(os.sep, '/').lower()
         h.update(rel.encode('utf-8') + b'\0' + _file_sha1(p))
     return h.hexdigest()
+
+
+def write_conversation_lcm(model, current=None, previous=None):
+    """Append recorded layouts; a provenance key must never change its meaning."""
+    from .conversations import historical_tables
+    tables = dict(previous or {})
+    for incoming in (historical_tables(model), current or {}):
+        for key, bits in incoming.items():
+            if key in tables and tables[key] != bits:
+                raise LCFileError('conversation.lcm: conflicting recorded conversation mapping')
+            tables[key] = bits
+    body = b''
+    for (digest, zone), bits in sorted(tables.items()):
+        if len(bits) > 128 or len(bits) % 4 or len(set(bits)) != len(bits):
+            raise LCFileError('conversation.lcm: invalid bit identities')
+        body += bytes.fromhex(digest) + bytes.fromhex(zone) + _u32(len(bits))
+        body += b''.join(bytes.fromhex(identity) for identity in bits)
+    return _with_header(CONVERSATION_MAGIC, (1, len(tables)), body)
+
+
+def read_conversation_lcm(buf):
+    r = _Reader(buf, 'conversation.lcm')
+    version, count = _header_check(r, CONVERSATION_MAGIC, 0, 0)
+    if version != 1: raise LCFileError('conversation.lcm: unsupported version')
+    out = {}
+    for _ in range(count):
+        key = (r.take(32).hex(), r.take(32).hex())
+        n = r.u32()
+        if n > 128 or n % 4: raise LCFileError('conversation.lcm: invalid bit count')
+        bits = [r.take(32).hex() for _ in range(n)]
+        if key in out or len(set(bits)) != n: raise LCFileError('conversation.lcm: duplicate identity or table')
+        out[key] = bits
+    r.done()
+    return out

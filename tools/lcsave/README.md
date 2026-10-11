@@ -29,9 +29,9 @@ XML2 Fix is CONVERTER-PORT.md beside them.
 
 Field widths stay unchanged. Writers record/retain per-zone placement/hash/conversation provenance and capture
 status: mask 1 incomplete, mask 2 historical/inferred. Observed removed numbered entities have explicit STATE
-tombstones. Cached records retain their own provenance. Zero/different conversation digests reset conversation
-bits, and unsupported semantic/native ranges refuse before narrowing. Non-converter translation never borrows the
-importer's drop policy.
+tombstones. Cached records retain their own provenance. Changed conversation digests use the historical identity
+mapping; unknown nonzero marks drop with a ledger note. Unsupported semantic/native ranges refuse before narrowing. Non-converter
+translation never borrows the importer's drop policy.
 
 Campaign/profile resaves retain LGCY and unknown KEEP payloads with the original KEYS index prefix. Profile imports
 now emit LGCY. Python writes canonical KEYS text, matching the native codec. Full parking remains deferred while
@@ -74,3 +74,36 @@ LGCY/external ledger records once: "Forge contact unlock granted (0.1.x builds d
 Native saving, new games and LC resaves never run this repair. Previously imported LC files are not repaired
 retroactively. The Python verifier lists this deliberate change in `legacy_repairs` while checking all other
 semantics. No wire layout, section version, catalogue or content-version change is needed.
+
+## Conversation heard marks across builder eras
+
+The engine ranks loaded conversation files by case-insensitive name, then indexes four consumption lanes per
+file (0x45cb5a, 0x45c56e, 0x45c679). A lane counts consumed run-once starts, not line ids or startCondition
+ordinals. Historical tables contain hashes of file name plus decimal lane; identical eras share a reference.
+
+New native `ZREC.conversation_digest` is package-aware: SHA-256 of `LCCONV2` plus NUL, the canonical zone key
+hash[32], little-endian u32 lane count, and every ordered file/lane identity hash[32]. Dialogue edits do not
+renumber these identities. Only an exact current package-ranking digest permits positional reuse. Bare global
+conversation-tree digests are legacy provenance keys, never evidence that current ranks match. The pinned
+release snapshot for the previously shipped global digest also protects earlier native LC resaves.
+
+Metadata regeneration reads and validates the previous `conversation.lcm`, retaining every recorded
+layout before appending historical and current layouts. Recorded keys are immutable: a conflicting mapping
+or damaged prior sidecar stops regeneration without overwriting history. Releases must carry this sidecar
+forward with their metadata; deleting it loses snapshots absent from the historical model.
+
+`conversation.lcm` emits both historical global keys and qualified package keys, plus the writing build's
+current package snapshots. A different package ranking maps surviving identities into their current positions;
+removed or unassigned identities get individual ledger notes. Unknown/zero provenance drops heard words with
+a note and continues loading. This keeps successful native/online-transfer saves loadable even when their
+capture metadata has no authenticated conversation provenance. Other state remains intact. Unknown marks
+are not asserted to be retained by this fallback.
+
+Loaded metadata rebases to the reconstructed package digest and retains inferred capture status. Cached-zone
+resaves therefore do not remap translated words a second time. Capture hooks and fresh native recording also
+write package-aware provenance. Legacy import bytes, LC field widths/layout, and catalogue identities are unchanged.
+
+Sidecar framing remains `LCCONV1` plus NUL, u32 version=1, u32 table count, u32 file length, and u32 body CRC-32.
+Each table has provenance[32], zone-key-hash[32], u32 bit count, then identity hashes[32]. Counts are multiples of
+four, at most 128. Duplicate keys/identities, bad framing/version/CRC refuse malformed table files. V39 checks
+the generated set. Rebuild savefiles after the era ledger changes; game asset preparation caches remain valid.

@@ -6378,3 +6378,15 @@ This is mirrored in Python tools/lcsave/convert.py and XML2 Fix reverse.cpp/api_
 receive the repair when loaded; converter output, wire revision, catalogue and generated build files do not
 change. Synthetic tests cover dormant smart/dynamic states, earlier imports with zero capture status,
 explicit tombstones, duplicate saved/current identities, observed-capture exclusion and resave persistence.
+
+
+### Conversation heard era mapping (number assigned at merge)
+
+Savefiles emits `Data/lcsave/conversation.lcm`, documented in tools/lcsave/README.md. V39 parses and compares
+it to the append-only hash map: validated previous snapshots plus historical and current package layouts.
+Regeneration retains every previously recorded key and rejects conflicting meanings or damaged prior metadata.
+Engine consumed-start lanes follow loaded file name rank, four per file.
+Reverse translation carries old marks by conversation-file/lane identity; removal gets a specific note, and
+unknown nonzero provenance drops heard words with a note and continues loading. New provenance hashes the
+zone's exact file/lane ranking; global file digests are legacy map keys and never enable positional reuse. Loaded metadata rebases the conversation
+digest to the reconstructed words. LC wire fields and existing catalogue ids remain unchanged.
