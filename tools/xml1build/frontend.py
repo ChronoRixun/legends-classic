@@ -97,6 +97,8 @@ import re
 import xml.etree.ElementTree as ET
 
 from . import common as C
+from . import main_appearance as MA
+from . import main_fonts as MF
 
 MODULE = 'frontend'
 
@@ -129,7 +131,8 @@ MENU_BUTTONS = (
     (1, None, BEGIN_STORY_CMD),                                  # XML1: newgame (no difficulty prompt in XML1)
     (2, None, 'runscript saveloadProcess(3)'),
     # XMen2.exe's own line for its Danger Room item (0x68d184, pushed at 0x5c98fb; drmode 1 = the profile mode of
-    # the main menu). Its story-level-6 gate (0x5c98e3) is not reproduced: XML1's main menu had none either.
+    # the main menu). The original checks a Phoenix-related profile bit; its lifetime needs an
+    # unlocked-original control. Accurate gate restoration is deferred separately from appearance.
     (3, None, 'set drmode 1;openmenu danger_room'),
     (4, None, 'options_main'),                                   # XML2's PC options (XML1: openmenu options)
     (5, None, 'set reviewmode -1;openmenu review'),              # XML2's review menu
@@ -149,9 +152,7 @@ MENU_NODES = 9                                       # XML1's IGB has button1..9
 # bottom edge of the view). The port's 8 buttons are spread evenly over the span of XML1's button1..button7
 # (space_menu_buttons): top and bottom stay XML1's, the spacing is 6/7 of XML1's (SPEC 21.2.4).
 MENU_SPAN = (1, 7)
-MENU_TEXT_STYLE = 'STYLE_MENU_BLACK'                 # XML1's (xbe style table 0x458d80: colours 9 / focus 10 /
-#                                                      disabled 5, font big); XMen2.exe's has the same indices and
-#                                                      font (dim white -> white on focus; XML1's colours were blue)
+MENU_TEXT_STYLE = MA.MAIN_STYLE                     # original colours remapped without replacing the PC palette
 MENU_TEXT_ALIGN = {'textalignx': 'TEXT_ALIGN_CENTER_X', 'textaligny': 'TEXT_ALIGN_CENTER_Y'}   # both exes' default
 MENU_FOCUS_MODEL = 'ui/models/model_button_highlight'
 MENU_NOFOCUS_MODEL = 'ui/models/model_hide'
@@ -190,7 +191,7 @@ def menu_node_names():
     out = []
     for suffix in ('_back', '_highlight', ''):
         out += [f'button{i}{suffix}' for i in range(1, MENU_NODES + 1)]
-    return out + ['desctext1', 'version']
+    return out + [MA.HELP_NODE, 'version']
 
 
 def igb_string_fields(data):
@@ -533,10 +534,22 @@ def menu_igb(ctx):
     if data is None:
         return None, {'problems': [f'{X1_MENU_IGB}: {p}' for p in spaced['problems']], 'nodes': {},
                       'camera': summary, 'spacing': spacing, 'source': str(src)}
+    try:
+        data, appearance = MA.help_alias(data)
+        layout = ctx.opt('main_menu_layout', 'classic')
+        if layout not in MA.LAYOUTS:
+            raise ValueError('unsupported main menu layout')
+        if layout == 'widescreen':
+            data, wide = MA.widescreen_scene(data)
+            appearance['widescreen'] = wide
+    except (ValueError, MA.G.IgbError) as ex:
+        return None, {'problems': [str(ex)], 'nodes': {}, 'camera': summary,
+                      'spacing': spacing, 'source': str(src)}
     fields = igb_string_fields(data)
     nodes = {n: fields.get(n, 0) for n in menu_node_names()}
     problems = [f'{n}: not a node of {X1_MENU_IGB}' for n, c in nodes.items() if not c]
-    return data, {'nodes': nodes, 'problems': problems, 'source': str(src), 'camera': summary, 'spacing': spacing}
+    return data, {'nodes': nodes, 'problems': problems, 'source': str(src), 'camera': summary,
+                  'spacing': spacing, 'appearance': appearance}
 
 
 def _x1_menu_texts(ctx):
@@ -570,6 +583,7 @@ def menu_tree(ctx):
     hidden = {'enabled': 'false', 'hide': 'true'}
     for i in range(1, MENU_NODES + 1):                   # the button meshes (XML1: enabled="false")
         ET.SubElement(root, 'item', {'name': f'button{i}_back', 'type': 'MENU_ITEM_MODEL', 'enabled': 'false',
+                                     'model': MENU_MODELS[0],
                                      **({} if i in shown else {'hide': 'true'})})
     for i in range(1, MENU_NODES + 1):                   # the focus models, swapped by <onfocus>
         ET.SubElement(root, 'item', {'name': f'button{i}_highlight', 'type': 'MENU_ITEM_MODEL',
@@ -589,7 +603,8 @@ def menu_tree(ctx):
     for i in range(1, MENU_NODES + 1):                   # XML1's debug slots: no text, never focused
         if i not in shown:
             ET.SubElement(root, 'item', {'name': f'button{i}', 'style': MENU_TEXT_STYLE, **hidden})
-    ET.SubElement(root, 'item', {'name': 'desctext1', 'style': 'STYLE_DESC'})
+    ET.SubElement(root, 'item', {'name': MA.HELP_NODE, 'style': MA.HELP_STYLE, 'text': desc,
+                               'neverfocus': 'true', **MENU_TEXT_ALIGN})
     ET.SubElement(root, 'item', {'name': 'version', 'style': 'STYLE_DESC', 'textalignx': 'TEXT_ALIGN_LEFT',
                                  'gamevar': 'version'})
     return root
@@ -1572,6 +1587,8 @@ def run(ctx):
         return
     det = {}
     # ---- A. main menu
+    det['main_palette'] = MA.write_styles(ctx)
+    det['main_fonts'] = MF.write_fonts(ctx)
     data, irep = menu_igb(ctx)
     for p in irep['problems']:
         ctx.error(f'{MENU_IGB_REL}: {p}')

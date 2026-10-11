@@ -70,6 +70,7 @@ class Job:
     movies: bool
     jobs: int
     prepare_jobs: int
+    main_menu_layout: str = 'classic'
     disc: dict = field(default_factory=dict)
     ident: dict | None = None
     xml2_info: dict = field(default_factory=dict)
@@ -317,7 +318,8 @@ def cmd_build(a, output, cancel, pipeline_factory):
     movies = not a.no_movies
     prepare_jobs = max(1, a.jobs or PL.default_jobs())
     jobs = max(1, a.jobs or max(1, (os.cpu_count() or 2) // 2))
-    job = Job(out=out_dir, xml2=xml2, cache=cache, iso=iso, movies=movies, jobs=jobs, prepare_jobs=prepare_jobs)
+    job = Job(out=out_dir, xml2=xml2, cache=cache, iso=iso, movies=movies, jobs=jobs, prepare_jobs=prepare_jobs,
+              main_menu_layout=getattr(a, 'main_menu_layout', 'classic'))
     ctl = Ctl(output, cancel, job)
     pipeline = pipeline_factory()
     out_lock = cache_lock = None

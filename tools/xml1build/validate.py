@@ -778,6 +778,7 @@ class Validator:
                                ('V13', 'actor slots', self.v13_actor_slots),
                                ('V14', 'forced teams', self.v14_forced_teams),
                                ('V15', 'front end', lambda ck: VF.v15_front_end(self, ck)),
+                               ('V-TBD', 'main appearance', lambda ck: VF.v_main_appearance(self, ck)),
                                ('V16', 'danger room', lambda ck: VF.v16_danger_room(self, ck)),
                                ('V17', 'review', lambda ck: VF.v17_review(self, ck)),
                                ('V18', 'combat events', lambda ck: CE.v18(self, ck)),

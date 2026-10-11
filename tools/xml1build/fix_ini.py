@@ -175,7 +175,7 @@ BALANCE_NATIVE_STAT_HEROES = 'ProfXAstral,ProfXGladiator'
 
 # every key the port may write (the builder drops the ones a build does not need); the launcher owns the rest
 PORT_OWNED = {'Game': ('NewGameTeam', 'ResetUnlocks', 'SaveFolder', 'ForcedTeams', 'PostgameScript', 'WindowTitle',
-                        'EndHeroUnlock', 'MainMenuItems', 'NewGamePlus', 'ReviewStats', 'Xtract', 'XtractionShop', 'XPCurve',
+                        'EndHeroUnlock', 'MainMenuItems', 'ClassicMainBackdrop', 'NewGamePlus', 'ReviewStats', 'Xtract', 'XtractionShop', 'XPCurve',
                        'GeometrySharingBlendIndices', 'CharacterLadderPaths', 'ObjectiveDescriptions',
                        'BreakRule', 'ConfirmationRelease'),
               'Limits': ('ActorSlots', 'ResourceNames', 'ItemEnhancements', 'FightStyles', 'EffectCurves'),
@@ -215,7 +215,8 @@ def menu_items_for(root, eighth=False):
     if root is None or root.get('type') != 'MAIN_MENU':
         return None
     shown = [it for it in root.iter('item') if it.get('text') and not it.get('type')
-             and (it.get('hide') or '').lower() != 'true' and (it.get('enabled') or '').lower() != 'false']
+             and (it.get('hide') or '').lower() != 'true' and (it.get('enabled') or '').lower() != 'false'
+             and (it.get('neverfocus') or '').lower() != 'true']
     if not shown or any(not re.fullmatch(r'button\d+', it.get('name') or '') for it in shown):
         return None
     mouse = [it.get('name') for it in shown if it.get('usecmd')][:MAIN_MENU_MOUSE_SLOTS]
@@ -329,6 +330,7 @@ def game_keys(*, xml1_opening=True, save_folder=None, forced_teams='1', add_hero
         game.update(WindowTitle=PORT_WINDOW_TITLE, EndHeroUnlock=PORT_END_HERO_UNLOCK, ConfirmationRelease='1')
     if main_menu_items:
         game['MainMenuItems'] = main_menu_items
+        game['ClassicMainBackdrop'] = '1'
     if new_game_plus is not None:
         game['NewGamePlus'] = new_game_plus
     if review_stats is not None:

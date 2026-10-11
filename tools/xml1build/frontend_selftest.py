@@ -76,13 +76,18 @@ def u1_menu_igb(ctx):
     # its 8 buttons spread over XML1's button1..7 span (z floats of the button nodes only)
     again, frame = F.reframe_menu_igb(src)
     spaced, srep = F.space_menu_buttons(again) if again is not None else (None, {'edits': [], 'problems': ['-']})
-    if spaced != data or len(data) != len(src) or data == src or srep['problems']:
+    styled = F.MA.help_alias(spaced)[0] if spaced is not None else None
+    if ctx.opt('main_menu_layout', 'classic') == 'widescreen' and styled is not None:
+        styled = F.MA.widescreen_scene(styled)[0]
+    if styled != data or len(data) != len(src) or data == src or srep['problems']:
         fail('U1', 'x1_menu_main.IGB is not XML1\'s menu_main.igb re-framed and spaced (same size, camera moved)')
         return
     covered = bytearray(len(src))
     for off, n in frame['edits'] + srep['edits']:
         covered[off:off + n] = b'\x01' * n
-    stray = [i for i in range(len(src)) if src[i] != data[i] and not covered[i]]
+    # The re-frame/spacing functions still have an independent byte-range contract;
+    # the alias/footer/layout transform is checked separately below.
+    stray = [i for i in range(len(src)) if src[i] != spaced[i] and not covered[i]]
     if stray:
         fail('U1', f'{len(stray)} changed bytes outside the re-frame\'s edits (first at 0x{stray[0]:x})')
     u1_spacing(again, data, srep)
@@ -194,7 +199,7 @@ def u2_menu(ctx):
     root = F.menu_tree(ctx)
     items = {it.get('name'): it for it in root.iter('item')}
     x1 = ctx.read_x1_xml(F.X1_MAIN_MENU)
-    x1_items = [it.get('name') for it in x1.iter('item')]
+    x1_items = [F.MA.HELP_NODE if it.get('name') == 'desctext1' else it.get('name') for it in x1.iter('item')]
     if [it.get('name') for it in root.iter('item')] != x1_items:
         fail('U2', f'item names / order differ from XML1\'s main.eng: {list(items)} vs {x1_items}')
     for n in F.EXE_MENU_FORBIDDEN:
@@ -242,12 +247,12 @@ def u2_menu(ctx):
         fail('U2', 'the Quit slot is not button8 (the last button) without a usecmd')
     for n in order:
         it = items[n]
-        if it.get('style') != 'STYLE_MENU_BLACK' or it.get('enabled') or it.get('hide') or it.get('type') \
+        if it.get('style') != F.MENU_TEXT_STYLE or it.get('enabled') or it.get('hide') or it.get('type') \
                 or it.get('textalignx') != 'TEXT_ALIGN_CENTER_X' or it.get('textaligny') != 'TEXT_ALIGN_CENTER_Y':
             fail('U2', f'{n}: {it.attrib}')
     for i in range(1, F.MENU_NODES + 1):
         back, hl = items[f'button{i}_back'], items[f'button{i}_highlight']
-        if back.get('type') != 'MENU_ITEM_MODEL' or back.get('enabled') != 'false':
+        if back.get('type') != 'MENU_ITEM_MODEL' or back.get('enabled') != 'false' or back.get('model') != F.MENU_MODELS[0]:
             fail('U2', f'button{i}_back: {back.attrib}')
         if (back.get('hide') == 'true') != (i > nshown) or (hl.get('hide') == 'true') != (i > nshown):
             fail('U2', f'button{i}: back / highlight hidden {back.get("hide")} / {hl.get("hide")}')
