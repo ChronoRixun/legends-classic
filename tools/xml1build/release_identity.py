@@ -30,6 +30,7 @@ HISTORY = (
     Identity('0.2.0-integrated-talents', 16, 4, 'LC22', 'b6f19256b5b2e9d0bce31e622404cbe173891e0ccfe216ab0707db1a525f1d50'),
     Identity('0.2.0-talents-minimal', 16, 5, 'LC23', '7d62fba81dd1cf58ea375311d8697d34cf6c213a16e25d0a0f8ab57b0d736e0f'),
     Identity('0.2.0-candidate-e', 16, 6, 'LC24', '8ecd8ea2e8f4172ae9b7b7ea57b6f29c30dd9eb832f8dc187a4787e0aaab9c53'),
+    Identity('0.2.0-candidate-i', 17, 6, 'LC25', '85fbdb54e626766891bb0d9e118f2087a24a5027309959e31a4a3b8cebe14779'),
 )
 
 

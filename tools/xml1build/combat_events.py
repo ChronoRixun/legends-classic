@@ -617,7 +617,7 @@ def style_findings(root, shared, *, max_triggers=None):
                 out.append(Finding('name_len', mname, name.lower(), f'{len(name)} chars > {EVENT_NAME_MAX}'))
         n = len(effective(nm) or [])
         if n > max_triggers:
-            out.append(Finding('trigger_cap', mname, str(n), f'V-TBD: {n} triggers > configured MoveTriggers={max_triggers} (0x4f6aa7: the rest '
+            out.append(Finding('trigger_cap', mname, str(n), f'V18: {n} triggers > configured MoveTriggers={max_triggers} (0x4f6aa7: the rest '
                                                               f'are freed)'))
         h = (_get(m, 'handler') or '').lower()
         if h and h not in FM_HANDLERS:

@@ -3,7 +3,7 @@
 The builder's releases, newest first. The version is `xml1-builder --version`; the content version is what a
 build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebuild.
 
-## Unreleased - 0.2.0 - content version 16 (needs XML2 Fix 1.4)
+## Unreleased - 0.2.0 - content version 17 (needs XML2 Fix 1.4)
 
 - The companion agreement now carries explicit effective rules and entity/token layout, with a shared
   registration API for capacity/controllers and immediate native incompatibility messages/cleanup.

@@ -88,7 +88,7 @@ def test_current_catalogue_disambiguates_same_content_history():
     old = RI.HISTORY
     try:
         rev = RI.CURRENT_CATALOGUE_REVISION
-        RI.HISTORY = tuple(row for row in old if row.catalogue_revision != rev) + (RI.Identity('fictional-final', 16, rev, 'LA03', 'f' * 64),)
+        RI.HISTORY = tuple(row for row in old if row.catalogue_revision != rev) + (RI.Identity('fictional-final', RI.CONTENT_VERSION, rev, 'LA03', 'f' * 64),)
         assert RI.game_version() == 'LA03'
         assert RI.game_version(content_version=16, catalogue_revision=2) == 'LC20'
     finally:

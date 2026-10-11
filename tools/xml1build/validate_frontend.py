@@ -53,7 +53,7 @@ FRONTEND_FILES = (F.MENU_REL + '.XMLB', F.MENU_REL + '.engb', F.MENU_PKG_REL + '
 
 
 def v_main_appearance(v, ck):
-    """V-TBD: explicit panels/help, bounded style IDs and complete PC-fallback font pairs."""
+    """V49: explicit panels/help, bounded style IDs and complete PC-fallback font pairs."""
     if C.frontend_mode(v.ctx) != 'xml1':
         return
     from . import igb_file as G
@@ -673,9 +673,9 @@ def v17_review(v, ck):
             ck.error(f'{rel}: missing or does not decode')
             continue
         if root.get('persistence') != 'compact':
-            ck.error(f'{rel}: trivia must use compact persistence (V-TBD)')
+            ck.error(f'{rel}: trivia must use compact persistence (V17)')
         if len(list(root.iter('question'))) > 250:
-            ck.error(f'{rel}: trivia exceeds the native 250-question budget (V-TBD)')
+            ck.error(f'{rel}: trivia exceeds the native 250-question budget (V17)')
         per_act = Counter()
         for q in root.iter('question'):
             ans = q.findall('answer')
@@ -690,7 +690,7 @@ def v17_review(v, ck):
                     ck.error(f'{rel}: trivia text {el.get("text")[:50]!r}: {"".join(ch for _, ch in c)!r} not '
                              f'escaped (XMen2.exe reads it as a text code; write "|c")')
         if any(not a.isdigit() or int(a) < 1 or n > 50 for a, n in per_act.items()):
-            ck.error(f'{rel}: invalid trivia act/question position (V-TBD)')
+            ck.error(f'{rel}: invalid trivia act/question position (V17)')
         for act in F.trivia_acts(ctx):
             if not per_act.get(str(act)):
                 ck.warn(f'{rel}: act {act} has a trivia console but no question')

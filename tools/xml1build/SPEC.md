@@ -2071,7 +2071,7 @@ options for the standalone tools (validate, zones_selftest, scripts_selftest).
 
 ### 21.2 Main menu (A)
 
-#### Main appearance restoration (number assigned at merge)
+#### 21.2.1 Main appearance restoration
 
 The classic front end explicitly binds each back item to the original button model. The PC
 model reader at 0x5c5080 otherwise chooses an invisible default. Original main colours are
@@ -2108,7 +2108,7 @@ The companion XML2 Fix writes `[Game] ClassicMainBackdrop=1` for the classic mai
 libIGSg configureScale hook (RVA 0x6a780) changes only the first diffuse pass of known opaque
 Cerebro shaders while the current zone is exactly `menu/main_back`, preserving reflection
 0.1 and logo lighting. Unsupported exports, code bytes or pass layouts retain retail passes.
-The builder does not edit library binaries or the backdrop's original materials. V-TBD checks
+The builder does not edit library binaries or the backdrop's original materials. V49 checks
 explicit panels/help, bounded styles/palette and complete paired font overrides.
 
 Shader basenames are secondary material guards, not ownership proof. A guarded libIGCore
@@ -3517,8 +3517,7 @@ trigger count. When the key is absent, conversion uses stock 19 behavior. Never 
 an older DLL or a disabled raise. Rebuild characters (which implies heroes), then validate and regenerate the
 port ini. Prepared source/media caches remain reusable; output styles must be regenerated.
 
-V42 checks all converted named-weapon shots for their sound with the raised key. V-TBD (SPEC section number
-assigned at merge), within V18, rejects effective move counts above the configured capacity, including inherited
+V42 checks all converted named-weapon shots for their sound with the raised key. V18 (section 29.4) rejects effective move counts above the configured capacity, including inherited
 triggers and tag updates. No CONTENT_VERSION bump here; the release integrator owns it.
 
 ---------------------------------------------------------------------------------------------------------------
@@ -5954,7 +5953,7 @@ Decided here (the writers and readers are tools/lcsave/lcfiles.py; a C++ reader 
   has no aliases yet).
 - .lcbind: lists in ascending domain-number order, each with `bind rule` 1 (the first numbered version of the
   SPEC-new-save 3.2 rules; proof B of 3.5 records 1 once the per-domain dumps have run), except compact
-  trivia uses TRIV rule 2 (see Trivia persistence, section number assigned at merge). `group` / `position`
+  trivia uses TRIV rule 2 (see section 82). `group` / `position`
   per domain: STAT group 0, position = stats-table index (herostat from 1, npcstat continuing); COST group =
   hero's stats-table index, position = costume slot 0..8; TALN group 0 = shared (position = shared index), group
   = hero's stats-table index (position = talent-file index; old talent id = position when group 0, else
@@ -6442,7 +6441,7 @@ change. Synthetic tests cover dormant smart/dynamic states, earlier imports with
 explicit tombstones, duplicate saved/current identities, observed-capture exclusion and resave persistence.
 
 
-### Conversation heard era mapping (number assigned at merge)
+## 81. Conversation heard era mapping
 
 Savefiles emits `Data/lcsave/conversation.lcm`, documented in tools/lcsave/README.md. V39 parses and compares
 it to the append-only hash map: validated previous snapshots plus historical and current package layouts.
@@ -6452,14 +6451,14 @@ Reverse translation carries old marks by conversation-file/lane identity; remova
 unknown nonzero provenance drops heard words with a note and continues loading. New provenance hashes the
 zone's exact file/lane ranking; global file digests are legacy map keys and never enable positional reuse. Loaded metadata rebases the conversation
 digest to the reconstructed words. LC wire fields and existing catalogue ids remain unchanged.
-### Trivia persistence (section number assigned at merge; V-TBD)
+## 82. Trivia persistence (V17)
 
 The question split in section 21.4 stays unchanged. The generated trivia root declares
 `persistence="compact"`; its TRIV bind list uses rule 2. Row group/position and catalogue key
 remain `(act, question)` and `act/qN`. The native bit is the zero-based rank of `(act, position)`
 in numeric sorted order. The current 50 questions occupy bits 0..49, leaving 200 native slots
 unused. Every act must be positive, each act may contain at most 50 questions, and the total
-may not exceed 250. V-TBD checks the declaration and these bounds within frontend validation.
+may not exceed 250. V17 checks the declaration and these bounds within frontend validation.
 
 XML2 Fix with `[Save] Format=lc` guards and replaces the native getter/setter at 0x469e10 /
 0x469e60. They take act and zero-based question index and access the existing CGame bitmap
@@ -6486,7 +6485,7 @@ Cursor advancement therefore cannot mutate another question's persisted answer. 
 stream dimensions and LC records remain unchanged. Old cursor-overlap damage cannot be
 unambiguously distinguished from genuine early-act answers in already-written files.
 
-## Explosive first-contact compatibility (number assigned at merge)
+## 83. Explosive first-contact compatibility
 
 The port requests `[Game] ExplosiveFirstHit=1` from the companion XML2 Fix. The first game's
 explosion getter increments the projectile attack sequence unconditionally; the PC getter does
@@ -6496,7 +6495,7 @@ rule to every call of the native explosion getter, including guided and inline p
 and drop it when that opening is absent. Stock openings do not request it.
 
 No entity/declaration/placement order, scalar blast value, activation flag or save format changes.
-V-TBD: the synthetic INI contract checks ownership, opt-in defaults and the stock-opening fallback.
+The synthetic INI contract checks ownership, opt-in defaults and the stock-opening fallback.
 A visual explosion is not damage evidence: compare actual health/energy and separate contact,
 blast, other enemies and falling damage. The rule does not change explosion activation.
 The release integrator assigns the content version; this restoration does not bump it locally.
@@ -6513,3 +6512,13 @@ The shared native gameplay-capability record includes the effective explosive ru
 layout; participating controller/capacity installers register values before finalization. Unknown or differing
 entries refuse with an actionable native dialog and immediate pending-join cleanup. The transport and
 registration API are documented in the companion XML2 Fix `docs/gameplay-agreement.md`.
+
+
+## 84. Candidate i content identity
+
+Generated menu, trivia, explosion and move-style content changes advance CONTENT_VERSION from 16 to 17.
+Catalogue revision 6 and all IDs are retained: no key/domain change requires a catalogue revision.
+The append-only release history assigns (17,6) token LC25 with the fresh build's immutable bind manifest.
+LC24 and all historical rows remain unchanged; saves resolve identities across content versions.
+Builder/DLL versions remain 0.2.0 / 1.4.0. The shared gameplay agreement includes the installed first-hit
+rule (capability 2, revision 1) in addition to the entity/token layout.
