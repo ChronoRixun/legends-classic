@@ -6522,3 +6522,27 @@ The append-only release history assigns (17,6) token LC25 with the fresh build's
 LC24 and all historical rows remain unchanged; saves resolve identities across content versions.
 Builder/DLL versions remain 0.2.0 / 1.4.0. The shared gameplay agreement includes the installed first-hit
 rule (capability 2, revision 1) in addition to the entity/token layout.
+
+## 85. Master Mold native controller
+
+The scripts module records the effective packed mission-stage layout in
+`_build/scripts_detail.json`, under `mold_controller` revision 1. It derives the
+flag, first bit and narrowed width from the same storage plan used to transform
+scripts. **V-TBD:** if the boss spawn script is installed but that binding is
+invalid, the scripts module reports a build error. Missing/unsupported metadata
+never enables a controller in an older or partial build.
+
+`fix_ini.port_keys` and the harness write `Game.Xml1MasterMold=1` and
+`Game.Xml1MoldStage=flag:first_bit:width` only with first-game identity and a valid
+contract. Both are builder-owned keys. The DLL defaults off, checks its native
+hook dependencies atomically, and keeps the unshielded native encounter when
+support is unavailable. The controller reads the existing stage flags on spawn;
+no save field, entity ordinal, or content-version change is introduced here.
+
+The companion DLL restores native shield/core attacks, platform actions, original
+attack deadlines, party coordination and core tethers. Staged runtime acceptance
+covers native core deaths, real switch interactions, shield lowering, cold load,
+post-shield phase recovery and ending credits. It is not an unassisted campaign
+playthrough. Online is refused for an enabled controller until shared gameplay
+rule ID 3 registers the effective behavior revision. Turret restoration is still
+separate and is not enabled by this change.

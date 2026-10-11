@@ -179,7 +179,7 @@ BALANCE_NATIVE_STAT_HEROES = 'ProfXAstral,ProfXGladiator'
 PORT_OWNED = {'Game': ('NewGameTeam', 'ResetUnlocks', 'SaveFolder', 'ForcedTeams', 'PostgameScript', 'WindowTitle',
                         'EndHeroUnlock', 'MainMenuItems', 'ClassicMainBackdrop', 'ClassicMainPanelBounds', 'NewGamePlus', 'ReviewStats', 'Xtract', 'XtractionShop', 'XPCurve',
                        'GeometrySharingBlendIndices', 'CharacterLadderPaths', 'ObjectiveDescriptions',
-                       'BreakRule', 'ConfirmationRelease', 'ExplosiveFirstHit'),
+                       'BreakRule', 'ConfirmationRelease', 'ExplosiveFirstHit', 'Xml1MasterMold', 'Xml1MoldStage'),
               'Limits': ('ActorSlots', 'ResourceNames', 'ItemEnhancements', 'FightStyles', 'EffectCurves', 'MoveTriggers'),
               'Online': ('GameVersion', 'ContentFingerprint'),
               'Save': ('Format',)}
@@ -302,6 +302,33 @@ def build_forced_teams(out):
     return '1' if str(b.get('forced_teams') or 'seat').lower() == 'seat' else None
 
 
+def mold_stage_binding(layout, width=None):
+    """Native-controller binding for the effective packed mission stage."""
+    if not isinstance(layout, dict) or layout.get('kind') != 'pack':
+        return None
+    flag, first, stored = (layout.get(key) for key in ('gamevar', 'first_bit', 'nbits'))
+    width = stored if width is None else width
+    if not isinstance(flag, str) or not re.fullmatch(r'[A-Za-z0-9_]{1,32}', flag):
+        return None
+    if any(type(value) is not int for value in (first, stored, width)):
+        return None
+    if not (1 <= width <= stored <= 32 and 1 <= first <= 33 - stored):
+        return None
+    return f'{flag}:{first}:{width}'
+
+
+def build_mold_controller(out):
+    """Only a builder-generated, supported script contract opts into the DLL."""
+    try:
+        data = json.loads(Path(out, '_build/scripts_detail.json').read_text(encoding='utf-8'))
+        contract = data.get('mold_controller', {})
+        revision = contract.get('revision')
+        binding = mold_stage_binding(contract.get('stage')) if type(revision) is int and revision == 1 else None
+    except (OSError, ValueError, AttributeError, TypeError):
+        return {}
+    return dict(Xml1MasterMold='1', Xml1MoldStage=binding) if binding else {}
+
+
 def game_keys(*, xml1_opening=True, save_folder=None, forced_teams='1', add_hero=False, join_hero=True, postgame=None,
               port_identity=False, main_menu_items=None, new_game_plus=None, review_stats=None, xtract=None,
               xp_curve=None) -> dict:
@@ -384,6 +411,8 @@ def port_keys(out, *, save_folder=PLAY_SAVE_FOLDER, eighth=True) -> dict:
                      postgame=postgame, port_identity=bool(postgame), main_menu_items=menu,
                      new_game_plus=NEW_GAME_PLUS if menu else None, review_stats=build_review_stats(out),
                      xtract=XTRACT if postgame else None, xp_curve=build_xp_curve(out))
+    if postgame:
+        game.update(build_mold_controller(out))
     keys = {'Game': game, 'Limits': dict(LIMITS)}
     balance = build_balance(out)
     online = online_keys(port_identity=bool(postgame), balance=balance, fingerprint=content_fingerprint(out))

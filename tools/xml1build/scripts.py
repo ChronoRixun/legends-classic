@@ -54,6 +54,7 @@ from . import scripted_approaches as SA
 from . import start_fixes as SF
 from . import scripts_transform as T
 from . import ladder_motion as LM
+from . import fix_ini as FI
 
 # ----------------------------------------------------------------------------------------------- constants
 RESEARCH_OUT = 'scripts/out'                      # under ctx.research
@@ -2780,6 +2781,14 @@ def run(ctx):
     zone_rows = _global_checks(ctx, det, installed, obj_names)
     _queue_check(ctx, det, installed, det.get('new_game', {}).get('lines'))
     _defer(ctx, zone_rows, det)
+    if 'mastermold/mmspawn' in installed:
+        layout = _rjson(ctx, 'var_storage.json').get('m:stage', {})
+        width = next((spec.k for spec in _narrow_specs(ctx) if spec.key == 'm:stage'), layout.get('nbits'))
+        binding = FI.mold_stage_binding(layout, width)
+        if binding:
+            det['mold_controller'] = {'revision': 1, 'stage': dict(layout, nbits=width)}
+        else:
+            ctx.error('V-TBD: Master Mold requires a valid effective packed stage binding')
     det['counts'] = dict(ctx.report.mod(ctx.module)['counts'])
     ctx.write_meta('scripts_detail.json', det)
     ctx.log(f"{len(installed)} scripts, {det['dialogs']['count']} dialogs "
