@@ -601,8 +601,14 @@ def _translate(old, env, res, original_name, old_bytes, slot, now=None, context=
         slot=slot, mods=[])))
     # ---- GAME
     trivia = []
+    native_trivia = {v: k for k, v in env.binds.trivia_bits.items()} if context is not None else None
     for bit in _bits(g['trivia'], 250):
-        act, q = bit // TRIVIA_PER_ACT + 1, bit % TRIVIA_PER_ACT
+        if native_trivia is not None:
+            if bit not in native_trivia:
+                raise ConvertError(f'native trivia bit {bit} names no question in this build')
+            act, q = native_trivia[bit]
+        else:
+            act, q = bit // TRIVIA_PER_ACT + 1, bit % TRIVIA_PER_ACT
         h = ref['TRIV'].get(f'{act},{q}')
         if h is None:
             raise ConvertError(f'trivia bit {bit} (act {act} question {q + 1}) names a question no release has')
@@ -885,7 +891,9 @@ def reverse_slot(new_bytes, env, template=None):
     trivia = [0] * 8
     for v in G['trivia']:
         act, q = pos.trivia(v)
-        bit = (act - 1) * TRIVIA_PER_ACT + q
+        bit = env.binds.trivia_bits[(act, q)]
+        if not 0 <= bit < 250:
+            raise ConvertError('trivia question outside native persistence range 0..249')
         trivia[bit // 32] |= 1 << (bit % 32)
     fl = G['flags']
     m['game'] = dict(timer_threshold=G['timer_threshold'], timer_remaining=G['timer_remaining'], timer_after_add=G['timer_after_add'],
@@ -1387,11 +1395,12 @@ def verify_file(old_path, env, out_dir=None):
     ref_cv = env.ref['content_version']
     rep['reverse_expected_identical'] = (res.era['start'] == ref_cv and res.era['items'] == ref_cv
                                          and all(z['era'] == ref_cv for z in res.era.get('zones', []))
-                                         and not any(res.dropped.values()) and not rep['legacy_repairs'])
+                                         and not any(res.dropped.values()) and not rep['legacy_repairs']
+                                         and old['game']['trivia'] == back['game']['trivia'])
     if not rep['reverse_identical']:
         rep['reverse_first_diff'] = next((i for i in range(len(buf)) if buf[i] != rebuilt[i]), None)
         rep['reverse_diff_fields'] = _diff_fields(old, back)
-    d_back = dump_old(back, env, era_hint=dict(start=ref_cv, items=ref_cv))
+    d_back = dump_old(back, env, era_hint=dict(start=ref_cv, items=ref_cv), native=True)
     d_back['zones'] = d_new['zones']        # the reverse keeps the original zone block (indices are capture order)
     rep['reverse_semantic'] = semantic_diff(d_back, d_new)
     rep['ok'] = (not rep['semantic_diff'] and not rep['reverse_semantic']

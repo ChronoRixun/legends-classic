@@ -236,6 +236,10 @@ class Binds:
         xp, _ = _load(D, 'xtraction_points')
         self.xpoint = [(e.get('zone') or '', e.get('name') or '') for e in xp]
         tv, _ = _load(D, 'trivia')
+        mode = tv.get('persistence') or 'legacy'
+        if mode not in ('legacy', 'compact'):
+            raise ValueError('unsupported trivia persistence mode')
+        self.trivia_compact = mode == 'compact'
         self.trivia = {}
         per = {}
         for e in tv:
@@ -244,6 +248,12 @@ class Binds:
         for act, lst in per.items():
             for i, e in enumerate(lst):
                 self.trivia[(act, i)] = (f'q{i + 1}', element_fingerprint(e))
+        if any(not 1 <= a <= 0x7fffffff or i >= TRIVIA_PER_ACT for a, i in self.trivia):
+            raise ValueError('invalid trivia act/question position')
+        if self.trivia_compact and len(self.trivia) > 250:
+            raise ValueError('native trivia budget exceeded (250)')
+        self.trivia_bits = {k: (n if self.trivia_compact else (k[0] - 1) * TRIVIA_PER_ACT + k[1])
+                            for n, k in enumerate(sorted(self.trivia))}
         zi, _ = _load(D, 'zoneinfo')
         self.zone_names = {(e.get('name') or '').lower() for e in zi if e.tag == 'zone'}
         self._zones = {}

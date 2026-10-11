@@ -113,11 +113,15 @@ def _zone_states_old(old, z):
     return out
 
 
-def dump_old(old, env, era_hint):
+def dump_old(old, env, era_hint, *, native=False):
     """era_hint: dict(start=cv, items=cv) - the eras the converter chose (the dump reads positions with them)"""
     era_t = env.by_cv[era_hint['start']]
     era_i = env.by_cv[era_hint['items']]
     g = old['game']
+    trivia_hashes = ({bit: key_hash(*env.binds.key_trivia(*position))
+                      for position, bit in env.binds.trivia_bits.items()} if native else
+                     {(int(a) - 1) * TRIVIA_PER_ACT + int(q): h
+                      for k, h in env.ref['TRIV'].items() for a, q in [k.split(',')]})
     it = old['items']
     stat = era_t.table('STAT')
     d = {}
@@ -128,7 +132,7 @@ def dump_old(old, env, era_hint):
                      value_608=g['value_608'], difficulty=g['difficulty'], play_time=round(g['play_time'], 3),
                      potion=g['flags_d8'] & 3, counters=[(g['flags_d8'] >> 2) & 0x1f, g['flags_d9'] & 0x1f],
                      flags=((g['flags_d9'] >> 5) & 7) | ((g['flags_da'] & 0x7f) << 3),
-                     trivia=sorted(_name(env, 'TRIV', env.ref['TRIV'].get(f'{b // TRIVIA_PER_ACT + 1},{b % TRIVIA_PER_ACT}')) for b in _bits(g['trivia'], 250)))
+                     trivia=sorted(_name(env, 'TRIV', trivia_hashes.get(b)) for b in _bits(g['trivia'], 250)))
     item_t = era_i.table('ITEM')
     d['items'] = dict(tech_bits=it['tech_bits'], health=it['health_items'], energy=it['energy_items'],
                       keys={KEY_ITEM_NAMES[i].lower(): it['key_counts'][i] for i in range(6)},

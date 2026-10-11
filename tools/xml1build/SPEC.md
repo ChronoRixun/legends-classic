@@ -5896,7 +5896,8 @@ Decided here (the writers and readers are tools/lcsave/lcfiles.py; a C++ reader 
   which needs no key text. Aliases are written only when their key text is known (the catalogue at revision 1
   has no aliases yet).
 - .lcbind: lists in ascending domain-number order, each with `bind rule` 1 (the first numbered version of the
-  SPEC-new-save 3.2 rules; proof B of 3.5 records 1 once the per-domain dumps have run). `group` / `position`
+  SPEC-new-save 3.2 rules; proof B of 3.5 records 1 once the per-domain dumps have run), except compact
+  trivia uses TRIV rule 2 (see Trivia persistence, section number assigned at merge). `group` / `position`
   per domain: STAT group 0, position = stats-table index (herostat from 1, npcstat continuing); COST group =
   hero's stats-table index, position = costume slot 0..8; TALN group 0 = shared (position = shared index), group
   = hero's stats-table index (position = talent-file index; old talent id = position when group 0, else
@@ -5905,8 +5906,8 @@ Decided here (the writers and readers are tools/lcsave/lcfiles.py; a C++ reader 
   category (1 belt, 2 gloves, 3 armor), position within the category; OBJV group = mission-file index, position
   = the global objective index; DRCS group = grade index, position = the global course position; DRGR group 0,
   position = grade index; REVW group = category index (0 load, 1 cin, 2 comic, 3 concept, 4 stat), position
-  within the category; TRIV group = act, position = question index within the act (engine bit =
-  (act - 1) x 50 + position). A bind whose key the catalogue does not know carries id 0 (SPEC-new-save 3.4 b: a
+  within the category; TRIV group = act, position = question index within the act (rule 1 engine bit =
+  (act - 1) x 50 + position; rule 2 engine bit = numeric sorted rank of the group/position pair). A bind whose key the catalogue does not know carries id 0 (SPEC-new-save 3.4 b: a
   mod's new thing, saved as a key reference); for the builder's own build that is an error (V39).
 - legacy.lcm (`LCLGM1\0\0`; u32 legacy map id = the last old content version, 13; u32 catalogue revision; u32
   era count; u32 file length; u32 CRC-32): one era block per content version, ascending. A block is u32 content
@@ -6383,6 +6384,7 @@ receive the repair when loaded; converter output, wire revision, catalogue and g
 change. Synthetic tests cover dormant smart/dynamic states, earlier imports with zero capture status,
 explicit tombstones, duplicate saved/current identities, observed-capture exclusion and resave persistence.
 
+<<<<<<< HEAD
 
 ### Conversation heard era mapping (number assigned at merge)
 
@@ -6394,3 +6396,38 @@ Reverse translation carries old marks by conversation-file/lane identity; remova
 unknown nonzero provenance drops heard words with a note and continues loading. New provenance hashes the
 zone's exact file/lane ranking; global file digests are legacy map keys and never enable positional reuse. Loaded metadata rebases the conversation
 digest to the reconstructed words. LC wire fields and existing catalogue ids remain unchanged.
+=======
+### Trivia persistence (section number assigned at merge; V-TBD)
+
+The question split in section 21.4 stays unchanged. The generated trivia root declares
+`persistence="compact"`; its TRIV bind list uses rule 2. Row group/position and catalogue key
+remain `(act, question)` and `act/qN`. The native bit is the zero-based rank of `(act, position)`
+in numeric sorted order. The current 50 questions occupy bits 0..49, leaving 200 native slots
+unused. Every act must be positive, each act may contain at most 50 questions, and the total
+may not exceed 250. V-TBD checks the declaration and these bounds within frontend validation.
+
+XML2 Fix with `[Save] Format=lc` guards and replaces the native getter/setter at 0x469e10 /
+0x469e60. They take act and zero-based question index and access the existing CGame bitmap
+at +0x5e8 using the verified current bind mapping. Native capture, disk reconstruction and
+online stream translation use the same map. Rule-1 builds retain the sparse layout. A DLL
+that does not know rule 2 refuses its bind, rather than accepting a mismatched layout.
+
+The one-time importer always decodes historical bits as `(act-1)*50+question`; LC GAME.trivia
+continues storing the existing identities. Imported LC answers are reconstructed at the
+current build's compact positions. No catalogue renumbering or LC wire change is required.
+Late-act answers that an older native engine never recorded cannot be recovered from those saves.
+
+Rebuild `frontend,savefiles` together in an existing build. Prepared disc/table/script/sound/music
+inputs are unchanged and remain reusable; generated trivia XMLB/ENGB and its SHA-1-bound
+sidecar must be regenerated together. The release integrator sets CONTENT_VERSION.
+
+The native per-act cursor accessors at 0x46a690 / 0x46a6a0 have no bounds check:
+they access CGame+0x5e0+act. The original five cursor bytes end at +0x5e5; acts 8/9
+alias the answer bitmap itself. Guarded replacements keep cursors in independent storage
+for every act in the verified question table. Resetgame and completed full campaign loads
+clear this transient storage; first access derives the first unanswered question from
+restored identities (or question zero once all are answered). Stats-only loads preserve it.
+Cursor advancement therefore cannot mutate another question's persisted answer. Native
+stream dimensions and LC records remain unchanged. Old cursor-overlap damage cannot be
+unambiguously distinguished from genuine early-act answers in already-written files.
+>>>>>>> 815961a
