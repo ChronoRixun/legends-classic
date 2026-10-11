@@ -9,6 +9,8 @@ build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebui
   glyph fallback, and the help footer. Add a deterministic `--main-menu-layout widescreen`
   choice that moves the composition without stretching it. Bright Cerebro rendering needs
   the companion XML2 Fix backdrop hook. The original profile gate remains a separate question.
+- Match main-menu mouse regions to the full visible panel widths with disjoint row seams
+  through the companion DLL's `ClassicMainPanelBounds` setting.
 
 - Import equipped legacy items using the detected item era, including restore-bank equipment, when the
   campaign's talent era differs. Attribute restore-bank talent evidence to its actual stats-table owner.

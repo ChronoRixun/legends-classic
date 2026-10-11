@@ -2095,12 +2095,30 @@ depths and navigation are unchanged. This is a deterministic composition, not re
 runtime reflow. The CLI/job/build report and standalone checks carry the choice; a changed
 choice invalidates frontend carry-over. Unknown scene layouts are refused whole.
 
+The builder also writes `[Game] ClassicMainPanelBounds=1`. The companion DLL derives all
+eight selectable rectangles from their loaded back-panel bounds, preserving full panel
+width. Where panel borders overlap vertically, it splits the hit regions at the midpoint
+using the native hit-test's half-open rectangle convention. Online/Quit remain disjoint.
+Local bound offsets change with the rectangles so the text's component origin and centering
+stay consistent. This operates only on the guarded MAIN_MENU update with all eight expected
+items present; stock builds omit the key. Native synthetic tests cover both layout offsets,
+nonoverlapping row seams, malformed bounds, text origin and repeated updates.
+
 The companion XML2 Fix writes `[Game] ClassicMainBackdrop=1` for the classic main. Its guarded
 libIGSg configureScale hook (RVA 0x6a780) changes only the first diffuse pass of known opaque
 Cerebro shaders while the current zone is exactly `menu/main_back`, preserving reflection
 0.1 and logo lighting. Unsupported exports, code bytes or pass layouts retain retail passes.
 The builder does not edit library binaries or the backdrop's original materials. V-TBD checks
 explicit panels/help, bounded styles/palette and complete paired font overrides.
+
+Shader basenames are secondary material guards, not ownership proof. A guarded libIGCore
+resource-load hook (RVA 0x4ca90) retains the directory returned for exactly the room asset.
+Every candidate must be an object entry in that directory's current resolved reference set;
+matching shaders outside it fail ownership before any pass changes. Directory replacement
+releases the previous reference. The observed twelve shaders are not a numeric selection cap.
+Bridge allocation/protection failures and protection-restore failures are logged. The
+original Options capture shows the same bright Cerebro room, so that room's appearance
+continues behind native PC Options; Options widgets/layout are not part of this restoration.
 
 The original main has a Phoenix-related profile gate (XBE 0x17e94e–0x17e975). Its exact bit
 meaning and lifetime still need an unlocked-original control. This appearance change does

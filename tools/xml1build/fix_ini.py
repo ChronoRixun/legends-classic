@@ -175,7 +175,7 @@ BALANCE_NATIVE_STAT_HEROES = 'ProfXAstral,ProfXGladiator'
 
 # every key the port may write (the builder drops the ones a build does not need); the launcher owns the rest
 PORT_OWNED = {'Game': ('NewGameTeam', 'ResetUnlocks', 'SaveFolder', 'ForcedTeams', 'PostgameScript', 'WindowTitle',
-                        'EndHeroUnlock', 'MainMenuItems', 'ClassicMainBackdrop', 'NewGamePlus', 'ReviewStats', 'Xtract', 'XtractionShop', 'XPCurve',
+                        'EndHeroUnlock', 'MainMenuItems', 'ClassicMainBackdrop', 'ClassicMainPanelBounds', 'NewGamePlus', 'ReviewStats', 'Xtract', 'XtractionShop', 'XPCurve',
                        'GeometrySharingBlendIndices', 'CharacterLadderPaths', 'ObjectiveDescriptions',
                        'BreakRule', 'ConfirmationRelease'),
               'Limits': ('ActorSlots', 'ResourceNames', 'ItemEnhancements', 'FightStyles', 'EffectCurves'),
@@ -331,6 +331,7 @@ def game_keys(*, xml1_opening=True, save_folder=None, forced_teams='1', add_hero
     if main_menu_items:
         game['MainMenuItems'] = main_menu_items
         game['ClassicMainBackdrop'] = '1'
+        game['ClassicMainPanelBounds'] = '1'
     if new_game_plus is not None:
         game['NewGamePlus'] = new_game_plus
     if review_stats is not None:

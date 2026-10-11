@@ -204,6 +204,8 @@ def test_generated_menu_help_does_not_disable_mouse_and_quit_contract():
     assert FI.menu_items_for(menu, eighth=True) == ','.join(F.MAIN_MENU_ITEMS_MOUSE_ALL)
     keys = FI.game_keys(main_menu_items=FI.menu_items_for(menu, eighth=True))
     assert keys['ClassicMainBackdrop'] == '1' and 'ClassicMainBackdrop' in FI.PORT_OWNED['Game']
+    assert keys['ClassicMainPanelBounds'] == '1' and 'ClassicMainPanelBounds' in FI.PORT_OWNED['Game']
+    assert 'ClassicMainPanelBounds' not in FI.game_keys(main_menu_items=None)
 
 
 def scene_fixture():
