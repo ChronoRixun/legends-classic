@@ -6543,6 +6543,14 @@ The companion DLL restores native shield/core attacks, platform actions, origina
 attack deadlines, party coordination and core tethers. Staged runtime acceptance
 covers native core deaths, real switch interactions, shield lowering, cold load,
 post-shield phase recovery and ending credits. It is not an unassisted campaign
-playthrough. Online is refused for an enabled controller until shared gameplay
-rule ID 3 registers the effective behavior revision. Turret restoration is still
-separate and is not enabled by this change.
+playthrough. Turret restoration is still separate and is not enabled by this change.
+
+Online co-op is lockstep: every peer runs the boss's native AI update, so every
+peer runs the controller. The companion DLL registers the installed state in the
+shared gameplay-capability record as rule 3 (revision 1, `{installed, first_bit,
+width, 0}` from the applied `Xml1MoldStage`) and rule 4 (turrets, always off).
+Two first-game builds with the same binding agree; a peer without the controller,
+with a different binding, or with an unverified installation is refused before
+admission. A requested controller that fails to install closes host/join for that
+process instead of falling back silently. Inside a session the controller uses the
+first player slot with a living hero rather than each machine's `_ACTIVE_HERO_`.
