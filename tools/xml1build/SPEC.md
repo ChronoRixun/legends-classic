@@ -6404,3 +6404,11 @@ V-TBD: the synthetic INI contract checks ownership, opt-in defaults and the stoc
 A visual explosion is not damage evidence: compare actual health/energy and separate contact,
 blast, other enemies and falling damage. The rule does not change explosion activation.
 The release integrator assigns the content version; this restoration does not bump it locally.
+
+
+The companion DLL also binds the effective installed rule into native host-info/join agreement.
+INI enablement alone is insufficient: failed installation blocks online access, and differing
+installed rules refuse admission in either direction. Both verified off peers remain compatible.
+This agreement is separate from the release identity; the integrator assigns that token, and this
+change does not rewrite it. Older peers without the tagged agreement cannot join the new protocol.
+Live multiplayer acceptance is deferred to the integrator; the native agreement fixture is game-free.
