@@ -25,6 +25,50 @@ documents (SPEC-new-save revision 2.3, SPEC-old-save revision 2.1) in the coordi
 XML2 Fix is CONVERTER-PORT.md beside them.
 
 
+## Native layouts, the Phase A marker and the typed entity-id registry (entity capacity, Phase A)
+
+`layout.NativeLayout` describes the engine's save manager layout: `RETAIL` (the retail executable: 768 states,
+256 ordinals, 300 dynamic, 768 smart, zone record 0x55e0, manager 0x1afdc, payload 0x2fc00, wrapper 0x2fc78) and
+`E10A2` (the entity-capacity build: 4096 states including the sentinel, 1024 ordinals / dynamic / smart, record
+0x19b88, five records, manager 0x80c24, payload 0x200000, usable end 0x200000, wrapper 0x200078, no origin
+trailer; `transfer_chunk` 200 and `chunk_bounds(i)` for the 47/48 campaign transfer). Every reader and writer of the
+native stream takes the layout explicitly (`oldsave.read_slot(buf, native)`, `oldsave.write_slot(m, native)`,
+`convert.reverse_slot(..., native=, registry=, report=)`, `convert.old_stream_to_new(..., native=)`,
+`convert.native_zone_metadata(..., native=)`, `convert.loaded_zone_metadata(..., native=, registry=)`); the default
+is `RETAIL`, and a stream of the other layout's size is refused, never re-interpreted. The one-time importer
+(`convert_slot`) reads retail saves only. The C++ `lcsave` mirrors this (`lcsave::retail_layout`, `e10a2_layout`).
+
+The container header's `required_features` bit 0 is `FEATURE_ENTITY_LAYOUT_CONTIGUOUS10`: the file's typed entity
+ids are ten-bit tokens. The E10A2 saver writes it, the offline converters and the retail engine keep 0; a rewrite
+passes the read header through (`container.write_file(kind, sections, header)` takes `header['required_features']`).
+`container.feature_decision(required_features, native)` is the reader's rule: an unknown bit is refused ("needs a
+newer version"), a feature-1 file on a retail layout is refused ("needs the entity-capacity build"; the marker is
+never stripped), a feature-0 file on E10A2 has its registered typed fields migrated, a feature-1 file on E10A2 has
+them validated.
+
+`typed_registry` is the registry of script variables that hold World tokens (PHASE-A-PLAN section 4): the round6
+scan over a prepared scripts tree (`v = fn(` assignments, getID/getIDString taint, literal `set(Zone|Game)Var`
+keys, the float-operator taint check; `scan_scripts`), bound to the tree by a fingerprint (SHA-256 over
+`relative-posix-path\0sha256\n` for every `*.py`, in lower-cased-component path order; `scripts_fingerprint`).
+`tools/xml1build/typed_entity_ids.py SCRIPTS_ROOT OUT [--expect-fingerprint HEX --expect-keys N]` writes the file
+and exits 1 without writing when a key has mixed writers or a token local enters a float operator;
+`--check REGISTRY SCRIPTS_ROOT` is the engine's verification. The file (text, LF, ASCII; `load_registry`,
+`verify_registry(file, scripts_root) -> (ok, reason)`; the C++ reads exactly the same):
+
+    lcsave-typed-entity-ids 1
+    fingerprint <64 hex digits>
+    files <count of *.py files hashed>
+    key<TAB><Zone|Game><TAB><key>        one per typed field, sorted by (scope, key)
+
+At the LC -> native boundary (`reverse_slot`) and nowhere else, a registered (scope, exact key) value of a
+feature-0 file is translated with `layout.migrate_typed_field` (retail `(g << 8) | i` -> `(g << 10) | i`, or null
+when the value is not a positive retail token, `g == 0` or `g > 0x3fff`); a feature-1 file's registered values are
+only validated (`layout.validate_typed_field`). Every other integer is preserved. The counts (mode, typed_fields,
+translated, normalized_to_null, validated) are returned through `report=` and logged as one note.
+`tests/unit/export_lcsave_typed_vectors.py DEST` exports the parity vectors xml2-fix's `lcsave_durable_parity`
+checks byte for byte.
+
+
 ## Revision 2.4 Core change list
 
 Field widths stay unchanged. Writers record/retain per-zone placement/hash/conversation provenance and capture

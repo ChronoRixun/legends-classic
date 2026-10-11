@@ -89,6 +89,8 @@ Checks (severity per SPEC 4.6: error = will not load or silently misbehaves; war
                 events; any other build has no marker
   V39 save files (SPEC 70, savefiles.validate): the build carries catalogue.lcc, legacy.lcm and every .lcbind,
                 byte-identical to the set its own data produces, every key in the master catalogue
+  V50 typed entity ids (SPEC 85, savefiles.validate): Data/lcsave/typed-entity-ids.txt is present and is exactly the
+      registry of the shipped Scripts tree (fingerprint and keys), as the entity-capacity DLL verifies it at load
   V40 melee weapons (SPEC 69.5, melee_weapons.validate): exact metadata on all and only the source armed NPCs,
                 both npcstat halves agree and their bounded ini serialization matches
   V23 fight styles (SPEC 43, style_budget.validate): per converted zone the distinct style files of the permanent

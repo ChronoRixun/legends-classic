@@ -6522,3 +6522,28 @@ The append-only release history assigns (17,6) token LC25 with the fresh build's
 LC24 and all historical rows remain unchanged; saves resolve identities across content versions.
 Builder/DLL versions remain 0.2.0 / 1.4.0. The shared gameplay agreement includes the installed first-hit
 rule (capability 2, revision 1) in addition to the entity/token layout.
+
+## 85. Entity capacity (XML2 Fix `[Limits] EntityCapacity`, V50)
+
+The stock engine keeps 32 actor and 224 generic entity slots and 256 World handles; the 224th live generic
+entity is the last prop, projectile or trigger a zone gets - the rest are refused without a word (the 0.2.0 census:
+943 refusals across 116 zones; the HAARP interior freeze gun never gets a slot; the Magneto arena sits at 224/224).
+XML2 Fix 1.5's `[Limits] EntityCapacity=1` raises the domain to 32 actor / 768 generic / 1024 World handles with
+contiguous ten-bit indices (its docs/entity-capacity.md and docs/entity-capacity-phase-a-plan.md). The builder:
+
+- owns the key for port builds (fix_ini.LIMITS; `check_entity_capacity_dll` refuses a DLL that does not know it,
+  and the key without `[Save] Format=lc`, because the expanded native save layout exists only as LC files);
+- writes `Data/lcsave/typed-entity-ids.txt` from the SHIPPED `Scripts` tree (savefiles, the last module): the
+  registry of zone-variable keys whose every writer is a direct `getID` local or a literal zero (12 keys in the
+  prepared corpus of the plan; the shipped tree, which also holds the XML2 base scripts, has 13), with the
+  fingerprint of every script file. The DLL verifies the registry against the installed tree before it migrates a
+  legacy (pre-capacity) save's typed fields from the eight-bit to the ten-bit token layout; a mod that ships
+  scripts leaves it unverified and legacy loads are refused with the reason (`tools/xml1build/typed_entity_ids.py`,
+  `tools/lcsave/typed_registry.py`);
+- V50 checks the shipped registry is exactly the shipped tree's; a tree the scanner cannot classify (a typed key
+  with a non-token writer, a token local in a float operator) fails the build rather than guess;
+- the Python lcsave takes an explicit native layout (`layout.RETAIL` / `layout.E10A2`) for every stream, record
+  and transfer bound, and encodes/decodes the LC required-feature bit 0 the expanded layout's saves carry.
+  Retail-layout outputs are byte-identical to before (the 82-save corpus).
+
+Capacities stay 32 actors (the controller arena and team records are a later phase).

@@ -277,8 +277,14 @@ def write_file(kind, sections, header):
         off += len(pl) + pad
     after = bytes(entries) + bytes(body)
     optional = header.get('optional_features', 0) | (L.OPTIONAL_KEYS_PRESENT if any(t == 'KEYS' for t, *_ in payloads) else 0)
+    # required_features: bit 0 ENTITY_LAYOUT_CONTIGUOUS10 (PHASE-A-PLAN section 4) - the writer's native layout
+    # decides it (header['required_features']; a rewrite passes the read header through, so the marker survives);
+    # a bit this code does not implement is never written
+    required = header.get('required_features', 0)
+    if required & ~L.KNOWN_REQUIRED_FEATURES:
+        raise ContainerError(f'required feature bits {required:#x} not implemented by this writer')
     h = dict(magic=L.NEW_MAGIC, kind=kind, header_size_8=L.NEW_HEADER_SIZE // 8, major=1, minor=0, reserved_0e=0,
-             required_features=0, optional_features=optional, file_length=L.NEW_HEADER_SIZE + len(after),
+             required_features=required, optional_features=optional, file_length=L.NEW_HEADER_SIZE + len(after),
              section_count=len(payloads), section_table_offset=table_off, writer_version=header['writer_version'],
              content_version=header['content_version'], catalogue_revision=header['catalogue_revision'],
              campaign_serial=header['campaign_serial'], body_crc=crc32(after), save_sequence=header['save_sequence'],
@@ -299,7 +305,7 @@ def read_file(buf, expect_kind=None):
         raise ContainerError('header CRC mismatch (damaged)')
     if h['header_size_8'] * 8 != L.NEW_HEADER_SIZE or h['major'] != 1:
         raise ContainerError(f'format major {h["major"]} / header size not supported (needs a newer version)')
-    if h['required_features']:
+    if h['required_features'] & ~L.KNOWN_REQUIRED_FEATURES:
         raise ContainerError(f'required feature bits {h["required_features"]:#x} not implemented (needs a newer version)')
     if expect_kind is not None and h['kind'] != expect_kind:
         raise ContainerError(f'file kind {h["kind"]} is not the expected {expect_kind}')
@@ -353,3 +359,24 @@ def read_file(buf, expect_kind=None):
         if tag not in sections:
             raise ContainerError(f'section {tag} missing')
     return dict(header=h, sections=sections, order=order)
+
+
+# ------------------------------------------------------------------------------------------------ features
+DOWNGRADE_REFUSED = ('this save requires ENTITY_LAYOUT_CONTIGUOUS10 (required feature bit 0): it needs the '
+                     'entity-capacity build and cannot be loaded by a retail-layout build')
+
+
+def feature_decision(required_features, native):
+    """What a native layout does with a file's required_features (PHASE-A-PLAN section 4) -> (ok, reason, migrate):
+      ok False       the file cannot be applied to this layout (reason: unknown bit, or the feature-1 file of the
+                     entity-capacity build given to a retail-layout reader - the marker is never stripped)
+      migrate True   a feature-0 (legacy, retail eight-bit) file applied to a contiguous layout: the registered
+                     typed fields are translated at the LC -> native boundary
+      migrate False  the file's layout is the reader's: typed fields are validated (feature 1) or untouched (retail)
+    """
+    if required_features & ~L.KNOWN_REQUIRED_FEATURES:
+        return False, f'required feature bits {required_features:#x} not implemented (needs a newer version)', False
+    contiguous = bool(required_features & L.FEATURE_ENTITY_LAYOUT_CONTIGUOUS10)
+    if contiguous and not native.contiguous:
+        return False, DOWNGRADE_REFUSED, False
+    return True, '', native.contiguous and not contiguous

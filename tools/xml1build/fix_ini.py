@@ -125,7 +125,7 @@ BUILD_REPORT = ('_build', 'report.json')
 # MoveTriggers preserves all authored holster/redraw events and a flash/sound per gun shot.
 # Requires the companion XML2 Fix move-trigger patch; absent key means stock 19.
 LIMITS = {'ActorSlots': '127', 'ResourceNames': '1024', 'ItemEnhancements': '512', 'FightStyles': '32',
-          'EffectCurves': '3600', 'MoveTriggers': '64'}
+          'EffectCurves': '3600', 'MoveTriggers': '64', 'EntityCapacity': '1'}
 
 # xml2-fix 1.3.1 [Game] GeometrySharingBlendIndices (SPEC 44, issue #11): XMen2.exe's geometry sharing reuses one
 # skinned mesh for another when positions and weights match although their packed blend indices differ; XML1's
@@ -180,7 +180,7 @@ PORT_OWNED = {'Game': ('NewGameTeam', 'ResetUnlocks', 'SaveFolder', 'ForcedTeams
                         'EndHeroUnlock', 'MainMenuItems', 'ClassicMainBackdrop', 'ClassicMainPanelBounds', 'NewGamePlus', 'ReviewStats', 'Xtract', 'XtractionShop', 'XPCurve',
                        'GeometrySharingBlendIndices', 'CharacterLadderPaths', 'ObjectiveDescriptions',
                        'BreakRule', 'ConfirmationRelease', 'ExplosiveFirstHit'),
-              'Limits': ('ActorSlots', 'ResourceNames', 'ItemEnhancements', 'FightStyles', 'EffectCurves', 'MoveTriggers'),
+              'Limits': ('ActorSlots', 'ResourceNames', 'ItemEnhancements', 'FightStyles', 'EffectCurves', 'MoveTriggers', 'EntityCapacity'),
               'Online': ('GameVersion', 'ContentFingerprint'),
               'Save': ('Format',)}
 
@@ -539,11 +539,25 @@ def check_move_trigger_dll(dll, keys: dict) -> None:
                          'the existing DLL does not recognize it')
 
 
+def check_entity_capacity_dll(dll, keys: dict) -> None:
+    """[Limits] EntityCapacity=1 (SPEC 85: actor 32 / generic 768 / World 1024) needs the companion DLL that owns it
+    and LC saves (the expanded native save layout exists only as LC files)."""
+    if keys.get('Limits', {}).get('EntityCapacity', '0') != '1':
+        return
+    if keys.get('Save', {}).get('Format') != 'lc':
+        raise ValueError('[Limits] EntityCapacity=1 requires [Save] Format=lc')
+    dll = Path(dll)
+    if dll.is_file() and 'EntityCapacity'.encode('utf-16le') not in dll.read_bytes():
+        raise ValueError('The entity-capacity raise requires the companion XML2 Fix DLL supporting [Limits] EntityCapacity; '
+                         'the existing DLL does not recognize it')
+
+
 def write_port_keys(out, keys: dict | None = None) -> dict:
     """merge the port's keys (default: port_keys(out)) into <out>/xml2-fix.ini, dropping the PORT_OWNED keys it does
     not need; the launcher's keys stay. Returns the keys written."""
     keys = port_keys(out) if keys is None else keys
     check_move_trigger_dll(Path(out) / 'dinput.dll', keys)
+    check_entity_capacity_dll(Path(out) / 'dinput.dll', keys)
     if keys.get('Save', {}).get('Format') == 'lc' and (Path(out) / 'Data/lcsave/catalogue.lcc').is_file():
         import json
         identity = RI.manifest(out)

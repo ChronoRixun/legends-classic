@@ -158,23 +158,35 @@ def _write_snapshot(s):
     return write_struct(d, L.OLD_SNAPSHOT)
 
 
-def _read_zone_record(r):
+def _read_zone_record(r, native):
+    """one zone record of the native layout `native` (the state records and the tail sized by it); bounds are
+    checked against the descriptor before anything is kept"""
     start = r.p
+    if r.p + native.record_size > len(r.b):
+        raise OldSaveError(f'zone record needs {native.record_size} bytes at {r.p:#x}, payload ends at {len(r.b):#x}')
     z = {'name_handle': r.u32()}
-    z['states'] = [r.struct(L.OLD_STATE_RECORD) for _ in range(L.OLD_ZONE_STATES)]
-    z.update(r.struct(L.OLD_ZONE_RECORD_TAIL))
-    if r.p - start != L.OLD_ZONE_RECORD:
+    z['states'] = [r.struct(L.OLD_STATE_RECORD) for _ in range(native.states)]
+    z.update(r.struct(native.zone_record_tail()))
+    if r.p - start != native.record_size:
         raise OldSaveError('zone record size')
-    if z['state_count'] > L.OLD_ZONE_STATES or z['dynamic_count'] > L.OLD_ZONE_DYNAMIC or z['smart_count'] > L.OLD_ZONE_SMART:
+    if z['state_count'] > native.states or z['dynamic_count'] > native.dynamic or z['smart_count'] > native.smart:
         raise OldSaveError('zone record counts beyond the engine tables')
     return z
 
 
-def _write_zone_record(z):
+def zone_record_matches(z, native):
+    """the model's zone record has the array sizes of `native` (a record read with one layout never writes as another)"""
+    return (len(z['states']) == native.states and len(z['ordinal_map']) == native.ordinals
+            and len(z['dynamic']) == native.dynamic and len(z['smart']) == native.smart)
+
+
+def _write_zone_record(z, native):
+    if not zone_record_matches(z, native):
+        raise OldSaveError(f'zone record does not match the native layout {native.id}')
     out = bytearray(struct.pack('<I', z['name_handle']))
     for s in z['states']:
         out += write_struct(s, L.OLD_STATE_RECORD)
-    out += write_struct(z, L.OLD_ZONE_RECORD_TAIL)
+    out += write_struct(z, native.zone_record_tail())
     return bytes(out)
 
 
@@ -214,14 +226,16 @@ def zone_string(table, handle):
     return arena[off:end].decode('cp1252', 'replace')
 
 
-def read_slot(buf):
-    """a complete slot file (0x84 + 0x2fc00 bytes) -> model dict. Refuses anything inconsistent."""
-    if len(buf) != L.OLD_SLOT_SIZE:
-        raise OldSaveError(f'file size {len(buf)} is not the slot size {L.OLD_SLOT_SIZE} (0x84 + 0x2fc00)')
+def read_slot(buf, native=L.RETAIL):
+    """a complete slot file (0x84 + payload bytes of the native layout `native`, RETAIL: 0x2fc00) -> model dict.
+    Refuses anything inconsistent. The layout is the caller's explicit choice: a file of another layout's size is
+    refused, never re-interpreted."""
+    if len(buf) != native.slot_size:
+        raise OldSaveError(f'file size {len(buf)} is not the slot size {native.slot_size} (0x84 + {native.payload:#x})')
     desc = bytes(buf[:0x80]).split(b'\0')[0].decode('cp1252', 'replace')
     plen = struct.unpack_from('<I', buf, 0x80)[0]
-    if plen != L.OLD_PAYLOAD:
-        raise OldSaveError(f'payload length field {plen:#x} is not {L.OLD_PAYLOAD:#x}')
+    if plen != native.payload:
+        raise OldSaveError(f'payload length field {plen:#x} is not {native.payload:#x}')
     m = {'description': desc, 'description_raw': bytes(buf[:0x80])}
     r = _Reader(buf, L.OLD_ENVELOPE)
     m['begin_tag'] = r.tag('[SAVEGAMEBEGIN')
@@ -292,9 +306,9 @@ def read_slot(buf):
     m['zone_strings'] = r.struct(L.OLD_ZONE_STRINGS)
     r.tag('[MAP: ZONES]')
     nz = r.u32()
-    if nz > CEIL_ZONE_RECORDS:
+    if nz > CEIL_ZONE_RECORDS or nz > native.record_count:
         raise OldSaveError(f'zone record count {nz} > {CEIL_ZONE_RECORDS}')
-    m['zones'] = [_read_zone_record(r) for _ in range(nz)]
+    m['zones'] = [_read_zone_record(r, native) for _ in range(nz)]
     r.tag('[MAP: MISSION STATE]')
     m['mission'] = _read_snapshot(r)
     # ---- profile, script variables, town centres (old 1.15-1.17)
@@ -339,11 +353,17 @@ def _tag_bytes(text):
     return bytes([L.OLD_TAG_MARKER]) + body + bytes([L.OLD_TAG_MARKER])
 
 
-def write_slot(m):
-    """model -> the complete slot file bytes (0x84 + 0x2fc00). Tags are rebuilt from their text."""
+def write_slot(m, native=L.RETAIL):
+    """model -> the complete slot file bytes (0x84 + the payload of `native`, RETAIL: 0x2fc00). Tags are rebuilt
+    from their text. Every zone record must have the array sizes of `native` (refused otherwise)."""
+    for z in m['zones']:
+        if not zone_record_matches(z, native):
+            raise OldSaveError(f'zone record does not match the native layout {native.id}')
+    if len(m['zones']) > native.record_count:
+        raise OldSaveError(f'zone record count {len(m["zones"])} > {native.record_count}')
     out = bytearray()
     out += m['description_raw'] if m.get('description_raw') is not None else write_struct({'v': m['description']}, (('v', 'cstr', 0x80),))
-    out += struct.pack('<I', L.OLD_PAYLOAD)
+    out += struct.pack('<I', native.payload)
     out += m.get('begin_tag_raw') or _tag_bytes(m['begin_tag'])
     it = m['items']
     out += write_struct(it, L.OLD_ITEM_HEAD)
@@ -374,7 +394,7 @@ def write_slot(m):
     out += _tag_bytes('[MAP: ZONESTRINGS]') + write_struct(m['zone_strings'], L.OLD_ZONE_STRINGS)
     out += _tag_bytes('[MAP: ZONES]') + struct.pack('<I', len(m['zones']))
     for z in m['zones']:
-        out += _write_zone_record(z)
+        out += _write_zone_record(z, native)
     out += _tag_bytes('[MAP: MISSION STATE]') + _write_snapshot(m['mission'])
     out += write_profile_block(m['profile'])
     for kind in ('zone', 'game'):
@@ -382,13 +402,21 @@ def write_slot(m):
             out += write_struct(v, L.OLD_SCRIPT_VAR)
     out += struct.pack('<I', m['town_centres'])
     out += m.get('end_tag_raw') or _tag_bytes(m['end_tag'])
-    if len(out) > L.OLD_SLOT_SIZE:
-        raise OldSaveError(f'model does not fit the payload: {len(out) - L.OLD_ENVELOPE} > {L.OLD_PAYLOAD}')
+    if len(out) > native.slot_size:
+        raise OldSaveError(f'model does not fit the payload: {len(out) - L.OLD_ENVELOPE} > {native.payload}')
     slack = m.get('slack')
-    out += slack if slack else b'\0' * (L.OLD_SLOT_SIZE - len(out))
-    if len(out) != L.OLD_SLOT_SIZE:
+    out += slack if slack else b'\0' * (native.slot_size - len(out))
+    if len(out) != native.slot_size:
         raise OldSaveError('slack length')
     return bytes(out)
+
+
+def zone_record_layout(z):
+    """the native layout whose array sizes a model's zone record has, or None"""
+    for native in L.NATIVE_LAYOUTS.values():
+        if zone_record_matches(z, native):
+            return native
+    return None
 
 
 def read_profile_file(buf):
