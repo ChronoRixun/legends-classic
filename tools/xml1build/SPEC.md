@@ -6384,7 +6384,6 @@ receive the repair when loaded; converter output, wire revision, catalogue and g
 change. Synthetic tests cover dormant smart/dynamic states, earlier imports with zero capture status,
 explicit tombstones, duplicate saved/current identities, observed-capture exclusion and resave persistence.
 
-<<<<<<< HEAD
 
 ### Conversation heard era mapping (number assigned at merge)
 
@@ -6396,7 +6395,6 @@ Reverse translation carries old marks by conversation-file/lane identity; remova
 unknown nonzero provenance drops heard words with a note and continues loading. New provenance hashes the
 zone's exact file/lane ranking; global file digests are legacy map keys and never enable positional reuse. Loaded metadata rebases the conversation
 digest to the reconstructed words. LC wire fields and existing catalogue ids remain unchanged.
-=======
 ### Trivia persistence (section number assigned at merge; V-TBD)
 
 The question split in section 21.4 stays unchanged. The generated trivia root declares
@@ -6430,4 +6428,31 @@ restored identities (or question zero once all are answered). Stats-only loads p
 Cursor advancement therefore cannot mutate another question's persisted answer. Native
 stream dimensions and LC records remain unchanged. Old cursor-overlap damage cannot be
 unambiguously distinguished from genuine early-act answers in already-written files.
->>>>>>> 815961a
+
+## Explosive first-contact compatibility (number assigned at merge)
+
+The port requests `[Game] ExplosiveFirstHit=1` from the companion XML2 Fix. The first game's
+explosion getter increments the projectile attack sequence unconditionally; the PC getter does
+so only with `explosionhitsfirstvictim`. The companion guarded branch patch supplies the original
+rule to every call of the native explosion getter, including guided and inline projectiles.
+`fix_ini.PORT_OWNED` includes the key so ordinary INI merges enable it for the first-game opening
+and drop it when that opening is absent. Stock openings do not request it.
+
+No entity/declaration/placement order, scalar blast value, activation flag or save format changes.
+V-TBD: the synthetic INI contract checks ownership, opt-in defaults and the stock-opening fallback.
+A visual explosion is not damage evidence: compare actual health/energy and separate contact,
+blast, other enemies and falling damage. The rule does not change explosion activation.
+The release integrator assigns the content version; this restoration does not bump it locally.
+
+
+The companion DLL also binds the effective installed rule into native host-info/join agreement.
+INI enablement alone is insufficient: failed installation blocks online access, and differing
+installed rules refuse admission in either direction. Both verified off peers remain compatible.
+This agreement is separate from the release identity; the integrator assigns that token, and this
+change does not rewrite it. Older peers without the tagged agreement cannot join the new protocol.
+Live multiplayer acceptance is deferred to the integrator; the native agreement fixture is game-free.
+
+The shared native gameplay-capability record includes the effective explosive rule and explicit entity/token
+layout; participating controller/capacity installers register values before finalization. Unknown or differing
+entries refuse with an actionable native dialog and immediate pending-join cleanup. The transport and
+registration API are documented in the companion XML2 Fix `docs/gameplay-agreement.md`.

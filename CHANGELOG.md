@@ -5,6 +5,15 @@ build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebui
 
 ## Unreleased - 0.2.0 - content version 16 (needs XML2 Fix 1.4)
 
+- The companion agreement now carries explicit effective rules and entity/token layout, with a shared
+  registration API for capacity/controllers and immediate native incompatibility messages/cleanup.
+
+- The companion explosive first-hit fix now verifies effective installed rules between peers before joining.
+  Differing/failed rules are refused independently of the assigned release identity.
+
+- Request the companion XML2 Fix first-contact explosion rule through `[Game] ExplosiveFirstHit=1`.
+  This restores the original fresh blast attack ID without changing entity attributes or save records.
+
 - Resolve XML1 numeric value codes in map-local entity declarations, restoring explosion damage on
   Avalanche rocks, Magneto props, and other inline projectiles. Explosion damage keeps the original scalar
   minimum; V19 rejects unresolved inline codes and ranges. Entity and placement order are preserved.

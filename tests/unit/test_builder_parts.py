@@ -351,7 +351,7 @@ def test_port_keys_from_a_synthetic_build():
         assert FI.port_keys(out) == {'Game': {'NewGameTeam': 'wolverine', 'ResetUnlocks': '0',
                                               'SaveFolder': 'X-Men Legends', 'ForcedTeams': '1',
                                               'GeometrySharingBlendIndices': '1', 'CharacterLadderPaths': '1',
-                                              'ObjectiveDescriptions': '1', 'BreakRule': 'xml1'},
+                                              'ObjectiveDescriptions': '1', 'BreakRule': 'xml1', 'ExplosiveFirstHit': '1'},
                                      'Limits': {'ActorSlots': '127', 'ResourceNames': '1024', 'ItemEnhancements': '512',
                                                 'FightStyles': '32', 'EffectCurves': '3600', 'MoveTriggers': '64'}}
         menu = ET.Element('menu', type='MAIN_MENU')
