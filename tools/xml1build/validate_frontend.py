@@ -52,6 +52,74 @@ FRONTEND_FILES = (F.MENU_REL + '.XMLB', F.MENU_REL + '.engb', F.MENU_PKG_REL + '
                   'Scripts/menus/intro_normal.py', 'Scripts/menus/main_back_main.py')
 
 
+def v_main_appearance(v, ck):
+    """V-TBD: explicit panels/help, bounded style IDs and complete PC-fallback font pairs."""
+    if C.frontend_mode(v.ctx) != 'xml1':
+        return
+    from . import igb_file as G
+    from . import main_appearance as MA
+    menu = v.tree(F.MENU_REL + '.XMLB')
+    if menu is None:
+        ck.error('classic main menu is missing')
+        return
+    items = {item.get('name'): item for item in menu.iter('item')}
+    for number, _text, _command in F.MENU_BUTTONS:
+        back = items.get(f'button{number}_back')
+        if back is None or back.get('model') != F.MENU_MODELS[0]:
+            ck.error(f'button{number}: no explicit original back-panel model')
+    help_item = items.get(MA.HELP_NODE)
+    if help_item is None or not help_item.get('text') or help_item.get('neverfocus') != 'true' or \
+            help_item.get('style') != MA.HELP_STYLE or 'desctext1' in items:
+        ck.error('main help must use the visible, nonfocusable alias and classic description style')
+    colors, styles = v.tree('Data/colors.XMLB'), v.tree('Data/styles.XMLB')
+    if colors is None or styles is None:
+        ck.error('classic main palette/style tables are missing')
+        return
+    ids = [int(entry.get('id', '-1')) for entry in colors]
+    if len(ids) != len(set(ids)) or any(not 0 <= value < MA.COLOR_LIMIT for value in ids):
+        ck.error('palette IDs are duplicate or outside the native table')
+    if len(styles) > MA.STYLE_LIMIT:
+        ck.error('styles exceed the native table')
+    names = {entry.get('name'): entry for entry in styles}
+    for name in (MA.MAIN_STYLE, MA.HELP_STYLE):
+        style = names.get(name)
+        if style is None or any(int(style.get(key, '-1')) not in ids
+                               for key in ('color_nofocus', 'color_focus', 'color_disabled', 'color_highlight')):
+            ck.error(f'{name}: missing modern colour fields or dangling IDs')
+    for map_name, suffix in (('fonts_pc', ''), ('fonts_hd', '_hd')):
+        root = v.tree(f'UI/fonts/{map_name}.XMLB')
+        base = v.ctx.read_base_xmlb(f'UI/fonts/{map_name}.XMLB')
+        if root is None or [entry.attrib for entry in list(root)[:len(base)]] != [entry.attrib for entry in base]:
+            ck.error(f'{map_name}: original PC map entries were replaced')
+            continue
+        for index in ('medium', 'big'):
+            name = f'lc_main_{index}{suffix}'
+            overrides = [entry for entry in root if entry.get('index') == index and entry.get('data') == name
+                         and entry.get('texture') == name and entry.get('language') == 'eng']
+            table = v.tree(f'UI/fonts/{name}.XMLB')
+            if len(overrides) != 1 or table is None or \
+                    {int(entry.get('num', '-1')) for entry in table} != set(range(256)) or len(table) != 256:
+                ck.error(f'{name}: incomplete English override or glyph slots')
+                continue
+            fallback = next(entry for entry in base if entry.get('index') == index and
+                            'eng' in (entry.get('language') or 'eng').split(','))
+            pc_table = v.ctx.read_base_xmlb(f'UI/fonts/{fallback.get("data")}.XMLB')
+            glyphs = {int(entry.get('num')): entry for entry in table}
+            for entry in pc_table:
+                number = int(entry.get('num'))
+                if not 32 <= number <= 126 and any(value != glyphs[number].get(key)
+                    for key, value in entry.attrib.items() if key not in ('s', 's2', 't', 't2')):
+                    ck.error(f'{name}: PC control/extended glyph {number} metrics changed')
+            data = v.read(f'Textures/fonts/{name}.IGB')
+            try:
+                images = G.IgbFile(data or b'').objects_of('igImage')
+                if not images or any(image.get(11) != 7 or image.get(20, 0) != 0 for image in images):
+                    ck.error(f'{name}: font atlas is not the uncompressed paired format')
+            except G.IgbError as error:
+                ck.error(f'{name}: unreadable atlas: {error}')
+    ck.set('main_panel_count', len(F.MENU_BUTTONS))
+
+
 def _console_cmds(ctx):
     names = set()
     p = ctx.research_path('scripts/xml2_console_cmds.txt')
@@ -294,7 +362,8 @@ def v15_front_end(v, ck):
             if online[0] in F.MAIN_MENU_ITEMS[F.MAIN_MENU_QUIT_SLOT:]:
                 ck.error(f'{rel}: Play Online ({online[0]}) is named for xml2-fix MainMenuItems\' Quit slot')
         shown_buttons |= {n for n, it in items.items() if it.get('text') and not it.get('type')
-                          and (it.get('hide') or '').lower() != 'true'}
+                          and (it.get('hide') or '').lower() != 'true'
+                          and (it.get('neverfocus') or '').lower() != 'true'}
         igb_names |= set(items)
         ck.set('menu_items', len(items))
     # ---- the menu IGB: XML1's re-framed on XML2's menu camera, with every node the menu file names

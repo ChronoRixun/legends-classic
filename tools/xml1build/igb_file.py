@@ -111,7 +111,10 @@ class IgbFile:
             raise IgbError(f'meta objects end at 0x{off:x}, header says 0x{start + h[2]:x}')
         self.meta_index = {m['name']: i for i, m in enumerate(self.metas)}
         off += self._section(off)                               # external directory
-        off += self._section(off)                               # memory pool names
+        # The older PC font atlases use the 0xb0000006 layout: there is no
+        # memory-pool-name section between the external directory and directory.
+        if h[11] != 0xb0000006:
+            off += self._section(off)                           # memory pool names
         # directory
         start, self.directory = off, []
         self._dir_start, self._dir_entries = off, []          # (offset, bytes, fields) per entry, for rebuilt()

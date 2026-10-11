@@ -2071,6 +2071,63 @@ options for the standalone tools (validate, zones_selftest, scripts_selftest).
 
 ### 21.2 Main menu (A)
 
+#### Main appearance restoration (number assigned at merge)
+
+The classic front end explicitly binds each back item to the original button model. The PC
+model reader at 0x5c5080 otherwise chooses an invisible default. Original main colours are
+mapped into free or identical non-pulsing PC palette IDs, below the native 75-colour ceiling;
+two named styles use the PC reader's modern colour fields and stay below its 32-style ceiling.
+The existing help transform and both serialized binding aliases become `helptext1`, with the
+original help text and a nonfocusable footer. MAIN_MENU hides `desctext1` at 0x5c99e1.
+
+English medium/big overrides in both PC and HD font maps combine the original printable
+letters with all PC control/extended and missing printable glyphs. Matching metrics and
+atlases are imported together. DXT3's explicit alpha is decoded correctly; the combined
+atlas uses the native uncompressed format, with no base-pixel resizing. Every 256-slot PC
+table and all other language/map entries remain present. These two font indices are global:
+English dialogs, credits and other menus using medium/big also receive the classic letters.
+HUD/digital indices and non-English entries retain their PC definitions.
+
+`--main-menu-layout classic|widescreen` defaults to classic. Widescreen translates the
+entire composition 48 world units to the right: text, back/highlight transforms, logo
+vertices, world bounds and lights move together. Camera, geometry proportions, font metrics,
+depths and navigation are unchanged. This is a deterministic composition, not responsive
+runtime reflow. The CLI/job/build report and standalone checks carry the choice; a changed
+choice invalidates frontend carry-over. Unknown scene layouts are refused whole.
+
+The builder also writes `[Game] ClassicMainPanelBounds=1`. The companion DLL derives all
+eight selectable rectangles from their loaded back-panel bounds, preserving full panel
+width. Where panel borders overlap vertically, it splits the hit regions at the midpoint
+using the native hit-test's half-open rectangle convention. Online/Quit remain disjoint.
+Local bound offsets change with the rectangles so the text's component origin and centering
+stay consistent. This operates only on the guarded MAIN_MENU update with all eight expected
+items present; stock builds omit the key. Native synthetic tests cover both layout offsets,
+nonoverlapping row seams, malformed bounds, text origin and repeated updates.
+
+The companion XML2 Fix writes `[Game] ClassicMainBackdrop=1` for the classic main. Its guarded
+libIGSg configureScale hook (RVA 0x6a780) changes only the first diffuse pass of known opaque
+Cerebro shaders while the current zone is exactly `menu/main_back`, preserving reflection
+0.1 and logo lighting. Unsupported exports, code bytes or pass layouts retain retail passes.
+The builder does not edit library binaries or the backdrop's original materials. V-TBD checks
+explicit panels/help, bounded styles/palette and complete paired font overrides.
+
+Shader basenames are secondary material guards, not ownership proof. A guarded libIGCore
+resource-load hook (RVA 0x4ca90) retains the directory returned for exactly the room asset.
+Every candidate must be an object entry in that directory's current resolved reference set;
+matching shaders outside it fail ownership before any pass changes. Directory replacement
+releases the previous reference. The observed twelve shaders are not a numeric selection cap.
+Bridge allocation/protection failures and protection-restore failures are logged. The
+original Options capture shows the same bright Cerebro room, so that room's appearance
+continues behind native PC Options; Options widgets/layout are not part of this restoration.
+
+The original main has a Phoenix-related profile gate (XBE 0x17e94e–0x17e975). Its exact bit
+meaning and lifetime still need an unlocked-original control. This appearance change does
+not implement that gate or substitute XML2's story-level-6 condition. No save fields, ordered
+content identities or content-version bump are part of this patch; the integrator owns the bump.
+
+The historical table below describes the earlier binding/style cut; the appearance rules
+above supersede its implicit back models, `desctext1` item and `STYLE_MENU_BLACK` styling.
+
 | Piece | Module | What is built |
 |---|---|---|
 | backdrop | zones | `menu/main_back` is converted like any zone: XML1's Cerebro room (`Maps/menu/main_back.{XMLB,CHRB,BOYB,IGB}`, `MotionPaths/menus/main_back.IGB` with `mp_camera`, the zone anim DB `zone_main_back` from `mission_menu`). The world keeps XML2's `nosave` / `startblack` (the existing replaced-zone rule of `mutate_zone`); the package keeps XML2's `bigconvmap off` and `xml data/npcstat` (`Zones.menu_zone_xml2_entries`). zoneinfo keeps XML2's entry (act 1) with `loading="textures/loading/x_mansion"` (`C.FRONTEND_MENU_LOADING`; XML1's zoneinfo has no entry). The act plan never touches a menu zone (`C.MENU_ZONES`, both modes). |

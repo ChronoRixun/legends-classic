@@ -41,6 +41,13 @@ XML2 install, the disc image, the cache or this repository's `tools/` and `resea
 
 ## Tests
 
+The classic main menu has an optional deterministic widescreen composition:
+`--main-menu-layout widescreen` on either builder entry point. The default is `classic`.
+Both keep geometry and font proportions; widescreen moves logo, panels, text and lights
+together. English medium/big letters also affect other menus and dialogs sharing those
+global font indices. The bright Cerebro backdrop requires a companion XML2 Fix build with
+`[Game] ClassicMainBackdrop=1`; the builder writes that key for the classic main menu.
+
 | What | Command | Needs |
 |---|---|---|
 | Unit tests (synthetic: disc images, bundles, the prepare stages on made-up inputs, the builder CLI on a stub pipeline, packaging) | `python tests/unit/run.py` (or `pytest tests/unit`) | nothing; CI runs them on Windows and Linux |
