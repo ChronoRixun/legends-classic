@@ -6548,7 +6548,8 @@ playthrough. Turret restoration is still separate and is not enabled by this cha
 Online co-op is lockstep: every peer runs the boss's native AI update, so every
 peer runs the controller. The companion DLL registers the installed state in the
 shared gameplay-capability record as rule 3 (revision 1, `{installed, first_bit,
-width, 0}` from the applied `Xml1MoldStage`) and rule 4 (turrets, always off).
+width, FNV-1a-32(flag)}` from the applied `Xml1MoldStage`, so a different saved
+variable with the same bit range is refused too) and rule 4 (turrets, always off).
 Two first-game builds with the same binding agree; a peer without the controller,
 with a different binding, or with an unverified installation is refused before
 admission. A requested controller that fails to install closes host/join for that
