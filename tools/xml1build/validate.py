@@ -432,6 +432,7 @@ class Validator:
         self._banks = None
         self._x1stats = None
         self._weapon_fire_cache = {}    # powerstyle (lower) -> weapons.weapon_fire_left (SPEC 29.3)
+        self._weapon_sound_cache = {}   # authored named-weapon events; ordinary beams need no added gun sound
         self._weapon_types = None
         self._zoneinfo = None
         self._zone_ids = None
@@ -1990,12 +1991,21 @@ class Validator:
             elif plain:
                 out.append(('allow', f'powerstyle {ps}: {len(plain)} weapon_fire trigger(s), no shot in XMen2.exe',
                             'the XML1 entry has no weapon: its weapon_fire had nothing to fire in XML1 either'))
-            # V42 (SPEC 29.4, issue #83): gun-shot triggers must not go without their fire sound while the
-            # move still spends triggers on a mid-move bolton holster/redraw cycle
-            silent = W.silent_shots(self.tree(f'data/powerstyles/{ps}.xmlb'))
+            # V42 (SPEC 29.4, issue #83): with raised MoveTriggers every converted weapon shot keeps sound.
+            source_ps = (x1[1].get('powerstyle') or '').lower() if x1 is not None else ''
+            if source_ps not in self._weapon_sound_cache:
+                authored = None
+                for ext in ('.xml', '.eng'):
+                    try:
+                        authored = self.ctx.read_x1_xml(f'data/powerstyles/{source_ps}{ext}')
+                        break
+                    except KeyError:
+                        pass
+                self._weapon_sound_cache[source_ps] = W.named_weapon_events(authored)
+            silent = W.silent_shots(self.tree(f'data/powerstyles/{ps}.xmlb'),
+                                   event_names=self._weapon_sound_cache[source_ps])
             if silent:
-                out.append(('soft', f'powerstyle {ps}: {len(silent)} gun shot(s) carry no fire sound while a '
-                                    f'mid-move bolton holster cycle spends their slots: {silent[:4]}'))
+                out.append(('soft', f'powerstyle {ps}: {len(silent)} gun shot(s) carry no fire sound: {silent[:4]}'))
         ms = el.get('moveset1')
         if ms and not (self.exists(f'data/fightstyles/{ms}.xmlb') or self.exists(f'data/fightstyles/{ms}.engb')):
             out.append(('soft', f'moveset1 Data/fightstyles/{ms} missing'))

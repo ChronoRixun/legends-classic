@@ -3415,8 +3415,7 @@ references are mapped: an `<event>` (root or move level) whose inherit chain rea
 bullet / beam weapon becomes a `beam` event with that weapon's data, exactly as `shot_triggers` builds a shot
 (`beambolt` = the event's `boltselect`, else the weapon's `actorbolt`; tracer, impact, damage code, range,
 `damageMod`). Event names stay, so no move gains a trigger for its shots; the weapon's muzzle flash + fire sound
-(`effect_sound`) go on the burst's shots while the move stays within 19 triggers (29.4 reclaims a mid-move bolton
-cycle so every shot of Mystique's bursts carries its sound). Projectile / flame weapons named this way are counted
+(`effect_sound`) go on every burst shot under the port's MoveTriggers=64 contract (29.4). Projectile / flame weapons named this way are counted
 and left (none on the disc). Count `weapon_events_to_beam` (2), report `detail['weapon_events']`.
 
 Validator (in V5): a stats entry's power style must not fire `weapon_fire` - through an event naming a weapon,
@@ -3439,26 +3438,21 @@ landing spot is not hurt, as in XML1. Nothing changed.
 
 ### 29.4 Every shot of a named-weapon burst keeps its fire sound (issue #83)
 
-**Symptom (tester, builder 0.1.10).** Mystique's gun attacks miss some sound effects (and the HAARP officer's gun
-is very loud; see section 72 for that half).
+XML1 attaches the fire sound to the weapon event. The port adds one `effect_sound` trigger per shot.
+The native cap is 19 at `0x4f6aa7`. The companion XML2 Fix `[Limits] MoveTriggers` patch expands handle storage
+without changing native move records or saved data. Port builds request 64, preserving all original triggers,
+including holster/redraw cycles. The source census found two affected moves: Mystique's `power_attack` needs
+23 triggers (all 6 shots sound and the original holster cycle stays); `power_smash` needs 27 (all 10 shots sound).
+The former 19-trigger build emitted 2 smash sounds, not the four previously documented.
 
-**Cause.** In XML1 the fire sound rides the `weapon_fire` EVENT, so every trigger inheriting it (every shot of
-Mystique's 6-shot power_attack and 10-shot power_smash bursts) played `character/mystiq_m/power1b` - no per-shot
-data needed. The port must spend one trigger per shot on the sound (XMen2.exe has no sound-bearing attack events),
-and a FightMove holds at most 19 triggers: 29.3 therefore put the muzzle flash + fire sound on only the first two
-shots of each burst; shots three and up went silent. ps_mystique's moves carry a mid-move bolton cycle (guns
-holstered at 0.18 for the grenade toss, redrawn at 0.45 for the burst) - four triggers spent on a cosmetic
-holster moment while the burst's audio was dropped.
+The builder's `fix_ini.LIMITS` is the capacity contract for both weapon conversion and V18's effective inherited
+trigger count. When the key is absent, conversion uses stock 19 behavior. Never pair full 64-trigger output with
+an older DLL or a disabled raise. Rebuild characters (which implies heroes), then validate and regenerate the
+port ini. Prepared source/media caches remain reusable; output styles must be regenerated.
 
-**Fix.** `weapons.rewrite_weapon_events`: when a move's shots do not all fit, `_drop_bolton_churn` first removes a
-mid-move `removebolton`/re-`bolton` pair of any boltslot that is re-added later in the same move (the weapon stays
-attached through the move). The freed slots get the weapon's `effect_sound` per shot. power_attack drops one cycle
-(2 x 2 triggers) and all 6 shots now carry flash + sound at exactly 19 triggers; power_smash has no cycle to
-reclaim, so 4 of its 10 shots sound - the engine's 19-trigger cap leaves no alternative (XMen2's own gun styles
-are single-shot moves the AI repeats). Counts `weapon_event_bolton_churn_dropped`, `weapon_event_fx_added`.
-
-Validator (V42 in V5): a style with weapon events must not keep a mid-move bolton churn cycle in a move whose
-shots lack sound; `weapons.weapon_fire_silent_shots` lists them.
+V42 checks all converted named-weapon shots for their sound with the raised key. V-TBD (SPEC section number
+assigned at merge), within V18, rejects effective move counts above the configured capacity, including inherited
+triggers and tag updates. No CONTENT_VERSION bump here; the release integrator owns it.
 
 ---------------------------------------------------------------------------------------------------------------
 

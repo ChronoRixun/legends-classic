@@ -67,13 +67,10 @@ build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebui
 - Melee weapons contribute their authored fixed bonus before Strength and Might; damage rolls use inclusive
   integers. The opening cop's punch is 7 or 9 damage (SPEC 69.5; V40).
 - Includes every 0.1.12 content and XML2 Fix 1.3.2 change listed below.
-- **Fixed: Mystique's pistols lose their sound part-way through a burst** (issue #83). In the first game every
-  shot of her gun bursts plays the fire sound (it rides the weapon's fire event); the port must spend a trigger
-  per shot on it, and the engine allows 19 per move, so after the first two shots the rest of a burst went
-  silent. The builder now reclaims the mid-move holster/redraw of her gun models (the guns stay in hand) so
-  every shot of power_attack carries its muzzle flash + fire sound; power_smash's ten shots still exceed what
-  19 triggers can hold and four of them sound. The HAARP officer's nullifier was checked at the same time: it
-  fires the first game's own sound, as loud there as here.
+- **Fixed: every shot of Mystique's pistol bursts keeps its fire sound and muzzle flash** (issue #83).
+  Port builds request `[Limits] MoveTriggers=64` from the companion XML2 Fix patch. Her attack keeps its original
+  holster/redraw events and all six sounds (23 triggers); smash keeps all ten sounds (27 triggers). The previous
+  build emitted two smash sounds. Conversion and validation share the capacity written into the port ini.
 - **Checked: the health / energy pack sound** (issue #82). The port plays the first game's own pack recordings
   (the merged bank's entries are the same audio the Xbox ships) at the original 22050 Hz; verified in game
   through a DirectSound trace of the engine's sound calls. No cause for the reported "sometimes lower pitched"

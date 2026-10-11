@@ -122,8 +122,10 @@ BUILD_REPORT = ('_build', 'report.json')
 # effects and a four-hero party's powers need more than 900 curves (943 at nyc1_1_2b's bench fire, up to about 1050
 # in the heaviest zones), and past the pool XMen2.exe hands out empty curves - the effects loaded last lose their
 # particles (the bench fire is a faint glow). Curves are not saved.
+# MoveTriggers preserves all authored holster/redraw events and a flash/sound per gun shot.
+# Requires the companion XML2 Fix move-trigger patch; absent key means stock 19.
 LIMITS = {'ActorSlots': '127', 'ResourceNames': '1024', 'ItemEnhancements': '512', 'FightStyles': '32',
-          'EffectCurves': '3600'}
+          'EffectCurves': '3600', 'MoveTriggers': '64'}
 
 # xml2-fix 1.3.1 [Game] GeometrySharingBlendIndices (SPEC 44, issue #11): XMen2.exe's geometry sharing reuses one
 # skinned mesh for another when positions and weights match although their packed blend indices differ; XML1's
@@ -178,7 +180,7 @@ PORT_OWNED = {'Game': ('NewGameTeam', 'ResetUnlocks', 'SaveFolder', 'ForcedTeams
                         'EndHeroUnlock', 'MainMenuItems', 'NewGamePlus', 'ReviewStats', 'Xtract', 'XtractionShop', 'XPCurve',
                        'GeometrySharingBlendIndices', 'CharacterLadderPaths', 'ObjectiveDescriptions',
                        'BreakRule', 'ConfirmationRelease'),
-              'Limits': ('ActorSlots', 'ResourceNames', 'ItemEnhancements', 'FightStyles', 'EffectCurves'),
+              'Limits': ('ActorSlots', 'ResourceNames', 'ItemEnhancements', 'FightStyles', 'EffectCurves', 'MoveTriggers'),
               'Online': ('GameVersion', 'ContentFingerprint'),
               'Save': ('Format',)}
 
@@ -522,10 +524,22 @@ def merge_ini(path, sections: dict, drop: dict | None = None) -> bool:
     return True
 
 
+def check_move_trigger_dll(dll, keys: dict) -> None:
+    """An existing DLL must recognize the raised key before full-trigger output is installed.
+    Source-only builds may omit the DLL, then install the companion build through the harness."""
+    if int(keys.get('Limits', {}).get('MoveTriggers', '19')) <= 19:
+        return
+    dll = Path(dll)
+    if dll.is_file() and 'MoveTriggers'.encode('utf-16le') not in dll.read_bytes():
+        raise ValueError('Full move triggers require the companion XML2 Fix DLL supporting [Limits] MoveTriggers; '
+                         'the existing DLL does not recognize it')
+
+
 def write_port_keys(out, keys: dict | None = None) -> dict:
     """merge the port's keys (default: port_keys(out)) into <out>/xml2-fix.ini, dropping the PORT_OWNED keys it does
     not need; the launcher's keys stay. Returns the keys written."""
     keys = port_keys(out) if keys is None else keys
+    check_move_trigger_dll(Path(out) / 'dinput.dll', keys)
     if keys.get('Save', {}).get('Format') == 'lc' and (Path(out) / 'Data/lcsave/catalogue.lcc').is_file():
         import json
         identity = RI.manifest(out)
