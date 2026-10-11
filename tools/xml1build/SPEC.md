@@ -6412,3 +6412,8 @@ installed rules refuse admission in either direction. Both verified off peers re
 This agreement is separate from the release identity; the integrator assigns that token, and this
 change does not rewrite it. Older peers without the tagged agreement cannot join the new protocol.
 Live multiplayer acceptance is deferred to the integrator; the native agreement fixture is game-free.
+
+The shared native gameplay-capability record includes the effective explosive rule and explicit entity/token
+layout; participating controller/capacity installers register values before finalization. Unknown or differing
+entries refuse with an actionable native dialog and immediate pending-join cleanup. The transport and
+registration API are documented in the companion XML2 Fix `docs/gameplay-agreement.md`.
