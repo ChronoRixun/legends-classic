@@ -1,6 +1,9 @@
 """Invented palettes, glyphs and scene graphs for the main-menu importer."""
 import copy
 import struct
+import json
+import tempfile
+from pathlib import Path
 import xml.etree.ElementTree as ET
 
 import numpy as np
@@ -176,6 +179,17 @@ def test_layout_choice_reaches_both_builder_parsers():
     from xml1builder.cli import make_parser
     assert build_xml1.parse_args(['--out', 'synthetic', '--main-menu-layout', 'widescreen']).main_menu_layout == 'widescreen'
     assert make_parser().parse_args(['build', '--main-menu-layout', 'widescreen']).main_menu_layout == 'widescreen'
+
+
+def test_standalone_checks_keep_the_built_layout():
+    from xml1build import common as C
+    with tempfile.TemporaryDirectory() as folder:
+        out = Path(folder)
+        (out / '_build').mkdir()
+        (out / '_build' / 'report.json').write_text(json.dumps({'build': {
+            'frontend': 'xml1', 'main_menu_layout': 'widescreen'}}))
+        assert C.args_for_out(out).main_menu_layout == 'widescreen'
+        assert C.args_for_out(out, main_menu_layout='classic').main_menu_layout == 'classic'
 
 
 def test_generated_menu_help_does_not_disable_mouse_and_quit_contract():
