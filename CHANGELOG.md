@@ -13,6 +13,9 @@ every new rule below without a word. Rebuild; your saves carry over.
 - **Breakable parts** (issue #3): Juggernaut's helmet and the Sentinels' arms can be broken again, with their effects,
   and a Sentinel without an arm can't use that arm's attacks. Boss "armour off" moments now really take the armour off
   (Juggernaut's helmet, Blob's pillars, Pyro and Toad): those fights were much tougher than the first game's.
+- **Resistant enemies stand their ground again**: the first game's resistance talents also stop hit reactions, so
+  HAARP officers and the other resistant enemies (41 of 74 resistant entries) are no longer launched or knocked back
+  by a punch-punch-slam; plain soldiers still are, and a boss whose armour comes off can be launched again.
 - **Leaders** (issue #15): heroes don't flinch from a leader's projectiles, and leaders drop as in the first game
   (four drops, one of them health, energy or an Xtreme pip).
 - **Solo mode** (issue #5): the first game's solo boxes and bridges keep the rest of the party behind and regroup it
@@ -59,9 +62,10 @@ player and a 0.2.2 player refuse each other at join, with the reason on both PCs
   `LevelStatPoints`, `Xml1Multipart`, `X1Leader` (with `Data\x1leader.txt`), `SoloMode`, `DeathRule`,
   `DangerRoomGate`, `RevivalCost`, `Xml1Turrets` (with `[Xml1Turrets]`), `PackAmount`; `[Limits] ScriptFunctions`.
 - New build checks: V52 breakable parts, V53 removable resistances, V54 leader list, V55 fractional health, V56 scan
-  turret contract, V57 script function names, V58 Codex highlight, V59 solo mode calls; V26 compares fall volumes with
+  turret contract, V57 script function names, V58 Codex highlight, V59 solo mode calls, V60
+  resistance talents; V26 compares fall volumes with
   the source; V32 checks the Load bit of every Xtraction point.
-- SPEC 41.1, 52, 63.4-63.6, 79.1, 88-91.
+- SPEC 41.1, 52, 63.4-63.6, 79.1, 88-92.
 
 </details>
 
