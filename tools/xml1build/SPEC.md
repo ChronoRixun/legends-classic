@@ -6947,7 +6947,7 @@ item data is unchanged. An XML2 Fix without the key leaves the third (the ini ke
 ## 91. Release 0.2.2 content identity
 
 The 0.2.2 wave changes a build's output (Professor X's seats, the resistance talents' removal tags, the solo-mode
-script calls, the Xtraction service bits and the Healer / Forge unlock rows, the fall volumes' shape and two enabled
+script calls, the Xtraction service bits and the Healer / Forge unlock rows, the resistance talents' reaction rows, the fall volumes' shape and two enabled
 rooms, the Codex highlight model, the turret placements, the leader list and the new XML2 Fix keys), so CONTENT_VERSION
 advances from 18 to 19. The decoded catalogue differs from 0.2.1's only in its content version, so catalogue
 revision 6 is retained; of the `.lcbind` files only `shared_talents.lcbind` differs, and only in its data hash (its
