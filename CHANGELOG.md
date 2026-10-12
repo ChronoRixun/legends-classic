@@ -5,41 +5,65 @@ build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebui
 
 ## v0.2.2 - content version 19 (needs XML2 Fix 1.5.0)
 
-This build needs **XML2 Fix 1.5.0** (the launcher installs it): the builder refuses an older fix, which would ignore
-every new rule below without a word. Rebuild; your saves carry over.
+This build needs **XML2 Fix 1.5.0**: in the launcher, **Rebuild**, then **Play** (the launcher installs the fix after
+the build). Your saves carry over.
 
+**Updating**
+
+- **Old saves catch up once.** The first time an existing save is loaded, every hero gets the fifth-level points the
+  new rules give (1 skill point and 4 stat points for each fifth level already passed), and each hero's automatic stat
+  growth is recomputed with the first game's tables; comic rewards are kept. The next save records it, so it happens
+  only once.
+- **The fix and the build go together.** The new rules need XML2 Fix 1.5.0: an older `dinput.dll` ignores them without
+  a word. A build that finds an older fix in its folder warns and names the missing settings; the launcher replaces
+  the fix right after the build (standalone: copy the 1.5.0 `dinput.dll` into the folder).
+- **Online, both players need 0.2.2 with XML2 Fix 1.5.0.** A 0.2.1 / XML2 Fix 1.4.0 player and a 0.2.2 player refuse
+  each other at join, with the reason on both PCs.
+- **Going back to 0.2.1?** Copy `Documents\Activision\X-Men Legends` somewhere before updating. XML2 Fix 1.4.0 never
+  overwrites a save 1.5.0 wrote without keeping it (as `.lcsave.newer`), and after going back and forth it can refuse
+  to save the profile at all; put your copy back to go back cleanly.
+
+**The big ones**
+
+- **The scan turrets fire again** (issue #4): the HAARP exterior missile tanks scan, turn, lock on and fire their
+  three-missile salvos with the first game's timing, the Arbiter and Weapon X tripod guns sweep and fire their
+  bullets, and the Hive tanks' flame turrets burn whoever comes close. All of them can still be destroyed, and stay
+  destroyed in your saves.
+- **Xtraction points offer the first game's services** (issue #63): Load, the Danger Room, the Healer and Forge where
+  the first game had them; the main menu's Danger Room is greyed until Phoenix has joined your campaign. Online,
+  Load and the campaign-gated choices are greyed with other players, as XML2 does.
 - **Skill ranks cost what they cost in the first game** (issue #35): the ranks that open a new form of a power cost
-  2 skill points, and every fifth level gives 2 skill points and 8 stat points instead of 1 and 4. Heroes in your
-  existing saves get the points they missed at the fifth levels they already passed, once, when the save is first
-  loaded (1 skill point and 4 stat points per fifth level).
-- **Heroes grow like the first game's** (SPEC 94): the automatic stat bonus of each level follows X-Men Legends I's
-  bruiser / support tables instead of XML2's classes. Heroes in your existing saves get their bonus recomputed once,
-  when the save is first loaded (comic rewards are kept).
+  2 skill points, and every fifth level gives 2 skill points and 8 stat points instead of 1 and 4.
+- **Heroes grow like the first game's**: the automatic stat bonus of each level follows X-Men Legends I's bruiser /
+  support tables instead of XML2's classes. Bruisers end up with more health, supports and mental attackers deal
+  more damage.
 - **Breakable parts** (issue #3): Juggernaut's helmet and the Sentinels' arms can be broken again, with their effects,
   and a Sentinel without an arm can't use that arm's attacks. Boss "armour off" moments now really take the armour off
   (Juggernaut's helmet, Blob's pillars, Pyro and Toad): those fights were much tougher than the first game's.
 - **Resistant enemies stand their ground again**: the first game's resistance talents also stop hit reactions, so
   HAARP officers and the other resistant enemies (41 of 74 resistant entries) are no longer launched or knocked back
   by a punch-punch-slam; plain soldiers still are. A boss whose armour comes off takes full damage again but
-  still isn't launched, as in the first game.
-- **A hero who takes over from a fallen one stands still** until you move them, as in the first game, instead of
-  finishing the walk its AI had started (in the ice tunnel's solo crossing, off the edge).
-- **Leaders** (issue #15): heroes don't flinch from a leader's projectiles, and leaders drop as in the first game
-  (four drops, one of them health, energy or an Xtreme pip).
+  still isn't launched, as in the first game. XML2's "Resistant" line under enemy health bars goes with it (the
+  first game had none).
 - **Solo mode** (issue #5): the first game's solo boxes and bridges keep the rest of the party behind and regroup it
   afterwards, so followers no longer walk into the void at the gaps.
+
+**Fixes**
+
+- **Leaders** (issue #15): heroes don't flinch from a leader's projectiles, and leaders drop as in the first game
+  (four drops, one of them health, energy or an Xtreme pip).
 - **Enemies die below 1 health**, as in the first game, so none fights on at a fraction of a point with its death
   script and drop waiting (the HAARP keycard officer).
-- **Xtraction points offer the first game's services** (issue #63): Load, the Danger Room, the Healer and Forge where
-  the first game had them; the main menu's Danger Room is greyed until Phoenix has joined your campaign. Online,
-  Load and the campaign-gated choices are greyed with other players, as XML2 does.
+- **A hero who takes over from a fallen one stands still** until you move them, as in the first game, instead of
+  finishing the walk its AI had started (in the ice tunnel's solo crossing, off the edge).
 - **Reviving a fallen hero costs the first game's price**: 200 x (your highest hero's level) squared. That is much more
   than before at high levels (level 24: 115,200).
 - **Packs restore a quarter** of health or energy, as in the first game (XML2 gave a third).
 - **Fall volumes work as in the first game** (issue #22): the East Rooftops and the second sewer room kill a hero who
   falls, and every fall volume keeps the first game's round shape.
-- **Pads and the Codex**: *Defaults 1/2/3* in the controls menu keep your pad layout (issue #9); in a cinematic the
-  mouse no longer outlines or moves heroes (issue #85); the Codex list highlight covers the whole row (issue #97).
+- **Pads and the Codex**: *Defaults 1/2/3* in the controls menu keep your pad layout (XML2 Fix issue #9); in a
+  cinematic the mouse no longer outlines or moves heroes (issue #85); the Codex list highlight covers the whole row
+  (issue #97).
 - **Exclusive fullscreen** asks only for a mode your screen can show, 8x anti-aliasing is really 8x, and a failed
   start no longer resets your display settings (issue #84).
 - **More room for scripts**: the game's limit of 320 script functions is raised to 1024 (the first game's scripts and
@@ -54,13 +78,17 @@ every new rule below without a word. Rebuild; your saves carry over.
 - **Fixed: the health / energy pack sound sometimes played lower** (issue #82). That was XML2's double heal and its own
   "double" sound; builds ask XML2 Fix for `[Game] DoubleHeal=0`, so packs heal as in the first game and the stats screen
   drops the double-heal lines (SPEC 63.5).
-- **The scan turrets fire again** (issue #4, needs the matching XML2 Fix): the HAARP exterior missile tanks scan,
-  turn, lock on and fire their three-missile salvos with the first game's timing, the Arbiter and Weapon X tripod
-  guns sweep and fire their bullets, and the Hive tanks' flame turrets burn whoever comes close. All of them can
-  still be destroyed.
 
-**Online co-op:** 0.2.2 and XML2 Fix 1.5.0 add rules 5-15 to the shared gameplay agreement. A 0.2.1 / XML2 Fix 1.4.0
-player and a 0.2.2 player refuse each other at join, with the reason on both PCs: update both.
+**Known issues**
+
+- Professor X keeps his old seat in the rooms an existing save already visited (above).
+- The revival price is the first game's, steep at high levels (above).
+- 18 fall volumes are still off (#22): several sit in water or rooms followers can stray into, and need their own
+  checks.
+- In co-op, *Load Saved Campaign* can stop at "Sending game information..." (0.2.1 too). Start a new campaign in co-op
+  for now.
+- Co-op was tested with two copies of the game on one PC; the two-PC pass, on one network and across the internet,
+  is 0.3.0.
 
 <details><summary>Technical details</summary>
 
@@ -74,6 +102,9 @@ player and a 0.2.2 player refuse each other at join, with the reason on both PCs
   resistance talents; V26 compares fall volumes with
   the source; V32 checks the Load bit of every Xtraction point.
 - SPEC 41.1, 52, 63.4-63.6, 79.1, 88-94; heroes check V-H17 (autospend classes).
+- `xml1-builder build` over a folder that still holds an older XML2 Fix (the launcher's Rebuild runs before it
+  installs the new fix) finishes with warning `W_XML2FIX_OLD`, naming the keys that DLL doesn't know, instead of
+  failing at the last step; `build_xml1.py` and the harness still refuse an older DLL.
 
 </details>
 
