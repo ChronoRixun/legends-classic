@@ -3,7 +3,85 @@
 The builder's releases, newest first. The version is `xml1-builder --version`; the content version is what a
 build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebuild.
 
-## Unreleased - 0.2.0 - content version 17 (needs XML2 Fix 1.4)
+<!-- TODO(release): content version 18 / LC26 is candidate j's identity; if the menu-centring fix changes the build
+output it becomes 19 / a new token - confirm with tools/xml1build/release_identity.py, then fix the heading and the
+lobby-token bullet below. This comment sits above the heading, so the release notes do not carry it. -->
+## v0.2.0 - content version 18 (needs XML2 Fix 1.4.0)
+
+This build needs **XML2 Fix 1.4.0** (the launcher installs it). Rebuild, then start the game once: your saves are
+carried over into the new format by themselves. Saves made with 0.2.0 don't load in earlier builds.
+
+**Updating**
+
+- **A new save format, and your old saves come with you.** The first time the rebuilt game starts, every existing
+  save and the profile are converted once into a new `SaveLC` folder next to the old `Save` folder, which is never
+  touched. Heroes, levels, stats, talents, inventory, mission progress, unlocks, heard conversations and trivia
+  answers carry over, from every builder version. `SaveLC\legacy-import.txt` says what happened to each file.
+  Future updates can change content without breaking saves.
+- Rebuild **and** update the fix: the format needs both. Updating only `dinput.dll` doesn't make the save tables.
+- Want to be able to go back? Copy `Documents\Activision\X-Men Legends` somewhere first. Older builds play the old
+  `Save` folder as it was before the update; they can't read the new `.lcsave` files.
+- Every save keeps the one before it as `.lcsave.bak`. If a save or load is ever refused, the game says why and the
+  file on disk is kept as it was: report it with `xml2-fix.log` and `SaveLC\legacy-import.txt`.
+
+**The big ones**
+
+- **The first game's combat balance** (issues #14, #94). Enemy health and damage, the heroes' strength bonus, power
+  attacks, melee hit chance and the original seven basic melee attacks are back to X-Men Legends' numbers; enemy
+  punches hurt again. NPC guns roll the first game's +/-30 % damage (they hit about 13-15 % too hard before), and
+  hero health is scaled to match: a fresh level-1 Wolverine has 80 HP, the opening riot cops 40. Expect fights to be
+  harder than in 0.1.12.
+- **The classic main menu.** The bright blue Cerebro room, honeycomb panels behind every button, the original fonts,
+  colours and help line, in a widescreen layout that moves everything together instead of stretching it. The mouse
+  lands anywhere on a button, also in a window Windows resized for display scaling.
+- **Bigger rooms stay complete.** The engine's object limits are raised (general objects 224 -> 768, world handles
+  256 -> 1024), so crowded rooms no longer silently drop props and projectiles: the HAARP freeze gun fires, Magneto's
+  arena keeps its props, and about 940 objects across 116 zones that went missing before are there.
+- **Master Mold fights like the original** (issue #27). His warp-core shield, the cores that bring it down, his
+  platform and floor attacks and their original timing, through to his defeat and the ending. Loading a save made
+  mid-fight keeps your progress.
+
+**Fixes**
+
+- Mystique's pistol and smash bursts keep every shot's sound and muzzle flash (#83).
+- Explosions count their first hit the way the first game did; Avalanche's rocks, Magneto's props and other thrown
+  objects deal their original explosion damage.
+- Soldiers throw the right grenades; the freeze-gun leader's flashbang drains energy with a white flash (#36).
+- Pyro reaches his fight position at HAARP and can pass his own fire barrier (#93).
+- Keycards lying in the world show their model instead of a yellow question mark (#96).
+- The equipment shop is reachable from Xtraction points after you have met Forge (#95).
+- The personal items in the mansion bedrooms show their picture framed in its window, with readable text (#47).
+- Hero power icons show the first game's complete art in round frames (#53, #73).
+- "Enter the HAARP facility?" no longer answers itself while the accept button is still held (#77).
+- Floating props settle onto the floor on a fresh visit; positions a save already holds stay as they were (#81).
+- Trivia answers are remembered in every act, including acts 8 and 9.
+- Heard conversations stay heard after loading, even when content changed between versions.
+- The bridge tanks drive out in older saves instead of appearing after the cutscene.
+- Equipped items in older saves import correctly when the save's talent era differs.
+- No crash on Quit from the classic main menu.
+
+**Co-op**
+
+- Saving during co-op no longer freezes the game long enough for the other player to be disconnected.
+- Players whose builds or gameplay settings differ are refused when they join, with the reason on both PCs (the host
+  sees it in the lobby, or as a short line in play), instead of joining and drifting out of sync.
+- Co-op works in tests with two copies of the game on one PC. A dedicated co-op pass with two PCs, on one network
+  and across the internet, is planned for 0.3.0: please report disconnects, and whether the game showed its lag
+  warnings first.
+
+**Known issues**
+
+- Scan turrets in HAARP and other zones are still inert (#4; planned for 0.3.0).
+- An officer killed while pinned against a door in HAARP can drop his keycard behind it, out of reach: load your last
+  save if it happens (fix planned for 0.2.1).
+- Exclusive fullscreen can fail on high-refresh desktops (seen at 2560x1440 and 180 Hz) and the game then resets its
+  own resolution settings: use borderless, the launcher's default (fix planned for 0.2.1).
+- The Danger Room is always open from the main menu; the first game opened it at a point in the story.
+- An online save made after destroying objects was refused once in an earlier test build (after a connection drop).
+  Two fixes since address the likely causes and destruction saves have passed online since, but that case was never
+  reproduced: if a save is refused, your existing save file is kept - please report it with `xml2-fix.log`.
+
+### Details
 
 - Own `[Limits] EntityCapacity=1` for port builds (SPEC 85): the companion DLL raises the entity domain to
   32 actor / 768 generic / 1024 World handles, so the props, projectiles and triggers the stock 224-slot
@@ -98,9 +176,11 @@ build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebui
   the melee hit chance and rounding through xml2-fix's `[Balance]` section), and the seven basic melee attacks
   and the power-attack rule are in the build's data. Was prepared off by default; 0.2.0 turns the switch on
   (`xml1build.balance.X1_BALANCE`, the test override dropped). SPEC 69; the check V38.
-- **Co-op compatibility metadata** (decision D5). `[Online] GameVersion` is `LC23` (content 16, catalogue 5), separating these lobbies
-  from earlier port generations. The ini records the save-table content fingerprint. Comparing peers
-  by content version and fingerprint needs the XML2 Fix network seam, which is not implemented in 1.4.
+- **Co-op compatibility metadata** (decision D5). `[Online] GameVersion` is the release's lobby token, `LC26`
+  (content 18, catalogue 6; `tools/xml1build/release_identity.py`), separating these lobbies from earlier port
+  generations and candidates. The ini also records the save-table content fingerprint, as metadata: XML2 Fix 1.4
+  compares the peers' effective gameplay rules and entity layout when a player joins (the shared gameplay
+  agreement), not the fingerprint.
 - Continuing LC saves retain legacy/KEEP payloads and documentary keys. Core capture metadata records opened
   placements, numbered identities and completeness; Python/C++ canonical KEYS bytes match (SPEC 70.5).
 - Power slots retain their usable flag through conversion, save and load (HERO 1.1).
