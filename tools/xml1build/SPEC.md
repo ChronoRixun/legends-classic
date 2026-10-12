@@ -5586,6 +5586,17 @@ All-zone sweep (145 XML1 zones, staged `loadMapKeepTeam`, first visit each, hit 
 first 6 s, Frida): only mansion1a_2 has a hit during a settle. Four zones have load-time hits outside any settle
 (asteroid2_2, mastermold2, nuke2_3, nyc3_1_3: fires, harm loops, scripted events), unchanged by the key.
 
+### 63.5 Packs that never heal double (xml2-fix `[Game] DoubleHeal=0`, issue #82)
+
+A health / energy pack's onactivate script is XMen2.exe's `restoreHealth` / `restoreEnergy` (0x4a2dd0 / 0x4a2c20).
+Each draws a random number against the hero's double-heal chance (the stats screen's "Double Heal Chance"). Below it,
+the pack heals two thirds instead of one and its use (0x42ca80 / 0x42cb70) plays `common/game/pickup_power_double`:
+XML2's own recording, darker than the first game's `pickup_power` (spectral centroid about 1680 Hz against 2260 Hz).
+That is the "sometimes slower / lower pitched" pack sound: 5 of 80 staged uses in the harness. The first game's pack
+use (default.xbe 0x3a7c0) takes no multiplier, and its banks have no double event. The builder writes `DoubleHeal=0`
+for every XML1 build (`fix_ini.DOUBLE_HEAL`), and the fix always takes the single branch: 0 of 80. The random number is
+still drawn. The stats screen's "Double Heal Chance" line (XML2's own help text) is not changed yet.
+
 ## 64. The pause menu without the Blink Portal (issue #89)
 
 **What the first game does.** XML1 has no portal: its pause menu offers Objectives, Characters, Load Game, Players,
