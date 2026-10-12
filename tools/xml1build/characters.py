@@ -75,9 +75,12 @@ XML2_TAG = {'talent': 'talent', 'race': 'Race', 'bolton': 'BoltOn', 'multipart':
 BOLTON_SLOTS = {'ebolton_clawright': 0, 'ebolton_clawleft': 1, 'ebolton_weapon': 0, 'ebolton_altweapon': 1,
                 'ebolton_cape': 2, 'ebolton_tail': 2, 'ebolton_wings': 2, 'ebolton_tongue': 3,
                 'ebolton_autoanim': 4, 'ebolton_autoanim2': 5}
-# XML1 Multipart attributes XMen2.exe's Multipart parser (0x48ce80: bone, NonMenuOnly, hideSkin[%d],
-# showSkin[%d]) does not read: kept in the data (harmless), but XML2 ignores them
+# XML1 Multipart attributes XMen2.exe's Multipart parser (0x48cec0: bone, NonMenuOnly, hideSkin[%d],
+# showSkin[%d]) does not read. Kept verbatim: xml2-fix multipart.cpp ([Game] Xml1Multipart, fix_ini) reads
+# health / effectOnDeath / loopEffect / effectBone / linkToPower back from the built stats (validator V-TBD).
+# startHide and healthMul are inert: the XBE's own parser (0x89500) never reads them either.
 MULTIPART_X1_ONLY = ('effectondeath', 'linktopower', 'starthide', 'healthmul', 'loopeffect', 'effectbone')
+MULTIPART_X1_INERT = ('starthide', 'healthmul')
 # Append XML1's bolt-on actor anim mappings (data/boltonactoranims: 99_cape, 98_tail) to XML2's table under the
 # mapped anim DB names, so the XML1 capes / tails (MagnetoBoss/Act2/Scripted, nightcrawler NPCs) follow the
 # wearer's animations. Append-only (XML2 entries win). Not in SPEC 5.1 (which lists boltonactoranims as
@@ -1775,11 +1778,10 @@ def run(ctx):
                   'activepowerup, power1-4, menus, textureicon, HUD heads per costume (run the heroes module)')
     mp = b.detail.get('multipart_ignored', [])
     if mp:
-        ctx.defer(f'{len(mp)} XML1 Multipart parts use attributes XMen2.exe does not parse (0x48ce80 reads only '
-                  f'bone/NonMenuOnly/hideSkin/showSkin): {sorted({a for _, x in mp for a in x})} on '
-                  f'{sorted({n for n, _ in mp})}: breakable-part death effects, loop effects, power links, '
-                  f'health multipliers and parts hidden at start (Juggernaut helmet) are lost; the scripts '
-                  f'research emulates destroyMultipartPiece with setSegmentVisible + spawnEffectBone')
+        ctx.note(f'{len(mp)} XML1 Multipart parts on {sorted({n for n, _ in mp})} keep the first game attributes '
+                 f'{sorted({a for _, x in mp for a in x})}: the XMen2.exe parser (0x48cec0) reads only '
+                 f'bone/NonMenuOnly/hideSkin/showSkin; xml2-fix [Game] Xml1Multipart reads the part health, effects '
+                 f'and power links (breakable helmet / arms); {list(MULTIPART_X1_INERT)} are inert in XML1 too')
         ctx.set_count('multipart_x1_attrs_ignored', len(mp))
     if b.detail['dropped_children']:
         heroes_dropped = sum(1 for d in b.detail['dropped_children'] if 'hero' in d[2] or d[2] == 'level 0')

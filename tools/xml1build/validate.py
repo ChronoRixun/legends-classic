@@ -104,6 +104,9 @@ Checks (severity per SPEC 4.6: error = will not load or silently misbehaves; war
                 worst four-hero party packages, with the NPC-only talents in their data/talents/npc set files
                 (TalentRegistry fix): over 100 names or 9 files an error, exactly full a warning
   V25 harm loops (SPEC 51): no delayed start-on ordinary harm loops that XML2 disables
+  V-TBD breakable parts (issue #3): every XML1 npcstat Multipart row survives with its bone / health / effectOnDeath
+                / loopEffect / effectBone / linkToPower (xml2-fix [Game] Xml1Multipart reads them), at most four
+                parts per character, and the parts' templates leave the 13-record multipart pool room for actors
   V34 ladder spawns (SPEC 46): no monster spawner without monster_spawnexactlocation runs a ladder motion path
   V35 pda portal (SPEC 64, issue #89; validate_frontend.v_pda_portal): both front ends: UI/menus/pda (both halves)
                 written by frontend without the Blink Portal (no label_option03, nothing links to it, its models
@@ -772,6 +775,50 @@ class Validator:
             self._x1gren = {ch: next(iter(gs)) for ch, gs in W.grenade_override_votes(roots).items() if len(gs) == 1}
         return self._x1gren
 
+    # ------------------------------------------------------------------ breakable parts (issue #3)
+    # XML1's npcstat <Multipart> attributes the XBE's parser 0x89500 reads and xml2-fix multipart.cpp
+    # ([Game] Xml1Multipart) reads back from the built stats: losing one silently turns a part off.
+    MULTIPART_KEPT = ('bone', 'health', 'effectondeath', 'loopeffect', 'effectbone', 'linktopower')
+    MULTIPART_PARTS_MAX = 4      # XBE 0x89706: cmp [record+0x178],4 refuses a fifth part
+    MULTIPART_RECORDS = 13       # both managers hold 13 records (XBE 0x89ec0, XMen2.exe 0x48ccf0), templates + live actors
+
+    def vtbd_multipart(self, ck):
+        """V-TBD: every XML1 npcstat Multipart row survives in the built stats with its part-health, effect and
+        power-link attributes (case-insensitive keys, as XMen2.exe's attribute getter 0x5649c0 reads them); at most
+        four parts per character; the parts' templates leave the 13-record pool room for live actors."""
+        built = self.stats()['by_name']
+        templates = 0
+        for name, (_f, x1) in sorted(self.x1_stats().items()):
+            rows = [c for c in x1 if c.tag.lower() == 'multipart']
+            if not rows:
+                continue
+            ck.count('xml1_characters')
+            if name not in built:
+                ck.error(f'{name}: XML1 Multipart character missing from the built stats')
+                continue
+            out = [c for c in built[name][1] if c.tag.lower() == 'multipart']
+            if len(out) != len(rows):
+                ck.error(f'{name}: {len(rows)} XML1 Multipart rows, {len(out)} built')
+                continue
+            if len(out) > self.MULTIPART_PARTS_MAX:
+                ck.error(f'{name}: {len(out)} parts; the first game holds {self.MULTIPART_PARTS_MAX}')
+            if any(float(c.get('health') or 0) > 0 for c in out):
+                templates += 1
+            for i, (a, b) in enumerate(zip(rows, out), 1):
+                xa = {k.lower(): v for k, v in a.attrib.items()}
+                xb = {k.lower(): v for k, v in b.attrib.items()}
+                for k in self.MULTIPART_KEPT:
+                    if (xa.get(k) or '') != (xb.get(k) or ''):
+                        ck.error(f'{name} part {i}: {k} {xb.get(k)!r}, XML1 {xa.get(k)!r}')
+                ck.count('parts')
+        ck.set('templates', templates)
+        if templates >= self.MULTIPART_RECORDS:
+            ck.error(f'{templates} characters with breakable parts fill the {self.MULTIPART_RECORDS}-record pool: '
+                     f'no spawned actor would get its parts')
+        elif templates > self.MULTIPART_RECORDS - 4:
+            ck.warn(f'{templates} characters with breakable parts leave {self.MULTIPART_RECORDS - templates} records '
+                    f'for spawned actors')
+
     # ------------------------------------------------------------------ running / reporting
     def run_all(self):
         for cid, title, fn in (('V1', 'proxy', self.v1_proxy), ('V2', 'registry', self.v2_registry),
@@ -812,7 +859,8 @@ class Validator:
                                ('V41', 'spawn-floor residency', self.spawn_floor_residency),
                                ('V45', 'gun damage roll', lambda ck: W.validate(self, ck)),
                                ('V47', 'scripted boss approach', lambda ck: SA.validate(self, ck)),
-                               ('V46', 'pickup models', self.v46_pickup_models)):
+                               ('V46', 'pickup models', self.v46_pickup_models),
+                               ('V-TBD', 'breakable parts', self.vtbd_multipart)):
             ck = Check(cid, title)
             self.checks[cid] = ck
             t0 = time.time()
