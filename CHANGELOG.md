@@ -5,6 +5,15 @@ build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebui
 
 ## Unreleased - 0.2.0 - content version 17 (needs XML2 Fix 1.4)
 
+- Own `[Limits] EntityCapacity=1` for port builds (SPEC 85): the companion DLL raises the entity domain to
+  32 actor / 768 generic / 1024 World handles, so the props, projectiles and triggers the stock 224-slot
+  arena refused (943 refusals across 116 zones in the 0.2.0 census; the HAARP freeze gun) exist again.
+  The builder writes `Data/lcsave/typed-entity-ids.txt`, the registry of the shipped scripts' typed
+  entity-id zone variables (`tools/xml1build/typed_entity_ids.py`), which the DLL verifies before it
+  migrates a legacy save; V50 checks it against the shipped scripts. The Python lcsave takes an explicit
+  native layout (retail or the expanded E10A2) and the LC required-feature marker; retail outputs are
+  byte-identical.
+
 - The companion agreement now carries explicit effective rules and entity/token layout, with a shared
   registration API for capacity/controllers and immediate native incompatibility messages/cleanup.
 
@@ -28,6 +37,11 @@ build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebui
 - Match main-menu mouse regions to the full visible panel widths with disjoint row seams
   through the companion DLL's `ClassicMainPanelBounds` setting.
 
+- Supply the effective packed stage binding for the native Master Mold controller
+  and enable it only for first-game builds with that validated contract. The companion
+  DLL restores the shield/core encounter and registers it as shared gameplay rule 3, so
+  co-op stays available between matching builds and refuses peers whose controller
+  state differs (SPEC 86). Older DLLs ignore the keys and retain the existing fallback.
 - Import equipped legacy items using the detected item era, including restore-bank equipment, when the
   campaign's talent era differs. Attribute restore-bank talent evidence to its actual stats-table owner.
   The companion XML2 Fix converter and semantic dump apply the same corrections; no save-format change.

@@ -12,10 +12,12 @@ from __future__ import annotations
 
 import glob
 import os
+from pathlib import Path
 import sys
 
 # tools/ is on sys.path when the build runs (build_xml1.py / the builder's pipeline); lcsave lives beside xml1build
-from lcsave import lcfiles as LF  # noqa: E402
+from lcsave import lcfiles as LF
+from lcsave import typed_registry as TR  # noqa: E402
 
 REPORT_KEY = 'content_fingerprint'           # <out>/_build/report.json build.content_fingerprint
 MODULE = 'savefiles'
@@ -48,6 +50,38 @@ def run(ctx):
     fp = LF.content_fingerprint(out)
     ctx.shared[REPORT_KEY] = fp
     ctx.note(f'{len(files)} save-format files written; content fingerprint {fp}')
+    # SPEC 85: the typed entity-id registry of the SHIPPED scripts (this module runs last, after the scripts module
+    # wrote Scripts/), which the entity-capacity DLL verifies against the installed tree before it migrates a legacy
+    # save's typed fields (PHASE-A-PLAN section 4). A scripts tree the scanner cannot classify fails the build.
+    code, scan, messages = typed_registry_for(out)
+    for m in messages:
+        ctx.note(f'typed entity ids: {m}')
+    if code != 0 or scan is None:
+        ctx.error('typed entity ids: the shipped scripts could not be classified; no registry written')
+    else:
+        ctx.write_bytes(REGISTRY_REL, TR.registry_text(scan).encode('ascii'),
+                        source='lcsave: the typed entity-id registry of the shipped scripts (SPEC 85)')
+
+
+REGISTRY_REL = 'Data/lcsave/typed-entity-ids.txt'
+
+
+def typed_registry_for(out):
+    """-> (exit code, scan dict or None, messages): the registry of <out>/Scripts (the shipped tree)."""
+    from . import typed_entity_ids as TE
+    scripts = Path(out) / 'Scripts'
+    messages = []
+    try:
+        api = TR.load_api(TE.DEFAULT_API)
+        scan = TR.scan_scripts(str(scripts), api)
+    except (TR.RegistryError, OSError, ValueError) as e:
+        return 1, None, [f'refused: {e}']
+    keys = [(t['scope'], t['key']) for t in scan['typed_fields']]
+    messages.append(f"scripts {len(scan['files'])} files, fingerprint {scan['fingerprint']}, typed keys {len(keys)}: "
+                    + ', '.join(f'{s}/{k}' for s, k in keys))
+    if scan['problems']:
+        return 1, scan, messages + ['refused: ' + '; '.join(scan['problems'])]
+    return 0, scan, messages
 
 
 def validate(v, ck):
@@ -90,6 +124,14 @@ def validate(v, ck):
             bad += 1
             continue
         written += 1
+    # V50 (SPEC 85): the registry is present and is exactly the shipped scripts' (fingerprint and keys).
+    reg = os.path.join(out, REGISTRY_REL.replace('/', os.sep))
+    if not os.path.isfile(reg):
+        ck.error(f'{REGISTRY_REL} missing: the entity-capacity DLL refuses legacy saves without it (SPEC 85)')
+    else:
+        ok, reason = TR.verify_registry(TR.read_registry_file(reg), str(Path(out) / 'Scripts'))
+        if not ok:
+            ck.error(f'{REGISTRY_REL} does not match the shipped scripts: {reason}')
     extra = [p for p in glob.glob(os.path.join(out, 'Data', '**', '*.lcbind'), recursive=True)
              if os.path.relpath(p, out).replace(os.sep, '/') not in files]
     for p in extra:

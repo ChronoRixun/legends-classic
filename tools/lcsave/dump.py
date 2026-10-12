@@ -103,7 +103,7 @@ def _zone_states_old(old, z):
         out.append(dict(list=kind, ordinal=ordinal, definition=oldsave.zone_string(strings, s['def_name']),
                         instance=oldsave.zone_string(strings, s['inst_name']), flags=[s['flags_a'], s['flags_b']],
                         position=list(s['position']), payload=s['payload'].hex()))
-    for k in range(L.OLD_ZONE_ORDINALS):
+    for k in range(len(z['ordinal_map'])):                # the record's own ordinal map (its native layout's size)
         if z['ordinal_map'][k]:
             st(z['ordinal_map'][k], 1, k + 1)
     for idx in z['dynamic'][:z['dynamic_count']]:

@@ -125,7 +125,7 @@ BUILD_REPORT = ('_build', 'report.json')
 # MoveTriggers preserves all authored holster/redraw events and a flash/sound per gun shot.
 # Requires the companion XML2 Fix move-trigger patch; absent key means stock 19.
 LIMITS = {'ActorSlots': '127', 'ResourceNames': '1024', 'ItemEnhancements': '512', 'FightStyles': '32',
-          'EffectCurves': '3600', 'MoveTriggers': '64'}
+          'EffectCurves': '3600', 'MoveTriggers': '64', 'EntityCapacity': '1'}
 
 # xml2-fix 1.3.1 [Game] GeometrySharingBlendIndices (SPEC 44, issue #11): XMen2.exe's geometry sharing reuses one
 # skinned mesh for another when positions and weights match although their packed blend indices differ; XML1's
@@ -179,8 +179,8 @@ BALANCE_NATIVE_STAT_HEROES = 'ProfXAstral,ProfXGladiator'
 PORT_OWNED = {'Game': ('NewGameTeam', 'ResetUnlocks', 'SaveFolder', 'ForcedTeams', 'PostgameScript', 'WindowTitle',
                         'EndHeroUnlock', 'MainMenuItems', 'ClassicMainBackdrop', 'ClassicMainPanelBounds', 'NewGamePlus', 'ReviewStats', 'Xtract', 'XtractionShop', 'XPCurve',
                        'GeometrySharingBlendIndices', 'CharacterLadderPaths', 'ObjectiveDescriptions',
-                       'BreakRule', 'ConfirmationRelease', 'ExplosiveFirstHit'),
-              'Limits': ('ActorSlots', 'ResourceNames', 'ItemEnhancements', 'FightStyles', 'EffectCurves', 'MoveTriggers'),
+                       'BreakRule', 'ConfirmationRelease', 'ExplosiveFirstHit', 'Xml1MasterMold', 'Xml1MoldStage'),
+              'Limits': ('ActorSlots', 'ResourceNames', 'ItemEnhancements', 'FightStyles', 'EffectCurves', 'MoveTriggers', 'EntityCapacity'),
               'Online': ('GameVersion', 'ContentFingerprint'),
               'Save': ('Format',)}
 
@@ -302,6 +302,33 @@ def build_forced_teams(out):
     return '1' if str(b.get('forced_teams') or 'seat').lower() == 'seat' else None
 
 
+def mold_stage_binding(layout, width=None):
+    """Native-controller binding for the effective packed mission stage."""
+    if not isinstance(layout, dict) or layout.get('kind') != 'pack':
+        return None
+    flag, first, stored = (layout.get(key) for key in ('gamevar', 'first_bit', 'nbits'))
+    width = stored if width is None else width
+    if not isinstance(flag, str) or not re.fullmatch(r'[A-Za-z0-9_]{1,32}', flag):
+        return None
+    if any(type(value) is not int for value in (first, stored, width)):
+        return None
+    if not (1 <= width <= stored <= 32 and 1 <= first <= 33 - stored):
+        return None
+    return f'{flag}:{first}:{width}'
+
+
+def build_mold_controller(out):
+    """Only a builder-generated, supported script contract opts into the DLL."""
+    try:
+        data = json.loads(Path(out, '_build/scripts_detail.json').read_text(encoding='utf-8'))
+        contract = data.get('mold_controller', {})
+        revision = contract.get('revision')
+        binding = mold_stage_binding(contract.get('stage')) if type(revision) is int and revision == 1 else None
+    except (OSError, ValueError, AttributeError, TypeError):
+        return {}
+    return dict(Xml1MasterMold='1', Xml1MoldStage=binding) if binding else {}
+
+
 def game_keys(*, xml1_opening=True, save_folder=None, forced_teams='1', add_hero=False, join_hero=True, postgame=None,
               port_identity=False, main_menu_items=None, new_game_plus=None, review_stats=None, xtract=None,
               xp_curve=None) -> dict:
@@ -384,6 +411,8 @@ def port_keys(out, *, save_folder=PLAY_SAVE_FOLDER, eighth=True) -> dict:
                      postgame=postgame, port_identity=bool(postgame), main_menu_items=menu,
                      new_game_plus=NEW_GAME_PLUS if menu else None, review_stats=build_review_stats(out),
                      xtract=XTRACT if postgame else None, xp_curve=build_xp_curve(out))
+    if postgame:
+        game.update(build_mold_controller(out))
     keys = {'Game': game, 'Limits': dict(LIMITS)}
     balance = build_balance(out)
     online = online_keys(port_identity=bool(postgame), balance=balance, fingerprint=content_fingerprint(out))
@@ -539,11 +568,25 @@ def check_move_trigger_dll(dll, keys: dict) -> None:
                          'the existing DLL does not recognize it')
 
 
+def check_entity_capacity_dll(dll, keys: dict) -> None:
+    """[Limits] EntityCapacity=1 (SPEC 85: actor 32 / generic 768 / World 1024) needs the companion DLL that owns it
+    and LC saves (the expanded native save layout exists only as LC files)."""
+    if keys.get('Limits', {}).get('EntityCapacity', '0') != '1':
+        return
+    if keys.get('Save', {}).get('Format') != 'lc':
+        raise ValueError('[Limits] EntityCapacity=1 requires [Save] Format=lc')
+    dll = Path(dll)
+    if dll.is_file() and 'EntityCapacity'.encode('utf-16le') not in dll.read_bytes():
+        raise ValueError('The entity-capacity raise requires the companion XML2 Fix DLL supporting [Limits] EntityCapacity; '
+                         'the existing DLL does not recognize it')
+
+
 def write_port_keys(out, keys: dict | None = None) -> dict:
     """merge the port's keys (default: port_keys(out)) into <out>/xml2-fix.ini, dropping the PORT_OWNED keys it does
     not need; the launcher's keys stay. Returns the keys written."""
     keys = port_keys(out) if keys is None else keys
     check_move_trigger_dll(Path(out) / 'dinput.dll', keys)
+    check_entity_capacity_dll(Path(out) / 'dinput.dll', keys)
     if keys.get('Save', {}).get('Format') == 'lc' and (Path(out) / 'Data/lcsave/catalogue.lcc').is_file():
         import json
         identity = RI.manifest(out)
