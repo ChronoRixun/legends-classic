@@ -434,30 +434,41 @@ _RESIST_AFFECTER = re.compile(r'(resist_|def_damage$)')
 def removable_findings(x1_talents, shared_roots, stats, style):
     """V-TBD2 (issue #3 follow-up). XML1's remove="true" drops every def_damage powerup of the actor, talents included
     (default.xbe 0x2b100); XMen2.exe drops powerups by tag name (remove_tag). Errors when (a) a shared talent whose
-    XML1 definition is a def_damage activepowerup has no tag_name="def_damage" powerup with a resistance affecter in
-    a built shared_talents half, or (b) a character whose style removes tag def_damage carries nothing that tag
+    XML1 definition is a def_damage activepowerup, referenced by a built character or defined in a built half, is
+    missing from a half, or a rank of it has no resistance powerup or an untagged one, or (b) a character whose style removes tag def_damage carries nothing that tag
     reaches (no tagged talent, no tag_name="def_damage" powerup trigger in its style).
     x1_talents {lower name: XML1 element}; shared_roots built roots; stats built <stats> elements; style(name) ->
     root or None. Returns (errors, counts)."""
     errors, counts = [], {'x1_removable_talents': 0, 'removing_characters': 0}
-    wanted = sorted(n for n, t in x1_talents.items()
-                    if any(e.tag.lower() == 'activepowerup' and (e.get('powerup') or '').lower() == REMOVABLE_TAG
-                           for e in t.iter()))
-    tagged = set()
-    for root in shared_roots:
+    removable = {n for n, t in x1_talents.items()
+                 if any(e.tag.lower() == 'activepowerup' and (e.get('powerup') or '').lower() == REMOVABLE_TAG
+                        for e in t.iter())}
+    # expected: the removable talents a built character references or a built half defines (the heroes module may
+    # prune unreferenced ones from both halves); each must be defined, fully tagged, in every half
+    referenced = {(t.get('name') or '').lower() for st in stats for t in st.iter() if t.tag.lower() == 'talent'}
+    defined = {(t.get('name') or '').lower() for root in shared_roots for t in root.iter('talent')}
+    wanted = sorted(removable & (referenced | defined))
+    tagged = set(wanted)
+    for half, root in enumerate(shared_roots):
         defs = {(t.get('name') or '').lower(): t for t in root.iter('talent')}
         for name in wanted:
             t = defs.get(name)
             if t is None:
+                errors.append(f'shared talent {name}: missing from built half {half + 1} - XML1 removals of '
+                              f'{REMOVABLE_TAG} have nothing to take')
+                tagged.discard(name)
                 continue
-            ok = any(pu.get('tag_name') == REMOVABLE_TAG and
-                     any(_RESIST_AFFECTER.match(a.get('attribute') or '') for a in pu.iter('affecter'))
-                     for pu in t.iter('powerup'))
-            if ok:
-                tagged.add(name)
-            else:
-                errors.append(f'shared talent {name}: no tag_name="{REMOVABLE_TAG}" resistance powerup - XML1 '
-                              f'removals of {REMOVABLE_TAG} would leave it on')
+            # every rank: each powerup carrying a resistance affecter is tagged, and the rank has one
+            for rank, level in enumerate(t.findall('level'), 1):
+                resist = [pu for pu in level.findall('powerup')
+                          if any(_RESIST_AFFECTER.match(a.get('attribute') or '') for a in pu.iter('affecter'))]
+                bad = [pu for pu in resist if pu.get('tag_name') != REMOVABLE_TAG]
+                if not resist or bad:
+                    errors.append(f'shared talent {name} rank {rank} (half {half + 1}): '
+                                  + ('no resistance powerup' if not resist else
+                                     f'{len(bad)} resistance powerup(s) without tag_name="{REMOVABLE_TAG}"')
+                                  + f' - XML1 removals of {REMOVABLE_TAG} would leave it on')
+                    tagged.discard(name)
     counts['x1_removable_talents'] = len(tagged)
     for st in stats:
         ps = (st.get('powerstyle') or '').lower()
@@ -870,13 +881,16 @@ class Validator:
 
     def vtbd_removable(self, ck):
         """V-TBD2: XML1 removals take resistance talents (characters.tag_x1_removable_talents)."""
-        roots = [t for t in (self.tree('data/shared_talents.engb'), self.tree('data/shared_talents.xmlb')) if t is not None]
+        halves = (self.tree('data/shared_talents.engb'), self.tree('data/shared_talents.xmlb'))
+        roots = [t for t in halves if t is not None]
+        if len(roots) != len(halves):
+            ck.error('a built shared_talents half (engb / XMLB) is missing or undecodable: removable resistances unchecked there')
         try:
             x1 = self.ctx.read_x1_xml('data/shared_talents.eng')
         except KeyError:
             x1 = None
         if x1 is None or not roots:
-            ck.warn('shared_talents (built or XML1) unreadable: removable resistances not checked')
+            ck.error('shared_talents (built or XML1) unreadable: removable resistances not checked')
             return
         x1_talents = {(t.get('name') or '').lower(): t for t in x1.iter() if t.tag.lower() == 'talent'}
         styles = {}

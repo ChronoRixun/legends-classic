@@ -126,3 +126,27 @@ def test_removable_resistances_validator():
     assert any('Brute' in e for e in errors)
     errors, _ = _removable_case(talent='other', style_tags=True)
     assert not errors
+
+
+def test_removable_resistances_validator_is_complete():
+    """Review S2: a missing definition in a half and an untagged later rank are errors."""
+    from xml1build.validate import removable_findings
+    x1 = ET.fromstring('<talent name="mind_shield"><level><activepowerup powerup="def_damage" level="0.2"/></level></talent>')
+    st = ET.fromstring('<stats name="Brute" powerstyle="ps_brute"><talent name="mind_shield" level="1"/></stats>')
+    style = ET.fromstring('<powerstyle><fightmove name="off"><trigger name="powerup" remove_tag="def_damage"/></fightmove>'
+                          '</powerstyle>')
+
+    def shared(*ranks):
+        return ET.fromstring('<talents><talent name="mind_shield">' + ''.join(
+            f'<level><powerup life="-1"{tag}><affecter attribute="resist_mental" level="0.8"/></powerup></level>'
+            for tag in ranks) + '</talent></talents>')
+    tag = ' tag_name="def_damage"'
+
+    def run(*roots):
+        return removable_findings({'mind_shield': x1}, list(roots), [st], lambda n: style)[0]
+    assert not run(shared(tag, tag), shared(tag, tag))
+    assert any('missing from built half' in e for e in run(ET.fromstring('<talents/>'), ET.fromstring('<talents/>')))
+    assert any('half 2' in e and 'missing' in e for e in run(shared(tag), ET.fromstring('<talents/>')))
+    errors = run(shared(tag, ''), shared(tag, tag))
+    assert any('rank 2 (half 1)' in e and 'without tag_name' in e for e in errors)
+    assert any('Brute' in e for e in errors)      # the remover then has no fully tagged target
