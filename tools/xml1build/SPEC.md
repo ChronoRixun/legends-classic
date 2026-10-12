@@ -6609,3 +6609,26 @@ decoded catalogue differs from candidate i's only in its content version; every 
 token LC26 with the fresh build's bind manifest; LC25 and every older row are unchanged. A raised (E10A2) save
 carries LC required-feature bit 0; the GCAP protocol revision 2 and entity layout rule revision 3 refuse a
 candidate-i peer at admission whatever its token. Builder/DLL versions remain 0.2.0 / 1.4.0.
+
+## (number assigned at merge). XML1 scan turrets (XML2 Fix `Game.Xml1Turrets`, V-TBD)
+
+XML1's `scanturretent` stays a physent (x1schema, fixed mount, turret weapon model) and keeps its scanner attributes.
+The zones module now writes `_build/turrets.json` (xml1build.turrets, revision 1): one line per placement of a
+converted zone whose physent carries a `turretweapon`, with the inst's authored position and orientation, the scanner
+values (absent ones take default.xbe's constructor defaults, 0xa8600: visrange 600, minspeed 0, mintime 0.75,
+resetdelay 10, visextent 30, yaw/pitch extent 45, turnrate 20; filterteam hero = PC team bit 29) and the turret
+weapon from XML1's `data/weapons/weapons.eng`: kind, recoiltime, count/spread (projectile defaults 1/10, 0xbb240),
+projectilespeed, accuracy, range, the gun damage draw bounds (`weapons.gun_damage_range`, SPEC 76) and the
+projectile entity / entity file. Only weapon kinds the controller emits are listed (`SUPPORTED_KINDS`: projectile,
+the two HAARP exterior tanks); the tripod bullets (Arbiter, Weapon X, demo) and the Hive flame turret are reported in
+the build notes and stay inert physents as in 0.2.1.
+
+**V-TBD:** the zones module reports a build error when the contract is malformed (field counts, names, a ';' that
+would end an INI value, duplicate placements, more than the DLL's 32).
+
+`fix_ini.build_turrets` / `port_keys` and the harness write `[Game] Xml1Turrets=1` and `[Xml1Turrets] Count, T1..Tn`
+only for a first-game build with a valid contract; every key is port-owned (dropped again from a build without
+turrets). The DLL (docs/xml1-controllers.md in xml2-fix) runs the first game's acquisition, rotation and firing timing
+on those physents and registers rule 4 revision 2 with a hash of the applied lines, so co-op peers with different
+placements are refused. No save field, entity ordinal or content-version change: turret destruction stays the
+physent's own (deathscripts, deathspawn), and the scanner restarts from the authored placement on every load.

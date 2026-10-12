@@ -3,6 +3,12 @@
 The builder's releases, newest first. The version is `xml1-builder --version`; the content version is what a
 build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebuild.
 
+## Unreleased
+
+- **The scan turrets fire again** (issue #4, needs the matching XML2 Fix): the HAARP exterior missile tanks scan,
+  turn, lock on and fire their three-missile salvos with the first game's timing, and can still be destroyed. The
+  Arbiter / Weapon X tripod guns and the Hive flame turret are not driven yet and stay as before.
+
 ## v0.2.1 - content version 18 (needs XML2 Fix 1.4.0)
 
 - **Fixed: builds with the released builder failed at the last step** ("typed entity ids: the shipped scripts could

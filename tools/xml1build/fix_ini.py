@@ -179,10 +179,12 @@ BALANCE_NATIVE_STAT_HEROES = 'ProfXAstral,ProfXGladiator'
 PORT_OWNED = {'Game': ('NewGameTeam', 'ResetUnlocks', 'SaveFolder', 'ForcedTeams', 'PostgameScript', 'WindowTitle',
                         'EndHeroUnlock', 'MainMenuItems', 'ClassicMainBackdrop', 'ClassicMainPanelBounds', 'NewGamePlus', 'ReviewStats', 'Xtract', 'XtractionShop', 'XPCurve',
                        'GeometrySharingBlendIndices', 'CharacterLadderPaths', 'ObjectiveDescriptions',
-                       'BreakRule', 'ConfirmationRelease', 'ExplosiveFirstHit', 'Xml1MasterMold', 'Xml1MoldStage'),
+                       'BreakRule', 'ConfirmationRelease', 'ExplosiveFirstHit', 'Xml1MasterMold', 'Xml1MoldStage',
+                       'Xml1Turrets'),
               'Limits': ('ActorSlots', 'ResourceNames', 'ItemEnhancements', 'FightStyles', 'EffectCurves', 'MoveTriggers', 'EntityCapacity'),
               'Online': ('GameVersion', 'ContentFingerprint'),
-              'Save': ('Format',)}
+              'Save': ('Format',),
+              'Xml1Turrets': ('Count',) + tuple(f'T{i}' for i in range(1, 33))}
 
 
 def port_owned() -> dict:
@@ -329,6 +331,21 @@ def build_mold_controller(out):
     return dict(Xml1MasterMold='1', Xml1MoldStage=binding) if binding else {}
 
 
+def build_turrets(out) -> dict:
+    """{'Game': {'Xml1Turrets': '1'}, 'Xml1Turrets': {'Count': n, 'T1': ...}} from the builder's turret contract
+    (xml1build.turrets -> _build/turrets.json); {} without a valid one (the turrets stay inert physents)."""
+    from . import turrets as TU
+    try:
+        data = json.loads(Path(out, '_build/turrets.json').read_text(encoding='utf-8'))
+    except (OSError, ValueError):
+        return {}
+    if TU.validate_contract(data) or not data.get('placements'):
+        return {}
+    section = {'Count': str(len(data['placements']))}
+    section.update({f'T{i}': line for i, line in enumerate(data['placements'], 1)})
+    return {'Game': {'Xml1Turrets': '1'}, 'Xml1Turrets': section}
+
+
 def game_keys(*, xml1_opening=True, save_folder=None, forced_teams='1', add_hero=False, join_hero=True, postgame=None,
               port_identity=False, main_menu_items=None, new_game_plus=None, review_stats=None, xtract=None,
               xp_curve=None) -> dict:
@@ -411,9 +428,13 @@ def port_keys(out, *, save_folder=PLAY_SAVE_FOLDER, eighth=True) -> dict:
                      postgame=postgame, port_identity=bool(postgame), main_menu_items=menu,
                      new_game_plus=NEW_GAME_PLUS if menu else None, review_stats=build_review_stats(out),
                      xtract=XTRACT if postgame else None, xp_curve=build_xp_curve(out))
+    turrets = build_turrets(out) if postgame else {}
     if postgame:
         game.update(build_mold_controller(out))
+        game.update(turrets.get('Game', {}))
     keys = {'Game': game, 'Limits': dict(LIMITS)}
+    if turrets:
+        keys['Xml1Turrets'] = turrets['Xml1Turrets']
     balance = build_balance(out)
     online = online_keys(port_identity=bool(postgame), balance=balance, fingerprint=content_fingerprint(out))
     if postgame and (Path(out) / 'Data/lcsave/catalogue.lcc').is_file():
