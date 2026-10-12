@@ -3,9 +3,6 @@
 The builder's releases, newest first. The version is `xml1-builder --version`; the content version is what a
 build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebuild.
 
-<!-- TODO(release): content version 18 / LC26 is candidate j's identity; if the menu-centring fix changes the build
-output it becomes 19 / a new token - confirm with tools/xml1build/release_identity.py, then fix the heading and the
-lobby-token bullet below. This comment sits above the heading, so the release notes do not carry it. -->
 ## v0.2.0 - content version 18 (needs XML2 Fix 1.4.0)
 
 This build needs **XML2 Fix 1.4.0** (the launcher installs it). Rebuild, then start the game once: your saves are
@@ -81,7 +78,9 @@ carried over into the new format by themselves. Saves made with 0.2.0 don't load
   Two fixes since address the likely causes and destruction saves have passed online since, but that case was never
   reproduced: if a save is refused, your existing save file is kept - please report it with `xml2-fix.log`.
 
-### Details
+<details>
+<summary><b>Details</b> (technical list of every change)</summary>
+
 
 - Centre the classic main menu in every display mode. The game already centres the original 4:3
   composition at any aspect; the `--main-menu-layout widescreen` used for candidate 0.2.0j added a
@@ -222,6 +221,8 @@ carried over into the new format by themselves. Saves made with 0.2.0 don't load
 - Resident props selected for floor placement preserve the original numbered-instance prefix (#81; SPEC 71, V31/V41).
 - Port builds enable `[Game] ConfirmationRelease=1` (#77) and retain `[Limits] EffectCurves=3600`.
 - Hero health uses `[Balance] HeroHealthPerBody=2.5`: scaled level-1 Wolverine has 80 HP.
+
+</details>
 
 ## v0.1.12 - content version 15 (needs XML2 Fix 1.3.2)
 
