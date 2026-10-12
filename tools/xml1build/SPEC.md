@@ -6715,3 +6715,16 @@ XML2 bruiser none). Options for the maintainer, none implemented:
 10: XML2 Fix 1.4.0 (control) 0 / 12 / 16 / 32 / 36 (+4 at 4 -> 5 and 9 -> 10); with `LevelStatPoints=xml1` (and the
 other two keys) 0 / 12 / 20 / 36 / 44 (+8 at both); saved, closed, loaded in a new process: level 10, 44 stat points
 and 11 skill points; level 10 -> 11 then +4 (48). The automatic bonus was not measured (static comparison above).
+
+### 88.3 Review fixes (2026-10-12)
+
+- The automatic spending now follows default.xbe's 0xaf160: a talent whose next rank the hero can't pay for is no
+  candidate of the pick (XML2 Fix site 0x43cd7e), so the next best affordable rank is bought; only when nothing
+  affordable is left does the spending end (as running out of points does). Before, it stopped at the first
+  unaffordable pick.
+- Losing a level first cancels the ranks added in an open skills menu and not yet committed (XMen2.exe 0x43a890, an
+  inlined store at 0x43a926 the first search missed): they now refund their costs, not 1 each.
+- V-H16 also refuses more than 3 costed ranks in a talent (the first game keeps 3, 0xb4250) and reads a level without
+  `count` as one rank (0x4bdea0).
+- ProfXAstral / ProfXGladiator (native stats, 88.2) are `xpexempt` level-40 forms: the level processing gives them
+  nothing, so neither level key touches them.

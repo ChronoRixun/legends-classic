@@ -9,10 +9,12 @@ reads the level that 0x4bdea0 finds for the rank - the n-th rank's level counted
 
 The check (heroes validation V-H16): every cost of the XML1 source sits on the same rank of the built talent, every
 level up to it covers exactly one rank (count="1"; otherwise the engine's rank -> level walk lands elsewhere), the
-value is one the fix honours (1..7) and no built level carries a cost the source does not have."""
+value is one the fix honours (1..7), no built level carries a cost the source does not have, and no talent has more
+than the first game's 3 costed ranks (a level without `count` covers one rank, as 0x4bdea0 reads it)."""
 from __future__ import annotations
 
 COST_MIN, COST_MAX = 1, 7            # xml2-fix rank_costs_rules::parse_cost; XML1 keeps 3 bits
+COSTS_PER_TALENT = 3                 # default.xbe 0xb4250 keeps 3 (rank, cost) pairs (cmp [esi+8],3); a 4th costs 1 there
 
 
 def _tag(e):
@@ -54,6 +56,9 @@ def problems(source, built, where):
     """V-H16 for one hero file: messages for every cost the build lost, moved, mangled or invented."""
     out = []
     for name in sorted(source):
+        if len(source[name]) > COSTS_PER_TALENT:
+            out.append(f'{where}: {name} has {len(source[name])} costed ranks in XML1; the first game keeps only '
+                       f'{COSTS_PER_TALENT} (0xb4250), the fix would honour all')
         levels = built.get(name)
         if levels is None:
             out.append(f'{where}: {name} has XML1 rank costs {source[name]} but no built talent')
@@ -64,7 +69,7 @@ def problems(source, built, where):
                 continue
             if levels[rank - 1][0] != cost:
                 out.append(f'{where}: {name} rank {rank} costs {cost} in XML1, {levels[rank - 1][0]!r} in the build')
-            if any(c != '1' for _, c in levels[:rank]):
+            if any((c if c is not None else '1') != '1' for _, c in levels[:rank]):   # absent count = 1 (0x4bdea0)
                 out.append(f'{where}: {name} rank {rank}: a level up to it covers more or fewer ranks than one '
                            f'(count {[c for _, c in levels[:rank]]}), so the engine prices another rank')
     for name, levels in sorted(built.items()):

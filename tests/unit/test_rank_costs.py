@@ -112,3 +112,15 @@ def test_port_asks_for_xml1_level_stat_points_on_its_scale():
     assert 'LevelStatPoints' in fix_ini.PORT_OWNED['Game']
     assert fix_ini.game_keys()['LevelStatPoints'] == 'xml1'
     assert 'LevelStatPoints' not in fix_ini.game_keys(xml1_opening=False)
+
+
+def test_more_than_three_costs_is_an_error():
+    src = {'gale_strike': {1: '2', 2: '2', 3: '2', 4: '2'}}
+    lv = {'gale_strike': [('2', '1')] * 4}
+    assert any('keeps only 3' in m for m in RC.problems(src, built(lv), 'w'))
+
+
+def test_absent_count_reads_as_one_rank():
+    lv = good()
+    lv['gale_strike'][0] = (None, None)
+    assert RC.problems(RC.source_costs(source_stats()), built(lv), 'w') == []
