@@ -42,11 +42,14 @@ def test_prepare_writes_the_full_point_for_every_lite_call():
         inline = json.loads((out / 'inline_rewrites.json').read_text(encoding='utf-8'))
         helper = inline[LITE_DATA]
         assert helper.startswith('x1/')
-        assert 'extractionPointServices("_OWNER_", 0 )' in (out / f'scripts/{helper}.py').read_text()
+        assert 'extractionPointServices("_OWNER_", x1_svc )' in (out / f'scripts/{helper}.py').read_text()
+        assert 'x1_svc = iadd(0, 63 )' in (out / f'scripts/{helper}.py').read_text()     # flags false,true,true,true
         z = (out / 'scripts/inv/outpost1.py').read_bytes().decode('latin-1')
         assert 'extractionPointLite' not in z
         assert 'extractionPoint("invented_beacon" )' in z
-        assert 'extractionPointServices("invented_beacon", 0 )' in z
+        assert 'extractionPointServices("invented_beacon", x1_svc )' in z
+        assert 'x1_svc = iadd(0, 4 )' in z                                  # flag 1 only: Change Team, Load
+        assert 'x1_svc = iadd(0, 31 )' in z                                 # the full point
         assert rep['stats']['rule Xtraction point services'] == 3
     assert P3.VERSION >= 2                                                  # cached P3 outputs are rebuilt once
 
@@ -86,3 +89,22 @@ def test_v32_rejects_lite_calls_in_xml1_scripts_and_data_only():
             runscripts={'dialogs/inv/menu.engb': ["extractionpointlite('_OWNER_', 'false', 'false', 'false' )"]})
         assert len(bad.errors) == 3, bad.errors
         assert 'outpost1.py:2' in bad.errors[0] and 'outpost1.engb' in bad.errors[1] + bad.errors[2]
+
+
+def test_v32_requires_load_on_every_services_call():
+    """V-TBD (issue #63): every first-game point offers Load, so each services helper passes x1_svc with bit 4."""
+    helper = ('x1_svc = iadd(x1_shop, 14 )\r\nx1_services = iadd(0, 0 )\r\n'
+              'x1_services = xml2fixFeature("xtractionservices" )\r\nif x1_services == 1\r\n'
+              '     extractionPointServices("_OWNER_", x1_svc )\r\nelse\r\n     extractionPoint("_OWNER_" )\r\nendif\r\n')
+    with tempfile.TemporaryDirectory() as td:
+        folder = Path(td)
+        good = _validator(folder, {'scripts/x1/invented_point.py': ('scripts', helper)})
+        assert not good.errors and good.counts['xtraction_services_calls_checked'] == 1
+        no_load = _validator(folder, {'scripts/x1/invented_point.py': ('scripts', helper.replace('14', '10'))})
+        assert len(no_load.errors) == 1 and 'without Load' in no_load.errors[0]
+        old = _validator(folder, {'scripts/x1/invented_point.py': ('scripts', 'extractionPointServices("_OWNER_", 0 )\r\n')})
+        assert len(old.errors) == 1
+
+        second = helper + '     extractionPointServices("_OWNER_", x1_svc )\r\n'      # no x1_svc line of its own
+        twice = _validator(folder, {'scripts/x1/invented_point.py': ('scripts', second)})
+        assert len(twice.errors) == 1 and twice.counts['xtraction_services_calls_checked'] == 2

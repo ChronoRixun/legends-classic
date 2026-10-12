@@ -376,9 +376,9 @@ def test_port_keys_from_a_synthetic_build():
         keys = FI.port_keys(out)
         g = keys['Game']
         assert g['MainMenuItems'] == 'button1,button2,button3,button4,button5,button6,button8,button7'
-        assert g['ClassicMainBackdrop'] == '1'
+        assert g['ClassicMainBackdrop'] == '1' and g['DangerRoomGate'] == 'button3'
         assert g['PostgameScript'] == FI.POSTGAME_SCRIPT and g['WindowTitle'] == 'X-Men Legends'
-        assert g['NewGamePlus'] == '0' and g['ReviewStats'] == '0' and g['XPCurve'] == 'xml1' and g['Xtract'] == '0'
+        assert g['NewGamePlus'] == '0' and g['ReviewStats'] == '0' and g['XPCurve'] == 'xml1' and g['Xtract'] == '0' and g['RevivalCost'] == 'xml1'
         assert keys['Online'] == {'GameVersion': FI.PORT_GAME_VERSION} and set(g) <= set(FI.PORT_OWNED['Game'])
         assert keys['Save'] == {'Format': 'lc'} and 'Format' in FI.PORT_OWNED['Save']
         # the harness builds its test ini from the same keys
@@ -718,3 +718,12 @@ def test_port_builds_ask_for_the_lc_save_format():
     assert FI.save_keys(port_identity=False) == {}
     assert FI.PORT_OWNED['Save'] == ('Format',) and 'ContentFingerprint' in FI.PORT_OWNED['Online']
     assert FI.REQUIRED_XML2FIX == '1.4'
+
+
+def test_danger_room_gate_names_the_front_ends_danger_room_item():
+    """Issue #63: DangerRoomGate is the XML1 main menu item that opens the Danger Room."""
+    from xml1build import frontend as F
+    dr = [f'button{n}' for n, _, cmd in F.MENU_BUTTONS if cmd and 'openmenu danger_room' in cmd]
+    assert dr == [FI.DANGER_ROOM_GATE_ITEM]
+    assert FI.game_keys(main_menu_items='x')['DangerRoomGate'] == FI.DANGER_ROOM_GATE_ITEM
+    assert 'DangerRoomGate' not in FI.game_keys()

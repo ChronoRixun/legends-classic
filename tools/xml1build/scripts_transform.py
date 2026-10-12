@@ -463,11 +463,12 @@ def xtraction_menu_fallback(lines):
 
 FT_VAR, AH_VAR, JH_VAR = 'x1ft', 'x1ah', 'x1jh'
 FT_FEATURE, AH_FEATURE, JH_FEATURE = 'forcedteams', 'addhero', 'joinhero'
-FEATURES = (FT_FEATURE, AH_FEATURE, JH_FEATURE, 'xtractionshop')
+XTRACTION_FEATURE = 'xtractionservices'           # xml2-fix >= 1.5: extractionPointServices takes a bitmask (#63)
+FEATURES = (FT_FEATURE, AH_FEATURE, JH_FEATURE, 'xtractionshop', XTRACTION_FEATURE)
 # the function each xml2-fix call needs switched on (the 'then' branch of 'if <v> == 1', <v> = xml2fixFeature(f))
 GUARD_OF = {'seatParty': FT_FEATURE, 'setSkinset': FT_FEATURE, 'pushParty': FT_FEATURE, 'popParty': FT_FEATURE,
             'addHero': AH_FEATURE, 'getPartyMember': None, 'joinHero': JH_FEATURE,
-            'extractionPointServices': 'xtractionshop'}
+            'extractionPointServices': XTRACTION_FEATURE}
 IND = '     '                                  # BehavEd's block indentation
 # a no-op (0x5aaff0) that keeps a branch non-empty when the DLL is absent and its xml2-fix calls are dropped at compile
 # (XML2 retail scripts never have an empty block; research rewrite_scripts keeps blocks non-empty the same way)

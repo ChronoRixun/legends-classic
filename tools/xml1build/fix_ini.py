@@ -54,6 +54,11 @@ POSTGAME_SCRIPT = 'x1/menus/postgame'
 # before Play Online (SPEC 21.2.4), button1..6 + button8 since (Play Online, button7, is keys / pad only: XMen2.exe
 # clamps the mouse slots after the sixth to Quit, 0x5c944b).
 MAIN_MENU_ITEMS = 'button1,button2,button3,button4,button5,button6,button8'
+# xml2-fix [Game] DangerRoomGate (issue #63): the XML1 main menu's Danger Room item (frontend.MENU_BUTTONS, the item
+# running "openmenu danger_room"), disabled until Phoenix has been in a campaign on the profile - the first game's
+# gate (xbe 0x17e93c-0x17e975: profile bit of 'phoenix', button3), not XML2's story level 6. Written with
+# MainMenuItems; an older DLL ignores the key (the item stays always open, as before).
+DANGER_ROOM_GATE_ITEM = 'button3'
 MAIN_MENU_MOUSE_SLOTS = 6
 # xml2-fix a3b8567+ (in v1.2.0) takes an 8th name (after Quit): the mouse slot for a 7th usecmd item (Play Online,
 # button7), the mouse clamp at 0x5c944b raised from 6 to 8. An older DLL quits when that slot is clicked, so the 8th
@@ -214,7 +219,7 @@ BALANCE_NATIVE_STAT_HEROES = 'ProfXAstral,ProfXGladiator'
 
 # every key the port may write (the builder drops the ones a build does not need); the launcher owns the rest
 PORT_OWNED = {'Game': ('NewGameTeam', 'ResetUnlocks', 'SaveFolder', 'ForcedTeams', 'PostgameScript', 'WindowTitle',
-                        'EndHeroUnlock', 'MainMenuItems', 'ClassicMainBackdrop', 'ClassicMainPanelBounds', 'NewGamePlus', 'ReviewStats', 'Xtract', 'XtractionShop', 'XPCurve',
+                        'EndHeroUnlock', 'MainMenuItems', 'DangerRoomGate', 'ClassicMainBackdrop', 'ClassicMainPanelBounds', 'NewGamePlus', 'ReviewStats', 'Xtract', 'XtractionShop', 'RevivalCost', 'XPCurve',
                        'GeometrySharingBlendIndices', 'CharacterLadderPaths', 'ObjectiveDescriptions',
                        'BreakRule', 'PlacementCrush', 'DoubleHeal', 'DeathRule', 'ConfirmationRelease',
                        'ExplosiveFirstHit', 'RankCosts', 'LevelSkillPoints', 'LevelStatPoints', 'Xml1Multipart',
@@ -408,6 +413,7 @@ def game_keys(*, xml1_opening=True, save_folder=None, forced_teams='1', add_hero
         game.update(WindowTitle=PORT_WINDOW_TITLE, EndHeroUnlock=PORT_END_HERO_UNLOCK, ConfirmationRelease='1')
     if main_menu_items:
         game['MainMenuItems'] = main_menu_items
+        game['DangerRoomGate'] = DANGER_ROOM_GATE_ITEM
         game['ClassicMainBackdrop'] = '1'
         game['ClassicMainPanelBounds'] = '1'
     if new_game_plus is not None:
@@ -417,6 +423,9 @@ def game_keys(*, xml1_opening=True, save_folder=None, forced_teams='1', add_hero
     if xtract is not None:
         game['Xtract'] = xtract
         game['XtractionShop'] = '1'
+        # xml2-fix [Game] RevivalCost (issue #63): a fallen hero costs the first game's 200 * (highest roster level)^2
+        # (default.xbe 0xaf6b0 / 0x54cb0), not XMen2.exe's max(200, 2 * level^2); shared gameplay agreement rule 10
+        game['RevivalCost'] = 'xml1'
     if xp_curve:
         game['XPCurve'] = xp_curve
     return game

@@ -6492,13 +6492,30 @@ It opens an equipment-shop menu, rather than travelling to a workshop map. The l
 (0x9f4a0) also requires its fourth service flag. XML2's full handler (0x4a6b50) has no such
 option; disabling its world map does not add services.
 
-Prepare P3 VERSION 5 writes a generated helper for each source point. Full points permit the
-shop; lite points preserve flag 4. The source contact script's existing ftalk store supplies
-the unlock, using its planned storage, without adding a saved flag or changing the packing.
-That store is cleared at the first mansion mission's start, and remains set across away
-missions. The helper calls extractionPointServices(owner, permission) behind the
-xml2fixFeature("xtractionshop") guard. Menu builds collapse the helper to its native fallback.
-Other lite permissions retain the existing section 62 behavior.
+Superseded by issue #63 (below): prepare P3 (stage version 7) passes each point's services as a bitmask and Forge
+uses the original's campaign test instead of the ftalk contact store.
+
+### 79.1 The rest of the first game's Xtraction menu (issue #63)
+
+- Original rules (default.xbe): full point 0x9f110 and lite point 0x9f4a0 add Save (2002) and Load (2006,
+  saveloadProcess(3)) always; Danger Room (2003) when 'storm' is in the campaign, Healer (2004, item shop) when
+  'healer' is, Forge (2005) when 'forge' is; a lite point also needs its 2nd / 3rd / 4th flag for them, and its
+  1st flag for Change Team (0x9f695). Its 5th flag is never read (0x9f557 reads the 4th again).
+- Prepare P3 writes one helper per distinct point call: `x1_svc = iadd(0, <bits> )` then, behind
+  `xml2fixFeature("xtractionservices")`, `extractionPointServices(owner, x1_svc )` (else the native
+  `extractionPoint`). Bits: 1 Forge offered, 2 Healer offered, 4 Load, 8 Danger Room offered, 16 Forge needs 'forge'
+  in the campaign, 32 no Change Team. Full points 31; the sub-basements 63; all-false lite points 36; Master Mold 4.
+  XML2 Fix checks the campaign bits (registry vt+0x84), greys Load and missing campaign options online with other
+  players, and skips Change Team for bit 32.
+- Campaign entry: default.xbe's mission-start table (0x44e2e8) has non-playable rows; `scripts.CAMPAIGN_NPCS`
+  keeps 'healer' (sewers_hub group, from sewers_gambit on) and 'forge' (mansion1 group) in the unlock lines of the
+  begin bodies and the zone catch-up scripts (saves from earlier builds get them on load).
+- Needs XML2 Fix >= the release with `xtractionservices` (1.5): with 1.4.0 the guard is 0 and the native menu runs
+  (Change Team and Save only; no Forge, unlike 0.2.1 with 1.4.0's ftalk permission).
+- V32 also rejects an `extractionPointServices` call without the Load bit in its own `x1_svc` line (V-TBD).
+- fix_ini writes `[Game] DangerRoomGate=button3` (the main menu's Danger Room greyed until Phoenix has been in a
+  campaign on the profile, xbe 0x17e93c-0x17e975) and `[Game] RevivalCost=xml1` (200 * (highest roster level)^2,
+  xbe 0xaf6b0) with the port's keys.
 
 The companion XML2 Fix registers extractionPointServices n(ai), wraps the same forced-team
 handler as the native point, and appends the source label before the native dialog finalizes.

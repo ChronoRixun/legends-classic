@@ -63,7 +63,8 @@ from ..sources import REPO_ROOT
 import xmlb  # noqa: E402  tools/xmlb.py
 
 STAGE = 'scripts'
-VERSION = 5                                          # 5: issue #95 (point-local permission, safe feature fallback)
+VERSION = 7                                          # 5: issue #95 (point-local permission, safe feature fallback)
+#                                                      6/7: issue #63 (the first game's service bits)
 OUT = 'out'                                          # the research layout: Sources overrides scripts/out with this
 REPORT_TXT, REPORT_JSON = 'rewrite_report.txt', 'rewrite_report.json'
 API_RELS = ('scripts/xml1_api.json', 'scripts/xml2_api.json')   # research-relative, packaged data
@@ -172,18 +173,42 @@ def gen_get(target, st, quote):
     return lines
 
 
-def xtraction_menu_lines(owner, allowed, unlock_storage, quote):
-    """Keep Save and team handling native; pass a point-local shop permission to the companion DLL."""
-    lines = gen_get('x1_shop', unlock_storage, quote) if allowed and unlock_storage else []
-    permission = 'x1_shop' if lines else '0'
-    return lines + ['x1_services = iadd(0, 0 )',
-                    f'x1_services = {call("xml2fixFeature", q("xtractionshop", quote))}',
-                    'if x1_services == 1',
-                    '     debug("x1: Xtraction services" )',
-                    '     ' + call('extractionPointServices', owner, permission),
-                    'else',
-                    '     ' + call('extractionPoint', owner),
-                    'endif']
+# xml2-fix extractionPointServices(owner, services): the first game's Xtraction services as a bitmask (issue #63).
+# XML1's extractionPoint (xbe 0x9f110) / extractionPointLite (0x9f4a0) add Save and Load always, Danger Room when
+# 'storm' is in the campaign (lite: and its 2nd flag), Healer when 'healer' is (lite: and its 3rd flag), Forge when
+# 'forge' is (lite: and its 4th flag); a lite point's 1st flag gates Change Team (0x9f695). The point's own flags are
+# decided here; the DLL reads the campaign bits (SVC_FORGE_CAMPAIGN: Forge too - the table row 'forge' at mansion1,
+# scripts.CAMPAIGN_NPCS - instead of 0.2.0's ftalk contact signal).
+SVC_FORGE, SVC_HEALER, SVC_LOAD, SVC_DANGER_ROOM, SVC_FORGE_CAMPAIGN, SVC_NO_CHANGE_TEAM = 1, 2, 4, 8, 16, 32
+
+
+def lite_flag(args, i):
+    """XML1 extractionPointLite's flag i (1-based after the owner) is TRUE (case-insensitive, 0x9f5f2-0x9f65c)."""
+    return len(args) > i and args[i].kind == 'str' and args[i].value.lower() == 'true'
+
+
+def point_services(name, args):
+    """-> the services bitmask for an XML1 point call."""
+    forge = SVC_FORGE | SVC_FORGE_CAMPAIGN
+    if name == 'extractionPoint':
+        return SVC_LOAD | SVC_DANGER_ROOM | SVC_HEALER | forge
+    # lite: 1 Change Team, 2 Danger Room, 3 Healer, 4 Forge (the 5th is never read by the original)
+    return (SVC_LOAD | (0 if lite_flag(args, 1) else SVC_NO_CHANGE_TEAM) | (SVC_DANGER_ROOM if lite_flag(args, 2) else 0)
+            | (SVC_HEALER if lite_flag(args, 3) else 0) | (forge if lite_flag(args, 4) else 0))
+
+
+def xtraction_menu_lines(owner, services, quote):
+    """Keep Save and team handling native; pass the point's services to the companion DLL. Needs an XML2 Fix that
+    knows "xtractionservices" (1.5): with 1.4.0 the guard reads 0 and the native extractionPoint runs (no Forge)."""
+    return [f'x1_svc = {call("iadd", 0, services)}',
+            'x1_services = iadd(0, 0 )',
+            f'x1_services = {call("xml2fixFeature", q("xtractionservices", quote))}',
+            'if x1_services == 1',
+            '     debug("x1: Xtraction services" )',
+            '     ' + call('extractionPointServices', owner, 'x1_svc'),
+            'else',
+            '     ' + call('extractionPoint', owner),
+            'endif']
 
 
 def fmt_line(indent, s):
@@ -741,13 +766,8 @@ class Rewriter:
             return [call(name, argtxt(c.args[0], quote), q(new, '"' if quote == '"' else "'"),
                          argtxt(c.args[2], quote))]
         if name in ('extractionPoint', 'extractionPointLite') and c.args:
-            # Full points offer Forge once contacted. Lite points additionally gate it with flag 4.
-            # The existing ftalk store is set by the source contact script, and survives away missions.
-            allowed = name == 'extractionPoint' or (len(c.args) > 4 and
-                       c.args[4].kind == 'str' and c.args[4].value.lower() == 'true')
             STATS['rule Xtraction point services'] += 1
-            return xtraction_menu_lines(argtxt(c.args[0], quote), allowed,
-                                        self.STORAGE.get(('m', 'ftalk')), quote)
+            return xtraction_menu_lines(argtxt(c.args[0], quote), point_services(name, c.args), quote)
         if name in DROP:
             STATS[f'drop {name}'] += 1
             txt = f'{name}(' + ', '.join(a.text for a in c.args) + ')'

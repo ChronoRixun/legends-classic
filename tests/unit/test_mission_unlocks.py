@@ -70,6 +70,15 @@ def test_mission_map_limits_to_playable_heroes_and_reports_missing_milestones():
     assert drop == {'hub': ('npcguy',)}
 
 
+
+def test_campaign_npc_rows_stay_in_the_unlock_map():
+    """Issue #63: a non-playable row the Xtraction points read (CAMPAIGN_NPCS) is kept, the other NPC rows dropped."""
+    from xml1build import scripts as S
+    assert S.CAMPAIGN_NPCS == ('healer', 'forge')
+    rows = [('begin', 'alpha'), ('', 'npcguy'), ('stage1', 'healer')]
+    keep, drop = U.mission_unlocks({'hub': 'stage1'}, rows, {'alpha'} | set(S.CAMPAIGN_NPCS))
+    assert keep == {'hub': ('alpha', 'healer')} and drop == {'hub': ('npcguy',)}
+
 SEAT_BODY = ['# ( "XML1 beginMission(hubtwo)" )', 'setCurrentAct(1 )', 'unlockCharacter("guest", "" )',
              'unlockCharacter("alpha", "" )', T.FT_SEAT_COMMENT, 'x1ft = iadd(0, 0 )',
              'x1ft = xml2fixFeature("forcedteams" )', 'if x1ft == 1', '     seatParty("guest", "", "", "" )',
