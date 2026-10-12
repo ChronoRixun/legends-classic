@@ -198,7 +198,8 @@ def point_services(name, args):
 
 
 def xtraction_menu_lines(owner, services, quote):
-    """Keep Save and team handling native; pass the point's services to the companion DLL."""
+    """Keep Save and team handling native; pass the point's services to the companion DLL. Needs an XML2 Fix that
+    knows "xtractionservices" (1.5): with 1.4.0 the guard reads 0 and the native extractionPoint runs (no Forge)."""
     return [f'x1_svc = {call("iadd", 0, services)}',
             'x1_services = iadd(0, 0 )',
             f'x1_services = {call("xml2fixFeature", q("xtractionservices", quote))}',

@@ -1254,6 +1254,7 @@ class Validator:
                     if m.group(1).strip() != 'x1_svc' or svc_bits is None or not svc_bits & 4:
                         ck.error(f'{self.idx.get(r) or r}:{i + 1}: {_short(s)}: an Xtraction point without Load '
                                  "(V-TBD, issue #63: the first game's points always offer Save and Load)")
+                    svc_bits = None                     # each call needs its own x1_svc line
         ck.set('lite_xtraction_scripts_checked', n_scripts)
         ck.set('xtraction_services_calls_checked', n_services)
         n_code = 0

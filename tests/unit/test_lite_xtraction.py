@@ -104,3 +104,7 @@ def test_v32_requires_load_on_every_services_call():
         assert len(no_load.errors) == 1 and 'without Load' in no_load.errors[0]
         old = _validator(folder, {'scripts/x1/invented_point.py': ('scripts', 'extractionPointServices("_OWNER_", 0 )\r\n')})
         assert len(old.errors) == 1
+
+        second = helper + '     extractionPointServices("_OWNER_", x1_svc )\r\n'      # no x1_svc line of its own
+        twice = _validator(folder, {'scripts/x1/invented_point.py': ('scripts', second)})
+        assert len(twice.errors) == 1 and twice.counts['xtraction_services_calls_checked'] == 2
