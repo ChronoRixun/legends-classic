@@ -6536,7 +6536,7 @@ rule (capability 2, revision 1) in addition to the entity/token layout.
 The stock engine keeps 32 actor and 224 generic entity slots and 256 World handles; the 224th live generic
 entity is the last prop, projectile or trigger a zone gets - the rest are refused without a word (the 0.2.0 census:
 943 refusals across 116 zones; the HAARP interior freeze gun never gets a slot; the Magneto arena sits at 224/224).
-XML2 Fix 1.5's `[Limits] EntityCapacity=1` raises the domain to 32 actor / 768 generic / 1024 World handles with
+XML2 Fix 1.4's `[Limits] EntityCapacity=1` raises the domain to 32 actor / 768 generic / 1024 World handles with
 contiguous ten-bit indices (its docs/entity-capacity.md and docs/entity-capacity-phase-a-plan.md). The builder:
 
 - owns the key for port builds (fix_ini.LIMITS; `check_entity_capacity_dll` refuses a DLL that does not know it,
@@ -6556,12 +6556,12 @@ contiguous ten-bit indices (its docs/entity-capacity.md and docs/entity-capacity
 
 Capacities stay 32 actors (the controller arena and team records are a later phase).
 
-## 86. Master Mold native controller
+## 86. Master Mold native controller (V51)
 
 The scripts module records the effective packed mission-stage layout in
 `_build/scripts_detail.json`, under `mold_controller` revision 1. It derives the
 flag, first bit and narrowed width from the same storage plan used to transform
-scripts. **V-TBD:** if the boss spawn script is installed but that binding is
+scripts. **V51:** if the boss spawn script is installed but that binding is
 invalid, the scripts module reports a build error. Missing/unsupported metadata
 never enables a controller in an older or partial build.
 
@@ -6588,3 +6588,14 @@ with a different binding, or with an unverified installation is refused before
 admission. A requested controller that fails to install closes host/join for that
 process instead of falling back silently. Inside a session the controller uses the
 first player slot with a living hero rather than each machine's `_ACTIVE_HERO_`.
+
+## 87. Candidate j content identity
+
+The entity-capacity builder (SPEC 85: `Data/lcsave/typed-entity-ids.txt`, the `[Limits] EntityCapacity` and
+`[Save] Format=lc` keys) and the Master Mold binding (SPEC 86: `Game.Xml1MasterMold` / `Xml1MoldStage`) change a
+build's output, so CONTENT_VERSION advances from 17 to 18. The catalogue's IDs, keys and domains are unchanged (the
+decoded catalogue differs from candidate i's only in its content version; every `.lcbind`, `legacy.lcm` and
+`conversation.lcm` is byte-identical), so catalogue revision 6 is retained. The append-only history assigns (18,6)
+token LC26 with the fresh build's bind manifest; LC25 and every older row are unchanged. A raised (E10A2) save
+carries LC required-feature bit 0; the GCAP protocol revision 2 and entity layout rule revision 3 refuse a
+candidate-i peer at admission whatever its token. Builder/DLL versions remain 0.2.0 / 1.4.0.

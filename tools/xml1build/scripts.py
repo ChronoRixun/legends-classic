@@ -2788,7 +2788,7 @@ def run(ctx):
         if binding:
             det['mold_controller'] = {'revision': 1, 'stage': dict(layout, nbits=width)}
         else:
-            ctx.error('V-TBD: Master Mold requires a valid effective packed stage binding')
+            ctx.error('V51: Master Mold requires a valid effective packed stage binding')
     det['counts'] = dict(ctx.report.mod(ctx.module)['counts'])
     ctx.write_meta('scripts_detail.json', det)
     ctx.log(f"{len(installed)} scripts, {det['dialogs']['count']} dialogs "
