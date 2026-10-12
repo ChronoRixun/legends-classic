@@ -68,6 +68,36 @@ TALENT_CAP = 99          # 0x4c05d0 shared talent ids 0..98
 NAME_MAX = 31            # stats name strncpy 0x20 incl. NUL
 # XML1-only stats attributes XML2's parser does not handle (schema_stats.txt 'handled=NO')
 DROP_ATTRS = {'leader', 'ratingmelee', 'ratingranged', 'ratingsupport', 'ratingdurability', 'throwally'}
+
+# issue #15: XMen2.exe's stats parser (FUN_004b9c40) has no `leader` case, but the engine kept both of the
+# bit's behaviours, keyed to actor+0x3db bit 3 (its x3 spawn-variant flag) instead of a stats field:
+# the pain gate (0x43597b) skips a hero's flinch for a projectile owned by a flagged actor, and the
+# death-drop roller (0x46e4ed) always rolls drops for a flagged corpse and forces the named
+# HEALTH_ITEM/ENERGY_ITEM/XTREME_PIP slots from the second drop on. Neither flag is settable per
+# character in data, so the builder ships the set of stats entries XML1 marked leader="true" in this
+# sidecar and xml2-fix ([Game] X1Leader) treats those actors like the flagged ones. Names are derived
+# here from the converted stats; nothing game-specific is committed.
+LEADER_SIDECAR_REL = 'Data/x1leader.txt'
+
+
+def leader_sidecar_text(names):
+    """The sidecar's content: comment lines ('#' or ';'), then one stats name per line, sorted
+    (deterministic output for the build hash). Parsed back by parse_leader_sidecar and by xml2-fix."""
+    lines = ['# XML1 stats entries carrying leader="true" (issue #15), derived by xml1build.characters',
+             '# consumed by xml2-fix ([Game] X1Leader); names match case-insensitively']
+    lines.extend(sorted(names))
+    return '\r\n'.join(lines) + '\r\n'
+
+
+def parse_leader_sidecar(text):
+    """Sidecar names (lower); comment ('#' or ';'), blank lines skipped; duplicates collapse (the
+    validator reports the duplicate line separately)."""
+    out = set()
+    for line in text.splitlines():
+        s = line.strip()
+        if s and not s.startswith(('#', ';')):
+            out.add(s.lower())
+    return out
 # costume names XML2 knows (table 0x6d8aa0); other skin_<x> attributes are dropped
 COSTUMES_X2 = {'astonishing', 'aoa', '60s', '70s', 'weaponx', 'future', 'winter', 'civilian'}
 XML2_TAG = {'talent': 'talent', 'race': 'Race', 'bolton': 'BoltOn', 'multipart': 'Multipart', 'flyeffect': 'FlyEffect'}
@@ -394,6 +424,7 @@ class _Builder:
         self.import_stats = {}
         self.x1_weapons = {}
         self.talent_names = set()
+        self.x1_leaders = set()     # stats names (original case) whose leader="true" convert_stats dropped (issue #15)
         self.talent_roots = ()
         self.x1_talents = {}
         self.dep_extra = {}         # style/entity package filename -> [(kind, filename)] it needs in addition
@@ -1043,6 +1074,8 @@ class _Builder:
         for k, v in a.items():
             if v == '' or k in DROP_ATTRS:
                 self.detail['dropped_attrs'].append([name, k, v])
+                if k == 'leader' and v.strip().lower() == 'true':
+                    self.x1_leaders.add(name)   # shipped in Data/x1leader.txt (issue #15)
                 continue
             if k.startswith('skin_') and k[5:] not in COSTUMES_X2:
                 self.detail['dropped_attrs'].append([name, k, v])
@@ -1765,6 +1798,14 @@ def run(ctx):
         ctx.note(f'shared_talents: {tagged} tagged {X1_REMOVABLE_ATTR!r} so XML1 def_damage removals (remove_tag) take '
                  f'them away as XML1 did (0x2b100)')
     ctx.set_count('x1_removable_talents', len(tagged))
+    # issue #15: the leader sidecar xml2-fix reads ([Game] X1Leader); derived from the converted stats above
+    if not b.x1_leaders:
+        ctx.error('no XML1 stats entry carried leader="true" (the officer/commander census) - '
+                  f'{LEADER_SIDECAR_REL} would be empty')
+    else:
+        ctx.write_bytes(LEADER_SIDECAR_REL, leader_sidecar_text(b.x1_leaders).encode('latin-1'),
+                        source='xml1build.characters')
+        ctx.set_count('leader_sidecar_names', len(b.x1_leaders))
     ctx.write_xmlb_pair('Data/shared_talents', b.talent_roots[0], b.talent_roots[1], source='xml1build.characters')
     ctx.set_count('talents_added', len(b.detail['talents_added']))
     ctx.note(f"shared_talents: {len(b.detail['talents_added'])} empty definitions added "
