@@ -7007,9 +7007,11 @@ ps_colossus), and definition_rows reads it back as the XML1 row, so V19's body c
 the `tag_name="def_damage"` powerup (other affecters - `def_mind_control` - move to the untagged one). A boss's
 `remove_tag="def_damage"` (Blob armor_off, Juggernaut armor_end / helmet_penalty, Toad, Pyro, MagnetoBoss) drops
 it by tag (0x54f7b0 -> 0x54dad0, which also marks the cached affecters dirty, 0x54da80); `def_damage_scope` is asked
-live from the current powerup list on every hit (0x550410), so the next hit already takes full damage and, as in
-XML1 (0x2b100 drops every def_damage powerup), can launch, knock back and trip again. V53 counts
-`def_damage_scope` as a resistance affecter.
+live from the current powerup list on every hit (0x550410), so the next hit already takes full damage, as in XML1
+(0x2b100 drops every def_damage powerup). Reactions do not return for these nine: each also carries
+`def_knockback` 0 (and `large` or `def_finisher`) in both games, so a launcher still does not lift them - seen in game
+on the 0.2.2 candidate for BlobAct4 (no lift before or after `armor_off`; hits about 4-9 before, 19-23 after).
+V53 counts `def_damage_scope` as a resistance affecter.
 
 ## 93. The death hand-over stops the successor's AI walk (XML2 Fix `[Game] DeathSwitchClear`, gameplay rule 15)
 
