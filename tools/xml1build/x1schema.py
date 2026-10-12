@@ -398,11 +398,13 @@ def convert_harm_loop_start(root):
     return changed
 
 
-# Fall kill volumes use XML1's original damage, bounds and activation scripts.
-# XML2 retail enables box collision and disables smart-entity streaming for them.
-# Runtime controls: boxcollision alone leaves the HAARP ravine survivable; both
-# flags give the original 32000-damage hit on entry (SPEC 52).
-FALL_KILL_FLAGS = {'boxcollision': 'true', 'smartent': 'false'}
+# Fall kill volumes keep XML1's original damage, bounds, activation scripts and touch shape.
+# Both engines touch-test a model-less entity as a vertical cylinder (radius = the larger
+# horizontal half-extent, the box's own height) unless it sets boxcollision, then as the box.
+# The one difference: XML1 leaves an absent smartent false, XMen2.exe makes it true for physical
+# entities, and a smart entity is never in the touch query (the dead form). So only smartent is
+# written; boxcollision stays as authored (SPEC 52, "Touch shape").
+FALL_KILL_FLAGS = {'smartent': 'false'}
 # Preserve these original hazards until issue #5 party handling is available and
 # the crossings are revalidated: AI can follow a safe leader into their water.
 FALL_KILL_DEFERRED = {

@@ -4822,9 +4822,9 @@ triggers.
 lethal-touch signature: `affectableharment`, `damage="32000"`,
 `damagetype="dmg_direct"`, `actontouch="true"`, `nocollide="true"`. Matching is
 independent of entity names except for the specific deferred pair below. After normal class conversion, set
-`boxcollision="true"` and `smartent="false"`, the collision and residency flags
-used by XML2's native fall kill volumes. Preserve every other attribute and all
-instances, including bounds, positions, orientations, damage modifiers, targeting
+`smartent="false"` (XML1's default residency; see "Touch shape" below) and nothing else: `boxcollision` stays as
+the source has it (0.1.8 to 0.2.1 also wrote `boxcollision="true"`, which changed the touch shape). Preserve
+every other attribute and all instances, including bounds, positions, orientations, damage modifiers, targeting
 flags, and activation scripts. Ordinary fire/damage hazards and non-map entities
 are outside this rule. The conversion is idempotent and reports
 `fall_kill_volumes` in the schema counters.
@@ -4877,6 +4877,27 @@ full build validation and the zones self-test passed.
 
 The reduced two-flag configuration also passed a staged flat-floor on-foot
 control: Wolverine lost exactly 32,000 HP at Z=0.16, with no fall.
+
+### Touch shape: XML1's volumes are cylinders (2026-10-12, issue #22)
+
+Both executables find touch contacts the same way. After a move, the mover's swept volume (a vertical cylinder of
+radius max(half-x, half-y) of its bound and half-height half-z, from the old centre to the new one) goes to a world
+query restricted to entities with the touch flag (Xbox movement 0x42a7b-0x42b7f, XMen2.exe 0x433765-0x433869; query
+vt+0x74 Xbox 0xa1770 / PC 0x4aa180; collision system vt+0x10 Xbox 0x588d0 / PC 0x44d360). Each candidate is tested by
+its collision type (Xbox vt+0x4c 0x75000 / PC vt+0x50 0x471650): an entity without a model is type 5 with
+`boxcollision` and type 2 without it. Type 2 (Xbox 0x58c60, PC 0x44dca0) is a vertical cylinder around the bound
+centre with radius = the larger horizontal half-extent and the bound's own height, tested by the same swept-cylinder
+routine in both (Xbox 0x1988b0, PC 0x600dc0); type 5 (Xbox 0x590d0, PC 0x44e140) is the oriented box. The harm
+entity's centre and half-extents getters agree (Xbox 0x75f40 / 0x30680, PC 0x4712e0 / 0x41c330). The only further
+difference in the query is that the Xbox also requires `nocollide` (every volume here has it).
+
+29 of the first game's 30 lethal-touch definitions carry no `boxcollision` (nuke1_2's `kill_target02` does), so on
+the Xbox they are cylinders. Their `smartent` is absent too, and XML1 keeps an absent `smartent` false (0x67534),
+while XMen2.exe makes it true for physical entities (0x498a05): a smart entity is not in the touch query, which is
+the dead form the conversion started from. The faithful conversion is therefore `smartent="false"` alone. Writing
+`boxcollision="true"` (0.1.8 to 0.2.1) made every volume a box: its corners reach past the original cylinder, and an
+elongated box misses the cylinder's sides (sewers3_1_1's 624 x 180 boxes are cylinders of radius 312 on the Xbox).
+V26 now compares each enabled volume's `boxcollision` with its XML1 source.
 
 ### Player-only ravine: the HAARP exterior volume (maintainer decision, 2026-10-05)
 

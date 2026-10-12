@@ -27,7 +27,9 @@ def test_fall_volume_preserves_damage_scripts_and_each_instance():
     instances = ET.tostring(root.find('entinst'))
     counts = S.convert(root, 'Maps/Invented/Cliff.eng')
     assert counts['fall_kill_volumes'] == 1
-    assert entity.attrib == dict(before, boxcollision='true', smartent='false')
+    # only the residency flag: the source's touch shape (no boxcollision = a vertical cylinder) is kept
+    assert entity.attrib == dict(before, smartent='false')
+    assert 'boxcollision' not in entity.attrib
     assert ET.tostring(root.find('entinst')) == instances
     assert not S.convert(root, 'Maps/Invented/Cliff.eng')
     # The actual output writer must retain XML2's binary-search attribute order.
@@ -60,17 +62,21 @@ def test_fall_volume_does_not_change_other_hazards_or_nonmap_entities():
         assert ET.tostring(root) == before
 
 
-def check_fixture(folder, root, source='invented'):
+def check_fixture(folder, root, source='invented', x1=None):
+    """x1: the XML1 source tree (written as text next to the outputs) the volumes were converted from"""
     validator = Validator.__new__(Validator)
     validator._scan = None
     validator.reg = {}
+    if x1 is not None:
+        source = str(folder / 'cliff.eng')
+        (folder / 'cliff.eng').write_bytes(ET.tostring(x1))
     for suffix in ('.xmlb', '.engb'):
         name = 'maps/invented/cliff' + suffix
         path = folder / ('cliff' + suffix)
         path.write_bytes(C.encode_xmlb(root))
         validator.reg[name] = dict(rel=name, owner='zones', source=source)
     validator.idx = SimpleNamespace(path=lambda name: folder / Path(name).name)
-    validator.is_x1_source = lambda value: value == 'invented'
+    validator.is_x1_source = lambda value: value == 'invented' or str(value).endswith('cliff.eng')
     check = Check('V26', 'fall kill volumes')
     validator.fall_kill_volumes(check)
     return check
@@ -80,18 +86,28 @@ def test_fall_volume_validator_detects_each_missing_flag_once_per_twin_pair():
     with tempfile.TemporaryDirectory() as temp:
         folder = Path(temp)
         root, entity = fixture()
-        bad = check_fixture(folder, root)
+        source, _ = fixture()
+        bad = check_fixture(folder, root, x1=source)
         assert len(bad.errors) == 1
-        assert 'boxcollision=true' in bad.errors[0] and 'smartent=false' in bad.errors[0]
+        assert 'smartent=false' in bad.errors[0]
         assert bad.counts['volumes_checked'] == 1
         S.convert(root, 'maps/invented/cliff.eng')
-        good = check_fixture(folder, root)
-        assert not good.errors and good.counts['volumes_checked'] == 1
-        for key, value in [('boxcollision', 'false'), ('smartent', 'true')]:
-            expected = entity.get(key)
-            entity.set(key, value)
-            assert len(check_fixture(folder, root).errors) == 1
-            entity.set(key, expected)
+        good = check_fixture(folder, root, x1=source)
+        assert not good.errors and good.counts['volumes_checked'] == 1 and good.counts['volumes_cylinder'] == 1
+        entity.set('smartent', 'true')
+        assert len(check_fixture(folder, root, x1=source).errors) == 1
+        entity.set('smartent', 'false')
+        # a box where the source has none changes the touch shape (cylinder -> box): error
+        for value in ('true', 'false'):
+            entity.set('boxcollision', value)
+            shape = check_fixture(folder, root, x1=source)
+            assert len(shape.errors) == 1 and 'touch shape' in shape.errors[0]
+        # ... and a source box stays a box
+        source.find('entity').set('boxcollision', 'true')
+        entity.set('boxcollision', 'true')
+        assert not check_fixture(folder, root, x1=source).errors
+        entity.attrib.pop('boxcollision')
+        assert len(check_fixture(folder, root, x1=source).errors) == 1
         entity.attrib.pop('smartent')
         assert not check_fixture(folder, root, source='native').errors
 
@@ -107,12 +123,12 @@ def test_deferred_volume_keeps_source_form_without_excluding_neighbor_hazards():
         with patch.object(S, 'FALL_KILL_DEFERRED', deferred, create=True):
             changes = S.convert(root, rel)
         assert entity.attrib == before
-        assert other.get('boxcollision') == 'true' and other.get('smartent') == 'false'
+        assert other.get('boxcollision') is None and other.get('smartent') == 'false'
         assert changes['fall_kill_volumes'] == 1
     root, entity = fixture()
     with patch.object(S, 'FALL_KILL_DEFERRED', deferred, create=True):
         S.convert(root, 'maps/invented/other.eng')
-    assert entity.get('boxcollision') == 'true' and entity.get('smartent') == 'false'
+    assert entity.get('boxcollision') is None and entity.get('smartent') == 'false'
 
 
 def test_validator_reports_deferral_and_rejects_accidental_reactivation():
@@ -144,9 +160,9 @@ def test_player_only_volume_gets_the_leader_gate_for_the_exact_pair_only():
         with patch.object(S, 'FALL_KILL_LEADER_ONLY', listed):
             changes = S.convert(root, rel)
             assert changes['fall_kill_volumes'] == 2
-            assert entity.attrib == dict(before, boxcollision='true', smartent='false', actleader='true')
+            assert entity.attrib == dict(before, smartent='false', actleader='true')
             assert 'actleader' not in other.attrib
-            assert other.get('boxcollision') == 'true' and other.get('smartent') == 'false'
+            assert other.get('boxcollision') is None and other.get('smartent') == 'false'
             assert ET.tostring(root.find('entinst')) == instances
             assert not S.convert(root, rel)
         decoded = C.decode_xmlb(C.encode_xmlb(root))
@@ -155,9 +171,9 @@ def test_player_only_volume_gets_the_leader_gate_for_the_exact_pair_only():
     root, entity = fixture()
     with patch.object(S, 'FALL_KILL_LEADER_ONLY', listed):
         S.convert(root, 'maps/invented/other.eng')
-    assert 'actleader' not in entity.attrib and entity.get('boxcollision') == 'true'
-    # an already converted volume (two flags) that becomes listed still gains the gate
-    root, entity = fixture(boxcollision='true', smartent='false')
+    assert 'actleader' not in entity.attrib and entity.get('smartent') == 'false'
+    # an already converted volume that becomes listed still gains the gate
+    root, entity = fixture(smartent='false')
     with patch.object(S, 'FALL_KILL_LEADER_ONLY', listed):
         assert S.convert(root, 'maps/invented/gorge.eng')['fall_kill_volumes'] == 1
     assert entity.get('actleader') == 'true'

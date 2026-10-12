@@ -61,7 +61,7 @@ Checks (severity per SPEC 4.6: error = will not load or silently misbehaves; war
                 index counts equal, indices inside the blend palette, palette entries on skeleton bones, weights
                 summing to 1 (errors); every bone the skin's vertices use in the anim DB skeleton (skin / skeleton
                 mismatch: error, warning when the XML1 disc has it too); 1-2 blend weights noted
-  V26 fall kill volumes (SPEC 52): XML1 map lethal-touch boxes have boxcollision=true and smartent=false
+  V26 fall kill volumes (SPEC 52): XML1 map lethal-touch volumes have smartent=false and their source boxcollision
   V28 dialog platforms (SPEC 54, x1schema.dialog_platform_problems): every registered
                 Dialogs/ file has, for each filter value, a variant XMen2.exe's platform test (0x4bd650) accepts -
                 else the popup opens an empty panel (issue #50)
@@ -575,7 +575,8 @@ class Validator:
                          XS.fall_kill_volume_deferred(el, n),
                          (XS.fall_kill_volume_leader_only(el, n),
                           all(el.get(k) == v for k, v in XS.FALL_KILL_LEADER_FLAGS.items()),
-                          any(el.get(k, '').lower() == 'true' for k in XS.FALL_KILL_LEADER_FLAGS)))
+                          any(el.get(k, '').lower() == 'true' for k in XS.FALL_KILL_LEADER_FLAGS)),
+                         el.get('boxcollision'))
                         for el in volumes]
                     tail = XS.numbered_entinst_tail_problems(root, n)
                     if tail:
@@ -1131,15 +1132,31 @@ class Validator:
             n_break += len(lst)
         ck.set('x1_break_rule_unpaired', n_break)
 
+    def x1_source_entity(self, n, name):
+        """attributes of the XML1 source <entity name=...> of a registered map output (None: not found)."""
+        cache = self.__dict__.setdefault('_x1_ents', {})
+        src = (self.reg.get(n) or {}).get('source')
+        if src not in cache:
+            ents = {}
+            try:
+                root = C.parse_x1_text(src)
+                for el in (root.iter('entity') if root is not None else ()):
+                    ents.setdefault(el.get('name'), dict(el.attrib))
+            except Exception:        # noqa: BLE001
+                pass
+            cache[src] = ents
+        return cache[src].get(name)
+
     def fall_kill_volumes(self, ck):
-        """V26: converted fall kill volumes must be active collision boxes; the listed player-only
-        volumes, and no others, carry the leader gate."""
+        """V26: converted fall kill volumes must be live (smartent=false) with the source's own touch
+        shape (boxcollision as authored); the listed player-only volumes, and no others, carry the
+        leader gate."""
         sc = self.scan
         for n, volumes in sorted(sc.fall_kill_volumes.items()):
             if n in sc.twins or not self.is_x1_source((self.reg.get(n) or {}).get('source')):
                 continue
             ck.count('files_checked')
-            for name, missing, deferred, (leader_listed, leader_set, leader_any) in volumes:
+            for name, missing, deferred, (leader_listed, leader_set, leader_any), box in volumes:
                 if leader_listed and not deferred:
                     ck.count('volumes_player_only')
                     if not leader_set:
@@ -1163,6 +1180,14 @@ class Validator:
                 if missing:
                     ck.error(f'{sc.files[n]["rel"]}: fall kill volume {name!r} lacks '
                              f'{", ".join(k + "=" + XS.FALL_KILL_FLAGS[k] for k in missing)}')
+                source = self.x1_source_entity(n, name)
+                if source is not None and (box or '').lower() != (source.get('boxcollision') or '').lower():
+                    # XML1 touch-tests a volume without boxcollision as a vertical cylinder; a box reaches
+                    # its corners (and misses the cylinder's sides): another hazard than the designers'
+                    ck.error(f'{sc.files[n]["rel"]}: fall kill volume {name!r} has boxcollision={box!r}, '
+                             f'the XML1 source {source.get("boxcollision")!r} (its touch shape changes)')
+                if box is None:
+                    ck.count('volumes_cylinder')
 
     def _npc_pool_names(self):
         """talent names defined by the built npc per-set files (data/talents/npc*, the TalentRegistry fix)."""
