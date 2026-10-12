@@ -91,7 +91,8 @@ MULTIPART_X1_INERT = ('starthide', 'healthmul')
 # damage resistance (other affecters - def_mind_control - move to an untagged powerup of their own, as XML1 kept
 # them: another attribute). XML2's own talents use tag_name the same way (spawn_invis). The resistance affecter is
 # XML1's own def_damage row in XMen2.exe's scoped spelling (def_damage_scope, restore_resist_talents runs first: it
-# is what strips a hit's reactions, so removing it also gives launches / knockback back, as in XML1); resist_ and
+# is what strips a hit's reactions; the nine bosses that remove it keep refusing them through def_knockback 0 /
+# large / def_finisher, as in XML1, and only their damage taken returns to full); resist_ and
 # plain def_damage are still accepted for a base install whose definitions restore_resist_talents left alone.
 X1_REMOVABLE_ATTR = 'def_damage'
 X1_REMOVABLE_AFFECTERS = re.compile(r'(resist_|def_damage(_scope)?$)')
