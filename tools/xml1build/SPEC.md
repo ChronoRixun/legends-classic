@@ -548,8 +548,7 @@ build.
    - `script_exists(ctx, ref)`: the ref is in the installed or planned set.
 6. **shared:** `scripts_installed`. **counts:** `scripts_installed`, `common_overwritten`, `dialogs_x1`,
    `mission_files`, `inline_rewrites_available`.
-7. **Defer:** forced per-mission heroes (REQUIREDHERO / maxheros), `addHero`, solo mode (18 inline
-   `enterSoloMode` removed), the exact side-mission return point, conversation speaker markup, 44 zones that set
+7. **Defer:** forced per-mission heroes (REQUIREDHERO / maxheros), `addHero`, the exact side-mission return point, conversation speaker markup, 44 zones that set
    no act on entry, and the 22 multi-act zones.
 
 ### 5.3 zones.py
@@ -813,7 +812,9 @@ statements) is the first thing to watch.
 
 - forced per-mission heroes;
 - `addHero`;
-- solo mode;
+- ~~solo mode~~ (issue #5: prepare P3 rewrites XML1's 18 inline `enterSoloMode` and 4 `exitSoloMode` to xml2-fix
+  `setSoloMode(actor, 1 / 0)`; the party solo state, its AI sites and regroup are xml2-fix's `[Game] SoloMode`,
+  docs/solo-mode.md there; validate V-TBD);
 - XML1 per-zone music overrides;
 - ~~automaps~~ (section 26);
 - danger-room and review data;
