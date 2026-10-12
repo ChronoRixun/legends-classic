@@ -6884,12 +6884,13 @@ on every level they hit; the port maps its heroes onto XML2's four classes from 
 D13). By level 40 every XML2 class gives 79 stat points in port units; XML1's stat_rules give 47 XML1 points = 172 port
 units (bruiser: body 80, strength 44, mind 32, speed 16; support: mind 112, strength 40, speed 16, body 4), so the port's
 heroes grow about 46 % of the first game's automatic growth, in different proportions (an XML1 bruiser gains mind, an
-XML2 bruiser none). Options for the maintainer, none implemented:
-1. Data: two new classes `x1_bruiser` / `x1_support` in autospend.XMLB (XML1's templates), the heroes moved to them,
-   their bonuses as periodic rules approximating stat_rules x 4. The record appears to hold few rules (0x43d000 walks
-   6-byte entries from +0x14 up to the count at +0x30) and XML2 applies them past 40, so it can only approximate; it
-   also changes the classes' spend proportions (the auto-spend of unspent points), which would need XML1's `spend`
-   lists translated too.
+XML2 bruiser none). The maintainer chose option 1, implemented in SPEC 94 (xml1build.autospend: classes
+x1_bruiser / x1_support, heroes.AUTOSPEND moved to XML1's templates, validator V-H17). For the record:
+1. Data (implemented, SPEC 94): two new classes `x1_bruiser` / `x1_support` in autospend.XMLB (XML1's
+   templates), the heroes moved to them, their bonuses as periodic rules approximating stat_rules x 4.
+   A class holds at most four rules (the rule adder 0x43d370 drops the rest), the file at most four classes
+   (the parser skips every class after the fourth, 0x43d18d) and XML2 applies the rules past 40, so it can only
+   approximate; XML1's `spend` lists became the classes' auto-spend weights.
 2. Code: an XML2 Fix hook on 0x43d000's caller applying XML1's per-level table (written by the builder from
    stat_rules.xml x 4 / speed x 2, by template) - exact, levels 2..40 only, level loss symmetric; rule 5 again.
 3. Leave it: the 0.2.0 balance work (design-balance, decision 1) tuned enemy health and the stat coefficients with the
@@ -7045,3 +7046,58 @@ edge. X-Men Legends I's player branch only reads the pad (default.xbe 0x439a0): 
 - What the fix does (xml2-fix `docs/death-switch.md`): the hand-over call at 0x42a042 goes through the fix, which
   clears the successor's move goal and follow handle as the manual switch does; nothing else of the switch changes.
 - Online it is rule 15 of the shared gameplay agreement. No data change.
+
+## 94. XML1's automatic stat growth in Data/autospend.XMLB (classes x1_bruiser / x1_support, validator V-H17)
+
+Maintainer decision 2026-10-12 (SPEC 88.2 option 1): approximate the first game's automatic stat bonus in data.
+
+**The first game** (default.xbe 0xaed70 / 0xaea90; stat_rules.xml): each hero names a template class (bruiser or
+support, `<CHARACTER name=.. template=..>`) and each listed level 2..40 applies its bonus stats at once (a `<level>`
+without `offset` follows the previous one; the first is level 2); nothing above 40. Port units: body / mind /
+strength x4 (heroes.STAT_SCALE), speed x2 (SPEED_MAP's slope).
+
+**The port's format** (XMen2.exe, retail):
+- Level processing 0x4bbae0 walks every level from the hero's processed level ([CStats+0xc0]+0x3c) + 1 to its level
+  (CStats+0x1c) and, per level, calls the class rule walk 0x43cf90 -> 0x43d000 (and grants the stat / skill
+  points). It skips xpexempt heroes (CStats+0x2ad bit 0x20), so ProfXAstral / ProfXGladiator never grow. It runs
+  when a hero in the party gains XP; a benched hero's levels are processed, all at once, the next time it levels in
+  the party (live: Rogue 1 -> 42 in one walk got exactly the level-42 total).
+- 0x43cf90 looks the herostat `autospend` name (set by the stats parser at 0x4bb2bf, kept at [CStats+0xc0]+0x24)
+  up in a static table of **four** class records (0x34 bytes each, from 0x712bf4). The parser 0x43d0c0 skips every
+  CharacterClass after the fourth (`cmp [ebx+0x78],4` at 0x43d18d); a hero whose class was skipped gets no growth
+  at all, silently (0x43cf90 finds nothing and returns).
+- A record holds up to four 6-byte rules at +0x14 (start, rate, four signed stat deltas), count at +0x30; the rule
+  adder 0x43d370 drops a fifth (`cmp [ecx+0x30],4` at 0x43d373). A rule fires on level L when L == start, or
+  L > start, rate > 0 and (L - start) % rate == 0 (0x43d041..0x43d05f) - rate 0 fires once, at start.
+- A fire adds the deltas to the hero's class-bonus bytes CStats+0x10..0x13 ([strength, speed, body, mind]) through
+  0x43a620, which refuses a write that would take base (CStats+8) + spent (CStats+0xc) + bonus above 250; a level
+  lost re-walks with the sign reversed (0x4bbbf6). The effective stat is base + spent + bonus (+ items); the
+  bonus bytes are saved with the hero (live: unchanged after a cold load, the next level fires on top).
+- The class attributes body / mind / speed / strength are the auto-spend weights of the unspent points
+  (normalized by the engine, 0x43d24d).
+
+**The build** (xml1build.autospend, after heroes in MODULE_ORDER): Data/autospend.XMLB = x1_bruiser, x1_support
+FIRST, then the XML2 classes the built herostat still names (support_heavy: `default`, Magneto, the x1pad entries),
+the rest dropped (they could never load anyway). heroes.AUTOSPEND maps every XML1 hero onto its template's class.
+The templates' tables and `spend` lists are read from the player's stat_rules.xml at build time (nothing XML1 is
+stored in the repo); the `spend` counts become the auto-spend weights (`agility` counted as speed).
+
+The fitted rules (least per-level deviation under the four-rule limit; a hill-climb over joint four-stat rules found
+nothing better for x1_bruiser and only the one-shot body/mind tweak below for x1_support):
+
+- x1_bruiser: body (2,2,+4), strength (3,4,+4), speed (5,5,+2), mind (5,4,+4). Max deviation over levels 2..40:
+  body 4, strength 4, speed 2, mind 4 port points (one XML1 point each).
+- x1_support: mind (2,1,+3), strength (7,4,+4), speed (5,5,+2), body+4 / mind-1 once at 6 (rate 0). Max deviation:
+  mind 5, strength 4, speed 2, body 0.
+
+**Past 40** the periodic rules keep firing to the level cap (45 with XPCurve=xml1): by 45 bruiser body +8, mind +12,
+speed +2 over XML1's flat line; support mind +19 (XML1 units: at most 5 points).
+
+**Live** (staged XP via awardXPToPlayable, read from CStats+0x10): the bonus matches the simulation exactly at
+levels 5, 10, 20, 30, 40, 41 and 42 for both classes; a control with XML2's classes reproduces XML2's growth.
+
+**V-H17** (autospend.problems, from heroes.validate_out): the built file loads x1_bruiser / x1_support and every
+class herostat names within its first four classes, carries exactly the fitted rules (<= 4, signed-byte amounts,
+byte start/rate), the simulated growth stays within the documented deviation of the player's stat_rules.xml at
+every level 2..40, the weights equal the `spend` counts, and every hero stat_rules.xml names uses its template's
+class.
