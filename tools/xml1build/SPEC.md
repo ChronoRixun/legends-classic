@@ -6669,3 +6669,9 @@ points. Heroes past level 5 in a save made before the key are short one point fo
 when the level is processed, so there is nothing in its rule for a grant on load, and a save does not record which
 rule gave its points (only the header's writer / content version could tell). A one-time catch-up on conversion is
 possible but is not done (agent report, follow-up).
+
+**In game (agent check, 2026-10-12; staged: XP by `awardXPToPlayable` to XML1's level thresholds - 505, 830, 4720,
+6880 - and the extraction menu opened by script for the save).** New Game, Wolverine: XML2 Fix 1.4.0 (control) gives
+3 / 4 / 8 / 9 skill points at levels 4 / 5 / 9 / 10 (+1 at 4 -> 5 and 9 -> 10); with `LevelSkillPoints=xml1` 3 / 5 / 9 /
+11 (+2 at both). Saved, closed, loaded in a new process: level 10, 11 points; level 10 -> 11 then gives +1 (12). Stat
+points identical on both sides (12 / 16 / 32 / 36).
