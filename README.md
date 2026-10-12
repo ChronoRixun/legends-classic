@@ -215,8 +215,8 @@ need new engine hooks in xml2-fix), the port plays without them:
 - **A keycard can drop out of reach in HAARP:** an officer killed while pinned against a door can drop his keycard
   behind it. If that happens, load your last save; a fix is planned for 0.2.1.
 - Online play (*Play Online*) is X-Men Legends II's, through the [OpenSpy](https://openspy.net) servers; port games
-  only list other port games. Joining, playing and saving on both PCs work in tests with two copies of the game on
-  one PC; play between two PCs, and across the internet, gets a dedicated pass in 0.3.0. Reports of disconnects are
+  only list other port games. Joining, playing and saving for both players work in tests with two copies of the game
+  on one PC; play between two PCs, and across the internet, gets a dedicated pass in 0.3.0. Reports of disconnects are
   welcome (say whether the game showed its lag warnings first).
 - Local co-op on controllers should work (it is X-Men Legends II's) but has had little testing.
 - Open bugs and play-test notes: [issues](https://github.com/ChronoRixun/legends-classic/issues) and
