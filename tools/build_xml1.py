@@ -47,6 +47,7 @@ from pathlib import Path
 
 from xml1build import common as C  # noqa: E402  (tools/ = this script's folder, sys.path[0]; the builder imports us)
 from xml1build import balance as BAL  # noqa: E402
+from xml1build import main_appearance as MA  # noqa: E402
 
 
 def parse_args(argv=None):
@@ -108,7 +109,8 @@ def parse_args(argv=None):
                          "(xml1, the default; also $XML1BUILD_FRONTEND) or XML2's front end exactly as before SPEC 21 "
                          "(xml2, the A/B fallback)")
     ap.add_argument('--main-menu-layout', choices=('classic', 'widescreen'), default='classic',
-                    help='main-menu composition: classic centered layout, or a rigid widescreen offset')
+                    help='main-menu composition: classic (the original, centred by the game at every aspect); '
+                         'widescreen is a retired name for classic')
     ap.add_argument('--xp-curve', dest='xp_curve', choices=C.XP_CURVE_MODES,
                     default=(os.environ.get(C.XP_CURVE_ENV) or C.XP_CURVE_DEFAULT).lower()
                     if (os.environ.get(C.XP_CURVE_ENV) or C.XP_CURVE_DEFAULT).lower() in C.XP_CURVE_MODES
@@ -146,6 +148,10 @@ def parse_args(argv=None):
         ap.error('--tour needs a positive number of seconds')
     if a.start_zone:
         a.start_zone = C.norm(a.start_zone).removeprefix('maps/')
+    if a.main_menu_layout == 'widescreen':
+        print('[build] --main-menu-layout widescreen is retired: the game already centres the classic main menu '
+              'at every aspect; building classic')
+    a.main_menu_layout = MA.layout(a.main_menu_layout)
     return a
 
 
