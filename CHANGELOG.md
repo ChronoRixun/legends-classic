@@ -6,8 +6,9 @@ build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebui
 ## Unreleased
 
 - **The scan turrets fire again** (issue #4, needs the matching XML2 Fix): the HAARP exterior missile tanks scan,
-  turn, lock on and fire their three-missile salvos with the first game's timing, and can still be destroyed. The
-  Arbiter / Weapon X tripod guns and the Hive flame turret are not driven yet and stay as before.
+  turn, lock on and fire their three-missile salvos with the first game's timing, the Arbiter and Weapon X tripod
+  guns sweep and fire their bullets, and the Hive tanks' flame turrets burn whoever comes close. All of them can
+  still be destroyed.
 
 ## v0.2.1 - content version 18 (needs XML2 Fix 1.4.0)
 

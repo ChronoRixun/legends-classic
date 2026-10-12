@@ -29,21 +29,59 @@ def _zone():
     s = ET.SubElement(root, 'entinst', type='gizmo_gun')
     ET.SubElement(s, 'inst', name='gun_z', pos='0 0 0', orient='0 0 0')
     ET.SubElement(root, 'entity', name='gizmo_gun', classname='physent', turretweapon='wp_fake_gun')
+    z = ET.SubElement(root, 'entinst', type='gizmo_zapper')
+    ET.SubElement(z, 'inst', name='zap_y', pos='5 5 5', orient='0 0 0')
+    ET.SubElement(root, 'entity', name='gizmo_zapper', classname='physent', turretweapon='wp_fake_zapper')
     return root
 
 
 WEAPONS = {'wp_fake_launcher': {'type': 'projectile', 'recoiltime': '4', 'count': '2', 'spread': '15',
                                 'projectilespeed': '300', 'accuracy': '10', 'range': '700', 'damage': 'Q7',
                                 'projectileent': 'dart_fake', 'entfile': 'fake_ents'},
-           'wp_fake_gun': {'type': 'bullet', 'recoiltime': '0.5', 'range': '500', 'damage': 'Q7'}}
+           'wp_fake_gun': {'type': 'bullet', 'recoiltime': '0.5', 'range': '500', 'damage': 'Q7', 'accuracy': '3',
+                           'damagemod': 'dmgmod_no_pain', 'muzzlefx': 'fake/gun_flash', 'muzzleaccfx': 'fake/gun_line',
+                           'impactfx': 'fake/gun_spark'},
+           'wp_fake_zapper': {'type': 'beam', 'recoiltime': '1', 'range': '100', 'damage': 'Q7'}}
 
 
 def test_placements_carry_authored_values_and_defaults():
     lines, skipped = TU.placements('fake/zone_q', _zone(), WEAPONS, FakeValues())
     assert [l for l, _ in lines] == [
-        'fake/zone_q|gizmo_a|10,-20,30.5,0,-0.25,1.5|600,0,0,2,80,70,0,30,29|2,4,2,15,300,10,700,27,51|dart_fake|fake_ents',
-        'fake/zone_q|gizmo_b|40,50,60,0,0,0|600,0,0,2,80,70,0,30,29|2,4,2,15,300,10,700,27,51|dart_fake|fake_ents']
-    assert skipped == ['fake/zone_q:gun_z: bullet weapon wp_fake_gun not emitted by the controller yet']
+        'fake/zone_q|gizmo_a|10,-20,30.5,0,-0.25,1.5,0,0,0|600,0,0,2,80,70,0,30,29|2,4,2,15,300,10,700,27,51,0,0,128,0|'
+        'dart_fake|fake_ents|,,',
+        'fake/zone_q|gizmo_b|40,50,60,0,0,0,0,0,0|600,0,0,2,80,70,0,30,29|2,4,2,15,300,10,700,27,51,0,0,128,0|'
+        'dart_fake|fake_ents|,,',
+        'fake/zone_q|gun_z|0,0,0,0,0,0,0,0,0|600,0,0.75,10,30,45,45,20,29|0,0.5,1,10,0,3,500,27,51,0,0,128,524288|||'
+        'fake/gun_flash,fake/gun_line,fake/gun_spark']
+    assert skipped == ['fake/zone_q:zap_y: beam weapon wp_fake_zapper not emitted by the controller yet']
+
+
+def test_ray_weapons_carry_trace_radius_damage_bits_and_effects():
+    flame = {'type': 'flame', 'recoiltime': '0.03', 'range': '120', 'damage': 'Q7', 'tracetime': '0.4',
+             'radius': '40', 'damagetype': 'dmg_fire', 'muzzleaccfx': 'fake/jet_stream'}
+    kind, gun, proj, ents, fx = TU.weapon_fields(flame, FakeValues())[0]
+    assert (kind, proj, ents, fx) == ('flame', '', '', ',fake/jet_stream,')
+    assert gun == '1,0.03,1,10,0,0,120,27,51,0.4,40,65536,0'
+    assert TU.weapon_fields(dict(flame, damagetype='dmg_bleed'), FakeValues())[0] is None      # not on the PC exe
+    assert TU.weapon_fields(dict(flame, damagemod='dmgmod_confusion'), FakeValues())[0] is None
+    assert TU.weapon_fields(dict(flame, range='0'), FakeValues())[0] is None                   # a ray needs a range
+    assert TU.damage_bits({'damagemod': 'dmgmod_no_pain dmgmod_auto_knockback'}) == (0x80, 0x80008, [])
+    assert TU.weapon_effects({'impactfx': 'bad name!'}) == ',,'                                  # unusable path dropped
+
+
+def test_muzzle_is_the_models_gun1_node_and_spawned_turrets_bind_by_name():
+    root = _zone()
+    lines, _ = TU.placements('fake/zone_q', root, WEAPONS, FakeValues(), muzzle=lambda model: (12.5, 0, 3))
+    assert lines[0][0].split('|')[2] == '10,-20,30.5,0,-0.25,1.5,12.5,0,3'
+    spawns = TU.script_spawns(['spawn("cart1", "gizmo_gun", "gun_w", " 0 0 9 ", " 0 0 -90 ")\n',
+                               'x = spawn("cart2", "crate", "box_v", "0 0 0", "0 0 0")'])
+    assert spawns == [('gizmo_gun', 'gun_w'), ('crate', 'box_v')]
+    lines, _ = TU.placements('fake/zone_q', root, WEAPONS, FakeValues(), spawns)
+    spawned = [l for l, d in lines if d['spawned']]
+    assert spawned == ['fake/zone_q|*gun_w|0,0,0,0,0,0,0,0,0|600,0,0.75,10,30,45,45,20,29|'
+                       '0,0.5,1,10,0,3,500,27,51,0,0,128,524288|||fake/gun_flash,fake/gun_line,fake/gun_spark']
+    assert TU.validate_contract({'revision': 2, 'placements': spawned}) == []
+    assert TU.muzzle_offset(b'not an igb') == (0.0, 0.0, 0.0)
 
 
 def test_scanner_defaults_are_the_original_constructor():
@@ -64,12 +102,14 @@ def test_unresolvable_or_unknown_weapons_are_skipped():
 
 def test_contract_validation():
     lines, _ = TU.placements('fake/zone_q', _zone(), WEAPONS, FakeValues())
-    good = {'revision': 1, 'placements': [l for l, _ in lines]}
+    good = {'revision': 2, 'placements': [l for l, _ in lines]}
     assert TU.validate_contract(good) == []
-    assert TU.validate_contract({'revision': 2, 'placements': []})
+    assert TU.validate_contract({'revision': 1, 'placements': []})
     assert TU.validate_contract(dict(good, placements=good['placements'] * 2))      # duplicates
     assert TU.validate_contract(dict(good, placements=['fake|x;y|1|2|3|4|5']))
-    assert TU.validate_contract(dict(good, placements=good['placements'][:1] * 1 + ['a/b|c|1,2|1|1|p|f']))
+    assert TU.validate_contract(dict(good, placements=good['placements'][:1] * 1 + ['a/b|c|1,2|1|1|p|f|,,']))
+    old = good['placements'][0].rsplit('|', 1)[0]                                     # revision-1 shape (7 fields)
+    assert TU.validate_contract(dict(good, placements=[old]))
 
 
 def test_ini_keys_need_a_valid_contract_and_port_identity():
@@ -79,11 +119,11 @@ def test_ini_keys_need_a_valid_contract_and_port_identity():
         assert F.build_turrets(out) == {}
         (out / '_build').mkdir()
         meta = out / '_build/turrets.json'
-        meta.write_text(json.dumps({'revision': 1, 'placements': [l for l, _ in lines]}))
+        meta.write_text(json.dumps({'revision': 2, 'placements': [l for l, _ in lines]}))
         keys = F.build_turrets(out)
         assert keys['Game'] == {'Xml1Turrets': '1'}
-        assert keys['Xml1Turrets']['Count'] == '2' and keys['Xml1Turrets']['T2'] == lines[1][0]
-        meta.write_text(json.dumps({'revision': 1, 'placements': []}))
+        assert keys['Xml1Turrets']['Count'] == '3' and keys['Xml1Turrets']['T2'] == lines[1][0]
+        meta.write_text(json.dumps({'revision': 2, 'placements': []}))
         assert F.build_turrets(out) == {}
         meta.write_text(json.dumps({'revision': 9, 'placements': [l for l, _ in lines]}))
         assert F.build_turrets(out) == {}

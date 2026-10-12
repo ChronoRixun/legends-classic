@@ -6613,18 +6613,23 @@ candidate-i peer at admission whatever its token. Builder/DLL versions remain 0.
 ## (number assigned at merge). XML1 scan turrets (XML2 Fix `Game.Xml1Turrets`, V-TBD)
 
 XML1's `scanturretent` stays a physent (x1schema, fixed mount, turret weapon model) and keeps its scanner attributes.
-The zones module now writes `_build/turrets.json` (xml1build.turrets, revision 1): one line per placement of a
-converted zone whose physent carries a `turretweapon`, with the inst's authored position and orientation, the scanner
+The zones module now writes `_build/turrets.json` (xml1build.turrets, revision 2): one line per placement of a
+converted zone whose physent carries a `turretweapon`, with the inst's authored position and orientation, the model's
+`Gun1` bolt (the muzzle, read from the built model IGB; 0,0,0 without one), the scanner
 values (absent ones take default.xbe's constructor defaults, 0xa8600: visrange 600, minspeed 0, mintime 0.75,
 resetdelay 10, visextent 30, yaw/pitch extent 45, turnrate 20; filterteam hero = PC team bit 29) and the turret
 weapon from XML1's `data/weapons/weapons.eng`: kind, recoiltime, count/spread (projectile defaults 1/10, 0xbb240),
-projectilespeed, accuracy, range, the gun damage draw bounds (`weapons.gun_damage_range`, SPEC 76) and the
-projectile entity / entity file. Only weapon kinds the controller emits are listed (`SUPPORTED_KINDS`: projectile,
-the two HAARP exterior tanks); the tripod bullets (Arbiter, Weapon X, demo) and the Hive flame turret are reported in
-the build notes and stay inert physents as in 0.2.1.
+projectilespeed, accuracy, range, the gun damage draw bounds (`weapons.gun_damage_range`, SPEC 76), tracetime,
+radius, the PC damage-type and damagemod bits of the weapon's names (XMen2.exe tables 0x6d61e0 / 0x6d6258; a name the
+PC exe does not know skips the placement and is reported), the projectile entity / entity file and the weapon's
+muzzlefx, muzzleaccfx and impactfx effect paths. A turret that a script of the zone's own folder spawns
+(`spawn("tank1", "tank_turret_sp01", "turret1", ...)`, the Hive tanks) is listed as `*turret1` (bound by name in the
+DLL). `SUPPORTED_KINDS` are projectile (HAARP exterior tanks), bullet (Arbiter, demo and Weapon X tripods) and flame
+(the Hive tanks' turrets); beam weapons (no turret uses one) are reported in the build notes and stay inert.
 
-**V-TBD:** the zones module reports a build error when the contract is malformed (field counts, names, a ';' that
-would end an INI value, duplicate placements, more than the DLL's 32).
+**V-TBD:** the zones module reports a build error when the contract is malformed (8 fields, 9 placement numbers, 9
+scanner numbers, 13 weapon numbers, 3 effects, names, a ';' that would end an INI value, duplicate placements, more
+than the DLL's 32).
 
 `fix_ini.build_turrets` / `port_keys` and the harness write `[Game] Xml1Turrets=1` and `[Xml1Turrets] Count, T1..Tn`
 only for a first-game build with a valid contract; every key is port-owned (dropped again from a build without
