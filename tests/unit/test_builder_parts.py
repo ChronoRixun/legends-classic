@@ -354,7 +354,7 @@ def test_port_keys_from_a_synthetic_build():
                                               'ObjectiveDescriptions': '1', 'BreakRule': 'xml1',
                                               'PlacementCrush': 'xml1', 'DoubleHeal': '0', 'ExplosiveFirstHit': '1',
                                               'RankCosts': '1', 'LevelSkillPoints': 'xml1',
-                                              'LevelStatPoints': 'xml1', 'Xml1Multipart': '1'},
+                                              'LevelStatPoints': 'xml1', 'Xml1Multipart': '1', 'DeathRule': 'xml1'},
                                      'Limits': {'ActorSlots': '127', 'ResourceNames': '1024', 'ItemEnhancements': '512',
                                                 'FightStyles': '32', 'EffectCurves': '3600', 'MoveTriggers': '64', 'EntityCapacity': '1'}}
         menu = ET.Element('menu', type='MAIN_MENU')
@@ -666,6 +666,35 @@ def test_xml1_builds_ask_for_the_first_games_break_rule():
     assert FI.game_keys(xml1_opening=True)['DoubleHeal'] == '0'
     assert 'DoubleHeal' not in FI.game_keys(xml1_opening=False)
     assert 'DoubleHeal' in FI.PORT_OWNED['Game']
+
+
+def test_xml1_builds_ask_for_the_first_games_death_threshold():
+    """XML1 kills below 1 health, XMen2.exe at 0: every XML1 build asks the fix for XML1's line; an XML2-opening ini
+    has no key, and the port owns it, so a stock merge removes it again."""
+    assert FI.game_keys(xml1_opening=True)['DeathRule'] == 'xml1'
+    assert 'DeathRule' not in FI.game_keys(xml1_opening=False)
+    assert 'DeathRule' in FI.PORT_OWNED['Game']
+    assert FI.dropped_keys({'Game': {}})['Game'].count('DeathRule') == 1
+    with tempfile.TemporaryDirectory() as td:
+        path = Path(td) / 'example.ini'
+        path.write_text('[Game]\nDeathRule=xml2\nKeepMe=example\n')
+        port = {'Game': FI.game_keys()}
+        FI.merge_ini(path, port, FI.dropped_keys(port))
+        assert FI.read_ini(path)['Game']['DeathRule'] == 'xml1'
+        stock = {'Game': FI.game_keys(xml1_opening=False)}
+        FI.merge_ini(path, stock, FI.dropped_keys(stock))
+        parsed = FI.read_ini(path)['Game']
+        assert 'DeathRule' not in parsed and parsed['KeepMe'] == 'example'
+
+
+def test_fractional_health_is_reported():
+    """SPEC 63.6: a definition with 0 < health < 1 would die on its first hit under DeathRule=xml1."""
+    import xml.etree.ElementTree as ET
+    from xml1build import x1schema as XS
+    root = ET.fromstring('<entities><e classname="physent" name="crate_a" health="0.5"/>'
+                         '<e classname="physent" name="crate_b" health="1"/><e classname="physent" name="crate_c" health="0"/>'
+                         '<e classname="physent" name="crate_d" health="x"/><e name="crate_e" health="0.25"/></entities>')
+    assert XS.fractional_health_problems(root) == [('crate_a', '0.5')]
 
 
 def test_xml1_builds_ask_for_no_xtract_world_map():

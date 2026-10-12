@@ -184,6 +184,13 @@ LEVEL_SKILL_POINTS = 'xml1'
 # level already is XML1's 1. 'xml1' makes the fix give 8 on every 5th level; a fix without the feature ignores the key.
 LEVEL_STAT_POINTS = 'xml1'
 
+# xml2-fix [Game] DeathRule (the 0.2.2 death threshold; xml2-fix docs/death-threshold.md, gameplay rule 9): XML1's
+# damage function (default.xbe 0x92220) kills an entity whose health falls BELOW 1, XMen2.exe's (0x497e70) only at 0,
+# so with XMen2.exe's float damage an enemy could sit alive on a fraction of a point, its death script and drops
+# waiting for another hit. 'xml1' makes the fix draw XML1's line in the damage functions. Off in xml2-fix unless set;
+# a fix without the feature ignores the key (entities die at 0, as before). Written for every XML1 build.
+DEATH_RULE = 'xml1'
+
 # xml2-fix [Game] ForcedTeams (SPEC 19): '1' = the scripts of a --forced-teams seat build seat XML1's parties
 # (xml2-fix forced_teams module), '0' = the functions exist but report off (team menu), 'off' = no key (nothing
 # patched). Every xml2-fix call sits behind xml2fixFeature("forcedteams") (validate V14b), so with ForcedTeams=0, a
@@ -209,9 +216,9 @@ BALANCE_NATIVE_STAT_HEROES = 'ProfXAstral,ProfXGladiator'
 PORT_OWNED = {'Game': ('NewGameTeam', 'ResetUnlocks', 'SaveFolder', 'ForcedTeams', 'PostgameScript', 'WindowTitle',
                         'EndHeroUnlock', 'MainMenuItems', 'ClassicMainBackdrop', 'ClassicMainPanelBounds', 'NewGamePlus', 'ReviewStats', 'Xtract', 'XtractionShop', 'XPCurve',
                        'GeometrySharingBlendIndices', 'CharacterLadderPaths', 'ObjectiveDescriptions',
-                       'BreakRule', 'PlacementCrush', 'DoubleHeal', 'ConfirmationRelease', 'ExplosiveFirstHit',
-                       'RankCosts', 'LevelSkillPoints', 'LevelStatPoints', 'Xml1Multipart', 'Xml1MasterMold',
-                       'Xml1MoldStage'),
+                       'BreakRule', 'PlacementCrush', 'DoubleHeal', 'DeathRule', 'ConfirmationRelease',
+                       'ExplosiveFirstHit', 'RankCosts', 'LevelSkillPoints', 'LevelStatPoints', 'Xml1Multipart',
+                       'Xml1MasterMold', 'Xml1MoldStage'),
               'Limits': ('ActorSlots', 'ResourceNames', 'ItemEnhancements', 'FightStyles', 'EffectCurves', 'MoveTriggers', 'EntityCapacity'),
               'Online': ('GameVersion', 'ContentFingerprint'),
               'Save': ('Format',)}
@@ -385,6 +392,7 @@ def game_keys(*, xml1_opening=True, save_folder=None, forced_teams='1', add_hero
         # xml2-fix multipart.cpp: XML1's breakable parts (npcstat <Multipart> health / effects / linkToPower, kept
         # verbatim by characters.py; V-TBD checks them) - Juggernaut's helmet, the Sentinels' arms
         game['Xml1Multipart'] = '1'
+        game['DeathRule'] = DEATH_RULE
     if forced_teams in ('0', '1'):
         game['ForcedTeams'] = forced_teams
     if add_hero:
