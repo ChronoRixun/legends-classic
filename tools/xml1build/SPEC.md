@@ -6728,3 +6728,7 @@ and 11 skill points; level 10 -> 11 then +4 (48). The automatic bonus was not me
   `count` as one rank (0x4bdea0).
 - ProfXAstral / ProfXGladiator (native stats, 88.2) are `xpexempt` level-40 forms: the level processing gives them
   nothing, so neither level key touches them.
+- In game (agent check; staged XP to level 15, the save menu opened by script): Wolverine with wolv_xtreme rank 1
+  unbought and 2 points: [Space] Auto buys wolv_xtreme rank 1 (2 points; the pick's first choice). The same save
+  loaded in a new process, one point spent by hand: with 1 point, [Space] Auto passes over wolv_xtreme and buys
+  wolv_sharpness rank 1 (1 point), leaving 0.
