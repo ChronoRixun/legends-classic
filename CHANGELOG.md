@@ -3,6 +3,14 @@
 The builder's releases, newest first. The version is `xml1-builder --version`; the content version is what a
 build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebuild.
 
+## v0.2.1 - content version 18 (needs XML2 Fix 1.4.0)
+
+- **Fixed: builds with the released builder failed at the last step** ("typed entity ids: the shipped scripts could
+  not be classified; no registry written"). The new save step looked for its script table beside the program
+  instead of in the builder's bundled data, so every build from the 0.2.0 download stopped there. Builds from source
+  were not affected. Nothing else changes: the game a 0.2.1 build makes is the one 0.2.0 was meant to make, so
+  just run the build again (Resume or Rebuild); your saves are untouched.
+
 ## v0.2.0 - content version 18 (needs XML2 Fix 1.4.0)
 
 This build needs **XML2 Fix 1.4.0** (the launcher installs it). Rebuild, then start the game once: your saves are
