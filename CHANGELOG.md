@@ -16,6 +16,8 @@ every new rule below without a word. Rebuild; your saves carry over.
 - **Resistant enemies stand their ground again**: the first game's resistance talents also stop hit reactions, so
   HAARP officers and the other resistant enemies (41 of 74 resistant entries) are no longer launched or knocked back
   by a punch-punch-slam; plain soldiers still are, and a boss whose armour comes off can be launched again.
+- **A hero who takes over from a fallen one stands still** until you move them, as in the first game, instead of
+  finishing the walk its AI had started (in the ice tunnel's solo crossing, off the edge).
 - **Leaders** (issue #15): heroes don't flinch from a leader's projectiles, and leaders drop as in the first game
   (four drops, one of them health, energy or an Xtreme pip).
 - **Solo mode** (issue #5): the first game's solo boxes and bridges keep the rest of the party behind and regroup it
@@ -51,7 +53,7 @@ every new rule below without a word. Rebuild; your saves carry over.
   guns sweep and fire their bullets, and the Hive tanks' flame turrets burn whoever comes close. All of them can
   still be destroyed.
 
-**Online co-op:** 0.2.2 and XML2 Fix 1.5.0 add rules 5-14 to the shared gameplay agreement. A 0.2.1 / XML2 Fix 1.4.0
+**Online co-op:** 0.2.2 and XML2 Fix 1.5.0 add rules 5-15 to the shared gameplay agreement. A 0.2.1 / XML2 Fix 1.4.0
 player and a 0.2.2 player refuse each other at join, with the reason on both PCs: update both.
 
 <details><summary>Technical details</summary>
@@ -60,12 +62,12 @@ player and a 0.2.2 player refuse each other at join, with the reason on both PCs
   `shared_talents.lcbind`'s data hash differs, from the resistance talents' new removal tags).
 - New `[Game]` keys written for every XML1 build: `PlacementCrush`, `DoubleHeal`, `RankCosts`, `LevelSkillPoints`,
   `LevelStatPoints`, `Xml1Multipart`, `X1Leader` (with `Data\x1leader.txt`), `SoloMode`, `DeathRule`,
-  `DangerRoomGate`, `RevivalCost`, `Xml1Turrets` (with `[Xml1Turrets]`), `PackAmount`; `[Limits] ScriptFunctions`.
+  `DangerRoomGate`, `RevivalCost`, `Xml1Turrets` (with `[Xml1Turrets]`), `PackAmount`, `DeathSwitchClear`; `[Limits] ScriptFunctions`.
 - New build checks: V52 breakable parts, V53 removable resistances, V54 leader list, V55 fractional health, V56 scan
   turret contract, V57 script function names, V58 Codex highlight, V59 solo mode calls, V60
   resistance talents; V26 compares fall volumes with
   the source; V32 checks the Load bit of every Xtraction point.
-- SPEC 41.1, 52, 63.4-63.6, 79.1, 88-92.
+- SPEC 41.1, 52, 63.4-63.6, 79.1, 88-93.
 
 </details>
 

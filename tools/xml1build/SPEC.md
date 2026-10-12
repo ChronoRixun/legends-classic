@@ -6953,7 +6953,7 @@ advances from 18 to 19. The decoded catalogue differs from 0.2.1's only in its c
 revision 6 is retained; of the `.lcbind` files only `shared_talents.lcbind` differs, and only in its data hash (its
 bound lists are identical). The append-only history assigns (19,6) token LC27 with the fresh build's bind manifest;
 LC26 and every older row are unchanged. A 0.2.1 peer is refused at admission whatever its token: XML2 Fix 1.5.0
-registers gameplay rules 5-14. Builder/DLL versions 0.2.2 / 1.5.0; REQUIRED_XML2FIX 1.5 (fix_ini.check_release_dll).
+registers gameplay rules 5-15. Builder/DLL versions 0.2.2 / 1.5.0; REQUIRED_XML2FIX 1.5 (fix_ini.check_release_dll).
 
 ## 92. Resistance talents strip reactions again (launchers; validator V60)
 
@@ -7010,3 +7010,17 @@ it by tag (0x54f7b0 -> 0x54dad0, which also marks the cached affecters dirty, 0x
 live from the current powerup list on every hit (0x550410), so the next hit already takes full damage and, as in
 XML1 (0x2b100 drops every def_damage powerup), can launch, knock back and trip again. V53 counts
 `def_damage_scope` as a resistance affecter.
+
+## 93. The death hand-over stops the successor's AI walk (XML2 Fix `[Game] DeathSwitchClear`, gameplay rule 15)
+
+When the controlled hero dies, XMen2.exe hands the controller to a living AI party member (onDeath 0x429de0, the call
+0x420860 at 0x42a042) without clearing that member's AI move goal, which the manual switch does (0x424030 -> 0x42bd60).
+The player branch of the per-frame update (0x434540) runs a leftover goal through the AI's move driver whenever the
+pad gives no movement, so the new hero finished the AI's walk on its own - in icetunnel1's solo crossing, off the
+edge. X-Men Legends I's player branch only reads the pad (default.xbe 0x439a0): a new hero stands still until moved.
+
+- `fix_ini.game_keys` writes `DeathSwitchClear=1` for every XML1 build; the key is port-owned and one of the 1.5 keys
+  `check_release_dll` requires. A fix without the feature ignores it.
+- What the fix does (xml2-fix `docs/death-switch.md`): the hand-over call at 0x42a042 goes through the fix, which
+  clears the successor's move goal and follow handle as the manual switch does; nothing else of the switch changes.
+- Online it is rule 15 of the shared gameplay agreement. No data change.
