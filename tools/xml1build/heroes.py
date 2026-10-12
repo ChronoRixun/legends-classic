@@ -3259,7 +3259,7 @@ def _validate(ctx, report=None):
     unlocks = S.mission_start_unlocks(ctx)['missions']
     for m, hs in sorted(unlocks.items()):
         for h in hs:
-            if h.lower() not in hero_l:
+            if h.lower() not in hero_l and h.lower() not in S.CAMPAIGN_NPCS:
                 ck.error(f'unlock point {m}: {h} is not a playable herostat hero of this build')
     markers = tuple(f'XML1 beginMission({m})' for m in unlocks)
     copies = collections.Counter()

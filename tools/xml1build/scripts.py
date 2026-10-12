@@ -129,6 +129,14 @@ JOIN_HERO_MISSIONS = {'alison': 1, 'dr_mag2': 2}
 # Jubilee / Colossus / Psylocke unlock points of 2026-09-28, which stood in for this table.
 
 
+# XML1's table also puts non-playable characters in the campaign (issue #63). The Healer's campaign bit is what the
+# first game's Xtraction points test for their Healer choice (default.xbe 0x9f3bd / 0x9f7c8; the 'sewers_hub' row of
+# the table at 0x44e338), and xml2-fix reads the same registry bit (XMen2.exe vt+0x84) - XMen2.exe's own first-use
+# rule never adds her (her npcstat team is none). Forge's row ('mansion1') stays dropped: the port's Forge choice
+# keeps its #95 contact signal.
+CAMPAIGN_NPCS = ('healer',)
+
+
 def mission_start_unlocks(ctx) -> dict:
     """Pure (cached): {'missions': {mission: (hero, ...)}, 'cumulative': {mission: (hero, ...)}, 'dropped':
     {mission: (non-playable hero, ...)}, 'errors': [str]}, limited to the playable heroes of this build's herostat.
@@ -159,7 +167,7 @@ def mission_start_unlocks(ctx) -> dict:
             errors.append(f'missions.xml: mission {m} has no charunlock milestone')
         if rows is None or errors:
             return {'missions': {}, 'cumulative': {}, 'dropped': {}, 'errors': errors, 'rows': len(rows or ())}
-        playable = set(_port_heroes(ctx))
+        playable = set(_port_heroes(ctx)) | set(CAMPAIGN_NPCS)
         cum, drop = U.mission_unlocks(milestones, rows, playable)
         grp, _ = U.mission_unlocks(milestones, rows, playable, fn=U.group)
         return {'missions': grp, 'cumulative': cum, 'dropped': drop, 'errors': errors, 'rows': len(rows)}
