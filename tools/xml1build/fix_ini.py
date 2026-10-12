@@ -154,6 +154,18 @@ OBJECTIVE_DESCRIPTIONS = '1'
 # break as they do without it. Written for every XML1 build.
 BREAK_RULE = 'xml1'
 
+# xml2-fix [Game] PlacementCrush (SPEC 63.4, issue #79): XMen2.exe settles each object on the floor - at a zone's load
+# and 0.5 s after any spawn in play (death drops, script props, debris) - and an object touching another there may "crush" it (a 1,000,000-damage hit; BreakRule=xml1 refuses most, but the hit's sound
+# still plays): XML1's furniture authored overlapping (the dormitories' desk chair under a roll-top desk) gave two hit
+# sounds from an empty room on entry. 'xml1' makes the fix refuse that touch while a settle runs; the first game has no settle at
+# all. Other touches in play keep the game's own rule. A fix without the feature ignores the key.
+PLACEMENT_CRUSH = 'xml1'
+
+# xml2-fix [Game] DoubleHeal (SPEC 63.5, issue #82): XMen2.exe's restoreHealth / restoreEnergy (the packs' onactivate
+# scripts) sometimes heal double and then play common/game/pickup_power_double, XML2's own darker recording; XML1's
+# packs never double and its banks have no such sound. '0' makes the fix always take the single branch.
+DOUBLE_HEAL = '0'
+
 # xml2-fix [Game] ForcedTeams (SPEC 19): '1' = the scripts of a --forced-teams seat build seat XML1's parties
 # (xml2-fix forced_teams module), '0' = the functions exist but report off (team menu), 'off' = no key (nothing
 # patched). Every xml2-fix call sits behind xml2fixFeature("forcedteams") (validate V14b), so with ForcedTeams=0, a
@@ -179,7 +191,7 @@ BALANCE_NATIVE_STAT_HEROES = 'ProfXAstral,ProfXGladiator'
 PORT_OWNED = {'Game': ('NewGameTeam', 'ResetUnlocks', 'SaveFolder', 'ForcedTeams', 'PostgameScript', 'WindowTitle',
                         'EndHeroUnlock', 'MainMenuItems', 'ClassicMainBackdrop', 'ClassicMainPanelBounds', 'NewGamePlus', 'ReviewStats', 'Xtract', 'XtractionShop', 'XPCurve',
                        'GeometrySharingBlendIndices', 'CharacterLadderPaths', 'ObjectiveDescriptions',
-                       'BreakRule', 'ConfirmationRelease', 'ExplosiveFirstHit', 'Xml1MasterMold', 'Xml1MoldStage'),
+                       'BreakRule', 'PlacementCrush', 'DoubleHeal', 'ConfirmationRelease', 'ExplosiveFirstHit', 'Xml1MasterMold', 'Xml1MoldStage'),
               'Limits': ('ActorSlots', 'ResourceNames', 'ItemEnhancements', 'FightStyles', 'EffectCurves', 'MoveTriggers', 'EntityCapacity'),
               'Online': ('GameVersion', 'ContentFingerprint'),
               'Save': ('Format',)}
@@ -344,6 +356,8 @@ def game_keys(*, xml1_opening=True, save_folder=None, forced_teams='1', add_hero
         game['CharacterLadderPaths'] = CHARACTER_LADDER_PATHS
         game['ObjectiveDescriptions'] = OBJECTIVE_DESCRIPTIONS
         game['BreakRule'] = BREAK_RULE
+        game['PlacementCrush'] = PLACEMENT_CRUSH
+        game['DoubleHeal'] = DOUBLE_HEAL
         game['ExplosiveFirstHit'] = '1'
     if forced_teams in ('0', '1'):
         game['ForcedTeams'] = forced_teams
