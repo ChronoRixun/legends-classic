@@ -103,6 +103,9 @@ Checks (severity per SPEC 4.6: error = will not load or silently misbehaves; war
                 registered talent names and distinct talent files of the permanent, zone, CHRB character and
                 worst four-hero party packages, with the NPC-only talents in their data/talents/npc set files
                 (TalentRegistry fix): over 100 names or 9 files an error, exactly full a warning
+  V-TBD2 removable resistances (issue #3): shared talents whose XML1 form is a def_damage activepowerup carry
+                tag_name="def_damage" on their resistance powerup (XML1 0x2b100 removes them; XMen2.exe by tag), and
+                every character whose style removes tag def_damage carries something that tag reaches
   V25 harm loops (SPEC 51): no delayed start-on ordinary harm loops that XML2 disables
   V-TBD breakable parts (issue #3): every XML1 npcstat Multipart row survives with its bone / health / effectOnDeath
                 / loopEffect / effectBone / linkToPower (xml2-fix [Game] Xml1Multipart reads them), at most four
@@ -424,6 +427,52 @@ class Scan:
 
 
 # ---------------------------------------------------------------------------------------------- validator
+REMOVABLE_TAG = 'def_damage'
+_RESIST_AFFECTER = re.compile(r'(resist_|def_damage$)')
+
+
+def removable_findings(x1_talents, shared_roots, stats, style):
+    """V-TBD2 (issue #3 follow-up). XML1's remove="true" drops every def_damage powerup of the actor, talents included
+    (default.xbe 0x2b100); XMen2.exe drops powerups by tag name (remove_tag). Errors when (a) a shared talent whose
+    XML1 definition is a def_damage activepowerup has no tag_name="def_damage" powerup with a resistance affecter in
+    a built shared_talents half, or (b) a character whose style removes tag def_damage carries nothing that tag
+    reaches (no tagged talent, no tag_name="def_damage" powerup trigger in its style).
+    x1_talents {lower name: XML1 element}; shared_roots built roots; stats built <stats> elements; style(name) ->
+    root or None. Returns (errors, counts)."""
+    errors, counts = [], {'x1_removable_talents': 0, 'removing_characters': 0}
+    wanted = sorted(n for n, t in x1_talents.items()
+                    if any(e.tag.lower() == 'activepowerup' and (e.get('powerup') or '').lower() == REMOVABLE_TAG
+                           for e in t.iter()))
+    tagged = set()
+    for root in shared_roots:
+        defs = {(t.get('name') or '').lower(): t for t in root.iter('talent')}
+        for name in wanted:
+            t = defs.get(name)
+            if t is None:
+                continue
+            ok = any(pu.get('tag_name') == REMOVABLE_TAG and
+                     any(_RESIST_AFFECTER.match(a.get('attribute') or '') for a in pu.iter('affecter'))
+                     for pu in t.iter('powerup'))
+            if ok:
+                tagged.add(name)
+            else:
+                errors.append(f'shared talent {name}: no tag_name="{REMOVABLE_TAG}" resistance powerup - XML1 '
+                              f'removals of {REMOVABLE_TAG} would leave it on')
+    counts['x1_removable_talents'] = len(tagged)
+    for st in stats:
+        ps = (st.get('powerstyle') or '').lower()
+        root = style(ps) if ps else None
+        if root is None or not any(t.get('remove_tag') == REMOVABLE_TAG for t in root.iter('trigger')):
+            continue
+        counts['removing_characters'] += 1
+        talents = {(t.get('name') or '').lower() for t in st.iter() if t.tag.lower() == 'talent'}
+        own = any(t.get('tag_name') == REMOVABLE_TAG for t in root.iter('trigger'))
+        if not (talents & tagged) and not own:
+            errors.append(f'{st.get("name")}: style {ps} removes tag {REMOVABLE_TAG} but nothing on the character '
+                          f'carries it (no tagged resistance talent, no tag_name="{REMOVABLE_TAG}" powerup)')
+    return errors, counts
+
+
 class Validator:
     def __init__(self, ctx):
         self.ctx = ctx
@@ -819,6 +868,29 @@ class Validator:
             ck.warn(f'{templates} characters with breakable parts leave {self.MULTIPART_RECORDS - templates} records '
                     f'for spawned actors')
 
+    def vtbd_removable(self, ck):
+        """V-TBD2: XML1 removals take resistance talents (characters.tag_x1_removable_talents)."""
+        roots = [t for t in (self.tree('data/shared_talents.engb'), self.tree('data/shared_talents.xmlb')) if t is not None]
+        try:
+            x1 = self.ctx.read_x1_xml('data/shared_talents.eng')
+        except KeyError:
+            x1 = None
+        if x1 is None or not roots:
+            ck.warn('shared_talents (built or XML1) unreadable: removable resistances not checked')
+            return
+        x1_talents = {(t.get('name') or '').lower(): t for t in x1.iter() if t.tag.lower() == 'talent'}
+        styles = {}
+
+        def style(name):
+            if name not in styles:
+                styles[name] = self.tree(f'data/powerstyles/{name}.engb') or self.tree(f'data/powerstyles/{name}.xmlb')
+            return styles[name]
+        errors, counts = removable_findings(x1_talents, roots, [el for _f, el in self.stats()['by_name'].values()], style)
+        for e in errors:
+            ck.error(e)
+        for k, v in counts.items():
+            ck.set(k, v)
+
     # ------------------------------------------------------------------ running / reporting
     def run_all(self):
         for cid, title, fn in (('V1', 'proxy', self.v1_proxy), ('V2', 'registry', self.v2_registry),
@@ -860,7 +932,8 @@ class Validator:
                                ('V45', 'gun damage roll', lambda ck: W.validate(self, ck)),
                                ('V47', 'scripted boss approach', lambda ck: SA.validate(self, ck)),
                                ('V46', 'pickup models', self.v46_pickup_models),
-                               ('V-TBD', 'breakable parts', self.vtbd_multipart)):
+                               ('V-TBD', 'breakable parts', self.vtbd_multipart),
+                               ('V-TBD2', 'removable resistances', self.vtbd_removable)):
             ck = Check(cid, title)
             self.checks[cid] = ck
             t0 = time.time()

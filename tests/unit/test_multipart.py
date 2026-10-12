@@ -98,3 +98,31 @@ def test_xml1_removable_talents_are_tagged_and_split():
         assert [a.get('attribute') for a in pus[1]] == ['def_mind_control'] and pus[1].get('life') == '-1'
         assert root.findall('talent')[1].find('level').find('powerup').get('tag_name') is None
     assert tag_x1_removable_talents(roots, x1_talents) == []      # idempotent
+
+
+def _removable_case(tag_talent=True, style_tags=False, talent='mind_shield'):
+    from xml1build.validate import removable_findings
+    x1 = ET.fromstring('<talents><talent name="mind_shield"><level>'
+                       '<activepowerup powerup="def_damage" scope_damage="dmg_mental" level="0.2"/></level></talent>'
+                       '</talents>')
+    shared = ET.fromstring('<talents><talent name="mind_shield"><level><powerup life="-1"%s>'
+                           '<affecter attribute="resist_mental" level="0.8"/></powerup></level></talent></talents>'
+                           % (' tag_name="def_damage"' if tag_talent else ''))
+    st = ET.fromstring(f'<stats name="Brute" powerstyle="ps_brute"><talent name="{talent}" level="1"/></stats>')
+    style = ET.fromstring('<powerstyle><fightmove name="armor_off"><trigger name="powerup" remove_tag="def_damage"/>'
+                          '</fightmove>%s</powerstyle>'
+                          % ('<fightmove name="armor"><trigger name="powerup" tag_name="def_damage"/></fightmove>'
+                             if style_tags else ''))
+    return removable_findings({'mind_shield': x1.find('talent')}, [shared], [st],
+                              lambda n: style if n == 'ps_brute' else None)
+
+
+def test_removable_resistances_validator():
+    errors, counts = _removable_case()
+    assert not errors and counts == {'x1_removable_talents': 1, 'removing_characters': 1}
+    errors, _ = _removable_case(tag_talent=False)
+    assert any('shared talent mind_shield' in e for e in errors) and any('Brute' in e for e in errors)
+    errors, _ = _removable_case(talent='other')       # remover with nothing the tag reaches
+    assert any('Brute' in e for e in errors)
+    errors, _ = _removable_case(talent='other', style_tags=True)
+    assert not errors
