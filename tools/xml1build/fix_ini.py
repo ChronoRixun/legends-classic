@@ -166,6 +166,24 @@ PLACEMENT_CRUSH = 'xml1'
 # packs never double and its banks have no such sound. '0' makes the fix always take the single branch.
 DOUBLE_HEAL = '0'
 
+# xml2-fix [Game] RankCosts (SPEC 88, issue #35): X-Men Legends 1 charges a talent rank its <level cost> (2 for the
+# 119 ranks that open a new form of a power; heroes.py keeps the attribute, V-H16 checks it) in the skills screen, its
+# buyable/greyed test, the automatic spending, the respec and when levels are lost; XMen2.exe charges 1 for every rank.
+# Off in xml2-fix unless set; a fix without the feature ignores the key (every rank costs 1). Co-op peers must agree
+# (gameplay rule 5). Written for every XML1 build.
+RANK_COSTS = '1'
+
+# xml2-fix [Game] LevelSkillPoints (SPEC 88.1): X-Men Legends 1 gives 2 skill points for a level divisible by 5 and 1
+# for any other (default.xbe 0xb1ca0; a level lost takes the same back); XMen2.exe gives 1 for every level. 'xml1' makes
+# the fix give the first game's; a fix without the feature ignores the key. Gameplay rule 5 with RankCosts. Written for
+# every XML1 build.
+LEVEL_SKILL_POINTS = 'xml1'
+
+# xml2-fix [Game] LevelStatPoints (SPEC 88.2): the same rule for the stat points on the port's scale - XML1's 1 a level
+# (2 on a level divisible by 5) is 4 (8) here, as the heroes' stats are XML1's x STAT_SCALE (4) and XMen2.exe's 4 a
+# level already is XML1's 1. 'xml1' makes the fix give 8 on every 5th level; a fix without the feature ignores the key.
+LEVEL_STAT_POINTS = 'xml1'
+
 # xml2-fix [Game] ForcedTeams (SPEC 19): '1' = the scripts of a --forced-teams seat build seat XML1's parties
 # (xml2-fix forced_teams module), '0' = the functions exist but report off (team menu), 'off' = no key (nothing
 # patched). Every xml2-fix call sits behind xml2fixFeature("forcedteams") (validate V14b), so with ForcedTeams=0, a
@@ -191,7 +209,8 @@ BALANCE_NATIVE_STAT_HEROES = 'ProfXAstral,ProfXGladiator'
 PORT_OWNED = {'Game': ('NewGameTeam', 'ResetUnlocks', 'SaveFolder', 'ForcedTeams', 'PostgameScript', 'WindowTitle',
                         'EndHeroUnlock', 'MainMenuItems', 'ClassicMainBackdrop', 'ClassicMainPanelBounds', 'NewGamePlus', 'ReviewStats', 'Xtract', 'XtractionShop', 'XPCurve',
                        'GeometrySharingBlendIndices', 'CharacterLadderPaths', 'ObjectiveDescriptions',
-                       'BreakRule', 'PlacementCrush', 'DoubleHeal', 'ConfirmationRelease', 'ExplosiveFirstHit', 'Xml1MasterMold', 'Xml1MoldStage'),
+                       'BreakRule', 'PlacementCrush', 'DoubleHeal', 'ConfirmationRelease', 'ExplosiveFirstHit',
+                       'RankCosts', 'LevelSkillPoints', 'LevelStatPoints', 'Xml1MasterMold', 'Xml1MoldStage'),
               'Limits': ('ActorSlots', 'ResourceNames', 'ItemEnhancements', 'FightStyles', 'EffectCurves', 'MoveTriggers', 'EntityCapacity'),
               'Online': ('GameVersion', 'ContentFingerprint'),
               'Save': ('Format',)}
@@ -359,6 +378,9 @@ def game_keys(*, xml1_opening=True, save_folder=None, forced_teams='1', add_hero
         game['PlacementCrush'] = PLACEMENT_CRUSH
         game['DoubleHeal'] = DOUBLE_HEAL
         game['ExplosiveFirstHit'] = '1'
+        game['RankCosts'] = RANK_COSTS
+        game['LevelSkillPoints'] = LEVEL_SKILL_POINTS
+        game['LevelStatPoints'] = LEVEL_STAT_POINTS
     if forced_teams in ('0', '1'):
         game['ForcedTeams'] = forced_teams
     if add_hero:

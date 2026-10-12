@@ -41,6 +41,7 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 
 from . import common as C
+from . import rank_costs as RC
 from . import combat_events as CE
 from . import hero_icons as HI        # issues #53/#73: the talent-icon atlases as 4x4 alpha-blended sheets
 from . import npc_values as NV     # SPEC 24: value codes, the NPC energy talent
@@ -2722,7 +2723,7 @@ class Check:
 
 
 def _validate(ctx, report=None):
-    """V-H1..V-H13 (DESIGN 5.2; V-H13 the unlock points) over <out>. Returns (checks list, budgets dict)."""
+    """V-H1..V-H16 (DESIGN 5.2; V-H13 the unlock points, V-H16 the rank costs) over <out>. Returns (checks list, budgets dict)."""
     o = _Out(ctx)
     plan = hero_plan(ctx)
     checks = []
@@ -3321,6 +3322,26 @@ def _validate(ctx, report=None):
                              'cells and a valid texture-to-image object reference (issues #53/#73)')
             except OSError as e:
                 ck.error(f'{rel}: unreadable: {e}')
+
+    # ---- V-H16 (issue #35): XML1's rank costs kept where xml2-fix [Game] RankCosts reads them (rank_costs.py)
+    ck = Check('V-H16')
+    checks.append(ck)
+    costed = 0
+    for h in hero_l:
+        st = plan['x1'].get(h)
+        if st is None:
+            continue
+        source = RC.source_costs(st)
+        for ext in ('engb', 'XMLB'):
+            t = o.tree(f'Data/talents/{h}.{ext}')
+            if t is None:
+                continue
+            built = RC.built_levels(t)
+            for m in RC.problems(source, built, f'talents/{h}.{ext}'):
+                ck.error(f'V-H16: {m}')
+            if ext == 'engb':
+                costed += RC.costed_ranks(built)
+    ck.counts['rank_costs'] = costed
     return checks, budgets
 
 

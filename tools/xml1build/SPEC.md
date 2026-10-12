@@ -6675,3 +6675,126 @@ decoded catalogue differs from candidate i's only in its content version; every 
 token LC26 with the fresh build's bind manifest; LC25 and every older row are unchanged. A raised (E10A2) save
 carries LC required-feature bit 0; the GCAP protocol revision 2 and entity layout rule revision 3 refuse a
 candidate-i peer at admission whatever its token. Builder/DLL versions remain 0.2.0 / 1.4.0.
+
+## 88. Skill rank costs (issue #35; XML2 Fix `[Game] RankCosts`, V-H16)
+
+**The first game.** A talent rank can cost more than one skill point: `<level cost="2">` in herostat.eng. That is
+119 ranks over the 14 heroes with costs (Beast, Colossus, Cyclops, Iceman, Jubilee, Magma, Psylocke, Rogue, Storm,
+Wolverine 9 each; Frost 8; Gambit, Nightcrawler, Phoenix 7): every Xtreme power's rank 1, the boost's ranks 1/4/7
+(Gambit 4/7), the first power's ranks 6/11 and the second power's ranks 1/6/11 (Nightcrawler and Phoenix: 6 only /
+1 and 6). They are the ranks that carry a `descname` (a new form of the power), not "the top Legend ranks". shared_talents
+has one more (psionic_fury rank 4), which no playable hero has. default.xbe's talent parser (0xb4250) keeps up to three
+(rank index, cost) pairs per talent (byte = index | cost << 5); CTalent vt+0x34 (0xb3ad0) answers the cost of a 0-based
+rank, 1 for any other. The skills menu charges and refunds it (0x16c800), greys a talent the hero can't pay for
+(0x169200), the automatic spending tries a rank only when the hero has its cost (0xae8a0/0xaf160) and losing levels
+takes ranks back until their costs cover the lost points (0xb1ca0). The first game has no respec.
+
+**The port.** heroes.py already copies `cost` onto the converted level (4.2), and every level covers one rank
+(`count="1"`), so the n-th rank is the n-th level. XMen2.exe never reads it (its only `cost` reader is the item
+loader). XML2 Fix's `[Game] RankCosts=1` (xml2-fix docs/rank-costs.md) charges each rank its level's `cost` in the
+skills screen (+ and -), its buyable test (which also decides whether the hint bar offers `[J] Add`), the screen's
+requirement sweep, the automatic spending ([Space] Auto and the level-up offer), Training's respec and losing levels;
+co-op peers agree through gameplay rule 5. `fix_ini.RANK_COSTS` writes the key for every XML1 build. A fix without the
+feature ignores the key: every rank costs 1, as before.
+
+**V-H16 (heroes validation, `rank_costs.py`).** Every cost of the XML1 source is on the same rank of the built talent,
+every level up to it has `count="1"`, the value is 1..7 (what the fix honours) and no built level carries a cost XML1
+does not. The count `rank_costs` is 119 for a full build.
+
+**Saves.** Unchanged: the unspent points and the ranks are stored, nothing recomputes them. A hero saved with ranks
+bought at 1 point keeps them and its points (checked in game: a 0.2.1-content save with the Xtreme, a rank 6 and two
+other 2-point ranks bought for 1 loads with the same ranks and 0 points); the difference stays spent. The first game
+had no respec, so nothing is stripped; Training's respec (XML2's shop service) would return the full costs.
+
+**In game (agent check, 2026-10-12; staged: XP by `awardXPToPlayable`, the extraction menu opened by script for the
+save).** Wolverine at level 17 with 16 points, real menu input on the skills tab. XML2 Fix 1.4.0 (control): wolv_xtreme
+rank 1, wolv_frenzy rank 1 and wolv_slash rank 6 cost 1 each. With RankCosts: 2 each (16 -> 14, - returns 2, the other
+ranks 1); with exactly 1 point left the hint bar offers no `[J] Add` on wolv_xtreme or wolv_berserk's rank 4 (both
+2 points) and J changes nothing, while wolv_frenzy's next rank (1 point) is offered; the last point buys a 1-point
+rank. [Space] Auto at level 20 with 3 points bought wolv_xtreme rank 1 (2) and x1_wolverine_healing_factor rank 1 (1). A save and a
+cold load in a new process keep the ranks and 0 points.
+
+### 88.1 Skill points per level (XML2 Fix `[Game] LevelSkillPoints=xml1`)
+
+**The first game.** default.xbe's level processing (0xb1ca0; it runs for every level between the hero's processed
+level, byte +0x1d, and its level +0x1c) gives 1 skill point and 1 stat point for each level gained, **2 of each for a
+level divisible by 5** (5, 10 .. 45: `level % 5 == 0`), besides stat_rules.xml's automatic stat bonus (0xaed70). A
+level lost (processed level above the level) takes the same 1 / 2 back, from the unspent points first and the rest as
+stats / ranks (the rank part costed, SPEC 88). XMen2.exe's (0x4bbae0) gives 1 skill point and 4 stat points for every
+level and takes 1 / 4 back. The grant is code (the INC at 0x4bbb6f, the min(points, 1) at 0x4bbc3e), not data, so the
+fix does it: `[Game] LevelSkillPoints=xml1` gives 2 on a level divisible by 5 and takes the same back
+(`fix_ini.LEVEL_SKILL_POINTS`, written for every XML1 build; gameplay rule 5 revision 2). Stat points stay XML2's.
+
+`[Game] XPCurve=xml1` (SPEC 23) only changes the XP a level needs and the cap (45); every level still goes through the
+processing, so by level 45 a hero has 9 more skill points than before. The SKILL pickups (SPEC 32) add their point
+directly (`addSkillPoints`) and are unaffected; together they bring a hero to XML1's total.
+
+**Saves.** A save stores the unspent points and each hero's processed level (`ack_level`); nothing recomputes the
+points. Heroes past level 5 in a save made before the key are short one point for every multiple of 5 they passed
+(level 5-9: 1, 10-14: 2, .. 45: 9). They keep their points as they are: the first game grants a level's points only
+when the level is processed, so there is nothing in its rule for a grant on load, and a save does not record which
+rule gave its points (only the header's writer / content version could tell). A one-time catch-up on conversion is
+possible but is not done (agent report, follow-up).
+
+**In game (agent check, 2026-10-12; staged: XP by `awardXPToPlayable` to XML1's level thresholds - 505, 830, 4720,
+6880 - and the extraction menu opened by script for the save).** New Game, Wolverine: XML2 Fix 1.4.0 (control) gives
+3 / 4 / 8 / 9 skill points at levels 4 / 5 / 9 / 10 (+1 at 4 -> 5 and 9 -> 10); with `LevelSkillPoints=xml1` 3 / 5 / 9 /
+11 (+2 at both). Saved, closed, loaded in a new process: level 10, 11 points; level 10 -> 11 then gives +1 (12). Stat
+points identical on both sides (12 / 16 / 32 / 36).
+
+### 88.2 Stat points per level (XML2 Fix `[Game] LevelStatPoints=xml1`) and the automatic stat growth
+
+**The first game** (default.xbe 0xb1ca0 / 0xaed70; stat_rules.xml). Per level gained: 1 unspent stat point, 2 on a level
+divisible by 5 (the same rule as the skill points, 88.1); and an automatic bonus from stat_rules.xml: the hero's
+CHARACTER entry names a template class (bruiser: Beast, Colossus, Rogue, Wolverine; support: the other eleven, ProfXAstral
+included), and each `<level>` (levels 2..40; the first without `offset` is level 2) lists `bonus` stats applied at once
+(0xaea90) - one stat a level, two on levels 5, 10 .. 40, 47 stat points by level 40 (bruiser 20 body / 11 strength / 8
+speed / 8 mind; support 28 mind / 10 strength / 8 speed / 1 body); none above 40. Its `spend` entries are only the
+suggested spend of the unspent point. A level lost takes both back.
+
+**The port's scale.** The heroes' body / mind / strength are XML1's x 4 (heroes.STAT_SCALE; XML2 Fix [Balance]
+HeroStatScale=4 divides the stat coefficients by 4 for exactly these heroes), speed 10 + 2 x XML1's (SPEED_MAP).
+XMen2.exe's 4 unspent stat points a level are therefore XML1's 1, and a fifth level's 2 are 8: `LevelStatPoints=xml1`
+gives 8 on a level divisible by 5 (and takes 8 back when one is lost), 4 on the others (`fix_ini.LEVEL_STAT_POINTS`,
+gameplay rule 5 revision 3). Speed bought with points stays on XML2's 1-per-point scale (an XML1 speed point is 2 here),
+as before this change.
+
+**The automatic bonus is not reproduced, and is not changed here.** XMen2.exe's per-level bonus (0x43cf90 -> 0x43d000)
+comes from Data/autospend.XMLB: each class has periodic rules (start, rate, + body / mind / speed / strength), applied
+on every level they hit; the port maps its heroes onto XML2's four classes from XML1's ratings (heroes.AUTOSPEND,
+D13). By level 40 every XML2 class gives 79 stat points in port units; XML1's stat_rules give 47 XML1 points = 172 port
+units (bruiser: body 80, strength 44, mind 32, speed 16; support: mind 112, strength 40, speed 16, body 4), so the port's
+heroes grow about 46 % of the first game's automatic growth, in different proportions (an XML1 bruiser gains mind, an
+XML2 bruiser none). Options for the maintainer, none implemented:
+1. Data: two new classes `x1_bruiser` / `x1_support` in autospend.XMLB (XML1's templates), the heroes moved to them,
+   their bonuses as periodic rules approximating stat_rules x 4. The record appears to hold few rules (0x43d000 walks
+   6-byte entries from +0x14 up to the count at +0x30) and XML2 applies them past 40, so it can only approximate; it
+   also changes the classes' spend proportions (the auto-spend of unspent points), which would need XML1's `spend`
+   lists translated too.
+2. Code: an XML2 Fix hook on 0x43d000's caller applying XML1's per-level table (written by the builder from
+   stat_rules.xml x 4 / speed x 2, by template) - exact, levels 2..40 only, level loss symmetric; rule 5 again.
+3. Leave it: the 0.2.0 balance work (design-balance, decision 1) tuned enemy health and the stat coefficients with the
+   port's current growth; restoring XML1's growth makes heroes stronger at high level and would need that balance
+   checked again.
+
+**In game (agent check, 2026-10-12; staged as in 88.1).** Unspent stat points of Wolverine at levels 1 / 4 / 5 / 9 /
+10: XML2 Fix 1.4.0 (control) 0 / 12 / 16 / 32 / 36 (+4 at 4 -> 5 and 9 -> 10); with `LevelStatPoints=xml1` (and the
+other two keys) 0 / 12 / 20 / 36 / 44 (+8 at both); saved, closed, loaded in a new process: level 10, 44 stat points
+and 11 skill points; level 10 -> 11 then +4 (48). The automatic bonus was not measured (static comparison above).
+
+### 88.3 Review fixes (2026-10-12)
+
+- The automatic spending now follows default.xbe's 0xaf160: a talent whose next rank the hero can't pay for is no
+  candidate of the pick (XML2 Fix site 0x43cd7e), so the next best affordable rank is bought; only when nothing
+  affordable is left does the spending end (as running out of points does). Before, it stopped at the first
+  unaffordable pick.
+- Losing a level first cancels the ranks added in an open skills menu and not yet committed (XMen2.exe 0x43a890, an
+  inlined store at 0x43a926 the first search missed): they now refund their costs, not 1 each.
+- V-H16 also refuses more than 3 costed ranks in a talent (the first game keeps 3, 0xb4250) and reads a level without
+  `count` as one rank (0x4bdea0).
+- ProfXAstral / ProfXGladiator (native stats, 88.2) are `xpexempt` level-40 forms: the level processing gives them
+  nothing, so neither level key touches them.
+- In game (agent check; staged XP to level 15, the save menu opened by script): Wolverine with wolv_xtreme rank 1
+  unbought and 2 points: [Space] Auto buys wolv_xtreme rank 1 (2 points; the pick's first choice). The same save
+  loaded in a new process, one point spent by hand: with 1 point, [Space] Auto passes over wolv_xtreme and buys
+  wolv_sharpness rank 1 (1 point), leaving 0.
