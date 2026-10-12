@@ -6982,7 +6982,7 @@ registers gameplay rules 5-15. Builder/DLL versions 0.2.2 / 1.5.0; REQUIRED_XML2
 
 **Symptom.** A punch-punch-slam (the first game's launching uppercut, `popupattack`: `dmgmod_popup`) throws a
 standing HAARP officer about 80 units up on the port; the first game only lands the hit (13 of 13 tries on the Xbox
-original, 6 of 20 launches on 0.2.1, agent-work door-022). An officer launched next to the HAARP key door can hang
+original, 6 of 20 launches on 0.2.1, in the 0.2.2 door investigation). An officer launched next to the HAARP key door can hang
 on it and drop his keycard behind it.
 
 **Rule (the same code in both engines).** The damage receive path strips a hit's reaction bits - knockback 0x8,
