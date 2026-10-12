@@ -6647,3 +6647,12 @@ co-op peers run the same build, so no gameplay agreement rule is involved.
 **V-TBD** (npc_values.v_resist_talents): every shared talent XML1 defines with scoped `def_damage` rows carries them
 as `def_damage_scope` and no `resist_<type>` of those types. npc_values.verify_exe / verify_xbe also check both 0.3
 thresholds.
+
+**SPEC 30 follow-up: scoped immunity rows.** SPEC 30 wrote XML1's scoped `def_damage` immunity rows (HavokBoss's
+`def_damage dmg_energy 0`, the Morlock bruisers' `def_damage dmg_physical 0.5`) as XMen2.exe `def_damage` with a
+`scope_damage`. XMen2.exe's `def_damage` (39) is a cached per-actor value: the cache rebuild 0x53bf20 runs
+0x53a1a0 (case 0x27) for every affecter that passes its share filter (vt+0x44 = 0x534dc0), without a hit, so the
+scope does not limit it (static reading; not yet seen in game): the bruisers would take half damage from every
+type, and HavokBoss (named only by an unused map) none at all.
+npc_values.immunity_talent now writes a scoped `def_damage` row as `def_damage_scope` (XML2 retail's own spelling,
+ps_colossus), and definition_rows reads it back as the XML1 row, so V19's body comparison is unchanged.

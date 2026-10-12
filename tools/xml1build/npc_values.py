@@ -394,14 +394,17 @@ def immunity_key(rows):
 
 
 def immunity_talent(name, rows):
-    """the shared talent definition in XML2's boss_resistances form."""
+    """the shared talent definition in XML2's boss_resistances form. A def_damage row scoped to a damage type is
+    written as XMen2.exe's scoped affecter def_damage_scope (56, asked with the hit at 0x4379e6): its def_damage
+    (39) is a cached per-actor value (0x53a1a0 case 0x27, filled without a hit), so a scope_damage on it never
+    limits it to that damage type."""
     t = ET.Element('talent', {'name': name})
     pu = ET.SubElement(ET.SubElement(t, 'level'), 'powerup', {'life': '-1'})
     for attr, affect, level, scope in rows:
         a = {}
         if affect:
             a['affect_type'] = affect
-        a['attribute'] = attr
+        a['attribute'] = SCOPED_DEF_DAMAGE if attr == 'def_damage' and scope else attr
         if level != '':
             a['level'] = level
         if scope:
@@ -427,6 +430,8 @@ def definition_rows(talent_el):
             return None
         d = _lower(a)
         attr = (d.get('attribute') or '').lower()
+        if attr == SCOPED_DEF_DAMAGE and d.get('scope_damage'):
+            attr = 'def_damage'                 # immunity_talent's spelling of a scoped def_damage row
         if attr not in IMMUNITY_AFFECTERS or set(d) - {'attribute', 'affect_type', 'level', 'scope_damage'}:
             return None
         rows.append((attr, (d.get('affect_type') or '').lower(), (d.get('level') or '').lower(),
