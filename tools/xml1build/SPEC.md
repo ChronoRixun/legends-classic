@@ -5127,6 +5127,19 @@ the Details page stayed on the first entry after moving the selection with test-
 by the change and is not investigated here. Enemy entries were not reached in game: `unlockCharacter` did not list
 them.
 
+**The highlight (issue #97).** The bar XML2's list draws on the focused row (`onfocus type="list_focus"`,
+`ui/models/m_codex_select`) is placed at the list item's origin, but its geometry leaves room for XML2's icon cell:
+the model's outer `igTransform` moves the bar so it spans x 26..282 from the origin, and the row's name starts at the
+origin when the list has no icons (0x5c20a7 shifts the text by the icon only when one is loaded). So the bar began
+under the middle of every name. `frontend.codex_select_igb` writes `ui/models/x1_codex_select.igb`, the player's own
+`m_codex_select.IGB` with that outer transform scaled and moved so the bar spans 0..282 (its own right end; scale
+282/256) and the outer bounds starting at 0 (an in-place edit, nothing else changes), and both codex halves point
+`list_focus` at it. It refuses (build error) a model that is not one transform holding another with matching bounds,
+or whose bar already starts at the origin. V-TBD (codex highlight) checks with `--frontend xml1` that the model is the
+frontend module's and both halves highlight with it. In game (the bytes the builder writes, tested in a 0.2.1 build
+with xml2-fix 1.4.0 + fix/controls-ui): the bar starts under the first letter of the focused name on every row
+(four rows, three of them unlocked with `unlockCharacter` as staged setup) and keeps XML2's right end.
+
 ## 56. Personal items (issue #47)
 
 Issue #47: examining a bedroom item in the mansion's second-floor zones showed the zone's loading screen, and
