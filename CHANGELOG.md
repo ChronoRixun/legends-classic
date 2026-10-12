@@ -3,6 +3,19 @@
 The builder's releases, newest first. The version is `xml1-builder --version`; the content version is what a
 build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebuild.
 
+## Unreleased
+
+- **Fixed: Professor X sat inside his desk at the first mansion visit** (issue #54). XMen2.exe seats a spawned character
+  one walk cell away from where the first game does in about 91 of 233 cases; three of Xavier's spawn points now land
+  on the original's seats (his desk, the first subbasement, the second visit's war room). A save that already holds a
+  record of one of those rooms (a save keeps up to five zone records) restores the spawn point it saved there, so he
+  keeps the old seat in that room; a new campaign, or a room the save holds no record of, gets the new one (SPEC 41.1).
+- **Fixed: two hit sounds from an empty room on entering the dormitories** (issue #79). Builds ask XML2 Fix for
+  `[Game] PlacementCrush=xml1`: objects being settled on the floor no longer crush each other (SPEC 63.4).
+- **Fixed: the health / energy pack sound sometimes played lower** (issue #82). That was XML2's double heal and its own
+  "double" sound; builds ask XML2 Fix for `[Game] DoubleHeal=0`, so packs heal as in the first game and the stats screen
+  drops the double-heal lines (SPEC 63.5).
+
 ## v0.2.1 - content version 18 (needs XML2 Fix 1.4.0)
 
 - **Fixed: builds with the released builder failed at the last step** ("typed entity ids: the shipped scripts could

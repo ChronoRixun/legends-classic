@@ -4386,6 +4386,12 @@ and subbasement2's `sp_profx01` and `profx_a` (1742.65 -> 1702.65 in Y): XMen2.e
 and (2260.5 1740.1), the original's seats (in subbasement2 the port's seat had the wheelchair against the war room
 console). XMen2.exe's own rule was not worked out, so no general builder correction replaces the table.
 
+Saves: a spawner without `monster_smartent` + `instantspawn` is a numbered placed entity (SPEC 60), so a zone record
+restores its saved position onto it. A save that already holds a record of mansion1a_1, subbasement1a or subbasement2
+(made with an earlier build) therefore puts the spawner, and with it Xavier, back on the old spot in that room; the
+new seat applies to a new campaign and to rooms the save holds no record of. The ordinals do not move (positions only),
+so no other record is misapplied. Release notes, not save surgery.
+
 
 ## 42. Generated long-range buoy networks (2026-10-03, content version 10)
 
@@ -5578,8 +5584,9 @@ would silently fall back to XMen2.exe's rule: a plain punch would break it again
 
 ### 63.4 Settling objects without crushes (xml2-fix `[Game] PlacementCrush=xml1`, issue #79)
 
-When a zone loads, XMen2.exe settles every object on the floor (the settle event, entity vt+0x98 mode 3, floor routine
-0x474080). An object touching another during that settle may crush it (vt+0xac 0x498ef0): a 1,000,000-damage hit that
+XMen2.exe settles every object on the floor when a zone loads, and every object spawned in play 0.5 s after it appears
+(death drops, script-spawned props, debris; the spawn-init virtual 0x474c00 posts the settle event at 0x474c63; entity
+vt+0x98 mode 3, floor routine 0x474080). The first game has no settle at all (default.xbe has no ESettle event). An object touching another during that settle may crush it (vt+0xac 0x498ef0): a 1,000,000-damage hit that
 BreakRule=xml1 refuses for most XML1 objects, but whose hit sound (`common/melee/hit_normal`) still plays. In
 mansion/man1a/mansion1a_2 the desk chair `chairdesk_x` (2648.78 1315.84) is authored tucked under `desk_rolltop_x`
 (2668.47 1315.63). On every first entry the desk crushes the chair while it settles, the chair is knocked into the
@@ -5589,7 +5596,8 @@ at noise level there and at r 0.62/0.74 on the original's real punches).
 
 Moving the chair 13 units out did not stop it (4/4 still hit). So the builder writes `PlacementCrush=xml1` for every
 XML1 build (`fix_ini.PLACEMENT_CRUSH`), and XML2 Fix refuses touches while a settle is in progress: 0 hit sounds on 3/3
-fresh entries, 13 touches refused each. Touches during play keep the game's rule. A fix without the feature ignores the
+fresh entries, 13 touches refused each. Settle-time touches of objects spawned in play are refused too (the first game never settles them either); other
+touches in play keep the game's rule. A fix without the feature ignores the
 key. Tests: tests/unit/test_builder_parts.py.
 
 All-zone sweep (145 XML1 zones, staged `loadMapKeepTeam`, first visit each, hit sounds and object damage in the
@@ -5605,7 +5613,11 @@ XML2's own recording, darker than the first game's `pickup_power` (spectral cent
 That is the "sometimes slower / lower pitched" pack sound: 5 of 80 staged uses in the harness. The first game's pack
 use (default.xbe 0x3a7c0) takes no multiplier, and its banks have no double event. The builder writes `DoubleHeal=0`
 for every XML1 build (`fix_ini.DOUBLE_HEAL`), and the fix always takes the single branch: 0 of 80. The random number is
-still drawn. The stats screen's "Double Heal Chance" line (XML2's own help text) is not changed yet.
+still drawn. The stats screen's Body and Focus helps (XML2's own text, strings 1092 / 1093) state a double health /
+energy chance the first game never had: with DoubleHeal in, XML2 Fix's stat help (the strings manager's vt+8, as for
+[Balance]) drops the phrase and the line from both. The Focus line's number sits between two others in the screen's
+_vsnprintf call, so its directive becomes `%.0s`, which takes the argument and prints nothing (msvcr71 checked).
+The builder changes no string data for it.
 
 ## 64. The pause menu without the Blink Portal (issue #89)
 

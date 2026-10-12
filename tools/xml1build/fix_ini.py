@@ -154,11 +154,11 @@ OBJECTIVE_DESCRIPTIONS = '1'
 # break as they do without it. Written for every XML1 build.
 BREAK_RULE = 'xml1'
 
-# xml2-fix [Game] PlacementCrush (SPEC 63.4, issue #79): XMen2.exe's zone loader sets each object on the floor and an
-# object touching another may "crush" it (a 1,000,000-damage hit; BreakRule=xml1 refuses most, but the hit's sound
+# xml2-fix [Game] PlacementCrush (SPEC 63.4, issue #79): XMen2.exe settles each object on the floor - at a zone's load
+# and 0.5 s after any spawn in play (death drops, script props, debris) - and an object touching another there may "crush" it (a 1,000,000-damage hit; BreakRule=xml1 refuses most, but the hit's sound
 # still plays): XML1's furniture authored overlapping (the dormitories' desk chair under a roll-top desk) gave two hit
-# sounds from an empty room on entry. 'xml1' makes the fix refuse that touch while a zone load is in progress, as the
-# first game's zones place their objects; during play the game's own rule. A fix without the feature ignores the key.
+# sounds from an empty room on entry. 'xml1' makes the fix refuse that touch while a settle runs; the first game has no settle at
+# all. Other touches in play keep the game's own rule. A fix without the feature ignores the key.
 PLACEMENT_CRUSH = 'xml1'
 
 # xml2-fix [Game] DoubleHeal (SPEC 63.5, issue #82): XMen2.exe's restoreHealth / restoreEnergy (the packs' onactivate
