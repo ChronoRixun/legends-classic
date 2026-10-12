@@ -351,9 +351,9 @@ def test_port_keys_from_a_synthetic_build():
         assert FI.port_keys(out) == {'Game': {'NewGameTeam': 'wolverine', 'ResetUnlocks': '0',
                                               'SaveFolder': 'X-Men Legends', 'ForcedTeams': '1',
                                               'GeometrySharingBlendIndices': '1', 'CharacterLadderPaths': '1',
-                                              'ObjectiveDescriptions': '1', 'BreakRule': 'xml1'},
+                                              'ObjectiveDescriptions': '1', 'BreakRule': 'xml1', 'ExplosiveFirstHit': '1'},
                                      'Limits': {'ActorSlots': '127', 'ResourceNames': '1024', 'ItemEnhancements': '512',
-                                                'FightStyles': '32', 'EffectCurves': '3600'}}
+                                                'FightStyles': '32', 'EffectCurves': '3600', 'MoveTriggers': '64', 'EntityCapacity': '1'}}
         menu = ET.Element('menu', type='MAIN_MENU')
         for i in range(1, 9):
             attrs = {'name': f'button{i}', 'text': f't{i}'}
@@ -373,9 +373,11 @@ def test_port_keys_from_a_synthetic_build():
         keys = FI.port_keys(out)
         g = keys['Game']
         assert g['MainMenuItems'] == 'button1,button2,button3,button4,button5,button6,button8,button7'
+        assert g['ClassicMainBackdrop'] == '1'
         assert g['PostgameScript'] == FI.POSTGAME_SCRIPT and g['WindowTitle'] == 'X-Men Legends'
         assert g['NewGamePlus'] == '0' and g['ReviewStats'] == '0' and g['XPCurve'] == 'xml1' and g['Xtract'] == '0'
-        assert keys['Online'] == {'GameVersion': 'X1.0'} and set(g) <= set(FI.PORT_OWNED['Game'])
+        assert keys['Online'] == {'GameVersion': FI.PORT_GAME_VERSION} and set(g) <= set(FI.PORT_OWNED['Game'])
+        assert keys['Save'] == {'Format': 'lc'} and 'Format' in FI.PORT_OWNED['Save']
         # the harness builds its test ini from the same keys
         sys.path.insert(0, str(Path(C.__file__).resolve().parents[1]))
         import harness
@@ -667,3 +669,12 @@ def test_xml1_builds_ask_for_no_xtract_world_map():
         (out / 'Scripts' / 'x1' / 'menus').mkdir(parents=True)
         (out / 'Scripts' / 'x1' / 'menus' / 'postgame.py').write_bytes(b'x')
         assert FI.port_keys(out)['Game']['Xtract'] == '0'                   # an XML1 build: no world map anywhere
+
+
+def test_port_builds_ask_for_the_lc_save_format():
+    """SPEC 70: [Save] Format=lc is a port build's (an XML2-opening ini has none), the port owns it, and the
+    build needs the xml2-fix that reads it (1.4)."""
+    assert FI.save_keys(port_identity=True) == {'Format': 'lc'}
+    assert FI.save_keys(port_identity=False) == {}
+    assert FI.PORT_OWNED['Save'] == ('Format',) and 'ContentFingerprint' in FI.PORT_OWNED['Online']
+    assert FI.REQUIRED_XML2FIX == '1.4'

@@ -41,6 +41,13 @@ XML2 install, the disc image, the cache or this repository's `tools/` and `resea
 
 ## Tests
 
+The classic main menu is XML1's composition, which the game centres at every aspect (4:3 to
+21:9) without any change to the file. `--main-menu-layout` keeps only `classic`; the 0.2.0j
+`widescreen` value, which pushed the menu right of centre, is accepted as a retired name for
+`classic`. English medium/big letters also affect other menus and dialogs sharing those
+global font indices. The bright Cerebro backdrop requires a companion XML2 Fix build with
+`[Game] ClassicMainBackdrop=1`; the builder writes that key for the classic main menu.
+
 | What | Command | Needs |
 |---|---|---|
 | Unit tests (synthetic: disc images, bundles, the prepare stages on made-up inputs, the builder CLI on a stub pipeline, packaging) | `python tests/unit/run.py` (or `pytest tests/unit`) | nothing; CI runs them on Windows and Linux |

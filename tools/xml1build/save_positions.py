@@ -1,16 +1,16 @@
-"""Identities a save keeps by position (SPEC 61).
+"""Identities a save keeps (SPEC 61).
 
-XMen2.exe's save names a hero's shared talents by their position in Data/shared_talents (talent ids below 100 are
+XMen2.exe names a hero's shared talents by their position in Data/shared_talents (talent ids below 100 are
 the position; a hero's own talents are (stats index + 1) x 100 + the position in its talent file). Neither a name
 nor a count is written, so a build that inserts, removes or reorders a shared talent moves the ranks of every
 saved hero onto other talents: builder 0.1.8 dropped fightstyle_gun_rifle (slot 4) and inserted grab (slot 9) and
 x1_fightstyle_gun_rifle (slot 32), so a 0.1.7 save read its leadership rank as grab and its acrobatics, toughness
 and mutantmastery ranks as their neighbours'.
 
-SHARED_TALENT_ORDER is the order every release keeps: the 61 names of 0.1.5-0.1.7, then the names later releases
-added, each appended in the order it was added. A talent the builder adds goes at the end of this list in a new
-release; a talent no longer referenced keeps its slot (heroes.HeroBuilder holds it instead of pruning it). The
-names are engine identifiers, not game text.
+SHARED_TALENT_ORDER is the order 0.1.5-0.1.7 kept (the 61 names), then the names later releases appended. From
+0.2.0 the LC save format stores talent names, so positions are no longer save-bound: old saves convert through
+the frozen per-era tables (lcsave legacy) and the built file may drop or move names (the TalentRegistry fix moves
+NPC-only talents to data/talents/npc set files). The order survives as a sanity rule for the survivors.
 """
 from __future__ import annotations
 
@@ -57,23 +57,25 @@ def order_shared_talents(root):
     return True
 
 
-def shared_order_problems(names, label='shared_talents'):
-    """-> (errors, warnings) for one built shared_talents name list (lower-case, file order)."""
+def shared_order_problems(names, label='shared_talents', moved=()):
+    """-> (errors, warnings) for one built shared_talents name list (lower-case, file order).
+
+    0.2.0 names a saved hero's talents, not their positions (lcsave), so the 0.1.x pin that every SHARED_TALENT_ORDER
+    name keeps its slot is history: old saves convert through the frozen per-era tables and the new format stores
+    names. The order remains only as a sanity rule - survivors must keep the pinned RELATIVE order, so an
+    accidental reorder is still caught - and a name that disappears is a warning naming why (the TalentRegistry
+    fix moves NPC-only talents to data/talents/npc set files; `moved` lists them)."""
     errors, warnings = [], []
     names = [n.lower() for n in names]
-    want = ordered_names(names)
-    if names != want:
-        k = next(i for i, (a, b) in enumerate(zip(names, want)) if a != b)
-        errors.append(f'{label}: slot {k} holds {names[k]!r}, saved games expect {want[k]!r} there '
-                      f'(a save names shared talents by position; new talents go after {SHARED_TALENT_ORDER[-1]!r})')
     present = set(names)
+    pinned = [n for n in SHARED_TALENT_ORDER if n in present]
+    if [n for n in names if n in SHARED_TALENT_SLOTS] != pinned:
+        errors.append(f'{label}: the surviving save-order talents are out of pinned order '
+                      f'(expected relative order of {SHARED_TALENT_ORDER[0]!r}..{SHARED_TALENT_ORDER[-1]!r})')
     missing = [n for n in SHARED_TALENT_ORDER if n not in present]
     if missing:
-        last = max((SHARED_TALENT_SLOTS[n] for n in present if n in SHARED_TALENT_SLOTS), default=-1)
-        holes = [n for n in missing if SHARED_TALENT_SLOTS[n] < last]
-        if holes:
-            errors.append(f'{label}: {holes} missing before the last kept slot: every later talent moves down '
-                          f'and saved ranks land on other talents')
-        else:
-            warnings.append(f'{label}: {missing} absent at the end of the save-stable order')
+        moved = set(moved)
+        why = [f'{n} (npc set file)' if n in moved else f'{n} (unreferenced)' for n in missing]
+        warnings.append(f'{label}: {why} left the shared pool under the TalentRegistry fix / prune; '
+                        f'saves store talent names, old saves convert through the era tables')
     return errors, warnings

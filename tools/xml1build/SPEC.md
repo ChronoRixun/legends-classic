@@ -696,6 +696,7 @@ Allowlists are named constants with a reason. Checks:
 | V18 combat events | Section 22.4: the combat tables equal the install's XMen2.exe; in every style the build wrote each `<event>` / `<trigger>` resolves to a registered `ce_*` type, no orphan tag-only trigger, <= 19 triggers per move, names <= 31, affecters registered; unassessed unregistered handler (error), assessed ones (warn) | error / warn |
 | V19 npc values | Section 24.5: the value name table / energy constants equal the install's XMen2.exe; no style the build wrote holds a value code XMen2.exe reads as 0; the NPC energy talent and every XML1-origin npcstat entry's rank | error |
 | V20 automaps | Section 26.4: a `.zam` and exactly one last `<zam>` entry for every converted zone whose XML1 world names an automap texture (none elsewhere, no `textures/automap` entry); every `.zam` the build wrote parses as the loader reads it, keeps its vertices in their cells and fits the automap's 0x2000-vertex builder in every draw window | error / warn |
+| V43 grenade | Section 72: per XML1-origin entry whose XML1 weapon's `grenade=` or a unanimous spawner `monster_grenade` override names a non-default grenade, `powerstyle` is the matching `x1_<style>_<weapon>_<grenade>` variant (`weapons.grenade_powerstyle_want`); every shipped `x1_*_<grenade>` powerstyle throws the entity its name names; every `power_grenade` outranks its style's other aitype moves; matching moveset1 variants register/throw their own named entity; the flashbang keeps its authored explosion modifiers | error |
 
 **counts:** `files_checked`, `pkg_entries_checked`, `script_statements`, `sound_names`, `sound_resolved`,
 `movies_missing`.
@@ -2070,6 +2071,81 @@ options for the standalone tools (validate, zones_selftest, scripts_selftest).
 
 ### 21.2 Main menu (A)
 
+#### 21.2.1 Main appearance restoration
+
+The classic front end explicitly binds each back item to the original button model. The PC
+model reader at 0x5c5080 otherwise chooses an invisible default. Original main colours are
+mapped into free or identical non-pulsing PC palette IDs, below the native 75-colour ceiling;
+two named styles use the PC reader's modern colour fields and stay below its 32-style ceiling.
+The existing help transform and both serialized binding aliases become `helptext1`, with the
+original help text and a nonfocusable footer. MAIN_MENU hides `desctext1` at 0x5c99e1.
+
+English medium/big overrides in both PC and HD font maps combine the original printable
+letters with all PC control/extended and missing printable glyphs. Matching metrics and
+atlases are imported together. DXT3's explicit alpha is decoded correctly; the combined
+atlas uses the native uncompressed format, with no base-pixel resizing. Every 256-slot PC
+table and all other language/map entries remain present. These two font indices are global:
+English dialogs, credits and other menus using medium/big also receive the classic letters.
+HUD/digital indices and non-English entries retain their PC definitions.
+
+The main menu has one composition, XML1's, on the PC menu camera. XMen2.exe already centres
+it at every aspect: its 2D view is 384 units tall and aspect x 384 wide, centred on the
+512-wide 4:3 view (camera 0xa0a138 vt+0x20/+0x28, left -(width - 512) / 2 at vt+0x2c; the mouse
+mapping 0x5f9eb0 uses the same numbers) and the aspect is the resolution's w / h without a
+clamp (0x5fad61). A point x units from the camera lands x * height / 384 pixels from the
+screen centre at 4:3, 16:10, 16:9 and 21:9 alike (`main_appearance.screen_x`). XML1's own
+panels sit 1.65 units left of its camera (252.35 vs Camera01's 254, the original Xbox frame
+shows the same ~2 px at 640x480); that authored offset is kept, not corrected. The 0.2.0j
+`--main-menu-layout widescreen` moved the composition a further 48 units right, on top of
+the engine's centring: 90 px at 1280x720, 180 px at 2560x1440 (about 7 % of the width) right
+of centre in every mode. It is retired: `--main-menu-layout` still accepts `widescreen` (old
+command lines, jobs and build reports) and builds and records `classic`; a build recorded as
+widescreen re-runs frontend. The frontend self-test (U1) checks that the panel column's
+on-screen offset is XML1's own within a pixel at 4:3, 16:10, 16:9, 21:9 and 2560x1440, and at
+most 2 units from the camera.
+
+The builder also writes `[Game] ClassicMainPanelBounds=1`. The companion DLL derives all
+eight selectable rectangles from their loaded back-panel bounds, preserving full panel
+width. Where panel borders overlap vertically, it splits the hit regions at the midpoint
+using the native hit-test's half-open rectangle convention. Online/Quit remain disjoint.
+Local bound offsets change with the rectangles so the text's component origin and centering
+stay consistent. This operates only on the guarded MAIN_MENU update with all eight expected
+items present; stock builds omit the key. Native synthetic tests cover both layout offsets,
+nonoverlapping row seams, malformed bounds, text origin and repeated updates.
+Within the focused row a mouse move or left press stays that row's: MAIN_MENU's handler
+(0x5c9320) otherwise falls through to the generic handler (0x5ae0a0), whose label test
+(0x5c6490) is offset by half the label's local y offset and refocused the row below in each
+row's lower third. Independently of the layout, XML2 Fix converts every mouse point from the
+window's client area to the engine's screen size (0x5f9eb0 divides by `[0xa09ffc]`/`[0xa0a000]`),
+so a window whose client area differs from the resolution (a DPI change, a borderless window
+over a larger monitor) still hovers the row under the cursor; the native mapping tests cover
+1280x720, 1920x1080 and 1024x768, client areas shrunk or grown, and both panel columns
+(the DLL reads the rows from the loaded panels, so it needs no layout setting).
+
+The companion XML2 Fix writes `[Game] ClassicMainBackdrop=1` for the classic main. Its guarded
+libIGSg configureScale hook (RVA 0x6a780) changes only the first diffuse pass of known opaque
+Cerebro shaders while the current zone is exactly `menu/main_back`, preserving reflection
+0.1 and logo lighting. Unsupported exports, code bytes or pass layouts retain retail passes.
+The builder does not edit library binaries or the backdrop's original materials. V49 checks
+explicit panels/help, bounded styles/palette and complete paired font overrides.
+
+Shader basenames are secondary material guards, not ownership proof. A guarded libIGCore
+resource-load hook (RVA 0x4ca90) retains the directory returned for exactly the room asset.
+Every candidate must be an object entry in that directory's current resolved reference set;
+matching shaders outside it fail ownership before any pass changes. Directory replacement
+releases the previous reference. The observed twelve shaders are not a numeric selection cap.
+Bridge allocation/protection failures and protection-restore failures are logged. The
+original Options capture shows the same bright Cerebro room, so that room's appearance
+continues behind native PC Options; Options widgets/layout are not part of this restoration.
+
+The original main has a Phoenix-related profile gate (XBE 0x17e94e–0x17e975). Its exact bit
+meaning and lifetime still need an unlocked-original control. This appearance change does
+not implement that gate or substitute XML2's story-level-6 condition. No save fields, ordered
+content identities or content-version bump are part of this patch; the integrator owns the bump.
+
+The historical table below describes the earlier binding/style cut; the appearance rules
+above supersede its implicit back models, `desctext1` item and `STYLE_MENU_BLACK` styling.
+
 | Piece | Module | What is built |
 |---|---|---|
 | backdrop | zones | `menu/main_back` is converted like any zone: XML1's Cerebro room (`Maps/menu/main_back.{XMLB,CHRB,BOYB,IGB}`, `MotionPaths/menus/main_back.IGB` with `mp_camera`, the zone anim DB `zone_main_back` from `mission_menu`). The world keeps XML2's `nosave` / `startblack` (the existing replaced-zone rule of `mutate_zone`); the package keeps XML2's `bigconvmap off` and `xml data/npcstat` (`Zones.menu_zone_xml2_entries`). zoneinfo keeps XML2's entry (act 1) with `loading="textures/loading/x_mansion"` (`C.FRONTEND_MENU_LOADING`; XML1's zoneinfo has no entry). The act plan never touches a menu zone (`C.MENU_ZONES`, both modes). |
@@ -2665,7 +2741,7 @@ inherit (1): only their dead `level` goes, `life` stays a native update. Counts 
 
 | id | check | severity |
 |---|---|---|
-| V19 | `npc_values.verify_exe`: the 5-row value table 0x6da240, the resolver's 5-name loop and the energy constants equal the install's XMen2.exe. No style file the build wrote (Data/powerstyles, fightstyles, shared_nodes; XMLB and engb) holds a value code XMen2.exe reads as 0 (any L/M/H/K/P/A/BST/XTL/XLT/DMG shape but DMG2/3/4, K2, K3); XML2 retail files are allowlisted per file, XMen2.exe's own five are notes. `x1_npc_energy` is defined once per shared_talents file with the right values for every rank used, and every XML1-origin npcstat entry with a mind carries it at rank = mind (none on XML2 entries). | error |
+| V19 | `npc_values.verify_exe`: the 5-row value table 0x6da240, the resolver's 5-name loop and the energy constants equal the install's XMen2.exe. No style file, entity file or inline map entity the build wrote (XMLB and engb) holds a value code XMen2.exe reads as 0 (any L/M/H/K/P/A/BST/XTL/XLT/DMG shape but DMG2/3/4, K2, K3); XML2 retail files are allowlisted per file, XMen2.exe's own five are notes. `x1_npc_energy` is defined once per shared_talents file with the right values for every rank used, and every XML1-origin npcstat entry with a mind carries it at rank = mind (none on XML2 entries). | error |
 | V18 | `x1_powerup_update`: a tag-only update of an inherited powerup trigger still carrying `level` / `affect_type` / `level_max` / `scope_*` (24.4). | error |
 
 V-H5 now flags any code shape in a hero style (`npc_values.is_code`; it missed the `+` codes before).
@@ -3375,6 +3451,16 @@ and `K10` in the shipped freeze/knockback entity files. XMen2.exe does not resol
 Both importers now call `npc_values.resolve_entity_codes`. Unknown codes report a build error.
 V19 checks the final registered entity files as well as styles, including single and multiple XMLB roots.
 
+Zone conversion also resolves numeric codes in every inline `<entity>` declaration, using the same resolver
+and scalar `explodedamage` minimum. Zone instance names (such as an `entinst` type shaped like a value code)
+are never numeric inputs. V19 checks final registered map XMLB/ENGB declarations for unresolved codes and
+refuses explosion ranges. Resolution changes attributes in place; declaration and placement order stay
+unchanged, preserving save ordinals. Regenerate the affected zones and run `savefiles` (automatically selected
+after a content pass); a normal zone pass also needs the character modules that supply its weapon-variant plan:
+prepared source/cache stages are unchanged, but the map bytes must be regenerated. The automatic
+savefiles pass rechecks the save-bound Data files; this numeric-only map repair leaves those bindings unchanged.
+The release integrator assigns the content-version bump; this repair does not alter LC identities or layout.
+
 `characters.style_packages` also used the original bundle unchanged for weapon variants. All nine
 variant packages named the original style internally, even though the character and zone packages
 had been corrected in 29.1. `weapons.bind_style_package` changes only the source style's self-reference;
@@ -3414,9 +3500,8 @@ references are mapped: an `<event>` (root or move level) whose inherit chain rea
 bullet / beam weapon becomes a `beam` event with that weapon's data, exactly as `shot_triggers` builds a shot
 (`beambolt` = the event's `boltselect`, else the weapon's `actorbolt`; tracer, impact, damage code, range,
 `damageMod`). Event names stay, so no move gains a trigger for its shots; the weapon's muzzle flash + fire sound
-(`effect_sound`) go on the first shots of a move while it stays within 19 triggers (both of her gun moves have 17:
-the first left and the first right shot get them). Projectile / flame weapons named this way are counted and left
-(none on the disc). Count `weapon_events_to_beam` (2), report `detail['weapon_events']`.
+(`effect_sound`) go on every burst shot under the port's MoveTriggers=64 contract (29.4). Projectile / flame weapons named this way are counted
+and left (none on the disc). Count `weapon_events_to_beam` (2), report `detail['weapon_events']`.
 
 Validator (in V5): a stats entry's power style must not fire `weapon_fire` - through an event naming a weapon,
 or by name when the entry's XML1 weapon is a gun (error); a melee weapon is a warning (NukeGuardMelee: ps_grso with
@@ -3435,6 +3520,23 @@ Wolverine took 9.3-11.0 per explosion (7 in 60 s; the explosion and a floating "
 spawn trigger's damage (L2 = 9-11, `usedamageasexplodeonly`). Neither research hypothesis (only the death effect
 plays; the attack data filters heroes) holds for a hero inside the radius (52). A hero who moves away from the
 landing spot is not hurt, as in XML1. Nothing changed.
+
+### 29.4 Every shot of a named-weapon burst keeps its fire sound (issue #83)
+
+XML1 attaches the fire sound to the weapon event. The port adds one `effect_sound` trigger per shot.
+The native cap is 19 at `0x4f6aa7`. The companion XML2 Fix `[Limits] MoveTriggers` patch expands handle storage
+without changing native move records or saved data. Port builds request 64, preserving all original triggers,
+including holster/redraw cycles. The source census found two affected moves: Mystique's `power_attack` needs
+23 triggers (all 6 shots sound and the original holster cycle stays); `power_smash` needs 27 (all 10 shots sound).
+The former 19-trigger build emitted 2 smash sounds, not the four previously documented.
+
+The builder's `fix_ini.LIMITS` is the capacity contract for both weapon conversion and V18's effective inherited
+trigger count. When the key is absent, conversion uses stock 19 behavior. Never pair full 64-trigger output with
+an older DLL or a disabled raise. Rebuild characters (which implies heroes), then validate and regenerate the
+port ini. Prepared source/media caches remain reusable; output styles must be regenerated.
+
+V42 checks all converted named-weapon shots for their sound with the raised key. V18 (section 29.4) rejects effective move counts above the configured capacity, including inherited
+triggers and tag updates. No CONTENT_VERSION bump here; the release integrator owns it.
 
 ---------------------------------------------------------------------------------------------------------------
 
@@ -5018,10 +5120,37 @@ file are the frontend module's, have text without unescaped renderer codes, and 
 
 In game (xml2-fix 1.3.1): on main, Cyclops' first item showed the mansion loading screen and Wolverine's the
 yellow/magenta default texture; on the fixed build both show the first game's picture and close with the back key or
-the pad's B. Known gap: the item's text is not drawn. It is loaded (the word-wrapped text is in the game's memory
-while the menu is open), but no text box appears over the picture. Re-framing the menu IGB on X-Men Legends II's menu
-camera as done for the credits menus (21.2.1) did not draw it and hid the help line too, so it is not shipped; adding
-a text style to the text box or only moving the camera's near plane changed nothing. The cause is open.
+the pad's B.
+
+### The picture's size and the missing text (2026-10-07, in game on the 0.1.12 candidate)
+
+The engine draws the ITEM's texture as the menu's background sprite: the personal loader passes it to the menu's
+image setter (vt+0x84 = 0x5bb7b0, the same path as a menu's `image`), and the sprite is stretched over the whole
+512x384 virtual screen - the menu class's rect getter (0x5b7c60, vt+0x8c) feeds the manager a fixed 512x384, and
+the setter adds an aspect correction default.xbe does not have. default.xbe's setter (0x172880) adds the sprite at
+the rect its init sets instead: 256x128 at x 128..384, z 202..330 (bottom-up) - the first game's small picture over
+the menu IGB's desk backdrop. Both games ship the same `menu_personal.IGB` (XML2's is byte-identical to XML1's,
+camera and all), and the port's texture import was a byte copy, so the painted 512x256 art filled the screen ("too
+big") and covered the text area. The menu file is XML1's own, unchanged in XML2.
+
+`frontend` now re-composes every `Textures/personal/*.IGB` to 512x384 (`personal_art.recompose_igb`, pure Python -
+no imaging dependency): the art scaled into the first game's sprite window (rows 202..330, x 128..384 in the
+file's row order - the engine's v-flip shows it at z 202..330), its colours continued to the screen edges by a
+soft stretch of the art (the IGB's backdrop never shows: the sprite is opaque and ignores texture alpha - a
+fully transparent texture still drew opaque in game). The mip chain continues the halving to 1x1 under the same
+igImage count; a texture the reader cannot place falls back to the byte copy and is reported
+(`personal_textures_*_unframed`). V30 also checks the named texture's largest igImage is 512x384, so a future
+byte-copy regression fails validation.
+
+The item's text was hidden behind the image, rather than missing from the textbox. The earlier anchor-binding
+hypothesis is withdrawn: live probes show its hidden flag clear, binding/type-5 component present, and wrapped
+text populated. PERSONAL_MENU inherits image depth -10 at constructor 0x5b7c30; its description is at depth 0,
+so the opaque fullscreen sprite covers it. XML2 Fix 1.4's default-on `[Game] PersonalItemText` wraps only the
+personal-menu factory call (0x5b84e9), keeps the native constructor, verifies the personal vtable/default depth,
+and changes that inherited signed depth to +10. The subsequent menu parser still applies authored depth overrides.
+The shared textbox renderer and other image menus are unchanged. The menu reads Data/personal/<item>.engb;
+both its description and the builder's smaller picture window can now be visible. DLL docs/personal-item-text.md
+records the guards, native rules and bounded in-game proof.
 
 ## 57. Gun soldiers fight in their gun's style (issue #52)
 
@@ -5234,8 +5363,10 @@ exterior, and "finish your objectives" pops up near the start of the zone.
 load XMen2.exe numbers, in `.engb` entinst order, every placed entity that does not stay smart (entity +0x6e,
 0x48624c), and the restore puts each record's position, orientation and state flags on the entity holding the same
 ordinal (the record's own name handles are not compared). Physical entities (physent, affectableharment,
-powertriggerent, ...) and monster spawners stay smart unless `smartent="false"` (a spawner also with
-`monster_smartent="false"`); gameent, waypointent, playerstartent, waterent and actionent are numbered either way.
+powertriggerent, ...) stay smart unless `smartent="false"`; gameent, waypointent, playerstartent, waterent and
+actionent are numbered either way. A monster spawner is different: the exe numbers a spawner unless
+`monster_smartent` AND `instantspawn` are set and `checkteam` is not (its vt+0x78, 0x48a4f0; every attribute
+defaults to false, so a spawner that says nothing is numbered - CONVERTER-PORT section 3).
 Measured on haarp_ext01 (51 live ordinals read from +0x6e, all equal to that rule's prediction).
 
 SPEC 52 gave the enabled fall volumes `smartent="false"`, numbering them in place: every later ordinal moved by
@@ -5313,9 +5444,11 @@ says such points cannot save) and from the second use a menu with the title and 
 at nyc1_1_2b, whose first flag is `false`: Change Team is offered anyway, so the flag does not gate it as earlier
 notes assumed). None of the 20 points could save.
 
-**What the port does now.** P3 (`Rewriter.rewrite_call`, P3 VERSION 2) writes XMen2.exe's full
-`extractionPoint(owner)` (0x4a6b50) for every XML1 `extractionPointLite` call; the flags are dropped. The 20 points
-open the same menu as every full point: title, Xtract (X-Men Legends II's world map, #46), Change Team and Save.
+**The 0.1.12 conversion.** P3 (`Rewriter.rewrite_call`, P3 VERSION 2) wrote XMen2.exe's full
+`extractionPoint(owner)` (0x4a6b50) for every XML1 `extractionPointLite` call; the flags were dropped. The 20 points
+opened the same menu as every full point: title, Xtract (X-Men Legends II's world map, #46), Change Team and Save.
+The issue #95 change below now routes the points through a services helper and preserves their fourth flag for
+the equipment shop; the native handler still supplies Save and team handling.
 With xml2-fix `ForcedTeams=1` the Change Team choice is greyed while game flag `teamlock` bit 1 is set (a seated
 forced mission, SPEC 19.8), as at every full point. The builder's own `addHero` emulation still emits
 `extractionPointLite("_ACTIVE_HERO_", ...)`, which T7 replaces at build time (SPEC_heroes). V32 (lite xtraction)
@@ -5343,8 +5476,8 @@ The two Master Mold points are the only ones with f5 set, and f5's meaning is no
 #88 is resolved, do not save there; the fix may be to leave these two on a non-saving menu. Reports from other
 points are wanted before more work (maintainer's decision).
 
-**Still missing (a later XML2 Fix change).** XML1's Load choice at every point and the Danger Room / Healer / Forge
-choices (sub-basements: all three; full points: by XML1's conditions, not decoded). The Xtract world-map choice
+**Still missing (a later XML2 Fix change).** XML1's Load choice at every point and the Danger Room / Healer
+choices. Forge is restored by the issue #95 companion change below. The Xtract world-map choice
 (#46) is gone with XML2 Fix 1.3.2 (`[Game] Xtract=0`; the section after this one). XML1's flag 1 is not honoured
 either: the sub-basement points offer Change Team where the first game did not (in free missions, where `teamlock`
 is 0). The rest needs a script function that builds XML1's menus (the research's design: XML1's flags kept and
@@ -5494,7 +5627,7 @@ Unit tests: `tests/unit/test_builder_parts.py` (`test_xml1_builds_ask_for_no_xtr
 this change: the menu check is the release candidate's (xml2-fix `xtract` log line; title, Change Team and Save
 only, from nyc1_1_3's point on).
 
-**Still missing (as SPEC 62).** XML1's Load choice and the conditional Danger Room / Healer / Forge choices; those
+**Still missing (as SPEC 62).** XML1's Load choice and the conditional Danger Room / Healer choices; those
 need a script function that builds XML1's menus, not an ini key.
 
 ## 67. Recommended party before mission selection (issue #76)
@@ -5626,3 +5759,853 @@ future map naming a new beacon would otherwise fall back to a same-named XML2 fi
 a blue point (e.g. the HAARP exterior by the X-Jet) and the mansion sub-basement 1a point; on the fixed
 build both glow; on 0.1.11 (negative control) the blue one does not. The glow is the rotating beacon light
 above the point.
+
+## 69. The first game's combat balance (2026-10-05, issue #14)
+
+### 69.1 What was reported and what it is
+
+The port is easier than the first game: bosses go down in seconds, early enemies cannot hurt a hero. The research
+(the maintainer's issue #14, the balance design of 2026-10-05) found that most of it is XMen2.exe's formulas on the
+same character data, not the data: 3 health per body point against XML1's 10; a stat bonus of 0.05 per strength
+point against 0.1, which the x4 hero stat scale doubles again; a melee hit chance that lets every slow enemy land
+5 % of its punches where XML1's formula lands 65-80 %; the stat bonus given to power attacks XML1 withheld it from;
+every bonus rounded up where XML1 rounded down; no damage from the talent `might`. All of that is restored by
+xml2-fix's `[Balance]` section (xml2-fix docs/balance.md), one ini key each, nothing stored in a save.
+
+Two things the engine cannot be told from the ini, because they are properties of the attack data, are the
+builder's (`xml1build.balance`):
+
+1. **The power-attack marker.** XML1 gives an attack flagged `PowerAttack="true"` no stat bonus and never rolls
+   it to hit. XMen2.exe does not read the attribute; its own switch is `DamageScale` (`none` = XML1's power
+   attack: no stat bonus at 0x453b54, a miss not counted at 0x45333f; `normal` = the bonus and the roll). The
+   build writes `damagescale="x1power"` on every XML1 style `<event>` / named `<trigger>` whose XML1 PowerAttack is
+   true (its own attribute, else the style event it takes its data from, else XML1's shared event of that name,
+   read before combat_events.rewrite_style re-points XML1-only names) and whose built chain resolves to `normal`.
+   A child of a marked event inherits the marker with the rest of the attack data (0x4dce80) and is not written
+   again; an element XML1 flags `false` under a marked parent gets `normal` back. A chain that sets no damagescale
+   at all is left alone: the definition starts at 0 (0x4dc5db), so it already behaves as `none`. XMen2.exe's
+   parser (0x44ec00) reads an unknown name as `normal`, so the marker changes nothing by itself; xml2-fix
+   `[Balance] PowerAttacks=xml1` reads it as `none`. The maintainer's decision 5.3 A: a marker that an ini key
+   can switch, not `none` written directly.
+2. **The seven basic attacks.** The build ships XML2's data/shared_combat_events (section 4.4); section 33 writes
+   XML1's values onto XML1-origin styles only, so the XML2 fighting styles XML1's characters use (fightstyle_villain,
+   _hero, _baton, _wrestling, _finesse1 - heroes included) still punched with XML2's "2 3" / "3 5" / "6 9". The
+   seven basic melee events of the shared file itself (`punch`, `kick`: L1 = 4-5; `punch_heavy`, `kick_heavy`,
+   `move_damage`: L2 = 9-11; `punch_veryheavy`, `kick_veryheavy`: L3 = 15-18, resolved from XML1's values.xml as
+   section 33 resolves them) get XML1's damage. The maintainer's decision 5.2 A.
+
+### 69.2 The switch
+
+`xml1build.balance.X1_BALANCE` is the one switch for all of it: the two data changes, the `[Balance]` keys fix_ini
+writes for such a build (the first game's numbers: EnemyHealthPerBody 10, HeroStatScale 4 = heroes.STAT_SCALE,
+NativeStatHeroes ProfXAstral,ProfXGladiator - the entries rescale_x1_hero_stats leaves at XML1's numbers -
+StrengthBonus and MindBonus 0.1, MightBonus 0.05, PowerAttacks, HitChance and Rounding xml1), the section's
+ownership (fix_ini.port_owned: the tuning keys too, so a build that stops being a balance build drops them), the
+harness's copy of the section, and the build's `[Online] GameVersion` (every peer computes health and damage from
+its own ini, so lobbies with and without the keys must not mix). It was written OFF (a build made with it off was
+byte for byte what it was before the module existed, and its ini had no `[Balance]`; `$XML1BUILD_X1_BALANCE=1`
+turned it on for a test build). build_xml1.py records `balance: xml1 | xml2` in report.json; fix_ini and the harness
+read that, so the keys go only to a build that has the marker.
+
+The release flip (builder 0.2.0, done): `X1_BALANCE = True` and the environment override dropped, CONTENT_VERSION
+16 after integration onto 0.1.12 (which already uses 15), fix_ini.REQUIRED_XML2FIX 1.4 (the xml2-fix release that has `[Balance]` and the LC save format), the section
+numbered 69, and one `[Online] GameVersion` for every build (X1.2, SPEC 70) since balance is always on.
+
+### 69.3 Checks
+
+tests/unit/test_balance.py: the switch; the two shared tables; the marker on an invented style (an event on a
+normal punch marked, its child not, a child XML1 flags false cleared, a trigger flagged itself marked, a blast
+the shipped event already makes `none` and a chain with no damagescale left alone; idempotent; nothing else of the
+conversion changes); the seven values and nothing else; the ini keys only for a balance build with the switch on,
+the harness's section, the drop of the section's keys, a merge that keeps a foreign key. V38 (balance.validate):
+a balance build has the marker in its styles and XML1's values on the seven events; any other build has no marker.
+
+### 69.4 In game (2026-10-05, xml2-fix feature/balance 3d0afad)
+
+Measured with a debugger-based tracer on the melee roll (0x44f450 / 0x44f6bd) and the damage function (0x453c10) -
+nothing in the game changed but three int3 bytes - and real key input; Wolverine alone at level 1 among the riot
+police of the first zone, teleported next to them (staged) and healed by script when under 45 (staged, counted).
+"Off" is a build made with the switch off and no [Balance]; "on" this build with the section above.
+
+| measure | off (today) | on | the design's prediction |
+| --- | --- | --- | --- |
+| max health: riot cop / thug / Blob / Wolverine | 29 / 43 / 168 / 90 | 40 / 76 / 392 / 90 | 40 / 76 / 392 / 90 |
+| riot police on a standing Wolverine: chance, hits | 0.05, 5 of 115 (4 %) | 0.65, 137 of 219 (63 %) + 6 always-hits while he had no target | 60-70 % |
+| ... on a Wolverine punching back | 0.05, 5 of 129 (4 %) | 0.65, 98 of 132 (74 %) | the same |
+| Wolverine's punches on the police | 0.95, 24 of 24 | 0.85, 36 of 43 (84 %) | 85 % |
+| a riot cop's punch | 3.1-4.0 (mean 3.6) | 5.0-6.0 (mean 5.1 with the 3-point hits); heavy 11-20 | 5-6 (XML1) |
+| Wolverine's punch | 4.0-8.4 (mean 5.4) | 4.0-7.0 (mean 5.5) | 5-7 |
+| claw slash rank 1 | 46.4-55.3 (8 hits) | 25.3-30.6, 22 of 22 landed, none rolled | 25-31, no miss |
+| Blob's slam on Wolverine / his punch | - / - | 5.0 at most (power attack) / up to 30 (strength 9, might 3) | 5 |
+| Blob fight, Wolverine + Cyclops at level 1-2, the driver punching and slashing | 163 s, 1 heal | 146 s, 3 heals | - |
+| Shadow King's hits on a level-35 party | 60.9-62.6 (the one attack seen) | 50.1-62.9 (the same attack: no DamageScale, no bonus either way) | smash about 140 (not seen) |
+
+A lone level-1 Wolverine standing among four riot police lost about 4.4 health a second (17 heals in 180 s): he
+would die in about 20 s; fighting back he killed the four in about 60 s with 7-11 heals. The Blob fight's time is
+the driver's (Cyclops and the allied Magma did most of the damage in both runs). Not measured: Magneto (the arena
+trigger did not fire from the scripted jump), the Sentinel leaders' swipe, two players, a save made with the keys
+on and loaded without (the xtraction menu could not be driven blind; nothing of the keys is stored, by
+construction). Seen in both builds, unrelated to the keys: the hero sometimes loses exactly 100 health with no
+damage-function call in the first zone (a hazard or script of the zone), and a neutral herostat NPC's displayed
+maximum (the "alison" Magma of nyc1_1_3, 63 or 78) depends on whether the game's own refresh (0x41dee0) has run -
+the health function answers the same with and without the keys (traced: 63 with the actor, 78 without).
+
+### 69.5 Melee weapon damage (2026-10-07; validator assigned at integration)
+
+The original adds a melee weapon's damage to attacks whose `attacktype` matches
+the weapon, including a matching power attack. It does not replace the attack
+damage or boost every melee attack. In default.xbe, 0x5aa61 checks weapon category
+2 (melee), 0x5aa74 compares attacktype, and 0x5aab0 adds the prototype getter's
+word at +0x1c6 (getter 0xb9cf0) to the attack. The weapon parser at 0xbc2ef..0xbc30d
+resolves `damage` through the values getter 0xb7e60 without a maximum output and
+truncates its returned minimum. It is a fixed bonus, not another random roll.
+The addition precedes the damage calculation at 0x5cca0: Strength and Might
+bonuses are independently truncated on the increased roll, then added to it.
+Weapon damage modifiers are ORed into the attack and its damage type replaces
+the attack's at 0x5aa8f / 0x5aa9d. None of the five source melee weapons supplies
+a damage modifier; two supply an energy or electricity damage type.
+
+Eight npcstat entries carry these five weapons. All specify `attacktype=punch`;
+kicks and other attack types do not receive the bonus:
+
+| weapon | damage code / fixed bonus | npcstat entries |
+| --- | --- | --- |
+| wp_nightstick | L0+ / 2 | grso_riot |
+| wp_baton | L2 / 9 | HAARPSoldierMelee, NukeGuardMelee |
+| wp_powerbaton | L3 / 15 | grso_powerbaton, WeapXGuardMelee |
+| wp_powergloves | L1+ / 6 | grso_powergloves, grso_powerglovesb |
+| wp_superpowergloves | L3 / 15 | grso_superpowergloves |
+
+For the opening cop, base rolls 4/5 plus 2 become 6/7. Strength 3 contributes
+1/2 and Might rank 2 contributes 0/0, giving 7/9. This agrees with the original
+game's measured hits. The earlier balance design left weapon replacement open;
+the earlier section 69.4 prediction of 5-6 omitted this addition.
+
+`melee_weapons.apply` runs only with `X1_BALANCE`, before the NPC stats tables
+are written. It adds three inert attributes to affected entries:
+`xml1weaponattacktype`, `xml1weaponbonus`, `xml1weapondamagetype` (the engine's
+attack-kind enum, fixed integer bonus and damage-type bits). XML2 ignores these
+attributes. `fix_ini.balance_keys(out)` reads them from the built npcstat and
+writes `[Balance] MeleeWeapons`: sorted `name:type:bonus:damage-bits` records
+separated by `|`. The shipped ini writer and harness use the same function.
+At most 16 unique entries are accepted; partial/invalid metadata stops the build.
+No extra styles, talent identifiers or packages are allocated. A data-only
+prototype required six shared fighting-style talents and raised the worst-party
+pool from 92 to 98, violating the eight-slot Danger Room reserve; it was rejected.
+
+The companion XML2 Fix addition hooks attack construction (0x4dc37b), immediately
+after the base damage draw. It stores that draw at attack +4 as before, compares
+the attacker's stats name and attack kind (+0xc) against the generated profiles,
+and adds the fixed bonus to the newly built attack's damage. It replaces the
+damage-type bits at +0x10 before any contact roll or stat/Might calculation. The
+stub preserves registers and flags and replays the displaced stats-pointer read.
+Nonmatching kinds and actors retain their existing damage/type. No power-attack
+condition gates this bonus. Subsequent missed contacts clear the damage normally;
+the receive path never re-adds the weapon. Nothing is stored in shared attack
+definitions or in a save.
+
+`[Balance] DamageRolls=xml1`, also behind `X1_BALANCE`, redirects the construction
+damage draw's tail jump at 0x453a51 and the receive-side random draw at 0x453add
+to the engine's inclusive integer RNG (0x5601e0), returning its result as float
+to the existing damage paths. Truncating the bounds matches XML1's integer input;
+rounding a float draw would underweight endpoints of wide ranges. The RNG stream
+argument is preserved. This key applies to random damage draws, including powers,
+restoring the original integer roll rule. Hit-chance RNG and averaging branches
+are unchanged. Invalid/nonfinite bounds outside the original +/-32000 range fall
+back to the stock float draw. Without the keys, XML2 Fix writes none of these
+sites. Existing DLLs ignore the new keys and cannot reproduce this contribution;
+the companion change is required before this builder change ships.
+
+V40 (`melee_weapons.validate`, assigned at integration) checks all and only
+source melee-armed NPCs, the exact metadata in both npcstat extensions, missing
+armed entries and bounded ini serialization. Synthetic unit tests cover minimum
+and truncation, armed/unarmed scoping, existing style/talent preservation, ini
+sorting/refusals, shipping writer integration and the disabled switch. Native
+synthetic checks cover parsing, matching and nonmatching attacks/actors, repeated
+contacts, integer RNG delegation and stream preservation, stock fallback,
+guarded patch bytes and execution of the construction stub with the game's register/x87 shape.
+
+## 70. The save-format data files of a build (builder 0.2.0; xml2-fix 1.4 `[Save] Format=lc`)
+
+The build ships the tables XML2 Fix 1.4 needs for the LC save format (SPEC-new-save 3.4 / 3.5 / 5.3, decisions
+D1-D13), generated from the build's own data by tools/lcsave at the end of the content modules
+(xml1build.savefiles, last in MODULE_ORDER: the `.lcbind` headers carry the SHA-1 of the finished data files):
+
+- `Data/lcsave/catalogue.lcc` - the master catalogue (SPEC-new-save 3.4 a). The repository keeps hashes only
+  (tools/lcsave/data/catalogue.json, decision D3); the plain keys are generated on the player's machine from the
+  player's own data.
+- `Data/lcsave/legacy.lcm` - the era model for the one-time converter (SPEC-new-save 5.3; the reference is the
+  last old build, 0.1.10 / content version 13).
+- one `.lcbind` beside every save-bound data file (SPEC-new-save 3.4 b): `Data/items.lcbind` (ITEM, ENHC, NAMA,
+  NAMB, TRIT), `Data/herostat.lcbind` (the herostat STAT part, COST), `Data/npcstat.lcbind` (the npcstat STAT
+  part), `Data/shared_talents.lcbind` (shared TALN), one `Data/talents/<hero>.lcbind` per talent file (that
+  hero's TALN), `Data/missions/missions.lcbind` (MSNF), one `Data/missions/<file>.lcbind` per mission file (its
+  OBJV), `Data/dangerroom.lcbind` (DRGR, DRCS), `Data/review_paths.lcbind` (REVW),
+  `Data/xtraction_points.lcbind` (XPNT), `Data/trivia.lcbind` (TRIV). ZONE has no bind list (saves name zones by
+  string), and no `.lcent` ships yet (SPEC-new-save 3.8: mode 2 for every zone until N14 closes).
+
+fix_ini writes `[Save] Format=lc` for a port build (PORT_OWNED; `lc`, not the draft `lc1` of SPEC-new-save A11 -
+the name was free to choose before implementation) and raises REQUIRED_XML2FIX to 1.4.
+
+**Later-feature classification.** #6 loot / shops uses keyed packed `DEFSTATE` records in LC (reader ceiling
+65536 definitions). The 160-definition limit is the native engine budget checked by
+`convert.py::_validate_native_build` during native reconstruction. The current build has 88 definitions;
+adding the original's 116-item loot table would exceed 160 and needs an engine / DLL limit raise plus a converter
+budget change, with no LC format change. For #35 talent costs, `TAL` stores ranks, `HREC` stores level and unspent
+skill points, and the header stores `content_version`: a later two-point rank cost can grandfather or reprice
+existing saves by content version without a new field; policy is deferred until #35 lands. #5 solo mode changes
+runtime party behaviour only and persists nothing new.
+
+### 70.1 The byte-level choices SPEC-new-save leaves open
+
+Decided here (the writers and readers are tools/lcsave/lcfiles.py; a C++ reader is written from this text):
+
+- `str` = u16 little-endian byte count + that many bytes, no terminator. Key strings are the canonical key bytes
+  (lcsave.keys.canonical_key). An empty string is a count of 0.
+- CRC-32 is zlib's (IEEE 802.3) of everything after the CRC field. No alignment padding anywhere.
+- catalogue.lcc: domains in ascending domain-number order, entries ascending id within a domain. The content
+  version field is the builder's CONTENT_VERSION (16 at the integrated 0.2.0). An entry whose key the writing build does not
+  know - content of an earlier era, gone from the current data - is written with an **empty key** and resolves
+  by id only (parking / successor), never by key lookup; the converter reaches those ids through legacy.lcm,
+  which needs no key text. Aliases are written only when their key text is known (the catalogue at revision 1
+  has no aliases yet).
+- .lcbind: lists in ascending domain-number order, each with `bind rule` 1 (the first numbered version of the
+  SPEC-new-save 3.2 rules; proof B of 3.5 records 1 once the per-domain dumps have run), except compact
+  trivia uses TRIV rule 2 (see section 82). `group` / `position`
+  per domain: STAT group 0, position = stats-table index (herostat from 1, npcstat continuing); COST group =
+  hero's stats-table index, position = costume slot 0..8; TALN group 0 = shared (position = shared index), group
+  = hero's stats-table index (position = talent-file index; old talent id = position when group 0, else
+  (group + 1) x 100 + position); ITEM group = the NAMB category of the item's class (1 belt, 2 gloves, 3 armor,
+  0 none), position = definition index; ENHC / NAMA / TRIT / MSNF / XPNT group 0, position; NAMB group =
+  category (1 belt, 2 gloves, 3 armor), position within the category; OBJV group = mission-file index, position
+  = the global objective index; DRCS group = grade index, position = the global course position; DRGR group 0,
+  position = grade index; REVW group = category index (0 load, 1 cin, 2 comic, 3 concept, 4 stat), position
+  within the category; TRIV group = act, position = question index within the act (rule 1 engine bit =
+  (act - 1) x 50 + position; rule 2 engine bit = numeric sorted rank of the group/position pair). A bind whose key the catalogue does not know carries id 0 (SPEC-new-save 3.4 b: a
+  mod's new thing, saved as a key reference); for the builder's own build that is an error (V39).
+- legacy.lcm (`LCLGM1\0\0`; u32 legacy map id = the last old content version, 13; u32 catalogue revision; u32
+  era count; u32 file length; u32 CRC-32): one era block per content version, ascending. A block is u32 content
+  version; u32 table count and per table char[4] tag + u32 row count + rows of (u32 group, u32 position, u32
+  catalogue id) with the group / position conventions above (IOWN and TOWN are pseudo tables, not catalogue
+  domains: the own-record sets of SPEC-new-save 5.3, group = definition / trit index, position = k, id = the
+  enhancement record's id); u32 zone-delta count and per zone u32 ZONE catalogue id + the ordinal map (u32
+  count, then count x u32: era ordinal k -> reference ordinal, 0 = none) + the ambiguous ordinals (u32 count,
+  then count x u32); u32 holdable count and per hero u32 STAT id + u32 count + count x u32 shared-talent
+  positions; str conversation digest; u32 hero count; the four enhancement-record ranges (prefix, suffix, trit,
+  item-own: lo, hi as u32 each). Every era block carries the era's fully resolved tables (as lcsave.legacy.Era
+  resolves them); the reference era is the block whose content version equals the map id. After the last era,
+  the checks of SPEC-new-save 5.3: u32 hero block count (21), u32 live course count (62), u32 grade count (6),
+  u32 registered objective count (177). Every hash of the JSON model becomes a catalogue id; a hash the
+  catalogue does not know stops the writer (the catalogue was populated from every release build, so this
+  cannot happen unless the two files drift apart - which V39 catches as a build error).
+
+### 70.2 The content fingerprint and the co-op version (decision D5)
+
+The content fingerprint is SHA-256 over the sorted list of (relative path lower-cased, SHA-1) of the build's
+`Data/lcsave/catalogue.lcc` and every `Data/**/*.lcbind` (lcsave.lcfiles.content_fingerprint; the same rolling
+format as the conversation digest of SPEC-new-save 2.12). legacy.lcm is not part of it: it is converter input,
+identical for every player of a release, and a co-op session never converts. It is written to report.json
+(build.content_fingerprint), to `[Online] ContentFingerprint` in xml2-fix.ini and to the stamp
+(outputs.content_fingerprint). SPEC-new-save 6 designs a network seam that computes the resolved content digest
+and compares content version, catalogue revision and digest in a 60-byte 'G' handshake. That seam is not
+implemented in XML2 Fix 1.4 (docs/save-format.md): ContentFingerprint is recorded metadata here, not an enforced
+peer check. GameVersion is the existing lobby-generation filter; co-op compatibility of this integration has
+not been tested.
+
+`[Online] GameVersion` (1-4 characters, the GameSpy filter) changes whenever the content version or the save /
+combat rules do: X1.0 the port, X1.1 a balance test build, **X1.2 builder 0.2.0** (LC save format, balance on).
+Since 0.2.0 every build of a release is a balance build, so one value covers the release.
+
+### 70.3 Checks
+
+- V39 (savefiles.validate): the build carries the whole set, every file byte-identical to the set the build's
+  own data produces, readable by the format's readers, no stray `.lcbind`, every key in the master catalogue
+  (SPEC-new-save 3.3's builder rule) and a computable fingerprint. `python -m lcsave savefiles --build <out>
+  --check` runs the same comparison outside the build; without `--check` it (re)writes the set.
+- tests/unit/test_lcfiles.py: round-trips of the three formats through their readers (invented names), the
+  header / CRC / ordering rejections, the group-position conventions, the fingerprint (changes with a bind,
+  stable over a rewrite, covers the catalogue), the empty-key rule and the real data files (catalogue.json +
+  legacy_eras.json -> legacy.lcm, every hash resolves).
+- The catalogue is updated from a build of the release before it ships: `python -m lcsave catalogue --build
+  <out> --previous tools/lcsave/data/catalogue.json --content-version 16` (hashes only; the invariants test
+  against the previous release's catalogue).
+
+### 70.4 Integration onto the 0.1.12 / XML2 Fix 1.3.2 bases (2026-10-07, local)
+
+The 0.2.0b integration retains SPEC 62-68 and their checks; balance, save tables and melee weapon metadata use
+V38, V39 and V40. CONTENT_VERSION is 16 (0.1.12 already uses 15), catalogue revision 2; its ids and keys are
+unchanged. HERO 1.1 carries the power-slot flag byte through conversion and saving.
+
+Offline: 380 synthetic tests pass, the builder content guard passes, full prepared build has 0 errors,
+and 82 corpus saves agree between Python and C++ (82 loader/saver state round trips). In the local windowed game,
+eight copied old slots convert at startup, an old HAARP slot loads and Magma/Wolverine powers 1 and 2 fire.
+Real Xtraction-menu input writes a new LC slot; a cold load still fires powers. The menu has Change Team and Save
+without Xtract. Pause navigation skips the removed portal slot in both directions. Riot cops start at 40 HP;
+ordinary contacts deal 7/9 (miss zero), and rank-1 claw slashes deal 26, 31 and 25 with no stat bonus.
+A sewer ground spawn stays alive at floor height without path evaluation; a ladder-top spawn descends from 162
+to floor height alive, with the native evaluator active.
+
+Staged: access to the Xtraction beacon and combat encounter, facing, the isolated claw test's enemy-targeting
+flag, and the ladder test's zone/approach/top-spawner activation. Powers, menu saving/loading, floor-trigger
+walking and attacks use real input. This is short single-player acceptance, not a campaign or co-op proof.
+
+### 70.5 Revision 2.4 Core integration (2026-10-07)
+
+The builder's LC codecs write canonical KEYS bytes, matching C++ exactly, including documentary catalogue text.
+Continuing saves retain LGCY, unknown KEEP sections and the original KEYS prefix; unknown identities refuse intact
+until full parking is implemented. The DLL records per-capture opened placement hashes, numbered identities,
+conversation digest and completeness flags, with explicit removed-entity tombstones. Real resetgame separates
+new campaign retention/serials from the independent profile. Native capacity preflight rejects unrepresentable
+streams before narrowing. Tests/unit/test_lcsave_durable.py and the native durable parity vectors cover these
+contracts; the existing V39 continues to validate regenerated catalogue/bind/legacy files.
+
+The format remains major 1 with the existing field widths and HERO 1.1; CONTENT_VERSION remains 16 for this
+unreleased 0.2.0 integration. No new validator number is allocated. W11 remains open: native completion and manual
+save check are narrower evidence, not a full side-effect-free post-load observer. Newer-file/refusal latches,
+effective mod-bind policy, network/co-op/DR acceptance and TalentRegistry work remain separate pending branches.
+
+
+### 70.6 Legacy equipment eras and restore-bank evidence
+
+Legacy conversion carries the detected talent/start era separately from the item/writer era. Every item
+instance, including HERO equipped lists and REST bank equipment, uses the detected item era for definition,
+name, special-item and enhancement identities and own-record checks. Talents, hero identities and costumes
+continue to use the start era. The old semantic dump uses the same split so verification names equipped items
+correctly. Item-era detection uses the serialized definition count and the own-record checks of all inventory,
+world, hero and restore-bank instances.
+
+Talent-era evidence is keyed by explicit stats-table index: main hero block n uses n+1; restore-bank record n
+uses n. Evidence from both representations of one owner is merged once. Unexplained talent evidence reports
+stats indices. Synthetic regressions cover different talent/item eras with a moved equipped definition in both
+banks, restore slot 16 versus stats index 17, and exact Python/C++ legacy-import parity.
+
+This is a converter correction: LC major/minor versions, catalogue, wire revision and CONTENT_VERSION remain
+unchanged. The existing save-file validation (V39) remains applicable; no generated-content rule is added.
+
+## 71. Spawn-floor residency (issue #81)
+
+XML1's base entity parser (default.xbe 0x67534-0x67559) defaults `smartent` to
+false. Its physical-entity parser (0x93320) leaves that default alone. XMen2.exe's
+base parser also defaults it to false (0x460760), but its ordinary offline physent parser overrides
+an absent value to true (0x498a05-0x498a2e). At zone load the smart entity is
+released (0x486212-0x486242) before the three native floor-placement passes
+(0x486a10-0x486ac6). Recreating it later near a hero starts at the authored,
+quantized position. An unhit stationary object therefore stays suspended.
+XML1's three passes are at 0x82bb3-0x82c92; its ordinary physical objects remain
+resident. This is a load-placement difference, not a mass or lift-weight scale
+error. Both parsers read `nogravity` and mass, and both engines have a floor sweep
+(XML1 0x78640; XML2 0x474080). No executable or DLL change is needed for the
+bounded builder workaround below.
+
+`settle.py` reads the source map's `igCollideHull`: each triangle is three
+16-byte vertices, XYZ followed by an auxiliary word. A vertical intersection
+with its triangles and transformed source model collision-hull bounds selects upright,
+collidable, gravity-enabled physents whose bottom is more than three units
+above static geometry beneath their conservative footprint. Origin checks are
+only a broad phase: rectangle corners and clipped collision-triangle edges
+also test narrow curbs/platforms inside the footprint. A wide prop over a lower
+road is not unsupported when its footprint crosses higher pavement. Render
+boxes include non-colliding foliage/decoration and cannot establish settlement
+eligibility. If a potential supporting prop has no readable physical hull, its
+render bounds provide a conservative veto; the object itself is not selected
+without a readable hull or explicit extents. This is a selection
+test, **not** an inferred final position. The map placement, orientation, mass,
+health, break/lift attributes, model and scripts are not lowered or rewritten.
+The existing native swept collision routine determines final contact.
+
+Each selected instance moves to a generated, resident copy of its entity
+definition (`smartent=false`, ignored metadata `xml1settle=true`). The copy has
+a deterministic hashed name; original instance names remain intact, including
+repeated names. Selection uses document group/instance indices rather than
+names. Only selected instances change type. New instance groups append after
+all existing groups, including the existing fall-volume tail, preserving every
+previously numbered entity's ordinal. Existing definitions and unselected
+instances stay in place. The conversion is idempotent; aliases reuse existing
+model/package entries rather than adding assets.
+
+The survey defers tilted objects, absent collision floors, unreadable model or
+support bounds, disabled/scripted objects, and possible support by another
+placed collidable prop. Existing resident objects already receive native floor
+placement. It also defers an entire zone if the selection would add more than
+64 residents or bring explicitly resident placements above 128. These are
+conservative workload bounds, not claims that the engine can never exhaust its
+256-slot registry. Per-instance classifications are retained in the generated
+zone metadata. Supported and tilted props require separate original-game
+comparison; a static gap alone is not proof that an object should fall.
+
+**V41 (assigned at integration)** checks the generated resident-physent
+flags, added-resident bound and appended instance tail. The existing
+fall-volume ordinal rule accepts this new tail after old fall volumes. Synthetic
+tests cover sloping/multiple floors, repeated instance names, unchanged authored
+coordinates and definitions, stable old ordinal order, idempotence, supports,
+malformed physics values, exclusions and residency bounds. CONTENT_VERSION
+remains 11 under the unreleased fix-wave instruction.
+
+**V31** also checks the appended prop-instance tail independently of fall
+volumes: a newly resident prop cannot precede any pre-existing instance group.
+The native numbering audit (numbered iff vt+0x78 is false, including the
+spawner-specific smartness rule) retained the complete old numbered prefix in
+all 50 affected zones, with 325 entries appended. Overall placement indices can
+change when an old smart instance moves; the numbered ordinal does not.
+
+Runtime evidence for this implementation must compare an unfixed build and
+the generated build to original settled positions, then register real lift and
+smash inputs. A pin-only diagnostic or static triangle intersection does not
+establish whole-campaign or saved-game acceptance.
+
+Local acceptance on the generated build matched two objects' original Xbox
+settled XYZ exactly. Ordinary keyboard inputs lifted and smashed both; the
+heavier object's eligibility used a disclosed cached lift-capacity setup rather
+than natural talent progression. The densest selected zone retained all 42
+selected objects after ordinary movement. A 198-zone output audit preserved old
+definitions, non-selected instance order and every moved placement attribute.
+An unmodified copy of a 0.1.11 save in one affected zone loaded through ordinary
+UI input on the unfixed release and the fixed build: all 148 populated saved
+ordinals retained their identities and exact live XYZ. Legacy dynamic restore
+uses the retained original definitions and keeps the old saved positions,
+including floating states; settlement of new placements applies to a fresh zone
+load. Supported/tipped cases, other saves, re-saving and online behavior remain
+unverified.
+
+
+## 72. Soldiers throw the grenade their weapon or spawner names (issue #36)
+
+**Symptom.** The first game chooses a soldier's grenade from its weapon or spawner. The port's shared grenade
+moveset throws the default damage grenade, including for a freeze-gun HAARP leader whose weapon chooses a
+flashbang. Nuclear-plant guards have a spawner flashbang override but no grenade moveset in their source stats.
+
+**Mechanism.** XML1's `moveset_grenade` has a canonical `power_smash` move whose `grenade_projectile` trigger
+names the default entity in `grenade_ents`. Its runtime selected the weapon's `grenade=` or the spawner's
+`monster_grenade=`. The builder materializes that choice in a moveset per holder. Runtime style-layer reads
+confirm the HAARP leader uses `x1_moveset_grenade_flashbang` and the soldiers retain `moveset_grenade`. Current
+FightMove traces at both HAARP and the nuclear plant execute `power_smash` from the moveset. The XML2 AI prepares
+four actions (0x50fb70; table 0x694bec contains 5, 6, 7, 8); grenade has range 120..500 in the live table at
+0x78b908. Its launch helper sets speed 450 at 0x42a3e5. A throw can miss a stationary hero: five control
+projectiles in the HAARP lower room ended 108..125 units away, beyond the default blast radius 60.
+
+**Rule.** `weapons.effective_grenade` chooses the unanimous spawner `monster_grenade` override ahead of the
+weapon's `grenade=`. `characters.load_grenade_overrides` tallies the source maps; disagreement falls back to the
+weapon and emits a warning. A non-default weapon style uses the grenade-suffixed SPEC 29 name
+`x1_<style>_<weapon>_<grenade>` (`weapons.variant_grenade_name`), keeping a shared gun's default and overridden
+holders separate. The variant retains the auxiliary `power_grenade` copy, XML1's `aitype="grenade"` and reuse
+7, at priority 9 above the guns' 5. Observed throws execute the canonical moveset node; these checks do not
+establish that the auxiliary node or its raised priority is necessary.
+
+The actual thrown entity is also written into `x1_moveset_grenade_<grenade>`: an XML1 moveset copy with its
+registered name and projectile entity changed. Existing default holders retain the shared moveset. A unanimous
+spawner override grants a moveset to an entry without one (NukeGuard); a weapon alone grants no missing moveset.
+Character and style packages explicitly load the variant and entity dependencies (`characters.swap_variant_style`
+and `weapons.bind_style_package`). This covers the nuclear guards' flashbang override, freeze/knockback guns'
+flashbang, and the nullifier's incendiary; mp5/laser/superlaser/lightning holders retain the ordinary grenade.
+The common import path preserves the source explosion modifiers, damage values and effects.
+
+**Check.** V43 checks the grenade-suffixed powerstyle and matching `grenade_moveset_want` on each affected
+source-origin entry, each auxiliary throw's entity and priority, each moveset variant's registered name and
+entity, and preservation of the flashbang's authored modifiers. Unit tests: `tests/unit/test_grenade_variants.py`
+(invented weapons and grenade names).
+
+**Matched HAARP proof (2026-10-07).** Two 240-second runs of haarp2_1 used the same setup and real WASD procedure
+to follow a thrown projectile into its blast area. Unfixed main: 25 native ordinary-grenade projectiles, radius
+60, modifier mask 0, no energy drains; five isolated HP drops matched the projectile's stored explosion damage
+within 0.001 (30.0380, 26.9687, 28.8550, 29.2271, 27.9523). Fixed output: 15 ordinary projectiles plus five
+flashbangs. The soldiers' isolated HP hits matched 28.34131 and 26.83286 and showed orange blasts with single
+29/27 damage numbers. The leader's flashbangs had radius 48 and drain flag 0x4, produced white flashes and drained
+17.50204, 17.79309, 15.47449, 17.15930 and 16.07161 energy points. One isolated flashbang drained 17.79309 while
+health stayed unchanged. Every HP drop >=10 and energy drop >=8 captured a screenshot; larger mixed HP drops
+were not classified as grenades by their size alone.
+
+Read-only observations: entity +0x320 points to physical properties; its +0x44 holds sampled explosion damage
+(parser store 0x49bd81), +0x54 explosion modifier flags (0x49c047), +0x78 radius (0x49bc4d). Class names come from
+a decoded constant getter at vtable +0x18, with live entity/generation checks. Hero energy is CActor +0x288
+(getter 0x41d5d0). Damage-mod names are enum flags. The `dmgmod_drain` entry at 0x6d6270 has value 0x4
+(parser 0x43be40, table 0x6d6258); confusion has no registered name. The authored pair still resolves to the
+proven energy drain, so it is retained.
+
+**Nuclear-plant positive control.** A fresh 180-second run of the same fixed output gave four white flashes and
+energy drains of 17.07495, 15.33918, 16.32330 and 16.62947. The earlier matched main run kept energy at 58 for
+180 seconds. Removing both flashbang modifiers was a diagnostic health-blast experiment, never the final rule.
+
+**Corrections and limits.** The earlier claim that unfixed HAARP soldiers never throw, and the claim that equal
+priority prevents every throw, were falsified by native projectile tracking and exact HP matches on main.
+Earlier damage-band counts were bullet pile-ups; absence of a hit on a stationary hero was not absence of a
+throw. Removing timed tags in an experimental build did not supply the missing hit and is not shipped.
+
+Staging: both builds used the new-game start-zone hook, a HAARP loadZone, named door/cover teleports, hero-only
+maximum HP 500 plus survival top-ups, and native projectile positions to guide real movement. NPC health or AI was not scripted; NPC weapon and grenade data
+were unchanged, and no damage/kill script or virtual pad was used. These are conditioned
+combat checks of entity choice and blast behavior, not an unstaged playthrough. Confusion behavior, incendiary
+runtime behavior, save/reload and original-game throw trajectory/frequency remain unverified.
+
+## 73. Release 0.2.0 defaults
+
+Port builds write `[Game] ConfirmationRelease=1` for the opt-in XML2 Fix dialog release gate (#77).
+The builder owns this key and removes it when a build no longer asks for it.
+`[Balance] HeroHealthPerBody=2.5` compensates for the fourfold hero stat scale: the native max-health
+rule gives level-1 Wolverine (scaled Body 20) 80 HP. This is a formula check; final runtime acceptance
+is reported separately. `[Limits] EffectCurves=3600` remains the shipped effect-curve pool.
+## 74. Save guard release identities and registry demand
+
+V44: talent_budget.validate counts the unique registered talent names and distinct talent files of permanent,
+zone, NPC and the possible seated-party packages for every converted and retained zone, including arenas (complete roster in section 75). Both capacities are
+enforced independently (100 names/objects/handles; 9 files). Duplicate file/name loads are reuse, not extra slots.
+The old shared-plus-four-heroes margin alone does not cover zone/NPC demand. Exceeding either budget is a build
+error, naming the zone and relevant party. Missing/unreadable talent data is also a build error. A registry raise
+needs its separate relocation proof; this rule does not change the talent-ID radix or the LC layout.
+
+fix_ini assigns GameVersion from release_identity.HISTORY. History is append-only; previously issued tokens and
+content/catalogue tuples are never reused. The 0.2.0b candidate envelope (16,2) is assigned LC20 with its immutable
+bind manifest; historical X1.* tokens remain reserved. Final integration must append its final version tuple,
+token and pinned bind manifest. A build with an unassigned identity or a changed pinned bind manifest refuses
+identity publication. _build/lc-release-identity.json archives the identity and hashes of its save-binding files.
+Offline loading across content versions remains allowed when the saved identities resolve. Mods may add cosmetic,
+UI or script content; unsupported bound-file overlays/ID-0 keys are refused by the DLL. No full-content hash field
+is added to the save.
+
+
+## 75. Minimal TalentRegistry correction (supersedes the NPC-file split)
+
+The 121-zone live sweep falsified the per-set model: formatted talent paths use a 64-byte buffer
+(0x4c062d/0x4c04c9), unknown file names all start at the default stats ID interval100
+(0x4bdc00/0x4c0644), and occupied IDs refuse new names even below the100-name capacity (0x4c018b).
+A listed file and a quiet full-pool refusal log do not prove its definitions registered.
+
+Restore the63-name0.1.12 shared list and order, including NPC powers/immunities and the held rifle-style
+slot. No NPC set or union files are emitted/listed. Hero files and the engine limits100names/9files remain.
+The complete roster collector survives: CHRB, map spawners/spawn lists, literal script closure spawns and
+Danger Room courses. Hero NPC precache still occurs before its power style (section28).
+
+The reviewed noncombat prop table `talent_budget.PROP_HERO_ROLES` identifies the Arbiter's Cyclops,
+Phoenix, Storm and Wolverine. Only when the complete zone plus its possible seated-party demand
+exceeds a capacity does the emitter remove these props' unnecessary zone talent precache as a group.
+Fighting/seatable NPCs and forced-party files are retained. The party loads its own files normally.
+V44 independently reconstructs candidates, explains every dropped file/reason, and rejects unjustified
+omissions or retained overflow. Story missions use their forced seats plus later joins; unforced missions
+keep the worst-four-hero bound. The default build uses ForcedTeams=1; menu-mode builds retain the
+unconstrained bound and must pass it independently.
+
+V44 checks names<=100, files<=9, every full `data/talents/<name>.xmlb` path<=63bytes, no nested loader
+paths and at most one unknown/default-ID-interval file per zone. It rejects stale NPC set/union output,
+checks converted NPC references against loaded shared/hero definitions, and keeps untouched retail NPC
+leftovers outside the port's authored-reference error policy.
+
+Save metadata is regenerated by the normal build. Catalogue domains and frozen legacy eras remain
+unchanged; revision5/LC23 is appended after LC22, CONTENT_VERSION remains16 for this pending release.
+Restoring the shared ordering restores the original native shared IDs; hero held names/ranks/flags must
+still pass the full82-save Python/C++ corpus. Runtime registry checks and real boss/course observations
+are required before claiming the correction accepted.
+
+
+## 76. Gun weapons roll XML1's minimum-based +/-30 % draw; explosive entities carry the single minimum
+
+**Symptom.** The port's NPC gun shots dealt too much damage on average: the HAARP leader's freeze gun that the
+first game rolls at 34-64 (mean 49) hit for the whole authored L5 code range 50-63 (mean 56.5, ~15 % higher),
+and its minimum was far higher (34 vs 50 pre-Might). Thrown explosives (flashbangs, grenades) rolled their
+explodedamage range where the first game dealt the code's minimum only (flashbang 15-18 instead of 15).
+
+**Mechanism.** XML1's weapon parser resolves the damage code through the values getter with a NULL maximum
+pointer and stores only the minimum (default.xbe 0xbc2ef-0xbc30d, the word at weapon prototype +0x1c6; the
+authored maximum is discarded at parse time). Every fire path then makes ONE integer RNG draw between
+trunc(min x 0.7f) and trunc(min x 1.3f) - the binary32 constants at 0x3ca9d8 and 0x3d4a60, the draw at
+0x1233c0, executed at 0xbcc47-0xbcc99 before the weapon-type dispatch, so it is shared by bullet, projectile,
+beam and flame weapons. The port instead resolved the whole code range into the generated trigger, and with
+DamageRolls=xml1 the engine rolled that whole range. The same mismatch existed for the style events that name
+a weapon (ps_mystique's pistols, SPEC 29.3), and for the nullifier's literal damage=10000 (a number resolves
+to min=max=10000, so the original draws 6999-12999). The entity parser reads explodedamage the same single-
+value way (0x97940-0x97953 stores the minimum at entity +0x338, no draw), so the ported 'min max' range on
+grenade_ents/missilelauncher_ents/mystique_ents/sentin_grenade_ents exploded where XML1 dealt the minimum.
+
+**Rule.** `weapons.gun_damage_range(values, damage)` computes the draw bounds 'lo hi' from the declaration's
+resolved minimum with the binary32 constants (`GUN_DRAW_LO`/`GUN_DRAW_HI`, NOT idealized 0.7/1.3: the x87
+product of 50 x 0.7f truncates to 34, not 35). `weapons.apply` and `weapons.rewrite_weapon_events` take the
+values table (`characters` passes `ctx.x1_values()`); when a weapon's damage resolves, the shot trigger/event
+carries the draw bounds instead of the code, so the existing Might/rounding/balance hooks apply to the right
+range and no balance setting re-applies the +/-30 % (xml2-fix only redirects the roll to an inclusive integer
+draw between the written bounds and adds Might's rank bonus - it never rescales the bounds). Melee weapons are
+untouched (WEAPON_TYPES only). `npc_values.collapse_single_value_entity_attrs` runs in
+`resolve_entity_codes` (both entity importers) and keeps only the resolved minimum for
+`SINGLE_VALUE_ENTITY_ATTRS` (= explodedamage, the attribute the first game's parser is proved to read as one
+number); styles and power damage ranges are NOT collapsed. A non-resolving declaration stays as written and
+is reported by the existing value-code checks.
+
+**Check.** V45 (`weapons.validate`; SPEC 76):
+every gun-shot trigger of a built style (beam/projectile trigger or rewritten beam event with the
+damagescale=difficulty + damagelevel=1 fingerprint) must carry a range that is exactly the draw of some whole
+minimum, and a powerstyle named for an XML1 weapon (`weapons.variant_name`, a non-default grenade suffix
+aside) must carry exactly that weapon's draw; a built entity file's single-value attributes must hold one
+number, never a 'min max' range. Unit tests: `tests/unit/test_gun_damage.py` (invented weapons, codes and
+entities); `test_compatibility_regressions.py` covers both entity importers doing the same conversion.
+
+**Limits.** The endpoint arithmetic is the static binary32/x87 result (34-64 for L5); a one-point endpoint
+difference (35-65) would need a live Xbox trace, as the research report notes - the mean inflation fix does
+not depend on it. The entity `damage` attribute itself stays a range in the port: on weapon shots the gun's
+attack overrides it (both engines), and the bare-entity difference is left to a separate task. XML2's own
+retail entities/styles keep their retail ranges (the check only inspects files the build wrote).
+
+## 77. Same-name items keep XML2's entry but take XML1's pickup model (issues #96, #98)
+
+**Symptom.** World-placed keycard pickups rendered as the engine's missing-model marker - a floating yellow
+question mark where the model should be - while the objective hint arrow pointed at them correctly: the
+HAARP train-car keycard of the Maintenance Garage (issue #98) and the proximity keycard a leader drops
+(issue #96). The tester could still pick the invisible marker up.
+
+**Mechanism.** XML1's zones place these pickups as `inventoryent` entities with an `inventoryitem` name and
+NO model attribute; the running game resolves the pickup's model from the items table (XML1's items.eng:
+KEYCARD1/2/3 -> `pickups/key_green`). XML2's own items table ships same-named KEYCARD1/2/3 entries WITHOUT a
+model - XML2 never places them in the world. The world-table merge keeps XML2's entry for every same-named
+item (SPEC 4.4 xml2-wins), so the converted zones' keycards resolved to a model-less item and XMen2.exe
+drew its missing-model placeholder. The engine reads the zone's .engb as well as the .XMLB, so both halves
+of Data/items carry the fill.
+
+**Rule.** In `zones.build_world_tables`, for the items table only, a same-name XML2 entry with no `model`
+attribute (or an empty one) takes the model of XML1's original entry (`zones.fill_item_model`); XML2's own
+model, when it has one, always wins and other tables are untouched. Every filled model is added to the
+items package's `only_files` (it ships in packages/generated/items.PKGB, loaded at game start) and is
+reported in the build note.
+
+**Check.** V46: every item name a registered XMLB references through `inventoryitem` must
+exist in Data/items, carry a model, and have that model packaged in packages/generated/items.PKGB; `money`
+alone is allowlisted (XMen2.exe resolves MONEY natively; neither game lists it in the items table). Unit
+tests: `tests/unit/test_pickup_models.py` (invented items).
+
+**Limits.** The fill covers the items table only; entities that name a model directly (most pickups carry
+the model inline) are covered by the existing package reference checks. The engine-side behaviour (model
+lookup from the items table for inventoryent) is XML1/XML2-shared and was not re-verified against
+XMen2.exe in this task; the V46 data check and the staged live look at the keycard are the evidence.
+
+## 78. Scripted boss approach completion (issue #93)
+
+`scripted_approaches` handles only `haarp/int/pyro_intro`. Its authored spawner activates Pyro north of the
+doorway, then his spawn script assigns the `door_spot` waypoint path. On XML2 he stops north of the doorway
+while the waypoint action is already within activation distance. The barriers consequently rise with him on
+the wrong side. Runtime movement tracing at retail `0x42b7bb` reports the blocker as the zone's `world`
+entity, with a wall normal `(0,-1,0)`; Pyro and his fire volumes retain `altenemy` without team inversion.
+The same-team danger-notice gate is not the divergence demonstrated by this encounter.
+
+After the intro's unique spawner activation, the conversion inserts a `0.100` game-time wait and
+`copyOriginAndAngles` to the existing `wp_door_spot01`. The wait permits actor birth and the original spawn
+script to assign its path first. This finishes the scripted approach at its authored destination; it bypasses
+the blocked portion of the cutscene walk. The waypoint action, barriers, boss AI, health, damage, pain phases
+and death script remain authoritative. No collision or AI-notification attribute is added to a harm entity,
+and no map coordinate or relocated hero start is introduced.
+The existing script-reference pinning pass also writes `smartent=false` on this waypoint; it changes only
+this zone's map pair and keeps the marker available to the new direct script reference.
+
+The rewrite preserves conditional scope and CRLF, is idempotent, and fails closed if the reviewed spawner
+activation is absent or ambiguous. It applies to this intro only. V47 checks the ordered wait/placement in
+the written script and one matching map instance with a finite three-coordinate position. Synthetic tests
+use invented encounter names. This corrects the intro's placement; it does not repair XML2 world geometry
+or infer how every XML1 scripted path traversed that geometry. Loading a save already inside the fight
+does not rerun the intro, so such a save requires a separate recovery policy.
+
+## 79. Equipment shop from Xtraction points (issue #95)
+
+XML1's full point handler (default.xbe 0x9f110) adds string 2005 when the campaign registry's
+in-campaign test for the equipment vendor succeeds (0x9f3ff-0x9f43e, registry vt+0x38).
+It opens an equipment-shop menu, rather than travelling to a workshop map. The lite handler
+(0x9f4a0) also requires its fourth service flag. XML2's full handler (0x4a6b50) has no such
+option; disabling its world map does not add services.
+
+Prepare P3 VERSION 5 writes a generated helper for each source point. Full points permit the
+shop; lite points preserve flag 4. The source contact script's existing ftalk store supplies
+the unlock, using its planned storage, without adding a saved flag or changing the packing.
+That store is cleared at the first mansion mission's start, and remains set across away
+missions. The helper calls extractionPointServices(owner, permission) behind the
+xml2fixFeature("xtractionshop") guard. Menu builds collapse the helper to its native fallback.
+Other lite permissions retain the existing section 62 behavior.
+
+The companion XML2 Fix registers extractionPointServices n(ai), wraps the same forced-team
+handler as the native point, and appends the source label before the native dialog finalizes.
+[Game] XtractionShop=1 enables the guarded hook; default 0 keeps the menu unchanged. The
+builder owns and writes this key. Permission lives only around one native handler call,
+so a prior point cannot enable another point's shop. Save and Change Team remain native.
+The action is shopMenu('equip'), the existing port adapter: XML2 has only its shared shop
+menu, and cannot open XML1's separate equipment-shop menu file.
+
+V48 rejects source point calls left directly in XML1 map actscripts in seat builds; they
+must route through generated helpers. V14 checks the function signature and feature guard,
+and V7 treats it as a popup blocker. Synthetic tests use invented point and storage names.
+No content-version increment in this implementation wave; integration assigns it.
+
+
+Section 79 migration policy: the one-time pre-LC save importer grants the existing Forge-contact flag to a
+campaign whose saved zone/history proves progress beyond the first mansion visit (HAARP or later main-campaign
+zones). This recovers the contact unlock omitted by old port builds. The repair changes only x1v03 script bit31,
+records an import ledger note, and never runs for a new game or LC resave. Point-local service permissions and
+normal first-mansion contact progression remain as specified above. No generated content changes.
+
+
+## 80. Legacy streamed states for newly pinned placements
+
+The save loader must account for an entity changing from streamed to numbered placement between builder
+releases. An imported zone can retain a smart or dynamic state for such an entity while its numbered slot is
+absent. Applying inferred zero-slot removal semantics alone discards an existing cutscene target.
+
+At reverse/load time, a legacy-import record (META origin 1) or inferred record (capture flag 2) may associate
+an unnumbered state with the current numbering only when its definition/instance key pair identifies exactly
+one current placement and exactly one unnumbered saved state. An explicit numbered state, including a dead
+state, takes precedence. Observed native records without legacy provenance are not promoted. Missing or
+ambiguous states retain the existing removal policy; the loader does not reset the whole zone or create a
+missing entity.
+
+A promoted state leaves its unnumbered list, occupies the matching numbered slot, and gains native alive
+bit 8 because membership in an unnumbered capture list proves existence even while dormant. Other flags,
+position and payload are preserved. Loaded capture metadata describes the reconstructed numbered map so
+actual factory ordinals can still be matched by placement. A later save records the promoted placement as
+numbered; explicit removal remains authoritative on subsequent loads.
+
+This is mirrored in Python tools/lcsave/convert.py and XML2 Fix reverse.cpp/api_engine.cpp. Existing imports
+receive the repair when loaded; converter output, wire revision, catalogue and generated build files do not
+change. Synthetic tests cover dormant smart/dynamic states, earlier imports with zero capture status,
+explicit tombstones, duplicate saved/current identities, observed-capture exclusion and resave persistence.
+
+
+## 81. Conversation heard era mapping
+
+Savefiles emits `Data/lcsave/conversation.lcm`, documented in tools/lcsave/README.md. V39 parses and compares
+it to the append-only hash map: validated previous snapshots plus historical and current package layouts.
+Regeneration retains every previously recorded key and rejects conflicting meanings or damaged prior metadata.
+Engine consumed-start lanes follow loaded file name rank, four per file.
+Reverse translation carries old marks by conversation-file/lane identity; removal gets a specific note, and
+unknown nonzero provenance drops heard words with a note and continues loading. New provenance hashes the
+zone's exact file/lane ranking; global file digests are legacy map keys and never enable positional reuse. Loaded metadata rebases the conversation
+digest to the reconstructed words. LC wire fields and existing catalogue ids remain unchanged.
+## 82. Trivia persistence (V17)
+
+The question split in section 21.4 stays unchanged. The generated trivia root declares
+`persistence="compact"`; its TRIV bind list uses rule 2. Row group/position and catalogue key
+remain `(act, question)` and `act/qN`. The native bit is the zero-based rank of `(act, position)`
+in numeric sorted order. The current 50 questions occupy bits 0..49, leaving 200 native slots
+unused. Every act must be positive, each act may contain at most 50 questions, and the total
+may not exceed 250. V17 checks the declaration and these bounds within frontend validation.
+
+XML2 Fix with `[Save] Format=lc` guards and replaces the native getter/setter at 0x469e10 /
+0x469e60. They take act and zero-based question index and access the existing CGame bitmap
+at +0x5e8 using the verified current bind mapping. Native capture, disk reconstruction and
+online stream translation use the same map. Rule-1 builds retain the sparse layout. A DLL
+that does not know rule 2 refuses its bind, rather than accepting a mismatched layout.
+
+The one-time importer always decodes historical bits as `(act-1)*50+question`; LC GAME.trivia
+continues storing the existing identities. Imported LC answers are reconstructed at the
+current build's compact positions. No catalogue renumbering or LC wire change is required.
+Late-act answers that an older native engine never recorded cannot be recovered from those saves.
+
+Rebuild `frontend,savefiles` together in an existing build. Prepared disc/table/script/sound/music
+inputs are unchanged and remain reusable; generated trivia XMLB/ENGB and its SHA-1-bound
+sidecar must be regenerated together. The release integrator sets CONTENT_VERSION.
+
+The native per-act cursor accessors at 0x46a690 / 0x46a6a0 have no bounds check:
+they access CGame+0x5e0+act. The original five cursor bytes end at +0x5e5; acts 8/9
+alias the answer bitmap itself. Guarded replacements keep cursors in independent storage
+for every act in the verified question table. Resetgame and completed full campaign loads
+clear this transient storage; first access derives the first unanswered question from
+restored identities (or question zero once all are answered). Stats-only loads preserve it.
+Cursor advancement therefore cannot mutate another question's persisted answer. Native
+stream dimensions and LC records remain unchanged. Old cursor-overlap damage cannot be
+unambiguously distinguished from genuine early-act answers in already-written files.
+
+## 83. Explosive first-contact compatibility
+
+The port requests `[Game] ExplosiveFirstHit=1` from the companion XML2 Fix. The first game's
+explosion getter increments the projectile attack sequence unconditionally; the PC getter does
+so only with `explosionhitsfirstvictim`. The companion guarded branch patch supplies the original
+rule to every call of the native explosion getter, including guided and inline projectiles.
+`fix_ini.PORT_OWNED` includes the key so ordinary INI merges enable it for the first-game opening
+and drop it when that opening is absent. Stock openings do not request it.
+
+No entity/declaration/placement order, scalar blast value, activation flag or save format changes.
+The synthetic INI contract checks ownership, opt-in defaults and the stock-opening fallback.
+A visual explosion is not damage evidence: compare actual health/energy and separate contact,
+blast, other enemies and falling damage. The rule does not change explosion activation.
+The release integrator assigns the content version; this restoration does not bump it locally.
+
+
+The companion DLL also binds the effective installed rule into native host-info/join agreement.
+INI enablement alone is insufficient: failed installation blocks online access, and differing
+installed rules refuse admission in either direction. Both verified off peers remain compatible.
+This agreement is separate from the release identity; the integrator assigns that token, and this
+change does not rewrite it. Older peers without the tagged agreement cannot join the new protocol.
+Live multiplayer acceptance is deferred to the integrator; the native agreement fixture is game-free.
+
+The shared native gameplay-capability record includes the effective explosive rule and explicit entity/token
+layout; participating controller/capacity installers register values before finalization. Unknown or differing
+entries refuse with an actionable native dialog and immediate pending-join cleanup. The transport and
+registration API are documented in the companion XML2 Fix `docs/gameplay-agreement.md`.
+
+
+## 84. Candidate i content identity
+
+Generated menu, trivia, explosion and move-style content changes advance CONTENT_VERSION from 16 to 17.
+Catalogue revision 6 and all IDs are retained: no key/domain change requires a catalogue revision.
+The append-only release history assigns (17,6) token LC25 with the fresh build's immutable bind manifest.
+LC24 and all historical rows remain unchanged; saves resolve identities across content versions.
+Builder/DLL versions remain 0.2.0 / 1.4.0. The shared gameplay agreement includes the installed first-hit
+rule (capability 2, revision 1) in addition to the entity/token layout.
+
+## 85. Entity capacity (XML2 Fix `[Limits] EntityCapacity`, V50)
+
+The stock engine keeps 32 actor and 224 generic entity slots and 256 World handles; the 224th live generic
+entity is the last prop, projectile or trigger a zone gets - the rest are refused without a word (the 0.2.0 census:
+943 refusals across 116 zones; the HAARP interior freeze gun never gets a slot; the Magneto arena sits at 224/224).
+XML2 Fix 1.4's `[Limits] EntityCapacity=1` raises the domain to 32 actor / 768 generic / 1024 World handles with
+contiguous ten-bit indices (its docs/entity-capacity.md and docs/entity-capacity-phase-a-plan.md). The builder:
+
+- owns the key for port builds (fix_ini.LIMITS; `check_entity_capacity_dll` refuses a DLL that does not know it,
+  and the key without `[Save] Format=lc`, because the expanded native save layout exists only as LC files);
+- writes `Data/lcsave/typed-entity-ids.txt` from the SHIPPED `Scripts` tree (savefiles, the last module): the
+  registry of zone-variable keys whose every writer is a direct `getID` local or a literal zero (12 keys in the
+  prepared corpus of the plan; the shipped tree, which also holds the XML2 base scripts, has 13), with the
+  fingerprint of every script file. The DLL verifies the registry against the installed tree before it migrates a
+  legacy (pre-capacity) save's typed fields from the eight-bit to the ten-bit token layout; a mod that ships
+  scripts leaves it unverified and legacy loads are refused with the reason (`tools/xml1build/typed_entity_ids.py`,
+  `tools/lcsave/typed_registry.py`);
+- V50 checks the shipped registry is exactly the shipped tree's; a tree the scanner cannot classify (a typed key
+  with a non-token writer, a token local in a float operator) fails the build rather than guess;
+- the Python lcsave takes an explicit native layout (`layout.RETAIL` / `layout.E10A2`) for every stream, record
+  and transfer bound, and encodes/decodes the LC required-feature bit 0 the expanded layout's saves carry.
+  Retail-layout outputs are byte-identical to before (the 82-save corpus).
+
+Capacities stay 32 actors (the controller arena and team records are a later phase).
+
+## 86. Master Mold native controller (V51)
+
+The scripts module records the effective packed mission-stage layout in
+`_build/scripts_detail.json`, under `mold_controller` revision 1. It derives the
+flag, first bit and narrowed width from the same storage plan used to transform
+scripts. **V51:** if the boss spawn script is installed but that binding is
+invalid, the scripts module reports a build error. Missing/unsupported metadata
+never enables a controller in an older or partial build.
+
+`fix_ini.port_keys` and the harness write `Game.Xml1MasterMold=1` and
+`Game.Xml1MoldStage=flag:first_bit:width` only with first-game identity and a valid
+contract. Both are builder-owned keys. The DLL defaults off, checks its native
+hook dependencies atomically, and keeps the unshielded native encounter when
+support is unavailable. The controller reads the existing stage flags on spawn;
+no save field, entity ordinal, or content-version change is introduced here.
+
+The companion DLL restores native shield/core attacks, platform actions, original
+attack deadlines, party coordination and core tethers. Staged runtime acceptance
+covers native core deaths, real switch interactions, shield lowering, cold load,
+post-shield phase recovery and ending credits. It is not an unassisted campaign
+playthrough. Turret restoration is still separate and is not enabled by this change.
+
+Online co-op is lockstep: every peer runs the boss's native AI update, so every
+peer runs the controller. The companion DLL registers the installed state in the
+shared gameplay-capability record as rule 3 (revision 1, `{installed, first_bit,
+width, FNV-1a-32(flag)}` from the applied `Xml1MoldStage`, so a different saved
+variable with the same bit range is refused too) and rule 4 (turrets, always off).
+Two first-game builds with the same binding agree; a peer without the controller,
+with a different binding, or with an unverified installation is refused before
+admission. A requested controller that fails to install closes host/join for that
+process instead of falling back silently. Inside a session the controller uses the
+first player slot with a living hero rather than each machine's `_ACTIVE_HERO_`.
+
+## 87. Candidate j content identity
+
+The entity-capacity builder (SPEC 85: `Data/lcsave/typed-entity-ids.txt`, the `[Limits] EntityCapacity` and
+`[Save] Format=lc` keys) and the Master Mold binding (SPEC 86: `Game.Xml1MasterMold` / `Xml1MoldStage`) change a
+build's output, so CONTENT_VERSION advances from 17 to 18. The catalogue's IDs, keys and domains are unchanged (the
+decoded catalogue differs from candidate i's only in its content version; every `.lcbind`, `legacy.lcm` and
+`conversation.lcm` is byte-identical), so catalogue revision 6 is retained. The append-only history assigns (18,6)
+token LC26 with the fresh build's bind manifest; LC25 and every older row are unchanged. A raised (E10A2) save
+carries LC required-feature bit 0; the GCAP protocol revision 2 and entity layout rule revision 3 refuse a
+candidate-i peer at admission whatever its token. Builder/DLL versions remain 0.2.0 / 1.4.0.

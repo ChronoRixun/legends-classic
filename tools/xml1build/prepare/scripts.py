@@ -63,7 +63,7 @@ from ..sources import REPO_ROOT
 import xmlb  # noqa: E402  tools/xmlb.py
 
 STAGE = 'scripts'
-VERSION = 2                                          # 2: issue #63 (lite Xtraction points -> extractionPoint)
+VERSION = 5                                          # 5: issue #95 (point-local permission, safe feature fallback)
 OUT = 'out'                                          # the research layout: Sources overrides scripts/out with this
 REPORT_TXT, REPORT_JSON = 'rewrite_report.txt', 'rewrite_report.json'
 API_RELS = ('scripts/xml1_api.json', 'scripts/xml2_api.json')   # research-relative, packaged data
@@ -170,6 +170,20 @@ def gen_get(target, st, quote):
                   f'     {target} = {call("isub", target, 1 << st.nbits)}',
                   'endif']
     return lines
+
+
+def xtraction_menu_lines(owner, allowed, unlock_storage, quote):
+    """Keep Save and team handling native; pass a point-local shop permission to the companion DLL."""
+    lines = gen_get('x1_shop', unlock_storage, quote) if allowed and unlock_storage else []
+    permission = 'x1_shop' if lines else '0'
+    return lines + ['x1_services = iadd(0, 0 )',
+                    f'x1_services = {call("xml2fixFeature", q("xtractionshop", quote))}',
+                    'if x1_services == 1',
+                    '     debug("x1: Xtraction services" )',
+                    '     ' + call('extractionPointServices', owner, permission),
+                    'else',
+                    '     ' + call('extractionPoint', owner),
+                    'endif']
 
 
 def fmt_line(indent, s):
@@ -726,15 +740,14 @@ class Rewriter:
             STATS['rule blackbirdMenu code argument'] += 1
             return [call(name, argtxt(c.args[0], quote), q(new, '"' if quote == '"' else "'"),
                          argtxt(c.args[2], quote))]
-        if name == 'extractionPointLite' and c.args:
-            # issue #63: XML1's lite point (xbe 0x9f4a0: owner + 5 flags) always offers Save and Load, plus Change
-            # Team (flag 1) and Danger Room / Healer / Forge (flags 2-4). XMen2.exe's extractionPointLite (0x4a6d80,
-            # owner + 3) is team change only, after an X-Men Legends II hint on first use. The full extractionPoint
-            # (0x4a6b50: title, Xtract, Change Team, Save) is the nearest XMen2.exe menu: every lite point becomes
-            # one. The flags are dropped: Load / Danger Room / Healer / Forge need an XML2 Fix menu (SPEC, "Lite
-            # Xtraction points").
-            STATS['rule extractionPointLite -> extractionPoint (flags dropped)'] += 1
-            return [call('extractionPoint', argtxt(c.args[0], quote))]
+        if name in ('extractionPoint', 'extractionPointLite') and c.args:
+            # Full points offer Forge once contacted. Lite points additionally gate it with flag 4.
+            # The existing ftalk store is set by the source contact script, and survives away missions.
+            allowed = name == 'extractionPoint' or (len(c.args) > 4 and
+                       c.args[4].kind == 'str' and c.args[4].value.lower() == 'true')
+            STATS['rule Xtraction point services'] += 1
+            return xtraction_menu_lines(argtxt(c.args[0], quote), allowed,
+                                        self.STORAGE.get(('m', 'ftalk')), quote)
         if name in DROP:
             STATS[f'drop {name}'] += 1
             txt = f'{name}(' + ', '.join(a.text for a in c.args) + ')'
@@ -880,7 +893,8 @@ class Rewriter:
             # token - exactly how XML1/XML2 data writes it: runscript unlockCharacter('','astonishing')
             out = [compact(o) for o in out]
         joined = '\\n\\r'.join(out)
-        fits = len(joined) <= (INLINE_MAX - len('runscript ') if console else INLINE_MAX) and len(out) <= 6
+        fits = (len(joined) <= (INLINE_MAX - len('runscript ') if console else INLINE_MAX) and len(out) <= 6 and
+                not any('extractionPointServices(' in o for o in out))
         if fits and not (console and re.search(r'[\s;]', joined)):
             return joined
         hname = self.helper_script([x.replace("'", '"') for x in out], re.sub(r'\W+', '_', where.split('/')[-1])[:20])
@@ -903,7 +917,8 @@ class Rewriter:
                 ln.value.value if ln.kind == 'assign' and ln.value.kind == 'call' else None)
             if c is None:
                 continue
-            e = self.API2.get(c.name)
+            e = self.API2.get(c.name) or ({'args': 's', 'ret': 'i'} if c.name == 'xml2fixFeature' else
+                                        {'args': 'ai', 'ret': 'n'} if c.name == 'extractionPointServices' else None)
             if e is None:
                 if c.name != 'main':
                     bad.append(f'{where}:{i}: unknown function {c.name}')

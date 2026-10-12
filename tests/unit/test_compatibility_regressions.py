@@ -27,7 +27,9 @@ def test_zone_entity_patch_preserves_character_value_resolution():
     # mean a forced overwrite, so both import paths must perform exactly the same conversion.
     assert character_tree[0].get('damage') == '15 18'
     assert character_tree[0].get('knockback') == '500'
-    assert character_tree[0].get('explodedamage') == '25 31'
+    # explodedamage is a single-value attribute in XML1's entity parser (the minimum only, no draw), so both
+    # importers collapse the range to the minimum (npc_values.collapse_single_value_entity_attrs)
+    assert character_tree[0].get('explodedamage') == '25'
     assert ET.tostring(zone_tree) == ET.tostring(character_tree)
 
 

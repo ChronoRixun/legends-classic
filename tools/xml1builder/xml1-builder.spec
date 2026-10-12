@@ -49,6 +49,9 @@ for rel in R.RESEARCH_DATA:
         raise SystemExit(f'a packaged research table is missing: {src} (run tools/freeze_builder.py)')
     datas.append((str(src), str(Path('research', rel).parent.as_posix())))
 datas.append((str(TOOLS / 'xml1build' / 'lib' / 'ima_kernel.c'), 'xml1build/lib'))
+for p in sorted((TOOLS / 'lcsave' / 'data').iterdir()):          # the master catalogue and the era model
+    if p.is_file():                                             # (hashes only - decision D3), read by the
+        datas.append((str(p), 'lcsave/data'))                   # savefiles step of every build (SPEC 70)
 binaries = [(KERNEL, 'xml1build/lib')] if KERNEL else []
 
 DEV_ONLY = {'igb_budget', 'schema_check', 'regress_nyc1', 'devdata'}
@@ -61,6 +64,7 @@ def _shipped(name):
 
 hiddenimports = sorted(set(collect_submodules('xml1build', filter=_shipped)
                            + collect_submodules('xml1builder', filter=_shipped)
+                           + collect_submodules('lcsave', filter=_shipped)
                            + ['build_xml1', 'xmlb']))
 excludes = ['tkinter', '_tkinter', 'numpy.f2py', 'numpy.tests', 'pytest', 'PIL', 'matplotlib', 'scipy', 'IPython',
             'xml1build.igb_budget', 'xml1build.schema_check', 'xml1build.regress_nyc1']

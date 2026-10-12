@@ -184,7 +184,7 @@ def main(argv=None):
         '<FightMove name="p3"><trigger name="powerup" powerup="invisible" remove="true" time="0"/>'
         '<trigger name="tintin" type="ce_renderfx" remove="true" time="0"/></FightMove>'
         '</powerstyle>')
-    fnd = {(f.kind, f.move, f.name) for f in CE.style_findings(neg, shared)}
+    fnd = {(f.kind, f.move, f.name) for f in CE.style_findings(neg, shared, max_triggers=19)}
     want = {('unresolved', '<style>', 'bad_ev'), ('handler', 'm1', 'ch_bogus'), ('unresolved', 'm1', 'no_such_event'),
             ('unresolved', 'm1', 'x'), ('orphan_tag', 'm1', 'tag=7'), ('unresolved', 'm1', 'tag=None'),
             ('ignored_tag', 'm1', 'vel'), ('name_len', 'm1', 'n' * 32), ('trigger_cap', 'm2', '20'),

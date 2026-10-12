@@ -52,7 +52,7 @@ Checks (severity per SPEC 4.6: error = will not load or silently misbehaves; war
   V17 review (SPEC 21): review_paths (caps, textures, movies, imageViewer literals, loading screens), codex,
                 trivia, credits
   V18 combat events (SPEC 22, combat_events.v18): style triggers / events / handlers / affecters against XMen2.exe
-  V19 npc values (SPEC 24, npc_values.v19): no style value code XMen2.exe reads as 0; the NPC energy talent and
+  V19 npc values (SPEC 24, npc_values.v19): no style, entity-file or inline-map value code XMen2.exe reads as 0; the NPC energy talent and
                 every XML1-origin npcstat entry's rank (= its mind)
   V20 automaps (SPEC 26, automaps.v20): a .zam and one last <zam> entry for every converted zone with an XML1
                 automap texture (none elsewhere, no textures/automap entries); every zam parses as the loader
@@ -71,7 +71,8 @@ Checks (severity per SPEC 4.6: error = will not load or silently misbehaves; war
   V30 personal items (SPEC 56, validate_frontend.v_personal_items): every personalItem literal has
                 Data/personal/<item> from the first game (frontend), with text and a texture IGB in <out>
   V31 save positions (SPEC 61): shared_talents in the save-stable order of
-                save_positions (new talents appended); no enabled fall kill volume numbered before another entinst
+                save_positions (new talents appended); no enabled fall kill volume or new settled prop numbered
+                before an existing entinst
   V32 lite xtraction (SPEC 62, issue #63): no XML1 script or inline data code calls
                 extractionPointLite (XMen2.exe's is team change only, no Save); prepare P3 writes extractionPoint for
                 XML1's lite points
@@ -83,10 +84,25 @@ Checks (severity per SPEC 4.6: error = will not load or silently misbehaves; war
                 talentvalue with rank 1 zeroed while a later rank is non-zero must not have a same-named event
                 carrying a non-zero literal in the hero's powerstyle (XML1 inherits the event's value at ranks
                 the trigger leaves the attribute unset)
+  V38 balance (SPEC 69, balance.validate): a balance build has the power-attack
+                marker in its styles and XML1's values on the seven basic melee events of the shared combat
+                events; any other build has no marker
+  V39 save files (SPEC 70, savefiles.validate): the build carries catalogue.lcc, legacy.lcm and every .lcbind,
+                byte-identical to the set its own data produces, every key in the master catalogue
+  V50 typed entity ids (SPEC 85, savefiles.validate): Data/lcsave/typed-entity-ids.txt is present and is exactly the
+      registry of the shipped Scripts tree (fingerprint and keys), as the entity-capacity DLL verifies it at load
+  V51 Master Mold stage binding (SPEC 86, scripts module): with the boss spawn script installed, the effective
+      packed mission-stage binding the DLL's Xml1MoldStage carries is valid, else a build error
+  V40 melee weapons (SPEC 69.5, melee_weapons.validate): exact metadata on all and only the source armed NPCs,
+                both npcstat halves agree and their bounded ini serialization matches
   V23 fight styles (SPEC 43, style_budget.validate): per converted zone the distinct style files of the permanent
                 packages, the zone package, its CHRB characters' packages and the worst four-hero party against
                 the registry the shipped ini asks xml2-fix for ([Limits] FightStyles, else XMen2.exe's 19): more
                 is an error (the hero seated last has no powers), exactly full a warning
+  V44 talent registry (SPEC 75, talent_budget.validate): per converted zone the unique
+                registered talent names and distinct talent files of the permanent, zone, CHRB character and
+                worst four-hero party packages, with the NPC-only talents in their data/talents/npc set files
+                (TalentRegistry fix): over 100 names or 9 files an error, exactly full a warning
   V25 harm loops (SPEC 51): no delayed start-on ordinary harm loops that XML2 disables
   V34 ladder spawns (SPEC 46): no monster spawner without monster_spawnexactlocation runs a ladder motion path
   V35 pda portal (SPEC 64, issue #89; validate_frontend.v_pda_portal): both front ends: UI/menus/pda (both halves)
@@ -94,6 +110,11 @@ Checks (severity per SPEC 4.6: error = will not load or silently misbehaves; war
                 hidden)
   V36 recommended party (SPEC 67, issue #76; reported with V14): a mission start seeded with the first game's
                 recommended party has exactly the guarded seatParty + skinset before its original editable menu
+  V45 gun damage roll (SPEC 76, weapons.validate): every built gun-shot trigger
+                carries XML1's weapon-fire draw - one integer range trunc(min*0.7f)..trunc(min*1.3f) of the damage
+                declaration's minimum (default.xbe 0xbcc47-0xbcc99) - a powerstyle named for an XML1 weapon carries
+                exactly that weapon's draw, and a built entity file's single-value attributes (explodedamage)
+                hold XML1's minimum, never a 'min max' range
 
 Inherited defects. Many findings are defects of the XML1 disc itself (a zone, conversation, dialog, script or
 sound bank XML1 references but never shipped; a line default.xbe already dropped). They are re-derived, not
@@ -121,6 +142,9 @@ import xmlb                                   # noqa: E402  tools/xmlb.py
 from .lib import x1names                      # noqa: E402  the XML1 namespace (was research/characters)
 from .lib.x1names import is_fightstyle_name   # noqa: E402  fightstyle_* / x1_fightstyle_* (issue #52)
 from . import validate_script as VS
+from . import balance as BAL
+from . import melee_weapons as MW
+from . import savefiles as SF
 from . import validate_sound as VSND
 from . import x1schema as XS
 from . import scripts_transform as ST      # section 18: the join zones' NPC double; V14 forced teams
@@ -131,9 +155,11 @@ from . import npc_values as NV           # V19 (SPEC 24): value codes XMen2.exe 
 from . import buoys as BY
 from . import automaps as AM             # V20 (SPEC 26): XML1 automaps as .zam
 from . import skins as SK                # V21 (SPEC 25): skin blend weights / skeleton against the anim DB
+from . import talent_budget as TB        # V44 (SPEC 75): complete-roster TalentRegistry demand
 from . import style_budget as SB         # V23 (SPEC 43): the fighting / power style registry per zone
 from . import ladder_motion as LM       # V34 (SPEC 46): ladder paths only from the ladder top
 from . import weapons as W              # V5 (SPEC 57, issue #52): a gun-armed entry carries its gun's fighting style
+from . import scripted_approaches as SA  # V47 (SPEC 78): authored scripted approach completion
 from . import save_positions as SP      # V31: identities a save keeps by position
 
 MAX_REPORTED = 50                             # per check and severity, into ctx.error / ctx.warn
@@ -256,6 +282,14 @@ def _stem(rel):
 
 def _canon(el):
     return (el.tag, tuple(sorted(el.attrib.items())), tuple(_canon(c) for c in el))
+
+
+def _num(v, default=0.0):
+    """a style attribute as a number (missing / unparsable -> default)."""
+    try:
+        return float(v)
+    except (TypeError, ValueError):
+        return default
 
 
 def _short(v, n=90):
@@ -402,11 +436,13 @@ class Validator:
         self._banks = None
         self._x1stats = None
         self._weapon_fire_cache = {}    # powerstyle (lower) -> weapons.weapon_fire_left (SPEC 29.3)
+        self._weapon_sound_cache = {}   # authored named-weapon events; ordinary beams need no added gun sound
         self._weapon_types = None
         self._zoneinfo = None
         self._zone_ids = None
         self._x1checker = None
         self._x1weapons = None
+        self._x1gren = None
         self._obj_refs = collections.defaultdict(set)      # objective name -> files (XML1 code)
         self._act_refs = collections.defaultdict(set)      # setCurrentAct literal -> files (XML1 code)
         self._x1_zone_set = None
@@ -721,6 +757,21 @@ class Validator:
                 for w in root.iter() if w.tag.lower() == 'weapon' and w.get('name')}
         return self._x1weapons
 
+    def x1_grenade_overrides(self):
+        """XML1 monsterspawnerent monster_grenade votes by character: {character lower: grenade} where every
+        spawner agrees (issue #36; the same tally characters.load_grenade_overrides folds into the builds)."""
+        if self._x1gren is None:
+            roots = []
+            for rel in self.ctx.x1_rels('maps/'):
+                if not rel.lower().endswith('.eng'):
+                    continue
+                try:
+                    roots.append((rel, self.ctx.read_x1_xml(rel)))
+                except (KeyError, ValueError):
+                    continue
+            self._x1gren = {ch: next(iter(gs)) for ch, gs in W.grenade_override_votes(roots).items() if len(gs) == 1}
+        return self._x1gren
+
     # ------------------------------------------------------------------ running / reporting
     def run_all(self):
         for cid, title, fn in (('V1', 'proxy', self.v1_proxy), ('V2', 'registry', self.v2_registry),
@@ -732,6 +783,7 @@ class Validator:
                                ('V13', 'actor slots', self.v13_actor_slots),
                                ('V14', 'forced teams', self.v14_forced_teams),
                                ('V15', 'front end', lambda ck: VF.v15_front_end(self, ck)),
+                               ('V49', 'main appearance', lambda ck: VF.v_main_appearance(self, ck)),
                                ('V16', 'danger room', lambda ck: VF.v16_danger_room(self, ck)),
                                ('V17', 'review', lambda ck: VF.v17_review(self, ck)),
                                ('V18', 'combat events', lambda ck: CE.v18(self, ck)),
@@ -740,6 +792,7 @@ class Validator:
                                ('V21', 'skins', lambda ck: SK.validate(self, ck)),
                                ('V22', 'buoys', lambda ck: BY.validate(self, ck)),
                                ('V23', 'fight styles', lambda ck: SB.validate(self, ck)),
+                               ('V44', 'talent registry demand', lambda ck: TB.validate(self, ck)),
                                ('V24', 'conversation portraits', self.conversation_portraits),
                                ('V25', 'harm loop startup', self.harm_loop_startup),
                                ('V26', 'fall kill volumes', self.fall_kill_volumes),
@@ -749,9 +802,17 @@ class Validator:
                                ('V30', 'personal items', lambda ck: VF.v_personal_items(self, ck)),
                                ('V31', 'save positions', self.save_positions),
                                ('V32', 'lite xtraction', self.lite_xtraction),
+                               ('V48', 'Xtraction service routing', self.xtraction_services),
                                ('V34', 'ladder spawns', self.ladder_spawns),
                                ('V35', 'pda portal', lambda ck: VF.v_pda_portal(self, ck)),
-                               ('V37', 'xtraction beacons / rank-1 power damage', self.v37_beacons_rank_one)):
+                               ('V37', 'xtraction beacons / rank-1 power damage', self.v37_beacons_rank_one),
+                               ('V38', 'balance', lambda ck: BAL.validate(self, ck)),
+                               ('V40', 'melee weapons', lambda ck: MW.validate(self, ck)),
+                               ('V39', 'save files', lambda ck: SF.validate(self, ck)),
+                               ('V41', 'spawn-floor residency', self.spawn_floor_residency),
+                               ('V45', 'gun damage roll', lambda ck: W.validate(self, ck)),
+                               ('V47', 'scripted boss approach', lambda ck: SA.validate(self, ck)),
+                               ('V46', 'pickup models', self.v46_pickup_models)):
             ck = Check(cid, title)
             self.checks[cid] = ck
             t0 = time.time()
@@ -772,6 +833,61 @@ class Validator:
                 self._banks.save()
             except OSError as ex:
                 self.ctx.note(f'sound cache not saved: {ex}')
+
+    def spawn_floor_residency(self, ck):
+        """Issue #81: cheap output checks for the new numbered prop tail."""
+        from . import settle as SE
+        for zone in sorted(self.zone_ids):
+            root = self.tree(f'maps/{zone}.engb')
+            if root is None:
+                root = self.tree(f'maps/{zone}.xmlb')
+            if root is None:
+                continue
+            for problem in SE.problems(root):
+                ck.error(f'{zone}: {problem}')
+            defs = {e.get('name'): e for e in root.iter('entity')}
+            added = sum(len(g.findall('inst')) for g in root.findall('entinst')
+                        if defs.get(g.get('type')) is not None and defs[g.get('type')].get(SE.MARKER) == 'true')
+            if added > SE.MAX_NEW_RESIDENTS:
+                ck.error(f'{zone}: spawn-floor residency exceeds {SE.MAX_NEW_RESIDENTS} new instances')
+            residents = sum(len(g.findall('inst')) for g in root.findall('entinst')
+                            if defs.get(g.get('type')) is not None
+                            and defs[g.get('type')].get('smartent', '').strip().lower() in ('false', '0'))
+            if added and residents > SE.MAX_RESIDENTS:
+                ck.error(f'{zone}: spawn-floor residency exceeds {SE.MAX_RESIDENTS} explicit residents')
+            ck.count('settled_instances', added)
+
+    _ENGINE_ITEMS = {'money'}        # XMen2.exe resolves MONEY natively; neither game lists it in Data/items
+    _ITEMS_PKG = 'packages/generated/items.pkgb'
+
+    def v46_pickup_models(self, ck):
+        """V46 (issues #96, #98): every item a registered entity names through inventoryitem must carry a
+        pickup model in Data/items and that model must ship in the items package (loaded at game start).
+        A placed world pickup (inventoryent) takes its model from the items table; a model-less entry renders
+        as the engine's missing-model marker (the floating yellow question mark: the HAARP and asteroid
+        keycards XML2's same-named entries ship without a model)."""
+        sc = self.scan
+        refs = sorted({(v or '').strip().lower() for vals in sc.inv_items.values() for v in vals}
+                     - self._ENGINE_ITEMS)
+        ck.set('referenced_items', len(refs))
+        models = {}
+        for n, root in sc.items.items():
+            for el in root.iter():
+                if el.tag.lower() == 'item' and el.get('name'):
+                    models[el.get('name').strip().lower()] = (el.get('model') or '').strip()
+        pkg_models = {C.norm(f) for k, f in sc.pkg.get(self._ITEMS_PKG, ()) if k.lower() == 'model'}
+        ck.set('items_table_entries', len(models))
+        for name in refs:
+            if name not in models:
+                ck.error(f'inventoryitem={name!r} is referenced but has no entry in Data/items')
+                continue
+            if not models[name]:
+                ck.error(f'item {name!r} has no pickup model in Data/items (world pickups render as the '
+                         f"missing-model marker; issues #96/#98)")
+                continue
+            stem = C.split_ext(C.norm('models/' + models[name]))[0]
+            if stem not in {C.split_ext(p)[0] for p in pkg_models}:
+                ck.error(f'item {name!r} model {models[name]!r} is not packaged in {self._ITEMS_PKG}')
 
     def report(self):
         ctx = self.ctx
@@ -897,7 +1013,7 @@ class Validator:
             if e['owner'] == 'characters' and e.get('overwrote_base') and \
                     re.match(r'(actors|hud|ui/hud/characters|ui/models/characters|textures/loading)/', n):
                 ck.error(f'{e["rel"]}: characters replaced an XML2 character asset (SPEC 5.1 forbids it)')
-            if n.startswith('data/herostat.') and e['owner'] != 'heroes':
+            if n.startswith('data/herostat.') and not n.endswith('.lcbind') and e['owner'] != 'heroes':
                 ck.warn(f'{e["rel"]}: herostat rewritten by {e["owner"]} (only the heroes module owns it; SPEC_heroes.md)')
         if ck.counts.get('forced_reimports'):
             ck.note(f'{ck.counts["forced_reimports"]} shared XML1 imports under {FORCE_PREFIXES} were re-imported by '
@@ -1048,18 +1164,41 @@ class Validator:
                     ck.error(f'{sc.files[n]["rel"]}: fall kill volume {name!r} lacks '
                              f'{", ".join(k + "=" + XS.FALL_KILL_FLAGS[k] for k in missing)}')
 
+    def _npc_pool_names(self):
+        """talent names defined by the built npc per-set files (data/talents/npc*, the TalentRegistry fix)."""
+        cache = getattr(self, '_npc_pool_cache', None)
+        if cache is not None:
+            return cache
+        out = set()
+        idx = getattr(self, 'idx', None)
+        if idx is not None:
+            for rel in idx.under('data/talents'):
+                ln = rel.lower()
+                base = ln.rsplit('/', 1)[-1]
+                if not ln.endswith('.engb') or not (base.startswith('npc_') or 'npc_generic' in base):
+                    continue
+                t = self.tree(rel)
+                if t is not None:
+                    out.update((el.get('name') or '').lower() for el in t.iter() if el.tag.lower() == 'talent')
+        self._npc_pool_cache = out
+        return out
+
     def save_positions(self, ck):
         """V31 (SPEC 61): what a save names by position stays where earlier releases put it.
-        (a) shared_talents (both halves) in save_positions.SHARED_TALENT_ORDER, new talents after it: a saved
-        hero's talent id below 100 is the position. (b) no enabled fall kill volume numbered before another
-        entinst (x1schema.numbered_entinst_tail_problems): a zone record finds an entity by its ordinal."""
+        (a) shared_talents (both halves): from 0.2.0 the LC save stores talent names, so the 0.1.x slot pin is a
+        sanity rule (survivors keep the pinned relative order); names the TalentRegistry fix moved to npc set
+        files, or that nothing references, are warnings. (b) no enabled fall kill volume numbered before another
+        entinst (x1schema.numbered_entinst_tail_problems): a zone record finds an entity by its ordinal.
+        (c) newly resident props follow all pre-existing placements, even in zones without fall volumes."""
         talents = self.stats()['talents']
+        moved = {n.lower() for n in SP.SHARED_TALENT_ORDER} - {n.lower() for n in talents.get('.engb') or ()}
+        moved &= {n.lower() for n in self._npc_pool_names()}
         for ext in ('.engb', '.xmlb'):
             names = talents.get(ext)
             if names is None:
                 ck.error(f'data/shared_talents{ext} missing or undecodable')
                 continue
-            errors, warnings = SP.shared_order_problems(names, f'data/shared_talents{ext}')
+            errors, warnings = SP.shared_order_problems(names, f'data/shared_talents{ext}', moved)
             for m in errors:
                 ck.error(m)
             for m in warnings:
@@ -1075,6 +1214,15 @@ class Validator:
                 continue
             for m in msgs:
                 ck.error(m)
+        from . import settle as SE
+        for n in sorted(getattr(sc, 'files', {})):
+            if not n.startswith('maps/') or n in sc.twins:
+                continue
+            root = self.tree(n)
+            if root is None:
+                continue
+            for message in SE.numbered_tail_problems(root):
+                ck.error(f'{n}: {message}')
 
     _LITE_XPOINT = re.compile(r'\bextractionPointLite\s*\(', re.I)
 
@@ -1105,6 +1253,24 @@ class Validator:
                         ck.error(f'{sc.files[n]["rel"]}: inline code {_short(code, 80)!r}: extractionPointLite '
                                  f'offers no Save (issue #63; prepare P3 writes extractionPoint)')
         ck.set('lite_xtraction_data_code_checked', n_code)
+
+    def xtraction_services(self, ck):
+        """Issue #95: source point calls in maps must go through generated helpers in seat builds."""
+        if C.forced_teams_mode(self.ctx) != 'seat':
+            ck.set('xtraction_service_inline_checked', 0)
+            return
+        n_code = 0
+        for n, lst in self.data_items(self.scan.inline):
+            if not n.startswith('maps/') or not self.is_x1(n):
+                continue
+            for _, attr, code in lst:
+                if attr.lower() != 'actscript':
+                    continue
+                n_code += 1
+                if re.search(r'\bextractionPoint(?:Lite|Services)?\s*\(', code or '', re.I):
+                    ck.error(f'{self.scan.files[n]["rel"]}: Xtraction actscript bypasses its services helper '
+                             '(issue #95; point-local permission / contact unlock)')
+        ck.set('xtraction_service_inline_checked', n_code)
 
     # ================================================================== V37 (issues #74, #78)
     def v37_beacons_rank_one(self, ck):
@@ -1526,6 +1692,25 @@ class Validator:
                         ck.error(f'{fname}:{el.get("name")} (xml1): fighting style: {m}')
                     if W.gun_fightstyle(self.x1_weapons().get(wname)):
                         ck.count('gun_entries_with_weapon_fightstyle')
+                # V43 (issue #36): an entry whose XML1 weapon / a unanimous spawner monster_grenade override
+                # names a non-default grenade carries the grenade-suffixed weapon variant powerstyle
+                if name in x1:
+                    wrec = self.x1_weapons().get(wname)
+                    eff = W.effective_grenade(wrec, self.x1_grenade_overrides().get(name, ''))
+                    base_ps = (x1[name][1].get('powerstyle') or (wrec or {}).get('powerstyle') or '')
+                    want_ps = W.grenade_powerstyle_want(base_ps, wname, wrec,
+                                                        self.x1_grenade_overrides().get(name, ''), C.map_powerstyle)
+                    if want_ps:
+                        ck.count('grenade_variants_checked')
+                        got = (el.get('powerstyle') or '').lower()
+                        if got != want_ps:
+                            ck.error(f'{fname}:{el.get("name")} (xml1): grenade: XML1 throws {eff!r} (weapon '
+                                     f'{wname!r} / spawner override), so powerstyle must be {want_ps!r}, not {got!r}')
+                    want_ms = W.grenade_moveset_want(x1[name][1].get('moveset1') or '', wrec,
+                                                     self.x1_grenade_overrides().get(name, ''), C.map_fightstyle)
+                    if want_ms and (el.get('moveset1') or '').lower() != want_ms:
+                        ck.error(f'{fname}:{el.get("name")} (xml1): grenade entity source moveset1 must be '
+                                 f'{want_ms!r}, not {el.get("moveset1")!r}')
             xe = xmlb_by.get(name)
             if xe is not None:
                 for a in ('skin', 'characteranims', 'powerstyle', 'sounddir', 'moveset1'):
@@ -1560,6 +1745,77 @@ class Validator:
                          f'namespace name is {mapped!r}; XML2 would load its own same-named asset or nothing)')
         ck.set('unmapped_x1_refs', n_bad)
         self._x1_namespace_files(ck)
+        self._grenade_variant_files(ck)
+
+    def _grenade_variant_files(self, ck):
+        """V43 (issue #36): every shipped weapon-variant powerstyle that carries a power_grenade throw names
+        the entity that throw throws: the grenade_projectile trigger's entity is one of XML1's grenade_ents
+        entities, and a variant whose name ends in _<grenade> (weapons.variant_grenade) throws exactly that; the
+        throw outranks every other AI-selected move of the style (at equal priority XMen2.exe's AI never picks it)."""
+        ent_rel = next((r for r in ('data/entities/grenade_ents.eng', 'data/entities/grenade_ents.xml')
+                        if self.ctx.x1_path(r)), None)
+        if ent_rel is None:
+            ck.warn('grenade_ents absent from the XML1 disc; grenade throw files not checked')
+            return
+        root = self.ctx.read_x1_xml(ent_rel)
+        grenades = {e.get('name', '').strip().lower() for e in root.iter() if e.tag.lower() == 'entity'}
+        n = 0
+        for rel in self.idx.under('data/powerstyles/'):
+            stem = rel.rsplit('/', 1)[-1].rsplit('.', 1)[0].lower()
+            if not stem.startswith('x1_'):
+                continue
+            p = self.idx.path(rel)
+            if p is None:
+                continue
+            want = W.variant_grenade(stem, grenades)
+            found = False
+            moves = list(C.decode_xmlb(p.read_bytes()).iter('FightMove'))
+            rivals = [_num(mv.get('priority')) for mv in moves
+                      if mv.get('aitype') and (mv.get('name') or '').lower() != W.GRENADE_MOVE]
+            for mv in moves:
+                if (mv.get('name') or '').lower() != W.GRENADE_MOVE:
+                    continue
+                found = True
+                if rivals and _num(mv.get('priority')) <= max(rivals):
+                    ck.error(f'{rel}: {W.GRENADE_MOVE} priority {mv.get("priority")!r} does not outrank the '
+                             f"style's other AI moves ({max(rivals):g}): the AI never throws")
+                for c in mv.iter('trigger'):
+                    a = {k.lower(): v for k, v in c.attrib.items()}
+                    if (a.get('name') or '').lower() != W.GRENADE_TRIGGER:
+                        continue
+                    n += 1
+                    ent = (a.get('entity') or '').lower()
+                    if ent not in grenades:
+                        ck.error(f'{rel}: {W.GRENADE_MOVE} throws unknown entity {ent!r}')
+                    elif want and ent != want:
+                        ck.error(f'{rel}: grenade variant {stem!r} throws {ent!r}, not {want!r}')
+            if want and not found:
+                ck.error(f'{rel}: grenade variant {stem!r} has no {W.GRENADE_MOVE} move')
+        for rel in self.idx.under('data/fightstyles/'):
+            stem = rel.rsplit('/', 1)[-1].rsplit('.', 1)[0].lower()
+            want = W.variant_grenade(stem, grenades) if stem.startswith('x1_') else ''
+            if not want:
+                continue
+            tree = self.tree(rel)
+            throws = [t for t in tree.iter() if t.tag.lower() == 'trigger'
+                      and (t.get('name') or '').lower() == W.GRENADE_TRIGGER]
+            if not throws or any((t.get('entity') or '').lower() != want for t in throws):
+                ck.error(f'{rel}: grenade moveset variant must throw {want!r}')
+            if (tree.get('name') or '').lower() != stem:
+                ck.error(f'{rel}: grenade moveset registered name must be {stem!r}')
+            n += 1
+        authored = next((e for e in root.iter() if (e.get('name') or '').lower() == 'flashbang'), None)
+        if authored is not None:
+            want_mods = (authored.get('explodedamagemods') or '').lower().split()
+            for rel in self.idx.under('data/entities/'):
+                if rel.rsplit('/', 1)[-1].rsplit('.', 1)[0].lower() != 'grenade_ents':
+                    continue
+                for el in self.tree(rel).iter():
+                    if (el.get('name') or '').lower() == 'flashbang' and \
+                            (el.get('explodedamagemods') or '').lower().split() != want_mods:
+                        ck.error(f'{rel}: flashbang explosion modifiers differ from XML1; retain the authored '
+                                 'energy drain rather than substituting health damage')
+        ck.set('grenade_variant_files_checked', n)
 
     def _x1_namespace_files(self, ck):
         """SPEC 5.1.1: every non-empty XML1 character-namespace IGB exists in <out> under its mapped name (numeric
@@ -1647,8 +1903,7 @@ class Validator:
         s = (x1el.get('skin') or '').strip()
         return bool(s) and (el.get('skin') or '').strip() == C.map_skin(s)
 
-    @staticmethod
-    def _namespace_problems(el, x1el):
+    def _namespace_problems(self, el, x1el):
         """XML1-origin stats entry vs its XML1 source: skin / characteranims / powerstyle must be the mapped
         XML1 values (map_skin +14000, map_animdb x1_, map_powerstyle x1_)."""
         out = []
@@ -1666,6 +1921,16 @@ class Validator:
                 want = W.variant_name(want, (x1el.get('weapon') or '').strip())
                 if have == fn(src):
                     continue                        # a melee weapon: the plain mapped style
+                # issue #36: a non-default grenade (spawner monster_grenade override > weapon grenade=)
+                # suffixed the variant (V43 checks the thrown entity); the plain SPEC 29 name stays valid
+                # for a default-gr holder of the same weapon
+                if have != want:
+                    wrec = self.x1_weapons().get((x1el.get('weapon') or '').strip().lower())
+                    eff = W.effective_grenade(wrec, self.x1_grenade_overrides().get(
+                        (x1el.get('name') or '').lower(), ''))
+                    if eff and eff.lower() != W.DEFAULT_GRENADE \
+                            and have == W.variant_grenade_name(want, eff):
+                        continue
             if have != want:
                 out.append(f'{attr}={have!r}, but XML1 {attr}={src!r} maps to {want!r}')
         return out
@@ -1731,6 +1996,21 @@ class Validator:
             elif plain:
                 out.append(('allow', f'powerstyle {ps}: {len(plain)} weapon_fire trigger(s), no shot in XMen2.exe',
                             'the XML1 entry has no weapon: its weapon_fire had nothing to fire in XML1 either'))
+            # V42 (SPEC 29.4, issue #83): with raised MoveTriggers every converted weapon shot keeps sound.
+            source_ps = (x1[1].get('powerstyle') or '').lower() if x1 is not None else ''
+            if source_ps not in self._weapon_sound_cache:
+                authored = None
+                for ext in ('.xml', '.eng'):
+                    try:
+                        authored = self.ctx.read_x1_xml(f'data/powerstyles/{source_ps}{ext}')
+                        break
+                    except KeyError:
+                        pass
+                self._weapon_sound_cache[source_ps] = W.named_weapon_events(authored)
+            silent = W.silent_shots(self.tree(f'data/powerstyles/{ps}.xmlb'),
+                                   event_names=self._weapon_sound_cache[source_ps])
+            if silent:
+                out.append(('soft', f'powerstyle {ps}: {len(silent)} gun shot(s) carry no fire sound: {silent[:4]}'))
         ms = el.get('moveset1')
         if ms and not (self.exists(f'data/fightstyles/{ms}.xmlb') or self.exists(f'data/fightstyles/{ms}.engb')):
             out.append(('soft', f'moveset1 Data/fightstyles/{ms} missing'))
@@ -1743,11 +2023,13 @@ class Validator:
                 t = self.tree(f'data/talents/{name}.engb')
             hero_talent_files[name] = {x.get('name', '').lower() for x in t.iter('talent')} if t is not None else set()
         own_t = hero_talent_files[name]
+        npc_t = self._npc_pool_names()
         for c in el:
             if c.tag == 'talent':
                 tn = (c.get('name') or '').lower()
-                if tn and tn not in shared_t and tn not in own_t:
-                    out.append(('soft', f'talent {tn!r} is neither in shared_talents nor in data/talents/{name}'))
+                if tn and tn not in shared_t and tn not in own_t and tn not in npc_t:
+                    out.append(('soft', f'talent {tn!r} is neither in shared_talents, data/talents/{name} '
+                                        f'nor an npc set file'))
                 if is_fightstyle_name(tn) and not (self.exists(f'data/fightstyles/{tn}.xmlb') or
                                                         self.exists(f'data/fightstyles/{tn}.engb')):
                     out.append(('soft', f'fightstyle talent {tn}: Data/fightstyles/{tn} missing'))

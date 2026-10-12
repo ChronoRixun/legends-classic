@@ -58,6 +58,9 @@ from . import actor_budget as AB          # section 14: XMen2.exe's 40-slot acto
 from . import scripts_transform as ST     # section 18: the join zones' NPC double
 from . import buoys as BY                # section 42: generated long-range walk networks
 from . import automaps as AM              # section 26: XML1 automap textures -> Automaps/<zone>.zam
+from . import settle as SE                # issue #81: native floor sweeps for raised ordinary props
+from . import talent_sets as TS           # SPEC <number assigned at merge>: NPC-only talents in per-set files
+from . import npc_values as NV            # SPEC 29.2: inline entities use the same values as entity files
 
 # ---------------------------------------------------------------------------------------------- constants
 PATCH_ZONE = 'zones.zone'            # import_x1_asset patch keys (deterministic patches -> cacheable imports)
@@ -157,8 +160,67 @@ from .fix_ini import LIMITS as _FIX_LIMITS                   # noqa: E402 - the 
 ITEM_ENHANCEMENT_POOL = int(_FIX_LIMITS.get('ItemEnhancements', ITEM_ENHANCEMENT_POOL_STOCK))
 
 
+def fill_item_model(existing, x1):
+    """Issues #96/#98: a same-name item XML2 already ships (the keycards) has no pickup model of its own -
+    XML2 never places it in the world, while XML1's zones drop it as a world inventoryent whose model comes
+    from the items table. Without the fill the placed pickup renders as the engine's missing-model marker.
+    Returns the normalized model stem to package, or None when nothing was filled. XML2's own model, when it
+    has one, always wins."""
+    if x1 is None:
+        return None
+    model = (x1.get('model') or '').strip()
+    if model and not (existing.get('model') or '').strip():
+        existing.set('model', model)
+        return C.norm('models/' + strip_ext(model))
+    return None
+
+
 def item_enhancements(el):
     return sum(1 for e in el.iter() if isinstance(e.tag, str) and e.tag.lower() == 'enhancement')
+
+
+def zone_npc_talent_entries(ctx, zone, chr_names, script_refs=(), text_of=None):
+    """Hero NPC files needed by the complete CHRB/spawner/script/course roster.
+
+    NPC-only powers and immunities remain shared; no per-NPC files are produced.
+    Final package emission applies the reviewed noncombat prop budget policy.
+    """
+    try:
+        npc = ctx.read_out_xmlb('Data/npcstat.engb')
+    except Exception:          # noqa: BLE001 - characters has not written npcstat: nothing to add
+        return []
+    if npc is None:
+        return []
+    npc_refs = {(st.get('name') or '').lower(): set() for st in npc.iter('stats')}
+    try:
+        from . import heroes as H
+        heroes_roster = H.hero_plan(ctx)['heroes']
+    except Exception:          # synthetic callers without a complete roster plan
+        heroes_roster = ()
+    known = set(npc_refs) | {h.lower() for h in heroes_roster}
+    roster = {n.lower() for n in (chr_names or ()) if n}
+    for ext in ('.engb', '.xmlb'):
+        try:
+            root = ctx.read_out_xmlb(f'maps/{zone}{ext}')
+        except Exception:      # noqa: BLE001 - one half may be absent
+            root = None
+        roster |= TS.map_spawn_roster(root)
+    try:
+        dr = ctx.read_x1_xml('data/dangerroom.eng')
+    except Exception:          # noqa: BLE001 - no Danger Room table: no course roster
+        dr = None
+    roster |= TS.dangerroom_zone_roster(dr, zone)
+    if text_of is not None:
+        refs = TS.script_closure_refs([C.script_ref(r) for r in script_refs], text_of)
+        roster |= TS.script_zone_roster({r: text_of(r) for r in refs}, lambda n: n in known)
+    rels = set()   # NPC-only talents remain in the save-stable shared pool.
+    # heroes used as NPCs (cutscene and spawner instances) carry their own talent file, like the
+    # hero precache of section 28; without it the hero-NPC's stats talents resolve nowhere
+    for n in roster:
+        for h in heroes_roster:
+            if h.lower() == n:
+                rels.add(f'data/talents/{h}')
+    return sorted(rels)
 
 
 def enhancement_pool_cut(top, pool=None):
@@ -1245,6 +1307,8 @@ class Zones:
             self.counts['starts_allinone'] += allinone
         st['mapped_refs'] = C.map_tree_refs(root)
         st['rewritten'] = self.prov.rewrite_data_tree(ctx, root, zx)
+        codes, _ = NV.resolve_entity_codes(ctx, root, zx)
+        self.counts['inline_entity_codes_resolved'] += sum(n for k, n in codes.items() if k.startswith('code:'))
         inline = rename_npc_inline_refs(zone, root)                     # section 18.1: its inline code follows
         if inline:
             self.counts['npc_double_inline_refs'] += inline
@@ -1252,6 +1316,29 @@ class Zones:
         if pins:
             self.pinned[zone] = pins
             self.counts['entities_pinned'] += len(pins)
+        # Use source collision geometry to select only unsupported raised props.
+        # Native load sweeps determine their final position; no height is baked in.
+        map_path = ctx.x1_path(f'maps/{zone}.igb')
+        if map_path is not None:
+            def read_model(rel):
+                path = ctx.x1_path(rel)
+                if path is None:
+                    path = ctx.base_index.path(rel)
+                if path is None:
+                    raise ValueError('model is absent')
+                return path.read_bytes()
+            try:
+                rows = SE.survey(root, SE.collision_triangles(map_path.read_bytes()), SE.bounds_reader(read_model))
+                st['spawn_settle'] = rows
+                self.counts['spawn_settle_instances'] += SE.convert(root, rows)
+                for row in rows:
+                    self.counts['spawn_settle_' + row['status']] += 1
+            except (ValueError, OSError, KeyError, TypeError) as exc:
+                st['spawn_settle_deferred'] = str(exc)
+                for row in st.get('spawn_settle', []):
+                    if row['status'] == 'settle':
+                        row['status'] = 'conversion_deferred'
+                ctx.warn(f'{zone}: spawn-floor survey deferred: {exc}')
         for el in root.iter():
             if el.tag.lower() == 'precache':
                 t = (el.get('type') or '').lower()
@@ -1618,6 +1705,40 @@ class Zones:
                 names = [d]
         return names
 
+    # ---------------------------------------------------------------- retained XML2 zone packages
+    def patch_retained_packages(self):
+        """Retained XML2 zones keep their base packages and maps, but the port's stats replaced XML2's:
+        a retained spawner whose stats name moved to a talent set would bind nothing. List the same
+        roster's set files (and hero-NPC files) in the retained package, ahead of its styles."""
+        ctx = self.ctx
+        xml1 = set(self.converted) | set(self.skipped) | set(self.frontend)
+        done = 0
+        for rel in sorted(ctx.base_index.under('packages/generated/maps')):
+            if not rel.lower().endswith('.pkgb'):
+                continue
+            zone = C.norm(rel)[len('packages/generated/maps/'):-len('.pkgb')]
+            if zone in xml1:
+                continue
+            try:
+                root = ctx.read_out_xmlb(rel)
+            except Exception:      # noqa: BLE001 - no out copy: the sweep/V2 reports it
+                continue
+            if any((e.tag or '').lower() == 'xml_talents' for e in root):
+                continue           # already lists talents (a converted or already-patched package)
+            script_refs = {C.script_ref(e.get('filename')) for e in root
+                           if (e.tag or '').lower() == 'script' and e.get('filename')}
+            entries = zone_npc_talent_entries(ctx, zone, (), script_refs, self.script_text)
+            if not entries:
+                continue
+            for rel_entry in reversed(entries):
+                root.insert(0, ET.Element('xml_talents', {'filename': rel_entry}))
+            ctx.write_xmlb(rel[:-len('.PKGB')], root, ('.PKGB',),
+                           source='zones:retained npc talent sets')
+            self.counts['retained_talent_set_packages'] += 1
+            done += 1
+        if done:
+            ctx.note(f'retained XML2 zone packages patched with npc talent sets: {done}')
+
     # ------------------------------------------------------------------ one zone
     def zone_sources(self, zone):
         bundle = self.ctx.zone_bundle(zone)
@@ -1764,7 +1885,9 @@ class Zones:
                              'actors_pruned': self.pruned_actors.get(zone, []),
                              'automap': self.automaps.get(zone),
                              'base_world_attrs': st['base_world_attrs'], 'mapped_refs': st.get('mapped_refs'),
-                             'rewritten': st.get('rewritten')}
+                             'rewritten': st.get('rewritten'),
+                             'spawn_settle': st.get('spawn_settle', []),
+                             'spawn_settle_deferred': st.get('spawn_settle_deferred')}
 
     # ---- SPEC 21 (--frontend xml1): XML1's menu backdrop replaces XML2's menu/main_back
     MENU_ZONE_XML2_KINDS = ('bigconvmap',)                  # flag entries of the replaced XML2 package that are kept
@@ -1884,6 +2007,22 @@ class Zones:
             lits |= self.script_literals(r)
         tiles = st.get('tiles') or {'folders': {}, 'used': {}, 'insts': 0, 'bad': []}
         tiles_used = set().union(*tiles['used'].values()) if tiles['used'] else set()
+
+        # SPEC <number assigned at merge> (the TalentRegistry fix): an NPC-only talent set file rides the
+        # ZONE package - XMen2.exe processes a zone package's xml_talents entries (section 28's hero
+        # precache exists for exactly that) but ignores them on a spawned monster's own character
+        # package. The roster is every stats template that can appear here: CHRB characters, map
+        # spawners and spawn lists, the zone scripts' literal spawn calls (closure, so act scripts and
+        # boss phases count), and the Danger Room courses whose arena maps to this zone (audit
+        # 2026-10-08: every converted-map miss sat in course spawners). A zone-level selector drops a
+        # set file only when the names it contributes are already supplied by other retained files.
+        roster_scripts = set(script_refs)
+        for kind, fn in self.prov.zone_package_extras(self.ctx, zone):
+            if kind.lower() == 'script':
+                roster_scripts.add(C.script_ref(fn))
+        for rel in zone_npc_talent_entries(ctx, zone, chr_names, roster_scripts, self.script_text):
+            if pkg.add('xml_talents', rel, extra=True):
+                self.counts['npc_talent_set_zone_entries'] += 1
 
         for p, kind in bundle:
             k = kind.lower()
@@ -2014,7 +2153,9 @@ class Zones:
         else:
             ctx.warn(f'{zone}: package reference closure did not settle after 8 passes')
         self.conversation_heads(zone, pkg)
-        return pkg.root(tail=[('boy', stem)])
+        root = pkg.root(tail=[('boy', stem)])
+        from . import talent_budget as TB
+        return TB.prune_zone_precache(ctx, zone, root)
 
     def conversation_heads(self, zone, pkg):
         """Precache final named speakers after the script/data reference closure.
@@ -2504,7 +2645,11 @@ class Zones:
             C.map_tree_refs(x1root)
             self.prov.rewrite_data_tree(ctx, x1root, x1rel)
             x1top = C.iter_roots(x1root)[0]
+            x1_by_name = {}
             if name == 'items':
+                # same-name items XML2 already ships keep XML2's entry below; the original XML1 entries stay
+                # reachable here so a pickup model XML2's entry lacks can be filled (issues #96/#98)
+                x1_by_name = {(c.get('name') or '').lower(): c for c in x1top if c.get('name')}
                 have = set()
                 for ext in ('.XMLB', '.engb'):
                     if ctx.base_exists(f'Data/items{ext}'):
@@ -2521,28 +2666,38 @@ class Zones:
                 ctx.error(f'world table Data/{name}: not in the base install')
                 continue
             trees, added_names, xml2_wins, unnamed = {}, [], 0, 0
+            filled_models = set()
             for ext in exts:
                 tree = ctx.read_base_xmlb(f'Data/{name}{ext}')
                 top = C.iter_roots(tree)[0]
-                have = {(c.get('name') or '').lower() for c in top if c.get('name')}
+                have = {(c.get('name') or '').lower(): c for c in top if c.get('name')}
                 for c in x1top:
                     nm = c.get('name')
                     if not nm:
                         unnamed += ext == exts[0]
                         continue
-                    if nm.lower() in have:
+                    low = nm.lower()
+                    if have.get(low) is not None:
                         xml2_wins += ext == exts[0]
                         continue
-                    top.append(copy.deepcopy(c))
-                    have.add(nm.lower())
+                    new = copy.deepcopy(c)
+                    top.append(new)
+                    have[low] = new
                     if ext == exts[0]:
                         added_names.append(nm)
+                if name == 'items':   # issues #96/#98: XML2's same-name entry may lack the pickup model
+                    for low, src in x1_by_name.items():
+                        filled = fill_item_model(have[low], src) if low in have else None
+                        if filled:
+                            filled_models.add(filled)
                 trees[ext] = tree
             if len(exts) == 2:
                 ctx.write_xmlb_pair(f'Data/{name}', trees['.XMLB'], trees['.engb'], source=f'zones:{x1rel}')
             else:
                 ctx.write_xmlb(f'Data/{name}', trees[exts[0]], tuple(exts), source=f'zones:{x1rel}')
             self.counts[f'{name}_added'] = len(added_names)
+            if name == 'items':
+                self.counts['items_model_filled'] = len(filled_models)
             if name == 'items':                     # SPEC 32.1: what the 375-record enhancement pool cuts off
                 lost = enhancement_pool_cut(C.iter_roots(trees[exts[0]])[0])
                 self.counts['items_beyond_enhancement_pool'] = len(lost)
@@ -2551,7 +2706,9 @@ class Zones:
                              f'({ITEM_ENHANCEMENT_POOL}, 0x4804a6) overflows at {lost[0][0]} ({lost[0][1]} used before '
                              f'it), and the load stops there: {[n for n, _ in lost]}')
             ctx.note(f'Data/{name}: {len(added_names)} XML1 entries added, {xml2_wins} same-name entries kept '
-                     f'as XML2, {unnamed} unnamed XML1 children skipped')
+                     f'as XML2, {unnamed} unnamed XML1 children skipped'
+                     + (f', {len(filled_models)} same-name pickup models filled from XML1 '
+                        f'({sorted(filled_models)})' if name == 'items' and filled_models else ''))
             # package: XML2's generated PKGB + missing entries of the XML1 bundle + files the added entries use
             added = [c for c in x1top if c.get('name') in set(added_names)]
             if name in ('common_ents', 'item_ents'):
@@ -2561,8 +2718,9 @@ class Zones:
                         if v:
                             self.item_refs[v.lower()].add(f'data/{name}')
             only_files = None
-            if name == 'items':                     # only the pickup models of the items actually appended
+            if name == 'items':                     # pickup models of appended items and gap-filled same-name items
                 only_files = {C.norm('models/' + strip_ext(c.get('model'))) for c in added if c.get('model')}
+                only_files |= filled_models
             self.merge_package(f'Packages/generated/{name}', f'packages/generated/{name}.fb',
                                skip={f'data/{name}'}, extra_refs=[r for c in added for r in self.extract_refs(c)],
                                label=name, only_files=only_files)
@@ -2803,6 +2961,7 @@ def run(ctx):
     for z, why in sorted(Z.skipped.items()):
         ctx.note(f'zone skipped: {z}: {why}')
 
+    Z.patch_retained_packages()
     Z.build_zoneinfo()
     Z.build_world_tables()
     Z.build_permanent()

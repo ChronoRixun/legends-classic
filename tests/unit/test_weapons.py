@@ -171,15 +171,15 @@ def test_weapon_events_become_beams_with_their_bolts():
 
 
 def test_weapon_event_shots_get_muzzle_fx_only_within_the_trigger_cap():
-    root = two_gun_style(shots=6, others=W.MAX_TRIGGERS - 6 - 2)    # room for two effect_sound triggers
-    W.rewrite_weapon_events(root, TOYS)
+    root = two_gun_style(shots=6, others=W.STOCK_TRIGGERS - 6 - 2)    # room for two effect_sound triggers
+    W.rewrite_weapon_events(root, TOYS, max_triggers=19)
     trig = [c for c in root.find('FightMove') if c.tag == 'trigger']
-    assert len(trig) == W.MAX_TRIGGERS
+    assert len(trig) == W.STOCK_TRIGGERS
     fx = [c for c in trig if c.get('name') == 'effect_sound']
     assert [(c.get('time'), c.get('bolt')) for c in fx] == [('0.5', 'Bip01 L Hand'), ('0.6', 'Bip01 R Hand')]
     assert [c.get('name') for c in trig].count('left_pop') == 3   # every shot trigger kept
-    full = two_gun_style(shots=4, others=W.MAX_TRIGGERS - 4)
-    rep = W.rewrite_weapon_events(full, TOYS)
+    full = two_gun_style(shots=4, others=W.STOCK_TRIGGERS - 4)
+    rep = W.rewrite_weapon_events(full, TOYS, max_triggers=19)
     assert not rep['weapon_event_fx_added'] and not rep['moves_over_trigger_cap']
 
 
@@ -206,3 +206,115 @@ def test_weapon_fire_left_finds_plain_and_event_shots():
     assert W.weapon_fire_left(root) == [('power_attack:left_pop', True), ('power_attack:right_pop', True),
                                         ('power_attack:weapon_fire', False)]
     assert W.weapon_fire_left(None) == []
+
+
+def test_burst_sound_reclaims_a_midmove_bolton_holster_cycle():
+    """issue #83: XML1 puts the fire sound on the weapon_fire EVENT, so every shot of a burst sounds; the port
+    must spend triggers per shot, so a move whose shots do not fit drops a mid-move bolton holster/redraw
+    cycle (the weapon stays attached) to give every shot its muzzle flash + fire sound."""
+    root = ET.Element('PowerStyle')
+    ET.SubElement(root, 'event', {'name': 'left_pop', 'inherit': 'weapon_fire', 'weapon': 'wp_toy_pistol',
+                                  'boltselect': 'Bip01 L Hand'})
+    ET.SubElement(root, 'event', {'name': 'right_pop', 'inherit': 'weapon_fire', 'weapon': 'wp_toy_pistol'})
+    m = ET.SubElement(root, 'FightMove', {'name': 'power_attack', 'animenum': 'ea_power1', 'aitype': 'beam'})
+    for slot in ('ebolton_weapon', 'ebolton_altweapon'):
+        ET.SubElement(m, 'trigger', {'name': 'bolton', 'time': '0.08', 'boltslot': slot})
+    for slot in ('ebolton_weapon', 'ebolton_altweapon'):
+        ET.SubElement(m, 'trigger', {'name': 'removebolton', 'time': '0.18', 'boltslot': slot})
+    ET.SubElement(m, 'trigger', {'name': 'toss', 'time': '0.2'})
+    for slot in ('ebolton_weapon', 'ebolton_altweapon'):
+        ET.SubElement(m, 'trigger', {'name': 'bolton', 'time': '0.45', 'boltslot': slot})
+    for i in range(6):
+        ET.SubElement(m, 'trigger', {'name': 'left_pop' if i % 2 == 0 else 'right_pop', 'time': f'{0.5 + i / 25:g}'})
+    for slot in ('ebolton_weapon', 'ebolton_altweapon'):
+        ET.SubElement(m, 'trigger', {'name': 'removebolton', 'time': '0.92', 'boltslot': slot})
+    rep = W.rewrite_weapon_events(root, TOYS, max_triggers=19)
+    trig = [c for c in m if c.tag == 'trigger']
+    assert len(trig) <= W.MAX_TRIGGERS                     # the reclaimed slots went to the burst's sound
+    assert len([c for c in trig if c.get('name') == 'effect_sound']) == 6
+    assert rep['weapon_event_bolton_churn_dropped'] == 2   # one holster+redraw pair per boltslot
+    assert [c.get('name') for c in trig].count('left_pop') == 3
+    fx = [c for c in trig if c.get('name') == 'effect_sound']
+    assert len(fx) == 6 and all(c.get('sound') == 'test/toy_bang' for c in fx)
+    assert not [c for c in trig if c.get('name') == 'removebolton' and c.get('time') == '0.18']
+    assert [c.get('name') for c in trig].count('removebolton') == 2   # only the move-end holster remains
+
+
+def test_raised_limit_keeps_all_shots_and_authored_holster_cycles():
+    root = two_gun_style(shots=10, others=7)
+    m = root.find('FightMove')
+    ET.SubElement(m, 'trigger', {'name': 'removebolton', 'boltslot': 'toy', 'time': '0.1'})
+    ET.SubElement(m, 'trigger', {'name': 'bolton', 'boltslot': 'toy', 'time': '0.2'})
+    original = [dict(c.attrib) for c in m]
+    rep = W.rewrite_weapon_events(root, TOYS)
+    assert W.trigger_capacity() == 64
+    assert rep['weapon_event_fx_added'] == 10
+    assert not rep['weapon_event_bolton_churn_dropped']
+    assert len(m.findall('trigger')) == 29
+    assert W.silent_shots(root) == []
+    assert [dict(c.attrib) for c in m if c.get('name') != 'effect_sound'] == original
+    # The raised validator catches a missing shot sound even without any holster cycle.
+    m.remove(m.findall("trigger[@name='effect_sound']")[-1])
+    assert W.silent_shots(root) == ['power_attack:right_pop']
+
+
+def test_missing_limit_uses_stock_and_plain_weapon_burst_preserves_every_sound():
+    from xml1build import fix_ini as FI
+    saved = FI.LIMITS.pop('MoveTriggers')
+    try:
+        assert W.trigger_capacity() == 19
+        root = two_gun_style(shots=10, others=7)
+        rep = W.rewrite_weapon_events(root, TOYS)
+        assert rep['weapon_event_fx_added'] == 2
+    finally:
+        FI.LIMITS['MoveTriggers'] = saved
+    root = style([('burst', [{'name': 'weapon_fire', 'time': str(i/20)} for i in range(12)])])
+    W.apply(root, MP5)
+    assert len(root.find('FightMove').findall("trigger[@name='effect_sound']")) == 12
+
+
+def test_configured_trigger_validator_counts_inherited_events_without_trimming():
+    from xml1build import combat_events as CE
+    root = ET.Element('PowerStyle')
+    parent = ET.SubElement(root, 'FightMove', name='toy_parent')
+    for i in range(64):
+        ET.SubElement(parent, 'trigger', name='sound', tag=str(i))
+    child = ET.SubElement(root, 'FightMove', name='toy_child', inherit='toy_parent')
+    ET.SubElement(child, 'trigger', tag='0', sound='test/update')
+    shared = {'sound': ('ce_sound', {'name': 'sound', 'type': 'ce_sound'})}
+    assert not [f for f in CE.style_findings(root, shared) if f.kind == 'trigger_cap']
+    ET.SubElement(child, 'trigger', name='sound', tag='90')
+    over = [f for f in CE.style_findings(root, shared) if f.kind == 'trigger_cap']
+    assert len(over) == 1 and over[0].move == 'toy_child' and over[0].name == '65'
+
+
+def test_full_trigger_ini_refuses_an_existing_dll_without_the_capability():
+    import tempfile
+    from pathlib import Path
+    from xml1build import fix_ini as FI
+    with tempfile.TemporaryDirectory() as tmp:
+        dll = Path(tmp) / 'dinput.dll'
+        FI.check_move_trigger_dll(dll, {'Limits': {'MoveTriggers': '64'}})
+        dll.write_bytes(b'toy old runtime')
+        try:
+            FI.check_move_trigger_dll(dll, {'Limits': {'MoveTriggers': '64'}})
+        except ValueError as exc:
+            assert 'MoveTriggers' in str(exc)
+        else:
+            raise AssertionError('old runtime accepted full-trigger output')
+        FI.check_move_trigger_dll(dll, {'Limits': {}})
+        dll.write_bytes('MoveTriggers'.encode('utf-16le'))
+        FI.check_move_trigger_dll(dll, {'Limits': {'MoveTriggers': '64'}})
+
+
+def test_sound_validation_uses_authored_weapon_bindings_not_ordinary_beams():
+    root = two_gun_style(shots=4)
+    ET.SubElement(root, 'event', name='toy_energy', inherit='beam', attacktype='beam')
+    ET.SubElement(root.find('FightMove'), 'trigger', name='toy_energy', time='0.9')
+    names = W.named_weapon_events(root)
+    assert names == {'left_pop', 'right_pop'}
+    W.rewrite_weapon_events(root, TOYS)
+    assert W.silent_shots(root, event_names=names) == []
+    m = root.find('FightMove')
+    m.remove(m.findall("trigger[@name='effect_sound']")[-1])
+    assert W.silent_shots(root, event_names=names) == ['power_attack:right_pop']

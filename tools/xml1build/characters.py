@@ -51,6 +51,7 @@ from . import common as C
 from . import combat_events as CE
 from . import npc_values as NV       # SPEC 24: XML1 value codes in the styles, the NPC energy pool
 from . import weapons as W           # SPEC 29: XML1 weapon definitions as style triggers (variant styles)
+from . import melee_weapons as MW    # SPEC 69.5: balance-only melee weapon metadata
 from . import scripts_transform as ST
 from .lib import x1names as N   # the XML1 namespace (was research/characters/x1names.py)
 
@@ -338,7 +339,11 @@ class _Builder:
         self.x1_values = None       # heroes.Values of XML1's data/values.xml (loaded on the first style)
         self.npc_codes = {}         # x1 style rel -> (Counter, problems) of npc_values.resolve_style (SPEC 24)
         self.weapon_reports = {}    # variant style name -> (weapon, x1 style, weapons.apply counts) (SPEC 29)
+        self.grenade_variant_base = {}  # moveset1 variants (issue #36)
+        self.grenade_reports = {}
         self.variant_base = {}      # weapon variant style name -> the mapped base style it replaces (SPEC 29.1)
+        self.grenade_overrides = {}     # character name (lower) -> unanimous spawner monster_grenade (issue #36)
+        self.grenade_override_conflicts = {}  # character name (lower) -> disagreeing monster_grenade values
         self.weapon_event_reports = {}  # x1 style rel -> weapons.rewrite_weapon_events counts (SPEC 29.3)
         self.igb_renamed = 0
         self.import_stats = {}
@@ -507,7 +512,7 @@ class _Builder:
     def _style_patch(self, root, rel=''):
         # SPEC 29.3: style events that name an XML1 weapon (ps_mystique's left_gun / right_gun) -> beam events
         # (before map_tree_refs, as weapons.apply for the variants: the added effect / sound paths get mapped too)
-        wrep = W.rewrite_weapon_events(root, self.x1_weapons)
+        wrep = W.rewrite_weapon_events(root, self.x1_weapons, values=self.ctx.x1_values())
         if wrep:
             with self.lock:
                 self.weapon_event_reports[C.norm(rel)] = dict(wrep)
@@ -597,15 +602,20 @@ class _Builder:
             self.styles[key] = result
         return result
 
-    def weapon_style(self, x1_style, weapon, weapon_name):
-        """SPEC 29: the variant of XML1 powerstyle `x1_style` armed with `weapon` (a data/weapons/weapons.eng
-        entry): data/powerstyles/x1_<style>_<weapon>, the XML1 style with its weapon_fire triggers replaced by
-        the weapon's own (weapons.apply) and then patched like every style (value codes resolved). Returns the
-        variant's name, or None when the XML1 style does not exist."""
+    def weapon_style(self, x1_style, weapon, weapon_name, grenade=''):
+        """SPEC 29 + issue #36: the variant of XML1 powerstyle `x1_style` armed with `weapon` (a
+        data/weapons/weapons.eng entry): data/powerstyles/x1_<style>_<weapon>, the XML1 style with its
+        weapon_fire triggers replaced by the weapon's own (weapons.apply) - which also carries the soldier's
+        grenade throw, power_grenade, throwing the effective `grenade` (the spawner's monster_grenade override
+        beats the weapon's grenade=; a non-default grenade is part of the variant's NAME, because a shared
+        weapon can arm both a default-gr holder and an overridden one) - and then patched like every style
+        (value codes resolved). Returns the variant's name, or None when the XML1 style does not exist."""
         ctx = self.ctx
         lname = x1_style.lower()
         mapped = C.map_powerstyle(lname)
         name = W.variant_name(mapped, weapon_name)
+        if grenade and grenade.lower() != W.DEFAULT_GRENADE:
+            name = W.variant_grenade_name(name, grenade)
         key = ('powerstyles', name)
         with self.lock:
             self.variant_base[name] = mapped.lower()
@@ -619,13 +629,14 @@ class _Builder:
                       f'usable copy')
             result = None
         else:
-            def patch(root, r=rel, w=weapon, nm=name):
-                rep = W.apply(root, w, where=nm)
+            def patch(root, r=rel, w=weapon, nm=name, g=grenade):
+                rep = W.apply(root, w, where=nm, grenade=g, values=self.ctx.x1_values())
                 with self.lock:
                     self.weapon_reports[nm] = (weapon_name, lname, dict(rep))
                 self._style_patch(root, r)
             res = ctx.import_x1_asset(rel, out_rel_noext=f'Data/powerstyles/{name}', patch=patch,
-                                      patch_key=f'{PATCH_STYLE}.weapon.{weapon_name.lower()}')
+                                      patch_key=f'{PATCH_STYLE}.weapon.{weapon_name.lower()}'
+                                                + (f'.grenade.{grenade.lower()}' if grenade else ''))
             if not res.ok:
                 ctx.error(f'{rel}: weapon variant {name} import failed ({res.status})')
                 result = None
@@ -634,6 +645,49 @@ class _Builder:
                     self.styles_written[('powerstyles', name)] = rel
                 self._record('powerstyles', rel, res.out_rels)
                 ctx.count('weapon_styles_written')
+        with self.lock:
+            self.styles[key] = result
+        return result
+
+    def grenade_style(self, mapped_base, grenade):
+        """Issue #36: the variant of the mapped fightstyle `mapped_base` whose grenade_projectile triggers throw
+        `grenade` (data/fightstyles/x1_<base>_<grenade>): XML1's file for the base style with the thrown entity
+        swapped (weapons.apply_grenade) and then patched like every style (value codes resolved). Returns the
+        variant's name, or None when the XML1 style does not exist."""
+        ctx = self.ctx
+        name = W.grenade_variant_name(mapped_base, grenade)
+        key = ('fightstyles', name)
+        with self.lock:
+            self.grenade_variant_base[name] = mapped_base.lower()
+            if key in self.styles:
+                return self.styles[key]
+        srcs = [mapped_base, mapped_base[3:] if mapped_base.startswith('x1_') else f'x1_{mapped_base}']
+        rel = next((r for s in srcs for r in (f'data/fightstyles/{s}.eng', f'data/fightstyles/{s}.xml')
+                    if ctx.x1_path(r)), None)
+        result = name
+        if rel is None or ctx.x1_is_empty(rel):
+            ctx.error(f'data/fightstyles/{mapped_base}: grenade {grenade} needs it but the XML1 disc has no '
+                      f'usable copy')
+            result = None
+        else:
+            def patch(root, r=rel, g=grenade, nm=name):
+                rep = W.apply_grenade(root, g)
+                with self.lock:
+                    self.grenade_reports[nm] = dict(rep)
+                self._style_patch(root, r)
+                for k in list(root.attrib):
+                    if k.lower() == 'name':
+                        root.set(k, nm)
+            res = ctx.import_x1_asset(rel, out_rel_noext=f'Data/fightstyles/{name}', patch=patch,
+                                      patch_key=f'{PATCH_STYLE}.grenade.{grenade.lower()}')
+            if not res.ok:
+                ctx.error(f'{rel}: grenade variant {name} import failed ({res.status})')
+                result = None
+            else:
+                with self.lock:
+                    self.styles_written[('fightstyles', name)] = rel
+                self._record('fightstyles', rel, res.out_rels)
+                ctx.count('grenade_styles_written')
         with self.lock:
             self.styles[key] = result
         return result
@@ -696,6 +750,29 @@ class _Builder:
         root = self.ctx.read_x1_xml('data/weapons/weapons.eng')
         self.x1_weapons = {w.get('name').lower(): _lower_attrs(w)
                            for w in root.iter() if w.tag.lower() == 'weapon' and w.get('name')}
+
+    def load_grenade_overrides(self):
+        """Issue #36: XML1's monsterspawnerent monster_grenade="..." votes by character. XMen2.exe never reads
+        the attribute, so the builder folds a UNANIMOUS override into the character's grenade moveset variant
+        (a disagreement cannot be expressed per spawner without splitting the character; the weapon's grenade=
+        then stands, and the conflict is reported)."""
+        ctx = self.ctx
+        roots = []
+        for rel in ctx.x1_rels('maps/'):
+            if not rel.lower().endswith('.eng'):
+                continue
+            try:
+                roots.append((rel, ctx.read_x1_xml(rel)))
+            except (KeyError, ValueError, ET.ParseError):
+                continue
+        votes = W.grenade_override_votes(roots)
+        for ch, gs in sorted(votes.items()):
+            if len(gs) == 1:
+                self.grenade_overrides[ch] = next(iter(gs))
+            else:
+                self.grenade_override_conflicts[ch] = sorted(gs)
+                ctx.warn(f'{ch}: spawners disagree on monster_grenade {sorted(gs)}; the weapon\'s grenade= stands '
+                         f'(a per-spawner choice would need a character split)')
 
     def _asset(self, rel, why):
         """import a generic XML1 asset (model/effect/texture/entity) under the SPEC 4.4 collision policy, the
@@ -943,12 +1020,36 @@ class _Builder:
                 self.detail['dropped_attrs'].append([name, 'powerstyle', out.pop('powerstyle')])
             else:
                 out['powerstyle'] = ps
+        # issue #36: the grenade XML1's runtime would throw for this entry (spawner override > weapon grenade=):
+        # when it is not the moveset's hardcoded default, the entry's grenade moveset ships as a variant whose
+        # grenade_projectile trigger names that entity (weapons.grenade_moveset_want is the same rule the
+        # validator checks, V43)
+        w_peek = self.x1_weapons.get((a.get('weapon') or '').strip().lower()) if a.get('weapon') else None
+        grenade = W.effective_grenade(w_peek, self.grenade_overrides.get(name.lower(), ''))
+        want_ms = W.grenade_moveset_want(a.get('moveset1') or '', w_peek, self.grenade_overrides.get(name.lower(), ''),
+                                         C.map_fightstyle)
         if 'moveset1' in out:
             fs = self.style('fightstyles', out['moveset1'])
             if fs is None:
                 self.detail['dropped_attrs'].append([name, 'moveset1', out.pop('moveset1')])
             else:
                 out['moveset1'] = fs
+                if want_ms and fs.lower() != want_ms:
+                    vs = self.grenade_style(fs, grenade)
+                    if vs:
+                        out['moveset1'] = vs
+                        ctx.count('grenade_variants_used')
+        elif want_ms:
+            # XML1 granted the throw through the spawner attribute alone (the nuclear-plant NukeGuards: no
+            # moveset1 on the XML1 entry, a weapon naming the default grenade): give the entry the shared grenade
+            # moveset, in the variant throwing the spawner's entity
+            base = self.style('fightstyles', W.GRENADE_MOVESET)
+            if base:
+                vs = self.grenade_style(base, grenade)
+                if vs:
+                    out['moveset1'] = vs
+                    ctx.count('grenade_variants_used')
+                    ctx.count('grenade_moveset_granted')
         sd = out.get('sounddir')
         if sd:
             if ctx.sound_bank_rel(sd) is None:
@@ -1072,9 +1173,12 @@ class _Builder:
                 if ps:
                     new.set('powerstyle', ps)
             if (weapon.get('type') or '').lower() in W.WEAPON_TYPES:
-                # SPEC 29: a gun fires through the style; the variant carries this weapon's triggers
+                # SPEC 29: a gun fires through the style; the variant carries this weapon's triggers - and its
+                # soldier's grenade throw (issue #36): the effective grenade (spawner monster_grenade override >
+                # weapon grenade=) is part of the variant's identity; a non-default one renames the variant
+                eff_grenade = W.effective_grenade(weapon, self.grenade_overrides.get(name.lower(), ''))
                 base = a.get('powerstyle') or weapon.get('powerstyle') or ''
-                vs = self.weapon_style(base, weapon, weapon_name) if base else None
+                vs = self.weapon_style(base, weapon, weapon_name, grenade=eff_grenade) if base else None
                 if vs:
                     new.set('powerstyle', vs)
                     ctx.count('weapon_styles_used')
@@ -1175,18 +1279,72 @@ class _Builder:
         return root, seen
 
     def swap_variant_style(self, root, stats_el):
-        """SPEC 29.1: a package of a stats entry that uses a weapon variant style lists the VARIANT where XML1's
-        bundle listed the base style. A power style the engine loads on demand (named by a stats entry but by no
-        package) breaks the party's power wheels: in haarp_ext01 (0.1.2) the third and fourth heroes seated had
-        no wheel until the next zone; with the variant in the packages all four do (verified in game)."""
-        vs = (stats_el.get('powerstyle') or '').lower()
-        base = self.variant_base.get(vs)
-        if not base:
-            return
-        for e in root:
-            if e.tag == 'fightstyle' and C.norm(e.get('filename', '')) == f'data/powerstyles/{base}':
-                e.set('filename', f'data/powerstyles/{vs}')
-                self.ctx.count('package_styles_to_variant')
+        """SPEC 29.1 / issue #36: a package of a stats entry that uses a variant style lists the VARIANT where
+        XML1's bundle listed the base style. A power style the engine loads on demand (named by a stats entry but
+        by no package) breaks the party's power wheels: in haarp_ext01 (0.1.2) the third and fourth heroes seated
+        had no wheel until the next zone; with the variant in the packages all four do (verified in game). A
+        grenade variant (x1_<style>_<weapon>_<grenade>, issue #36) also needs the thrown entity's own files,
+        which the GRSO bundles carry but such a bundle may not: append them once. The moveset1
+        variant is loaded explicitly too, including a moveset granted by a spawner override."""
+        for kind, attr, variants in (('powerstyles', 'powerstyle', self.variant_base),
+                                     ('fightstyles', 'moveset1', self.grenade_variant_base)):
+            vs = (stats_el.get(attr) or '').lower()
+            base = variants.get(vs)
+            if not base:
+                continue
+            W.bind_style_package(root, base, vs, kind=kind)
+            have = {(e.tag, C.norm(e.get('filename') or '')) for e in root}
+            for entry in self._grenade_deps(vs):
+                if entry not in have:
+                    ET.SubElement(root, entry[0], {'filename': entry[1]})
+                    have.add(entry)
+                    self.ctx.count('package_grenade_deps_added')
+
+    def _grenade_deps(self, variant: str):
+        """(kind, filename) package entries the thrown entity of `variant` (x1_<style>_<weapon>_<grenade>) needs:
+        the entity file, its model / death effects and, one level deep, the entities and effects its deathspawn
+        names (the incendiary's fire globs) - what a GRSO bundle lists for its grenade-throwing soldiers, read
+        from XML1's data/entities/grenade_ents. '' when the name names no grenade entity."""
+        ctx = self.ctx
+        rel = next((r for r in ('data/entities/grenade_ents.eng', 'data/entities/grenade_ents.xml')
+                    if ctx.x1_path(r)), None)
+        if rel is None:
+            return []
+        try:
+            eroot = ctx.read_x1_xml(rel)
+        except (KeyError, ValueError, ET.ParseError):
+            return []
+        by_name = {e.get('name', '').lower(): e for e in eroot.iter()
+                   if e.tag.lower() == 'entity' and e.get('name')}
+        grenade = W.variant_grenade(variant, set(by_name))
+        if not grenade:
+            return []
+        out, seen = [], set()
+
+        def add(kind, fn):
+            fn = C.norm(fn)
+            if fn and (kind, fn) not in seen:
+                seen.add((kind, fn))
+                out.append((kind, fn))
+
+        def walk(el, depth):
+            a = _lower_attrs(el)
+            if a.get('model'):
+                add('model', a['model'] if a['model'].startswith('models/') else f"models/{a['model']}")
+            for k in ('deatheffect', 'loopfx', 'trailfx'):
+                if a.get(k):
+                    add('effect', a[k])
+            if depth < 1:
+                for k in ('deathspawn', 'actspawn', 'xdeathspawn'):
+                    sub = by_name.get((a.get(k) or '').lower())
+                    if sub is not None:
+                        walk(sub, depth + 1)
+
+        el = by_name.get(grenade)
+        if el is not None:
+            add('xml', C.split_ext(rel)[0])
+            walk(el, 0)
+        return out
 
     def add_boltons(self, root, seen, stats_el, who):
         """XML2 packages list every BoltOn model (fix_package_for_boltons) and its anim DB."""
@@ -1356,8 +1514,9 @@ class _Builder:
                 ents = bundle
             who = f'{kind}/{mapped}'
             root, _ = self.build_pkg(ents, who)
-            if kind == 'powerstyles' and mapped in self.variant_base:
-                W.bind_style_package(root, self.variant_base[mapped], mapped)
+            variants = self.variant_base if kind == 'powerstyles' else self.grenade_variant_base
+            if mapped in variants:
+                W.bind_style_package(root, variants[mapped], mapped, kind=kind)
             dst = f'Packages/generated/{kind}/{mapped}.PKGB'
             if dst in ctx.base_index:
                 old = ctx.read_base_xmlb(dst)
@@ -1465,6 +1624,7 @@ def run(ctx):
     b.load_talents()
     b.load_immunities(x1npc)
     b.load_weapons()
+    b.load_grenade_overrides()
 
     # ---------------- keep list (KEEP_X2 + exe strings via x2_stats_refs.json + scan of still-active XML2 content)
     evidence, need, scanned = plan['keep_evidence'], plan['keep_need'], plan['keep_scanned']
@@ -1507,6 +1667,9 @@ def run(ctx):
     new_names = {e.get('name').lower() for e, _ in new_entries}
     if new_names | set(plan['keep_x2']) | {n.lower() for n in plan['herostat']} != plan['names']:
         ctx.error('internal: planned_stats names differ from the entries built')
+
+    # Inert weapon metadata: XML2 Fix adds it to matching attacks (no new talents).
+    MW.apply(b, new_entries, x1npc)
 
     # ---------------- npcstat in XML1 mode (each file from its own base)
     roots = {}
@@ -1561,6 +1724,7 @@ def run(ctx):
               'inline NPC immunity bodies are real definitions (SPEC 30)')
     _npc_immunities_report(ctx, b)
     _values(ctx, b)
+    _basic_attacks(ctx)
 
     # ---------------- packages
     stats_by_lname = {e.get('name').lower(): e for e, _ in new_entries}
@@ -1636,6 +1800,7 @@ def run(ctx):
     ctx.shared['stats'] = stats
     ctx.shared['stats_names'] = set(stats)
     ctx.shared['weapon_variant_base'] = dict(b.variant_base)                       # SPEC 29.1 (zones packages)
+    ctx.shared['grenade_overrides'] = dict(b.grenade_overrides)                    # issue #36 (validator V43)
     ctx.shared['stats_powerstyle'] = {n: (e.get('powerstyle') or '').lower() for n, e in stats_by_lname.items()}
     ctx.shared['char_packages'] = set(char_pkgs)
     ctx.set_count('npc_entries', sum(1 for _, o in new_entries if o == 'xml1'))
@@ -1897,6 +2062,21 @@ def _check_caps(ctx, roots, hero_roots, b):
             f'shared talents {tl[1]}/{TALENT_CAP}')
 
 
+def _basic_attacks(ctx):
+    """a balance build (xml1build.balance): XML1's values on the seven basic melee events of the shipped
+    data/shared_combat_events, so the XML2 fighting styles XML1's characters use punch as hard as in XML1."""
+    from . import balance
+    if not balance.enabled():
+        return
+    shared = ctx.read_base_xmlb(CE.SHARED_EVENTS_REL)
+    changed = balance.apply_basic_attack_values(shared, ctx.x1_values())
+    if changed:
+        ctx.write_xmlb('Data/shared_combat_events', shared, ('.XMLB',), source='xml1build.balance', replace=True)
+    ctx.set_count('x1_basic_attacks', sum(changed.values()))
+    ctx.note(f'balance: XML1\'s values on {sum(changed.values())} basic melee events of {CE.SHARED_EVENTS_REL} '
+             f'({sorted(k.split(":", 1)[1] for k in changed)})')
+
+
 def _values(ctx, b):
     """append the XML1 value codes XML2 lacks (A1-A10, XTL1-6) to Data/values.XMLB; report the differing ones."""
     x2 = ctx.read_base_xmlb('Data/values.XMLB')
@@ -2091,6 +2271,19 @@ def _report_styles(ctx, b):
         ctx.note(f'style events naming an XML1 weapon (SPEC 29.3, weapons.rewrite_weapon_events): '
                  f'{dict(sorted(b.weapon_event_reports.items()))}')
     b.detail['weapon_events'] = dict(sorted(b.weapon_event_reports.items()))
+    if b.grenade_overrides:
+        thrown = collections.Counter()
+        for (_, _, rep) in b.weapon_reports.values():
+            for k, n in rep.items():
+                if k.startswith('grenade_'):
+                    thrown[k] += n
+        ctx.note(f'grenade throws (issue #36, weapons.apply power_grenade): {dict(sorted(thrown.items()))}; '
+                 f'spawner monster_grenade overrides folded in: {dict(sorted(b.grenade_overrides.items()))}'
+                 + (f'; disagreements kept at the weapon default: '
+                    f'{dict(sorted(b.grenade_override_conflicts.items()))}' if b.grenade_override_conflicts else ''))
+    b.detail['grenade_throws'] = {'variants': dict(sorted(thrown.items())) if b.grenade_overrides else {},
+                                  'overrides': dict(sorted(b.grenade_overrides.items())),
+                                  'conflicts': dict(sorted(b.grenade_override_conflicts.items()))}
     ctx.defer(f'{len(b.styles_written)} converted XML1 styles keep XML1 combat semantics: power-system review '
               f'pending (powers rework). {len(handler_styles)} use FightMove handlers XMen2.exe lacks and XML2 has no '
               f'counterpart for (they run as %default%: the move without its logic; combat_events.'

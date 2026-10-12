@@ -3,6 +3,227 @@
 The builder's releases, newest first. The version is `xml1-builder --version`; the content version is what a
 build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebuild.
 
+## v0.2.0 - content version 18 (needs XML2 Fix 1.4.0)
+
+This build needs **XML2 Fix 1.4.0** (the launcher installs it). Rebuild, then start the game once: your saves are
+carried over into the new format by themselves. Saves made with 0.2.0 don't load in earlier builds.
+
+**Updating**
+
+- **A new save format, and your old saves come with you.** The first time the rebuilt game starts, every existing
+  save and the profile are converted once into a new `SaveLC` folder next to the old `Save` folder, which is never
+  touched. Heroes, levels, stats, talents, inventory, mission progress, unlocks, heard conversations and trivia
+  answers carry over, from every builder version. `SaveLC\legacy-import.txt` says what happened to each file.
+  Future updates can change content without breaking saves.
+- Rebuild **and** update the fix: the format needs both. Updating only `dinput.dll` doesn't make the save tables.
+- Want to be able to go back? Copy `Documents\Activision\X-Men Legends` somewhere first. Older builds play the old
+  `Save` folder as it was before the update; they can't read the new `.lcsave` files.
+- Every save keeps the one before it as `.lcsave.bak`. If a save or load is ever refused, the game says why and the
+  file on disk is kept as it was: report it with `xml2-fix.log` and `SaveLC\legacy-import.txt`.
+
+**The big ones**
+
+- **The first game's combat balance** (issues #14, #94). Enemy health and damage, the heroes' strength bonus, power
+  attacks, melee hit chance and the original seven basic melee attacks are back to X-Men Legends' numbers; enemy
+  punches hurt again. NPC guns roll the first game's +/-30 % damage (they hit about 13-15 % too hard before), and
+  hero health is scaled to match: a fresh level-1 Wolverine has 80 HP, the opening riot cops 40. Expect fights to be
+  harder than in 0.1.12.
+- **The classic main menu.** The bright blue Cerebro room, honeycomb panels behind every button, the original fonts,
+  colours and help line, in a widescreen layout that moves everything together instead of stretching it. The mouse
+  lands anywhere on a button, also in a window Windows resized for display scaling.
+- **Bigger rooms stay complete.** The engine's object limits are raised (general objects 224 -> 768, world handles
+  256 -> 1024), so crowded rooms no longer silently drop props and projectiles: the HAARP freeze gun fires, Magneto's
+  arena keeps its props, and about 940 objects across 116 zones that went missing before are there.
+- **Master Mold fights like the original** (issue #27). His warp-core shield, the cores that bring it down, his
+  platform and floor attacks and their original timing, through to his defeat and the ending. Loading a save made
+  mid-fight keeps your progress.
+
+**Fixes**
+
+- Mystique's pistol and smash bursts keep every shot's sound and muzzle flash (#83).
+- Explosions count their first hit the way the first game did; Avalanche's rocks, Magneto's props and other thrown
+  objects deal their original explosion damage.
+- Soldiers throw the right grenades; the freeze-gun leader's flashbang drains energy with a white flash (#36).
+- Pyro reaches his fight position at HAARP and can pass his own fire barrier (#93).
+- Keycards lying in the world show their model instead of a yellow question mark (#96).
+- The equipment shop is reachable from Xtraction points after you have met Forge (#95).
+- The personal items in the mansion bedrooms show their picture framed in its window, with readable text (#47).
+- Hero power icons show the first game's complete art in round frames (#53, #73).
+- "Enter the HAARP facility?" no longer answers itself while the accept button is still held (#77).
+- Floating props settle onto the floor on a fresh visit; positions a save already holds stay as they were (#81).
+- Trivia answers are remembered in every act, including acts 8 and 9.
+- Heard conversations stay heard after loading, even when content changed between versions.
+- The bridge tanks drive out in older saves instead of appearing after the cutscene.
+- Equipped items in older saves import correctly when the save's talent era differs.
+- No crash on Quit from the classic main menu.
+
+**Co-op**
+
+- Saving during co-op no longer freezes the game long enough for the other player to be disconnected.
+- Players whose builds or gameplay settings differ are refused when they join, with the reason on both PCs (the host
+  sees it in the lobby, or as a short line in play), instead of joining and drifting out of sync.
+- Co-op works in tests with two copies of the game on one PC. A dedicated co-op pass with two PCs, on one network
+  and across the internet, is planned for 0.3.0: please report disconnects, and whether the game showed its lag
+  warnings first.
+
+**Known issues**
+
+- Scan turrets in HAARP and other zones are still inert (#4; planned for 0.3.0).
+- An officer killed while pinned against a door in HAARP can drop his keycard behind it, out of reach: load your last
+  save if it happens (fix planned for 0.2.1).
+- Exclusive fullscreen can fail on high-refresh desktops (seen at 2560x1440 and 180 Hz) and the game then resets its
+  own resolution settings: use borderless, the launcher's default (fix planned for 0.2.1).
+- The Danger Room is always open from the main menu; the first game opened it at a point in the story.
+- An online save made after destroying objects was refused once in an earlier test build (after a connection drop).
+  Two fixes since address the likely causes and destruction saves have passed online since, but that case was never
+  reproduced: if a save is refused, your existing save file is kept - please report it with `xml2-fix.log`.
+
+<details>
+<summary><b>Details</b> (technical list of every change)</summary>
+
+
+- Centre the classic main menu in every display mode. The game already centres the original 4:3
+  composition at any aspect; the `--main-menu-layout widescreen` used for candidate 0.2.0j added a
+  48-unit shift on top, so the logo and panels sat about 7 % of the width right of centre (borderless
+  2560x1440 and windowed alike). Classic is the only composition now; `widescreen` is accepted as a
+  retired name for it. Only `UI/menus/x1_menu_main.IGB` changes; save files and mouse rows are unaffected.
+
+- Own `[Limits] EntityCapacity=1` for port builds (SPEC 85): the companion DLL raises the entity domain to
+  32 actor / 768 generic / 1024 World handles, so the props, projectiles and triggers the stock 224-slot
+  arena refused (943 refusals across 116 zones in the 0.2.0 census; the HAARP freeze gun) exist again.
+  The builder writes `Data/lcsave/typed-entity-ids.txt`, the registry of the shipped scripts' typed
+  entity-id zone variables (`tools/xml1build/typed_entity_ids.py`), which the DLL verifies before it
+  migrates a legacy save; V50 checks it against the shipped scripts. The Python lcsave takes an explicit
+  native layout (retail or the expanded E10A2) and the LC required-feature marker; retail outputs are
+  byte-identical.
+
+- The companion agreement now carries explicit effective rules and entity/token layout, with a shared
+  registration API for capacity/controllers and immediate native incompatibility messages/cleanup.
+
+- The companion explosive first-hit fix now verifies effective installed rules between peers before joining.
+  Differing/failed rules are refused independently of the assigned release identity.
+
+- Request the companion XML2 Fix first-contact explosion rule through `[Game] ExplosiveFirstHit=1`.
+  This restores the original fresh blast attack ID without changing entity attributes or save records.
+
+- Resolve XML1 numeric value codes in map-local entity declarations, restoring explosion damage on
+  Avalanche rocks, Magneto props, and other inline projectiles. Explosion damage keeps the original scalar
+  minimum; V19 rejects unresolved inline codes and ranges. Entity and placement order are preserved.
+
+- Persist trivia answers in every campaign act. New builds use compact native trivia bits with the
+  companion XML2 Fix hooks; LC question identities and legacy sparse-save imports remain unchanged.
+
+- Restore classic main-menu back panels, blue colours, original English typography with PC
+  glyph fallback, and the help footer. Bright Cerebro rendering needs
+  the companion XML2 Fix backdrop hook. The original profile gate remains a separate question.
+- Match main-menu mouse regions to the full visible panel widths with disjoint row seams
+  through the companion DLL's `ClassicMainPanelBounds` setting.
+- Main-menu (and every menu's) mouse needs the companion XML2 Fix with the client-area mapping
+  fix: a window resized by a DPI change no longer drifts the hover downwards or leaves Quit
+  unreachable, and the focus no longer flips inside a row's lower third.
+
+- Supply the effective packed stage binding for the native Master Mold controller
+  and enable it only for first-game builds with that validated contract. The companion
+  DLL restores the shield/core encounter and registers it as shared gameplay rule 3, so
+  co-op stays available between matching builds and refuses peers whose controller
+  state differs (SPEC 86). Older DLLs ignore the keys and retain the existing fallback.
+- Import equipped legacy items using the detected item era, including restore-bank equipment, when the
+  campaign's talent era differs. Attribute restore-bank talent evidence to its actual stats-table owner.
+  The companion XML2 Fix converter and semantic dump apply the same corrections; no save-format change.
+
+
+- Preserve existing streamed cutscene entities when loading legacy saves into builds that pin them. The
+  companion XML2 Fix loader associates unique saved states with their current numbered placements;
+  explicit removed states remain removed. Existing LC imports benefit without reconversion.
+
+
+- **Pyro reaches his intended fight position** (issue #93). The HAARP intro finishes his scripted approach at
+  its existing doorway waypoint after spawning him. XML2 world collision had stopped him behind the doorway
+  before the fire barriers rose. The barriers, allegiance, combat moves and death-script progression retain
+  their authored settings. V47 checks the intro correction and its waypoint.
+
+- **World-placed keycards show their model instead of the missing-model marker** (issues #96, #98). The
+  HAARP train-car keycard and the dropped proximity/ID keycards are placed as world pickups whose model
+  comes from the items table; XML2's same-named items table entries ship no model (XML2 never places them),
+  and the xml2-wins merge kept that gap - the pickups rendered as a floating yellow question mark under a
+  correct hint arrow. A same-name items-table entry with no model now takes XML1's model, the model ships
+  in the items package, and a validator refuses any referenced item without a packaged pickup model.
+  SPEC 77; the check V46.
+- Restore equipment-shop access from Xtraction points after contacting Forge (issue #95). The companion
+  XML2 Fix menu hook keeps native Save and team handling, and respects each lite point's original shop
+  permission. The option uses the port's existing shop adapter. SPEC 79; V48.
+
+- **NPC gun damage rolls the first game's minimum-based +/-30 % draw.** The first game stores only the
+  weapon damage code's minimum and rolls one integer draw between trunc(min x 0.7f) and trunc(min x 1.3f) on
+  every shot (all gun types); the port instead rolled the whole authored code range, inflating gun damage by
+  roughly 13-15 % on average (the HAARP leader's freeze gun 34-64, mean 49, instead of 50-63, mean 56.5).
+  Generated gun-shot triggers now carry the draw's bounds, and thrown explosives' `explodedamage` carries the
+  code's minimum only, as XML1's entity parser reads it (flashbang 15, not 15-18). SPEC 76; the check V45.
+- **Correct the Arbiter talent overflow while retaining the original shared pool.** NPC powers and immunities
+  remain in the save-stable63-name shared list. Per-set/union NPC files are not shipped: engine filename
+  truncation and default-ID collisions made that approach unsafe. Only reviewed noncombat Arbiter props'
+  unnecessary talent precache is removed when it would exceed the registry budget. Fighting heroes keep
+  their precache. V44 retains the complete roster scan and checks100names,9files,63-byte formatted paths,
+  default-ID interval collisions, and records every justified prop-file removal. Save catalogue revision5
+  is appended without renumbering existing identities.
+- **A new save format; every old save is carried over once, automatically.** With XML2 Fix 1.4 the build starts
+  in the LC save format: at the first start the fix converts the old saves it finds, once per file, into the new
+  `SaveLC` folder - the old folder is never touched. Saves of every builder era load: heroes, levels, stats,
+  talents, inventory, mission progress, unlocks and the profile all carry over, including the talent moves of
+  0.1.8-0.1.9 (a save begun before 0.1.8 gets Grab back; the 0.1.8/0.1.9 moves are undone) and the older shift
+  from before 0.1.5. The new format names everything by a permanent id from a catalogue the build ships
+  (`Data\lcsave\catalogue.lcc`, `legacy.lcm` and a `.lcbind` beside every save-bound data file, checked at every
+  start), so future content can retain those save ids. The build writes `[Save] Format=lc`
+  and needs XML2 Fix 1.4 (SPEC 70, SPEC-new-save; the check V39).
+- **The first game's combat balance, on for every build** (issue #14). Enemy health and damage and the heroes'
+  strength bonus are the first game's again (enemy health per body point, the stat bonus, might, power attacks,
+  the melee hit chance and rounding through xml2-fix's `[Balance]` section), and the seven basic melee attacks
+  and the power-attack rule are in the build's data. Was prepared off by default; 0.2.0 turns the switch on
+  (`xml1build.balance.X1_BALANCE`, the test override dropped). SPEC 69; the check V38.
+- **Co-op compatibility metadata** (decision D5). `[Online] GameVersion` is the release's lobby token, `LC26`
+  (content 18, catalogue 6; `tools/xml1build/release_identity.py`), separating these lobbies from earlier port
+  generations and candidates. The ini also records the save-table content fingerprint, as metadata: XML2 Fix 1.4
+  compares the peers' effective gameplay rules and entity layout when a player joins (the shared gameplay
+  agreement), not the fingerprint.
+- Continuing LC saves retain legacy/KEEP payloads and documentary keys. Core capture metadata records opened
+  placements, numbered identities and completeness; Python/C++ canonical KEYS bytes match (SPEC 70.5).
+- Power slots retain their usable flag through conversion, save and load (HERO 1.1).
+- Melee weapons contribute their authored fixed bonus before Strength and Might; damage rolls use inclusive
+  integers. The opening cop's punch is 7 or 9 damage (SPEC 69.5; V40).
+- Includes every 0.1.12 content and XML2 Fix 1.3.2 change listed below.
+- **Fixed: every shot of Mystique's pistol bursts keeps its fire sound and muzzle flash** (issue #83).
+  Port builds request `[Limits] MoveTriggers=64` from the companion XML2 Fix patch. Her attack keeps its original
+  holster/redraw events and all six sounds (23 triggers); smash keeps all ten sounds (27 triggers). The previous
+  build emitted two smash sounds. Conversion and validation share the capacity written into the port ini.
+- **Checked: the health / energy pack sound** (issue #82). The port plays the first game's own pack recordings
+  (the merged bank's entries are the same audio the Xbox ships) at the original 22050 Hz; verified in game
+  through a DirectSound trace of the engine's sound calls. No cause for the reported "sometimes lower pitched"
+  was found in the port's data or playback.
+- **Fixed: the mansion bedrooms' personal items filled the screen** (issue #47, follow-up). 0.1.8 gave every item
+  its own picture, but the engine draws it as a background sprite stretched over the whole menu screen, so the
+  painted scene covered everything. Each picture is now re-framed to show inside the same window the first game
+  drew it in, with the scene's colours continuing to the edges. XML2 Fix's default-on PersonalItemText fix
+  places this menu's opaque background behind its description, so the text is visible too.
+- **Fixed: hero power icons show the first game's complete art inside round frames** (issues #53, #73).
+  The first game's four 64px icons were read as 32px quarter-crops and drawn square over the round frames.
+  The builder now resamples each complete icon into the second game's 128px 4x4 sheet layout, preserves
+  bottom-up image storage, and bakes circular alpha into the icons. The intended generic passive fallback
+  is included in cell 4 so the skills screen retains its passive icons. Image references stay unchanged.
+  Validator V-H15 checks the converted pixel layout and references; synthetic regression tests cover the
+  layout, orientation, image references and bright-colour codec interpolation.
+
+- **Soldier grenade choices** (issue #36). Holder-specific movesets carry the grenade named by the weapon
+  or unanimous spawner override; nuclear-plant guards receive their missing grenade moveset. Matched HAARP
+  checks confirm the freeze-gun leader's flashbang drains energy with a white flash while soldiers retain
+  ordinary damage grenades. The original explosion modifiers are preserved. Confusion behavior remains
+  unverified. SPEC 72 and validator V43 cover styles, packages and modifiers.
+
+- Resident props selected for floor placement preserve the original numbered-instance prefix (#81; SPEC 71, V31/V41).
+- Port builds enable `[Game] ConfirmationRelease=1` (#77) and retain `[Limits] EffectCurves=3600`.
+- Hero health uses `[Balance] HeroHealthPerBody=2.5`: scaled level-1 Wolverine has 80 HP.
+
+</details>
+
 ## v0.1.12 - content version 15 (needs XML2 Fix 1.3.2)
 
 This build needs XML2 Fix 1.3.2 (the launcher installs it). With an older fix the game starts, but the ladder,
@@ -61,7 +282,6 @@ mission's team selection) and V37 (the first game's Xtraction beacons; no power 
   first game: no Load, Danger Room, Healer or Forge choices at any Xtraction point, and the menu still has the
   Xtract world-map choice (#46); both need an XML2 Fix change. A new check (V32) keeps the old menu out. The
   scripts prepare stage reruns once.
-
 ## v0.1.10 - content version 13 (needs XML2 Fix 1.3.1)
 
 - **Fixed (0.1.8 regression): games saved before 0.1.8 lost or swapped hero skills.** The save names a hero's

@@ -74,9 +74,12 @@ before SPEC 21). With --frontend xml1 (the default) it writes A-E:
      leftover (wolverine01, naming a texture it never shipped: the engine's default texture was drawn) and no
      Textures/personal, so every other item showed the last image the menu manager had set - the mansion's loading
      screen. The ITEM schema is the same in both games (texture + text); the text is written with
-     escape_menu_text, the texture is XML1's IGB under the same name. UI/menus/personal and menu_personal.IGB stay
-     XML2's (the same PERSONAL_MENU as XML1's). Known gap (SPEC 56): XMen2.exe draws the item's
-     picture but not its text box - the text is loaded and word-wrapped in memory.
+     escape_menu_text. The texture is XML1's IGB under the same name, re-composed to the 512x384 the menu's
+     image sprite is stretched over (_import_personal_texture, personal_art): the engine draws it fullscreen,
+     where the first game's sprite was a 256x128 window over the menu IGB's backdrop (SPEC 56). UI/menus/personal
+     and menu_personal.IGB stay XML2's (the same PERSONAL_MENU as XML1's). Known gap (SPEC 56): XMen2.exe draws
+     the item's picture but not its text box - the text is loaded and word-wrapped in memory, and no data-side
+     change makes the box draw (engine-side, open).
 
   E. UI/menus/pda.{XMLB,engb} (both front ends: the pause menu in every zone, issue #89, SPEC 64): XML2's PDA_MENU
      without the Blink Portal entry (PDA_PORTAL_LABEL removed, its PDA_PORTAL_MODELS hidden, the up / down chain
@@ -94,6 +97,8 @@ import re
 import xml.etree.ElementTree as ET
 
 from . import common as C
+from . import main_appearance as MA
+from . import main_fonts as MF
 
 MODULE = 'frontend'
 
@@ -126,7 +131,8 @@ MENU_BUTTONS = (
     (1, None, BEGIN_STORY_CMD),                                  # XML1: newgame (no difficulty prompt in XML1)
     (2, None, 'runscript saveloadProcess(3)'),
     # XMen2.exe's own line for its Danger Room item (0x68d184, pushed at 0x5c98fb; drmode 1 = the profile mode of
-    # the main menu). Its story-level-6 gate (0x5c98e3) is not reproduced: XML1's main menu had none either.
+    # the main menu). The original checks a Phoenix-related profile bit; its lifetime needs an
+    # unlocked-original control. Accurate gate restoration is deferred separately from appearance.
     (3, None, 'set drmode 1;openmenu danger_room'),
     (4, None, 'options_main'),                                   # XML2's PC options (XML1: openmenu options)
     (5, None, 'set reviewmode -1;openmenu review'),              # XML2's review menu
@@ -146,9 +152,7 @@ MENU_NODES = 9                                       # XML1's IGB has button1..9
 # bottom edge of the view). The port's 8 buttons are spread evenly over the span of XML1's button1..button7
 # (space_menu_buttons): top and bottom stay XML1's, the spacing is 6/7 of XML1's (SPEC 21.2.4).
 MENU_SPAN = (1, 7)
-MENU_TEXT_STYLE = 'STYLE_MENU_BLACK'                 # XML1's (xbe style table 0x458d80: colours 9 / focus 10 /
-#                                                      disabled 5, font big); XMen2.exe's has the same indices and
-#                                                      font (dim white -> white on focus; XML1's colours were blue)
+MENU_TEXT_STYLE = MA.MAIN_STYLE                     # original colours remapped without replacing the PC palette
 MENU_TEXT_ALIGN = {'textalignx': 'TEXT_ALIGN_CENTER_X', 'textaligny': 'TEXT_ALIGN_CENTER_Y'}   # both exes' default
 MENU_FOCUS_MODEL = 'ui/models/model_button_highlight'
 MENU_NOFOCUS_MODEL = 'ui/models/model_hide'
@@ -187,7 +191,7 @@ def menu_node_names():
     out = []
     for suffix in ('_back', '_highlight', ''):
         out += [f'button{i}{suffix}' for i in range(1, MENU_NODES + 1)]
-    return out + ['desctext1', 'version']
+    return out + [MA.HELP_NODE, 'version']
 
 
 def igb_string_fields(data):
@@ -530,10 +534,18 @@ def menu_igb(ctx):
     if data is None:
         return None, {'problems': [f'{X1_MENU_IGB}: {p}' for p in spaced['problems']], 'nodes': {},
                       'camera': summary, 'spacing': spacing, 'source': str(src)}
+    try:
+        data, appearance = MA.help_alias(data)
+        # one composition, centred by the engine at every aspect (MA.screen_x); 'widescreen' is retired
+        appearance['layout'] = MA.layout(ctx.opt('main_menu_layout', 'classic'))
+    except (ValueError, MA.G.IgbError) as ex:
+        return None, {'problems': [str(ex)], 'nodes': {}, 'camera': summary,
+                      'spacing': spacing, 'source': str(src)}
     fields = igb_string_fields(data)
     nodes = {n: fields.get(n, 0) for n in menu_node_names()}
     problems = [f'{n}: not a node of {X1_MENU_IGB}' for n, c in nodes.items() if not c]
-    return data, {'nodes': nodes, 'problems': problems, 'source': str(src), 'camera': summary, 'spacing': spacing}
+    return data, {'nodes': nodes, 'problems': problems, 'source': str(src), 'camera': summary,
+                  'spacing': spacing, 'appearance': appearance}
 
 
 def _x1_menu_texts(ctx):
@@ -567,6 +579,7 @@ def menu_tree(ctx):
     hidden = {'enabled': 'false', 'hide': 'true'}
     for i in range(1, MENU_NODES + 1):                   # the button meshes (XML1: enabled="false")
         ET.SubElement(root, 'item', {'name': f'button{i}_back', 'type': 'MENU_ITEM_MODEL', 'enabled': 'false',
+                                     'model': MENU_MODELS[0],
                                      **({} if i in shown else {'hide': 'true'})})
     for i in range(1, MENU_NODES + 1):                   # the focus models, swapped by <onfocus>
         ET.SubElement(root, 'item', {'name': f'button{i}_highlight', 'type': 'MENU_ITEM_MODEL',
@@ -586,7 +599,8 @@ def menu_tree(ctx):
     for i in range(1, MENU_NODES + 1):                   # XML1's debug slots: no text, never focused
         if i not in shown:
             ET.SubElement(root, 'item', {'name': f'button{i}', 'style': MENU_TEXT_STYLE, **hidden})
-    ET.SubElement(root, 'item', {'name': 'desctext1', 'style': 'STYLE_DESC'})
+    ET.SubElement(root, 'item', {'name': MA.HELP_NODE, 'style': MA.HELP_STYLE, 'text': desc,
+                               'neverfocus': 'true', **MENU_TEXT_ALIGN})
     ET.SubElement(root, 'item', {'name': 'version', 'style': 'STYLE_DESC', 'textalignx': 'TEXT_ALIGN_LEFT',
                                  'gamevar': 'version'})
     return root
@@ -1143,7 +1157,7 @@ def trivia_tree(ctx):
     acts = trivia_acts(ctx) or [1]
     base, extra = divmod(len(qs), len(acts))
     sizes = [base + (1 if i < extra else 0) for i in range(len(acts))]
-    root = ET.Element('trivia')
+    root = ET.Element('trivia', persistence='compact')
     split = {}
     i = 0
     escaped = 0
@@ -1502,7 +1516,7 @@ def write_personal_items(ctx):
         if tex is None:
             rep['problems'].append(f'{PERSONAL_REL}/{name}: no texture')
             continue
-        st = _import_texture(ctx, tex + '.igb', tex)
+        st = _import_personal_texture(ctx, tex + '.igb', tex)
         rep['textures'][st] += 1
         if st not in ('present', 'written', 'kept_xml2'):
             rep['problems'].append(f'{PERSONAL_REL}/{name}: texture {tex} ({st})')
@@ -1527,6 +1541,28 @@ def _import_texture(ctx, x1_rel, out_noext):
     return res.status
 
 
+def _import_personal_texture(ctx, x1_rel, out_noext):
+    """import one item's texture re-composed to the 512x384 the menu's image sprite is stretched over
+    (personal_art.recompose_igb; SPEC 56). A texture it cannot recompose falls back to the byte copy, so the
+    picture still shows (too big, as before, and reported) rather than not at all."""
+    rel = C.norm(x1_rel)
+    rel = rel if rel.endswith('.igb') else rel + '.igb'
+    if ctx.registry.get(C.norm(out_noext) + '.igb') is not None or ctx.base_index.find(out_noext, ('.IGB',)):
+        return 'present'
+    src = ctx.x1_path(rel)
+    if src is None:
+        return 'missing'
+    from . import personal_art
+    try:
+        data, _rep = personal_art.recompose_igb(src.read_bytes())
+    except personal_art.G.IgbError:
+        res = ctx.import_x1_asset(rel, out_rel_noext=out_noext)
+        return res.status + '_unframed'
+    ctx.write_bytes(C.norm(out_noext) + '.igb', data,
+                    source='frontend:XML1 personal item picture re-framed to the menu sprite (SPEC 56)')
+    return 'written'
+
+
 def run(ctx):
     mode = C.frontend_mode(ctx)
     ctx.set_count('frontend_xml1', int(mode == 'xml1'))
@@ -1538,7 +1574,7 @@ def run(ctx):
     for st, n in prep['textures'].items():
         ctx.set_count(f'personal_textures_{st}', n)
     ctx.note(f'personal items: XML1\'s {len(prep["items"])} Data/personal items (XML2\'s leftover wolverine01 '
-             f'replaced) and their Textures/personal IGBs ({dict(prep["textures"])})')
+             f'replaced) and their Textures/personal IGBs re-framed to the menu sprite ({dict(prep["textures"])})')
     # ---- the pause menu without the Blink Portal (in-zone: both front ends; issue #89)
     write_pda_menu(ctx)
     if mode != 'xml1':
@@ -1547,6 +1583,8 @@ def run(ctx):
         return
     det = {}
     # ---- A. main menu
+    det['main_palette'] = MA.write_styles(ctx)
+    det['main_fonts'] = MF.write_fonts(ctx)
     data, irep = menu_igb(ctx)
     for p in irep['problems']:
         ctx.error(f'{MENU_IGB_REL}: {p}')

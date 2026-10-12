@@ -48,6 +48,7 @@ import struct
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from pathlib import Path
+from . import fix_ini
 
 # ------------------------------------------------------------------------------------------ registered names
 CE_FACTORY = 0x4faea0            # type name -> event object (the 70 names below, in this order)
@@ -514,9 +515,10 @@ class Finding:
         return f'{style}{":" if style else ""}{self.move} {self.kind} {self.name}: {self.detail}'
 
 
-def style_findings(root, shared):
+def style_findings(root, shared, *, max_triggers=None):
     """Everything XMen2.exe would drop or run without logic in one style tree (0x5010b0 semantics).
     shared: event_table() of the <out> data/shared_combat_events. Returns [Finding]."""
+    max_triggers = int(fix_ini.LIMITS.get('MoveTriggers', MOVE_TRIGGER_CAP)) if max_triggers is None else max_triggers
     out = []
     if root is None:
         return out
@@ -614,8 +616,8 @@ def style_findings(root, shared):
             if len(name) > EVENT_NAME_MAX:
                 out.append(Finding('name_len', mname, name.lower(), f'{len(name)} chars > {EVENT_NAME_MAX}'))
         n = len(effective(nm) or [])
-        if n > MOVE_TRIGGER_CAP:
-            out.append(Finding('trigger_cap', mname, str(n), f'{n} triggers > {MOVE_TRIGGER_CAP} (0x4f6aa7: the rest '
+        if n > max_triggers:
+            out.append(Finding('trigger_cap', mname, str(n), f'V18: {n} triggers > configured MoveTriggers={max_triggers} (0x4f6aa7: the rest '
                                                               f'are freed)'))
         h = (_get(m, 'handler') or '').lower()
         if h and h not in FM_HANDLERS:
@@ -756,7 +758,7 @@ def style_rels(index):
 def v18(v, ck):
     """V18 combat events (SPEC 22): the registered tables match the install's XMen2.exe; in every style file the
     build wrote, every <event> / <trigger> resolves to a registered ce_* type (0x501630), no tag-only trigger lacks
-    an inherited trigger to update, no move exceeds 19 triggers, names <= 31 chars, every <affecter attribute> is in
+    an inherited trigger to update, no move exceeds the configured MoveTriggers (stock 19), names <= 31 chars, every <affecter attribute> is in
     the affecter table 0x6ddb18, every FightMove handler is registered (unregistered + assessed in
     UNREGISTERED_HANDLER_NOTES: warning; not assessed: error). An XML1-form powerup trigger (powerup= attribute) or
     XML1 removal (remove="true") is an error: heroes.convert_npc_powerups / convert_powerup_trigger convert every one

@@ -197,6 +197,7 @@ class RealPipeline:
     def build_args(self, job):
         import build_xml1
         argv = ['--out', str(job.out), '--base', str(job.xml2), '--jobs', str(job.jobs)]
+        argv += ['--main-menu-layout', getattr(job, 'main_menu_layout', 'classic')]
         if not job.movies:
             argv.append('--no-movies')
         args = build_xml1.parse_args(argv)
@@ -399,6 +400,7 @@ class RealPipeline:
         if ctx is None:
             return None
         import build_xml1
+        from xml1build import balance as BAL
         a = job.args
         rep = ctx.report.to_json()
         rep['build'] = {'out': Path(job.out).as_posix(), 'base': Path(job.xml2).as_posix(),
@@ -406,6 +408,8 @@ class RealPipeline:
                         'no_movies': not job.movies, **{opt: getattr(a, opt) for opt in build_xml1.CONTENT_OPTS},
                         'start_party': None, 'start_skinset': None, 'files_registered': len(ctx.registry.entries),
                         'seconds': round(time.time() - job.t0, 1), 'shared_keys': sorted(ctx.shared),
+                        BAL.REPORT_KEY: BAL.REPORT_ON if BAL.enabled() else 'xml2',
+                        'content_fingerprint': ctx.shared.get('content_fingerprint'),
                         'sources': 'prepared', 'builder_mode': True}
         rep['builder'] = builder
         p = Path(job.out) / '_build' / 'report.json'
@@ -415,6 +419,11 @@ class RealPipeline:
     def port_keys(self, out) -> dict:
         from xml1build import fix_ini
         return fix_ini.port_keys(out)
+
+    def content_fingerprint(self, out) -> str | None:
+        """the build's D5 content fingerprint (report.json, written by xml1build.savefiles), or None."""
+        from xml1build import fix_ini
+        return (fix_ini.build_record(out) or {}).get('content_fingerprint')
 
     def write_ini(self, out, keys):
         from xml1build import fix_ini

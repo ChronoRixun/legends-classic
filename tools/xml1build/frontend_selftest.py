@@ -49,6 +49,7 @@ from xml1build import frontend as F        # noqa: E402
 FAIL = collections.defaultdict(list)
 INFO = collections.OrderedDict()
 SCRATCH = C.ROOT / 'build' / '_selftest_frontend'          # never written; a ctx needs an <out> path
+SOURCE_OUT = None                                    # --out supplies prepared inputs for provider checks
 
 
 def fail(kind, msg):
@@ -57,10 +58,11 @@ def fail(kind, msg):
 
 def ctx_for(mode, out=None, xp_curve=None):
     out = Path(out) if out else SCRATCH
+    sources = C.Sources.for_out(out if out != SCRATCH else SOURCE_OUT or SCRATCH)
     kw = {'xp_curve': xp_curve} if xp_curve else {}
     args = C.args_for_out(out, frontend=mode, **kw) if out != SCRATCH else \
         C.default_args(out=str(out), frontend=mode, **kw)
-    return C.BuildContext(out, args=args, scan_out=out != SCRATCH,
+    return C.BuildContext(out, base=sources.xml2, sources=sources, args=args, scan_out=out != SCRATCH,
                           registry=C.Registry.load(out / '_build' / 'registry.json') if out != SCRATCH else None)
 
 
@@ -76,16 +78,20 @@ def u1_menu_igb(ctx):
     # its 8 buttons spread over XML1's button1..7 span (z floats of the button nodes only)
     again, frame = F.reframe_menu_igb(src)
     spaced, srep = F.space_menu_buttons(again) if again is not None else (None, {'edits': [], 'problems': ['-']})
-    if spaced != data or len(data) != len(src) or data == src or srep['problems']:
+    styled = F.MA.help_alias(spaced)[0] if spaced is not None else None
+    if styled != data or len(data) != len(src) or data == src or srep['problems']:
         fail('U1', 'x1_menu_main.IGB is not XML1\'s menu_main.igb re-framed and spaced (same size, camera moved)')
         return
     covered = bytearray(len(src))
     for off, n in frame['edits'] + srep['edits']:
         covered[off:off + n] = b'\x01' * n
-    stray = [i for i in range(len(src)) if src[i] != data[i] and not covered[i]]
+    # The re-frame/spacing functions still have an independent byte-range contract;
+    # the alias/footer/layout transform is checked separately below.
+    stray = [i for i in range(len(src)) if src[i] != spaced[i] and not covered[i]]
     if stray:
         fail('U1', f'{len(stray)} changed bytes outside the re-frame\'s edits (first at 0x{stray[0]:x})')
     u1_spacing(again, data, srep)
+    u1_centred(src, data)
     data = again                               # the re-frame's checks below: XML1's file against the re-framed one
     cam0, cam1 = F.menu_igb_camera(src), F.menu_igb_camera(data)
     if cam0.get('problem') or cam1.get('problem'):
@@ -100,7 +106,7 @@ def u1_menu_igb(ctx):
             fail('U1', f'overlay depth {depth}: XML1 view {cam0["pos"][1] + cam0["near"]}.., re-framed '
                        f'{cam1["pos"][1] + cam1["near"]}..{cam1["pos"][1] + cam1["far"]}')
     # every world position moved by the camera's offset: the picture through the camera is the same
-    g0, g1 = G.IgbFile(src), G.IgbFile(data)
+    g0, g1 = G.IgbFile(src), G.IgbFile(again)
 
     def off(a, b):
         return max(abs((y - x) - d) for x, y, d in zip(a, b, delta))
@@ -113,7 +119,7 @@ def u1_menu_igb(ctx):
         elif o0.name == 'igLightAttr':
             worst = max(worst, off(o0.get(6), o1.get(6)))
     moved = {n for n, v in named.items() if v is not None}
-    want = set(F.menu_node_names()) | {'Camera01'}
+    want = {('desctext1' if n == F.MA.HELP_NODE else n) for n in F.menu_node_names()} | {'Camera01'}
     if moved != want:
         fail('U1', f'moved transforms {sorted(moved ^ want)} differ from the menu nodes + Camera01')
     worst = max([worst] + [v for v in named.values() if v is not None])
@@ -157,6 +163,35 @@ def u1_menu_igb(ctx):
         fail('U1', rep['problems'])
 
 
+# 4:3, 16:10, 16:9, 21:9 and the maintainer's 2560x1440 desktop
+CENTRE_SCREENS = ((640, 480), (1024, 768), (1280, 800), (1280, 720), (1920, 1080), (2560, 1440), (3440, 1440))
+# XML1's own panels sit 1.65 units left of its Camera01 (252.35 vs 254; the original Xbox frame shows the same
+# ~2 px at 640x480): the authored composition is kept, never corrected or offset.
+CENTRE_AUTHORED = 2.0
+
+
+def u1_centred(src, data):
+    """SPEC 21.2.1: the built main menu is XML1's composition on its camera, which the engine centres at every
+    aspect (MA.screen_x): the panel column's offset from the screen centre is XML1's own at every screen, within
+    a pixel, and no more than CENTRE_AUTHORED view units (the retired widescreen layout added 48)."""
+    from xml1build import igb_file as G
+    try:
+        x, cam = F.MA.panel_column(data)
+        x0, cam0 = F.MA.panel_column(src)
+    except (ValueError, G.IgbError) as ex:
+        fail('U1', f'main menu panel column: {ex}')
+        return
+    if abs(x - cam) > CENTRE_AUTHORED:
+        fail('U1', f'main menu panels at x {x:.2f}, {x - cam:+.2f} units from the camera {cam} (XML1: {x0 - cam0:+.2f})')
+    seen = {}
+    for w, h in CENTRE_SCREENS:
+        got, want = F.MA.screen_x(x, cam, w, h) - w / 2, F.MA.screen_x(x0, cam0, w, h) - w / 2
+        seen[f'{w}x{h}'] = round(got, 2)
+        if abs(got - want) > 1.0:
+            fail('U1', f'{w}x{h}: main menu panels {got:+.1f} px from the screen centre, XML1 {want:+.1f} px')
+    INFO['U1 panel column px from centre'] = seen
+
+
 def u1_spacing(framed, data, srep):
     """SPEC 21.2.4: the port's buttons spread evenly over XML1's button1..button7 span, each kind (text anchor, mesh,
     focus model) from its own button1 z to its own button7 z; nothing else of the scene moves."""
@@ -194,7 +229,7 @@ def u2_menu(ctx):
     root = F.menu_tree(ctx)
     items = {it.get('name'): it for it in root.iter('item')}
     x1 = ctx.read_x1_xml(F.X1_MAIN_MENU)
-    x1_items = [it.get('name') for it in x1.iter('item')]
+    x1_items = [F.MA.HELP_NODE if it.get('name') == 'desctext1' else it.get('name') for it in x1.iter('item')]
     if [it.get('name') for it in root.iter('item')] != x1_items:
         fail('U2', f'item names / order differ from XML1\'s main.eng: {list(items)} vs {x1_items}')
     for n in F.EXE_MENU_FORBIDDEN:
@@ -242,12 +277,12 @@ def u2_menu(ctx):
         fail('U2', 'the Quit slot is not button8 (the last button) without a usecmd')
     for n in order:
         it = items[n]
-        if it.get('style') != 'STYLE_MENU_BLACK' or it.get('enabled') or it.get('hide') or it.get('type') \
+        if it.get('style') != F.MENU_TEXT_STYLE or it.get('enabled') or it.get('hide') or it.get('type') \
                 or it.get('textalignx') != 'TEXT_ALIGN_CENTER_X' or it.get('textaligny') != 'TEXT_ALIGN_CENTER_Y':
             fail('U2', f'{n}: {it.attrib}')
     for i in range(1, F.MENU_NODES + 1):
         back, hl = items[f'button{i}_back'], items[f'button{i}_highlight']
-        if back.get('type') != 'MENU_ITEM_MODEL' or back.get('enabled') != 'false':
+        if back.get('type') != 'MENU_ITEM_MODEL' or back.get('enabled') != 'false' or back.get('model') != F.MENU_MODELS[0]:
             fail('U2', f'button{i}_back: {back.attrib}')
         if (back.get('hide') == 'true') != (i > nshown) or (hl.get('hide') == 'true') != (i > nshown):
             fail('U2', f'button{i}: back / highlight hidden {back.get("hide")} / {hl.get("hide")}')
@@ -457,6 +492,8 @@ def u7_review(ctx):
 
 def u8_trivia(ctx):
     root, rep = F.trivia_tree(ctx)
+    if root.get('persistence') != 'compact' or len(list(root.iter('question'))) > 250:
+        fail('U8', 'trivia persistence is not compact or exceeds the native budget')
     if rep.get('split') != {1: 9, 3: 9, 5: 8, 6: 8, 8: 8, 9: 8}:
         fail('U8', f'split {rep.get("split")}')
     for q in root.iter('question'):
@@ -795,10 +832,12 @@ def b_compare(out, ref):
 
 
 def main(argv=None):
+    global SOURCE_OUT
     ap = argparse.ArgumentParser(description=__doc__.split('\n')[0])
     ap.add_argument('--out')
     ap.add_argument('--compare')
     a = ap.parse_args(argv)
+    SOURCE_OUT = Path(a.out).resolve() if a.out else None
     x1 = ctx_for('xml1')
     for name, fn in (('U1', lambda: u1_menu_igb(x1)), ('U2', lambda: u2_menu(x1)), ('U3', lambda: u3_dangerroom(x1)),
                      ('U4', lambda: u4_xp(x1)), ('U5', lambda: u5_equipment(x1)), ('U6', u6_namespace),

@@ -24,16 +24,23 @@ style with every `weapon_fire` trigger replaced by the weapon's own (`apply` bel
 stats entry at it (its character package follows). One XML1 style serves many weapons (ps_grso: mp5, laser,
 lightning, nullifier, freeze, knockback, superlaser), hence variants. Value codes stay codes here (L1..L5, K10):
 npc_values.resolve_style turns them into XML1's numbers afterwards (SPEC 24), in the styles and in the two
-projectile entity files. A FightMove holds at most 19 triggers (0x4f6aa7), so a burst of 7 weapon_fire triggers
-gets 2 triggers per shot: the attack and one effect_sound (muzzle flash + fire sound in one).
+projectile entity files. The stock FightMove holds 19 triggers (0x4f6aa7). Port builds request MoveTriggers=64 from the companion
+XML2 Fix patch, preserving authored events plus the attack and one effect_sound per shot.
 """
 from __future__ import annotations
 
 import collections
 import xml.etree.ElementTree as ET
+from . import fix_ini
 
 WEAPON_TYPES = frozenset({'bullet', 'beam', 'flame', 'projectile'})   # melee weapons change nothing in the style
-MAX_TRIGGERS = 19                                                      # XMen2.exe 0x4f6aa7: the 20th is freed
+STOCK_TRIGGERS = 19                             # XMen2.exe 0x4f6aa7: the 20th is freed
+MAX_TRIGGERS = int(fix_ini.LIMITS['MoveTriggers']) # companion XML2 Fix, default 64
+
+
+def trigger_capacity() -> int:
+    """The same capacity requested by the emitted ini; a missing key leaves the engine stock."""
+    return int(fix_ini.LIMITS.get('MoveTriggers', STOCK_TRIGGERS))
 DEFAULT_BOLT = 'Bip01 R Hand'
 FLAME_INTERVAL = '0.1'            # ch_constantbeam fires the tag-150 beam this often (XML2's ps_pyro: 0.08 s)
 LOOP_TAG = '100'                  # the tag ch_constantbeam loops as a sound while the beam is on
@@ -52,6 +59,125 @@ def variant_name(mapped_style: str, weapon_name: str) -> str:
     base = mapped_style[3:] if mapped_style.startswith('x1_') else mapped_style
     wp = weapon_name[3:] if weapon_name.lower().startswith('wp_') else weapon_name
     return f'x1_{base}_{wp}'.lower()
+
+
+# The thrown grenade (issue #36): XML1's moveset_grenade hardcodes entity="grenade" and default.xbe chose the
+# thrown entity at runtime from the weapon's grenade= (weapons.eng) or the spawner's monster_grenade= (a unanimous
+# override; on the XML1 disc it sits on the six nuclear-plant NukeGuard spawners, whose weapon names the default).
+# The builder materializes that choice per holder. Runtime traces execute the canonical power_smash
+# from moveset1; its grenade_projectile supplies the actual entity. The variant powerstyle retains an auxiliary
+# power_grenade copy at priority 9, whose entity stays aligned with the moveset. Its selection/priority necessity
+# is not established by the acceptance runs. Shared guns need per-grenade variants; a unanimous spawner override
+# grants moveset1 to holders whose XML1 stats did not carry it (the nuclear-plant guards).
+GRENADE_MOVESET = 'moveset_grenade'   # moveset1 supplies the actual entity selected at throw time
+DEFAULT_GRENADE = 'grenade'           # the entity XML1's moveset_grenade hardcodes
+GRENADE_MOVE = 'power_grenade'        # auxiliary copy in the variant powerstyle
+GRENADE_TRIGGER = 'grenade_projectile'
+AI_GRENADE_TYPE = 'grenade'           # XML1's aitype; a name XMen2.exe's aitype table knows (0x2dba6c)
+GRENADE_AIREUSE = '7'                 # XML1's aireusetime on moveset_grenade's power_smash
+GRENADE_PRIORITY = '9'                # retained auxiliary-copy policy, above the guns' AI_PRIORITY
+
+
+def grenade_variant_name(mapped_style: str, grenade: str) -> str:
+    """'moveset_grenade' + 'flashbang' -> 'x1_moveset_grenade_flashbang' (a mapped 'x1_foo' keeps its prefix once)."""
+    base = mapped_style[3:] if mapped_style.startswith('x1_') else mapped_style
+    return f'x1_{base}_{grenade}'.lower()
+
+
+def apply_grenade(root, grenade: str, where: str = '') -> collections.Counter:
+    """point every grenade_projectile trigger's entity at `grenade` (filename stays the entity file the trigger
+    names, data/entities/grenade_ents, which carries grenade / flashbang / incendiary). Returns counts;
+    `root` is changed in place."""
+    rep = collections.Counter()
+    for c in root.iter('trigger'):
+        a = _lower(c)
+        if (a.get('name') or '').lower() != GRENADE_TRIGGER:
+            continue
+        c.set('entity', grenade)
+        rep['grenade_projectile_entity_set'] += 1
+    return rep
+
+
+def grenade_moveset_want(moveset1: str, weapon, override: str, map_fightstyle) -> str:
+    """the moveset1 the built entry must carry ('' = the base moveset stands): when XML1 would throw a grenade
+    other than the default, the variant of the entry's (mapped) grenade moveset that throws it. moveset1: the
+    entry's XML1 moveset1 ('' when XML1's data has none: then only a spawner override is known to grant the throw
+    - XML1's spawner attribute alone did, e.g. the NukeGuards - and the shared grenade moveset is the variant's
+    base; a weapon's grenade= by itself grants no move the data did not give)."""
+    g = effective_grenade(weapon, override)
+    if not g or g.lower() == DEFAULT_GRENADE or (not moveset1 and not override):
+        return ''
+    base = map_fightstyle((moveset1 or GRENADE_MOVESET).lower())
+    return grenade_variant_name(base, g)
+
+
+def variant_grenade_name(variant: str, grenade: str) -> str:
+    """'x1_ps_grso_mp5' + 'flashbang' -> 'x1_ps_grso_mp5_flashbang' (the variant identity of a gun whose
+    effective grenade is not the default; the default keeps the plain SPEC 29 name)."""
+    return f'{variant}_{grenade}'.lower()
+
+
+def variant_grenade(variant: str, grenades) -> str:
+    """the grenade entity a variant name names ('' when it names none): 'x1_ps_grso_mp5_flashbang' -> 'flashbang'
+    when the suffix is one of `grenades` (the entity names of XML1's grenade_ents)."""
+    tail = variant.rsplit('_', 1)[-1]
+    return tail if tail.lower() in grenades else ''
+
+
+def grenade_move(grenade: str) -> ET.Element:
+    """Auxiliary POWERSTYLE copy of XML1's moveset_grenade power_smash: XML1's own aitype "grenade"
+    (a name XMen2.exe's 20-name aitype table knows) at the retained GRENADE_PRIORITY, XML1's
+    aireusetime 7, the same animation, sound, grenade bolton and grenade_projectile trigger, throwing `grenade`
+    from data/entities/grenade_ents."""
+    m = ET.Element('FightMove', {'name': GRENADE_MOVE, 'animenum': 'ea_power2', 'handler': 'ch_grenade',
+                                 'aitype': AI_GRENADE_TYPE, 'aireusetime': GRENADE_AIREUSE,
+                                 'priority': GRENADE_PRIORITY, 'lockangles': 'true'})
+    ET.SubElement(m, 'trigger', {'name': 'stop', 'time': '0'})
+    ET.SubElement(m, 'trigger', {'name': 'sound', 'sound': 'character/grso_m/throw_grenade', 'time': '0.4'})
+    ET.SubElement(m, 'trigger', {'name': GRENADE_TRIGGER, 'type': 'ce_atk_spawn_grenade', 'time': '0.45',
+                                 'filename': 'grenade_ents', 'entity': grenade, 'count': '1',
+                                 'actorbolt': 'Bip01 L Hand'})
+    ET.SubElement(m, 'trigger', {'name': 'bolton', 'type': 'ce_bolton', 'time': '0.1',
+                                 'model': 'models/weapons/grenade', 'bolt': 'Bip01 L Hand',
+                                 'boltslot': 'ebolton_altweapon', 'attachpoint': 'Grab1'})
+    ET.SubElement(m, 'trigger', {'name': 'removebolton', 'type': 'ce_bolton', 'time': '0.44',
+                                 'removebolton': 'true', 'boltslot': 'ebolton_altweapon'})
+    ET.SubElement(m, 'chain', {'action': 'idle', 'result': 'idle'})
+    return m
+
+
+def effective_grenade(weapon, override: str) -> str:
+    """the entity XML1's runtime would throw: the spawner's monster_grenade beats the weapon's grenade= (on the
+    XML1 disc the override is the NukeGuards' only non-default path; its weapon names the default), then the
+    weapon's grenade=, else '' (the XML1 soldier did not throw)."""
+    g = (override or '').strip()
+    if g:
+        return g
+    return (weapon or {}).get('grenade', '').strip()
+
+
+def grenade_powerstyle_want(powerstyle: str, weapon_name: str, weapon, override: str, map_powerstyle) -> str:
+    """the powerstyle variant the built entry must carry ('' = the SPEC 29 variant stands): when XML1 would
+    throw a non-default grenade (the spawner monster_grenade override beats the weapon's grenade=), the weapon
+    variant suffixed with that entity - the same name characters.weapon_style writes. powerstyle: the base style
+    (the entry's XML1 powerstyle, else the weapon's own)."""
+    g = effective_grenade(weapon, override)
+    if not g or g.lower() == DEFAULT_GRENADE or not powerstyle:
+        return ''
+    return variant_grenade_name(variant_name(map_powerstyle(powerstyle.lower()), weapon_name), g)
+
+
+def grenade_override_votes(map_roots) -> dict:
+    """{character lower: {grenade: set of map rels}} of monsterspawnerent monster_grenade votes across parsed
+    XML1 map roots (the .eng maps carry every spawner; one language is enough - all name the same entities)."""
+    votes = {}
+    for rel, root in map_roots:
+        for el in root.iter():
+            g = (el.get('monster_grenade') or '').strip()
+            ch = (el.get('character') or '').strip().lower()
+            if g and ch:
+                votes.setdefault(ch, {}).setdefault(g, set()).add(rel)
+    return votes
 
 
 def gun_fightstyle(weapon) -> str:
@@ -82,14 +208,14 @@ def fightstyle_problems(fight_talents, weapon, map_fightstyle) -> list:
             f'armed; XMen2.exe uses one fighting-style talent), but the entry has {have}']
 
 
-def bind_style_package(root, base: str, variant: str):
-    """A weapon variant's own package must load that variant, not its source style.
+def bind_style_package(root, base: str, variant: str, kind: str = 'powerstyles'):
+    """A variant style's own package must load that variant, not its source style.
 
     The source bundle also carries effects/entities and sometimes other styles. Replace only
     its self-reference, preserving dependency entries and their order. Missing self-references
     (including asset-only bundles) get an explicit XML entry.
     """
-    old, new = f'data/powerstyles/{base}', f'data/powerstyles/{variant}'
+    old, new = f'data/{kind}/{base}', f'data/{kind}/{variant}'
     for entry in root:
         if entry.tag.lower() in ('xml', 'xml_resident', 'fightstyle') and \
                 (entry.get('filename') or '').replace('\\', '/').lower() == old:
@@ -101,6 +227,34 @@ def bind_style_package(root, base: str, variant: str):
 
 def _lower(el) -> dict:
     return {k.lower(): v for k, v in el.attrib.items()}
+
+
+# XML1's gun damage draw (default.xbe, shared by every weapon type's fire path): the weapon parser resolves the
+# damage code through the values getter with a NULL maximum pointer and stores only the minimum (0xbc2ef-0xbc30d,
+# the parsed word at prototype +0x1c6); at fire time 0xbcc47-0xbcc99 loads that minimum and makes ONE integer
+# RNG draw (0x1233c0) between trunc(min x 0.7f) and trunc(min x 1.3f) - the binary32 constants at 0x3ca9d8 and
+# 0x3d4a60 - which becomes the attack's damage. The authored code maximum is never a bound, so the trigger the
+# builder writes carries the draw's bounds instead of the code's range.
+GUN_DRAW_LO = 0.699999988079071            # default.xbe 0x3ca9d8: binary32 0.7 (not idealized 0.7)
+GUN_DRAW_HI = 1.2999999523162842           # default.xbe 0x3d4a60: binary32 1.3 (not idealized 1.3)
+
+
+def gun_damage_range(values, damage):
+    """XML1's gun-draw bounds 'lo hi' for a weapon damage declaration (a value code or a plain number),
+    computed from the declaration's resolved MINIMUM as the fire path draws it. None when the minimum does
+    not resolve (the declaration stays as written and npc_values.resolve_style reports it as today).
+    `values`: heroes.Values of XML1's data/values.xml; None-safe (a caller without a table gets None)."""
+    if values is None:
+        return None
+    try:
+        resolved = values.resolve(damage)
+    except (KeyError, TypeError, AttributeError):
+        return None
+    try:
+        minimum = float(str(resolved).split()[0])
+    except (TypeError, ValueError):
+        return None
+    return f'{int(minimum * GUN_DRAW_LO)} {int(minimum * GUN_DRAW_HI)}'
 
 
 def _attack(w: dict, extra: dict) -> ET.Element:
@@ -210,16 +364,50 @@ def _weapon_event_chain(events: dict, name: str):
     return False, '', ''
 
 
-def rewrite_weapon_events(root, weapons: dict, where: str = '') -> collections.Counter:
+def _drop_bolton_churn(move, dry=False) -> int:
+    """Remove (or, with dry=True, just count) a mid-move bolton holster/redraw cycle (a removebolton whose
+    boltslot is re-added later in the same FightMove, plus that re-add): the weapon simply stays attached. XML1
+    attached the fire sound to the weapon_fire EVENT, so every shot of a burst played it; XMen2.exe has no such
+    inheritance and a FightMove holds at most MAX_TRIGGERS triggers, so a 6-10 shot burst needs those slots for
+    its per-shot sound (issue #83: Mystique's pistols went silent after the first shots).
+    Returns the number of triggers removed (twice the number of cycles)."""
+    trigs = [c for c in move if c.tag.lower() == 'trigger']
+    order = {id(c): i for i, c in enumerate(trigs)}
+    pending_adds = {}       # boltslot -> the 'bolton' adds not yet consumed by a churn pair
+    for c in trigs:
+        a = _lower(c)
+        if (a.get('name') or '').lower() == 'bolton' and a.get('boltslot'):
+            pending_adds.setdefault(a['boltslot'], []).append(c)
+    drop = []
+    for c in trigs:
+        a = _lower(c)
+        if (a.get('name') or '').lower() == 'removebolton' and a.get('boltslot') in pending_adds:
+            later = [x for x in pending_adds[a['boltslot']] if order[id(x)] > order[id(c)]]
+            if later:
+                drop.append(c)
+                drop.append(later[0])
+                pending_adds[a['boltslot']].remove(later[0])
+    if not dry:
+        for c in drop:
+            move.remove(c)
+    return len(drop)
+
+
+def rewrite_weapon_events(root, weapons: dict, where: str = '', values=None, *, max_triggers=None) -> collections.Counter:
     """XML1 styles can also NAME a weapon on an event of their own: ps_mystique's `left_gun` / `right_gun` are
     `<event inherit="weapon_fire" weapon="wp_myst_pistol" [boltselect=...]>`, fired by plain triggers with those
     names. XMen2.exe builds `weapon_fire` as a sound event (see the module doc), so every such shot did nothing.
     Each such event (at the style root or inside a FightMove) becomes a `beam` event with the weapon's data,
     exactly as `shot_triggers` builds a bullet / beam shot (beambolt = the event's `boltselect`, else the weapon's
     `actorbolt`). The triggers keep their names, so no move gains a trigger for the shot itself; the weapon's
-    muzzle flash + fire sound (one `effect_sound`) go on the first shots of each move while it stays within
-    MAX_TRIGGERS. Projectile / flame weapons named this way are reported, not rewritten (none on the disc).
+    muzzle flash + fire sound (one `effect_sound`) go on the burst's shots. A FightMove holds at most
+    MAX_TRIGGERS triggers, so when the shots do not all fit, a mid-move bolton holster/redraw cycle is dropped
+    first (the weapon stays attached) to give every shot its sound, as XML1's weapon_fire event did (issue #83);
+    shots beyond the cap still go without. Projectile / flame weapons named this way are reported, not
+    rewritten (none on the disc). `values`: heroes.Values - when given, each rewritten event carries the XML1
+    gun draw of its weapon's damage minimum (gun_damage_range), as weapons.apply does for the variants.
     Returns counts; `root` is changed in place."""
+    max_triggers = trigger_capacity() if max_triggers is None else max_triggers
     rep = collections.Counter()
     events = {}
     for ev in root.iter('event'):
@@ -236,6 +424,11 @@ def rewrite_weapon_events(root, weapons: dict, where: str = '') -> collections.C
         if w is None:
             rep['weapon_event_unknown_weapon'] += 1
             continue
+        if values is not None and w.get('damage'):
+            drawn = gun_damage_range(values, w['damage'])
+            if drawn is not None:
+                w = dict(w, damage=drawn)
+                rep['gun_damage_drawn'] += 1
         kind = (w.get('type') or '').lower()
         if kind not in ('bullet', 'beam'):
             rep[f'weapon_event_{kind or "untyped"}_kept'] += 1
@@ -264,7 +457,14 @@ def rewrite_weapon_events(root, weapons: dict, where: str = '') -> collections.C
             continue
         rep['weapon_event_moves'] += 1
         rep['weapon_event_shots'] += len(fired)
-        room = MAX_TRIGGERS - len(trigs)
+        room = max_triggers - len(trigs)
+        if room < len(fired):
+            # XML1 played the fire sound on EVERY shot of the burst (it rides the weapon_fire event); reclaim
+            # a mid-move holster/redraw cycle so as many shots as possible carry their sound (issue #83).
+            reclaimed = _drop_bolton_churn(move)
+            rep['weapon_event_bolton_churn_dropped'] += reclaimed // 2
+            trigs = [c for c in move if c.tag.lower() == 'trigger']
+            room = max_triggers - len(trigs)
         for c in fired:
             if room <= 0:
                 break
@@ -274,9 +474,53 @@ def rewrite_weapon_events(root, weapons: dict, where: str = '') -> collections.C
                 move.insert(list(move).index(c) + 1, el)
                 room -= 1
                 rep['weapon_event_fx_added'] += 1
-        if sum(1 for c in move if c.tag.lower() == 'trigger') > MAX_TRIGGERS:
+        if sum(1 for c in move if c.tag.lower() == 'trigger') > max_triggers:
             rep['moves_over_trigger_cap'] += 1
     return rep
+
+
+def named_weapon_events(root) -> set:
+    """Names whose authored event chain binds a weapon; ordinary beam events are not weapon shots."""
+    if root is None:
+        return set()
+    events = {}
+    for ev in root.iter('event'):
+        name = (_lower(ev).get('name') or '').lower()
+        if name and name not in events:
+            events[name] = ev
+    return {name for name in events if (chain := _weapon_event_chain(events, name))[0] and chain[1]}
+
+
+def silent_shots(root, *, event_names=None) -> list:
+    """V42: missing fire sound on converted gun shots. With MoveTriggers raised, every shot
+    must sound; stock fallback reports missing sounds while a holster/redraw cycle spends slots.
+    Returns ['<move>:<trigger name>']."""
+    if root is None:
+        return []
+    out = []
+    for top in (list(root) if root.tag == 'xmlb_multiple_roots' else [root]):
+        shot_ev = {(_lower(ev).get('name') or '').lower()
+                   for ev in top.iter('event')
+                   if (_lower(ev).get('inherit') or '').lower() == 'beam'
+                   and (_lower(ev).get('attacktype') or '').lower() == 'beam'}
+        if event_names is not None:
+            shot_ev &= event_names
+        if not shot_ev:
+            continue
+        for move in top.iter('FightMove'):
+            trigs = [c for c in move if c.tag.lower() == 'trigger']
+            fired = [c for c in trigs if (_lower(c).get('name') or '').lower() in shot_ev]
+            if not fired:
+                continue
+            after = {id(a): b for a, b in zip(trigs, trigs[1:])}
+            quiet = [c for c in fired
+                     if after.get(id(c)) is None or (_lower(after[id(c)]).get('name') or '').lower() != 'effect_sound']
+            if not quiet:
+                continue
+            if trigger_capacity() > STOCK_TRIGGERS or _drop_bolton_churn(move, dry=True):
+                mname = _lower(move).get('name', '?')
+                out += [f'{mname}:{(_lower(c).get("name") or "?")}' for c in quiet]
+    return out
 
 
 def weapon_fire_left(root) -> list:
@@ -308,13 +552,28 @@ def weapon_fire_left(root) -> list:
     return out
 
 
-def apply(root, w: dict, where: str = '') -> collections.Counter:
+def apply(root, w: dict, where: str = '', grenade: str = '', values=None, *, max_triggers=None) -> collections.Counter:
     """replace every weapon_fire trigger of every FightMove with the weapon's triggers; for a continuous (flame)
-    weapon also give the constant beam its firing interval. Returns counts; `root` is changed in place."""
+    weapon also give the constant beam its firing interval. Then carry the soldier's grenade throw (issue #36):
+    XML1's holders of a grenade= weapon throw that grenade from moveset_grenade. Runtime traces execute the
+    canonical power_smash in moveset1; this variant retains an auxiliary power_grenade copy with a consistent
+    entity (XML1's aitype "grenade", at the retained priority above the guns).
+    `grenade`: the effective entity
+    (the spawner override beats the weapon's grenade=); '' = the weapon's own grenade=; a variant whose effective
+    grenade is non-default is named for it by the caller (weapons.variant_grenade_name). `values`: heroes.Values
+    of XML1's values table - when given, the weapon's damage declaration becomes the XML1 gun draw of its
+    minimum (gun_damage_range; the shot carries the draw's bounds, not the code's range). Returns counts;
+    `root` is changed in place."""
+    max_triggers = trigger_capacity() if max_triggers is None else max_triggers
     rep = collections.Counter()
     kind = (w.get('type') or '').lower()
     if kind not in WEAPON_TYPES:
         return rep
+    if values is not None and w.get('damage'):
+        drawn = gun_damage_range(values, w['damage'])
+        if drawn is not None:
+            w = dict(w, damage=drawn)
+            rep['gun_damage_drawn'] += 1
     for move in root.iter('FightMove'):
         trigs = [c for c in move if c.tag.lower() == 'trigger']
         fires = [c for c in trigs if (_lower(c).get('name') or '').lower() == 'weapon_fire']
@@ -330,9 +589,9 @@ def apply(root, w: dict, where: str = '') -> collections.Counter:
                 if kind == 'flame':
                     repl = flame_triggers(w, t, a.get('tag'))
                 else:
-                    # the fire sound + muzzle flash on every shot while the move's 19 triggers allow it, else
+                    # the fire sound + muzzle flash on every shot while the configured capacity allows it, else
                     # on every other shot of a burst
-                    budget = MAX_TRIGGERS - others - len(fires) * 2
+                    budget = max_triggers - others - len(fires) * 2
                     with_fx = first or budget >= 0 or (fires.index(c) % 2 == 0)
                     repl = shot_triggers(w, t, with_fx)
                     if a.get('tag'):
@@ -354,7 +613,7 @@ def apply(root, w: dict, where: str = '') -> collections.Counter:
         for c in new_children:
             move.append(c)
         n = sum(1 for c in move if c.tag.lower() == 'trigger')
-        if n > MAX_TRIGGERS:
+        if n > max_triggers:
             rep['moves_over_trigger_cap'] += 1
         ma = _lower(move)
         if not ma.get('aitype'):                      # let XML2's AI pick the move (see AI_TYPE)
@@ -370,4 +629,131 @@ def apply(root, w: dict, where: str = '') -> collections.Counter:
                         and (a.get('setbeam') or '').lower() == 'true' and not a.get('timeinterval'):
                     c.set('timeinterval', FLAME_INTERVAL)
                     rep['constantbeam_interval_set'] += 1
+    g = (grenade or w.get('grenade') or '').strip()
+    if g and not any((_lower(m).get('name') or '').lower() == GRENADE_MOVE for m in root.iter('FightMove')):
+        root.append(grenade_move(g))
+        rep['grenade_move_added'] = 1
+        rep[f'grenade_{g.lower()}'] = 1
     return rep
+
+
+# ------------------------------------------------------------------------------------------ validator (V45)
+
+def _gun_shot_els(root) -> list:
+    """every element of a built style tree that _attack wrote: a beam / projectile shot trigger, or a beam
+    event rewritten from a style-named weapon (SPEC 29.3). XML1's own power beams (ps_havok's name="beam")
+    carry no damagescale / damagelevel, so the fingerprint (damagescale=difficulty + damagelevel=1 + damage)
+    matches gun shots only."""
+    out = []
+    if root is None:
+        return out
+    for e in root.iter():
+        if not isinstance(e.tag, str):
+            continue
+        a = _lower(e)
+        if (a.get('damagescale') or '').lower() != DAMAGE_SCALE or a.get('damagelevel') != '1' \
+                or not a.get('damage'):
+            continue
+        if e.tag.lower() == 'trigger' and (a.get('name') or '').lower() in ('beam', 'projectile'):
+            out.append(e)
+        elif e.tag.lower() == 'event' and (a.get('inherit') or '').lower() == 'beam':
+            out.append(e)
+    return out
+
+
+def _is_gun_draw(lo: int, hi: int) -> bool:
+    """True when (lo, hi) is XML1's draw of some whole-number minimum: an m with trunc(m x 0.7f) == lo and
+    trunc(m x 1.3f) == hi. Such an m lies within +/-3 of lo / 0.7f (the m interval is ~1.43 wide)."""
+    centre = round(lo / GUN_DRAW_LO)
+    return any(int(m * GUN_DRAW_LO) == lo and int(m * GUN_DRAW_HI) == hi
+               for m in range(max(0, centre - 3), centre + 4))
+
+
+def validate(v, ck) -> None:
+    """V45 (SPEC 76): XML1's weapon fire rolls ONE integer draw between
+    trunc(min x 0.7f) and trunc(min x 1.3f) of the damage code's MINIMUM (default.xbe 0xbcc47-0xbcc99; the
+    authored maximum is never a bound), so (1) every gun-shot trigger of a built style must carry a range
+    that is exactly that draw of some minimum, and (2) a powerstyle named for an XML1 weapon
+    (weapons.variant_name, a non-default grenade suffix aside) must carry exactly that weapon's draw.
+    XML1's entity parser reads explodedamage as ONE number - the code's minimum (0x97940-0x97953) - so
+    (3) a built entity file's single-value attributes must hold one number, never a 'min max' range."""
+    ctx = v.ctx
+    from . import heroes as H                  # noqa: WPS433 - heroes imports this package's modules lazily too
+    from . import npc_values as NV             # noqa: WPS433 - the single-value entity attribute names
+    try:
+        values = H.Values(ctx.read_x1_xml('data/values.xml'))
+    except Exception:          # noqa: BLE001 - no XML1 source readable: the draw cannot be recomputed
+        ck.warn('XML1 data/values.xml not readable: gun damage rolls (SPEC 29) unverified')
+        return
+    x1_weapons = {}
+    try:
+        root = ctx.read_x1_xml('data/weapons/weapons.eng')
+        x1_weapons = {(w.get('name') or '').lower(): {k.lower(): val for k, val in w.attrib.items()}
+                      for w in root.iter() if isinstance(w.tag, str) and w.tag.lower() == 'weapon' and w.get('name')}
+    except Exception:          # noqa: BLE001
+        ck.warn('XML1 data/weapons/weapons.eng not readable: weapon-variant draws (SPEC 29) unverified')
+    grenades = set()
+    try:
+        ent_rel = next((r for r in ('data/entities/grenade_ents.eng', 'data/entities/grenade_ents.xml')
+                        if ctx.x1_path(r)), None)
+        if ent_rel is not None:
+            grenades = {(e.get('name') or '').strip().lower()
+                        for e in ctx.read_x1_xml(ent_rel).iter()
+                        if isinstance(e.tag, str) and e.tag.lower() == 'entity' and e.get('name')}
+    except Exception:          # noqa: BLE001
+        grenades = set()
+    for rel in v.idx.under('data/powerstyles/'):
+        if v.entry(rel) is None or not rel.lower().endswith(('.xmlb', '.engb')):
+            continue                       # XML2 retail styles: not gun conversions
+        root = v.tree(rel)
+        shots = _gun_shot_els(root)
+        if not shots:
+            continue
+        for e in shots:
+            ck.count('gun_shot_triggers_checked')
+            parts = (e.get('damage') or '').split()
+            nums = []
+            if len(parts) == 2:
+                try:
+                    nums = [float(parts[0]), float(parts[1])]
+                except ValueError:
+                    pass
+            if len(nums) != 2 or nums[0] != int(nums[0]) or nums[1] != int(nums[1]) \
+                    or not _is_gun_draw(int(nums[0]), int(nums[1])):
+                ck.error(f'{rel}: gun shot damage {e.get("damage")!r} is not XML1\'s draw trunc(min*0.7f)..'
+                         f'trunc(min*1.3f) of one minimum (SPEC 29)')
+        if not x1_weapons:
+            continue
+        name = rel.rsplit('/', 1)[-1].rsplit('.', 1)[0].lower()
+        g = variant_grenade(name, grenades)
+        if g:
+            name = name[:-(len(g) + 1)]
+        for wname, wrec in x1_weapons.items():
+            if (wrec.get('type') or '').lower() not in WEAPON_TYPES:
+                continue
+            suffix = wname[3:] if wname.startswith('wp_') else wname
+            if not (name.startswith('x1_') and name.endswith('_' + suffix)):
+                continue
+            ck.count('gun_variant_styles_checked')
+            want = gun_damage_range(values, wrec.get('damage'))
+            if want is None:
+                ck.warn(f'{rel}: {wname} damage {wrec.get("damage")!r} does not resolve; its draw not checked')
+                break
+            for e in shots:
+                if e.get('damage') != want:
+                    ck.error(f'{rel}: {wname} gun shot damage {e.get("damage")!r}, {want!r} expected '
+                             f"(XML1's draw of the damage declaration's minimum, SPEC 29)")
+            break
+    n = 0
+    for rel in v.idx.under('data/entities/'):
+        if v.entry(rel) is None or not rel.lower().endswith(('.xmlb', '.engb')):
+            continue                       # XML2 retail entities keep the retail range
+        for e in v.tree(rel).iter():
+            if not isinstance(e.tag, str):
+                continue
+            for k, val in e.attrib.items():
+                if k.lower() in NV.SINGLE_VALUE_ENTITY_ATTRS and len((val or '').split()) == 2:
+                    n += 1
+                    ck.error(f'{rel}: <{e.tag} {k}="{val}"> must be XML1\'s single minimum, not a range '
+                            '(the XML1 entity parser reads one number; SPEC 29)')
+    ck.set('entity_single_value_attrs_checked', n)

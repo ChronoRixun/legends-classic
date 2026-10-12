@@ -78,10 +78,11 @@ def _builder(weapons):
     b.detail = {'dropped_attrs': [], 'dropped_children': [], 'notes': [], 'talents_added': [],
                 'immunity_refs': []}
     b.x1_weapons = {w['name']: w for w in weapons}
+    b.grenade_overrides = {}
     b.x1_talents = {}
     b.talents = []
     b.style = lambda kind, name, rel=None: N.map_fightstyle(name) if kind == 'fightstyles' else name
-    b.weapon_style = lambda style, weapon, wname: W.variant_name(style, wname)
+    b.weapon_style = lambda style, weapon, wname, grenade='': W.variant_name(style, wname)
     b.ensure_talent = lambda name, fs, who: b.talents.append((name, fs))
     b._model_ok = lambda *a: True
     b.exists = lambda rel: True

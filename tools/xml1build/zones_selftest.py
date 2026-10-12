@@ -172,7 +172,23 @@ def main(argv=None):
             INFO['zones_world_synthesized'] += 1
             if C.find_world(s) is not None:
                 fail('B_world_synth_but_source_has_one', z)
-        if sum(1 for _ in o.iter()) != sum(1 for _ in s.iter()) + (1 if synth else 0):
+        # SPEC 71: selected props retain their placements in appended alias groups.
+        # Count the exact added definitions/groups and removed fully emptied source
+        # groups independently of settle.convert; do not tolerate arbitrary growth.
+        selected = [r for r in d.get('spawn_settle', []) if r['status'] == 'settle']
+        selected_types = collections.Counter(r['type'] for r in selected)
+        source_groups = s.findall('entinst')
+        source_defs = {e.get('name'): e for e in s.iter('entity')}
+        added_defs = removed_groups = 0
+        for typ, count in selected_types.items():
+            groups = [g for g in source_groups if g.get('type') == typ]
+            if len(groups) != 1 or typ not in source_defs:
+                fail('B_settle_source_group', f'{z}: {typ}')
+                continue
+            added_defs += sum(1 for _ in source_defs[typ].iter())
+            removed_groups += count == len(groups[0].findall('inst'))
+        settle_delta = added_defs + len({r['group'] for r in selected}) - removed_groups
+        if sum(1 for _ in o.iter()) != sum(1 for _ in s.iter()) + (1 if synth else 0) + settle_delta:
             fail('B_element_count', z)
         if o.tag != 'world':
             fail('B_root_tag', f'{z}: <{o.tag}>')
