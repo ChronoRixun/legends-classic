@@ -63,8 +63,8 @@ player and a 0.2.2 player refuse each other at join, with the reason on both PCs
 
 <details><summary>Technical details</summary>
 
-- Content version 19, catalogue revision 6, lobby token LC27 (the catalogue's keys and domains are unchanged; only
-  `shared_talents.lcbind`'s data hash differs, from the resistance talents' removal tags and reaction rows).
+- Content version 19, catalogue revision 6, lobby token LC27 (the catalogue's keys and domains are unchanged; only the
+  data hashes of `shared_talents.lcbind` (resistance talents) and `herostat.lcbind` (stat growth classes) differ).
 - New `[Game]` keys written for every XML1 build: `PlacementCrush`, `DoubleHeal`, `RankCosts`, `LevelSkillPoints`,
   `LevelStatPoints`, `Xml1Multipart`, `X1Leader` (with `Data\x1leader.txt`), `SoloMode`, `DeathRule`,
   `DangerRoomGate`, `RevivalCost`, `Xml1Turrets` (with `[Xml1Turrets]`), `PackAmount`, `DeathSwitchClear`; `[Limits] ScriptFunctions`.
