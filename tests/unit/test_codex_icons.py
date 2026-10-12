@@ -136,7 +136,7 @@ def highlight_validator(trees, owners, mode='xml1'):
     v = SimpleNamespace(ctx=SimpleNamespace(opt=lambda k: mode if k == 'frontend' else None))
     v.tree = lambda rel: trees.get(rel)
     v.entry = lambda rel: {'owner': owners[rel]} if rel in owners else None
-    ck = Check('V-TBD', 'codex highlight')
+    ck = Check('V58', 'codex highlight')
     VF.v_codex_highlight(v, ck)
     return ck
 

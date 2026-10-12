@@ -132,7 +132,7 @@ BUILD_REPORT = ('_build', 'report.json')
 # xml2-fix [Limits] ScriptFunctions (its docs/script-functions.md): XMen2.exe resolves script function names through a
 # tree of 320; its own 308 (289 + 19 builtins) and xml2-fix's functions fill it, and a function registered past it is
 # dropped together with every script line that calls it. The fix raises it to 1024 by default while ForcedTeams
-# registers its functions; written here explicitly (validate V-TBD script function names checks the count against it).
+# registers its functions; written here explicitly (validate V57 script function names checks the count against it).
 # Nothing saved; online it is gameplay agreement rule 14.
 LIMITS = {'ActorSlots': '127', 'ResourceNames': '1024', 'ItemEnhancements': '512', 'FightStyles': '32',
           'EffectCurves': '3600', 'MoveTriggers': '64', 'EntityCapacity': '1', 'ScriptFunctions': '1024'}
@@ -211,8 +211,11 @@ FORCED_TEAMS_VALUES = ('1', '0', 'off')
 # addSkillPoints, the conversation hooks [Game] AutoAdvance / ReplyVoices / ReplyCursor - SPEC 32, 34; v1.3.1:
 # [Limits] FightStyles - SPEC 43, [Game] GeometrySharingBlendIndices - SPEC 44; v1.3.2: [Game] CharacterLadderPaths -
 # SPEC 46, [Game] ObjectiveDescriptions - SPEC 47, the STAT pickup's addStatPoints - SPEC 48,
-# [Game] BreakRule - SPEC 63, [Limits] EffectCurves - SPEC 65, [Game] Xtract - SPEC 66; v1.4: [Save] Format and the LC save tables - SPEC 70, [Balance] - SPEC 69)
-REQUIRED_XML2FIX = '1.4'
+# [Game] BreakRule - SPEC 63, [Limits] EffectCurves - SPEC 65, [Game] Xtract - SPEC 66; v1.4: [Save] Format and the LC save tables - SPEC 70, [Balance] - SPEC 69;
+# v1.5: the 0.2.2 wave's [Game] keys - PlacementCrush, DoubleHeal, RankCosts, LevelSkillPoints, LevelStatPoints,
+# Xml1Multipart, X1Leader, SoloMode, DeathRule, DangerRoomGate, RevivalCost, Xml1Turrets, PackAmount - and
+# [Limits] ScriptFunctions; a 1.4 DLL silently ignores every one of them, so check_release_dll refuses it)
+REQUIRED_XML2FIX = '1.5'
 
 # xml2-fix [Balance] (xml1build.balance; SPEC 69): the first game's combat numbers for a
 # balance build - one whose styles carry the power-attack marker (report.json build.balance 'xml1'). HeroStatScale
@@ -228,12 +231,19 @@ BALANCE_NATIVE_STAT_HEROES = 'ProfXAstral,ProfXGladiator'
 # scripts with -1 and say "25%", so the amount is not data: the fix writes 0.25 into the two single-amount stores.
 PACK_AMOUNT = 'xml1'
 
+# xml2-fix [Game] X1Leader (issue #15; gameplay rule 7): XML1's stats `leader` bit - heroes don't flinch from a leader's
+# projectile, and a leader's corpse follows the first game's drop rule (4 drops, a forced health / energy / Xtreme
+# pick). XMen2.exe keys both to its own x3-variant flag; the fix treats the actors characters.py lists in
+# Data/x1leader.txt (V54) the same way. Off in xml2-fix unless set (the sidecar alone does nothing); a fix without the
+# feature ignores the key. Written for every XML1 build.
+X1_LEADER = '1'
+
 # every key the port may write (the builder drops the ones a build does not need); the launcher owns the rest
 PORT_OWNED = {'Game': ('NewGameTeam', 'ResetUnlocks', 'SaveFolder', 'ForcedTeams', 'PostgameScript', 'WindowTitle',
                         'EndHeroUnlock', 'MainMenuItems', 'DangerRoomGate', 'ClassicMainBackdrop', 'ClassicMainPanelBounds', 'NewGamePlus', 'ReviewStats', 'Xtract', 'XtractionShop', 'RevivalCost', 'XPCurve',
                        'GeometrySharingBlendIndices', 'CharacterLadderPaths', 'ObjectiveDescriptions',
                        'BreakRule', 'PlacementCrush', 'DoubleHeal', 'DeathRule', 'ConfirmationRelease',
-                       'ExplosiveFirstHit', 'PackAmount', 'SoloMode', 'RankCosts', 'LevelSkillPoints', 'LevelStatPoints', 'Xml1Multipart',
+                       'ExplosiveFirstHit', 'PackAmount', 'SoloMode', 'X1Leader', 'RankCosts', 'LevelSkillPoints', 'LevelStatPoints', 'Xml1Multipart',
                        'Xml1MasterMold', 'Xml1MoldStage', 'Xml1Turrets'),
               'Limits': ('ActorSlots', 'ResourceNames', 'ItemEnhancements', 'FightStyles', 'EffectCurves', 'MoveTriggers', 'EntityCapacity',
                          'ScriptFunctions'),
@@ -423,12 +433,13 @@ def game_keys(*, xml1_opening=True, save_folder=None, forced_teams='1', add_hero
         game['LevelSkillPoints'] = LEVEL_SKILL_POINTS
         game['LevelStatPoints'] = LEVEL_STAT_POINTS
         # xml2-fix multipart.cpp: XML1's breakable parts (npcstat <Multipart> health / effects / linkToPower, kept
-        # verbatim by characters.py; V-TBD checks them) - Juggernaut's helmet, the Sentinels' arms
+        # verbatim by characters.py; V52 checks them) - Juggernaut's helmet, the Sentinels' arms
         game['Xml1Multipart'] = '1'
         game['DeathRule'] = DEATH_RULE
         game['PackAmount'] = PACK_AMOUNT
         # XML1's solo mode (issue #5): setSoloMode in the solo boxes / bridge scripts acts only with this key
         game['SoloMode'] = '1'
+        game['X1Leader'] = X1_LEADER
     if forced_teams in ('0', '1'):
         game['ForcedTeams'] = forced_teams
     if add_hero:
@@ -673,12 +684,34 @@ def check_entity_capacity_dll(dll, keys: dict) -> None:
                          'the existing DLL does not recognize it')
 
 
+# The [Game] / [Limits] keys first read by XML2 Fix 1.5 (REQUIRED_XML2FIX): a 1.4 DLL ignores them without a word.
+RELEASE_15_KEYS = {'Game': ('PlacementCrush', 'DoubleHeal', 'RankCosts', 'LevelSkillPoints', 'LevelStatPoints',
+                            'Xml1Multipart', 'X1Leader', 'SoloMode', 'DeathRule', 'DangerRoomGate', 'RevivalCost',
+                            'Xml1Turrets', 'PackAmount'),
+                   'Limits': ('ScriptFunctions',)}
+
+
+def check_release_dll(dll, keys: dict) -> None:
+    """An existing companion DLL must know every XML2 Fix 1.5 key the build writes (as check_entity_capacity_dll does
+    for 1.4's): an older fix would run the build with those rules silently off. Source-only builds may omit the DLL."""
+    dll = Path(dll)
+    if not dll.is_file():
+        return
+    data = dll.read_bytes()
+    missing = [f'[{section}] {key}' for section, names in RELEASE_15_KEYS.items() for key in names
+               if key in keys.get(section, {}) and key.encode('utf-16le') not in data]
+    if missing:
+        raise ValueError(f'This build needs XML2 Fix {REQUIRED_XML2FIX} or later; the existing DLL does not recognize '
+                         + ', '.join(missing))
+
+
 def write_port_keys(out, keys: dict | None = None) -> dict:
     """merge the port's keys (default: port_keys(out)) into <out>/xml2-fix.ini, dropping the PORT_OWNED keys it does
     not need; the launcher's keys stay. Returns the keys written."""
     keys = port_keys(out) if keys is None else keys
     check_move_trigger_dll(Path(out) / 'dinput.dll', keys)
     check_entity_capacity_dll(Path(out) / 'dinput.dll', keys)
+    check_release_dll(Path(out) / 'dinput.dll', keys)
     if keys.get('Save', {}).get('Format') == 'lc' and (Path(out) / 'Data/lcsave/catalogue.lcc').is_file():
         import json
         identity = RI.manifest(out)

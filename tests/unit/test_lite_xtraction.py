@@ -92,7 +92,7 @@ def test_v32_rejects_lite_calls_in_xml1_scripts_and_data_only():
 
 
 def test_v32_requires_load_on_every_services_call():
-    """V-TBD (issue #63): every first-game point offers Load, so each services helper passes x1_svc with bit 4."""
+    """V32 (issue #63): every first-game point offers Load, so each services helper passes x1_svc with bit 4."""
     helper = ('x1_svc = iadd(x1_shop, 14 )\r\nx1_services = iadd(0, 0 )\r\n'
               'x1_services = xml2fixFeature("xtractionservices" )\r\nif x1_services == 1\r\n'
               '     extractionPointServices("_OWNER_", x1_svc )\r\nelse\r\n     extractionPoint("_OWNER_" )\r\nendif\r\n')

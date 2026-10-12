@@ -355,7 +355,7 @@ def test_port_keys_from_a_synthetic_build():
                                               'PlacementCrush': 'xml1', 'DoubleHeal': '0', 'ExplosiveFirstHit': '1',
                                               'RankCosts': '1', 'LevelSkillPoints': 'xml1',
                                               'LevelStatPoints': 'xml1', 'Xml1Multipart': '1', 'DeathRule': 'xml1',
-                                              'PackAmount': 'xml1', 'SoloMode': '1'},
+                                              'PackAmount': 'xml1', 'SoloMode': '1', 'X1Leader': '1'},
                                      'Limits': {'ActorSlots': '127', 'ResourceNames': '1024', 'ItemEnhancements': '512',
                                                 'FightStyles': '32', 'EffectCurves': '3600', 'MoveTriggers': '64', 'EntityCapacity': '1',
                                                 'ScriptFunctions': '1024'}}
@@ -715,11 +715,30 @@ def test_xml1_builds_ask_for_no_xtract_world_map():
 
 def test_port_builds_ask_for_the_lc_save_format():
     """SPEC 70: [Save] Format=lc is a port build's (an XML2-opening ini has none), the port owns it, and the
-    build needs the xml2-fix that reads it (1.4)."""
+    build needs the xml2-fix that reads it (1.4; 1.5 since the 0.2.2 keys)."""
     assert FI.save_keys(port_identity=True) == {'Format': 'lc'}
     assert FI.save_keys(port_identity=False) == {}
     assert FI.PORT_OWNED['Save'] == ('Format',) and 'ContentFingerprint' in FI.PORT_OWNED['Online']
-    assert FI.REQUIRED_XML2FIX == '1.4'
+    assert FI.REQUIRED_XML2FIX == '1.5'
+
+
+def test_a_dll_without_the_15_keys_is_refused(tmp_path=None):
+    """0.2.2: a companion DLL that doesn't know a 1.5 key the build writes is refused (a 1.4 DLL ignores them)."""
+    import tempfile
+    keys = {'Game': {'RankCosts': '1', 'X1Leader': '1'}, 'Limits': {'ScriptFunctions': '1024'}}
+    with tempfile.TemporaryDirectory() as d:
+        dll = Path(d) / 'dinput.dll'
+        FI.check_release_dll(dll, keys)                                   # no DLL: a source-only build
+        dll.write_bytes(b'MZ' + 'RankCosts'.encode('utf-16le') + 'ScriptFunctions'.encode('utf-16le'))
+        try:
+            FI.check_release_dll(dll, keys)
+        except ValueError as exc:
+            assert 'X1Leader' in str(exc) and '1.5' in str(exc) and 'RankCosts' not in str(exc)
+        else:
+            raise AssertionError('an old DLL was accepted')
+        dll.write_bytes(dll.read_bytes() + 'X1Leader'.encode('utf-16le'))
+        FI.check_release_dll(dll, keys)
+        FI.check_release_dll(dll, {'Game': {'NewGameTeam': 'x'}})        # no 1.5 key asked for: nothing to check
 
 
 def test_danger_room_gate_names_the_front_ends_danger_room_item():

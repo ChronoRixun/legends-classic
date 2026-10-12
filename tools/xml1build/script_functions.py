@@ -1,4 +1,4 @@
-"""xml1build.script_functions - validate V-TBD (script function names): every function the generated output calls is a
+"""xml1build.script_functions - validate V57 (script function names): every function the generated output calls is a
 retail XMen2.exe name or an xml2-fix one, and the names the build relies on fit the script function limit the build's
 xml2-fix.ini asks for.
 
@@ -50,7 +50,7 @@ def unknown_calls(calls, api, allowed=lambda call: False) -> list:
 
 
 def validate(v, ck):
-    """V-TBD script function names, over the validate.Validator `v`."""
+    """V57 script function names, over the validate.Validator `v`."""
     from . import common as C
     from . import fix_ini as FI
     from . import validate as V

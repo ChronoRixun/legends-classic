@@ -68,7 +68,7 @@ Checks (severity per SPEC 4.6: error = will not load or silently misbehaves; war
   V29 codex icons (SPEC 55, validate_frontend.v_codex_icons): --frontend xml1:
                 UI/menus/codex (both halves) written by frontend, its MENU_ITEM_LISTCODEX without icons / icons_cols /
                 icons_rows and no mini_convo_icons precache
-  V-TBD codex highlight (issue #97, validate_frontend.v_codex_highlight): --frontend xml1: the codex list's
+  V58 codex highlight (issue #97, validate_frontend.v_codex_highlight): --frontend xml1: the codex list's
                 list_focus is the frontend's ui/models/x1_codex_select (XML2's bar over the whole row), both halves
   V30 personal items (SPEC 56, validate_frontend.v_personal_items): every personalItem literal has
                 Data/personal/<item> from the first game (frontend), with text and a texture IGB in <out>
@@ -93,7 +93,7 @@ Checks (severity per SPEC 4.6: error = will not load or silently misbehaves; war
                 byte-identical to the set its own data produces, every key in the master catalogue
   V50 typed entity ids (SPEC 85, savefiles.validate): Data/lcsave/typed-entity-ids.txt is present and is exactly the
       registry of the shipped Scripts tree (fingerprint and keys), as the entity-capacity DLL verifies it at load
-  V-TBD script function names (xml2-fix [Limits] ScriptFunctions; script_functions.validate): every function XML1
+  V57 script function names (xml2-fix [Limits] ScriptFunctions; script_functions.validate): every function XML1
                 output calls is an XMen2.exe or xml2-fix name (V7's dead-script and inherited-drop allowances only),
                 and the names the build relies on fit fix_ini.LIMITS ScriptFunctions
   V51 Master Mold stage binding (SPEC 86, scripts module): with the boss spawn script installed, the effective
@@ -108,11 +108,18 @@ Checks (severity per SPEC 4.6: error = will not load or silently misbehaves; war
                 registered talent names and distinct talent files of the permanent, zone, CHRB character and
                 worst four-hero party packages, with the NPC-only talents in their data/talents/npc set files
                 (TalentRegistry fix): over 100 names or 9 files an error, exactly full a warning
-  V-TBD2 removable resistances (issue #3): shared talents whose XML1 form is a def_damage activepowerup carry
+  V53 removable resistances (issue #3): shared talents whose XML1 form is a def_damage activepowerup carry
                 tag_name="def_damage" on their resistance powerup (XML1 0x2b100 removes them; XMen2.exe by tag), and
                 every character whose style removes tag def_damage carries something that tag reaches
+  V54 leader sidecar (issue #15): Data/x1leader.txt lists exactly the XML1 stats entries whose source carries
+                leader="true" (xml2-fix [Game] X1Leader keys the restored leader behaviours to it)
+  V55 fractional health (SPEC 63.6, x1schema.fractional_health_problems): no XML1-sourced entity definition with
+                a numeric health above 0 and below 1 (it would die on its first hit under DeathRule=xml1)
+  V56 scan turrets (SPEC 89, turrets.validate_contract; zones module): the turrets.json contract is well formed
+                and within XML2 Fix's ranges, else a build error
+  V59 solo mode calls (issue #5): XML1's enterSoloMode / exitSoloMode reach xml2-fix as setSoloMode(actor, 1 / 0)
   V25 harm loops (SPEC 51): no delayed start-on ordinary harm loops that XML2 disables
-  V-TBD breakable parts (issue #3): every XML1 npcstat Multipart row survives with its bone / health / effectOnDeath
+  V52 breakable parts (issue #3): every XML1 npcstat Multipart row survives with its bone / health / effectOnDeath
                 / loopEffect / effectBone / linkToPower (xml2-fix [Game] Xml1Multipart reads them), at most four
                 parts per character, and the parts' templates leave the 13-record multipart pool room for actors
   V34 ladder spawns (SPEC 46): no monster spawner without monster_spawnexactlocation runs a ladder motion path
@@ -172,7 +179,7 @@ from . import style_budget as SB         # V23 (SPEC 43): the fighting / power s
 from . import ladder_motion as LM       # V34 (SPEC 46): ladder paths only from the ladder top
 from . import weapons as W              # V5 (SPEC 57, issue #52): a gun-armed entry carries its gun's fighting style
 from . import scripted_approaches as SA  # V47 (SPEC 78): authored scripted approach completion
-from . import characters as CH           # V50 (issue #15): the xml2-fix leader sidecar
+from . import characters as CH           # V54 (issue #15): the xml2-fix leader sidecar
 from . import save_positions as SP      # V31: identities a save keeps by position
 
 MAX_REPORTED = 50                             # per check and severity, into ctx.error / ctx.warn
@@ -440,7 +447,7 @@ _RESIST_AFFECTER = re.compile(r'(resist_|def_damage$)')
 
 
 def removable_findings(x1_talents, shared_roots, stats, style):
-    """V-TBD2 (issue #3 follow-up). XML1's remove="true" drops every def_damage powerup of the actor, talents included
+    """V53 (issue #3 follow-up). XML1's remove="true" drops every def_damage powerup of the actor, talents included
     (default.xbe 0x2b100); XMen2.exe drops powerups by tag name (remove_tag). Errors when (a) a shared talent whose
     XML1 definition is a def_damage activepowerup, referenced by a built character or defined in a built half, is
     missing from a half, or a rank of it has no resistance powerup or an untagged one, or (b) a character whose style removes tag def_damage carries nothing that tag
@@ -855,7 +862,7 @@ class Validator:
     MULTIPART_RECORDS = 13       # both managers hold 13 records (XBE 0x89ec0, XMen2.exe 0x48ccf0), templates + live actors
 
     def vtbd_multipart(self, ck):
-        """V-TBD: every XML1 npcstat Multipart row survives in the built stats with its part-health, effect and
+        """V52: every XML1 npcstat Multipart row survives in the built stats with its part-health, effect and
         power-link attributes (case-insensitive keys, as XMen2.exe's attribute getter 0x5649c0 reads them); at most
         four parts per character; the parts' templates leave the 13-record pool room for live actors."""
         built = self.stats()['by_name']
@@ -892,7 +899,7 @@ class Validator:
                     f'for spawned actors')
 
     def vtbd_removable(self, ck):
-        """V-TBD2: XML1 removals take resistance talents (characters.tag_x1_removable_talents)."""
+        """V53: XML1 removals take resistance talents (characters.tag_x1_removable_talents)."""
         halves = (self.tree('data/shared_talents.engb'), self.tree('data/shared_talents.xmlb'))
         roots = [t for t in halves if t is not None]
         if len(roots) != len(halves):
@@ -944,12 +951,12 @@ class Validator:
                                ('V27', 'voice lines', self.voice_lines),
                                ('V28', 'dialog platforms', self.dialog_platforms),
                                ('V29', 'codex icons', lambda ck: VF.v_codex_icons(self, ck)),
-                               ('V-TBD', 'codex highlight', lambda ck: VF.v_codex_highlight(self, ck)),
+                               ('V58', 'codex highlight', lambda ck: VF.v_codex_highlight(self, ck)),
                                ('V30', 'personal items', lambda ck: VF.v_personal_items(self, ck)),
                                ('V31', 'save positions', self.save_positions),
                                ('V32', 'lite xtraction', self.lite_xtraction),
                                ('V48', 'Xtraction service routing', self.xtraction_services),
-                               ('V-TBD', 'solo mode calls', self.solo_mode_calls),
+                               ('V59', 'solo mode calls', self.solo_mode_calls),
                                ('V34', 'ladder spawns', self.ladder_spawns),
                                ('V35', 'pda portal', lambda ck: VF.v_pda_portal(self, ck)),
                                ('V37', 'xtraction beacons / rank-1 power damage', self.v37_beacons_rank_one),
@@ -960,10 +967,10 @@ class Validator:
                                ('V45', 'gun damage roll', lambda ck: W.validate(self, ck)),
                                ('V47', 'scripted boss approach', lambda ck: SA.validate(self, ck)),
                                ('V46', 'pickup models', self.v46_pickup_models),
-                               ('V-TBD', 'breakable parts', self.vtbd_multipart),
-                               ('V-TBD2', 'removable resistances', self.vtbd_removable),
-                               ('V50', 'leader bit sidecar', self.v50_leader_sidecar),
-                               ('V-TBD', 'script function names', lambda ck: SFN.validate(self, ck))):
+                               ('V52', 'breakable parts', self.vtbd_multipart),
+                               ('V53', 'removable resistances', self.vtbd_removable),
+                               ('V54', 'leader bit sidecar', self.v54_leader_sidecar),
+                               ('V57', 'script function names', lambda ck: SFN.validate(self, ck))):
             ck = Check(cid, title)
             self.checks[cid] = ck
             t0 = time.time()
@@ -1075,9 +1082,9 @@ class Validator:
                  f'{summary["allowed"]} allowlisted; details in _build/validate.json')
         return doc
 
-    # ================================================================== V50 leader sidecar (issue #15)
-    def v50_leader_sidecar(self, ck):
-        """V50 (issue #15): Data/x1leader.txt must list exactly the XML1 stats entries whose source element
+    # ================================================================== V54 leader sidecar (issue #15)
+    def v54_leader_sidecar(self, ck):
+        """V54 (issue #15): Data/x1leader.txt must list exactly the XML1 stats entries whose source element
         carries leader="true" - it is what xml2-fix ([Game] X1Leader) keys the restored leader behaviours
         (death drops, no-flinch vs leader projectiles) to. Derived in code by xml1build.characters from the
         converted stats; this cross-checks derivation against the source data."""
@@ -1317,7 +1324,7 @@ class Validator:
                      f'pair (x1schema.convert_physics), e.g. {lst[:2]}')
             n_break += len(lst)
         ck.set('x1_break_rule_unpaired', n_break)
-        # V-TBD (SPEC 63.6): no XML1-sourced entity definition with a health above 0 and below 1. XML1 keeps maximum
+        # V55 (SPEC 63.6): no XML1-sourced entity definition with a health above 0 and below 1. XML1 keeps maximum
         # health whole; with DeathRule=xml1 such an entity dies on its first hit.
         n_frac = 0
         for n, lst in sorted(sc.fractional_health.items()):
@@ -1474,7 +1481,7 @@ class Validator:
                     n_services += 1
                     if m.group(1).strip() != 'x1_svc' or svc_bits is None or not svc_bits & 4:
                         ck.error(f'{self.idx.get(r) or r}:{i + 1}: {_short(s)}: an Xtraction point without Load '
-                                 "(V-TBD, issue #63: the first game's points always offer Save and Load)")
+                                 "(V32, issue #63: the first game's points always offer Save and Load)")
                     svc_bits = None                     # each call needs its own x1_svc line
         ck.set('lite_xtraction_scripts_checked', n_scripts)
         ck.set('xtraction_services_calls_checked', n_services)
@@ -1514,7 +1521,7 @@ class Validator:
     _SOLO_FORM = re.compile(r'''\bsetSoloMode\(\s*(['"])[^'"]+\1\s*,\s*[01]\s*\)''')
 
     def solo_mode_calls(self, ck):
-        """V-TBD (issue #5): XML1's enterSoloMode / exitSoloMode reach xml2-fix as setSoloMode(actor, 1 / 0) (prepare
+        """V59 (issue #5): XML1's enterSoloMode / exitSoloMode reach xml2-fix as setSoloMode(actor, 1 / 0) (prepare
         P3). XMen2.exe knows no XML1 name (its compiler would drop the call silently), and every setSoloMode keeps the
         two-argument form the DLL registers ('ai'). Counts the solo-box calls in map data and the script calls."""
         n_data = n_scripts = 0

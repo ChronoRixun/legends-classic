@@ -107,7 +107,7 @@ BOLTON_SLOTS = {'ebolton_clawright': 0, 'ebolton_clawleft': 1, 'ebolton_weapon':
                 'ebolton_autoanim': 4, 'ebolton_autoanim2': 5}
 # XML1 Multipart attributes XMen2.exe's Multipart parser (0x48cec0: bone, NonMenuOnly, hideSkin[%d],
 # showSkin[%d]) does not read. Kept verbatim: xml2-fix multipart.cpp ([Game] Xml1Multipart, fix_ini) reads
-# health / effectOnDeath / loopEffect / effectBone / linkToPower back from the built stats (validator V-TBD).
+# health / effectOnDeath / loopEffect / effectBone / linkToPower back from the built stats (validator V52).
 # startHide and healthMul are inert: the XBE's own parser (0x89500) never reads them either.
 MULTIPART_X1_ONLY = ('effectondeath', 'linktopower', 'starthide', 'healthmul', 'loopeffect', 'effectbone')
 MULTIPART_X1_INERT = ('starthide', 'healthmul')

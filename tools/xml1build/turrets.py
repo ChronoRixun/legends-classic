@@ -1,4 +1,4 @@
-"""XML1 scan turrets for the XML2 Fix turret controller (SPEC "XML1 scan turrets", number assigned at merge).
+"""XML1 scan turrets for the XML2 Fix turret controller (SPEC 89).
 
 XML1's scanturretent becomes a physent (x1schema.CLASS_REMAP) that keeps its scanner attributes; XMen2.exe has no
 scanner. XML2 Fix (Game.Xml1Turrets, [Xml1Turrets]) runs the first game's scanner/weapon timing on those physents.
@@ -353,7 +353,7 @@ def line_problems(line: str) -> list:
 
 
 def validate_contract(data) -> list:
-    """problems of a turrets.json contract (V-TBD): placements well formed, unique, within the DLL's 32"""
+    """problems of a turrets.json contract (V56): placements well formed, unique, within the DLL's 32"""
     problems = []
     if not isinstance(data, dict) or data.get('revision') != REVISION:
         return ['turrets contract: missing or other revision']

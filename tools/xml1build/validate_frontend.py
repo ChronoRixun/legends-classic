@@ -807,7 +807,7 @@ def v_codex_icons(v, ck):
 
 
 def v_codex_highlight(v, ck):
-    """V-TBD (issue #97): with --frontend xml1 the codex list highlights with the frontend's x1_codex_select (XML2's
+    """V58 (issue #97): with --frontend xml1 the codex list highlights with the frontend's x1_codex_select (XML2's
     bar stretched over the whole row), written by the frontend - XML2's m_codex_select leaves room for the icon
     cell the port's list no longer draws, so its bar began under the middle of every name."""
     if C.frontend_mode(v.ctx) != 'xml1':

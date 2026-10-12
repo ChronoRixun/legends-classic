@@ -60,7 +60,7 @@ def test_validator_counts_solo_calls_and_rejects_xml1_names():
     validator.is_x1 = lambda _: True
     validator.data_items = lambda table: list(table.items())
     validator.script_set = lambda: set()
-    check = Check('V-TBD', 'invented solo')
+    check = Check('V59', 'invented solo')
     validator.solo_mode_calls(check)
     assert len(check.errors) == 2
     assert check.counts['solo_mode_data_calls'] == 2 and check.counts['solo_mode_script_calls'] == 0

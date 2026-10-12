@@ -1,4 +1,4 @@
-"""Synthetic checks for validate V-TBD (script function names, script_functions.py): every function XML1 output calls
+"""Synthetic checks for validate V57 (script function names, script_functions.py): every function XML1 output calls
 is an XMen2.exe or xml2-fix name, and the names a port build relies on fit xml2-fix's [Limits] ScriptFunctions.
 Invented function names and scripts only; no game data is read."""
 from types import SimpleNamespace
@@ -45,7 +45,7 @@ def test_unknown_calls_are_exact_case_with_allowances():
 
 
 def _validator(scripts, inline=None, x1_original=None, retail=RETAIL, fix=FIX, seat=True):
-    """a stand-in for validate.Validator with the members V-TBD uses: scripts = {rel: (is_x1, text)}."""
+    """a stand-in for validate.Validator with the members V57 uses: scripts = {rel: (is_x1, text)}."""
     api = dict(retail, **(fix if seat else {}))
     checker = VS.ScriptChecker(api)
     x1checker = VS.ScriptChecker({'retailFn001': {'args': 'i', 'ret': 'n'}})   # "XML1's own table"
@@ -64,7 +64,7 @@ def _validator(scripts, inline=None, x1_original=None, retail=RETAIL, fix=FIX, s
         x1_script_statements=lambda ref: set((x1_original or {}).get(ref, ())),
         _stmt_key=V.Validator._stmt_key)
     v.inherited_drop = lambda p, verbatim: V.Validator.inherited_drop(v, p, verbatim)
-    ck = V.Check('V-TBD', 'script function names')
+    ck = V.Check('V57', 'script function names')
     SFN.validate(v, ck)
     return ck
 

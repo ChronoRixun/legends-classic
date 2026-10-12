@@ -1,4 +1,4 @@
-"""Issue #3: XML1 breakable parts - the fix key and the V-TBD validator (synthetic stats, invented names)."""
+"""Issue #3: XML1 breakable parts - the fix key and the V52 validator (synthetic stats, invented names)."""
 import xml.etree.ElementTree as ET
 
 from xml1build import fix_ini
@@ -44,7 +44,7 @@ def _lower(d):
 
 
 def _run(x1, built):
-    ck = Check('V-TBD', 'breakable parts')
+    ck = Check('V52', 'breakable parts')
     _Fake(x1, built).vtbd_multipart(ck)
     return ck
 

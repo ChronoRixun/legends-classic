@@ -814,7 +814,7 @@ statements) is the first thing to watch.
 - `addHero`;
 - ~~solo mode~~ (issue #5: prepare P3 rewrites XML1's 18 inline `enterSoloMode` and 4 `exitSoloMode` to xml2-fix
   `setSoloMode(actor, 1 / 0)`; the party solo state, its AI sites and regroup are xml2-fix's `[Game] SoloMode`,
-  docs/solo-mode.md there; validate V-TBD);
+  docs/solo-mode.md there; validate V59);
 - XML1 per-zone music overrides;
 - ~~automaps~~ (section 26);
 - danger-room and review data;
@@ -5182,7 +5182,7 @@ under the middle of every name. `frontend.codex_select_igb` writes `ui/models/x1
 `m_codex_select.IGB` with that outer transform scaled and moved so the bar spans 0..282 (its own right end; scale
 282/256) and the outer bounds starting at 0 (an in-place edit, nothing else changes), and both codex halves point
 `list_focus` at it. It refuses (build error) a model that is not one transform holding another with matching bounds,
-or whose bar already starts at the origin. V-TBD (codex highlight) checks with `--frontend xml1` that the model is the
+or whose bar already starts at the origin. V58 (codex highlight) checks with `--frontend xml1` that the model is the
 frontend module's and both halves highlight with it. In game (the bytes the builder writes, tested in a 0.2.1 build
 with xml2-fix 1.4.0 + fix/controls-ui): the bar starts under the first letter of the focused name on every row
 (four rows, three of them unlocked with `unlockCharacter` as staged setup) and keeps XML2's right end.
@@ -5695,7 +5695,7 @@ script and keycard drop waiting for another hit).
   "is it alive" test follow. Undying and bossundying still hold a boss at 1.
 - Data: XML1 reads an entity's `health` as a float and keeps its maximum as a whole number (default.xbe 0x9335a);
   an authored health below 1 would die on its first hit in both games, and a heal never runs the death test, so the
-  rule needs no data change. Validator V-TBD (x1schema.fractional_health_problems; the integrator numbers it) reports an entity definition whose
+  rule needs no data change. Validator V55 (x1schema.fractional_health_problems) reports an entity definition whose
   numeric `health` is above 0 and below 1.
 - Not reproduced: XML1's whole-number damage itself (XMen2.exe's float damage stays; `[Balance]` rolls whole numbers
   but multipliers still leave fractions).
@@ -6572,7 +6572,7 @@ uses the original's campaign test instead of the ftalk contact store.
   begin bodies and the zone catch-up scripts (saves from earlier builds get them on load).
 - Needs XML2 Fix >= the release with `xtractionservices` (1.5): with 1.4.0 the guard is 0 and the native menu runs
   (Change Team and Save only; no Forge, unlike 0.2.1 with 1.4.0's ftalk permission).
-- V32 also rejects an `extractionPointServices` call without the Load bit in its own `x1_svc` line (V-TBD).
+- V32 also rejects an `extractionPointServices` call without the Load bit in its own `x1_svc` line.
 - fix_ini writes `[Game] DangerRoomGate=button3` (the main menu's Danger Room greyed until Phoenix has been in a
   campaign on the profile, xbe 0x17e93c-0x17e975) and `[Game] RevivalCost=xml1` (200 * (highest roster level)^2,
   xbe 0xaf6b0) with the port's keys.
@@ -6897,7 +6897,7 @@ and 11 skill points; level 10 -> 11 then +4 (48). The automatic bonus was not me
   loaded in a new process, one point spent by hand: with 1 point, [Space] Auto passes over wolv_xtreme and buys
   wolv_sharpness rank 1 (1 point), leaving 0.
 
-## (number assigned at merge). XML1 scan turrets (XML2 Fix `Game.Xml1Turrets`, V-TBD)
+## 89. XML1 scan turrets (XML2 Fix `Game.Xml1Turrets`, V56)
 
 XML1's `scanturretent` stays a physent (x1schema, fixed mount, turret weapon model) and keeps its scanner attributes.
 The zones module now writes `_build/turrets.json` (xml1build.turrets, revision 2): one line per placement of a
@@ -6914,7 +6914,7 @@ muzzlefx, muzzleaccfx and impactfx effect paths, and the weapon's firesound and 
 DLL). `SUPPORTED_KINDS` are projectile (HAARP exterior tanks), bullet (Arbiter, demo and Weapon X tripods) and flame
 (the Hive tanks' turrets); beam weapons (no turret uses one) are reported in the build notes and stay inert.
 
-**V-TBD:** the zones module reports a build error when the contract is malformed (9 fields, 9 placement numbers, 9
+**V56:** the zones module reports a build error when the contract is malformed (9 fields, 9 placement numbers, 9
 scanner numbers, 13 weapon numbers, 3 effects, 2 sounds, names, a ';' that would end an INI value, duplicate placements, more
 than the DLL's 32).
 
@@ -6925,7 +6925,7 @@ on those physents and registers rule 4 revision 2 with a hash of the applied lin
 placements are refused. No save field, entity ordinal or content-version change: turret destruction stays the
 physent's own (deathscripts, deathspawn), and the scanner restarts from the authored placement on every load.
 
-## 88. Pack amount (XML2 Fix `[Game] PackAmount`, gameplay rule 13)
+## 90. Pack amount (XML2 Fix `[Game] PackAmount`, gameplay rule 13)
 
 Section number provisional: the 0.2.2 integrator renumbers if another branch took 88.
 
