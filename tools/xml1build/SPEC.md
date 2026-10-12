@@ -5820,7 +5820,7 @@ conversion changes); the seven values and nothing else; the ini keys only for a 
 the harness's section, the drop of the section's keys, a merge that keeps a foreign key. V38 (balance.validate):
 a balance build has the marker in its styles and XML1's values on the seven events; any other build has no marker.
 
-### 69.4 In game (2026-10-05, D:/Projects/agent-work/impl-balance, harness pipe implbal, xml2-fix feature/balance 3d0afad)
+### 69.4 In game (2026-10-05, xml2-fix feature/balance 3d0afad)
 
 Measured with a debugger-based tracer on the melee roll (0x44f450 / 0x44f6bd) and the damage function (0x453c10) -
 nothing in the game changed but three int3 bytes - and real key input; Wolverine alone at level 1 among the riot
