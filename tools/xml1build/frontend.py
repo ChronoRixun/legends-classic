@@ -67,6 +67,8 @@ before SPEC 21). With --frontend xml1 (the default) it writes A-E:
        MENU_ITEM_LISTCODEX item and the CODEX_ICON_PRECACHE texture; issue #48). XML1's codex list was text only;
        XML2's draws cell `textureicon` of mini_convo_icons per entry, and XML1's NPCs have no textureicon, so every
        NPC entry drew cell 0 (Cyclops). Without `icons` the list draws no cell (0x5c269e reads it only when present).
+       Its list highlight is CODEX_SELECT_X1 (issue #97): XML2's m_codex_select bar leaves room for the icon cell, so
+       without icons it began under the middle of each name; the port's copy spans the whole row (codex_select_igb).
 
   D. Data/personal/<item>.{XMLB,engb} + Textures/personal/*.IGB (both front ends: in-zone data, issue #47): the
      first game's 36 bedroom items (personalItem('<hero>NN') in the mansion *_2 zones; XMen2.exe's personalItem
@@ -1376,6 +1378,81 @@ def codex_icon_problems(root):
     return out
 
 
+# ------------------------------------------------------------------------------------ the codex list's highlight
+# Issue #97. XML2's codex list highlight (the list item's onfocus list_focus, ui/models/m_codex_select) leaves room
+# for the icon cell XML2 draws left of each name: the bar's geometry starts right of the list item's origin (its outer
+# igTransform moves it there; bounds x 26..282 from the origin) while a row's name starts at the origin when the list
+# has no icons (0x5c20a7 shifts the text by the icon only when one is loaded). Without the icons (issue #48) the bar
+# began under the middle of every name. The port's codex points list_focus at CODEX_SELECT_X1, a copy of the player's
+# XML2 model whose outer transform stretches the bar over the whole row - from the origin to XML2's right end - and
+# whose bounds say so. Nothing else in the model changes.
+CODEX_SELECT_MODEL = 'ui/models/m_codex_select'
+CODEX_SELECT_X1 = 'ui/models/x1_codex_select'
+
+
+def codex_select_igb(data):
+    """(bytes, report): XML2's codex highlight model with the bar stretched to start at the row's origin, or
+    (None, {'problem': text}) when the file is not the two-transform bar this expects."""
+    from . import igb_file as G
+    try:
+        g = G.IgbFile(data)
+    except G.IgbError as e:
+        return None, {'problem': f'not a readable IGB ({e})'}
+    tfs = g.objects_of('igTransform')
+    if len(tfs) != 2 or not all(t.decoded for t in tfs):
+        return None, {'problem': f'{len(tfs)} transforms (expected the bar\'s 2)'}
+    kids = {t.ref: set(g.list_items(t.get(7)) or []) for t in tfs}
+    outer = [t for t in tfs if any(u.ref in kids[t.ref] for u in tfs if u is not t)]
+    if len(outer) != 1:
+        return None, {'problem': 'neither transform holds the other'}
+    outer = outer[0]
+    inner = next(t for t in tfs if t is not outer)
+    m = list(outer.get(8) or [])
+    identity = (1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1)
+    if len(m) != 16 or any(abs(a - b) > 1e-4 for a, b in zip(m[:12] + m[13:], identity)):
+        return None, {'problem': 'the outer transform is not a move along x'}
+    ob, ib = g.obj(outer.get(3)), g.obj(inner.get(3))
+    if not (ob and ib and g.isa(ob, 'igAABox') and g.isa(ib, 'igAABox')):
+        return None, {'problem': 'the transforms have no bounds'}
+    omin, omax, imin, imax = list(ob.get(2)), list(ob.get(3)), list(ib.get(2)), list(ib.get(3))
+    if abs(omin[0] - (m[12] + imin[0])) > 0.01 or abs(omax[0] - (m[12] + imax[0])) > 0.01:
+        return None, {'problem': 'the outer bounds are not the inner ones moved by the outer transform'}
+    if omin[0] <= 0 or omax[0] <= omin[0]:
+        return None, {'problem': f'the bar already starts at x {omin[0]:g} (no icon gap to close)'}
+    scale = omax[0] / (imax[0] - imin[0])
+    m[0], m[12] = scale, -scale * imin[0]
+    g.set_floats(outer, 8, m)
+    boxes = 0
+    for b in g.objects_of('igAABox'):
+        if list(b.get(2)) == omin and list(b.get(3)) == omax:
+            g.set_floats(b, 2, [0.0])
+            boxes += 1
+    return g.edited(), {'gap': round(omin[0], 3), 'right': round(omax[0], 3), 'scale': round(scale, 6), 'bounds': boxes}
+
+
+def use_codex_select(root, model=CODEX_SELECT_X1):
+    """point every codex list item's list_focus at `model` (in place); the number changed."""
+    n = 0
+    for it in root.iter('item'):
+        if (it.get('type') or '').upper() == CODEX_LIST_TYPE:
+            for f in it.findall('onfocus'):
+                if f.get('type') == 'list_focus' and f.get('model') != model:
+                    f.set('model', model)
+                    n += 1
+    return n
+
+
+def codex_select_problems(root, model=CODEX_SELECT_X1):
+    """[str]: what in a codex menu tree highlights its list with anything but `model`."""
+    out = []
+    for it in root.iter('item'):
+        if (it.get('type') or '').upper() == CODEX_LIST_TYPE:
+            focus = [f.get('model') for f in it.findall('onfocus') if f.get('type') == 'list_focus']
+            if len(focus) != 1 or C.norm(focus[0] or '') != C.norm(model):
+                out.append(f'list item {it.get("name")!r} highlights with {focus}, not {model}')
+    return out
+
+
 # ------------------------------------------------------------------------------------ the pause menu's Blink Portal
 # Issue #89 (SPEC 64). The pause menu in every zone is XML2's UI/menus/pda (PDA_MENU). XMen2.exe's PDA menu finds
 # its entries by name (label_option01..09) and acts on some of them in its own code: label_option03 (no usecmd) is
@@ -1746,10 +1823,21 @@ def run(ctx):
     elif kremoved != want:
         ctx.error(f'codex menu: XML2\'s {CODEX_MENU_REL} changes {kremoved}, expected {want} in both halves')
     else:
+        # the highlight over the whole row (issue #97): XML2's bar with the icon gap closed
+        base_select = ctx.base_index.path(CODEX_SELECT_MODEL + '.IGB')
+        sdata, srep = (codex_select_igb(base_select.read_bytes()) if base_select
+                       else (None, {'problem': 'not in the base install'}))
+        if sdata is None:
+            ctx.error(f'codex menu: {CODEX_SELECT_MODEL}: {srep["problem"]}')
+        else:
+            ctx.write_bytes(CODEX_SELECT_X1 + '.igb', sdata,
+                            source=f'frontend:XML2\'s {CODEX_SELECT_MODEL} over the whole row')
+            use_codex_select(kx)
+            use_codex_select(kg)
         ctx.write_xmlb_pair(CODEX_MENU_REL, kx, kg, source='frontend:XML2\'s codex menu without list icons')
-        det['codex_menu'] = {'removed': kremoved}
+        det['codex_menu'] = {'removed': kremoved, 'highlight': srep}
         ctx.note(f'codex menu: {CODEX_MENU_REL} = XML2\'s without the list\'s icon cells ({", ".join(kremoved)}): '
-                 f'XML1\'s codex list was text only')
+                 f'XML1\'s codex list was text only; its highlight {CODEX_SELECT_X1} spans the whole row ({srep})')
     ctx.write_meta('frontend_detail.json', det)
     ctx.log(f'main menu, dangerroom ({(drep.get("counts") or {}).get("courses")} courses), review '
             f'({dict(by_type)}), codex, trivia, credits written')

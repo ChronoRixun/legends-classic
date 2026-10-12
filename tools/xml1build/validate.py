@@ -68,6 +68,8 @@ Checks (severity per SPEC 4.6: error = will not load or silently misbehaves; war
   V29 codex icons (SPEC 55, validate_frontend.v_codex_icons): --frontend xml1:
                 UI/menus/codex (both halves) written by frontend, its MENU_ITEM_LISTCODEX without icons / icons_cols /
                 icons_rows and no mini_convo_icons precache
+  V-TBD codex highlight (issue #97, validate_frontend.v_codex_highlight): --frontend xml1: the codex list's
+                list_focus is the frontend's ui/models/x1_codex_select (XML2's bar over the whole row), both halves
   V30 personal items (SPEC 56, validate_frontend.v_personal_items): every personalItem literal has
                 Data/personal/<item> from the first game (frontend), with text and a texture IGB in <out>
   V31 save positions (SPEC 61): shared_talents in the save-stable order of
@@ -799,6 +801,7 @@ class Validator:
                                ('V27', 'voice lines', self.voice_lines),
                                ('V28', 'dialog platforms', self.dialog_platforms),
                                ('V29', 'codex icons', lambda ck: VF.v_codex_icons(self, ck)),
+                               ('V-TBD', 'codex highlight', lambda ck: VF.v_codex_highlight(self, ck)),
                                ('V30', 'personal items', lambda ck: VF.v_personal_items(self, ck)),
                                ('V31', 'save positions', self.save_positions),
                                ('V32', 'lite xtraction', self.lite_xtraction),
