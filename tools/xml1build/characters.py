@@ -749,6 +749,27 @@ class _Builder:
         self.base_talent_count = len(names[1])
         x1 = ctx.read_x1_xml('data/shared_talents.eng')
         self.x1_talents = {t.get('name', '').lower(): t for t in x1.iter() if t.tag.lower() == 'talent'}
+        self.restore_resist_talents()
+
+    def restore_resist_talents(self):
+        """XML1's damage-type resistance talents keep XMen2.exe's definitions of the same names (XML2 wins by name)
+        but get XML1's def_damage rows back in place of resist_<type> (npc_values.resist_rewrite): only def_damage
+        stops a launcher, a knockback or a trip on a resistant NPC (and on the allies inside its aura)."""
+        ctx = self.ctx
+        done = collections.Counter()
+        for root in self.talent_roots:
+            for t in root.iter('talent'):
+                n = (t.get('name') or '').lower()
+                rewritten, problems = NV.resist_rewrite(t, self.x1_talents.get(n))
+                done[n] += rewritten
+                for msg in problems:
+                    ctx.warn(f'shared_talents: {msg}; XMen2.exe\'s definition kept as it is (validator V-TBD)')
+        done = {n: c for n, c in sorted(done.items()) if c}
+        self.detail['resist_talents'] = done
+        ctx.set_count('x1_resist_talents', len(done))
+        if done:
+            ctx.note(f'shared_talents: {len(done)} resistance talents carry XML1\'s def_damage rows as '
+                     f'{NV.SCOPED_DEF_DAMAGE} instead of resist_<type> (both halves): {sorted(done)}')
 
     def ensure_talent(self, name, fightstyle, who):
         """XML2 resolves a stats <talent> by name among registered talents (0x4c05b0); add an empty shared
