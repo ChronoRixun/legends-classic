@@ -353,7 +353,8 @@ def test_port_keys_from_a_synthetic_build():
                                               'GeometrySharingBlendIndices': '1', 'CharacterLadderPaths': '1',
                                               'ObjectiveDescriptions': '1', 'BreakRule': 'xml1',
                                               'PlacementCrush': 'xml1', 'DoubleHeal': '0', 'ExplosiveFirstHit': '1',
-                                              'RankCosts': '1', 'LevelSkillPoints': 'xml1', 'LevelStatPoints': 'xml1'},
+                                              'RankCosts': '1', 'LevelSkillPoints': 'xml1',
+                                              'LevelStatPoints': 'xml1', 'Xml1Multipart': '1'},
                                      'Limits': {'ActorSlots': '127', 'ResourceNames': '1024', 'ItemEnhancements': '512',
                                                 'FightStyles': '32', 'EffectCurves': '3600', 'MoveTriggers': '64', 'EntityCapacity': '1'}}
         menu = ET.Element('menu', type='MAIN_MENU')

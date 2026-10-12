@@ -210,7 +210,8 @@ PORT_OWNED = {'Game': ('NewGameTeam', 'ResetUnlocks', 'SaveFolder', 'ForcedTeams
                         'EndHeroUnlock', 'MainMenuItems', 'ClassicMainBackdrop', 'ClassicMainPanelBounds', 'NewGamePlus', 'ReviewStats', 'Xtract', 'XtractionShop', 'XPCurve',
                        'GeometrySharingBlendIndices', 'CharacterLadderPaths', 'ObjectiveDescriptions',
                        'BreakRule', 'PlacementCrush', 'DoubleHeal', 'ConfirmationRelease', 'ExplosiveFirstHit',
-                       'RankCosts', 'LevelSkillPoints', 'LevelStatPoints', 'Xml1MasterMold', 'Xml1MoldStage'),
+                       'RankCosts', 'LevelSkillPoints', 'LevelStatPoints', 'Xml1Multipart', 'Xml1MasterMold',
+                       'Xml1MoldStage'),
               'Limits': ('ActorSlots', 'ResourceNames', 'ItemEnhancements', 'FightStyles', 'EffectCurves', 'MoveTriggers', 'EntityCapacity'),
               'Online': ('GameVersion', 'ContentFingerprint'),
               'Save': ('Format',)}
@@ -381,6 +382,9 @@ def game_keys(*, xml1_opening=True, save_folder=None, forced_teams='1', add_hero
         game['RankCosts'] = RANK_COSTS
         game['LevelSkillPoints'] = LEVEL_SKILL_POINTS
         game['LevelStatPoints'] = LEVEL_STAT_POINTS
+        # xml2-fix multipart.cpp: XML1's breakable parts (npcstat <Multipart> health / effects / linkToPower, kept
+        # verbatim by characters.py; V-TBD checks them) - Juggernaut's helmet, the Sentinels' arms
+        game['Xml1Multipart'] = '1'
     if forced_teams in ('0', '1'):
         game['ForcedTeams'] = forced_teams
     if add_hero:

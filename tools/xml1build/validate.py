@@ -103,7 +103,13 @@ Checks (severity per SPEC 4.6: error = will not load or silently misbehaves; war
                 registered talent names and distinct talent files of the permanent, zone, CHRB character and
                 worst four-hero party packages, with the NPC-only talents in their data/talents/npc set files
                 (TalentRegistry fix): over 100 names or 9 files an error, exactly full a warning
+  V-TBD2 removable resistances (issue #3): shared talents whose XML1 form is a def_damage activepowerup carry
+                tag_name="def_damage" on their resistance powerup (XML1 0x2b100 removes them; XMen2.exe by tag), and
+                every character whose style removes tag def_damage carries something that tag reaches
   V25 harm loops (SPEC 51): no delayed start-on ordinary harm loops that XML2 disables
+  V-TBD breakable parts (issue #3): every XML1 npcstat Multipart row survives with its bone / health / effectOnDeath
+                / loopEffect / effectBone / linkToPower (xml2-fix [Game] Xml1Multipart reads them), at most four
+                parts per character, and the parts' templates leave the 13-record multipart pool room for actors
   V34 ladder spawns (SPEC 46): no monster spawner without monster_spawnexactlocation runs a ladder motion path
   V35 pda portal (SPEC 64, issue #89; validate_frontend.v_pda_portal): both front ends: UI/menus/pda (both halves)
                 written by frontend without the Blink Portal (no label_option03, nothing links to it, its models
@@ -421,6 +427,63 @@ class Scan:
 
 
 # ---------------------------------------------------------------------------------------------- validator
+REMOVABLE_TAG = 'def_damage'
+_RESIST_AFFECTER = re.compile(r'(resist_|def_damage$)')
+
+
+def removable_findings(x1_talents, shared_roots, stats, style):
+    """V-TBD2 (issue #3 follow-up). XML1's remove="true" drops every def_damage powerup of the actor, talents included
+    (default.xbe 0x2b100); XMen2.exe drops powerups by tag name (remove_tag). Errors when (a) a shared talent whose
+    XML1 definition is a def_damage activepowerup, referenced by a built character or defined in a built half, is
+    missing from a half, or a rank of it has no resistance powerup or an untagged one, or (b) a character whose style removes tag def_damage carries nothing that tag
+    reaches (no tagged talent, no tag_name="def_damage" powerup trigger in its style).
+    x1_talents {lower name: XML1 element}; shared_roots built roots; stats built <stats> elements; style(name) ->
+    root or None. Returns (errors, counts)."""
+    errors, counts = [], {'x1_removable_talents': 0, 'removing_characters': 0}
+    removable = {n for n, t in x1_talents.items()
+                 if any(e.tag.lower() == 'activepowerup' and (e.get('powerup') or '').lower() == REMOVABLE_TAG
+                        for e in t.iter())}
+    # expected: the removable talents a built character references or a built half defines (the heroes module may
+    # prune unreferenced ones from both halves); each must be defined, fully tagged, in every half
+    referenced = {(t.get('name') or '').lower() for st in stats for t in st.iter() if t.tag.lower() == 'talent'}
+    defined = {(t.get('name') or '').lower() for root in shared_roots for t in root.iter('talent')}
+    wanted = sorted(removable & (referenced | defined))
+    tagged = set(wanted)
+    for half, root in enumerate(shared_roots):
+        defs = {(t.get('name') or '').lower(): t for t in root.iter('talent')}
+        for name in wanted:
+            t = defs.get(name)
+            if t is None:
+                errors.append(f'shared talent {name}: missing from built half {half + 1} - XML1 removals of '
+                              f'{REMOVABLE_TAG} have nothing to take')
+                tagged.discard(name)
+                continue
+            # every rank: each powerup carrying a resistance affecter is tagged, and the rank has one
+            for rank, level in enumerate(t.findall('level'), 1):
+                resist = [pu for pu in level.findall('powerup')
+                          if any(_RESIST_AFFECTER.match(a.get('attribute') or '') for a in pu.iter('affecter'))]
+                bad = [pu for pu in resist if pu.get('tag_name') != REMOVABLE_TAG]
+                if not resist or bad:
+                    errors.append(f'shared talent {name} rank {rank} (half {half + 1}): '
+                                  + ('no resistance powerup' if not resist else
+                                     f'{len(bad)} resistance powerup(s) without tag_name="{REMOVABLE_TAG}"')
+                                  + f' - XML1 removals of {REMOVABLE_TAG} would leave it on')
+                    tagged.discard(name)
+    counts['x1_removable_talents'] = len(tagged)
+    for st in stats:
+        ps = (st.get('powerstyle') or '').lower()
+        root = style(ps) if ps else None
+        if root is None or not any(t.get('remove_tag') == REMOVABLE_TAG for t in root.iter('trigger')):
+            continue
+        counts['removing_characters'] += 1
+        talents = {(t.get('name') or '').lower() for t in st.iter() if t.tag.lower() == 'talent'}
+        own = any(t.get('tag_name') == REMOVABLE_TAG for t in root.iter('trigger'))
+        if not (talents & tagged) and not own:
+            errors.append(f'{st.get("name")}: style {ps} removes tag {REMOVABLE_TAG} but nothing on the character '
+                          f'carries it (no tagged resistance talent, no tag_name="{REMOVABLE_TAG}" powerup)')
+    return errors, counts
+
+
 class Validator:
     def __init__(self, ctx):
         self.ctx = ctx
@@ -772,6 +835,76 @@ class Validator:
             self._x1gren = {ch: next(iter(gs)) for ch, gs in W.grenade_override_votes(roots).items() if len(gs) == 1}
         return self._x1gren
 
+    # ------------------------------------------------------------------ breakable parts (issue #3)
+    # XML1's npcstat <Multipart> attributes the XBE's parser 0x89500 reads and xml2-fix multipart.cpp
+    # ([Game] Xml1Multipart) reads back from the built stats: losing one silently turns a part off.
+    MULTIPART_KEPT = ('bone', 'health', 'effectondeath', 'loopeffect', 'effectbone', 'linktopower')
+    MULTIPART_PARTS_MAX = 4      # XBE 0x89706: cmp [record+0x178],4 refuses a fifth part
+    MULTIPART_RECORDS = 13       # both managers hold 13 records (XBE 0x89ec0, XMen2.exe 0x48ccf0), templates + live actors
+
+    def vtbd_multipart(self, ck):
+        """V-TBD: every XML1 npcstat Multipart row survives in the built stats with its part-health, effect and
+        power-link attributes (case-insensitive keys, as XMen2.exe's attribute getter 0x5649c0 reads them); at most
+        four parts per character; the parts' templates leave the 13-record pool room for live actors."""
+        built = self.stats()['by_name']
+        templates = 0
+        for name, (_f, x1) in sorted(self.x1_stats().items()):
+            rows = [c for c in x1 if c.tag.lower() == 'multipart']
+            if not rows:
+                continue
+            ck.count('xml1_characters')
+            if name not in built:
+                ck.error(f'{name}: XML1 Multipart character missing from the built stats')
+                continue
+            out = [c for c in built[name][1] if c.tag.lower() == 'multipart']
+            if len(out) != len(rows):
+                ck.error(f'{name}: {len(rows)} XML1 Multipart rows, {len(out)} built')
+                continue
+            if len(out) > self.MULTIPART_PARTS_MAX:
+                ck.error(f'{name}: {len(out)} parts; the first game holds {self.MULTIPART_PARTS_MAX}')
+            if any(float(c.get('health') or 0) > 0 for c in out):
+                templates += 1
+            for i, (a, b) in enumerate(zip(rows, out), 1):
+                xa = {k.lower(): v for k, v in a.attrib.items()}
+                xb = {k.lower(): v for k, v in b.attrib.items()}
+                for k in self.MULTIPART_KEPT:
+                    if (xa.get(k) or '') != (xb.get(k) or ''):
+                        ck.error(f'{name} part {i}: {k} {xb.get(k)!r}, XML1 {xa.get(k)!r}')
+                ck.count('parts')
+        ck.set('templates', templates)
+        if templates >= self.MULTIPART_RECORDS:
+            ck.error(f'{templates} characters with breakable parts fill the {self.MULTIPART_RECORDS}-record pool: '
+                     f'no spawned actor would get its parts')
+        elif templates > self.MULTIPART_RECORDS - 4:
+            ck.warn(f'{templates} characters with breakable parts leave {self.MULTIPART_RECORDS - templates} records '
+                    f'for spawned actors')
+
+    def vtbd_removable(self, ck):
+        """V-TBD2: XML1 removals take resistance talents (characters.tag_x1_removable_talents)."""
+        halves = (self.tree('data/shared_talents.engb'), self.tree('data/shared_talents.xmlb'))
+        roots = [t for t in halves if t is not None]
+        if len(roots) != len(halves):
+            ck.error('a built shared_talents half (engb / XMLB) is missing or undecodable: removable resistances unchecked there')
+        try:
+            x1 = self.ctx.read_x1_xml('data/shared_talents.eng')
+        except KeyError:
+            x1 = None
+        if x1 is None or not roots:
+            ck.error('shared_talents (built or XML1) unreadable: removable resistances not checked')
+            return
+        x1_talents = {(t.get('name') or '').lower(): t for t in x1.iter() if t.tag.lower() == 'talent'}
+        styles = {}
+
+        def style(name):
+            if name not in styles:
+                styles[name] = self.tree(f'data/powerstyles/{name}.engb') or self.tree(f'data/powerstyles/{name}.xmlb')
+            return styles[name]
+        errors, counts = removable_findings(x1_talents, roots, [el for _f, el in self.stats()['by_name'].values()], style)
+        for e in errors:
+            ck.error(e)
+        for k, v in counts.items():
+            ck.set(k, v)
+
     # ------------------------------------------------------------------ running / reporting
     def run_all(self):
         for cid, title, fn in (('V1', 'proxy', self.v1_proxy), ('V2', 'registry', self.v2_registry),
@@ -812,7 +945,9 @@ class Validator:
                                ('V41', 'spawn-floor residency', self.spawn_floor_residency),
                                ('V45', 'gun damage roll', lambda ck: W.validate(self, ck)),
                                ('V47', 'scripted boss approach', lambda ck: SA.validate(self, ck)),
-                               ('V46', 'pickup models', self.v46_pickup_models)):
+                               ('V46', 'pickup models', self.v46_pickup_models),
+                               ('V-TBD', 'breakable parts', self.vtbd_multipart),
+                               ('V-TBD2', 'removable resistances', self.vtbd_removable)):
             ck = Check(cid, title)
             self.checks[cid] = ck
             t0 = time.time()
