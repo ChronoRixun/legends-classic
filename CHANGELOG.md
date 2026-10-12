@@ -17,7 +17,8 @@ every new rule below without a word. Rebuild; your saves carry over.
   (Juggernaut's helmet, Blob's pillars, Pyro and Toad): those fights were much tougher than the first game's.
 - **Resistant enemies stand their ground again**: the first game's resistance talents also stop hit reactions, so
   HAARP officers and the other resistant enemies (41 of 74 resistant entries) are no longer launched or knocked back
-  by a punch-punch-slam; plain soldiers still are, and a boss whose armour comes off can be launched again.
+  by a punch-punch-slam; plain soldiers still are. A boss whose armour comes off takes full damage again but
+  still isn't launched, as in the first game.
 - **A hero who takes over from a fallen one stands still** until you move them, as in the first game, instead of
   finishing the walk its AI had started (in the ice tunnel's solo crossing, off the edge).
 - **Leaders** (issue #15): heroes don't flinch from a leader's projectiles, and leaders drop as in the first game
