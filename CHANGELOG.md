@@ -5,6 +5,12 @@ build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebui
 
 ## Unreleased - 0.2.0 - content version 17 (needs XML2 Fix 1.4)
 
+- Centre the classic main menu in every display mode. The game already centres the original 4:3
+  composition at any aspect; the `--main-menu-layout widescreen` used for candidate 0.2.0j added a
+  48-unit shift on top, so the logo and panels sat about 7 % of the width right of centre (borderless
+  2560x1440 and windowed alike). Classic is the only composition now; `widescreen` is accepted as a
+  retired name for it. Only `UI/menus/x1_menu_main.IGB` changes; save files and mouse rows are unaffected.
+
 - Own `[Limits] EntityCapacity=1` for port builds (SPEC 85): the companion DLL raises the entity domain to
   32 actor / 768 generic / 1024 World handles, so the props, projectiles and triggers the stock 224-slot
   arena refused (943 refusals across 116 zones in the 0.2.0 census; the HAARP freeze gun) exist again.
@@ -31,8 +37,7 @@ build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebui
   companion XML2 Fix hooks; LC question identities and legacy sparse-save imports remain unchanged.
 
 - Restore classic main-menu back panels, blue colours, original English typography with PC
-  glyph fallback, and the help footer. Add a deterministic `--main-menu-layout widescreen`
-  choice that moves the composition without stretching it. Bright Cerebro rendering needs
+  glyph fallback, and the help footer. Bright Cerebro rendering needs
   the companion XML2 Fix backdrop hook. The original profile gate remains a separate question.
 - Match main-menu mouse regions to the full visible panel widths with disjoint row seams
   through the companion DLL's `ClassicMainPanelBounds` setting.

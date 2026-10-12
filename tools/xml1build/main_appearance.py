@@ -18,8 +18,12 @@ HELP_NODE = 'helptext1'                         # same byte length as the origin
 HELP_Z = 4.0                                  # below the eight PC rows, inside the visible footer
 COLOR_LIMIT = 75
 STYLE_LIMIT = 32
-LAYOUTS = ('classic', 'widescreen')
-WIDE_X = 48.0                                 # rigid composition offset; no mesh/font stretching
+LAYOUTS = ('classic',)
+# 0.2.0j's 'widescreen' moved the whole composition 48 units right on top of the engine's own centring
+# (screen_x): ~6-7 % right of centre at every aspect. It is kept only as an accepted name that builds the
+# classic composition, so old command lines, jobs and build reports still work.
+RETIRED_LAYOUTS = {'widescreen': 'classic'}
+VIEW_SIZE = (512.0, 384.0)                    # the 4:3 2D view the menu camera centres (frontend.MENU_SCREEN)
 
 
 def _rgba(value):
@@ -120,48 +124,37 @@ def write_styles(ctx):
     return {'color_ids': mapping, 'colors': len(colors), 'styles': len(styles)}
 
 
-def widescreen_scene(data, dx=WIDE_X):
-    """Move logo, panels, text, hit bounds and lights together; leave the menu camera fixed.
+def layout(value):
+    """The main-menu layout a requested or recorded name builds: 'classic' (also for None and the retired
+    'widescreen'). Refuse anything else."""
+    name = RETIRED_LAYOUTS.get(value or 'classic', value or 'classic')
+    if name not in LAYOUTS:
+        raise ValueError('unsupported main menu layout')
+    return name
 
-    The engine already preserves aspect ratio. Refuse layouts the shared reader
-    cannot move completely, including shared world/local bounds.
+
+def screen_x(x, camera_x, width, height):
+    """Pixel column (float) of world x in the main menu on a width x height screen (pure).
+
+    XMen2.exe draws a menu IGB orthographically through its camera. The 2D view is 384 units
+    tall and aspect * 384 wide, centred on the 512-wide 4:3 view (camera 0xa0a138 vt+0x20/+0x28,
+    left -(width - 512) / 2 at vt+0x2c; the mouse mapping 0x5f9eb0 uses the same numbers), and the
+    aspect is the resolution's w / h without a clamp (0x5fad61). The 4:3 composition therefore
+    stays centred on the camera at every aspect; nothing in the file has to move for wide screens.
     """
+    return width / 2.0 + (x - camera_x) * height / VIEW_SIZE[1]
+
+
+def panel_column(data):
+    """(panel centre x, camera x) of a main-menu IGB: the shared X of its button*_back transforms
+    (the panel models are centred on them) and its camera's X. Refuse a menu without both."""
     from . import frontend as F
     g = G.IgbFile(data)
     frame = F._scene_frame(g)
     if frame['problems']:
         raise G.IgbError('; '.join(frame['problems']))
-    camera = frame['camera_transform']
-    if any(abs(a - b) > 1e-4 for a, b in zip(camera.get(8)[12:15], F.MENU_CAMERA_POS)):
-        raise G.IgbError('widescreen main needs the PC menu camera')
-    counts = {'transforms': 0, 'bounds': 0, 'vertices': 0, 'lights': 0}
-    for obj in frame['transforms'].values():
-        if obj.ref != camera.ref:
-            g.set_floats(obj, 8, [obj.get(8)[12] + dx], 12)
-            counts['transforms'] += 1
-    for ref in frame['bounds']:
-        box = g.obj(ref)
-        if box is None or not box.decoded or not g.isa(box, 'igAABox'):
-            raise G.IgbError('unsupported widescreen main bound')
-        for slot in (2, 3):
-            g.set_floats(box, slot, [box.get(slot)[0] + dx])
-        counts['bounds'] += 1
-    for array in frame['vertex_arrays'].values():
-        blocks = g.ref_list(array.get(2))
-        count, fmt = array.get(3), array.get(6)
-        block = g.block(blocks[0]) if blocks else None
-        if not isinstance(fmt, int) or not fmt & 1 or not isinstance(count, int) or \
-                block is None or block[1] != 12 * count:
-            raise G.IgbError('unsupported widescreen main vertex positions')
-        xyz = g.block_floats(blocks[0])
-        for i in range(0, len(xyz), 3):
-            xyz[i] += dx
-        g.set_block_floats(blocks[0], xyz)
-        counts['vertices'] += count
-    for ref in frame['lights']:
-        light = g.obj(ref)
-        if light.fields.get(6) is None or light.fields[6].type != 'igVec3fMetaField':
-            raise G.IgbError('unsupported widescreen main light position')
-        g.set_floats(light, 6, [light.get(6)[0] + dx])
-        counts['lights'] += 1
-    return g.edited(), {'layout': 'widescreen', 'x': dx, **counts}
+    xs = {round(obj.get(8)[12], 4) for obj in frame['transforms'].values()
+          if isinstance(obj.get(2), str) and obj.get(2).startswith('button') and obj.get(2).endswith('_back')}
+    if len(xs) != 1:
+        raise G.IgbError('main menu panels do not share one column')
+    return xs.pop(), frame['camera_transform'].get(8)[12]

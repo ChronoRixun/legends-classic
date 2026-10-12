@@ -177,8 +177,11 @@ def test_legacy_pc_layout_omits_only_the_pool_name_section():
 def test_layout_choice_reaches_both_builder_parsers():
     import build_xml1
     from xml1builder.cli import make_parser
-    assert build_xml1.parse_args(['--out', 'synthetic', '--main-menu-layout', 'widescreen']).main_menu_layout == 'widescreen'
+    assert build_xml1.parse_args(['--out', 'synthetic']).main_menu_layout == 'classic'
+    # the retired name is still accepted and builds (and records) the classic composition
+    assert build_xml1.parse_args(['--out', 'synthetic', '--main-menu-layout', 'widescreen']).main_menu_layout == 'classic'
     assert make_parser().parse_args(['build', '--main-menu-layout', 'widescreen']).main_menu_layout == 'widescreen'
+    assert make_parser().parse_args(['build']).main_menu_layout == 'classic'
 
 
 def test_standalone_checks_keep_the_built_layout():
@@ -189,6 +192,7 @@ def test_standalone_checks_keep_the_built_layout():
         (out / '_build' / 'report.json').write_text(json.dumps({'build': {
             'frontend': 'xml1', 'main_menu_layout': 'widescreen'}}))
         assert C.args_for_out(out).main_menu_layout == 'widescreen'
+        assert MA.layout(C.args_for_out(out).main_menu_layout) == 'classic'   # a 0.2.0j report still checks
         assert C.args_for_out(out, main_menu_layout='classic').main_menu_layout == 'classic'
 
 
@@ -208,7 +212,7 @@ def test_generated_menu_help_does_not_disable_mouse_and_quit_contract():
     assert 'ClassicMainPanelBounds' not in FI.game_keys(main_menu_items=None)
 
 
-def scene_fixture():
+def scene_fixture(name='optionA', position=(100, 0, 60)):
     node = [(2, 's'), (3, 'r'), (5, 'i')]
     group = node + [(7, 'r')]
     list_fields = [(2, 'i'), (3, 'i'), (4, 'b')]
@@ -233,7 +237,7 @@ def scene_fixture():
                ('igTransform', transform('cameraA', 4, F.MENU_CAMERA_POS)),
                ('igNodeList', {2: 1, 3: 1, 4: 16}),
                ('igCamera', {2: 'viewA', 3: -1, 5: 2, 8: 30, 9: 100, 10: 1100}),
-               ('igTransform', transform('optionA', -1, (100, 0, 60))),
+               ('igTransform', transform(name, -1, position)),
                ('igGeometry', {2: 'emblemA', 3: 8, 5: 2, 7: -1, 8: 9}),
                ('igAABox', {2: (20, 0, 80), 3: (40, 2, 100)}),
                ('igAttrList', {2: 1, 3: 1, 4: 17}), ('igGeometryAttr', {4: 11}),
@@ -245,26 +249,40 @@ def scene_fixture():
     return fixture(specs, objects, blocks)
 
 
-def test_widescreen_moves_composition_and_bounds_without_scaling_or_camera_changes():
-    data = scene_fixture(); original = IgbFile(data)
-    moved, report = MA.widescreen_scene(data)
-    out = IgbFile(moved)
-    assert len(data) == len(moved) and report['vertices'] == 2
-    assert out.obj(3).get(8) == original.obj(3).get(8) # camera unchanged
-    before, after = original.obj(6).get(8), out.obj(6).get(8)
-    assert before[:12] == after[:12] and after[12] - before[12] == MA.WIDE_X
-    assert after[13:] == before[13:]
-    for slot in (2, 3):
-        assert out.obj(8).get(slot)[0] - original.obj(8).get(slot)[0] == MA.WIDE_X
-        assert out.obj(8).get(slot)[1:] == original.obj(8).get(slot)[1:]
-    a, b = original.block_floats(19), out.block_floats(19)
-    assert [b[i] - a[i] for i in (0, 3)] == [MA.WIDE_X, MA.WIDE_X]
-    assert b[3] - b[0] == a[3] - a[0]
-    assert out.obj(14).get(6) == [148, 30, 200]
-    assert original.edited() == data
+def test_layout_names_build_one_composition():
+    assert MA.LAYOUTS == ('classic',)
+    assert MA.layout(None) == MA.layout('classic') == MA.layout('widescreen') == 'classic'
+    raises(ValueError, lambda: MA.layout('ultrawide'))
+    assert not hasattr(MA, 'widescreen_scene') and not hasattr(MA, 'WIDE_X')
 
 
-def test_widescreen_refuses_noncanonical_camera_and_truncated_graph():
-    data = scene_fixture(); g = IgbFile(data); g.set_floats(g.obj(3), 8, [0], 12)
-    raises(IgbError, lambda: MA.widescreen_scene(g.edited()))
-    raises(IgbError, lambda: MA.widescreen_scene(data[:-4]))
+# 4:3, 16:10, 16:9, 21:9 (and 32:9) at several heights
+SCREENS = ((640, 480), (1024, 768), (1280, 800), (1680, 1050), (1280, 720), (2560, 1440), (2560, 1080),
+           (3440, 1440), (5120, 1440))
+
+
+def test_engine_centres_the_composition_at_every_aspect():
+    cx = F.MENU_CAMERA_POS[0]
+    assert cx == MA.VIEW_SIZE[0] / 2 and tuple(F.MENU_SCREEN) == MA.VIEW_SIZE
+    for width, height in SCREENS:
+        # the camera's axis and a composition centred on it are within a pixel of the screen centre
+        assert abs(MA.screen_x(cx, cx, width, height) - width / 2) < 1
+        left, right = MA.screen_x(cx - 134, cx, width, height), MA.screen_x(cx + 134, cx, width, height)
+        assert abs((left + right) / 2 - width / 2) < 1
+        # the panels keep their 4:3 size in screen heights: no stretching with the aspect
+        assert abs((right - left) / height - 268 / 384) < 1e-9
+        # the 4:3 view's edges are where the engine puts them (centred 512-wide view, 0xa0a138 vt+0x2c)
+        view = MA.VIEW_SIZE[1] * width / height
+        assert abs(MA.screen_x(-(view - 512) / 2, cx, width, height)) < 1e-6
+        # the retired rigid +48 put the panels 6.25 % of the screen height right of centre at every aspect
+        assert abs(MA.screen_x(cx + 48, cx, width, height) - width / 2 - height * 0.125) < 1e-6
+
+
+def test_panel_column_reads_the_panels_on_the_camera():
+    data = scene_fixture('button1_back', (MA.VIEW_SIZE[0] / 2, 0, 60))
+    x, camera = MA.panel_column(data)
+    assert x == camera == F.MENU_CAMERA_POS[0]
+    for width, height in SCREENS:
+        assert abs(MA.screen_x(x, camera, width, height) - width / 2) < 1
+    raises(IgbError, lambda: MA.panel_column(scene_fixture()))          # no panels
+    raises(IgbError, lambda: MA.panel_column(data[:-4]))                # truncated graph

@@ -2088,12 +2088,21 @@ table and all other language/map entries remain present. These two font indices 
 English dialogs, credits and other menus using medium/big also receive the classic letters.
 HUD/digital indices and non-English entries retain their PC definitions.
 
-`--main-menu-layout classic|widescreen` defaults to classic. Widescreen translates the
-entire composition 48 world units to the right: text, back/highlight transforms, logo
-vertices, world bounds and lights move together. Camera, geometry proportions, font metrics,
-depths and navigation are unchanged. This is a deterministic composition, not responsive
-runtime reflow. The CLI/job/build report and standalone checks carry the choice; a changed
-choice invalidates frontend carry-over. Unknown scene layouts are refused whole.
+The main menu has one composition, XML1's, on the PC menu camera. XMen2.exe already centres
+it at every aspect: its 2D view is 384 units tall and aspect x 384 wide, centred on the
+512-wide 4:3 view (camera 0xa0a138 vt+0x20/+0x28, left -(width - 512) / 2 at vt+0x2c; the mouse
+mapping 0x5f9eb0 uses the same numbers) and the aspect is the resolution's w / h without a
+clamp (0x5fad61). A point x units from the camera lands x * height / 384 pixels from the
+screen centre at 4:3, 16:10, 16:9 and 21:9 alike (`main_appearance.screen_x`). XML1's own
+panels sit 1.65 units left of its camera (252.35 vs Camera01's 254, the original Xbox frame
+shows the same ~2 px at 640x480); that authored offset is kept, not corrected. The 0.2.0j
+`--main-menu-layout widescreen` moved the composition a further 48 units right, on top of
+the engine's centring: 90 px at 1280x720, 180 px at 2560x1440 (about 7 % of the width) right
+of centre in every mode. It is retired: `--main-menu-layout` still accepts `widescreen` (old
+command lines, jobs and build reports) and builds and records `classic`; a build recorded as
+widescreen re-runs frontend. The frontend self-test (U1) checks that the panel column's
+on-screen offset is XML1's own within a pixel at 4:3, 16:10, 16:9, 21:9 and 2560x1440, and at
+most 2 units from the camera.
 
 The builder also writes `[Game] ClassicMainPanelBounds=1`. The companion DLL derives all
 eight selectable rectangles from their loaded back-panel bounds, preserving full panel
@@ -2110,7 +2119,8 @@ row's lower third. Independently of the layout, XML2 Fix converts every mouse po
 window's client area to the engine's screen size (0x5f9eb0 divides by `[0xa09ffc]`/`[0xa0a000]`),
 so a window whose client area differs from the resolution (a DPI change, a borderless window
 over a larger monitor) still hovers the row under the cursor; the native mapping tests cover
-1280x720, 1920x1080 and 1024x768, client areas shrunk or grown, and both layouts.
+1280x720, 1920x1080 and 1024x768, client areas shrunk or grown, and both panel columns
+(the DLL reads the rows from the loaded panels, so it needs no layout setting).
 
 The companion XML2 Fix writes `[Game] ClassicMainBackdrop=1` for the classic main. Its guarded
 libIGSg configureScale hook (RVA 0x6a780) changes only the first diffuse pass of known opaque
