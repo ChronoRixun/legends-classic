@@ -6609,3 +6609,41 @@ decoded catalogue differs from candidate i's only in its content version; every 
 token LC26 with the fresh build's bind manifest; LC25 and every older row are unchanged. A raised (E10A2) save
 carries LC required-feature bit 0; the GCAP protocol revision 2 and entity layout rule revision 3 refuse a
 candidate-i peer at admission whatever its token. Builder/DLL versions remain 0.2.0 / 1.4.0.
+
+## 88. Skill rank costs (issue #35; XML2 Fix `[Game] RankCosts`, V-H16)
+
+**The first game.** A talent rank can cost more than one skill point: `<level cost="2">` in herostat.eng. That is
+119 ranks over the 14 heroes with costs (Beast, Colossus, Cyclops, Iceman, Jubilee, Magma, Psylocke, Rogue, Storm,
+Wolverine 9 each; Frost 8; Gambit, Nightcrawler, Phoenix 7): every Xtreme power's rank 1, the boost's ranks 1/4/7
+(Gambit 4/7), the first power's ranks 6/11 and the second power's ranks 1/6/11 (Nightcrawler and Phoenix: 6 only /
+1 and 6). They are the ranks that carry a `descname` (a new form of the power), not "the top Legend ranks". shared_talents
+has one more (psionic_fury rank 4), which no playable hero has. default.xbe's talent parser (0xb4250) keeps up to three
+(rank index, cost) pairs per talent (byte = index | cost << 5); CTalent vt+0x34 (0xb3ad0) answers the cost of a 0-based
+rank, 1 for any other. The skills menu charges and refunds it (0x16c800), greys a talent the hero can't pay for
+(0x169200), the automatic spending tries a rank only when the hero has its cost (0xae8a0/0xaf160) and losing levels
+takes ranks back until their costs cover the lost points (0xb1ca0). The first game has no respec.
+
+**The port.** heroes.py already copies `cost` onto the converted level (4.2), and every level covers one rank
+(`count="1"`), so the n-th rank is the n-th level. XMen2.exe never reads it (its only `cost` reader is the item
+loader). XML2 Fix's `[Game] RankCosts=1` (xml2-fix docs/rank-costs.md) charges each rank its level's `cost` in the
+skills screen (+ and -), its buyable test (which also decides whether the hint bar offers `[J] Add`), the screen's
+requirement sweep, the automatic spending ([Space] Auto and the level-up offer), Training's respec and losing levels;
+co-op peers agree through gameplay rule 5. `fix_ini.RANK_COSTS` writes the key for every XML1 build. A fix without the
+feature ignores the key: every rank costs 1, as before.
+
+**V-H16 (heroes validation, `rank_costs.py`).** Every cost of the XML1 source is on the same rank of the built talent,
+every level up to it has `count="1"`, the value is 1..7 (what the fix honours) and no built level carries a cost XML1
+does not. The count `rank_costs` is 119 for a full build.
+
+**Saves.** Unchanged: the unspent points and the ranks are stored, nothing recomputes them. A hero saved with ranks
+bought at 1 point keeps them and its points (checked in game: a 0.2.1-content save with the Xtreme, a rank 6 and two
+other 2-point ranks bought for 1 loads with the same ranks and 0 points); the difference stays spent. The first game
+had no respec, so nothing is stripped; Training's respec (XML2's shop service) would return the full costs.
+
+**In game (agent check, 2026-10-12; staged: XP by `awardXPToPlayable`, the extraction menu opened by script for the
+save).** Wolverine at level 17 with 16 points, real menu input on the skills tab. XML2 Fix 1.4.0 (control): wolv_xtreme
+rank 1, wolv_frenzy rank 1 and wolv_slash rank 6 cost 1 each. With RankCosts: 2 each (16 -> 14, - returns 2, the other
+ranks 1); with exactly 1 point left the hint bar offers no `[J] Add` on wolv_xtreme or wolv_berserk's rank 4 (both
+2 points) and J changes nothing, while wolv_frenzy's next rank (1 point) is offered; the last point buys a 1-point
+rank. [Space] Auto at level 20 with 3 points bought wolv_xtreme rank 1 (2) and x1_wolverine_healing_factor rank 1 (1). A save and a
+cold load in a new process keep the ranks and 0 points.
