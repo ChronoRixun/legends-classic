@@ -98,3 +98,9 @@ def test_rank_costs_key_dropped_on_stock_merge():
         fix_ini.merge_ini(path, stock, fix_ini.dropped_keys(stock))
         parsed = fix_ini.read_ini(path)['Game']
         assert 'RankCosts' not in parsed and parsed['KeepMe'] == 'example'
+
+
+def test_port_asks_for_xml1_level_skill_points():
+    assert 'LevelSkillPoints' in fix_ini.PORT_OWNED['Game']
+    assert fix_ini.game_keys()['LevelSkillPoints'] == 'xml1'
+    assert 'LevelSkillPoints' not in fix_ini.game_keys(xml1_opening=False)

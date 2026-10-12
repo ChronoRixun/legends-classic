@@ -6647,3 +6647,25 @@ ranks 1); with exactly 1 point left the hint bar offers no `[J] Add` on wolv_xtr
 2 points) and J changes nothing, while wolv_frenzy's next rank (1 point) is offered; the last point buys a 1-point
 rank. [Space] Auto at level 20 with 3 points bought wolv_xtreme rank 1 (2) and x1_wolverine_healing_factor rank 1 (1). A save and a
 cold load in a new process keep the ranks and 0 points.
+
+### 88.1 Skill points per level (XML2 Fix `[Game] LevelSkillPoints=xml1`)
+
+**The first game.** default.xbe's level processing (0xb1ca0; it runs for every level between the hero's processed
+level, byte +0x1d, and its level +0x1c) gives 1 skill point and 1 stat point for each level gained, **2 of each for a
+level divisible by 5** (5, 10 .. 45: `level % 5 == 0`), besides stat_rules.xml's automatic stat bonus (0xaed70). A
+level lost (processed level above the level) takes the same 1 / 2 back, from the unspent points first and the rest as
+stats / ranks (the rank part costed, SPEC 88). XMen2.exe's (0x4bbae0) gives 1 skill point and 4 stat points for every
+level and takes 1 / 4 back. The grant is code (the INC at 0x4bbb6f, the min(points, 1) at 0x4bbc3e), not data, so the
+fix does it: `[Game] LevelSkillPoints=xml1` gives 2 on a level divisible by 5 and takes the same back
+(`fix_ini.LEVEL_SKILL_POINTS`, written for every XML1 build; gameplay rule 5 revision 2). Stat points stay XML2's.
+
+`[Game] XPCurve=xml1` (SPEC 23) only changes the XP a level needs and the cap (45); every level still goes through the
+processing, so by level 45 a hero has 9 more skill points than before. The SKILL pickups (SPEC 32) add their point
+directly (`addSkillPoints`) and are unaffected; together they bring a hero to XML1's total.
+
+**Saves.** A save stores the unspent points and each hero's processed level (`ack_level`); nothing recomputes the
+points. Heroes past level 5 in a save made before the key are short one point for every multiple of 5 they passed
+(level 5-9: 1, 10-14: 2, .. 45: 9). They keep their points as they are: the first game grants a level's points only
+when the level is processed, so there is nothing in its rule for a grant on load, and a save does not record which
+rule gave its points (only the header's writer / content version could tell). A one-time catch-up on conversion is
+possible but is not done (agent report, follow-up).
