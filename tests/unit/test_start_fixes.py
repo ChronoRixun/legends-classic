@@ -41,6 +41,7 @@ def test_the_shipped_table_names_its_tested_spot():
 
 def test_the_shipped_table_seats_xavier_behind_his_desk():
     # SPEC 41.1: a tabled spawner keeps its floor height; only its XY seat changes
-    expected, tested = S.START_FIXES['maps/mansion/man1a/mansion1a_1']['sp_profx01']
-    e, t = [list(map(float, v.split())) for v in (expected, tested)]
-    assert len(e) == len(t) == 3 and e[:2] != t[:2] and e[2] == t[2]
+    for zone in ('maps/mansion/man1a/mansion1a_1', 'maps/mansion/man1a/subbasement1a', 'maps/mansion/man2/subbasement2'):
+        for expected, tested in S.START_FIXES[zone].values():
+            e, t = [list(map(float, v.split())) for v in (expected, tested)]
+            assert len(e) == len(t) == 3 and e[:2] != t[:2] and e[2] == t[2]

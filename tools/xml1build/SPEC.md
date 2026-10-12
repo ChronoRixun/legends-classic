@@ -4373,8 +4373,18 @@ to another walk cell, (2899.4 1580), inside the desk - on every fresh load (3/3,
 XMen2.exe's choice is not the containing cell and does not follow the spawner's extents (a 2-unit box gives the same
 seat); measured on fresh loads: spawn (2940 1540) -> (2939.4 1580), (2940 1520) -> (2939.4 1500), (2940 1500) ->
 (2939.4 1540) 3/3. The `START_FIXES` table therefore moves `sp_profx01` to (2940 1500 0), which XMen2.exe seats at the
-original's spot; facing and extents are kept. Only mansion1a_1 has him at a desk (every ProfX spawner audited). Whether
-other XML1 spawners land a cell away from their original walk cell is open (most are invisible: enemies move at once).
+original's spot; facing and extents are kept. Only mansion1a_1 has him at a desk (every ProfX spawner audited).
+
+All-zone comparison (2026-10-12, 145 XML1 zones, the port's runtime positions 6 s after a staged first entry against
+each static spawner's XML1 cell, 364 spawned NPCs found): 91 of the 233 that had not walked off sit exactly one walk cell
+(40 or 56.6 units) away from the XML1 cell, in no fixed direction (Hive lab techs, Arbiter crewmen, Forge, Toad, Marrow, the Weapon X
+director, the subbasement X-Men); 115 sit at their exact spawn point (mostly civilians). The original confirms XML1's rule on
+four more seats (warped Xbox, xemu): ProfX (819.93 1899.80) in subbasement1a and (2260 1740) in subbasement2, Toad
+(2300 980) in subbasement2 - each its spawn point's cell centre. Screenshots of 13 flagged static NPCs in the port show
+no other one inside furniture or a wall. The table also moves subbasement1a's `sp_profx01` (838.602 -> 798.602 in X)
+and subbasement2's `sp_profx01` and `profx_a` (1742.65 -> 1702.65 in Y): XMen2.exe then seats him at (819.9 1899.85)
+and (2260.5 1740.1), the original's seats (in subbasement2 the port's seat had the wheelchair against the war room
+console). XMen2.exe's own rule was not worked out, so no general builder correction replaces the table.
 
 
 ## 42. Generated long-range buoy networks (2026-10-03, content version 10)
