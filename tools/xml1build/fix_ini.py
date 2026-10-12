@@ -179,7 +179,7 @@ BALANCE_NATIVE_STAT_HEROES = 'ProfXAstral,ProfXGladiator'
 PORT_OWNED = {'Game': ('NewGameTeam', 'ResetUnlocks', 'SaveFolder', 'ForcedTeams', 'PostgameScript', 'WindowTitle',
                         'EndHeroUnlock', 'MainMenuItems', 'ClassicMainBackdrop', 'ClassicMainPanelBounds', 'NewGamePlus', 'ReviewStats', 'Xtract', 'XtractionShop', 'XPCurve',
                        'GeometrySharingBlendIndices', 'CharacterLadderPaths', 'ObjectiveDescriptions',
-                       'BreakRule', 'ConfirmationRelease', 'ExplosiveFirstHit', 'Xml1MasterMold', 'Xml1MoldStage'),
+                       'BreakRule', 'ConfirmationRelease', 'ExplosiveFirstHit', 'SoloMode', 'Xml1MasterMold', 'Xml1MoldStage'),
               'Limits': ('ActorSlots', 'ResourceNames', 'ItemEnhancements', 'FightStyles', 'EffectCurves', 'MoveTriggers', 'EntityCapacity'),
               'Online': ('GameVersion', 'ContentFingerprint'),
               'Save': ('Format',)}
@@ -345,6 +345,8 @@ def game_keys(*, xml1_opening=True, save_folder=None, forced_teams='1', add_hero
         game['ObjectiveDescriptions'] = OBJECTIVE_DESCRIPTIONS
         game['BreakRule'] = BREAK_RULE
         game['ExplosiveFirstHit'] = '1'
+        # XML1's solo mode (issue #5): setSoloMode in the solo boxes / bridge scripts acts only with this key
+        game['SoloMode'] = '1'
     if forced_teams in ('0', '1'):
         game['ForcedTeams'] = forced_teams
     if add_hero:

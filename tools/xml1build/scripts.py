@@ -2540,8 +2540,9 @@ def _defer(ctx, zone_rows, det=None):
         ctx.defer('New Game roster: XMen2.exe startFirstMission sets up magneto/cyclops/wolverine/storm (0x4a7b41-'
                   '0x4a7bef) while XML1 alison starts with Wolverine alone; --newgame chooseteam loads nyc1_1_1 with '
                   'loadMapChooseTeam (the default keepteam uses xml2-fix [Game] NewGameTeam)')
-    ctx.defer('solo mode: 18 inline enterSoloMode and 4 exitSoloMode removed (debug no-op); may change '
-              'astral/arbiter bridge puzzles')
+    ctx.note('solo mode (issue #5): 18 inline enterSoloMode and 4 exitSoloMode -> xml2-fix setSoloMode(actor, 1 / 0); '
+             'the party holds while the leader crosses only with [Game] SoloMode=1 and its AI sites installed '
+             '(without them the call does nothing, as before)')
     ctx.defer('conversation speaker markup (%X-TEAM%text vs %Name%: text) is not converted (the XML1-only speaker '
               'alias %ALISON% is: -> %MAGMA%, the stats entry default.xbe keyed it to; default.xbe labelled those '
               'lines "Alison" (string 503), the port\'s party-Magma lines say "Magma" - one key gives XMen2.exe both '

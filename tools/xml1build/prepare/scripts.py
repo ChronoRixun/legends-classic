@@ -63,7 +63,7 @@ from ..sources import REPO_ROOT
 import xmlb  # noqa: E402  tools/xmlb.py
 
 STAGE = 'scripts'
-VERSION = 5                                          # 5: issue #95 (point-local permission, safe feature fallback)
+VERSION = 6                                          # 6: issue #5 (solo mode: setSoloMode); 5: issue #95 (point-local permission, safe feature fallback)
 OUT = 'out'                                          # the research layout: Sources overrides scripts/out with this
 REPORT_TXT, REPORT_JSON = 'rewrite_report.txt', 'rewrite_report.json'
 API_RELS = ('scripts/xml1_api.json', 'scripts/xml2_api.json')   # research-relative, packaged data
@@ -85,12 +85,13 @@ DROP = {  # function -> reason (evidence)
     'xtremeConversationLight': 'no XML2 equivalent (XML1 xbe 0x9e310 toggles the conversation light)',
     'setPowerStatus': 'no XML2 script function to enable/disable a single power (XML1 xbe 0x9db60)',
     'removeFromGroup': 'no XML2 script function (XML1 xbe 0x9fbd0 removes a hero from the party)',
-    'exitSoloMode': 'XML2 has no solo mode script API (XML1 xbe 0x9ef70)',
-    'enterSoloMode': 'XML2 has no solo mode script API (XML1 xbe 0x9eef0)',
     'setGroupLeader': 'no XML2 equivalent (XML1 xbe 0x9fcd0)',
     'canCancelDialog': 'canCancelDialog outside a popup sequence has no effect',
     'main': 'legacy Python entry call; the engine skips main() (exe 0x4d9cf2)',
 }
+# XML1 solo mode (issue #5): XML2 has no solo API; xml2-fix registers setSoloMode(actor, on) ([Game] SoloMode,
+# solo_mode.hpp). Without the DLL function the statement is dropped when the script compiles, as the removed call was.
+SOLO = {'enterSoloMode': 1, 'exitSoloMode': 0}       # XML1 xbe 0x9eef0 / 0x9ef70
 RENAME = {'screenFade': 'cameraFade',          # XML1 registers both names to 0x98ec0
           'loadMap': 'loadMapKeepTeam'}        # XML1 loadMap = "loadmap %s" (0x9a850); XML2 loadMap
 #                                                sends "loadmapaddteam %s", loadMapKeepTeam "loadmap %s 0 0"
@@ -748,6 +749,9 @@ class Rewriter:
             STATS['rule Xtraction point services'] += 1
             return xtraction_menu_lines(argtxt(c.args[0], quote), allowed,
                                         self.STORAGE.get(('m', 'ftalk')), quote)
+        if name in SOLO and len(c.args) == 1:
+            STATS[f'rule {name} -> setSoloMode'] += 1
+            return [call('setSoloMode', argtxt(c.args[0], quote), SOLO[name])]
         if name in DROP:
             STATS[f'drop {name}'] += 1
             txt = f'{name}(' + ', '.join(a.text for a in c.args) + ')'
@@ -918,7 +922,7 @@ class Rewriter:
             if c is None:
                 continue
             e = self.API2.get(c.name) or ({'args': 's', 'ret': 'i'} if c.name == 'xml2fixFeature' else
-                                        {'args': 'ai', 'ret': 'n'} if c.name == 'extractionPointServices' else None)
+                                        {'args': 'ai', 'ret': 'n'} if c.name in ('extractionPointServices', 'setSoloMode') else None)
             if e is None:
                 if c.name != 'main':
                     bad.append(f'{where}:{i}: unknown function {c.name}')
