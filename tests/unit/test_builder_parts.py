@@ -742,6 +742,37 @@ def test_a_dll_without_the_15_keys_is_refused(tmp_path=None):
         FI.check_release_dll(dll, {'Game': {'NewGameTeam': 'x'}})        # no 1.5 key asked for: nothing to check
 
 
+def test_old_fix_keys_names_every_unknown_key_and_the_cli_path_writes_anyway():
+    """FixTooOld (a ValueError) carries every key an older DLL lacks across the three checks; write_port_keys
+    refuses by default (harness, build_xml1) and writes with old_fix_ok (the xml1-builder CLI's warning path)."""
+    import tempfile
+    keys = {'Game': {'X1Leader': '1'}, 'Limits': {'MoveTriggers': '64', 'EntityCapacity': '1'}, 'Save': {'Format': 'lc'}}
+    with tempfile.TemporaryDirectory() as d:
+        dll = Path(d) / 'dinput.dll'
+        assert FI.old_fix_keys(dll, keys) == []                           # no DLL: nothing to name
+        dll.write_bytes(b'MZ ' + 'MoveTriggers'.encode('utf-16le'))     # a 1.3-era DLL that knows only one of them
+        assert FI.old_fix_keys(dll, keys) == ['[Limits] EntityCapacity', '[Game] X1Leader']
+        try:
+            FI.write_port_keys(d, {s: dict(v) for s, v in keys.items()})
+        except FI.FixTooOld as exc:
+            assert isinstance(exc, ValueError) and exc.missing == ['[Limits] EntityCapacity', '[Game] X1Leader']
+            assert 'XML2 Fix 1.5' in str(exc)
+        else:
+            raise AssertionError('an old DLL was accepted')
+        assert not (Path(d) / 'xml2-fix.ini').exists()
+        FI.write_port_keys(d, {s: dict(v) for s, v in keys.items()}, old_fix_ok=True)
+        ini = (Path(d) / 'xml2-fix.ini').read_text()
+        assert 'X1Leader=1' in ini and 'EntityCapacity=1' in ini
+        try:                                                              # a key set no DLL can run still fails
+            FI.old_fix_keys(dll, {'Limits': {'EntityCapacity': '1'}})
+        except FI.FixTooOld:
+            raise AssertionError('a missing Format=lc is not an old-fix case')
+        except ValueError as exc:
+            assert 'Format=lc' in str(exc)
+        else:
+            raise AssertionError('EntityCapacity without Format=lc was accepted')
+
+
 def test_danger_room_gate_names_the_front_ends_danger_room_item():
     """Issue #63: DangerRoomGate is the XML1 main menu item that opens the Danger Room."""
     from xml1build import frontend as F

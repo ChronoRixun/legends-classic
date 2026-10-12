@@ -341,6 +341,39 @@ def test_held_stray_is_named_by_a_warning():
         assert code == 0 and not stray.exists() and not any(e.get('code') == 'W_EXTRA_FILES' for e in evs)
 
 
+def test_rebuild_over_an_older_fix_warns_and_writes_the_ini():
+    """0.2.2: a Rebuild in the launcher runs while the folder still holds the previous XML2 Fix (the launcher installs
+    the new one after a successful build). An older dinput.dll that doesn't know a key the build writes is a warning
+    (W_XML2FIX_OLD naming the keys), not a failed finish; the ini gets every key and the DLL stays the player's."""
+    keys = {'Game': {'NewGameTeam': 'wolverine', 'X1Leader': '1'}, 'Limits': {'ScriptFunctions': '1024'}}
+    saved = B.StubPipeline.port_keys
+    B.StubPipeline.port_keys = lambda self, out: {s: dict(v) for s, v in keys.items()}
+    try:
+        with tempfile.TemporaryDirectory() as td:
+            xml2, iso, out, cache = setup(td)
+            out.mkdir()
+            old = b'MZ an older fix ' + 'ScriptFunctions'.encode('utf-16le')
+            (out / 'dinput.dll').write_bytes(old)
+            code, evs, err = run(build_argv(xml2, iso, out, cache))
+            last = check_stream(evs)
+            assert code == 0 and last['result']['ok'], (last.get('error'), err[-800:])
+            old_fix = [e for e in evs if e['ev'] == 'warning' and e['code'] == 'W_XML2FIX_OLD']
+            assert len(old_fix) == 1 and old_fix[0]['stage'] == 'finish', old_fix
+            w = old_fix[0]
+            assert w['detail']['missing'] == ['[Game] X1Leader'] and w['detail']['count'] == 1
+            assert w['detail']['required'].startswith('>=') and 'X1Leader' in w['msg'] and 'launcher' in w['msg']
+            ini = (out / 'xml2-fix.ini').read_text()
+            assert 'X1Leader=1' in ini and 'ScriptFunctions=1024' in ini
+            assert (out / 'dinput.dll').read_bytes() == old
+            assert last['result']['stamp']['requires']['xml2fix'] == w['detail']['required']
+            # the new fix in place: no warning
+            (out / 'dinput.dll').write_bytes(old + 'X1Leader'.encode('utf-16le'))
+            code, evs, _ = run(build_argv(xml2, iso, out, cache))
+            assert code == 0 and not any(e.get('code') == 'W_XML2FIX_OLD' for e in evs)
+    finally:
+        B.StubPipeline.port_keys = saved
+
+
 def test_os_io_errors_in_the_modules_are_e_io():
     """an OS-level I/O error in a content module (a file held open, a full disk - also wrapped by the module) is E_IO
     (exit 6) naming the file relative to the game folder and the cause; a module's other errors stay E_PIPELINE."""

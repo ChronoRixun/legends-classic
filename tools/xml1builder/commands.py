@@ -592,7 +592,18 @@ def finish(a, output, job, ctl, pipeline, warn):
              {'files': modified[:20], 'count': len(modified)}, stage='finish')
     keys = pipeline.port_keys(out_dir)
     if not a.no_ini:
-        pipeline.write_ini(out_dir, keys)
+        try:
+            pipeline.write_ini(out_dir, keys)
+        except ValueError as exc:
+            # an older XML2 Fix in the folder (fix_ini.FixTooOld names its unknown keys): the build is complete, and
+            # the launcher installs the latest fix right after it - a Rebuild over a 0.2.1 folder must not stop here
+            missing = getattr(exc, 'missing', None)
+            if not missing:
+                raise
+            warn('W_XML2FIX_OLD', f'{exc}. The build is complete: put XML2 Fix {pipeline.required_xml2fix()[2:]} or '
+                                  'later into the folder (the Ultimate Legends launcher does it after the build).',
+                 {'missing': missing, 'count': len(missing), 'required': pipeline.required_xml2fix()}, stage='finish')
+            pipeline.write_ini(out_dir, keys, old_fix_ok=True)
     total_bytes = sum(e['size'] for e in files.values())
     n_built = sum(1 for e in files.values() if e['kind'] == 'built')
     digest = M.manifest_digest(files)
