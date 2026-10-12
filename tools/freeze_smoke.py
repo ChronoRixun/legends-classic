@@ -15,7 +15,12 @@ Checks (each prints PASS / FAIL; exit 1 on any failure):
   xml2        info --xml2 <a stand-in install> -> exit 3, E_XML2_UNKNOWN_EXE
   usage       an unknown option -> exit 2, E_USAGE
   root        with $XML1_PORT_ROOT pointing somewhere else the frozen builder still reads only its own bundle
-              (resources.setup overrides it; check_root would stop it with E_INTERNAL)"""
+              (resources.setup overrides it; check_root would stop it with E_INTERNAL)
+  registry    the savefiles step's typed entity-id registry (savefiles.typed_registry_for) over an invented Scripts
+              tree, with a ctx whose research_path is the folder's _internal/research and the repo's copy of the
+              script API made unreachable: 0.2.0 read research/scripts/xml2_api.json from a path computed from the
+              module's location (beside the exe once frozen), so every build from the release failed at its last
+              step. Runs the source pipeline in this process against the bundle's data (no game data needed)"""
 from __future__ import annotations
 
 import argparse
@@ -58,6 +63,32 @@ def events(stdout):
     return evs
 
 
+def typed_registry_check(internal: Path):
+    """-> (ok, detail): savefiles.typed_registry_for with the frozen layout's research root (the "registry" check)."""
+    from xml1build import savefiles as SF
+    from xml1build import typed_entity_ids as TE
+
+    class Ctx:                                       # the build ctx's research_path, frozen: _internal/research/<rel>
+        def research_path(self, rel):
+            return internal / 'research' / rel
+
+    with tempfile.TemporaryDirectory(prefix='xml1-smoke-') as td:
+        zone = Path(td) / 'Scripts' / 'zone_a'       # invented script names, never game scripts
+        zone.mkdir(parents=True)
+        (zone / 'trap.py').write_text('def onHit(me):\n   victim = getID( me )\n   setZoneVar("victim_a", victim )\n',
+                                      encoding='ascii')
+        saved = TE.DEFAULT_API
+        TE.DEFAULT_API = Path(td) / 'no-repo' / 'research' / 'scripts' / 'xml2_api.json'
+        try:
+            code, scan, messages = SF.typed_registry_for(td, Ctx())
+        except Exception as e:                       # a signature or import change is a failure too, not a crash
+            code, scan, messages = 1, None, [f'{type(e).__name__}: {e}']
+        finally:
+            TE.DEFAULT_API = saved
+    keys = [(t['scope'], t['key']) for t in (scan or {}).get('typed_fields', [])]
+    return code == 0 and keys == [('Zone', 'victim_a')], f'exit {code}, keys {keys}; ' + '; '.join(messages)
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(prog='freeze_smoke.py')
     ap.add_argument('folder')
@@ -88,6 +119,9 @@ def main(argv=None) -> int:
     bundled = json.loads((internal / 'xml1builder' / 'data' / 'build-info.json').read_text(encoding='utf-8'))
     check('build-info', bundled.get('commit') == info.get('commit') and bundled.get('version') == VERSION,
           f'{bundled.get("commit")} / {bundled.get("version")}')
+
+    ok, detail = typed_registry_check(internal)
+    check('registry (bundled script API)', ok, detail)
 
     env = dict(os.environ)
     env.pop('XML1_PORT_ROOT', None)
