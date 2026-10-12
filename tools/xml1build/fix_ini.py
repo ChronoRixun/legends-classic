@@ -233,7 +233,7 @@ PORT_OWNED = {'Game': ('NewGameTeam', 'ResetUnlocks', 'SaveFolder', 'ForcedTeams
                         'EndHeroUnlock', 'MainMenuItems', 'DangerRoomGate', 'ClassicMainBackdrop', 'ClassicMainPanelBounds', 'NewGamePlus', 'ReviewStats', 'Xtract', 'XtractionShop', 'RevivalCost', 'XPCurve',
                        'GeometrySharingBlendIndices', 'CharacterLadderPaths', 'ObjectiveDescriptions',
                        'BreakRule', 'PlacementCrush', 'DoubleHeal', 'DeathRule', 'ConfirmationRelease',
-                       'ExplosiveFirstHit', 'PackAmount', 'RankCosts', 'LevelSkillPoints', 'LevelStatPoints', 'Xml1Multipart',
+                       'ExplosiveFirstHit', 'PackAmount', 'SoloMode', 'RankCosts', 'LevelSkillPoints', 'LevelStatPoints', 'Xml1Multipart',
                        'Xml1MasterMold', 'Xml1MoldStage', 'Xml1Turrets'),
               'Limits': ('ActorSlots', 'ResourceNames', 'ItemEnhancements', 'FightStyles', 'EffectCurves', 'MoveTriggers', 'EntityCapacity',
                          'ScriptFunctions'),
@@ -427,6 +427,8 @@ def game_keys(*, xml1_opening=True, save_folder=None, forced_teams='1', add_hero
         game['Xml1Multipart'] = '1'
         game['DeathRule'] = DEATH_RULE
         game['PackAmount'] = PACK_AMOUNT
+        # XML1's solo mode (issue #5): setSoloMode in the solo boxes / bridge scripts acts only with this key
+        game['SoloMode'] = '1'
     if forced_teams in ('0', '1'):
         game['ForcedTeams'] = forced_teams
     if add_hero:

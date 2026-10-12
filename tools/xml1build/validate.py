@@ -949,6 +949,7 @@ class Validator:
                                ('V31', 'save positions', self.save_positions),
                                ('V32', 'lite xtraction', self.lite_xtraction),
                                ('V48', 'Xtraction service routing', self.xtraction_services),
+                               ('V-TBD', 'solo mode calls', self.solo_mode_calls),
                                ('V34', 'ladder spawns', self.ladder_spawns),
                                ('V35', 'pda portal', lambda ck: VF.v_pda_portal(self, ck)),
                                ('V37', 'xtraction beacons / rank-1 power damage', self.v37_beacons_rank_one),
@@ -1507,6 +1508,40 @@ class Validator:
                     ck.error(f'{self.scan.files[n]["rel"]}: Xtraction actscript bypasses its services helper '
                              '(issue #95; point-local permission / contact unlock)')
         ck.set('xtraction_service_inline_checked', n_code)
+
+    _XML1_SOLO = re.compile(r'\b(?:enterSoloMode|exitSoloMode)\s*\(')
+    _SOLO_CALL = re.compile(r'\bsetSoloMode\s*\(')
+    _SOLO_FORM = re.compile(r'''\bsetSoloMode\(\s*(['"])[^'"]+\1\s*,\s*[01]\s*\)''')
+
+    def solo_mode_calls(self, ck):
+        """V-TBD (issue #5): XML1's enterSoloMode / exitSoloMode reach xml2-fix as setSoloMode(actor, 1 / 0) (prepare
+        P3). XMen2.exe knows no XML1 name (its compiler would drop the call silently), and every setSoloMode keeps the
+        two-argument form the DLL registers ('ai'). Counts the solo-box calls in map data and the script calls."""
+        n_data = n_scripts = 0
+        for table in (self.scan.inline, self.scan.runscripts):
+            for n, lst in self.data_items(table):
+                if not self.is_x1(n):
+                    continue
+                for item in lst:
+                    code = (item[2] if isinstance(item, tuple) else item) or ''
+                    if self._XML1_SOLO.search(code):
+                        ck.error(f'{self.scan.files[n]["rel"]}: XML1 solo call left in {_short(code, 80)!r}')
+                    calls = len(self._SOLO_CALL.findall(code))
+                    if calls != len(self._SOLO_FORM.findall(code)):
+                        ck.error(f'{self.scan.files[n]["rel"]}: setSoloMode not as (actor, 0|1) in {_short(code, 80)!r}')
+                    n_data += calls
+        for r in sorted(self.script_set()):
+            if not (self.exists(r) and self.is_x1(r)):
+                continue
+            for i, line in self._statements(self.read(r).decode('latin-1').split('\r\n')):
+                if self._XML1_SOLO.search(line):
+                    ck.error(f'{self.idx.get(r) or r}:{i + 1}: XML1 solo call left: {_short(line)}')
+                calls = len(self._SOLO_CALL.findall(line))
+                if calls != len(self._SOLO_FORM.findall(line)):
+                    ck.error(f'{self.idx.get(r) or r}:{i + 1}: setSoloMode not as (actor, 0|1): {_short(line)}')
+                n_scripts += calls
+        ck.set('solo_mode_data_calls', n_data)
+        ck.set('solo_mode_script_calls', n_scripts)
 
     # ================================================================== V37 (issues #74, #78)
     def v37_beacons_rank_one(self, ck):
