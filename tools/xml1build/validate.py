@@ -160,6 +160,7 @@ from . import style_budget as SB         # V23 (SPEC 43): the fighting / power s
 from . import ladder_motion as LM       # V34 (SPEC 46): ladder paths only from the ladder top
 from . import weapons as W              # V5 (SPEC 57, issue #52): a gun-armed entry carries its gun's fighting style
 from . import scripted_approaches as SA  # V47 (SPEC 78): authored scripted approach completion
+from . import characters as CH           # V50 (issue #15): the xml2-fix leader sidecar
 from . import save_positions as SP      # V31: identities a save keeps by position
 
 MAX_REPORTED = 50                             # per check and severity, into ctx.error / ctx.warn
@@ -812,7 +813,8 @@ class Validator:
                                ('V41', 'spawn-floor residency', self.spawn_floor_residency),
                                ('V45', 'gun damage roll', lambda ck: W.validate(self, ck)),
                                ('V47', 'scripted boss approach', lambda ck: SA.validate(self, ck)),
-                               ('V46', 'pickup models', self.v46_pickup_models)):
+                               ('V46', 'pickup models', self.v46_pickup_models),
+                               ('V50', 'leader bit sidecar', self.v50_leader_sidecar)):
             ck = Check(cid, title)
             self.checks[cid] = ck
             t0 = time.time()
@@ -923,6 +925,42 @@ class Validator:
         ctx.note(f'validate: {summary["result"]}: {summary["errors"]} errors, {summary["warnings"]} warnings, '
                  f'{summary["allowed"]} allowlisted; details in _build/validate.json')
         return doc
+
+    # ================================================================== V50 leader sidecar (issue #15)
+    def v50_leader_sidecar(self, ck):
+        """V50 (issue #15): Data/x1leader.txt must list exactly the XML1 stats entries whose source element
+        carries leader="true" - it is what xml2-fix ([Game] X1Leader) keys the restored leader behaviours
+        (death drops, no-flinch vs leader projectiles) to. Derived in code by xml1build.characters from the
+        converted stats; this cross-checks derivation against the source data."""
+        src = {n for n, (_, el) in self.x1_stats().items()
+               if (el.get('leader') or '').strip().lower() == 'true'}
+        data = self.read(CH.LEADER_SIDECAR_REL)
+        if data is None:
+            if src:
+                ck.error(f'{CH.LEADER_SIDECAR_REL} missing (xml1build.characters derives it from '
+                         f'leader="true"; xml2-fix has nothing to key the leader behaviours to)')
+            return
+        try:
+            text = data.decode('latin-1')
+        except UnicodeDecodeError:
+            ck.error(f'{CH.LEADER_SIDECAR_REL}: not latin-1 text')
+            return
+        have, dups = set(), []
+        for i, line in enumerate(text.splitlines(), 1):
+            s = line.strip()
+            if not s or s.startswith(('#', ';')):
+                continue
+            if s.lower() in have:
+                dups.append((i, s))
+            have.add(s.lower())
+        for i, s in dups:
+            ck.error(f'{CH.LEADER_SIDECAR_REL} line {i}: {s!r} is listed more than once')
+        for n in sorted(src - have):
+            ck.error(f'{CH.LEADER_SIDECAR_REL}: leader="true" entry {n!r} is missing')
+        for n in sorted(have - src):
+            ck.error(f'{CH.LEADER_SIDECAR_REL}: {n!r} has no leader="true" entry in the XML1 stats')
+        ck.set('source leader entries', len(src))
+        ck.set('sidecar names', len(have))
 
     # ================================================================== V1 proxy
     def v1_proxy(self, ck):
