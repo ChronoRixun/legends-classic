@@ -16,6 +16,13 @@ build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebui
   "double" sound; builds ask XML2 Fix for `[Game] DoubleHeal=0`, so packs heal as in the first game and the stats screen
   drops the double-heal lines (SPEC 63.5).
 
+## Unreleased
+
+- **The scan turrets fire again** (issue #4, needs the matching XML2 Fix): the HAARP exterior missile tanks scan,
+  turn, lock on and fire their three-missile salvos with the first game's timing, the Arbiter and Weapon X tripod
+  guns sweep and fire their bullets, and the Hive tanks' flame turrets burn whoever comes close. All of them can
+  still be destroyed.
+
 ## v0.2.1 - content version 18 (needs XML2 Fix 1.4.0)
 
 - **Fixed: builds with the released builder failed at the last step** ("typed entity ids: the shipped scripts could

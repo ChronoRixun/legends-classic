@@ -73,7 +73,8 @@ def dll_has(dll, marker):
 def ini_text(mode, width, height, pipe, xml1_opening=True, save_folder=None, limits=False, forced_teams='1',
              add_hero=False, postgame=None, main_menu_items=None, xp_curve=None, join_hero=True, pipe_name=None,
              online_server=None, log_network=False, new_game_plus=None, discord=None, port_identity=False,
-             review_stats=None, xtract=None, balance=False, fingerprint=None, balance_keys=None, mold_controller=None):
+             review_stats=None, xtract=None, balance=False, fingerprint=None, balance_keys=None, mold_controller=None,
+             turrets=None):
     """a whole test xml2-fix.ini: the harness's own [Display] / [Test] / [Discord] / [Debug] test settings around the
     port's [Game] / [Limits] / [Online] keys (fix_ini)."""
     lines = [MARKER, '[Display]', f'Mode={mode}', f'Width={width}', f'Height={height}', 'Topmost=0',
@@ -97,8 +98,12 @@ def ini_text(mode, width, height, pipe, xml1_opening=True, save_folder=None, lim
                         xtract=xtract, xp_curve=xp_curve)
     if xml1_opening and port_identity:
         game.update(mold_controller or {})
+        game.update((turrets or {}).get('Game', {}))
     if game:
         lines += ['[Game]'] + [f'{k}={v}' for k, v in game.items()] + ['']
+    if xml1_opening and port_identity and (turrets or {}).get('Xml1Turrets'):
+        # the first game's scan turrets (xml1build.turrets): every placement's authored scanner and weapon values
+        lines += ['[Xml1Turrets]'] + [f'{k}={v}' for k, v in turrets['Xml1Turrets'].items()] + ['']
     if limits:
         lines += ['[Limits]'] + [f'{k}={v}' for k, v in FI.LIMITS.items()] + ['']
     if balance:
@@ -143,7 +148,7 @@ def install(a):
                          True if a.discord else (False if (a.no_discord or not a.no_pipe) else None),
                          bool(postgame),        # an XML1 build: the port's title, ending and online version
                          review_stats, xtract, FI.build_balance(out), FI.content_fingerprint(out), FI.balance_keys(out),
-                         FI.build_mold_controller(out)))
+                         FI.build_mold_controller(out), FI.build_turrets(out)))
     if a.add_hero and a.forced_teams != '1':
         print('note: AddHero only acts with ForcedTeams=1 (xml2fixFeature("addhero") reports 0 otherwise)')
     print(f'harness installed in {out}: dinput.dll from {dll}; Mode={a.mode} {a.width}x{a.height} '
