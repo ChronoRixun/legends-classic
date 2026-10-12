@@ -4363,6 +4363,19 @@ tabled start instances (`START_FIXES`: zone -> start -> (expected XML1 pos, test
 an unexpected source position or a missing instance fails the build; a second run is a no-op. Tests:
 tests/unit/test_start_fixes.py (invented zones).
 
+### 41.1 Professor X's seat behind his desk (2026-10-12, issue #54)
+
+The first visit to mansion/man1a/mansion1a_1 spawns Professor X from `sp_profx01` (2925.34 1558.67 0, facing pi) for
+the 1_2_1_1 conversation. The original Xbox (xemu, the same conversation) seats him at (2938.85 1540 1.15): his walk
+cell's centre, behind the desk `prox_desk2_x` (2875.7 1560.13) with a clear gap. XMen2.exe resolves the same spawn point
+to another walk cell, (2899.4 1580), inside the desk - on every fresh load (3/3, port harness, new game then
+`loadMapKeepTeam`). Revisits within one session restore the remembered position, so only a fresh campaign tests it.
+XMen2.exe's choice is not the containing cell and does not follow the spawner's extents (a 2-unit box gives the same
+seat); measured on fresh loads: spawn (2940 1540) -> (2939.4 1580), (2940 1520) -> (2939.4 1500), (2940 1500) ->
+(2939.4 1540) 3/3. The `START_FIXES` table therefore moves `sp_profx01` to (2940 1500 0), which XMen2.exe seats at the
+original's spot; facing and extents are kept. Only mansion1a_1 has him at a desk (every ProfX spawner audited). Whether
+other XML1 spawners land a cell away from their original walk cell is open (most are invisible: enemies move at once).
+
 
 ## 42. Generated long-range buoy networks (2026-10-03, content version 10)
 

@@ -6,12 +6,20 @@ room's console desk, between the desk and the map wall; walking towards the room
 room's default start in subbasement7 (701.376 1674.6 24) is in the room proper; in subbasement8 a hero placed there
 walks to the computer and the stairs (2026-10-02 harness check, issue #28). Each fix names the position it expects to
 replace, so a different source fails closed instead of moving the wrong thing; a second run is a no-op.
+
+SPEC 41.1, the same table for a placed NPC: mansion/man1a/mansion1a_1's sp_profx01 (Professor X at his desk, issue #54).
+XMen2.exe resolves that spawn point to a different walk cell than the first game does: the original Xbox (xemu, the
+first visit's 1_2_1_1 conversation) seats him at (2938.85 1540 1.15), behind the desk with a clear gap; the port seated
+him at (2899.4 1580), inside the desk, on every fresh load (3/3). Spawn points tried on XMen2.exe: (2940 1540) ->
+(2939.4 1580), (2940 1520) -> (2939.4 1500), (2940 1500) -> (2939.4 1540) on 3/3 fresh loads - the original's seat.
 """
 import re
 
 # zone ref -> {start instance name: (expected XML1 pos, tested pos)}
 START_FIXES = {
     'maps/mansion/man8/subbasement8': {'player_start01': ('732.275 1535.96 24.0228', '701.376 1674.6 24')},
+    # SPEC 41.1: the spawn point XMen2.exe resolves to the original Xbox's seat behind Xavier's desk
+    'maps/mansion/man1a/mansion1a_1': {'sp_profx01': ('2925.34 1558.67 0', '2940 1500 0')},
 }
 
 
