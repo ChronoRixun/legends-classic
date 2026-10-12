@@ -25,7 +25,8 @@ def _zone():
     w = ET.SubElement(root, 'entinst', type='waypoint')
     ET.SubElement(w, 'inst', name='gizmo_a', pos='1 2 3')                 # same name, another type: not a turret
     ET.SubElement(root, 'entity', name='gizmo_turret', classname='physent', turretweapon='wp_fake_launcher',
-                  turnrate='30', visextent='80', yawextent='70', pitchextent='0', resetdelay='2', mintime='0')
+                  turnrate='30', visextent='80', yawextent='70', pitchextent='0', resetdelay='2', mintime='0',
+                  rotatesound='fake/whirr')
     s = ET.SubElement(root, 'entinst', type='gizmo_gun')
     ET.SubElement(s, 'inst', name='gun_z', pos='0 0 0', orient='0 0 0')
     ET.SubElement(root, 'entity', name='gizmo_gun', classname='physent', turretweapon='wp_fake_gun')
@@ -40,7 +41,7 @@ WEAPONS = {'wp_fake_launcher': {'type': 'projectile', 'recoiltime': '4', 'count'
                                 'projectileent': 'dart_fake', 'entfile': 'fake_ents'},
            'wp_fake_gun': {'type': 'bullet', 'recoiltime': '0.5', 'range': '500', 'damage': 'Q7', 'accuracy': '3',
                            'damagemod': 'dmgmod_no_pain', 'muzzlefx': 'fake/gun_flash', 'muzzleaccfx': 'fake/gun_line',
-                           'impactfx': 'fake/gun_spark'},
+                           'impactfx': 'fake/gun_spark', 'firesound': 'fake/gun_bang'},
            'wp_fake_zapper': {'type': 'beam', 'recoiltime': '1', 'range': '100', 'damage': 'Q7'}}
 
 
@@ -48,11 +49,11 @@ def test_placements_carry_authored_values_and_defaults():
     lines, skipped = TU.placements('fake/zone_q', _zone(), WEAPONS, FakeValues())
     assert [l for l, _ in lines] == [
         'fake/zone_q|gizmo_a|10,-20,30.5,0,-0.25,1.5,0,0,0|600,0,0,2,80,70,0,30,29|2,4,2,15,300,10,700,27,51,0,0,128,0|'
-        'dart_fake|fake_ents|,,',
+        'dart_fake|fake_ents|,,|,fake/whirr',
         'fake/zone_q|gizmo_b|40,50,60,0,0,0,0,0,0|600,0,0,2,80,70,0,30,29|2,4,2,15,300,10,700,27,51,0,0,128,0|'
-        'dart_fake|fake_ents|,,',
+        'dart_fake|fake_ents|,,|,fake/whirr',
         'fake/zone_q|gun_z|0,0,0,0,0,0,0,0,0|600,0,0.75,10,30,45,45,20,29|0,0.5,1,10,0,3,500,27,51,0,0,128,524288|||'
-        'fake/gun_flash,fake/gun_line,fake/gun_spark']
+        'fake/gun_flash,fake/gun_line,fake/gun_spark|fake/gun_bang,']
     assert skipped == ['fake/zone_q:zap_y: beam weapon wp_fake_zapper not emitted by the controller yet']
 
 
@@ -79,7 +80,7 @@ def test_muzzle_is_the_models_gun1_node_and_spawned_turrets_bind_by_name():
     lines, _ = TU.placements('fake/zone_q', root, WEAPONS, FakeValues(), spawns)
     spawned = [l for l, d in lines if d['spawned']]
     assert spawned == ['fake/zone_q|*gun_w|0,0,0,0,0,0,0,0,0|600,0,0.75,10,30,45,45,20,29|'
-                       '0,0.5,1,10,0,3,500,27,51,0,0,128,524288|||fake/gun_flash,fake/gun_line,fake/gun_spark']
+                       '0,0.5,1,10,0,3,500,27,51,0,0,128,524288|||fake/gun_flash,fake/gun_line,fake/gun_spark|fake/gun_bang,']
     assert TU.validate_contract({'revision': 2, 'placements': spawned}) == []
     assert TU.muzzle_offset(b'not an igb') == (0.0, 0.0, 0.0)
 
@@ -107,7 +108,7 @@ def test_contract_validation():
     assert TU.validate_contract({'revision': 1, 'placements': []})
     assert TU.validate_contract(dict(good, placements=good['placements'] * 2))      # duplicates
     assert TU.validate_contract(dict(good, placements=['fake|x;y|1|2|3|4|5']))
-    assert TU.validate_contract(dict(good, placements=good['placements'][:1] * 1 + ['a/b|c|1,2|1|1|p|f|,,']))
+    assert TU.validate_contract(dict(good, placements=good['placements'][:1] * 1 + ['a/b|c|1,2|1|1|p|f|,,|,']))
     old = good['placements'][0].rsplit('|', 1)[0]                                     # revision-1 shape (7 fields)
     assert TU.validate_contract(dict(good, placements=[old]))
 

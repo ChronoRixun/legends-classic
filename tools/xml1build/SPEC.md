@@ -6622,13 +6622,13 @@ weapon from XML1's `data/weapons/weapons.eng`: kind, recoiltime, count/spread (p
 projectilespeed, accuracy, range, the gun damage draw bounds (`weapons.gun_damage_range`, SPEC 76), tracetime,
 radius, the PC damage-type and damagemod bits of the weapon's names (XMen2.exe tables 0x6d61e0 / 0x6d6258; a name the
 PC exe does not know skips the placement and is reported), the projectile entity / entity file and the weapon's
-muzzlefx, muzzleaccfx and impactfx effect paths. A turret that a script of the zone's own folder spawns
+muzzlefx, muzzleaccfx and impactfx effect paths, and the weapon's firesound and the definition's rotatesound. A turret that a script of the zone's own folder spawns
 (`spawn("tank1", "tank_turret_sp01", "turret1", ...)`, the Hive tanks) is listed as `*turret1` (bound by name in the
 DLL). `SUPPORTED_KINDS` are projectile (HAARP exterior tanks), bullet (Arbiter, demo and Weapon X tripods) and flame
 (the Hive tanks' turrets); beam weapons (no turret uses one) are reported in the build notes and stay inert.
 
-**V-TBD:** the zones module reports a build error when the contract is malformed (8 fields, 9 placement numbers, 9
-scanner numbers, 13 weapon numbers, 3 effects, names, a ';' that would end an INI value, duplicate placements, more
+**V-TBD:** the zones module reports a build error when the contract is malformed (9 fields, 9 placement numbers, 9
+scanner numbers, 13 weapon numbers, 3 effects, 2 sounds, names, a ';' that would end an INI value, duplicate placements, more
 than the DLL's 32).
 
 `fix_ini.build_turrets` / `port_keys` and the harness write `[Game] Xml1Turrets=1` and `[Xml1Turrets] Count, T1..Tn`

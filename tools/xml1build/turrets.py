@@ -7,7 +7,7 @@ XML1's own weapon list (data/weapons/weapons.eng) and value table (data/values.x
 
     zone|instance|px,py,pz,rx,ry,rz,mx,my,mz|visrange,minspeed,mintime,resetdelay,visextent,yawextent,pitchextent,turnrate,team|
     kind,recoil,count,spread,speed,accuracy,range,damage_lo,damage_hi,tracetime,radius,damagetype,damagemods|
-    projectileent|entfile|muzzlefx,muzzleaccfx,impactfx
+    projectileent|entfile|muzzlefx,muzzleaccfx,impactfx|firesound,rotatesound
 
 Missing scanner attributes take the original constructor's defaults (default.xbe 0xa8600: visrange 600, minspeed 0,
 mintime 0.75, resetdelay 10/3, visextent 30, yaw/pitch extent 45, turnrate 20 degrees/s); the reader 0xa83e0 stores
@@ -17,7 +17,8 @@ count/spread default to 1/10 (the projectile packet defaults, default.xbe 0xbb24
 prototype constructor, default.xbe 0xb9c15). damagetype/damagemods are the PC exe's bit values of the weapon's own names
 (XML1 keeps damage types as an enum, 0 = dmg_physical, and damagemod bits that match the PC ones by name); a name the
 PC exe does not know is reported and left out. The effects are the weapon's effect paths (relative to effects/), empty
-when the weapon names none.
+when the weapon names none. The sounds are the weapon's firesound and the turret definition's rotatesound (sound
+names as the zone's sound bank keys them; empty when absent).
 
 m is the muzzle: the translation of the turret model's `Gun1` node (default.xbe 0xb9e40 fires from the weapon's
 `Gun<emitter+1>` bolt; a turret's single weapon is emitter 0), read from the built model; 0,0,0 (the turret's own
@@ -122,6 +123,12 @@ def weapon_effects(w: dict) -> str:
     return ','.join(out)
 
 
+def sound_name(v) -> str:
+    """a sound name as the scripts and banks use it ('zone_shared/objects/turretloop'), '' when unusable"""
+    v = (v or '').strip().replace('\\', '/')
+    return v if _EFFECT.match(v) else ''
+
+
 def weapon_fields(w: dict, values):
     """(kind, '<13 numbers>', projectileent, entfile, effects) or (None, reason)"""
     kind = (w.get('type') or 'bullet').strip().lower()
@@ -222,8 +229,9 @@ def placements(zone: str, root, weapons: dict, values, spawns=(), muzzle=None) -
             scan = [_num(d.get(k), SCAN_DEFAULTS[k]) for k in ('visrange', 'minspeed', 'mintime', 'resetdelay',
                                                                'visextent', 'yawextent', 'pitchextent', 'turnrate')]
             mz = list(muzzle(d.get('model') or '') if muzzle else (0.0, 0.0, 0.0))
+            sounds = sound_name(w.get('firesound')) + ',' + sound_name(d.get('rotatesound'))
             line = '|'.join([zone, ('*' if spawned else '') + name, ','.join(_fmt(v) for v in pos + orient + mz),
-                             ','.join(_fmt(v) for v in scan) + f',{team}', gun, proj, ents, fx])
+                             ','.join(_fmt(v) for v in scan) + f',{team}', gun, proj, ents, fx, sounds])
             lines.append((line, {'zone': zone, 'instance': name, 'definition': d.get('name'),
                                  'weapon': d.get('turretweapon'), 'kind': kind, 'spawned': spawned}))
     return lines, skipped
@@ -272,13 +280,13 @@ def validate_contract(data) -> list:
     seen = set()
     for line in lines:
         f = str(line).split('|')
-        if len(f) != 8 or ';' in line or not _ZONE.match(f[0]) or not _NAME.match(f[1].removeprefix('*')):
+        if len(f) != 9 or ';' in line or not _ZONE.match(f[0]) or not _NAME.match(f[1].removeprefix('*')):
             problems.append(f'turrets contract: malformed placement {line!r}')
             continue
         if (f[0], f[1], f[2]) in seen:
             problems.append(f'turrets contract: duplicate placement {f[0]}:{f[1]}')
         seen.add((f[0], f[1], f[2]))
         if (len(f[2].split(',')) != 9 or len(f[3].split(',')) != 9 or len(f[4].split(',')) != 13
-                or len(f[7].split(',')) != 3):
+                or len(f[7].split(',')) != 3 or len(f[8].split(',')) != 2):
             problems.append(f'turrets contract: wrong field counts in {f[0]}:{f[1]}')
     return problems
