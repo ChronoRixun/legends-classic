@@ -1225,22 +1225,37 @@ class Validator:
                 ck.error(f'{n}: {message}')
 
     _LITE_XPOINT = re.compile(r'\bextractionPointLite\s*\(', re.I)
+    # issue #63: the services helper (prepare P3 xtraction_menu_lines): x1_svc = iadd(<forge>, <bits> ), then
+    # extractionPointServices(<owner>, x1_svc ); bit 4 is Load, which every first-game point offers
+    _XPOINT_SVC_BITS = re.compile(r'\bx1_svc\s*=\s*iadd\([^,]*,\s*(\d+)\s*\)')
+    _XPOINT_SERVICES = re.compile(r'\bextractionPointServices\s*\([^,]*,([^)]*)\)')
 
     def lite_xtraction(self, ck):
         """V32 (issue #63; SPEC 62): XMen2.exe's extractionPointLite (0x4a6d80) is team change
         only, after an X-Men Legends II hint: XML1's lite Xtraction points always offered Save, so no XML1 script or
         inline data code may call it (prepare P3 writes extractionPoint for them)."""
         sc = self.scan
-        n_scripts = 0
+        n_scripts = n_services = 0
         for r in sorted(self.script_set()):
             if not (self.exists(r) and self.is_x1(r)):
                 continue
             n_scripts += 1
+            svc_bits = None
             for i, s in self._statements(self.read(r).decode('latin-1').split('\r\n')):
                 if self._LITE_XPOINT.search(s):
                     ck.error(f'{self.idx.get(r) or r}:{i + 1}: {_short(s)}: extractionPointLite offers no Save '
                              f'(issue #63; prepare P3 writes extractionPoint)')
+                m = self._XPOINT_SVC_BITS.search(s)
+                if m:
+                    svc_bits = int(m.group(1))
+                m = self._XPOINT_SERVICES.search(s)
+                if m:
+                    n_services += 1
+                    if m.group(1).strip() != 'x1_svc' or svc_bits is None or not svc_bits & 4:
+                        ck.error(f'{self.idx.get(r) or r}:{i + 1}: {_short(s)}: an Xtraction point without Load '
+                                 "(V-TBD, issue #63: the first game's points always offer Save and Load)")
         ck.set('lite_xtraction_scripts_checked', n_scripts)
+        ck.set('xtraction_services_calls_checked', n_services)
         n_code = 0
         for table in (sc.inline, sc.runscripts):
             for n, lst in self.data_items(table):

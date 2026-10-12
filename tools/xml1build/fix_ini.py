@@ -54,6 +54,11 @@ POSTGAME_SCRIPT = 'x1/menus/postgame'
 # before Play Online (SPEC 21.2.4), button1..6 + button8 since (Play Online, button7, is keys / pad only: XMen2.exe
 # clamps the mouse slots after the sixth to Quit, 0x5c944b).
 MAIN_MENU_ITEMS = 'button1,button2,button3,button4,button5,button6,button8'
+# xml2-fix [Game] DangerRoomGate (issue #63): the XML1 main menu's Danger Room item (frontend.MENU_BUTTONS, the item
+# running "openmenu danger_room"), disabled until Phoenix has been in a campaign on the profile - the first game's
+# gate (xbe 0x17e93c-0x17e975: profile bit of 'phoenix', button3), not XML2's story level 6. Written with
+# MainMenuItems; an older DLL ignores the key (the item stays always open, as before).
+DANGER_ROOM_GATE_ITEM = 'button3'
 MAIN_MENU_MOUSE_SLOTS = 6
 # xml2-fix a3b8567+ (in v1.2.0) takes an 8th name (after Quit): the mouse slot for a 7th usecmd item (Play Online,
 # button7), the mouse clamp at 0x5c944b raised from 6 to 8. An older DLL quits when that slot is clicked, so the 8th
@@ -177,7 +182,7 @@ BALANCE_NATIVE_STAT_HEROES = 'ProfXAstral,ProfXGladiator'
 
 # every key the port may write (the builder drops the ones a build does not need); the launcher owns the rest
 PORT_OWNED = {'Game': ('NewGameTeam', 'ResetUnlocks', 'SaveFolder', 'ForcedTeams', 'PostgameScript', 'WindowTitle',
-                        'EndHeroUnlock', 'MainMenuItems', 'ClassicMainBackdrop', 'ClassicMainPanelBounds', 'NewGamePlus', 'ReviewStats', 'Xtract', 'XtractionShop', 'XPCurve',
+                        'EndHeroUnlock', 'MainMenuItems', 'DangerRoomGate', 'ClassicMainBackdrop', 'ClassicMainPanelBounds', 'NewGamePlus', 'ReviewStats', 'Xtract', 'XtractionShop', 'XPCurve',
                        'GeometrySharingBlendIndices', 'CharacterLadderPaths', 'ObjectiveDescriptions',
                        'BreakRule', 'ConfirmationRelease', 'ExplosiveFirstHit', 'Xml1MasterMold', 'Xml1MoldStage'),
               'Limits': ('ActorSlots', 'ResourceNames', 'ItemEnhancements', 'FightStyles', 'EffectCurves', 'MoveTriggers', 'EntityCapacity'),
@@ -360,6 +365,7 @@ def game_keys(*, xml1_opening=True, save_folder=None, forced_teams='1', add_hero
         game.update(WindowTitle=PORT_WINDOW_TITLE, EndHeroUnlock=PORT_END_HERO_UNLOCK, ConfirmationRelease='1')
     if main_menu_items:
         game['MainMenuItems'] = main_menu_items
+        game['DangerRoomGate'] = DANGER_ROOM_GATE_ITEM
         game['ClassicMainBackdrop'] = '1'
         game['ClassicMainPanelBounds'] = '1'
     if new_game_plus is not None:
