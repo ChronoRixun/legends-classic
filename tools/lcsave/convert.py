@@ -1526,10 +1526,11 @@ def _current_environment(env, *, hash_conversations=True):
 def old_stream_to_new(old_bytes, env, *, retained_file=b'', now=None, zone_captures=None,
                       require_capture_metadata=False, campaign_serial=0, save_sequence=1,
                       writer_version=0x01040000, writer='XML2 Fix', slot=0, mods=(), origin=0, _hash_conversations=True,
-                      native=L.RETAIL):
+                      native=L.RETAIL, optional_features=0):
     """the saver's direction: the engine's stream (the whole slot image or the payload alone, of the native layout
     `native` - explicit, never inferred from the size) -> LC campaign. The header's required-feature marker is the
-    layout's (RETAIL: 0; E10A2: bit 0 ENTITY_LAYOUT_CONTIGUOUS10)."""
+    layout's (RETAIL: 0; E10A2: bit 0 ENTITY_LAYOUT_CONTIGUOUS10). optional_features: header bits the caller vouches
+    for (L.OPTIONAL_LEVEL_SKILL_POINTS / L.OPTIONAL_LEVEL_STAT_POINTS); KEYS is the writer's own."""
     res = Result()
     try:
         if len(old_bytes) == native.payload:
@@ -1546,7 +1547,7 @@ def old_stream_to_new(old_bytes, env, *, retained_file=b'', now=None, zone_captu
         sections = _retain_sections(add_keys_section(sections, env), retained_file, L.KIND_CAMPAIGN, native)
         header = dict(writer_version=writer_version, content_version=current.ref['content_version'],
                       catalogue_revision=env.catalogue.revision, campaign_serial=campaign_serial, save_sequence=save_sequence,
-                      required_features=native.feature_bits)
+                      required_features=native.feature_bits, optional_features=optional_features)
         res.file_bytes = write_file(L.KIND_CAMPAIGN, sections, header)
         read_file(res.file_bytes, L.KIND_CAMPAIGN)
     except (ValueError, IndexError, KeyError) as e:

@@ -367,3 +367,23 @@ def test_review_native_transfer_metadata_refuses_nonfinite_and_duplicate_zones()
         try: convert.native_zone_metadata(oldsave.write_slot(native), env)
         except convert.ConvertError: pass
         else: assert False, 'duplicate inferred zone accepted before native application'
+
+
+def test_fifth_level_optional_bits_written_and_ignored():
+    """XML2 Fix 1.5's fifth-level catch-up marker: header optional bits 1 / 2 beside KEYS (bit 0); an import vouches for
+    neither; the loader's direction ignores them."""
+    assert (L.OPTIONAL_KEYS_PRESENT, L.OPTIONAL_LEVEL_SKILL_POINTS, L.OPTIONAL_LEVEL_STAT_POINTS) == (1, 2, 4)
+    with tempfile.TemporaryDirectory() as d:
+        env = _env(d); raw, saved = _converted(env)
+        assert container.read_file(saved)['header']['optional_features'] & 6 == 0
+        restored, _ = convert.reverse_slot(saved, env)
+        captures = convert.loaded_zone_metadata(saved, env)
+        plain = convert.old_stream_to_new(oldsave.write_slot(restored), env, retained_file=saved, zone_captures=captures,
+                                          require_capture_metadata=True, now=0)
+        marked = convert.old_stream_to_new(oldsave.write_slot(restored), env, retained_file=saved, zone_captures=captures,
+                                           require_capture_metadata=True, now=0,
+                                           optional_features=L.OPTIONAL_LEVEL_SKILL_POINTS | L.OPTIONAL_LEVEL_STAT_POINTS)
+        assert plain.refused is None and marked.refused is None, (plain.refused, marked.refused)
+        hp, hm = container.read_file(plain.file_bytes)['header'], container.read_file(marked.file_bytes)['header']
+        assert hp['optional_features'] & 6 == 0 and hm['optional_features'] == hp['optional_features'] | 6
+        assert oldsave.write_slot(convert.reverse_slot(plain.file_bytes, env)[0]) == oldsave.write_slot(convert.reverse_slot(marked.file_bytes, env)[0])

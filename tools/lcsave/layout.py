@@ -354,6 +354,11 @@ SECTION_KEEP = 2
 SECTION_EXT_DROPPABLE = 8
 KIND_CAMPAIGN, KIND_PROFILE, KIND_TRANSFER = 1, 2, 3
 OPTIONAL_KEYS_PRESENT = 1
+# XML2 Fix 1.5: a campaign written while [Game] LevelSkillPoints / LevelStatPoints=xml1 was installed - its heroes' unspent
+# points include the first game's fifth-level bonus up to their processed levels. A file without the bit gets the
+# fix's one-time catch-up on load (xml2-fix save_format_rules.hpp); readers that don't know the bits ignore them.
+OPTIONAL_LEVEL_SKILL_POINTS = 2
+OPTIONAL_LEVEL_STAT_POINTS = 4
 assert size_of(NEW_HEADER) == NEW_HEADER_SIZE
 assert size_of(NEW_SECTION_ENTRY) == NEW_SECTION_ENTRY_SIZE
 assert size_of(OLD_GAME_BLOCK) == 0xdc and size_of(OLD_SNAPSHOT) == 0x26c and size_of(OLD_ATTR_SCALARS) == 0x18

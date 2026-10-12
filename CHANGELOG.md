@@ -9,7 +9,9 @@ This build needs **XML2 Fix 1.5.0** (the launcher installs it): the builder refu
 every new rule below without a word. Rebuild; your saves carry over.
 
 - **Skill ranks cost what they cost in the first game** (issue #35): the ranks that open a new form of a power cost
-  2 skill points, and every fifth level gives 2 skill points and 8 stat points instead of 1 and 4.
+  2 skill points, and every fifth level gives 2 skill points and 8 stat points instead of 1 and 4. Heroes in your
+  existing saves get the points they missed at the fifth levels they already passed, once, when the save is first
+  loaded (1 skill point and 4 stat points per fifth level).
 - **Breakable parts** (issue #3): Juggernaut's helmet and the Sentinels' arms can be broken again, with their effects,
   and a Sentinel without an arm can't use that arm's attacks. Boss "armour off" moments now really take the armour off
   (Juggernaut's helmet, Blob's pillars, Pyro and Toad): those fights were much tougher than the first game's.

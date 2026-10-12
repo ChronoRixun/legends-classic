@@ -6100,7 +6100,8 @@ the name was free to choose before implementation) and raises REQUIRED_XML2FIX t
 adding the original's 116-item loot table would exceed 160 and needs an engine / DLL limit raise plus a converter
 budget change, with no LC format change. For #35 talent costs, `TAL` stores ranks, `HREC` stores level and unspent
 skill points, and the header stores `content_version`: a later two-point rank cost can grandfather or reprice
-existing saves by content version without a new field; policy is deferred until #35 lands. #5 solo mode changes
+existing saves by content version without a new field (#35 landed in 0.2.2: rank costs grandfather; the fifth-level
+points are caught up once, marked by optional-feature bits 1 / 2, 88.1). #5 solo mode changes
 runtime party behaviour only and persists nothing new.
 
 ### 70.1 The byte-level choices SPEC-new-save leaves open
@@ -6827,12 +6828,32 @@ fix does it: `[Game] LevelSkillPoints=xml1` gives 2 on a level divisible by 5 an
 processing, so by level 45 a hero has 9 more skill points than before. The SKILL pickups (SPEC 32) add their point
 directly (`addSkillPoints`) and are unaffected; together they bring a hero to XML1's total.
 
-**Saves.** A save stores the unspent points and each hero's processed level (`ack_level`); nothing recomputes the
-points. Heroes past level 5 in a save made before the key are short one point for every multiple of 5 they passed
-(level 5-9: 1, 10-14: 2, .. 45: 9). They keep their points as they are: the first game grants a level's points only
-when the level is processed, so there is nothing in its rule for a grant on load, and a save does not record which
-rule gave its points (only the header's writer / content version could tell). A one-time catch-up on conversion is
-possible but is not done (agent report, follow-up).
+**Saves: the one-time catch-up (maintainer decision 2026-10-12; XML2 Fix 1.5, xml2-fix docs/rank-costs.md).** A save
+stores the unspent points and each hero's processed level (`ack_level`). Heroes in a save made before the key were
+processed through their fifth levels with 1 skill / 4 stat points, so they are short 1 / 4 per multiple of 5 up to
+their processed level (5-9: 1, 10-14: 2, .. 45: 9). XML2 Fix grants exactly that once, on load: per hero block and
+valid restore record, (multiples of 5 in (1, ack_level]) x (1 skill, 4 stat) for each installed key; xpexempt heroes
+nothing. ack, not level: heroes not yet in the party carry level > 1 with ack 1 in real saves, and the engine gives
+them the new rule when it processes those levels. The count starts at 1, not at a herostat starting level: the
+level-up object's constructor (XMen2.exe 0x44a430) sets processed = 1 whatever the level, so the levels below a
+higher starting level are processed (and were given 1 / 4) like any other. Neither the content version (an import is
+written with the reference era's 13 and its resaves keep LGCY; a 0.2.2 build whose fix lacks the keys writes 19 too)
+nor the writer version marks "caught up", so the LC header's optional-feature word does (SPEC-new-save 1.1, ignored
+when unknown): bit 1 (`layout.OPTIONAL_LEVEL_SKILL_POINTS`) and bit 2 (`OPTIONAL_LEVEL_STAT_POINTS`), written by the
+fix for each key installed when it saves; a load grants a key's points only without its bit. No field, section or
+version changes; 1.4.0 and this package's reader ignore the bits (`convert.old_stream_to_new(optional_features=)`
+writes them for tests).
+
+**In game (agent check, 2026-10-12; staged: the save menu opened by `extractionPoint`, everything else real menu
+input; points read from memory).** A copy of an old campaign (Cyclops / Iceman level 21, 20 skill / 80 stat points;
+Phoenix / Wolverine level 21, 0 / 0; the other heroes level 21 with nothing processed), imported and saved again by
+XML2 Fix 1.5.0 without the catch-up (content 19, no bit): that DLL loads 20 / 80 and 0 / 0 (control). With the
+catch-up: 24 / 96 and 4 / 16 (4 fifth levels), the unprocessed heroes and both Professor X forms unchanged; the
+import itself gets the same. Saved (bits 1 and 2 set), closed, loaded in a new process: 24 / 96 and 4 / 16, no grant.
+A granted stat point is spent in the stats screen (16 -> 15). Saved with the keys removed, then loaded with them: the
+catch-up runs again (28 / 112): a file written without the keys is never taken as caught up, so a campaign that goes
+through a session without them is granted again for its earlier fifth levels (one bit per file can't say up to which
+level each hero was caught up; the builder always writes the keys).
 
 **In game (agent check, 2026-10-12; staged: XP by `awardXPToPlayable` to XML1's level thresholds - 505, 830, 4720,
 6880 - and the extraction menu opened by script for the save).** New Game, Wolverine: XML2 Fix 1.4.0 (control) gives
