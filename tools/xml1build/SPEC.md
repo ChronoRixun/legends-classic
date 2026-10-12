@@ -5553,6 +5553,27 @@ would silently fall back to XMen2.exe's rule: a plain punch would break it again
   rank 1 in XML1's npcstat, hit a structure-2 wall at level 4). Which of an enemy's attacks pass the sweep here
   and passed XML1's is not established attack by attack.
 
+### 63.6 The first game's death threshold (xml2-fix `[Game] DeathRule=xml1`, gameplay rule 9)
+
+XML1's damage function (default.xbe 0x92220, shared by every class that can be hurt) kills an entity whose health
+falls below 1; XMen2.exe's (0x497e70) only at 0. XML1's health and damage are whole numbers, so its line at 1 never
+left a fraction alive; XMen2.exe's float damage did (a HAARP officer fought on at 0.2 and 0.9999993 health, his death
+script and keycard drop waiting for another hit).
+
+- `fix_ini.game_keys` writes `DeathRule=xml1` for every XML1 build; the key is port-owned (dropped again by a stock
+  merge). A fix without the feature ignores the key: entities die at 0 as before.
+- What the fix does (xml2-fix `docs/death-threshold.md`): XML1's seven 1.0 comparisons (death test, the character's
+  last-stand window and killing-hit mark, the harm entity's hazard announcement, the affectable harm's early return
+  and killer record, the power-gated bridges' reaction) and XMen2.exe's bossundying hold move to 1.0; a killing hit
+  that leaves health above 0 sets it to 0 (XML1's whole numbers always did), so kill XP, death drops and every
+  "is it alive" test follow. Undying and bossundying still hold a boss at 1.
+- Data: XML1 reads an entity's `health` as a float and keeps its maximum as a whole number (default.xbe 0x9335a);
+  an authored health below 1 would die on its first hit in both games, and a heal never runs the death test, so the
+  rule needs no data change. Validator V-TBD (x1schema.fractional_health_problems; the integrator numbers it) reports an entity definition whose
+  numeric `health` is above 0 and below 1.
+- Not reproduced: XML1's whole-number damage itself (XMen2.exe's float damage stays; `[Balance]` rolls whole numbers
+  but multipliers still leave fractions).
+
 ## 64. The pause menu without the Blink Portal (issue #89)
 
 **What the first game does.** XML1 has no portal: its pause menu offers Objectives, Characters, Load Game, Players,

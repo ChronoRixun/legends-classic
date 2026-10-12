@@ -414,6 +414,7 @@ class Scan:
         self.ladder_floor_paths = {}  # norm rel -> [spawner name] running a ladder path without exact location
         self.physics_scale = {}    # norm rel -> [(entity name, attribute, value)] XML1-scale object physics left
         self.break_rule = {}       # norm rel -> [(entity name, structure, xml1structure)] pairs BreakRule=xml1 cannot use
+        self.fractional_health = {}  # norm rel -> [(entity name, health)] with 0 < health < 1 (DeathRule=xml1)
         self.speakers = {}         # norm rel (conversations/) -> [(attr, %TOKEN%)]
         self.anim_enums = {}       # norm rel -> [(tag, attr, enum literal)]  animenum values + EA_* in any value
         self.zoneinfo_xtraction = {}   # norm rel (data/zoneinfo.*) -> [(zone, [attrs])] Xtraction network entries
@@ -605,6 +606,9 @@ class Validator:
                     br = XS.break_rule_problems(root)
                     if br:
                         sc.break_rule[n] = br
+                    fh = XS.fractional_health_problems(root)
+                    if fh:
+                        sc.fractional_health[n] = fh
                 if n.startswith('conversations/'):
                     sp = [(k, t) for el in root.iter() for k in SPEAKER_ATTRS for t in SPEAKER_RE.findall(el.get(k) or '')]
                     if sp:
@@ -1130,6 +1134,16 @@ class Validator:
                      f'pair (x1schema.convert_physics), e.g. {lst[:2]}')
             n_break += len(lst)
         ck.set('x1_break_rule_unpaired', n_break)
+        # V-TBD (SPEC 63.6): no XML1-sourced entity definition with a health above 0 and below 1. XML1 keeps maximum
+        # health whole; with DeathRule=xml1 such an entity dies on its first hit.
+        n_frac = 0
+        for n, lst in sorted(sc.fractional_health.items()):
+            if n in sc.twins:
+                continue
+            ck.error(f'{sc.files[n]["rel"]}: {len(lst)} entity definition(s) with a health above 0 and below 1 '
+                     f'(xml2-fix DeathRule=xml1 kills below 1), e.g. {lst[:2]}')
+            n_frac += len(lst)
+        ck.set('x1_fractional_health', n_frac)
 
     def fall_kill_volumes(self, ck):
         """V26: converted fall kill volumes must be active collision boxes; the listed player-only

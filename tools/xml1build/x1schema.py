@@ -331,6 +331,24 @@ def break_rule_problems(root):
 
 
 
+def fractional_health_problems(root):
+    """[(entity name, health)] of entity definitions whose numeric health is above 0 and below 1. XML1 keeps an
+    entity's maximum health as a whole number (default.xbe 0x9335a) and, with xml2-fix's DeathRule=xml1, kills
+    below 1: such an entity would die on its first hit (SPEC 63.6)."""
+    out = []
+    for el in root.iter():
+        if el.get('classname') is None:
+            continue
+        raw = (el.get('health') or '').strip()
+        try:
+            h = float(raw) if raw else None
+        except ValueError:
+            continue
+        if h is not None and 0.0 < h < 1.0:
+            out.append((el.get('name'), raw))
+    return out
+
+
 def turret_mount_problems(root):
     """[(entity name, missing flags)] of physents that are remapped XML1 scan turrets (they carry a turretweapon)
     without the fixed-mount flags (TURRET_MOUNT_FLAGS)."""

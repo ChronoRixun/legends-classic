@@ -677,6 +677,16 @@ def test_xml1_builds_ask_for_the_first_games_death_threshold():
         assert 'DeathRule' not in parsed and parsed['KeepMe'] == 'example'
 
 
+def test_fractional_health_is_reported():
+    """SPEC 63.6: a definition with 0 < health < 1 would die on its first hit under DeathRule=xml1."""
+    import xml.etree.ElementTree as ET
+    from xml1build import x1schema as XS
+    root = ET.fromstring('<entities><e classname="physent" name="crate_a" health="0.5"/>'
+                         '<e classname="physent" name="crate_b" health="1"/><e classname="physent" name="crate_c" health="0"/>'
+                         '<e classname="physent" name="crate_d" health="x"/><e name="crate_e" health="0.25"/></entities>')
+    assert XS.fractional_health_problems(root) == [('crate_a', '0.5')]
+
+
 def test_xml1_builds_ask_for_no_xtract_world_map():
     """issue #46: an XML1 build's ini has the Xtraction Points offer no Xtract world map (xml2-fix 1.3.2 [Game]
     Xtract=0); a build without XML1's postgame (no port build) carries no key, and the port owns it either way."""
