@@ -70,3 +70,31 @@ def test_fifth_part_and_full_pool():
     many = [_stats(f'Bot{i}', [ARM]) for i in range(13)]
     ck = _run(many, [_stats(f'bot{i}', [_lower(ARM)]) for i in range(13)])
     assert any('13-record pool' in e for e in ck.errors)
+
+
+def test_xml1_removable_talents_are_tagged_and_split():
+    """XML1's remove="true" takes every def_damage powerup (talents included); XMen2.exe removes by tag name."""
+    from xml1build.characters import tag_x1_removable_talents
+    x1 = ET.fromstring('<talents><talent name="mind_shield"><level>'
+                       '<activepowerup powerup="def_damage" scope_damage="dmg_mental" level="0.2"/>'
+                       '<activepowerup powerup="def_mind_control" level="0.001"/></level></talent>'
+                       '<talent name="quick_feet"><level><activepowerup powerup="speed" level="2"/></level></talent>'
+                       '</talents>')
+    x1_talents = {t.get('name'): t for t in x1.iter('talent')}
+
+    def x2():
+        return ET.fromstring('<talents><talent name="mind_shield"><level><powerup life="-1">'
+                             '<affecter attribute="resist_mental" level="0.8"/>'
+                             '<affecter attribute="def_mind_control" affect_type="scale" level="0.001"/>'
+                             '</powerup></level></talent>'
+                             '<talent name="quick_feet"><level><powerup life="-1">'
+                             '<affecter attribute="resist_speed_thing" level="1"/></powerup></level></talent></talents>')
+    roots = (x2(), x2())
+    assert tag_x1_removable_talents(roots, x1_talents) == ['mind_shield']
+    for root in roots:
+        pus = root.find('talent').find('level').findall('powerup')
+        assert [p.get('tag_name') for p in pus] == ['def_damage', None]
+        assert [a.get('attribute') for a in pus[0]] == ['resist_mental']
+        assert [a.get('attribute') for a in pus[1]] == ['def_mind_control'] and pus[1].get('life') == '-1'
+        assert root.findall('talent')[1].find('level').find('powerup').get('tag_name') is None
+    assert tag_x1_removable_talents(roots, x1_talents) == []      # idempotent

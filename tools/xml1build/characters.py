@@ -81,6 +81,48 @@ BOLTON_SLOTS = {'ebolton_clawright': 0, 'ebolton_clawleft': 1, 'ebolton_weapon':
 # startHide and healthMul are inert: the XBE's own parser (0x89500) never reads them either.
 MULTIPART_X1_ONLY = ('effectondeath', 'linktopower', 'starthide', 'healthmul', 'loopeffect', 'effectbone')
 MULTIPART_X1_INERT = ('starthide', 'healthmul')
+# XML1's powerup removal (a trigger with remove="true", default.xbe 0xd7668 -> 0x2b100(attribute, 1)) drops EVERY
+# powerup of the actor whose attribute matches, permanent ones included - and talents' activepowerups are such
+# powerups (0x7f8b0 -> 0x2aa90). So Juggernaut's armor_end / helmet_penalty (remove def_damage) also take away his
+# mental_resistant talent (XML1: def_damage dmg_mental 0.2), Blob's armor_off his physical_resistant, and so on.
+# XMen2.exe removes by tag name only (remove_tag, 0x4e7e79 -> 0x54f7b0) and the converted triggers say
+# remove_tag="def_damage", so XML2's resistance talents (affecter resist_*, untagged) never went. The shared talents
+# whose XML1 definition is a def_damage activepowerup get tag_name="def_damage" on the powerup that carries their
+# damage resistance (other affecters - def_mind_control - move to an untagged powerup of their own, as XML1 kept
+# them: another attribute). XML2's own talents use tag_name the same way (spawn_invis).
+X1_REMOVABLE_ATTR = 'def_damage'
+X1_REMOVABLE_AFFECTERS = re.compile(r'(resist_|def_damage$)')
+
+
+def tag_x1_removable_talents(talent_roots, x1_talents):
+    """tag_name="def_damage" on the damage-resistance powerup of every shared talent whose XML1 definition holds a
+    def_damage activepowerup; returns the sorted tagged names. Idempotent."""
+    wanted = {name for name, t in x1_talents.items()
+              if any(e.tag.lower() == 'activepowerup' and (e.get('powerup') or '').lower() == X1_REMOVABLE_ATTR
+                     for e in t.iter())}
+    done = set()
+    for root in talent_roots:
+        for talent in root.iter('talent'):
+            name = (talent.get('name') or '').lower()
+            if name not in wanted:
+                continue
+            for level in talent.findall('level'):
+                for pu in list(level.findall('powerup')):
+                    resist = [a for a in pu.findall('affecter') if X1_REMOVABLE_AFFECTERS.match(a.get('attribute') or '')]
+                    if not resist or pu.get('tag_name'):
+                        continue
+                    others = [a for a in pu.findall('affecter') if a not in resist]
+                    if others:
+                        keep = ET.Element('powerup', {k: v for k, v in pu.attrib.items()})
+                        for a in others:
+                            pu.remove(a)
+                            keep.append(a)
+                        level.insert(list(level).index(pu) + 1, keep)
+                    pu.set('tag_name', X1_REMOVABLE_ATTR)
+                    done.add(name)
+    return sorted(done)
+
+
 # Append XML1's bolt-on actor anim mappings (data/boltonactoranims: 99_cape, 98_tail) to XML2's table under the
 # mapped anim DB names, so the XML1 capes / tails (MagnetoBoss/Act2/Scripted, nightcrawler NPCs) follow the
 # wearer's animations. Append-only (XML2 entries win). Not in SPEC 5.1 (which lists boltonactoranims as
@@ -1718,6 +1760,11 @@ def run(ctx):
 
     # ---------------- write stats + talents + values
     ctx.write_xmlb_pair('Data/npcstat', roots['XMLB'], roots['engb'], source='xml1build.characters')
+    tagged = tag_x1_removable_talents(b.talent_roots, b.x1_talents)
+    if tagged:
+        ctx.note(f'shared_talents: {tagged} tagged {X1_REMOVABLE_ATTR!r} so XML1 def_damage removals (remove_tag) take '
+                 f'them away as XML1 did (0x2b100)')
+    ctx.set_count('x1_removable_talents', len(tagged))
     ctx.write_xmlb_pair('Data/shared_talents', b.talent_roots[0], b.talent_roots[1], source='xml1build.characters')
     ctx.set_count('talents_added', len(b.detail['talents_added']))
     ctx.note(f"shared_talents: {len(b.detail['talents_added'])} empty definitions added "
