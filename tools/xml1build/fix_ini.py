@@ -213,7 +213,7 @@ FORCED_TEAMS_VALUES = ('1', '0', 'off')
 # SPEC 46, [Game] ObjectiveDescriptions - SPEC 47, the STAT pickup's addStatPoints - SPEC 48,
 # [Game] BreakRule - SPEC 63, [Limits] EffectCurves - SPEC 65, [Game] Xtract - SPEC 66; v1.4: [Save] Format and the LC save tables - SPEC 70, [Balance] - SPEC 69;
 # v1.5: the 0.2.2 wave's [Game] keys - PlacementCrush, DoubleHeal, RankCosts, LevelSkillPoints, LevelStatPoints,
-# Xml1Multipart, X1Leader, SoloMode, DeathRule, DangerRoomGate, RevivalCost, Xml1Turrets, PackAmount - and
+# Xml1Multipart, X1Leader, SoloMode, DeathRule, DangerRoomGate, RevivalCost, Xml1Turrets, PackAmount, DeathSwitchClear - and
 # [Limits] ScriptFunctions; a 1.4 DLL silently ignores every one of them, so check_release_dll refuses it)
 REQUIRED_XML2FIX = '1.5'
 
@@ -243,7 +243,7 @@ PORT_OWNED = {'Game': ('NewGameTeam', 'ResetUnlocks', 'SaveFolder', 'ForcedTeams
                         'EndHeroUnlock', 'MainMenuItems', 'DangerRoomGate', 'ClassicMainBackdrop', 'ClassicMainPanelBounds', 'NewGamePlus', 'ReviewStats', 'Xtract', 'XtractionShop', 'RevivalCost', 'XPCurve',
                        'GeometrySharingBlendIndices', 'CharacterLadderPaths', 'ObjectiveDescriptions',
                        'BreakRule', 'PlacementCrush', 'DoubleHeal', 'DeathRule', 'ConfirmationRelease',
-                       'ExplosiveFirstHit', 'PackAmount', 'SoloMode', 'X1Leader', 'RankCosts', 'LevelSkillPoints', 'LevelStatPoints', 'Xml1Multipart',
+                       'ExplosiveFirstHit', 'PackAmount', 'SoloMode', 'X1Leader', 'DeathSwitchClear', 'RankCosts', 'LevelSkillPoints', 'LevelStatPoints', 'Xml1Multipart',
                        'Xml1MasterMold', 'Xml1MoldStage', 'Xml1Turrets'),
               'Limits': ('ActorSlots', 'ResourceNames', 'ItemEnhancements', 'FightStyles', 'EffectCurves', 'MoveTriggers', 'EntityCapacity',
                          'ScriptFunctions'),
@@ -440,6 +440,7 @@ def game_keys(*, xml1_opening=True, save_folder=None, forced_teams='1', add_hero
         # XML1's solo mode (issue #5): setSoloMode in the solo boxes / bridge scripts acts only with this key
         game['SoloMode'] = '1'
         game['X1Leader'] = X1_LEADER
+        game['DeathSwitchClear'] = '1'  # the hero handed a dead hero's controller stops its AI walk (XML1's hand-over)
     if forced_teams in ('0', '1'):
         game['ForcedTeams'] = forced_teams
     if add_hero:
@@ -687,7 +688,7 @@ def check_entity_capacity_dll(dll, keys: dict) -> None:
 # The [Game] / [Limits] keys first read by XML2 Fix 1.5 (REQUIRED_XML2FIX): a 1.4 DLL ignores them without a word.
 RELEASE_15_KEYS = {'Game': ('PlacementCrush', 'DoubleHeal', 'RankCosts', 'LevelSkillPoints', 'LevelStatPoints',
                             'Xml1Multipart', 'X1Leader', 'SoloMode', 'DeathRule', 'DangerRoomGate', 'RevivalCost',
-                            'Xml1Turrets', 'PackAmount'),
+                            'Xml1Turrets', 'PackAmount', 'DeathSwitchClear'),
                    'Limits': ('ScriptFunctions',)}
 
 
