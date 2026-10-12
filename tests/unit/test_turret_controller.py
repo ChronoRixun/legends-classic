@@ -52,7 +52,7 @@ def test_placements_carry_authored_values_and_defaults():
         'dart_fake|fake_ents|,,|,fake/whirr',
         'fake/zone_q|gizmo_b|40,50,60,0,0,0,0,0,0|600,0,0,2,80,70,0,30,29|2,4,2,15,300,10,700,27,51,0,0,128,0|'
         'dart_fake|fake_ents|,,|,fake/whirr',
-        'fake/zone_q|gun_z|0,0,0,0,0,0,0,0,0|600,0,0.75,10,30,45,45,20,29|0,0.5,1,10,0,3,500,27,51,0,0,128,524288|||'
+        'fake/zone_q|gun_z|0,0,0,0,0,0,0,0,0|600,0,0.75,-1,30,45,45,20,29|0,0.5,1,10,0,3,500,27,51,0,0,128,524288|||'
         'fake/gun_flash,fake/gun_line,fake/gun_spark|fake/gun_bang,']
     assert skipped == ['fake/zone_q:zap_y: beam weapon wp_fake_zapper not emitted by the controller yet']
 
@@ -79,7 +79,7 @@ def test_muzzle_is_the_models_gun1_node_and_spawned_turrets_bind_by_name():
     assert spawns == [('gizmo_gun', 'gun_w'), ('crate', 'box_v')]
     lines, _ = TU.placements('fake/zone_q', root, WEAPONS, FakeValues(), spawns)
     spawned = [l for l, d in lines if d['spawned']]
-    assert spawned == ['fake/zone_q|*gun_w|0,0,0,0,0,0,0,0,0|600,0,0.75,10,30,45,45,20,29|'
+    assert spawned == ['fake/zone_q|*gun_w|0,0,0,0,0,0,0,0,0|600,0,0.75,-1,30,45,45,20,29|'
                        '0,0.5,1,10,0,3,500,27,51,0,0,128,524288|||fake/gun_flash,fake/gun_line,fake/gun_spark|fake/gun_bang,']
     assert TU.validate_contract({'revision': 2, 'placements': spawned}) == []
     assert TU.muzzle_offset(b'not an igb') == (0.0, 0.0, 0.0)
@@ -91,7 +91,7 @@ def test_scanner_defaults_are_the_original_constructor():
     ET.SubElement(g, 'inst', name='bare1', pos='1 2 3', orient='0 0 0')
     ET.SubElement(root, 'entity', name='bare', classname='physent', turretweapon='wp_fake_launcher')
     (line, _), = TU.placements('fake/zone_r', root, WEAPONS, FakeValues())[0]
-    assert line.split('|')[3] == '600,0,0.75,10,30,45,45,20,29'
+    assert line.split('|')[3] == '600,0,0.75,-1,30,45,45,20,29'
 
 
 def test_unresolvable_or_unknown_weapons_are_skipped():
@@ -151,3 +151,23 @@ def test_only_xml1_scan_turret_definitions_are_turrets():
     assert 'wreck_a' not in names and 'gizmo_a' in names and 'gun_z' in names
     assert 'wreck_a' in [d['instance'] for _, d in TU.placements('fake/zone_q', root, WEAPONS, FakeValues())[0]]
     assert TU.placements('fake/zone_q', root, WEAPONS, FakeValues(), turret_defs=set()) == ([], [])
+
+
+def test_values_the_dll_refuses_skip_only_that_placement():
+    weapons = dict(WEAPONS, wp_fake_launcher=dict(WEAPONS['wp_fake_launcher'], count='12'))     # DLL reads 1..8
+    lines, skipped = TU.placements('fake/zone_q', _zone(), weapons, FakeValues())
+    assert [d['instance'] for _, d in lines] == ['gun_z']
+    assert any('gizmo_a' in r and 'weapon numbers' in r for r in skipped)
+    good = lines[0][0]
+    assert TU.line_problems(good) == []
+    f = good.split('|')
+    for i, bad in ((3, '600,0,0.75,-1,30,45,45,20,40'),                          # team bit beyond 31
+                   (3, '600,0,0.75,-3,30,45,45,20,29'),                          # resetdelay below -1
+                   (4, f[4].replace('0.5,1,10,0,3,500', '0.5,1,10,9000,3,500')),  # speed above 5000
+                   (2, '0,0,0,0,0,0,2000,0,0'),                                  # muzzle out of range
+                   (7, 'a b,,')):                                                 # effect path
+        g = list(f); g[i] = bad
+        assert TU.line_problems('|'.join(g)), bad
+    long = '|'.join(f[:7] + [','.join(['x/' + 'y' * 70] * 3), f[8]])
+    assert TU.line_problems(good.replace('fake/gun_flash', 'f' * 900))                     # INI value length
+    assert TU.validate_contract({'revision': 2, 'placements': [long]})

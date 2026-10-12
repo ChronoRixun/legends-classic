@@ -10,7 +10,7 @@ XML1's own weapon list (data/weapons/weapons.eng) and value table (data/values.x
     projectileent|entfile|muzzlefx,muzzleaccfx,impactfx|firesound,rotatesound
 
 Missing scanner attributes take the original constructor's defaults (default.xbe 0xa8600: visrange 600, minspeed 0,
-mintime 0.75, resetdelay 10/3, visextent 30, yaw/pitch extent 45, turnrate 20 degrees/s); the reader 0xa83e0 stores
+mintime 0.75, resetdelay 10/3 (written -1: the DLL keeps both), visextent 30, yaw/pitch extent 45, turnrate 20 degrees/s); the reader 0xa83e0 stores
 the one authored resetdelay in both of its fields. filterteam defaults to hero (XML1 team 27 -> PC bit 29).
 Weapon damage is XML1's gun draw (weapons.gun_damage_range: one integer in trunc(min*0.7f)..trunc(min*1.3f)).
 count/spread default to 1/10 (the projectile packet defaults, default.xbe 0xbb240). tracetime defaults to 0 (the
@@ -62,7 +62,8 @@ PC_DAMAGE_MODS = {'dmgmod_none': 0, 'dmgmod_no_damage': 0x1, 'dmgmod_no_actors':
                   'dmgmod_no_atk_roll': 0x8000000}
 _EFFECT = re.compile(r'^[A-Za-z0-9_/]{1,63}$')
 _SPAWN = re.compile(r'\bspawn\s*\(\s*"[^"]*"\s*,\s*"([A-Za-z0-9_]+)"\s*,\s*"([A-Za-z0-9_]+)"')
-SCAN_DEFAULTS = {'visrange': 600.0, 'minspeed': 0.0, 'mintime': 0.75, 'resetdelay': 10.0, 'visextent': 30.0,
+# resetdelay -1: not authored; the DLL keeps the constructor's two defaults (track loss 10, sweep pause 3)
+SCAN_DEFAULTS = {'visrange': 600.0, 'minspeed': 0.0, 'mintime': 0.75, 'resetdelay': -1.0, 'visextent': 30.0,
                  'yawextent': 45.0, 'pitchextent': 45.0, 'turnrate': 20.0}
 X1_TEAMS = {'none': 26, 'hero': 27, 'enemy': 28, 'altenemy': 29}     # XML1 team bits; PC = XML1 + 2 (mold_query)
 _NAME = re.compile(r'^[A-Za-z0-9_]{1,31}$')
@@ -247,6 +248,10 @@ def placements(zone: str, root, weapons: dict, values, spawns=(), muzzle=None, t
             sounds = sound_name(w.get('firesound')) + ',' + sound_name(d.get('rotatesound'))
             line = '|'.join([zone, ('*' if spawned else '') + name, ','.join(_fmt(v) for v in pos + orient + mz),
                              ','.join(_fmt(v) for v in scan) + f',{team}', gun, proj, ents, fx, sounds])
+            bad = line_problems(line)
+            if bad:
+                skipped.append(f'{where}: values the XML2 Fix controller refuses: {bad}')
+                continue
             lines.append((line, {'zone': zone, 'instance': name, 'definition': d.get('name'),
                                  'weapon': d.get('turretweapon'), 'kind': kind, 'spawned': spawned}))
     return lines, skipped
@@ -289,6 +294,64 @@ def build(ctx, zones) -> dict:
     return {'revision': REVISION, 'placements': lines, 'details': details, 'skipped': skipped}
 
 
+MAX_LINE = 1000      # xml2-fix reads an INI value up to 1023 characters (ini_rules::raw)
+
+
+def _int_like(v) -> bool:
+    return math.isfinite(v) and v == math.floor(v)
+
+
+def line_problems(line: str) -> list:
+    """what xml2-fix's turret_rules::parse would refuse in one placement line (its ranges, mirrored), and the INI
+    length; [] when the DLL accepts it. A refused line keeps every turret inert, so the builder skips such a
+    placement (placements) and the contract check reports it (validate_contract)."""
+    out = []
+    if len(line) > MAX_LINE:
+        out.append(f'{len(line)} characters (the INI value limit is {MAX_LINE})')
+    f = str(line).split('|')
+    if len(f) != 9:
+        return out + [f'{len(f)} fields']
+    if not _ZONE.match(f[0]) or not _NAME.match(f[1].removeprefix('*')):
+        out.append('zone or instance name')
+
+    def nums(text, n):
+        try:
+            v = [float(x) for x in text.split(',')]
+        except ValueError:
+            return None
+        return v if len(v) == n and all(math.isfinite(x) for x in v) else None
+
+    p, s, g = nums(f[2], 9), nums(f[3], 9), f[4].split(',')
+    if p is None or any(abs(x) > 1000 for x in p[6:9]):
+        out.append('placement / muzzle numbers')
+    if s is None or not (s[0] > 0 and s[1] >= 0 and s[2] >= 0 and (s[3] >= 0 or s[3] == -1) and 0 < s[4] <= 180
+                         and 0 <= s[5] <= 180 and 0 <= s[6] <= 90 and 0 <= s[7] <= 3600
+                         and _int_like(s[8]) and 0 <= s[8] <= 31):
+        out.append('scanner numbers')
+    w = nums(','.join(g[:11]), 11) if len(g) == 13 else None
+    bits_ok = len(g) == 13 and all(x.isdigit() and int(x) < 2 ** 32 for x in g[11:13])
+    kind = None
+    if w is None or not bits_ok or not (_int_like(w[0]) and 0 <= w[0] <= 3 and 0 <= w[1] <= 60 and _int_like(w[2])
+                                         and 1 <= w[2] <= 8 and 0 <= w[3] <= 90 and 0 <= w[4] <= 5000 and w[5] >= 0
+                                         and w[6] >= 0 and w[7] >= 0 and w[7] <= w[8] <= 100000
+                                         and 0 <= w[9] <= 60 and 0 <= w[10] <= 1000):
+        out.append('weapon numbers')
+    else:
+        kind = int(w[0])
+    if kind == KINDS['projectile']:
+        if not (_NAME.match(f[5]) and _NAME.match(f[6]) and w[4] > 0):
+            out.append('projectile without entity / entity file / speed')
+    elif kind is not None:
+        if f[5] or f[6]:
+            out.append('a ray weapon naming a projectile')
+        elif kind != KINDS['beam'] and not w[6] > 0:
+            out.append('a ray weapon without a range')
+    fx, snd = f[7].split(','), f[8].split(',')
+    if len(fx) != 3 or len(snd) != 2 or any(v and not _EFFECT.match(v) for v in fx + snd):
+        out.append('effects / sounds')
+    return out
+
+
 def validate_contract(data) -> list:
     """problems of a turrets.json contract (V-TBD): placements well formed, unique, within the DLL's 32"""
     problems = []
@@ -306,7 +369,6 @@ def validate_contract(data) -> list:
         if (f[0], f[1], f[2]) in seen:
             problems.append(f'turrets contract: duplicate placement {f[0]}:{f[1]}')
         seen.add((f[0], f[1], f[2]))
-        if (len(f[2].split(',')) != 9 or len(f[3].split(',')) != 9 or len(f[4].split(',')) != 13
-                or len(f[7].split(',')) != 3 or len(f[8].split(',')) != 2):
-            problems.append(f'turrets contract: wrong field counts in {f[0]}:{f[1]}')
+        for problem in line_problems(line):
+            problems.append(f'turrets contract: {f[0]}:{f[1]}: {problem}')
     return problems
