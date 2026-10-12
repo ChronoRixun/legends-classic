@@ -236,6 +236,70 @@ def problems(root, templates, heroes=None, hero_classes=None, used=()):
     return out
 
 
+# ---- The class each hero had before SPEC 94, for XML2 Fix's one-time re-base of saved class bonuses
+#
+# Saves written by builds before SPEC 94 hold the class bonus XML2's ratings classes gave (heroes.AUTOSPEND before
+# SPEC 94, below, on the player's own XML2 Data/autospend.XMLB, which those builds shipped unchanged), plus anything
+# else that writes the same bytes (the Review comics' stat rewards, 0x5d0920 -> 0x43a620). XML2 Fix 1.5 re-bases a
+# save once on load (header optional bit 3): per hero, saved bonus - what its old class gave up to its processed level
+# + what its current class gives, so the comic rewards stay. It needs the old classes, which this build no longer
+# ships (only four classes load), so the build writes them here: LEGACY_REL, one line per hero.
+LEGACY_AUTOSPEND = {'wolverine': 'bruiser', 'rogue': 'bruiser', 'colossus': 'bruiser',
+                    'beast': 'bruiser_light', 'nightcrawler': 'bruiser_light', 'psylocke': 'bruiser_light',
+                    'frost': 'support', 'phoenix': 'support', 'storm': 'support', 'profxastral': 'support',
+                    'profxgladiator': 'support',
+                    'cyclops': 'support_heavy', 'gambit': 'support_heavy', 'iceman': 'support_heavy',
+                    'jubilee': 'support_heavy', 'magma': 'support_heavy'}
+LEGACY_REL = 'Data/lcsave/autogrowth-legacy.txt'
+LEGACY_MAGIC = 'autogrowth-legacy 1'
+RECORD_ORDER = ('strength', 'speed', 'body', 'mind')      # the record's delta bytes = class-bonus bytes CStats+0x10..0x13
+
+
+def engine_classes(root):
+    """{class name lower: [(start, rate, (strength, speed, body, mind))]} as XMen2.exe loads an AutoSpend tree: the
+    first CLASS_LIMIT classes, the first RULES_PER_CLASS rules each, a missing number 0."""
+    out = {}
+    for c in [c for c in root if c.tag == 'CharacterClass'][:CLASS_LIMIT]:
+        rules = []
+        for b in [b for b in c if b.tag.lower() == 'bonus'][:RULES_PER_CLASS]:
+            rules.append((int(b.get('start') or 0), int(b.get('rate') or 0),
+                          tuple(int(b.get(s) or 0) for s in RECORD_ORDER)))
+        out[(c.get('name') or '').lower()] = rules
+    return out
+
+
+def legacy_text(stock_root, mapping=None):
+    """LEGACY_REL's text: a magic line, then `hero<TAB>class<TAB>start,rate,strength,speed,body,mind;...` per hero of
+    `mapping` (default LEGACY_AUTOSPEND), from the player's unmodified XML2 AutoSpend tree. Raises ValueError when a
+    class is not among the four XMen2.exe loaded (it would never have given anything)."""
+    classes = engine_classes(stock_root)
+    lines = [LEGACY_MAGIC]
+    for hero, cls in sorted((mapping or LEGACY_AUTOSPEND).items()):
+        if cls not in classes:
+            raise ValueError(f'legacy autospend class {cls!r} of {hero} is not among the classes XMen2.exe loads')
+        rules = ';'.join(','.join(str(v) for v in (start, rate) + deltas) for start, rate, deltas in classes[cls])
+        lines.append('\t'.join((hero, cls, rules)))
+    return '\r\n'.join(lines) + '\r\n'
+
+
+def parse_legacy(text):
+    """{hero: (class, [(start, rate, deltas)])} from legacy_text's output; ValueError on anything else."""
+    lines = [ln for ln in text.replace('\r\n', '\n').split('\n') if ln]
+    if not lines or lines[0] != LEGACY_MAGIC:
+        raise ValueError('not an autogrowth-legacy file')
+    out = {}
+    for ln in lines[1:]:
+        hero, cls, rules = ln.split('\t')
+        parsed = []
+        for r in (rules.split(';') if rules else []):
+            v = [int(x) for x in r.split(',')]
+            if len(v) != 6:
+                raise ValueError(f'{hero}: rule {r!r} has {len(v)} numbers')
+            parsed.append((v[0], v[1], tuple(v[2:])))
+        out[hero] = (cls, parsed)
+    return out
+
+
 def _herostat_roots(ctx):
     roots = []
     for ext in ('XMLB', 'engb'):
@@ -259,4 +323,12 @@ def run(ctx):
     for rel in done:
         ctx.count('autospend_x1_classes')
         ctx.log(f'{rel}: x1_bruiser / x1_support first, XML2 classes kept: {sorted(keep)} (SPEC 94)')
+    try:
+        text = legacy_text(ctx.read_base_xmlb('Data/autospend.XMLB'))
+    except ValueError as e:
+        ctx.error(f'autospend: {e}')
+        return len(done)
+    ctx.write_bytes(LEGACY_REL, text.encode('latin-1'))
+    ctx.set_count('autogrowth_legacy_heroes', len(LEGACY_AUTOSPEND))
+    ctx.log(f'{LEGACY_REL}: the pre-SPEC 94 classes of {len(LEGACY_AUTOSPEND)} heroes (XML2 Fix re-bases older saves)')
     return len(done)

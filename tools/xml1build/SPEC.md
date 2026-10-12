@@ -7101,3 +7101,28 @@ class herostat names within its first four classes, carries exactly the fitted r
 byte start/rate), the simulated growth stays within the documented deviation of the player's stat_rules.xml at
 every level 2..40, the weights equal the `spend` counts, and every hero stat_rules.xml names uses its template's
 class.
+V-H17 also requires `Data/lcsave/autogrowth-legacy.txt` (below) to parse and to name every hero of heroes.AUTOSPEND.
+
+**Saves: the one-time re-base (maintainer decision 2026-10-12; XML2 Fix 1.5).** A save written before this build
+holds the class bonus XML2's ratings classes gave each hero up to its processed level. The bonus bytes also take the
+Review comics' stat rewards (XMen2.exe 0x5d0920 -> the same setter 0x43a620; section 21.4: XML1's comic rewards,
+x4), so they cannot simply be replaced. XML2 Fix re-bases once per save, on load, per hero block and valid restore
+record: bonus = saved - the old class's growth + the current class's growth, both simulated with the engine's walk
+(levels 2 .. processed level; rate 0 = once; the setter's 250 ceiling against the hero's base + spent bytes); the
+"gain" bytes CStats+0x14 the same way with the rises. A hero whose saved bonus is below its old class's growth in a
+stat is left as it is (logged). The current classes are read from the build's Data/autospend and the herostat
+`autospend` names; the old ones from `Data/lcsave/autogrowth-legacy.txt`, which `autospend.run` writes from the
+player's unmodified XML2 Data/autospend.XMLB and `autospend.LEGACY_AUTOSPEND` (heroes.AUTOSPEND before this section):
+a magic line `autogrowth-legacy 1`, then `hero<TAB>class<TAB>start,rate,strength,speed,body,mind;...` per hero
+(record order). Without that file the fix re-bases nothing. The marker is the LC header's optional-feature bit 3
+(`layout.OPTIONAL_CLASS_GROWTH`), set on every campaign write while the re-base is active; a file with it is never
+re-based again. Exempt heroes (the Professor forms) are skipped. No save-format change.
+
+**In game (agent check, 2026-10-12; build = this branch's full build + `--only autospend`; staged: the save menu
+opened by `extractionPoint`, one `awardXPToPlayable`; loads by real menu input; bonus read at CStats+0x10).** A copy of
+an old campaign with four heroes processed to level 21 (bonus [str/spd/body/mind] Wolverine 25/5/10/0, Cyclops /
+Iceman 5/10/5/20, Phoenix 0/10/5/25 = their XML2 classes' growth): XML2 Fix 1.5.0 without the re-base keeps them
+(control). With it: Wolverine 20/8/40/20 (x1_bruiser at 21), the three supports 16/8/4/59 (x1_support at 21); level
+21 -> 22 then fires the new rules on top (Wolverine body 44, supports mind 62); saved (bits 1-3), loaded in a new
+process: unchanged, "the file vouches for the build's classes". On the 0.2.2 build without the new classes (no
+legacy file) the same file keeps its bonus.

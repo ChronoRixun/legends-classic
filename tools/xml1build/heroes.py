@@ -3367,6 +3367,19 @@ def _validate(ctx, report=None):
                         for r in hs if r is not None for s in r.iter('stats')}
         for m in ASP.problems(aut_tree, templates, x1_heroes, hero_classes, ASP.used_classes(hs)):
             ck.error(f'V-H17: {m}')
+        # the pre-SPEC 94 classes XML2 Fix needs to re-base older saves (autospend.LEGACY_REL)
+        lp = o.idx.path(ASP.LEGACY_REL)
+        try:
+            legacy = ASP.parse_legacy(lp.read_bytes().decode('latin-1')) if lp is not None else None
+        except (OSError, ValueError) as e:
+            legacy = None
+            ck.error(f'V-H17: {ASP.LEGACY_REL} unreadable: {e}')
+        if lp is None:
+            ck.error(f'V-H17: {ASP.LEGACY_REL} missing (XML2 Fix could not re-base older saves\' class bonus)')
+        elif legacy is not None:
+            missing = sorted(set(ASP.LEGACY_AUTOSPEND) - set(legacy))
+            if missing:
+                ck.error(f'V-H17: {ASP.LEGACY_REL} lacks {missing}')
     return checks, budgets
 
 

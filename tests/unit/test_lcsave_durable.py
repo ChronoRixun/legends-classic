@@ -372,7 +372,7 @@ def test_review_native_transfer_metadata_refuses_nonfinite_and_duplicate_zones()
 def test_fifth_level_optional_bits_written_and_ignored():
     """XML2 Fix 1.5's fifth-level catch-up marker: header optional bits 1 / 2 beside KEYS (bit 0); an import vouches for
     neither; the loader's direction ignores them."""
-    assert (L.OPTIONAL_KEYS_PRESENT, L.OPTIONAL_LEVEL_SKILL_POINTS, L.OPTIONAL_LEVEL_STAT_POINTS) == (1, 2, 4)
+    assert (L.OPTIONAL_KEYS_PRESENT, L.OPTIONAL_LEVEL_SKILL_POINTS, L.OPTIONAL_LEVEL_STAT_POINTS, L.OPTIONAL_CLASS_GROWTH) == (1, 2, 4, 8)
     with tempfile.TemporaryDirectory() as d:
         env = _env(d); raw, saved = _converted(env)
         assert container.read_file(saved)['header']['optional_features'] & 6 == 0
