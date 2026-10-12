@@ -37,6 +37,11 @@ build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebui
 - Match main-menu mouse regions to the full visible panel widths with disjoint row seams
   through the companion DLL's `ClassicMainPanelBounds` setting.
 
+- Supply the effective packed stage binding for the native Master Mold controller
+  and enable it only for first-game builds with that validated contract. The companion
+  DLL restores the shield/core encounter and registers it as shared gameplay rule 3, so
+  co-op stays available between matching builds and refuses peers whose controller
+  state differs (SPEC 86). Older DLLs ignore the keys and retain the existing fallback.
 - Import equipped legacy items using the detected item era, including restore-bank equipment, when the
   campaign's talent era differs. Attribute restore-bank talent evidence to its actual stats-table owner.
   The companion XML2 Fix converter and semantic dump apply the same corrections; no save-format change.
