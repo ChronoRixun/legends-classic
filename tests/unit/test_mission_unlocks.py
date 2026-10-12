@@ -74,7 +74,7 @@ def test_mission_map_limits_to_playable_heroes_and_reports_missing_milestones():
 def test_campaign_npc_rows_stay_in_the_unlock_map():
     """Issue #63: a non-playable row the Xtraction points read (CAMPAIGN_NPCS) is kept, the other NPC rows dropped."""
     from xml1build import scripts as S
-    assert S.CAMPAIGN_NPCS == ('healer',)
+    assert S.CAMPAIGN_NPCS == ('healer', 'forge')
     rows = [('begin', 'alpha'), ('', 'npcguy'), ('stage1', 'healer')]
     keep, drop = U.mission_unlocks({'hub': 'stage1'}, rows, {'alpha'} | set(S.CAMPAIGN_NPCS))
     assert keep == {'hub': ('alpha', 'healer')} and drop == {'hub': ('npcguy',)}

@@ -132,9 +132,9 @@ JOIN_HERO_MISSIONS = {'alison': 1, 'dr_mag2': 2}
 # XML1's table also puts non-playable characters in the campaign (issue #63). The Healer's campaign bit is what the
 # first game's Xtraction points test for their Healer choice (default.xbe 0x9f3bd / 0x9f7c8; the 'sewers_hub' row of
 # the table at 0x44e338), and xml2-fix reads the same registry bit (XMen2.exe vt+0x84) - XMen2.exe's own first-use
-# rule never adds her (her npcstat team is none). Forge's row ('mansion1') stays dropped: the port's Forge choice
-# keeps its #95 contact signal.
-CAMPAIGN_NPCS = ('healer',)
+# rule never adds her (her npcstat team is none). Forge's row (the 'mansion1' group, 0x44e310) is the first game's
+# Forge test too (0x9f3ff / 0x9f826), replacing 0.2.0's ftalk contact signal.
+CAMPAIGN_NPCS = ('healer', 'forge')
 
 
 def mission_start_unlocks(ctx) -> dict:

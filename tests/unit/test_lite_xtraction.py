@@ -43,12 +43,13 @@ def test_prepare_writes_the_full_point_for_every_lite_call():
         helper = inline[LITE_DATA]
         assert helper.startswith('x1/')
         assert 'extractionPointServices("_OWNER_", x1_svc )' in (out / f'scripts/{helper}.py').read_text()
-        assert 'x1_svc = iadd(0, 14 )' in (out / f'scripts/{helper}.py').read_text()     # Load, Danger Room, Healer
+        assert 'x1_svc = iadd(0, 63 )' in (out / f'scripts/{helper}.py').read_text()     # flags false,true,true,true
         z = (out / 'scripts/inv/outpost1.py').read_bytes().decode('latin-1')
         assert 'extractionPointLite' not in z
         assert 'extractionPoint("invented_beacon" )' in z
         assert 'extractionPointServices("invented_beacon", x1_svc )' in z
-        assert 'x1_svc = iadd(0, 4 )' in z                                  # a lite point without flags 2 / 3
+        assert 'x1_svc = iadd(0, 4 )' in z                                  # flag 1 only: Change Team, Load
+        assert 'x1_svc = iadd(0, 31 )' in z                                 # the full point
         assert rep['stats']['rule Xtraction point services'] == 3
     assert P3.VERSION >= 2                                                  # cached P3 outputs are rebuilt once
 
