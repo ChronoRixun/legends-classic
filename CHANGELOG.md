@@ -36,6 +36,9 @@ build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebui
   the companion XML2 Fix backdrop hook. The original profile gate remains a separate question.
 - Match main-menu mouse regions to the full visible panel widths with disjoint row seams
   through the companion DLL's `ClassicMainPanelBounds` setting.
+- Main-menu (and every menu's) mouse needs the companion XML2 Fix with the client-area mapping
+  fix: a window resized by a DPI change no longer drifts the hover downwards or leaves Quit
+  unreachable, and the focus no longer flips inside a row's lower third.
 
 - Supply the effective packed stage binding for the native Master Mold controller
   and enable it only for first-game builds with that validated contract. The companion

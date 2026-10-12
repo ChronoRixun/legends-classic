@@ -2103,6 +2103,14 @@ Local bound offsets change with the rectangles so the text's component origin an
 stay consistent. This operates only on the guarded MAIN_MENU update with all eight expected
 items present; stock builds omit the key. Native synthetic tests cover both layout offsets,
 nonoverlapping row seams, malformed bounds, text origin and repeated updates.
+Within the focused row a mouse move or left press stays that row's: MAIN_MENU's handler
+(0x5c9320) otherwise falls through to the generic handler (0x5ae0a0), whose label test
+(0x5c6490) is offset by half the label's local y offset and refocused the row below in each
+row's lower third. Independently of the layout, XML2 Fix converts every mouse point from the
+window's client area to the engine's screen size (0x5f9eb0 divides by `[0xa09ffc]`/`[0xa0a000]`),
+so a window whose client area differs from the resolution (a DPI change, a borderless window
+over a larger monitor) still hovers the row under the cursor; the native mapping tests cover
+1280x720, 1920x1080 and 1024x768, client areas shrunk or grown, and both layouts.
 
 The companion XML2 Fix writes `[Game] ClassicMainBackdrop=1` for the classic main. Its guarded
 libIGSg configureScale hook (RVA 0x6a780) changes only the first diffuse pass of known opaque
