@@ -265,3 +265,29 @@ def test_deferred_volume_stays_in_place():
         assert entinst_order(root) == ['beacon_a', 'pit_alpha', 'trigger_b', 'pad_c']
     finally:
         del S.FALL_KILL_DEFERRED['maps/invented/ridge']
+
+
+def test_volume_enabled_after_settled_props_goes_behind_them():
+    from xml1build import settle as SE
+    root = ordinal_fixture()
+    rel = 'maps/invented/ridge.eng'
+    S.FALL_KILL_ENABLED_LATE['maps/invented/ridge'] = frozenset({'pit_alpha'})
+    try:
+        S.convert(root, rel)
+        # the zone's settle pass runs after the conversion and appends its newly numbered prop
+        ET.SubElement(root, 'entity', name='x1_settle_crate', classname='physent', smartent='false', xml1settle='true')
+        ET.SubElement(ET.SubElement(root, 'entinst', type='x1_settle_crate'), 'inst', name='crate_1', pos='0 0 0')
+        assert entinst_order(root)[-2:] == ['pit_alpha', 'x1_settle_crate']
+        assert any('enabled after 0.2.1' in m for m in S.numbered_entinst_tail_problems(root, rel))
+        assert S.move_late_fall_volumes(root, rel) == 1
+        assert entinst_order(root) == ['beacon_a', 'trigger_b', 'pad_c', 'x1_settle_crate', 'pit_alpha']
+        assert S.numbered_entinst_tail_problems(root, rel) == []
+        assert SE.numbered_tail_problems(root, S.late_fall_volume_names(root, rel)) == []
+        assert SE.numbered_tail_problems(root)          # without the exemption the settle check still sees it
+        assert not any('ordinals' in m for m in SE.problems(root, S.late_fall_volume_names(root, rel)))   # V41
+    finally:
+        del S.FALL_KILL_ENABLED_LATE['maps/invented/ridge']
+    # an ordinary (not late) volume may stay ahead of the settled props
+    root = ordinal_fixture()
+    S.convert(root, rel)
+    assert S.move_late_fall_volumes(root, rel) == 0

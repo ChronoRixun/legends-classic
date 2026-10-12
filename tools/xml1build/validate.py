@@ -844,7 +844,7 @@ class Validator:
                 root = self.tree(f'maps/{zone}.xmlb')
             if root is None:
                 continue
-            for problem in SE.problems(root):
+            for problem in SE.problems(root, XS.late_fall_volume_names(root, f'maps/{zone}.eng')):
                 ck.error(f'{zone}: {problem}')
             defs = {e.get('name'): e for e in root.iter('entity')}
             added = sum(len(g.findall('inst')) for g in root.findall('entinst')
@@ -1246,7 +1246,7 @@ class Validator:
             root = self.tree(n)
             if root is None:
                 continue
-            for message in SE.numbered_tail_problems(root):
+            for message in SE.numbered_tail_problems(root, XS.late_fall_volume_names(root, n)):
                 ck.error(f'{n}: {message}')
 
     _LITE_XPOINT = re.compile(r'\bextractionPointLite\s*\(', re.I)

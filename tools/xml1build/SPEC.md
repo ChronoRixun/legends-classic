@@ -5029,6 +5029,30 @@ units under an island floor) and `nuke1_3`'s three small boxes (208 under the fl
 93 units below its box inside the footprint, and `arb3_2` and `nuke2_2`'s `kill_target01` have floor 4 and 40 units over
 the top: test those first for a walk through the box.
 
+### Original touch shape in game (2026-10-12)
+
+Build with the cylinder conversion (only `smartent="false"`), xml2-fix 1.4.0, windowed, real keyboard input through
+the test pipe, every party member's position and health on every state read, the hero's world box read from memory
+(bottom = origin, 72 high). Staged and named: new game, party seats, XP, zone loads, one revive, the start positions
+below and the mid-air placements (the fall after them is gravity and the touch query, not a teleport into the box).
+
+| Volume | v0.2.1 (inert) | Cylinder | Result |
+|---|---|---|---|
+| `haarp_ext01` `kill_target` (enabled, player-only) | - | nav walk from the zone start to the ravine edge with four heroes and fights, real double jump: the controlled hero 245 -> -31755 at z -214.5 (top -193); followers on the edge alive | still lethal, gate kept |
+| `nyc1_1_4` `kill_target01` | staged drop over the street (1300,2600,420) + one key tap: fell through the box (inside at z 306, no damage), died only by the engine void (-999779 at z -168) | the same drop: 32,000 at z 326.9 / 331.5; the billboard ramp crossed both ways with the AI follower and the escort, jumps on it, three falls off its side into the walled pocket at z 361 (21 above the top): nobody entered, closest 21.3 | **enabled** |
+| `sewers1_2_4` `kill_target` | - | north walkway x 1300-2000 with the party twice (closest 132.8 over the top); the controlled hero double-jumped the railing: 32,000 at z -158 / -195 (top -132) twice; followers stayed | **enabled** |
+| `arb3_2` `kill_target` | - | the hero 35 units past the last nav cell at the foot of the ramp (floor -80, 4 above the top) dropped to z -89 and took 32,000 (it is the ice-bridge water room; the step happened right after a staged placement) | stays deferred: water at the ramp foot; AI following untested (#5 class) |
+| `sewers2_1_3` `kill_target02` | - | party walk over/beside it and fights (closest 36.7), no entry; the deliberate jump was stopped by the railing; a follower showed an unexplained 32,000 between leaving this zone and the next start | stays deferred |
+| `nuke1_2` `kill_target02` (source box) | - | fights beside it (closest 63.9), no entry; no fall achieved | stays deferred |
+
+The billboard ramp report of 0.1.8 was not reproduced with either shape (its walkable cells are inside both, 21 above
+the top), and the slab replaces the engine's void kill rather than adding a hazard: on v0.2.1 a fall into the street
+already ends in the void kill, later. The other deferred rooms were not tested again in this run.
+
+Saved ordinals: a volume enabled after 0.2.1 goes after issue #81's settled props as well
+(`x1schema.FALL_KILL_ENABLED_LATE`, `move_late_fall_volumes` after the settle pass; nyc1_1_4 has six settled props),
+so a 0.2.1 save keeps every ordinal. `numbered_entinst_tail_problems` and V31 check it.
+
 ## 53. The first game's voice lines (2026-10-05, issue #49)
 
 XMen2.exe builds each character's sound table when the character loads (0x438d20, called from 0x4239be). For
