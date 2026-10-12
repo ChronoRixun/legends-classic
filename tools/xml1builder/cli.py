@@ -58,7 +58,8 @@ def make_parser():
     p.add_argument('--link-base', dest='link_base', action='store_true', help='(not supported yet: files are copied)')
     p.add_argument('--jobs', type=int, help='worker processes for the sound stages (default: every CPU)')
     p.add_argument('--main-menu-layout', choices=('classic', 'widescreen'), default='classic',
-                   help='build: centered classic main menu or deterministic widescreen composition')
+                   help='build: the classic main menu, centred by the game at every aspect '
+                        '(widescreen: a retired name for classic)')
     p.add_argument('--no-ini', dest='no_ini', action='store_true', help='do not merge the port\'s keys into '
                                                                          'xml2-fix.ini (they are in the stamp)')
     p.add_argument('--allow-unknown-exe', dest='allow_unknown_exe', action='store_true',

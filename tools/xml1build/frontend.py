@@ -536,12 +536,8 @@ def menu_igb(ctx):
                       'camera': summary, 'spacing': spacing, 'source': str(src)}
     try:
         data, appearance = MA.help_alias(data)
-        layout = ctx.opt('main_menu_layout', 'classic')
-        if layout not in MA.LAYOUTS:
-            raise ValueError('unsupported main menu layout')
-        if layout == 'widescreen':
-            data, wide = MA.widescreen_scene(data)
-            appearance['widescreen'] = wide
+        # one composition, centred by the engine at every aspect (MA.screen_x); 'widescreen' is retired
+        appearance['layout'] = MA.layout(ctx.opt('main_menu_layout', 'classic'))
     except (ValueError, MA.G.IgbError) as ex:
         return None, {'problems': [str(ex)], 'nodes': {}, 'camera': summary,
                       'spacing': spacing, 'source': str(src)}

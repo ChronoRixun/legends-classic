@@ -79,8 +79,6 @@ def u1_menu_igb(ctx):
     again, frame = F.reframe_menu_igb(src)
     spaced, srep = F.space_menu_buttons(again) if again is not None else (None, {'edits': [], 'problems': ['-']})
     styled = F.MA.help_alias(spaced)[0] if spaced is not None else None
-    if ctx.opt('main_menu_layout', 'classic') == 'widescreen' and styled is not None:
-        styled = F.MA.widescreen_scene(styled)[0]
     if styled != data or len(data) != len(src) or data == src or srep['problems']:
         fail('U1', 'x1_menu_main.IGB is not XML1\'s menu_main.igb re-framed and spaced (same size, camera moved)')
         return
@@ -93,6 +91,7 @@ def u1_menu_igb(ctx):
     if stray:
         fail('U1', f'{len(stray)} changed bytes outside the re-frame\'s edits (first at 0x{stray[0]:x})')
     u1_spacing(again, data, srep)
+    u1_centred(src, data)
     data = again                               # the re-frame's checks below: XML1's file against the re-framed one
     cam0, cam1 = F.menu_igb_camera(src), F.menu_igb_camera(data)
     if cam0.get('problem') or cam1.get('problem'):
@@ -162,6 +161,35 @@ def u1_menu_igb(ctx):
     INFO['U1 nodes'] = len(rep['nodes'])
     if rep['problems']:
         fail('U1', rep['problems'])
+
+
+# 4:3, 16:10, 16:9, 21:9 and the maintainer's 2560x1440 desktop
+CENTRE_SCREENS = ((640, 480), (1024, 768), (1280, 800), (1280, 720), (1920, 1080), (2560, 1440), (3440, 1440))
+# XML1's own panels sit 1.65 units left of its Camera01 (252.35 vs 254; the original Xbox frame shows the same
+# ~2 px at 640x480): the authored composition is kept, never corrected or offset.
+CENTRE_AUTHORED = 2.0
+
+
+def u1_centred(src, data):
+    """SPEC 21.2.1: the built main menu is XML1's composition on its camera, which the engine centres at every
+    aspect (MA.screen_x): the panel column's offset from the screen centre is XML1's own at every screen, within
+    a pixel, and no more than CENTRE_AUTHORED view units (the retired widescreen layout added 48)."""
+    from xml1build import igb_file as G
+    try:
+        x, cam = F.MA.panel_column(data)
+        x0, cam0 = F.MA.panel_column(src)
+    except (ValueError, G.IgbError) as ex:
+        fail('U1', f'main menu panel column: {ex}')
+        return
+    if abs(x - cam) > CENTRE_AUTHORED:
+        fail('U1', f'main menu panels at x {x:.2f}, {x - cam:+.2f} units from the camera {cam} (XML1: {x0 - cam0:+.2f})')
+    seen = {}
+    for w, h in CENTRE_SCREENS:
+        got, want = F.MA.screen_x(x, cam, w, h) - w / 2, F.MA.screen_x(x0, cam0, w, h) - w / 2
+        seen[f'{w}x{h}'] = round(got, 2)
+        if abs(got - want) > 1.0:
+            fail('U1', f'{w}x{h}: main menu panels {got:+.1f} px from the screen centre, XML1 {want:+.1f} px')
+    INFO['U1 panel column px from centre'] = seen
 
 
 def u1_spacing(framed, data, srep):
