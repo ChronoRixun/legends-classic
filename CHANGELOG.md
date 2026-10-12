@@ -12,6 +12,8 @@ every new rule below without a word. Rebuild; your saves carry over.
   2 skill points, and every fifth level gives 2 skill points and 8 stat points instead of 1 and 4. Heroes in your
   existing saves get the points they missed at the fifth levels they already passed, once, when the save is first
   loaded (1 skill point and 4 stat points per fifth level).
+- **Automatic stat growth as in the first game**: heroes you don't spend points for yourself now grow with X-Men
+  Legends I's bruiser / support tables (Data/autospend.XMLB from your own disc), not XML2's.
 - **Breakable parts** (issue #3): Juggernaut's helmet and the Sentinels' arms can be broken again, with their effects,
   and a Sentinel without an arm can't use that arm's attacks. Boss "armour off" moments now really take the armour off
   (Juggernaut's helmet, Blob's pillars, Pyro and Toad): those fights were much tougher than the first game's.
@@ -70,7 +72,7 @@ player and a 0.2.2 player refuse each other at join, with the reason on both PCs
   turret contract, V57 script function names, V58 Codex highlight, V59 solo mode calls, V60
   resistance talents; V26 compares fall volumes with
   the source; V32 checks the Load bit of every Xtraction point.
-- SPEC 41.1, 52, 63.4-63.6, 79.1, 88-93.
+- SPEC 41.1, 52, 63.4-63.6, 79.1, 88-94; heroes check V-H17 (autospend classes).
 
 </details>
 
