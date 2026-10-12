@@ -351,7 +351,8 @@ def test_port_keys_from_a_synthetic_build():
         assert FI.port_keys(out) == {'Game': {'NewGameTeam': 'wolverine', 'ResetUnlocks': '0',
                                               'SaveFolder': 'X-Men Legends', 'ForcedTeams': '1',
                                               'GeometrySharingBlendIndices': '1', 'CharacterLadderPaths': '1',
-                                              'ObjectiveDescriptions': '1', 'BreakRule': 'xml1', 'ExplosiveFirstHit': '1'},
+                                              'ObjectiveDescriptions': '1', 'BreakRule': 'xml1', 'ExplosiveFirstHit': '1',
+                                              'DeathRule': 'xml1'},
                                      'Limits': {'ActorSlots': '127', 'ResourceNames': '1024', 'ItemEnhancements': '512',
                                                 'FightStyles': '32', 'EffectCurves': '3600', 'MoveTriggers': '64', 'EntityCapacity': '1'}}
         menu = ET.Element('menu', type='MAIN_MENU')
@@ -655,6 +656,25 @@ def test_xml1_builds_ask_for_the_first_games_break_rule():
     assert 'BreakRule' not in FI.game_keys(xml1_opening=False)
     assert 'BreakRule' in FI.PORT_OWNED['Game']
     assert FI.dropped_keys({'Game': {}})['Game'].count('BreakRule') == 1
+
+
+def test_xml1_builds_ask_for_the_first_games_death_threshold():
+    """XML1 kills below 1 health, XMen2.exe at 0: every XML1 build asks the fix for XML1's line; an XML2-opening ini
+    has no key, and the port owns it, so a stock merge removes it again."""
+    assert FI.game_keys(xml1_opening=True)['DeathRule'] == 'xml1'
+    assert 'DeathRule' not in FI.game_keys(xml1_opening=False)
+    assert 'DeathRule' in FI.PORT_OWNED['Game']
+    assert FI.dropped_keys({'Game': {}})['Game'].count('DeathRule') == 1
+    with tempfile.TemporaryDirectory() as td:
+        path = Path(td) / 'example.ini'
+        path.write_text('[Game]\nDeathRule=xml2\nKeepMe=example\n')
+        port = {'Game': FI.game_keys()}
+        FI.merge_ini(path, port, FI.dropped_keys(port))
+        assert FI.read_ini(path)['Game']['DeathRule'] == 'xml1'
+        stock = {'Game': FI.game_keys(xml1_opening=False)}
+        FI.merge_ini(path, stock, FI.dropped_keys(stock))
+        parsed = FI.read_ini(path)['Game']
+        assert 'DeathRule' not in parsed and parsed['KeepMe'] == 'example'
 
 
 def test_xml1_builds_ask_for_no_xtract_world_map():
