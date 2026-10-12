@@ -278,19 +278,20 @@ def convert(root, rows):
     return changed
 
 
-def numbered_tail_problems(root):
-    """New residents must follow every pre-existing placement (save ordinals)."""
+def numbered_tail_problems(root, later=()):
+    """New residents must follow every pre-existing placement (save ordinals). `later`: entinst types numbered
+    after the settled props (x1schema.FALL_KILL_ENABLED_LATE), allowed behind them."""
     marked = {e.get('name') for e in root.iter('entity') if e.get(MARKER) == 'true'}
     out, in_tail = [], False
     for group in root.findall('entinst'):
         if group.get('type') in marked:
             in_tail = True
-        elif in_tail:
+        elif in_tail and group.get('type') not in later:
             out.append('settled prop precedes an old entinst (saved ordinals shift)')
     return out
 
 
-def problems(root):
+def problems(root, later=()):
     definitions = {e.get('name'): e for e in root.iter('entity')}
     marked = {n for n, e in definitions.items() if e.get(MARKER) == 'true'}
     out = []
@@ -305,7 +306,7 @@ def problems(root):
             valid = False
         if not valid:
             out.append(f'{n}: settled prop must be a gravity-enabled resident physent')
-    out.extend(numbered_tail_problems(root))
+    out.extend(numbered_tail_problems(root, later))
     return out
 
 

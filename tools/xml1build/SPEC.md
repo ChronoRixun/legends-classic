@@ -4851,9 +4851,9 @@ triggers.
 lethal-touch signature: `affectableharment`, `damage="32000"`,
 `damagetype="dmg_direct"`, `actontouch="true"`, `nocollide="true"`. Matching is
 independent of entity names except for the specific deferred pair below. After normal class conversion, set
-`boxcollision="true"` and `smartent="false"`, the collision and residency flags
-used by XML2's native fall kill volumes. Preserve every other attribute and all
-instances, including bounds, positions, orientations, damage modifiers, targeting
+`smartent="false"` (XML1's default residency; see "Touch shape" below) and nothing else: `boxcollision` stays as
+the source has it (0.1.8 to 0.2.1 also wrote `boxcollision="true"`, which changed the touch shape). Preserve
+every other attribute and all instances, including bounds, positions, orientations, damage modifiers, targeting
 flags, and activation scripts. Ordinary fire/damage hazards and non-map entities
 are outside this rule. The conversion is idempotent and reports
 `fall_kill_volumes` in the schema counters.
@@ -4906,6 +4906,27 @@ full build validation and the zones self-test passed.
 
 The reduced two-flag configuration also passed a staged flat-floor on-foot
 control: Wolverine lost exactly 32,000 HP at Z=0.16, with no fall.
+
+### Touch shape: XML1's volumes are cylinders (2026-10-12, issue #22)
+
+Both executables find touch contacts the same way. After a move, the mover's swept volume (a vertical cylinder of
+radius max(half-x, half-y) of its bound and half-height half-z, from the old centre to the new one) goes to a world
+query restricted to entities with the touch flag (Xbox movement 0x42a7b-0x42b7f, XMen2.exe 0x433765-0x433869; query
+vt+0x74 Xbox 0xa1770 / PC 0x4aa180; collision system vt+0x10 Xbox 0x588d0 / PC 0x44d360). Each candidate is tested by
+its collision type (Xbox vt+0x4c 0x75000 / PC vt+0x50 0x471650): an entity without a model is type 5 with
+`boxcollision` and type 2 without it. Type 2 (Xbox 0x58c60, PC 0x44dca0) is a vertical cylinder around the bound
+centre with radius = the larger horizontal half-extent and the bound's own height, tested by the same swept-cylinder
+routine in both (Xbox 0x1988b0, PC 0x600dc0); type 5 (Xbox 0x590d0, PC 0x44e140) is the oriented box. The harm
+entity's centre and half-extents getters agree (Xbox 0x75f40 / 0x30680, PC 0x4712e0 / 0x41c330). The only further
+difference in the query is that the Xbox also requires `nocollide` (every volume here has it).
+
+29 of the first game's 30 lethal-touch definitions carry no `boxcollision` (nuke1_2's `kill_target02` does), so on
+the Xbox they are cylinders. Their `smartent` is absent too, and XML1 keeps an absent `smartent` false (0x67534),
+while XMen2.exe makes it true for physical entities (0x498a05): a smart entity is not in the touch query, which is
+the dead form the conversion started from. The faithful conversion is therefore `smartent="false"` alone. Writing
+`boxcollision="true"` (0.1.8 to 0.2.1) made every volume a box: its corners reach past the original cylinder, and an
+elongated box misses the cylinder's sides (sewers3_1_1's 624 x 180 boxes are cylinders of radius 312 on the Xbox).
+V26 now compares each enabled volume's `boxcollision` with its XML1 source.
 
 ### Player-only ravine: the HAARP exterior volume (maintainer decision, 2026-10-05)
 
@@ -5036,6 +5057,31 @@ Not checked in game (stay deferred): `arb3_2`, `arb3_3`, `mount`, `nuke1_2` `kil
 units under an island floor) and `nuke1_3`'s three small boxes (208 under the floor) look like pits; `mount` has floor
 93 units below its box inside the footprint, and `arb3_2` and `nuke2_2`'s `kill_target01` have floor 4 and 40 units over
 the top: test those first for a walk through the box.
+
+### Original touch shape in game (2026-10-12)
+
+Build with the cylinder conversion (only `smartent="false"`), xml2-fix 1.4.0, windowed, real keyboard input through
+the test pipe, every party member's position and health on every state read, the hero's world box read from memory
+(bottom = origin, 72 high). Staged and named: new game, party seats, XP, zone loads, one revive, the start positions
+below and the mid-air placements (the fall after them is gravity and the touch query, not a teleport into the box).
+
+| Volume | v0.2.1 (inert) | Cylinder | Result |
+|---|---|---|---|
+| `haarp_ext01` `kill_target` (enabled, player-only) | - | nav walk from the zone start to the ravine edge with four heroes and fights, real double jump: the controlled hero 245 -> -31755 at z -214.5 (top -193); followers on the edge alive | still lethal, gate kept |
+| `nyc1_1_4` `kill_target01` | staged drop over the street (1300,2600,420) + one key tap: fell through the box (inside at z 306, no damage), died only by the engine void (-999779 at z -168) | the same drop: 32,000 at z 326.9 / 331.5; the billboard ramp crossed both ways with the AI follower and the escort, jumps on it, three falls off its side into the walled pocket at z 361 (21 above the top): nobody entered, closest 21.3 | **enabled** |
+| `sewers1_2_4` `kill_target` | - | north walkway x 1300-2000 with the party twice (closest 132.8 over the top); the controlled hero double-jumped the railing: 32,000 at z -158 / -195 (top -132) twice; followers stayed | **enabled** |
+| `arb3_2` `kill_target` | - | the hero 35 units past the last nav cell at the foot of the ramp (floor -80, 4 above the top) dropped to z -89 and took 32,000 (it is the ice-bridge water room; the step happened right after a staged placement) | stays deferred: water at the ramp foot; AI following untested (#5 class) |
+| `arb3_3` `kill_target` | - | the hero placed on the nav cell beside it (floor -36) moved about 100 units and down to -81 within four seconds of the placement and one short key tap, then took 32,000 at z -85 (top -86): a slope into the water | stays deferred: same water-room pattern as `arb3_2`, reached right after staging |
+| `sewers2_1_3` `kill_target02` | - | party walk over/beside it and fights (closest 36.7), no entry; the deliberate jump was stopped by the railing; a follower showed an unexplained 32,000 between leaving this zone and the next start | stays deferred |
+| `nuke1_2` `kill_target02` (source box) | - | fights beside it (closest 63.9), no entry; no fall achieved | stays deferred |
+
+The billboard ramp report of 0.1.8 was not reproduced with either shape (its walkable cells are inside both, 21 above
+the top), and the slab replaces the engine's void kill rather than adding a hazard: on v0.2.1 a fall into the street
+already ends in the void kill, later. The other deferred rooms were not tested again in this run.
+
+Saved ordinals: a volume enabled after 0.2.1 goes after issue #81's settled props as well
+(`x1schema.FALL_KILL_ENABLED_LATE`, `move_late_fall_volumes` after the settle pass; nyc1_1_4 has six settled props),
+so a 0.2.1 save keeps every ordinal. `numbered_entinst_tail_problems` and V31 check it.
 
 ## 53. The first game's voice lines (2026-10-05, issue #49)
 

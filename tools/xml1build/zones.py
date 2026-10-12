@@ -1331,6 +1331,9 @@ class Zones:
                 rows = SE.survey(root, SE.collision_triangles(map_path.read_bytes()), SE.bounds_reader(read_model))
                 st['spawn_settle'] = rows
                 self.counts['spawn_settle_instances'] += SE.convert(root, rows)
+                # fall volumes enabled after 0.2.1 follow the settled props (save ordinals)
+                from . import x1schema as XS
+                self.counts['fall_kill_volumes_late'] += XS.move_late_fall_volumes(root, f'maps/{zone}.eng')
                 for row in rows:
                     self.counts['spawn_settle_' + row['status']] += 1
             except (ValueError, OSError, KeyError, TypeError) as exc:
