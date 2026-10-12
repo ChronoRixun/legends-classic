@@ -53,7 +53,7 @@ def run(ctx):
     # SPEC 85: the typed entity-id registry of the SHIPPED scripts (this module runs last, after the scripts module
     # wrote Scripts/), which the entity-capacity DLL verifies against the installed tree before it migrates a legacy
     # save's typed fields (PHASE-A-PLAN section 4). A scripts tree the scanner cannot classify fails the build.
-    code, scan, messages = typed_registry_for(out)
+    code, scan, messages = typed_registry_for(out, ctx)
     for m in messages:
         ctx.note(f'typed entity ids: {m}')
     if code != 0 or scan is None:
@@ -66,13 +66,15 @@ def run(ctx):
 REGISTRY_REL = 'Data/lcsave/typed-entity-ids.txt'
 
 
-def typed_registry_for(out):
-    """-> (exit code, scan dict or None, messages): the registry of <out>/Scripts (the shipped tree)."""
+def typed_registry_for(out, ctx=None):
+    """-> (exit code, scan dict or None, messages): the registry of <out>/Scripts (the shipped tree). In a build the
+    script API comes through ctx.research_path like every other research table, so the frozen builder reads its
+    bundled copy (_internal/research/...); without a ctx (tests, the developer CLI) it is the repo's research/."""
     from . import typed_entity_ids as TE
     scripts = Path(out) / 'Scripts'
     messages = []
     try:
-        api = TR.load_api(TE.DEFAULT_API)
+        api = TR.load_api(ctx.research_path('scripts/xml2_api.json') if ctx is not None else TE.DEFAULT_API)
         scan = TR.scan_scripts(str(scripts), api)
     except (TR.RegistryError, OSError, ValueError) as e:
         return 1, None, [f'refused: {e}']

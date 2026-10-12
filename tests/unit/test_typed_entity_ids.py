@@ -166,3 +166,31 @@ def test_savefiles_registry_for_shipped_tree():
         code, scan, messages = SF.typed_registry_for(d)
         assert code == 1 and any('refused' in m for m in messages)
         assert SF.REGISTRY_REL == 'Data/lcsave/typed-entity-ids.txt'
+
+
+def test_savefiles_registry_reads_api_through_ctx():
+    """0.2.1: in a build the script API comes through ctx.research_path, never a path computed from the module's own
+    location - the frozen builder bundles research/ under _internal/, and 0.2.0's path pointed beside the exe."""
+    import shutil
+    from xml1build import savefiles as SF
+    from xml1build import typed_entity_ids as TE
+    with tempfile.TemporaryDirectory() as d:
+        bundle = Path(d) / 'bundle' / 'research'
+        (bundle / 'scripts').mkdir(parents=True)
+        shutil.copyfile(TE.DEFAULT_API, bundle / 'scripts' / 'xml2_api.json')
+
+        class Ctx:
+            def research_path(self, rel):
+                return bundle / rel
+
+        out = Path(d) / 'out'
+        _tree(out / 'Scripts', GOOD)
+        saved = TE.DEFAULT_API
+        try:
+            TE.DEFAULT_API = Path(d) / 'missing' / 'xml2_api.json'   # the repo path a frozen build does not have
+            code, scan, messages = SF.typed_registry_for(str(out), Ctx())
+            assert code == 0 and scan is not None, messages
+            code, scan, messages = SF.typed_registry_for(str(out))
+            assert code == 1 and any('No such file' in m or 'cannot find' in m.lower() for m in messages), messages
+        finally:
+            TE.DEFAULT_API = saved

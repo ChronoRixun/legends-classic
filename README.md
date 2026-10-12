@@ -11,7 +11,7 @@ It is a builder, not a download: every file of the result is made on your comput
 This project ships no game content - no game files, no parts of them, no modified executables - and the builder
 makes no network connections.
 
-> **Status: public test builds (builder 0.2.0, XML2 Fix 1.4.0, launcher 0.3.0).** Every mission and the ending run
+> **Status: public test builds (builder 0.2.1, XML2 Fix 1.4.0, launcher 0.3.0).** Every mission and the ending run
 > in automated tests on the developer's PC (a full hand-played run is under way), the builder (`xml1-builder`) makes
 > that build from a disc image and an X-Men Legends II install in a few minutes, and the
 > [Ultimate Legends](https://github.com/ChronoRixun/ultimate-legends) launcher does it in a few clicks. 0.2.0 brings a
@@ -230,7 +230,7 @@ combat, menu, capacity or Master Mold changes. The launcher installs the latest 
 
 | Builder | Content version | Needs xml2-fix | Notes |
 |---|---|---|---|
-| 0.2.0 | 18 | 1.4.0 | the LC save format (`[Save] Format=lc`), the first game's combat balance (`[Balance]`), the entity capacity raise (`[Limits] EntityCapacity`: 768 generic / 1024 World entities), triggers per move (`[Limits] MoveTriggers`), the Master Mold controller (`[Game] Xml1MasterMold`, `Xml1MoldStage`), explosions' first hit (`[Game] ExplosiveFirstHit`), the classic main menu (`[Game] ClassicMainBackdrop`, `ClassicMainPanelBounds`), popup answers (`[Game] ConfirmationRelease`), the Xtraction shop (`[Game] XtractionShop`), content fingerprint metadata (`[Online] ContentFingerprint`) and the shared gameplay agreement (co-op peers with different content or settings are refused, with the reason on both PCs) |
+| 0.2.0 - 0.2.1 | 18 | 1.4.0 | the LC save format (`[Save] Format=lc`), the first game's combat balance (`[Balance]`), the entity capacity raise (`[Limits] EntityCapacity`: 768 generic / 1024 World entities), triggers per move (`[Limits] MoveTriggers`), the Master Mold controller (`[Game] Xml1MasterMold`, `Xml1MoldStage`), explosions' first hit (`[Game] ExplosiveFirstHit`), the classic main menu (`[Game] ClassicMainBackdrop`, `ClassicMainPanelBounds`), popup answers (`[Game] ConfirmationRelease`), the Xtraction shop (`[Game] XtractionShop`), content fingerprint metadata (`[Online] ContentFingerprint`) and the shared gameplay agreement (co-op peers with different content or settings are refused, with the reason on both PCs) |
 | 0.1.12 | 15 | 1.3.2 | ladder descents (`[Game] CharacterLadderPaths`), objective completion text (`[Game] ObjectiveDescriptions`), STAT pickups (`addStatPoints`), the first game's break rule (`[Game] BreakRule`), the effect curve pool (`[Limits] EffectCurves`), no Xtract world map (`[Game] Xtract`) |
 | 0.1.8 - 0.1.11 | 11 - 14 | 1.3.1 | fighting-style registry (`[Limits] FightStyles`), enemy outlines (`[Game] GeometrySharingBlendIndices`) |
 | 0.1.6 - 0.1.7 | 8 - 9 | 1.3.0 | conversation hooks, skill points, the item-enhancement pool |
