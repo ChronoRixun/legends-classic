@@ -129,8 +129,13 @@ BUILD_REPORT = ('_build', 'report.json')
 # particles (the bench fire is a faint glow). Curves are not saved.
 # MoveTriggers preserves all authored holster/redraw events and a flash/sound per gun shot.
 # Requires the companion XML2 Fix move-trigger patch; absent key means stock 19.
+# xml2-fix [Limits] ScriptFunctions (its docs/script-functions.md): XMen2.exe resolves script function names through a
+# tree of 320; its own 308 (289 + 19 builtins) and xml2-fix's functions fill it, and a function registered past it is
+# dropped together with every script line that calls it. The fix raises it to 1024 by default while ForcedTeams
+# registers its functions; written here explicitly (validate V-TBD script function names checks the count against it).
+# Nothing saved; online it is gameplay agreement rule 14.
 LIMITS = {'ActorSlots': '127', 'ResourceNames': '1024', 'ItemEnhancements': '512', 'FightStyles': '32',
-          'EffectCurves': '3600', 'MoveTriggers': '64', 'EntityCapacity': '1'}
+          'EffectCurves': '3600', 'MoveTriggers': '64', 'EntityCapacity': '1', 'ScriptFunctions': '1024'}
 
 # xml2-fix 1.3.1 [Game] GeometrySharingBlendIndices (SPEC 44, issue #11): XMen2.exe's geometry sharing reuses one
 # skinned mesh for another when positions and weights match although their packed blend indices differ; XML1's
@@ -224,7 +229,8 @@ PORT_OWNED = {'Game': ('NewGameTeam', 'ResetUnlocks', 'SaveFolder', 'ForcedTeams
                        'BreakRule', 'PlacementCrush', 'DoubleHeal', 'DeathRule', 'ConfirmationRelease',
                        'ExplosiveFirstHit', 'RankCosts', 'LevelSkillPoints', 'LevelStatPoints', 'Xml1Multipart',
                        'Xml1MasterMold', 'Xml1MoldStage', 'Xml1Turrets'),
-              'Limits': ('ActorSlots', 'ResourceNames', 'ItemEnhancements', 'FightStyles', 'EffectCurves', 'MoveTriggers', 'EntityCapacity'),
+              'Limits': ('ActorSlots', 'ResourceNames', 'ItemEnhancements', 'FightStyles', 'EffectCurves', 'MoveTriggers', 'EntityCapacity',
+                         'ScriptFunctions'),
               'Online': ('GameVersion', 'ContentFingerprint'),
               'Save': ('Format',),
               'Xml1Turrets': ('Count',) + tuple(f'T{i}' for i in range(1, 33))}
