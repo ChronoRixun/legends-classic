@@ -6609,3 +6609,22 @@ decoded catalogue differs from candidate i's only in its content version; every 
 token LC26 with the fresh build's bind manifest; LC25 and every older row are unchanged. A raised (E10A2) save
 carries LC required-feature bit 0; the GCAP protocol revision 2 and entity layout rule revision 3 refuse a
 candidate-i peer at admission whatever its token. Builder/DLL versions remain 0.2.0 / 1.4.0.
+
+## 88. Pack amount (XML2 Fix `[Game] PackAmount`, gameplay rule 13)
+
+Section number provisional: the 0.2.2 integrator renumbers if another branch took 88.
+
+A health or energy pack heals a fraction of the hero's maximum in both games, and the fraction is code, not data:
+both games' `Data/items` give `HEALTH_ITEM` / `ENERGY_ITEM` the scripts `restoreHealth('_ACTIVATOR_',-1)` /
+`restoreEnergy('_ACTIVATOR_',-1)` (both describe them as 25%), and -1 means "the script function's own fraction".
+default.xbe's functions (0x9bd50 / 0x9bcb0) take `(int)(max * 0.25)` (0x3c83b0) and pass it to the use (0x3a7c0 /
+0x3a870: the pending heal becomes `min(max, max(current, pending) + amount)`); no random draw, no double. XMen2.exe's
+(0x4a2dd0 / 0x4a2c20) take 0.33 (0.66 on a double heal, removed by `[Game] DoubleHeal=0`) into the same kind of
+pending heal (0x42ca80 / 0x42cb70). The port's packs therefore healed a third where the first game's healed a
+quarter, at every level (the x4 hero stat scale moves the maximum and the pack with it).
+
+`fix_ini.game_keys` writes `[Game] PackAmount=xml1` (`PACK_AMOUNT`) for every first-game opening, and the key is
+port-owned (dropped from a stock install's ini). The fix writes 0.25 over the two single-amount immediates; the
+item data is unchanged. An XML2 Fix without the key leaves the third (the ini key is ignored). Checks:
+`tests/unit/test_pack_amount.py` (the key, its ownership and the stock merge); the fix's own
+`xml2_test --pack-amount-rules`.

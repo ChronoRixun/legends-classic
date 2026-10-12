@@ -175,11 +175,17 @@ REQUIRED_XML2FIX = '1.4'
 BALANCE_HERO_STAT_SCALE = '4'
 BALANCE_NATIVE_STAT_HEROES = 'ProfXAstral,ProfXGladiator'
 
+# xml2-fix [Game] PackAmount (0.2.2; port gameplay rule 13): XML1's health / energy packs restore a quarter of the
+# maximum - default.xbe's restoreHealth / restoreEnergy (0x9bd50 / 0x9bcb0) turn the items' -1 into (int)(max * 0.25)
+# (0x3c83b0) - where XMen2.exe's (0x4a2dd0 / 0x4a2c20) take 0.33. Both games' HEALTH_ITEM / ENERGY_ITEM call the same
+# scripts with -1 and say "25%", so the amount is not data: the fix writes 0.25 into the two single-amount stores.
+PACK_AMOUNT = 'xml1'
+
 # every key the port may write (the builder drops the ones a build does not need); the launcher owns the rest
 PORT_OWNED = {'Game': ('NewGameTeam', 'ResetUnlocks', 'SaveFolder', 'ForcedTeams', 'PostgameScript', 'WindowTitle',
                         'EndHeroUnlock', 'MainMenuItems', 'ClassicMainBackdrop', 'ClassicMainPanelBounds', 'NewGamePlus', 'ReviewStats', 'Xtract', 'XtractionShop', 'XPCurve',
                        'GeometrySharingBlendIndices', 'CharacterLadderPaths', 'ObjectiveDescriptions',
-                       'BreakRule', 'ConfirmationRelease', 'ExplosiveFirstHit', 'Xml1MasterMold', 'Xml1MoldStage'),
+                       'BreakRule', 'ConfirmationRelease', 'ExplosiveFirstHit', 'PackAmount', 'Xml1MasterMold', 'Xml1MoldStage'),
               'Limits': ('ActorSlots', 'ResourceNames', 'ItemEnhancements', 'FightStyles', 'EffectCurves', 'MoveTriggers', 'EntityCapacity'),
               'Online': ('GameVersion', 'ContentFingerprint'),
               'Save': ('Format',)}
@@ -345,6 +351,7 @@ def game_keys(*, xml1_opening=True, save_folder=None, forced_teams='1', add_hero
         game['ObjectiveDescriptions'] = OBJECTIVE_DESCRIPTIONS
         game['BreakRule'] = BREAK_RULE
         game['ExplosiveFirstHit'] = '1'
+        game['PackAmount'] = PACK_AMOUNT
     if forced_teams in ('0', '1'):
         game['ForcedTeams'] = forced_teams
     if add_hero:
