@@ -6844,6 +6844,17 @@ fix for each key installed when it saves; a load grants a key's points only with
 version changes; 1.4.0 and this package's reader ignore the bits (`convert.old_stream_to_new(optional_features=)`
 writes them for tests).
 
+**In game (agent check, 2026-10-12; staged: the save menu opened by `extractionPoint`, everything else real menu
+input; points read from memory).** A copy of an old campaign (Cyclops / Iceman level 21, 20 skill / 80 stat points;
+Phoenix / Wolverine level 21, 0 / 0; the other heroes level 21 with nothing processed), imported and saved again by
+XML2 Fix 1.5.0 without the catch-up (content 19, no bit): that DLL loads 20 / 80 and 0 / 0 (control). With the
+catch-up: 24 / 96 and 4 / 16 (4 fifth levels), the unprocessed heroes and both Professor X forms unchanged; the
+import itself gets the same. Saved (bits 1 and 2 set), closed, loaded in a new process: 24 / 96 and 4 / 16, no grant.
+A granted stat point is spent in the stats screen (16 -> 15). Saved with the keys removed, then loaded with them: the
+catch-up runs again (28 / 112): a file written without the keys is never taken as caught up, so a campaign that goes
+through a session without them is granted again for its earlier fifth levels (one bit per file can't say up to which
+level each hero was caught up; the builder always writes the keys).
+
 **In game (agent check, 2026-10-12; staged: XP by `awardXPToPlayable` to XML1's level thresholds - 505, 830, 4720,
 6880 - and the extraction menu opened by script for the save).** New Game, Wolverine: XML2 Fix 1.4.0 (control) gives
 3 / 4 / 8 / 9 skill points at levels 4 / 5 / 9 / 10 (+1 at 4 -> 5 and 9 -> 10); with `LevelSkillPoints=xml1` 3 / 5 / 9 /
