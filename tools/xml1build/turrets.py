@@ -24,6 +24,9 @@ m is the muzzle: the translation of the turret model's `Gun1` node (default.xbe 
 `Gun<emitter+1>` bolt; a turret's single weapon is emitter 0), read from the built model; 0,0,0 (the turret's own
 position, as the original without that bolt) when the model has none.
 
+Only definitions that are scanturretent in the XML1 zone (maps/<zone>.eng) are turrets; XML1's damaged deathspawn
+models also carry a turretweapon but are plain physents and are never listed.
+
 A turret that a zone script spawns (XML1's Hive tanks: spawn("tank1", "tank_turret_sp01", "turret1", ...) in the zone's
 own script folder) has no authored spot: it is listed as '*<name>' with a zero position and rest, and the DLL binds it
 by name anywhere in the zone, taking its orientation when bound as the rest basis.
@@ -181,13 +184,25 @@ def script_spawns(texts) -> list:
     return out
 
 
-def placements(zone: str, root, weapons: dict, values, spawns=(), muzzle=None) -> tuple[list, list]:
+def scan_turret_definitions(x1_root) -> set:
+    """names of the XML1 zone's scanturretent definitions (its maps/<zone>.eng). Only those are turrets: XML1's
+    damaged deathspawn models (tank_turret_sp_d, tank_turret_haarp_sp_d) are plain physents that also carry a
+    turretweapon, and become indistinguishable from a remapped turret once converted."""
+    if x1_root is None:
+        return set()
+    return {el.get('name') for el in x1_root.iter('entity')
+            if el.get('name') and (el.get('classname') or '').strip().lower() == 'scanturretent'}
+
+
+def placements(zone: str, root, weapons: dict, values, spawns=(), muzzle=None, turret_defs=None) -> tuple[list, list]:
     """([(line, detail)], [skipped reason]) for one built zone (its .engb root); spawns: script_spawns() of the zone's
-    script folder; muzzle(model path) -> the model's Gun1 offset (muzzle_offset), (0, 0, 0) when not given"""
+    script folder; muzzle(model path) -> the model's Gun1 offset (muzzle_offset), (0, 0, 0) when not given;
+    turret_defs: scan_turret_definitions() of the XML1 zone (None: every physent with a turretweapon)"""
     defs = {}
     for el in root.iter('entity'):
         if el.get('name') and el.get('turretweapon') and (el.get('classname') or '').lower() == 'physent':
-            defs[el.get('name')] = el
+            if turret_defs is None or el.get('name') in turret_defs:
+                defs[el.get('name')] = el
     lines, skipped = [], []
     if not defs:
         return lines, skipped
@@ -261,7 +276,12 @@ def build(ctx, zones) -> dict:
         folder = ctx.out_path(f'Scripts/{zone.rsplit("/", 1)[0]}') if '/' in zone else None
         texts = [f.read_text(encoding='utf-8', errors='replace') for f in sorted(folder.glob('*.py'))] \
             if folder is not None and folder.is_dir() else []
-        got, miss = placements(zone, ctx.read_out_xmlb(rel), weapons, values, script_spawns(texts), model_muzzle)
+        try:
+            x1_root = ctx.read_x1_xml(f'maps/{zone}.eng')
+        except KeyError:
+            x1_root = None
+        got, miss = placements(zone, ctx.read_out_xmlb(rel), weapons, values, script_spawns(texts), model_muzzle,
+                               scan_turret_definitions(x1_root))
         for line, detail in got:
             lines.append(line)
             details.append(detail)

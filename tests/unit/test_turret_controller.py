@@ -134,3 +134,20 @@ def test_ini_keys_need_a_valid_contract_and_port_identity():
     assert 'Xml1Turrets' not in harness.ini_text('windowed', 1280, 720, True, turrets=keys)
     # every key the port may write is port-owned (dropped again when a build no longer has turrets)
     assert 'Xml1Turrets' in F.PORT_OWNED['Game'] and 'T32' in F.PORT_OWNED['Xml1Turrets']
+
+
+def test_only_xml1_scan_turret_definitions_are_turrets():
+    root = _zone()
+    d = ET.SubElement(root, 'entinst', type='gizmo_turret_wreck')
+    ET.SubElement(d, 'inst', name='wreck_a', pos='7 7 7', orient='0 0 0')
+    ET.SubElement(root, 'entity', name='gizmo_turret_wreck', classname='physent', turretweapon='wp_fake_launcher')
+    x1 = ET.Element('world')
+    for name, cls in (('gizmo_turret', 'scanTurretEnt'), ('gizmo_gun', 'scanturretent'), ('gizmo_zapper', 'scanturretent'),
+                      ('gizmo_turret_wreck', 'physent')):
+        ET.SubElement(x1, 'entity', name=name, classname=cls)
+    defs = TU.scan_turret_definitions(x1)
+    assert defs == {'gizmo_turret', 'gizmo_gun', 'gizmo_zapper'} and TU.scan_turret_definitions(None) == set()
+    names = [d['instance'] for _, d in TU.placements('fake/zone_q', root, WEAPONS, FakeValues(), turret_defs=defs)[0]]
+    assert 'wreck_a' not in names and 'gizmo_a' in names and 'gun_z' in names
+    assert 'wreck_a' in [d['instance'] for _, d in TU.placements('fake/zone_q', root, WEAPONS, FakeValues())[0]]
+    assert TU.placements('fake/zone_q', root, WEAPONS, FakeValues(), turret_defs=set()) == ([], [])
