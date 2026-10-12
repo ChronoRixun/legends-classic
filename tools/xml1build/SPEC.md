@@ -6610,7 +6610,7 @@ token LC26 with the fresh build's bind manifest; LC25 and every older row are un
 carries LC required-feature bit 0; the GCAP protocol revision 2 and entity layout rule revision 3 refuse a
 candidate-i peer at admission whatever its token. Builder/DLL versions remain 0.2.0 / 1.4.0.
 
-## TBD. Resistance talents strip reactions again (launchers; validator V-TBD)
+## TBD. Resistance talents strip reactions again (launchers; validator V-TBD3)
 
 **Symptom.** A punch-punch-slam (the first game's launching uppercut, `popupattack`: `dmgmod_popup`) throws a
 standing HAARP officer about 80 units up on the port; the first game only lands the hit (13 of 13 tries on the Xbox
@@ -6644,7 +6644,7 @@ share fields and effects) and replaces each `resist_<type>` affecter with XML1's
 halves. Damage taken is unchanged; names and order are unchanged (saves, `shared_talents.lcbind`). Data only: both
 co-op peers run the same build, so no gameplay agreement rule is involved.
 
-**V-TBD** (npc_values.v_resist_talents): every shared talent XML1 defines with scoped `def_damage` rows carries them
+**V-TBD3** (npc_values.v_resist_talents): every shared talent XML1 defines with scoped `def_damage` rows carries them
 as `def_damage_scope` and no `resist_<type>` of those types. npc_values.verify_exe / verify_xbe also check both 0.3
 thresholds.
 
@@ -6656,3 +6656,12 @@ scope does not limit it (static reading; not yet seen in game): the bruisers wou
 type, and HavokBoss (named only by an unused map) none at all.
 npc_values.immunity_talent now writes a scoped `def_damage` row as `def_damage_scope` (XML2 retail's own spelling,
 ps_colossus), and definition_rows reads it back as the XML1 row, so V19's body comparison is unchanged.
+
+**With the removable resistances (issue #3, `tag_x1_removable_talents`, V-TBD2).** restore_resist_talents runs first
+(load_talents); the removal tag runs when shared_talents is written, so the `def_damage_scope` row is what lands in
+the `tag_name="def_damage"` powerup (other affecters - `def_mind_control` - move to the untagged one). A boss's
+`remove_tag="def_damage"` (Blob armor_off, Juggernaut armor_end / helmet_penalty, Toad, Pyro, MagnetoBoss) drops
+it by tag (0x54f7b0 -> 0x54dad0, which also marks the cached affecters dirty, 0x54da80); `def_damage_scope` is asked
+live from the current powerup list on every hit (0x550410), so the next hit already takes full damage and, as in
+XML1 (0x2b100 drops every def_damage powerup), can launch, knock back and trip again. V-TBD2 counts
+`def_damage_scope` as a resistance affecter.

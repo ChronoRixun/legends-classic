@@ -857,7 +857,7 @@ def v19_immunities(v, ck):
 
 
 def v_resist_talents(v, ck):
-    """V-TBD resistance talents: every shared talent in <out> (both halves) that XML1's data/shared_talents.eng
+    """V-TBD3 resistance talents: every shared talent in <out> (both halves) that XML1's data/shared_talents.eng
     defines with def_damage rows scoped to a damage type carries those rows as def_damage_scope and no resist_<type>
     of the same types (resist_rewrite). Otherwise XMen2.exe never strips the reactions XML1 refused (a resistant
     NPC is launched by an uppercut XML1 merely lands)."""

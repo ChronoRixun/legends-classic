@@ -150,3 +150,44 @@ def test_removable_resistances_validator_is_complete():
     errors = run(shared(tag, ''), shared(tag, tag))
     assert any('rank 2 (half 1)' in e and 'without tag_name' in e for e in errors)
     assert any('Brute' in e for e in errors)      # the remover then has no fully tagged target
+
+
+def test_restored_resistance_rows_are_what_the_removal_tag_takes():
+    """resist_rewrite (XML1's def_damage row as def_damage_scope) then the removal tag: the scoped row sits in the
+    tagged powerup (removing it gives the reactions back, as XML1's removal did), the other affecter stays put."""
+    from xml1build import npc_values as NV
+    from xml1build.characters import tag_x1_removable_talents
+    from xml1build.validate import removable_findings
+    x1 = ET.fromstring('<talents><talent name="mind_shield"><level>'
+                       '<activepowerup powerup="def_damage" scope_damage="dmg_mental" affect_type="scale" level="0.2"/>'
+                       '<activepowerup powerup="def_mind_control" affect_type="scale" level="0.001"/></level></talent>'
+                       '</talents>')
+    x1_talents = {t.get('name'): t for t in x1.iter('talent')}
+
+    def x2():
+        return ET.fromstring('<talents><talent name="mind_shield"><level><powerup life="-1" share_radius="120">'
+                             '<affecter attribute="resist_mental" level="0.8"/>'
+                             '<affecter attribute="def_mind_control" affect_type="scale" level="0.001"/>'
+                             '</powerup></level></talent></talents>')
+    roots = (x2(), x2())
+    for root in roots:
+        assert NV.resist_rewrite(root.find('talent'), x1_talents['mind_shield']) == (1, [])
+    assert tag_x1_removable_talents(roots, x1_talents) == ['mind_shield']
+    for root in roots:
+        pus = root.find('talent').find('level').findall('powerup')
+        assert [p.get('tag_name') for p in pus] == ['def_damage', None]
+        assert [dict(a.attrib) for a in pus[0]] == [{'affect_type': 'scale', 'attribute': 'def_damage_scope',
+                                                     'level': '0.2', 'scope_damage': 'dmg_mental'}]
+        assert [a.get('attribute') for a in pus[1]] == ['def_mind_control']
+        assert pus[0].get('share_radius') == pus[1].get('share_radius') == '120'
+        assert NV.resist_problems(root.find('talent'), x1_talents['mind_shield']) == []
+    st = ET.fromstring('<stats name="Brute" powerstyle="ps_brute"><talent name="mind_shield" level="1"/></stats>')
+    style = ET.fromstring('<powerstyle><fightmove name="off"><trigger name="powerup" remove_tag="def_damage"/>'
+                          '</fightmove></powerstyle>')
+    errors, counts = removable_findings(x1_talents, list(roots), [st], lambda n: style)
+    assert not errors and counts == {'x1_removable_talents': 1, 'removing_characters': 1}
+    # an untagged scoped row is a V-TBD2 finding
+    untagged = x2()
+    NV.resist_rewrite(untagged.find('talent'), x1_talents['mind_shield'])
+    errors, _ = removable_findings(x1_talents, [untagged, roots[1]], [st], lambda n: style)
+    assert any('without tag_name' in e for e in errors)

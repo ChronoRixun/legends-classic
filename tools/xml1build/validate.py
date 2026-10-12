@@ -116,7 +116,7 @@ Checks (severity per SPEC 4.6: error = will not load or silently misbehaves; war
                 hidden)
   V36 recommended party (SPEC 67, issue #76; reported with V14): a mission start seeded with the first game's
                 recommended party has exactly the guarded seatParty + skinset before its original editable menu
-  V-TBD resistance talents (npc_values.v_resist_talents): every shared talent XML1 defines with def_damage rows
+  V-TBD3 resistance talents (npc_values.v_resist_talents): every shared talent XML1 defines with def_damage rows
                 scoped to a damage type (the six physical / energy / mental _resistant[_share] talents) carries them
                 as def_damage_scope and no resist_<type> of those types - only def_damage strips a hit's reactions
                 (popup, knockback, trip, stun) at scale <= 0.3 in both engines
@@ -432,7 +432,7 @@ class Scan:
 
 # ---------------------------------------------------------------------------------------------- validator
 REMOVABLE_TAG = 'def_damage'
-_RESIST_AFFECTER = re.compile(r'(resist_|def_damage$)')
+_RESIST_AFFECTER = re.compile(r'(resist_|def_damage(_scope)?$)')   # characters.X1_REMOVABLE_AFFECTERS
 
 
 def removable_findings(x1_talents, shared_roots, stats, style):
@@ -925,7 +925,7 @@ class Validator:
                                ('V17', 'review', lambda ck: VF.v17_review(self, ck)),
                                ('V18', 'combat events', lambda ck: CE.v18(self, ck)),
                                ('V19', 'npc values', lambda ck: NV.v19(self, ck)),
-                               ('V-TBD', 'resistance talents', lambda ck: NV.v_resist_talents(self, ck)),
+                               ('V-TBD3', 'resistance talents', lambda ck: NV.v_resist_talents(self, ck)),
                                ('V20', 'automaps', lambda ck: AM.v20(self, ck)),
                                ('V21', 'skins', lambda ck: SK.validate(self, ck)),
                                ('V22', 'buoys', lambda ck: BY.validate(self, ck)),
