@@ -214,9 +214,10 @@ X2_MAXENERGY = (30, 4, 2)            # XMen2.exe 0x4b8c20: 0x6d9774, 0x6d9778, 0
 X1_REGEN_MIND = 0.01                 # default.xbe 0xaf860: regen scale x (1 + 0.01 mind), 0x3c93c0
 REGEN_BASE = 15.0                    # default.xbe 0x3c836c (non-hero team) = XMen2.exe 0x683f2c (enemy team)
 # (address, float) facts verify_exe / verify_xbe check byte for byte
-X2_FLOATS = {0x6d9774: 30.0, 0x6d9778: 4.0, 0x6d977c: 2.0, 0x683f2c: 15.0, 0x684068: 1 / 60, VALUE_ZERO: 0.0}
+X2_FLOATS = {0x6d9774: 30.0, 0x6d9778: 4.0, 0x6d977c: 2.0, 0x683f2c: 15.0, 0x684068: 1 / 60, VALUE_ZERO: 0.0,
+             0x681ebc: 0.3}           # the def_damage reaction-strip threshold (resist_rewrite)
 X1_FLOATS = {0x44f200: 30.0, 0x44f204: 4.0, 0x44f208: 7.0, 0x3c93c0: 0.01, 0x3c836c: 15.0, 0x3ca950: 1 / 60,
-             0x3c9404: 2.0, 0x3c6de4: 0.0}
+             0x3c9404: 2.0, 0x3c6de4: 0.0, 0x3c8828: 0.3}
 
 
 def maxenergy_add(rank):
@@ -348,6 +349,7 @@ IMMUNITY_AFFECTERS = ('def_damage', 'def_knockback', 'def_stun', 'def_pain', 'de
                       'def_grab', 'def_reflect_pain', 'def_finisher', 'def_mind_control', 'no_iceshell',
                       'slow_immune')
 _IMMUNITY_ROW_ATTRS = ('powerup', 'affect_type', 'level', 'life', 'scope_damage')
+SCOPED_DEF_DAMAGE = 'def_damage_scope'    # XMen2.exe's def_damage asked with the hit (affecter 56)
 # a row = (attribute, affect_type, level, scope_damage), all lower-case strings ('' when absent): the affecter's form
 
 
@@ -392,14 +394,17 @@ def immunity_key(rows):
 
 
 def immunity_talent(name, rows):
-    """the shared talent definition in XML2's boss_resistances form."""
+    """the shared talent definition in XML2's boss_resistances form. A def_damage row scoped to a damage type is
+    written as XMen2.exe's scoped affecter def_damage_scope (56, asked with the hit at 0x4379e6): its def_damage
+    (39) is a cached per-actor value (0x53a1a0 case 0x27, filled without a hit), so a scope_damage on it never
+    limits it to that damage type."""
     t = ET.Element('talent', {'name': name})
     pu = ET.SubElement(ET.SubElement(t, 'level'), 'powerup', {'life': '-1'})
     for attr, affect, level, scope in rows:
         a = {}
         if affect:
             a['affect_type'] = affect
-        a['attribute'] = attr
+        a['attribute'] = SCOPED_DEF_DAMAGE if attr == 'def_damage' and scope else attr
         if level != '':
             a['level'] = level
         if scope:
@@ -425,6 +430,8 @@ def definition_rows(talent_el):
             return None
         d = _lower(a)
         attr = (d.get('attribute') or '').lower()
+        if attr == SCOPED_DEF_DAMAGE and d.get('scope_damage'):
+            attr = 'def_damage'                 # immunity_talent's spelling of a scoped def_damage row
         if attr not in IMMUNITY_AFFECTERS or set(d) - {'attribute', 'affect_type', 'level', 'scope_damage'}:
             return None
         rows.append((attr, (d.get('affect_type') or '').lower(), (d.get('level') or '').lower(),
@@ -479,6 +486,116 @@ def immunity_plan(npc_root, exclude=()):
         b['canonical'] = name
         alias[key] = name
     return {'bodies': bodies, 'alias': alias, 'skipped': skipped, 'losses': losses}
+
+
+# ------------------------------------------------------------------- damage-type resistance talents (reactions)
+# XML1's six resistance talents (physical / energy / mental _resistant and their _share auras) are
+# <activepowerup powerup="def_damage" scope_damage="dmg_<type>" affect_type="scale" level="0.2">. XMen2.exe ships
+# talents of the same six names, which win by name (characters.load_talents), built on resist_<type> 0.8 instead.
+# The damage is the same (x0.2), but only def_damage strips a hit's reactions. Both engines run the same rule in the
+# damage receive path: a victim whose def_damage scale for this hit is at most 0.3 loses the hit's knockback,
+# popup (launch), trip, stun, immobilize and bounce (default.xbe 0x45260: def_damage = affecter 18 queried with the
+# hit, compared with 0.3 at 0x3c8828; XMen2.exe 0x437490: def_damage_scope = affecter 56 queried with the hit at
+# 0x4379e6 / 0x4379f7, times the cached unscoped def_damage, compared with 0.3 at 0x681ebc at 0x437bc3, mask at
+# 0x437bd9). resist_<type> (0x4294d0) only scales the damage, so on the port a HAARP officer or a GRSO captain
+# was launched by a punch-punch-slam uppercut XML1 merely lands. XML2's scoped spelling is def_damage_scope
+# (XML2 retail: ps_colossus); its def_damage (39) is the unscoped cached value. The rewrite keeps XML2's powerup
+# shape (share_radius / share_life aura, its effects, remove_on_death) and swaps only the resist affecter for
+# XML1's own row; a shared powerup reaches its owner in both engines (default.xbe 0x2aa90 adds it to the owner's
+# list before it creates the share object).
+RESIST_SCOPES = ('dmg_physical', 'dmg_energy', 'dmg_mental')
+REACTION_STRIP_SCALE = 0.3            # default.xbe 0x3c8828 = XMen2.exe 0x681ebc
+
+
+def resist_attr(scope):
+    """'dmg_physical' -> XMen2.exe's resist affecter of that type, 'resist_physical'."""
+    return 'resist_' + scope[len('dmg_'):]
+
+
+def x1_resist_rows(x1_talent):
+    """XML1 <Talent> definition -> [(scope_damage, level)] of its def_damage scale rows scoped to one of
+    RESIST_SCOPES, in document order ([] when it has none)."""
+    rows = []
+    if x1_talent is None:
+        return rows
+    for ap in x1_talent.iter():
+        if not isinstance(ap.tag, str) or ap.tag.lower() != 'activepowerup':
+            continue
+        a = _lower(ap)
+        scope = (a.get('scope_damage') or '').lower()
+        if (a.get('powerup') or '').lower() == 'def_damage' and (a.get('affect_type') or '').lower() == 'scale' \
+                and scope in RESIST_SCOPES and a.get('level') is not None:
+            rows.append((scope, a['level']))
+    return rows
+
+
+def _affecters(talent_el):
+    return [a for a in talent_el.iter() if isinstance(a.tag, str) and a.tag.lower() == 'affecter']
+
+
+def _is_scoped_row(a, scope, level):
+    d = _lower(a)
+    return ((d.get('attribute') or '').lower() == SCOPED_DEF_DAMAGE and (d.get('affect_type') or '').lower() == 'scale'
+            and (d.get('scope_damage') or '').lower() == scope and d.get('level') == level)
+
+
+def resist_rewrite(x2_talent, x1_talent):
+    """In place on one XMen2.exe shared talent definition XML1 also defines: for each of XML1's resistance rows
+    (x1_resist_rows) the first remaining <affecter attribute="resist_<type>"> becomes XML1's row in XMen2.exe's
+    scoped form, <affecter affect_type="scale" attribute="def_damage_scope" level=XML1 scope_damage="dmg_<type>">.
+    Idempotent (a row already in that form counts as done). Returns (rewritten, problems): problems name an XML1
+    row with no resist affecter to take it, or a resist affecter of a rewritten type left over (the damage would
+    be scaled twice)."""
+    rows = x1_resist_rows(x1_talent)
+    if x2_talent is None or not rows:
+        return 0, []
+    name = x2_talent.get('name') or '?'
+    affs = _affecters(x2_talent)
+    used, rewritten, problems = set(), 0, []
+    for scope, level in rows:
+        done = next((a for a in affs if id(a) not in used and _is_scoped_row(a, scope, level)), None)
+        if done is not None:
+            used.add(id(done))
+            continue
+        target = next((a for a in affs if id(a) not in used
+                       and (_lower(a).get('attribute') or '').lower() == resist_attr(scope)), None)
+        if target is None:
+            problems.append(f'{name}: XML1 def_damage {scope} {level} has no {resist_attr(scope)} affecter to replace')
+            continue
+        rest = {k: v for k, v in target.attrib.items()
+                if k.lower() not in ('affect_type', 'attribute', 'level', 'scope_damage')}
+        target.attrib.clear()
+        target.attrib.update({'affect_type': 'scale', 'attribute': SCOPED_DEF_DAMAGE, 'level': level,
+                              'scope_damage': scope, **rest})
+        used.add(id(target))
+        rewritten += 1
+    for scope in sorted({s for s, _ in rows}):
+        left = [a for a in affs if id(a) not in used and (_lower(a).get('attribute') or '').lower() == resist_attr(scope)]
+        if left:
+            problems.append(f'{name}: {len(left)} {resist_attr(scope)} affecter(s) left beside XML1\'s def_damage rows')
+    return rewritten, problems
+
+
+def resist_problems(out_talent, x1_talent):
+    """the validator's view of one <out> definition: [] when it carries every XML1 resistance row in the scoped
+    form and no resist affecter of those types, else the reasons."""
+    rows = x1_resist_rows(x1_talent)
+    if out_talent is None or not rows:
+        return []
+    name = out_talent.get('name') or '?'
+    affs = _affecters(out_talent)
+    bad, used = [], set()
+    for scope, level in rows:
+        hit = next((a for a in affs if id(a) not in used and _is_scoped_row(a, scope, level)), None)
+        if hit is None:
+            bad.append(f'{name}: no <affecter affect_type="scale" attribute="{SCOPED_DEF_DAMAGE}" level="{level}" '
+                       f'scope_damage="{scope}"> (XML1 def_damage row)')
+        else:
+            used.add(id(hit))
+    for scope in sorted({s for s, _ in rows}):
+        if any((_lower(a).get('attribute') or '').lower() == resist_attr(scope) for a in affs):
+            bad.append(f'{name}: carries {resist_attr(scope)} (XMen2.exe never strips reactions for it)')
+    return bad
 
 
 # ------------------------------------------------------------------------------------------ exe / xbe facts
@@ -737,3 +854,33 @@ def v19_immunities(v, ck):
             ck.set('npc_immunity_entries', n_entries)
             ck.set('npc_immunity_refs', n_refs)
             ck.set('npc_immunity_talents', len(used))
+
+
+def v_resist_talents(v, ck):
+    """V60 resistance talents: every shared talent in <out> (both halves) that XML1's data/shared_talents.eng
+    defines with def_damage rows scoped to a damage type carries those rows as def_damage_scope and no resist_<type>
+    of the same types (resist_rewrite). Otherwise XMen2.exe never strips the reactions XML1 refused (a resistant
+    NPC is launched by an uppercut XML1 merely lands)."""
+    try:
+        x1root = v.ctx.read_x1_xml('data/shared_talents.eng')
+    except Exception:          # noqa: BLE001 - no XML1 source: nothing to compare against
+        x1root = None
+    if x1root is None:
+        ck.warn('XML1 data/shared_talents.eng not readable: resistance talents unverified')
+        return
+    x1 = {(t.get('name') or '').lower(): t for t in x1root.iter()
+          if isinstance(t.tag, str) and t.tag.lower() == 'talent' and x1_resist_rows(t)}
+    checked = 0
+    for ext in ('.xmlb', '.engb'):
+        t = v.tree(f'data/shared_talents{ext}')
+        if t is None:
+            ck.error(f'data/shared_talents{ext} missing or undecodable')
+            continue
+        for d in t.iter('talent'):
+            src = x1.get((d.get('name') or '').lower())
+            if src is None:
+                continue
+            checked += 1
+            for msg in resist_problems(d, src):
+                ck.error(f'shared_talents{ext} {msg}')
+    ck.set('resist_talents_checked', checked)

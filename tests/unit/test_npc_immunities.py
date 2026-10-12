@@ -157,8 +157,17 @@ def test_immunity_talent_is_the_engine_form():
     assert NV.immunity_key(NV.definition_rows(t)) == NV.immunity_key(rows)
     rows, _ = NV.immunity_rows(_talent(root, 'BruiserB', 'tough_skin'))
     t = NV.immunity_talent('tough_skin', rows)
-    assert [a.attrib for a in t.iter('affecter')] == [{'affect_type': 'scale', 'attribute': 'def_damage',
+    # a scoped def_damage row is written in XMen2.exe's scoped spelling (its def_damage ignores scope_damage) ...
+    assert [a.attrib for a in t.iter('affecter')] == [{'affect_type': 'scale', 'attribute': 'def_damage_scope',
                                                         'level': '0.5', 'scope_damage': 'dmg_physical'}]
+    # ... and reads back as the XML1 body (V19 compares bodies)
+    assert NV.immunity_key(NV.definition_rows(t)) == NV.immunity_key(rows)
+    # an unscoped def_damage row stays def_damage
+    t = NV.immunity_talent('all_proof', [('def_damage', 'scale', '0', '')])
+    assert [a.get('attribute') for a in t.iter('affecter')] == ['def_damage']
+    # def_damage_scope without a scope is not an immunity row
+    assert not NV.is_immunity_talent(definition('odd', [{'affect_type': 'scale', 'attribute': 'def_damage_scope',
+                                                         'level': '0'}]))
 
 
 def test_is_immunity_talent_rejects_other_shared_forms():

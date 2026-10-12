@@ -6954,3 +6954,59 @@ revision 6 is retained; of the `.lcbind` files only `shared_talents.lcbind` diff
 bound lists are identical). The append-only history assigns (19,6) token LC27 with the fresh build's bind manifest;
 LC26 and every older row are unchanged. A 0.2.1 peer is refused at admission whatever its token: XML2 Fix 1.5.0
 registers gameplay rules 5-14. Builder/DLL versions 0.2.2 / 1.5.0; REQUIRED_XML2FIX 1.5 (fix_ini.check_release_dll).
+
+## 92. Resistance talents strip reactions again (launchers; validator V60)
+
+**Symptom.** A punch-punch-slam (the first game's launching uppercut, `popupattack`: `dmgmod_popup`) throws a
+standing HAARP officer about 80 units up on the port; the first game only lands the hit (13 of 13 tries on the Xbox
+original, 6 of 20 launches on 0.2.1, agent-work door-022). An officer launched next to the HAARP key door can hang
+on it and drop his keycard behind it.
+
+**Rule (the same code in both engines).** The damage receive path strips a hit's reaction bits - knockback 0x8,
+popup 0x10, trip 0x20, stun 0x40, immobilize 0x80 and bounce 0x40000 (XML1 also 0x200) - when the victim's
+`def_damage` scale for that hit is at most 0.3: default.xbe 0x45260 asks affecter 18 (`def_damage`) with the hit
+(so `scope_damage` applies) and compares with 0.3 (0x3c8828); XMen2.exe 0x437490 asks affecter 56
+(`def_damage_scope`) with the hit (0x4379e6 / 0x4379f7), multiplies the cached unscoped `def_damage`, and compares
+with 0.3 at 0x437bc3 (0x681ebc), mask at 0x437bd9. The rest of the popup decision also matches: `def_finisher` /
+`def_popup` turn the popup into a resisted reaction (XML1 affecters 26 / 28, XMen2.exe 47 / 48), `large` (XML1
+stats +0x3a1 bit 0x10, XMen2.exe +0x2ad bit 8) or `def_knockback` 0 cancel it (0x38340 / 0x427e00), and the
+launch itself is 120 units (30 for an airborne victim) in both (0x44630 / 0x435bf0).
+
+**Conversion loss.** XML1's six resistance talents (`physical_resistant`, `energy_resistant`, `mental_resistant`
+and their `_share` auras) are `def_damage` scale 0.2 scoped to one damage type. XMen2.exe ships talents of the same
+names, which win by name (characters.load_talents), built on `resist_<type>` 0.8. The damage is the same, but
+`resist_<type>` (0x4294d0) never strips a reaction. 74 XML1 npcstat entries carry one of the six; for 41 of them no
+other talent refuses the reactions (HAARPLeader, the GRSO officers, captains, commander and elite, the Shades
+leaders, Acolytes, Brotherhood and Morlock specialists, the advanced Sentinels, the Danger Room robots, the
+doppelgangers ...), so on the port they - and every ally inside a sharer's 120-unit aura - could be launched,
+knocked back, tripped and stunned by the damage types the first game refused them (a static census over the
+first game's npcstat and the 0.2.1 build: 14 entries for physical hits, 16 energy, 19 mental). A shared powerup reaches its owner in both engines (default.xbe 0x2aa90 puts it in the
+owner's list before it makes the share object).
+
+**Fix.** characters.restore_resist_talents (npc_values.resist_rewrite) keeps XMen2.exe's definitions (the aura's
+share fields and effects) and replaces each `resist_<type>` affecter with XML1's own row in XMen2.exe's scoped form,
+`<affecter affect_type="scale" attribute="def_damage_scope" level="0.2" scope_damage="dmg_<type>">`, in both
+halves. Damage taken is unchanged; names and order are unchanged (saves, `shared_talents.lcbind`). Data only: both
+co-op peers run the same build, so no gameplay agreement rule is involved.
+
+**V60** (npc_values.v_resist_talents): every shared talent XML1 defines with scoped `def_damage` rows carries them
+as `def_damage_scope` and no `resist_<type>` of those types. npc_values.verify_exe / verify_xbe also check both 0.3
+thresholds.
+
+**SPEC 30 follow-up: scoped immunity rows.** SPEC 30 wrote XML1's scoped `def_damage` immunity rows (HavokBoss's
+`def_damage dmg_energy 0`, the Morlock bruisers' `def_damage dmg_physical 0.5`) as XMen2.exe `def_damage` with a
+`scope_damage`. XMen2.exe's `def_damage` (39) is a cached per-actor value: the cache rebuild 0x53bf20 runs
+0x53a1a0 (case 0x27) for every affecter that passes its share filter (vt+0x44 = 0x534dc0), without a hit, so the
+scope does not limit it (static reading; not yet seen in game): the bruisers would take half damage from every
+type, and HavokBoss (named only by an unused map) none at all.
+npc_values.immunity_talent now writes a scoped `def_damage` row as `def_damage_scope` (XML2 retail's own spelling,
+ps_colossus), and definition_rows reads it back as the XML1 row, so V19's body comparison is unchanged.
+
+**With the removable resistances (issue #3, `tag_x1_removable_talents`, V53).** restore_resist_talents runs first
+(load_talents); the removal tag runs when shared_talents is written, so the `def_damage_scope` row is what lands in
+the `tag_name="def_damage"` powerup (other affecters - `def_mind_control` - move to the untagged one). A boss's
+`remove_tag="def_damage"` (Blob armor_off, Juggernaut armor_end / helmet_penalty, Toad, Pyro, MagnetoBoss) drops
+it by tag (0x54f7b0 -> 0x54dad0, which also marks the cached affecters dirty, 0x54da80); `def_damage_scope` is asked
+live from the current powerup list on every hit (0x550410), so the next hit already takes full damage and, as in
+XML1 (0x2b100 drops every def_damage powerup), can launch, knock back and trip again. V53 counts
+`def_damage_scope` as a resistance affecter.
