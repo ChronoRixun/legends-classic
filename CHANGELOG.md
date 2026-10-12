@@ -3,8 +3,36 @@
 The builder's releases, newest first. The version is `xml1-builder --version`; the content version is what a
 build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebuild.
 
-## Unreleased
+## v0.2.2 - content version 19 (needs XML2 Fix 1.5.0)
 
+This build needs **XML2 Fix 1.5.0** (the launcher installs it): the builder refuses an older fix, which would ignore
+every new rule below without a word. Rebuild; your saves carry over.
+
+- **Skill ranks cost what they cost in the first game** (issue #35): the ranks that open a new form of a power cost
+  2 skill points, and every fifth level gives 2 skill points and 8 stat points instead of 1 and 4.
+- **Breakable parts** (issue #3): Juggernaut's helmet and the Sentinels' arms can be broken again, with their effects,
+  and a Sentinel without an arm can't use that arm's attacks. Boss "armour off" moments now really take the armour off
+  (Juggernaut's helmet, Blob's pillars, Pyro and Toad): those fights were much tougher than the first game's.
+- **Leaders** (issue #15): heroes don't flinch from a leader's projectiles, and leaders drop as in the first game
+  (four drops, one of them health, energy or an Xtreme pip).
+- **Solo mode** (issue #5): the first game's solo boxes and bridges keep the rest of the party behind and regroup it
+  afterwards, so followers no longer walk into the void at the gaps.
+- **Enemies die below 1 health**, as in the first game, so none fights on at a fraction of a point with its death
+  script and drop waiting (the HAARP keycard officer).
+- **Xtraction points offer the first game's services** (issue #63): Load, the Danger Room, the Healer and Forge where
+  the first game had them; the main menu's Danger Room is greyed until Phoenix has joined your campaign. Online,
+  Load and the campaign-gated choices are greyed with other players, as XML2 does.
+- **Reviving a fallen hero costs the first game's price**: 200 x (your highest hero's level) squared. That is much more
+  than before at high levels (level 24: 115,200).
+- **Packs restore a quarter** of health or energy, as in the first game (XML2 gave a third).
+- **Fall volumes work as in the first game** (issue #22): the East Rooftops and the second sewer room kill a hero who
+  falls, and every fall volume keeps the first game's round shape.
+- **Pads and the Codex**: *Defaults 1/2/3* in the controls menu keep your pad layout (issue #9); in a cinematic the
+  mouse no longer outlines or moves heroes (issue #85); the Codex list highlight covers the whole row (issue #97).
+- **Exclusive fullscreen** asks only for a mode your screen can show, 8x anti-aliasing is really 8x, and a failed
+  start no longer resets your display settings (issue #84).
+- **More room for scripts**: the game's limit of 320 script functions is raised to 1024 (the first game's scripts and
+  the fix's own had filled it).
 - **Fixed: Professor X sat inside his desk at the first mansion visit** (issue #54). XMen2.exe seats a spawned character
   one walk cell away from where the first game does in about 91 of 233 cases; three of Xavier's spawn points now land
   on the original's seats (his desk, the first subbasement, the second visit's war room). A save that already holds a
@@ -15,13 +43,27 @@ build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebui
 - **Fixed: the health / energy pack sound sometimes played lower** (issue #82). That was XML2's double heal and its own
   "double" sound; builds ask XML2 Fix for `[Game] DoubleHeal=0`, so packs heal as in the first game and the stats screen
   drops the double-heal lines (SPEC 63.5).
-
-## Unreleased
-
 - **The scan turrets fire again** (issue #4, needs the matching XML2 Fix): the HAARP exterior missile tanks scan,
   turn, lock on and fire their three-missile salvos with the first game's timing, the Arbiter and Weapon X tripod
   guns sweep and fire their bullets, and the Hive tanks' flame turrets burn whoever comes close. All of them can
   still be destroyed.
+
+**Online co-op:** 0.2.2 and XML2 Fix 1.5.0 add rules 5-14 to the shared gameplay agreement. A 0.2.1 / XML2 Fix 1.4.0
+player and a 0.2.2 player refuse each other at join, with the reason on both PCs: update both.
+
+<details><summary>Technical details</summary>
+
+- Content version 19, catalogue revision 6, lobby token LC27 (the catalogue's keys and domains are unchanged; only
+  `shared_talents.lcbind`'s data hash differs, from the resistance talents' new removal tags).
+- New `[Game]` keys written for every XML1 build: `PlacementCrush`, `DoubleHeal`, `RankCosts`, `LevelSkillPoints`,
+  `LevelStatPoints`, `Xml1Multipart`, `X1Leader` (with `Data\x1leader.txt`), `SoloMode`, `DeathRule`,
+  `DangerRoomGate`, `RevivalCost`, `Xml1Turrets` (with `[Xml1Turrets]`), `PackAmount`; `[Limits] ScriptFunctions`.
+- New build checks: V52 breakable parts, V53 removable resistances, V54 leader list, V55 fractional health, V56 scan
+  turret contract, V57 script function names, V58 Codex highlight, V59 solo mode calls; V26 compares fall volumes with
+  the source; V32 checks the Load bit of every Xtraction point.
+- SPEC 41.1, 52, 63.4-63.6, 79.1, 88-91.
+
+</details>
 
 ## v0.2.1 - content version 18 (needs XML2 Fix 1.4.0)
 

@@ -6943,3 +6943,14 @@ port-owned (dropped from a stock install's ini). The fix writes 0.25 over the tw
 item data is unchanged. An XML2 Fix without the key leaves the third (the ini key is ignored). Checks:
 `tests/unit/test_pack_amount.py` (the key, its ownership and the stock merge); the fix's own
 `xml2_test --pack-amount-rules`.
+
+## 91. Release 0.2.2 content identity
+
+The 0.2.2 wave changes a build's output (Professor X's seats, the resistance talents' removal tags, the solo-mode
+script calls, the Xtraction service bits and the Healer / Forge unlock rows, the fall volumes' shape and two enabled
+rooms, the Codex highlight model, the turret placements, the leader list and the new XML2 Fix keys), so CONTENT_VERSION
+advances from 18 to 19. The decoded catalogue differs from 0.2.1's only in its content version, so catalogue
+revision 6 is retained; of the `.lcbind` files only `shared_talents.lcbind` differs, and only in its data hash (its
+bound lists are identical). The append-only history assigns (19,6) token LC27 with the fresh build's bind manifest;
+LC26 and every older row are unchanged. A 0.2.1 peer is refused at admission whatever its token: XML2 Fix 1.5.0
+registers gameplay rules 5-14. Builder/DLL versions 0.2.2 / 1.5.0; REQUIRED_XML2FIX 1.5 (fix_ini.check_release_dll).
