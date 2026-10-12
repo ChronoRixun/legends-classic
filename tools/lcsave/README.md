@@ -41,6 +41,10 @@ is `RETAIL`, and a stream of the other layout's size is refused, never re-interp
 The container header's `required_features` bit 0 is `FEATURE_ENTITY_LAYOUT_CONTIGUOUS10`: the file's typed entity
 ids are ten-bit tokens. The E10A2 saver writes it, the offline converters and the retail engine keep 0; a rewrite
 passes the read header through (`container.write_file(kind, sections, header)` takes `header['required_features']`).
+`optional_features` (ignored when unknown): bit 0 `OPTIONAL_KEYS_PRESENT`; bits 1 / 2 `OPTIONAL_LEVEL_SKILL_POINTS` /
+`OPTIONAL_LEVEL_STAT_POINTS`, set by XML2 Fix 1.5 when the campaign's heroes carry the fifth-level points of
+`[Game] LevelSkillPoints` / `LevelStatPoints=xml1` (a file without them gets the fix's one-time catch-up on load;
+SPEC 88.1). The importer never sets them.
 `container.feature_decision(required_features, native)` is the reader's rule: an unknown bit is refused ("needs a
 newer version"), a feature-1 file on a retail layout is refused ("needs the entity-capacity build"; the marker is
 never stripped), a feature-0 file on E10A2 has its registered typed fields migrated, a feature-1 file on E10A2 has
