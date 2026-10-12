@@ -91,6 +91,9 @@ Checks (severity per SPEC 4.6: error = will not load or silently misbehaves; war
                 byte-identical to the set its own data produces, every key in the master catalogue
   V50 typed entity ids (SPEC 85, savefiles.validate): Data/lcsave/typed-entity-ids.txt is present and is exactly the
       registry of the shipped Scripts tree (fingerprint and keys), as the entity-capacity DLL verifies it at load
+  V-TBD script function names (xml2-fix [Limits] ScriptFunctions; script_functions.validate): every function XML1
+                output calls is an XMen2.exe or xml2-fix name (V7's dead-script and inherited-drop allowances only),
+                and the names the build relies on fit fix_ini.LIMITS ScriptFunctions
   V51 Master Mold stage binding (SPEC 86, scripts module): with the boss spawn script installed, the effective
       packed mission-stage binding the DLL's Xml1MoldStage carries is valid, else a build error
   V40 melee weapons (SPEC 69.5, melee_weapons.validate): exact metadata on all and only the source armed NPCs,
@@ -142,6 +145,7 @@ import xmlb                                   # noqa: E402  tools/xmlb.py
 from .lib import x1names                      # noqa: E402  the XML1 namespace (was research/characters)
 from .lib.x1names import is_fightstyle_name   # noqa: E402  fightstyle_* / x1_fightstyle_* (issue #52)
 from . import validate_script as VS
+from . import script_functions as SFN
 from . import balance as BAL
 from . import melee_weapons as MW
 from . import savefiles as SF
@@ -812,7 +816,8 @@ class Validator:
                                ('V41', 'spawn-floor residency', self.spawn_floor_residency),
                                ('V45', 'gun damage roll', lambda ck: W.validate(self, ck)),
                                ('V47', 'scripted boss approach', lambda ck: SA.validate(self, ck)),
-                               ('V46', 'pickup models', self.v46_pickup_models)):
+                               ('V46', 'pickup models', self.v46_pickup_models),
+                               ('V-TBD', 'script function names', lambda ck: SFN.validate(self, ck))):
             ck = Check(cid, title)
             self.checks[cid] = ck
             t0 = time.time()
