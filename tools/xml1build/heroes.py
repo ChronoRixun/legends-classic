@@ -3357,7 +3357,15 @@ def _validate(ctx, report=None):
     if aut_tree is None:
         ck.error('V-H17: Data/autospend.XMLB missing / undecodable')
     else:
-        for m in ASP.problems(aut_tree):
+        try:
+            templates, x1_heroes = ASP.x1_templates(ctx.read_x1_xml('data/stat_rules.xml'))
+        except KeyError:
+            templates, x1_heroes = {}, {}
+            ck.error('V-H17: XML1 data/stat_rules.xml missing')
+        hs = [o.tree(f'Data/herostat.{ext}') for ext in ('XMLB', 'engb')]
+        hero_classes = {(s.get('name') or '').lower(): (s.get('autospend') or '').lower()
+                        for r in hs if r is not None for s in r.iter('stats')}
+        for m in ASP.problems(aut_tree, templates, x1_heroes, hero_classes, ASP.used_classes(hs)):
             ck.error(f'V-H17: {m}')
     return checks, budgets
 

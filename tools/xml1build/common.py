@@ -53,7 +53,7 @@ import xmlb                    # noqa: E402  tools/xmlb.py
 from .lib import sweeplib      # noqa: E402  robust XML1 text-XML parser (was research/sweep)
 from .lib import x1names       # noqa: E402  skin/animdb/style namespace (was research/characters)
 
-MODULE_ORDER = ('characters', 'autospend', 'heroes', 'scripts', 'zones', 'media', 'frontend',
+MODULE_ORDER = ('characters', 'heroes', 'autospend', 'scripts', 'zones', 'media', 'frontend',
                 'savefiles')                   # content modules, in run order (savefiles last: the .lcbind
                                                # headers carry the SHA-1 of the finished data files)
 POST_STEPS = ('testhooks', 'validate')                          # run after the content modules
