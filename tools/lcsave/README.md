@@ -44,7 +44,8 @@ passes the read header through (`container.write_file(kind, sections, header)` t
 `optional_features` (ignored when unknown): bit 0 `OPTIONAL_KEYS_PRESENT`; bits 1 / 2 `OPTIONAL_LEVEL_SKILL_POINTS` /
 `OPTIONAL_LEVEL_STAT_POINTS`, set by XML2 Fix 1.5 when the campaign's heroes carry the fifth-level points of
 `[Game] LevelSkillPoints` / `LevelStatPoints=xml1` (a file without them gets the fix's one-time catch-up on load;
-SPEC 88.1). The importer never sets them.
+SPEC 88.1); bit 3 `OPTIONAL_CLASS_GROWTH`, the heroes' class bonus is the build's current autospend classes'
+(SPEC 94: XML2 Fix re-bases a file without it once). The importer never sets them.
 `container.feature_decision(required_features, native)` is the reader's rule: an unknown bit is refused ("needs a
 newer version"), a feature-1 file on a retail layout is refused ("needs the entity-capacity build"; the marker is
 never stripped), a feature-0 file on E10A2 has its registered typed fields migrated, a feature-1 file on E10A2 has

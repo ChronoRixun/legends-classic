@@ -149,3 +149,39 @@ def test_weights_and_hero_template_mismatch_are_errors():
 def test_heroes_map_onto_the_x1_classes():
     from xml1build.heroes import AUTOSPEND
     assert set(AUTOSPEND.values()) == set(ASP.X1_TEMPLATES.values())
+
+
+def test_legacy_table_round_trip_and_engine_limits():
+    """autogrowth-legacy.txt: the pre-SPEC 94 classes as XMen2.exe loaded them (first four classes, four rules each,
+    deltas in record order strength, speed, body, mind), invented classes and heroes."""
+    root = ET.Element('AutoSpend')
+    for i, n in enumerate(('alpha', 'beta', 'gamma', 'delta', 'epsilon')):
+        c = ET.SubElement(root, 'CharacterClass', {'name': n.upper() if n == 'beta' else n})
+        for k in range(5):
+            ET.SubElement(c, 'bonus', {'start': str(2 + k), 'rate': str(k), 'strength': str(i), 'mind': str(-k)})
+    classes = ASP.engine_classes(root)
+    assert sorted(classes) == ['alpha', 'beta', 'delta', 'gamma']           # the fifth class never loads
+    assert len(classes['beta']) == 4 and classes['beta'][3] == (5, 3, (1, 0, 0, -3))
+    text = ASP.legacy_text(root, {'hero_one': 'alpha', 'hero_two': 'beta'})
+    assert text.startswith(ASP.LEGACY_MAGIC + '\r\n') and text.endswith('\r\n')
+    parsed = ASP.parse_legacy(text)
+    assert parsed['hero_two'] == ('beta', classes['beta']) and parsed['hero_one'][0] == 'alpha'
+    try:
+        ASP.legacy_text(root, {'hero_three': 'epsilon'})
+    except ValueError:
+        pass
+    else:
+        raise AssertionError('a class XMen2.exe never loaded must not be a legacy class')
+    for bad in ('', 'other 1\r\n', ASP.LEGACY_MAGIC + '\r\nhero\tcls\t1,2,3\r\n'):
+        try:
+            ASP.parse_legacy(bad)
+        except ValueError:
+            continue
+        raise AssertionError(f'accepted {bad!r}')
+
+
+def test_legacy_mapping_covers_every_hero():
+    """every hero the build maps to an x1 class has its pre-SPEC 94 class (the re-base needs both)."""
+    from xml1build import heroes
+    assert set(ASP.LEGACY_AUTOSPEND) == set(heroes.AUTOSPEND)
+    assert set(ASP.LEGACY_AUTOSPEND.values()) <= {'bruiser', 'bruiser_light', 'support', 'support_heavy'}

@@ -359,6 +359,9 @@ OPTIONAL_KEYS_PRESENT = 1
 # fix's one-time catch-up on load (xml2-fix save_format_rules.hpp); readers that don't know the bits ignore them.
 OPTIONAL_LEVEL_SKILL_POINTS = 2
 OPTIONAL_LEVEL_STAT_POINTS = 4
+# XML2 Fix 1.5: the heroes' class bonus is the build's current autospend classes' (SPEC 94 re-base; a file without it
+# is re-based once on load when the build ships Data/lcsave/autogrowth-legacy.txt).
+OPTIONAL_CLASS_GROWTH = 8
 assert size_of(NEW_HEADER) == NEW_HEADER_SIZE
 assert size_of(NEW_SECTION_ENTRY) == NEW_SECTION_ENTRY_SIZE
 assert size_of(OLD_GAME_BLOCK) == 0xdc and size_of(OLD_SNAPSHOT) == 0x26c and size_of(OLD_ATTR_SCALARS) == 0x18
