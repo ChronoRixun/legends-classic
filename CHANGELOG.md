@@ -50,7 +50,7 @@ the build). Your saves carry over.
 
 **Fixes**
 
-- **Leaders** (issue #15): heroes don't flinch from a leader's projectiles, and leaders drop as in the first game
+- **Leaders** (issue #15): leaders drop as in the first game (no chance roll, four drops, one of them a health pack, energy pack or Xtreme pip)
   (four drops, one of them health, energy or an Xtreme pip).
 - **Enemies die below 1 health**, as in the first game, so none fights on at a fraction of a point with its death
   script and drop waiting (the HAARP keycard officer).
