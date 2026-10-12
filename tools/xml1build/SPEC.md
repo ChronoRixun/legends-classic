@@ -5566,6 +5566,26 @@ would silently fall back to XMen2.exe's rule: a plain punch would break it again
   rank 1 in XML1's npcstat, hit a structure-2 wall at level 4). Which of an enemy's attacks pass the sweep here
   and passed XML1's is not established attack by attack.
 
+### 63.4 Settling objects without crushes (xml2-fix `[Game] PlacementCrush=xml1`, issue #79)
+
+When a zone loads, XMen2.exe settles every object on the floor (the settle event, entity vt+0x98 mode 3, floor routine
+0x474080). An object touching another during that settle may crush it (vt+0xac 0x498ef0): a 1,000,000-damage hit that
+BreakRule=xml1 refuses for most XML1 objects, but whose hit sound (`common/melee/hit_normal`) still plays. In
+mansion/man1a/mansion1a_2 the desk chair `chairdesk_x` (2648.78 1315.84) is authored tucked under `desk_rolltop_x`
+(2668.47 1315.63). On every first entry the desk crushes the chair while it settles, the chair is knocked into the
+desk, the desk's impact (0x499100) is a second hit, and two hit sounds come from Cyclops' empty room: 2 on 3/3 fresh
+entries (harness, Frida). The original Xbox plays none on the same entry (xemu recording; the port's hit sample matches
+at noise level there and at r 0.62/0.74 on the original's real punches).
+
+Moving the chair 13 units out did not stop it (4/4 still hit). So the builder writes `PlacementCrush=xml1` for every
+XML1 build (`fix_ini.PLACEMENT_CRUSH`), and XML2 Fix refuses touches while a settle is in progress: 0 hit sounds on 3/3
+fresh entries, 13 touches refused each. Touches during play keep the game's rule. A fix without the feature ignores the
+key. Tests: tests/unit/test_builder_parts.py.
+
+All-zone sweep (145 XML1 zones, staged `loadMapKeepTeam`, first visit each, hit sounds and object damage in the
+first 6 s, Frida): only mansion1a_2 has a hit during a settle. Four zones have load-time hits outside any settle
+(asteroid2_2, mastermold2, nuke2_3, nyc3_1_3: fires, harm loops, scripted events), unchanged by the key.
+
 ## 64. The pause menu without the Blink Portal (issue #89)
 
 **What the first game does.** XML1 has no portal: its pause menu offers Objectives, Characters, Load Game, Players,
