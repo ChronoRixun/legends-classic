@@ -104,3 +104,11 @@ def test_port_asks_for_xml1_level_skill_points():
     assert 'LevelSkillPoints' in fix_ini.PORT_OWNED['Game']
     assert fix_ini.game_keys()['LevelSkillPoints'] == 'xml1'
     assert 'LevelSkillPoints' not in fix_ini.game_keys(xml1_opening=False)
+
+
+def test_port_asks_for_xml1_level_stat_points_on_its_scale():
+    from xml1build import heroes
+    assert heroes.STAT_SCALE == 4        # the fix's 4 / 8 assume XML1's 1 / 2 x 4
+    assert 'LevelStatPoints' in fix_ini.PORT_OWNED['Game']
+    assert fix_ini.game_keys()['LevelStatPoints'] == 'xml1'
+    assert 'LevelStatPoints' not in fix_ini.game_keys(xml1_opening=False)

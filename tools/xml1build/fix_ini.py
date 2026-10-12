@@ -167,6 +167,11 @@ RANK_COSTS = '1'
 # every XML1 build.
 LEVEL_SKILL_POINTS = 'xml1'
 
+# xml2-fix [Game] LevelStatPoints (SPEC 88.2): the same rule for the stat points on the port's scale - XML1's 1 a level
+# (2 on a level divisible by 5) is 4 (8) here, as the heroes' stats are XML1's x STAT_SCALE (4) and XMen2.exe's 4 a
+# level already is XML1's 1. 'xml1' makes the fix give 8 on every 5th level; a fix without the feature ignores the key.
+LEVEL_STAT_POINTS = 'xml1'
+
 # xml2-fix [Game] ForcedTeams (SPEC 19): '1' = the scripts of a --forced-teams seat build seat XML1's parties
 # (xml2-fix forced_teams module), '0' = the functions exist but report off (team menu), 'off' = no key (nothing
 # patched). Every xml2-fix call sits behind xml2fixFeature("forcedteams") (validate V14b), so with ForcedTeams=0, a
@@ -192,7 +197,7 @@ BALANCE_NATIVE_STAT_HEROES = 'ProfXAstral,ProfXGladiator'
 PORT_OWNED = {'Game': ('NewGameTeam', 'ResetUnlocks', 'SaveFolder', 'ForcedTeams', 'PostgameScript', 'WindowTitle',
                         'EndHeroUnlock', 'MainMenuItems', 'ClassicMainBackdrop', 'ClassicMainPanelBounds', 'NewGamePlus', 'ReviewStats', 'Xtract', 'XtractionShop', 'XPCurve',
                        'GeometrySharingBlendIndices', 'CharacterLadderPaths', 'ObjectiveDescriptions',
-                       'BreakRule', 'ConfirmationRelease', 'ExplosiveFirstHit', 'RankCosts', 'LevelSkillPoints', 'Xml1MasterMold', 'Xml1MoldStage'),
+                       'BreakRule', 'ConfirmationRelease', 'ExplosiveFirstHit', 'RankCosts', 'LevelSkillPoints', 'LevelStatPoints', 'Xml1MasterMold', 'Xml1MoldStage'),
               'Limits': ('ActorSlots', 'ResourceNames', 'ItemEnhancements', 'FightStyles', 'EffectCurves', 'MoveTriggers', 'EntityCapacity'),
               'Online': ('GameVersion', 'ContentFingerprint'),
               'Save': ('Format',)}
@@ -360,6 +365,7 @@ def game_keys(*, xml1_opening=True, save_folder=None, forced_teams='1', add_hero
         game['ExplosiveFirstHit'] = '1'
         game['RankCosts'] = RANK_COSTS
         game['LevelSkillPoints'] = LEVEL_SKILL_POINTS
+        game['LevelStatPoints'] = LEVEL_STAT_POINTS
     if forced_teams in ('0', '1'):
         game['ForcedTeams'] = forced_teams
     if add_hero:

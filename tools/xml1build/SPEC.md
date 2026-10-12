@@ -6675,3 +6675,43 @@ possible but is not done (agent report, follow-up).
 3 / 4 / 8 / 9 skill points at levels 4 / 5 / 9 / 10 (+1 at 4 -> 5 and 9 -> 10); with `LevelSkillPoints=xml1` 3 / 5 / 9 /
 11 (+2 at both). Saved, closed, loaded in a new process: level 10, 11 points; level 10 -> 11 then gives +1 (12). Stat
 points identical on both sides (12 / 16 / 32 / 36).
+
+### 88.2 Stat points per level (XML2 Fix `[Game] LevelStatPoints=xml1`) and the automatic stat growth
+
+**The first game** (default.xbe 0xb1ca0 / 0xaed70; stat_rules.xml). Per level gained: 1 unspent stat point, 2 on a level
+divisible by 5 (the same rule as the skill points, 88.1); and an automatic bonus from stat_rules.xml: the hero's
+CHARACTER entry names a template class (bruiser: Beast, Colossus, Rogue, Wolverine; support: the other eleven, ProfXAstral
+included), and each `<level>` (levels 2..40; the first without `offset` is level 2) lists `bonus` stats applied at once
+(0xaea90) - one stat a level, two on levels 5, 10 .. 40, 47 stat points by level 40 (bruiser 20 body / 11 strength / 8
+speed / 8 mind; support 28 mind / 10 strength / 8 speed / 1 body); none above 40. Its `spend` entries are only the
+suggested spend of the unspent point. A level lost takes both back.
+
+**The port's scale.** The heroes' body / mind / strength are XML1's x 4 (heroes.STAT_SCALE; XML2 Fix [Balance]
+HeroStatScale=4 divides the stat coefficients by 4 for exactly these heroes), speed 10 + 2 x XML1's (SPEED_MAP).
+XMen2.exe's 4 unspent stat points a level are therefore XML1's 1, and a fifth level's 2 are 8: `LevelStatPoints=xml1`
+gives 8 on a level divisible by 5 (and takes 8 back when one is lost), 4 on the others (`fix_ini.LEVEL_STAT_POINTS`,
+gameplay rule 5 revision 3). Speed bought with points stays on XML2's 1-per-point scale (an XML1 speed point is 2 here),
+as before this change.
+
+**The automatic bonus is not reproduced, and is not changed here.** XMen2.exe's per-level bonus (0x43cf90 -> 0x43d000)
+comes from Data/autospend.XMLB: each class has periodic rules (start, rate, + body / mind / speed / strength), applied
+on every level they hit; the port maps its heroes onto XML2's four classes from XML1's ratings (heroes.AUTOSPEND,
+D13). By level 40 every XML2 class gives 79 stat points in port units; XML1's stat_rules give 47 XML1 points = 172 port
+units (bruiser: body 80, strength 44, mind 32, speed 16; support: mind 112, strength 40, speed 16, body 4), so the port's
+heroes grow about 46 % of the first game's automatic growth, in different proportions (an XML1 bruiser gains mind, an
+XML2 bruiser none). Options for the maintainer, none implemented:
+1. Data: two new classes `x1_bruiser` / `x1_support` in autospend.XMLB (XML1's templates), the heroes moved to them,
+   their bonuses as periodic rules approximating stat_rules x 4. The record appears to hold few rules (0x43d000 walks
+   6-byte entries from +0x14 up to the count at +0x30) and XML2 applies them past 40, so it can only approximate; it
+   also changes the classes' spend proportions (the auto-spend of unspent points), which would need XML1's `spend`
+   lists translated too.
+2. Code: an XML2 Fix hook on 0x43d000's caller applying XML1's per-level table (written by the builder from
+   stat_rules.xml x 4 / speed x 2, by template) - exact, levels 2..40 only, level loss symmetric; rule 5 again.
+3. Leave it: the 0.2.0 balance work (design-balance, decision 1) tuned enemy health and the stat coefficients with the
+   port's current growth; restoring XML1's growth makes heroes stronger at high level and would need that balance
+   checked again.
+
+**In game (agent check, 2026-10-12; staged as in 88.1).** Unspent stat points of Wolverine at levels 1 / 4 / 5 / 9 /
+10: XML2 Fix 1.4.0 (control) 0 / 12 / 16 / 32 / 36 (+4 at 4 -> 5 and 9 -> 10); with `LevelStatPoints=xml1` (and the
+other two keys) 0 / 12 / 20 / 36 / 44 (+8 at both); saved, closed, loaded in a new process: level 10, 44 stat points
+and 11 skill points; level 10 -> 11 then +4 (48). The automatic bonus was not measured (static comparison above).
