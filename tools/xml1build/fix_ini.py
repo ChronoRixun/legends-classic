@@ -712,7 +712,7 @@ def check_entity_capacity_dll(dll, keys: dict) -> None:
 # The [Game] / [Limits] keys first read by XML2 Fix 1.5 (REQUIRED_XML2FIX): a 1.4 DLL ignores them without a word.
 RELEASE_15_KEYS = {'Game': ('PlacementCrush', 'DoubleHeal', 'RankCosts', 'LevelSkillPoints', 'LevelStatPoints',
                             'Xml1Multipart', 'X1Leader', 'SoloMode', 'DeathRule', 'DangerRoomGate', 'RevivalCost',
-                            'Xml1Turrets', 'PackAmount', 'DeathSwitchClear'),
+                            'Xml1Turrets', 'PackAmount', 'DeathSwitchClear', 'NpcPowerRule'),
                    'Limits': ('ScriptFunctions',)}
 
 

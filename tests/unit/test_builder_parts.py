@@ -790,3 +790,23 @@ def test_danger_room_gate_names_the_front_ends_danger_room_item():
     assert dr == [FI.DANGER_ROOM_GATE_ITEM]
     assert FI.game_keys(main_menu_items='x')['DangerRoomGate'] == FI.DANGER_ROOM_GATE_ITEM
     assert 'DangerRoomGate' not in FI.game_keys()
+
+
+def test_existing_release_dll_without_npc_power_rule_is_refused():
+    """A pre-feature 1.5 DLL knows the other release keys but must not silently omit enemy AI."""
+    import tempfile
+    keys = {section: {name: 'xml1' for name in names} for section, names in FI.RELEASE_15_KEYS.items()}
+    keys['Game']['NpcPowerRule'] = 'xml1'
+    with tempfile.TemporaryDirectory() as d:
+        dll = Path(d) / 'dinput.dll'
+        dll.write_bytes(b'MZ' + b''.join(name.encode('utf-16le') + b'\0\0'
+                                       for section in keys.values() for name in section if name != 'NpcPowerRule'))
+        try:
+            FI.check_release_dll(dll, keys)
+        except FI.FixTooOld as exc:
+            assert exc.missing == ['[Game] NpcPowerRule']
+        else:
+            raise AssertionError('a DLL without NpcPowerRule was accepted')
+        assert FI.old_fix_keys(dll, keys) == ['[Game] NpcPowerRule']
+        dll.write_bytes(dll.read_bytes() + 'NpcPowerRule'.encode('utf-16le'))
+        FI.check_release_dll(dll, keys)

@@ -25,6 +25,8 @@ the build). Your saves carry over.
 
 **The big ones**
 
+- **Enemy AI** (issue #101): enemies pay energy for powers, decide every 2 seconds, need at least half their energy, and use the first game's melee combos. Visibility uses the first game's geometry and query scheduling. Heroes still spend more time stunned than in the original; that part of #101 remains open.
+
 - **The scan turrets fire again** (issue #4): the HAARP exterior missile tanks scan, turn, lock on and fire their
   three-missile salvos with the first game's timing, the Arbiter and Weapon X tripod guns sweep and fire their
   bullets, and the Hive tanks' flame turrets burn whoever comes close. All of them can still be destroyed, and stay
@@ -51,7 +53,6 @@ the build). Your saves carry over.
 **Fixes**
 
 - **Leaders** (issue #15): leaders drop as in the first game (no chance roll, four drops, one of them a health pack, energy pack or Xtreme pip)
-  (four drops, one of them health, energy or an Xtreme pip).
 - **Enemies die below 1 health**, as in the first game, so none fights on at a fraction of a point with its death
   script and drop waiting (the HAARP keycard officer).
 - **A hero who takes over from a fallen one stands still** until you move them, as in the first game, instead of
@@ -135,6 +136,8 @@ carried over into the new format by themselves. Saves made with 0.2.0 don't load
   file on disk is kept as it was: report it with `xml2-fix.log` and `SaveLC\legacy-import.txt`.
 
 **The big ones**
+
+- **Enemy AI** (issue #101): enemies pay energy for powers, decide every 2 seconds, need at least half their energy, and use the first game's melee combos. Visibility uses the first game's geometry and query scheduling. Heroes still spend more time stunned than in the original; that part of #101 remains open.
 
 - **The first game's combat balance** (issues #14, #94). Enemy health and damage, the heroes' strength bonus, power
   attacks, melee hit chance and the original seven basic melee attacks are back to X-Men Legends' numbers; enemy
