@@ -4879,7 +4879,8 @@ Experimental XMLB writes must use `common.encode_xmlb`: unsorted attributes
 invalidate the engine's binary-search lookups and any resulting mechanism claim.
 
 V26 checks registered XML1-sourced map outputs for matching volumes missing
-either flag; identical localized twins are counted once. Deferred volumes are
+`smartent="false"` or changing the source's `boxcollision`; identical localized twins are counted once.
+Deferred volumes are
 reported separately, and `smartent="false"` on one is an error (`boxcollision` alone is inert, and nuke1_2's `kill_target02` carries it in the source). A volume listed in
 `FALL_KILL_LEADER_ONLY` must carry `actleader="true"` (without it the volume kills AI followers again), and
 a matching volume that is not listed must not carry it; the count is reported as `volumes_player_only`.
@@ -4935,7 +4936,7 @@ Decision: at the HAARP exterior ravine the hero a player controls dies when he f
 in is not killed and comes back to the party as he does when the volume is inert.
 
 `FALL_KILL_LEADER_ONLY` names an exact map stem and entity name (`maps/haarp/ext/haarp_ext01` / `kill_target`).
-That volume gets the two flags above plus `actleader="true"`; nothing else about it changes, and no other volume
+That volume gets `smartent="false"` plus `actleader="true"`, retaining its source touch shape; no other volume
 gets the attribute. It stays the designers' harm entity with its bounds and its 32,000 direct damage: no script
 trigger, no new damage source.
 
@@ -4978,7 +4979,8 @@ the follower result rests on the placed falls. Staged: new game, party, levellin
 positions, the mid-air placements; never the falls, the box entries, jumps, crossings, hero switches or the
 second player's join and movement.
 
-The other 30 enabled volumes keep killing every toucher. Whether the gate suits any of them is a per-room
+Volumes outside this exception retain their authored target eligibility when enabled. Whether the gate suits
+any of them is a per-room
 question (does a fallen follower get placed back there, and can a player inherit a hero on the floor); do not
 extend the list without the same test.
 
@@ -5083,6 +5085,26 @@ already ends in the void kill, later. The other deferred rooms were not tested a
 Saved ordinals: a volume enabled after 0.2.1 goes after issue #81's settled props as well
 (`x1schema.FALL_KILL_ENABLED_LATE`, `move_late_fall_volumes` after the settle pass; nyc1_1_4 has six settled props),
 so a 0.2.1 save keeps every ordinal. `numbered_entinst_tail_problems` and V31 check it.
+
+### Deferred definitions and AI eligibility audit (2026-10-13)
+
+The released 0.2.2 policy contains **17 deferred definitions in 15 maps, with 25 placements**, rather than the
+18 stated in the earlier report. A source/output audit covering English and XML-only maps finds 32 lethal-touch
+definitions and 41 placements in all: 15 definitions remain enabled. The three demo definitions are outside the
+packaged campaign's reachability graph. Each deferred definition retains its source attributes and every placement
+retains its bounds after the world-to-local conversion. This is a data check, not a live crossing result.
+
+The original harm path does not grant blanket immunity to AI teammates or enemies. Its generic activation gate
+can restrict a source that requests team/leader filtering; the deferred definitions do not request those filters.
+The original lethal damage value also excludes these entities from the ordinary AI danger-notification tick.
+The PC tick has different damage and health thresholds, so matching geometry does not establish matching AI
+navigation. See [the engine comparison](../../research/audit/fall_volumes_2026-10-13.md) for addresses and limits.
+
+All authored HAARP exterior fall-volume placements are already enabled in 0.2.2. All five exterior rooms retain
+the original raw map collision triangle blocks and navigation. That rules out an omitted authored kill volume
+or dropped map hull, but does not reproduce the slope/bridge escape or establish identical native collision
+traversal. No deferred volume or new boundary is enabled by this static audit. Further enables still require
+the per-room hero/follower/enemy movement checks and placement after the existing settled-prop tail.
 
 ## 53. The first game's voice lines (2026-10-05, issue #49)
 
