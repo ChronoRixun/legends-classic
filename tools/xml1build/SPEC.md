@@ -7169,3 +7169,18 @@ and carry XML1's aitype / aireusetime / powerusage (resolved per 24.2). The caus
   below the original's 51–53%. These are small staged samples, not a claim that the remaining aggression is solved.
 - **Resistance (SPEC 92)** checked with the hero punching a physically resistant Revolutionary (AI off, real pad A
   presses): it still flinches on light hits about once per 3 points of damage in 0.2.1 and 0.2.2 alike.
+
+### 95.1 Candidate combo timing restoration (not live-accepted)
+
+The companion engine candidate extends rule 16 to revision 4, retaining enabled values `{1,1,0,0}`. It schedules
+each combo press using XML1's delay table instead of abandoning the combo when the next move cannot chain at the
+next AI update. Completion adds the final button delay, rather than PC's fixed 0.2 seconds. The earlier unshipped
+experiment left that completion addition and an extra hold gate in place; native execution distinguishes both.
+The AI pool layout and all new code sites are guarded, and the writes join the existing transaction. No builder
+data, content version or save format changes are required. A revision-3 peer is incompatible with revision 4.
+
+The preceding combat measurements remain historical revision-3 evidence. The candidate has native bridge,
+original-code characterization and agreement checks, but no new arena or vulnerable-fight result. It must not
+be presented as resolving the remaining stun gap until matched live controls pass. Hero stun/get-up behavior
+has not changed; default stun duration and the checked get-up speeds agree, while the original stun handler
+and the PC's timed stun powerup differ. A hero-side engine restoration would need a separately coordinated rule.
