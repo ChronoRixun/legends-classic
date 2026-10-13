@@ -548,8 +548,7 @@ build.
    - `script_exists(ctx, ref)`: the ref is in the installed or planned set.
 6. **shared:** `scripts_installed`. **counts:** `scripts_installed`, `common_overwritten`, `dialogs_x1`,
    `mission_files`, `inline_rewrites_available`.
-7. **Defer:** forced per-mission heroes (REQUIREDHERO / maxheros), `addHero`, solo mode (18 inline
-   `enterSoloMode` removed), the exact side-mission return point, conversation speaker markup, 44 zones that set
+7. **Defer:** forced per-mission heroes (REQUIREDHERO / maxheros), `addHero`, the exact side-mission return point, conversation speaker markup, 44 zones that set
    no act on entry, and the 22 multi-act zones.
 
 ### 5.3 zones.py
@@ -813,7 +812,9 @@ statements) is the first thing to watch.
 
 - forced per-mission heroes;
 - `addHero`;
-- solo mode;
+- ~~solo mode~~ (issue #5: prepare P3 rewrites XML1's 18 inline `enterSoloMode` and 4 `exitSoloMode` to xml2-fix
+  `setSoloMode(actor, 1 / 0)`; the party solo state, its AI sites and regroup are xml2-fix's `[Game] SoloMode`,
+  docs/solo-mode.md there; validate V59);
 - XML1 per-zone music overrides;
 - ~~automaps~~ (section 26);
 - danger-room and review data;
@@ -4363,6 +4364,35 @@ tabled start instances (`START_FIXES`: zone -> start -> (expected XML1 pos, test
 an unexpected source position or a missing instance fails the build; a second run is a no-op. Tests:
 tests/unit/test_start_fixes.py (invented zones).
 
+### 41.1 Professor X's seat behind his desk (2026-10-12, issue #54)
+
+The first visit to mansion/man1a/mansion1a_1 spawns Professor X from `sp_profx01` (2925.34 1558.67 0, facing pi) for
+the 1_2_1_1 conversation. The original Xbox (xemu, the same conversation) seats him at (2938.85 1540 1.15): his walk
+cell's centre, behind the desk `prox_desk2_x` (2875.7 1560.13) with a clear gap. XMen2.exe resolves the same spawn point
+to another walk cell, (2899.4 1580), inside the desk - on every fresh load (3/3, port harness, new game then
+`loadMapKeepTeam`). Revisits within one session restore the remembered position, so only a fresh campaign tests it.
+XMen2.exe's choice is not the containing cell and does not follow the spawner's extents (a 2-unit box gives the same
+seat); measured on fresh loads: spawn (2940 1540) -> (2939.4 1580), (2940 1520) -> (2939.4 1500), (2940 1500) ->
+(2939.4 1540) 3/3. The `START_FIXES` table therefore moves `sp_profx01` to (2940 1500 0), which XMen2.exe seats at the
+original's spot; facing and extents are kept. Only mansion1a_1 has him at a desk (every ProfX spawner audited).
+
+All-zone comparison (2026-10-12, 145 XML1 zones, the port's runtime positions 6 s after a staged first entry against
+each static spawner's XML1 cell, 364 spawned NPCs found): 91 of the 233 that had not walked off sit exactly one walk cell
+(40 or 56.6 units) away from the XML1 cell, in no fixed direction (Hive lab techs, Arbiter crewmen, Forge, Toad, Marrow, the Weapon X
+director, the subbasement X-Men); 115 sit at their exact spawn point (mostly civilians). The original confirms XML1's rule on
+four more seats (warped Xbox, xemu): ProfX (819.93 1899.80) in subbasement1a and (2260 1740) in subbasement2, Toad
+(2300 980) in subbasement2 - each its spawn point's cell centre. Screenshots of 13 flagged static NPCs in the port show
+no other one inside furniture or a wall. The table also moves subbasement1a's `sp_profx01` (838.602 -> 798.602 in X)
+and subbasement2's `sp_profx01` and `profx_a` (1742.65 -> 1702.65 in Y): XMen2.exe then seats him at (819.9 1899.85)
+and (2260.5 1740.1), the original's seats (in subbasement2 the port's seat had the wheelchair against the war room
+console). XMen2.exe's own rule was not worked out, so no general builder correction replaces the table.
+
+Saves: a spawner without `monster_smartent` + `instantspawn` is a numbered placed entity (SPEC 60), so a zone record
+restores its saved position onto it. A save that already holds a record of mansion1a_1, subbasement1a or subbasement2
+(made with an earlier build) therefore puts the spawner, and with it Xavier, back on the old spot in that room; the
+new seat applies to a new campaign and to rooms the save holds no record of. The ordinals do not move (positions only),
+so no other record is misapplied. Release notes, not save surgery.
+
 
 ## 42. Generated long-range buoy networks (2026-10-03, content version 10)
 
@@ -4822,9 +4852,9 @@ triggers.
 lethal-touch signature: `affectableharment`, `damage="32000"`,
 `damagetype="dmg_direct"`, `actontouch="true"`, `nocollide="true"`. Matching is
 independent of entity names except for the specific deferred pair below. After normal class conversion, set
-`boxcollision="true"` and `smartent="false"`, the collision and residency flags
-used by XML2's native fall kill volumes. Preserve every other attribute and all
-instances, including bounds, positions, orientations, damage modifiers, targeting
+`smartent="false"` (XML1's default residency; see "Touch shape" below) and nothing else: `boxcollision` stays as
+the source has it (0.1.8 to 0.2.1 also wrote `boxcollision="true"`, which changed the touch shape). Preserve
+every other attribute and all instances, including bounds, positions, orientations, damage modifiers, targeting
 flags, and activation scripts. Ordinary fire/damage hazards and non-map entities
 are outside this rule. The conversion is idempotent and reports
 `fall_kill_volumes` in the schema counters.
@@ -4877,6 +4907,27 @@ full build validation and the zones self-test passed.
 
 The reduced two-flag configuration also passed a staged flat-floor on-foot
 control: Wolverine lost exactly 32,000 HP at Z=0.16, with no fall.
+
+### Touch shape: XML1's volumes are cylinders (2026-10-12, issue #22)
+
+Both executables find touch contacts the same way. After a move, the mover's swept volume (a vertical cylinder of
+radius max(half-x, half-y) of its bound and half-height half-z, from the old centre to the new one) goes to a world
+query restricted to entities with the touch flag (Xbox movement 0x42a7b-0x42b7f, XMen2.exe 0x433765-0x433869; query
+vt+0x74 Xbox 0xa1770 / PC 0x4aa180; collision system vt+0x10 Xbox 0x588d0 / PC 0x44d360). Each candidate is tested by
+its collision type (Xbox vt+0x4c 0x75000 / PC vt+0x50 0x471650): an entity without a model is type 5 with
+`boxcollision` and type 2 without it. Type 2 (Xbox 0x58c60, PC 0x44dca0) is a vertical cylinder around the bound
+centre with radius = the larger horizontal half-extent and the bound's own height, tested by the same swept-cylinder
+routine in both (Xbox 0x1988b0, PC 0x600dc0); type 5 (Xbox 0x590d0, PC 0x44e140) is the oriented box. The harm
+entity's centre and half-extents getters agree (Xbox 0x75f40 / 0x30680, PC 0x4712e0 / 0x41c330). The only further
+difference in the query is that the Xbox also requires `nocollide` (every volume here has it).
+
+29 of the first game's 30 lethal-touch definitions carry no `boxcollision` (nuke1_2's `kill_target02` does), so on
+the Xbox they are cylinders. Their `smartent` is absent too, and XML1 keeps an absent `smartent` false (0x67534),
+while XMen2.exe makes it true for physical entities (0x498a05): a smart entity is not in the touch query, which is
+the dead form the conversion started from. The faithful conversion is therefore `smartent="false"` alone. Writing
+`boxcollision="true"` (0.1.8 to 0.2.1) made every volume a box: its corners reach past the original cylinder, and an
+elongated box misses the cylinder's sides (sewers3_1_1's 624 x 180 boxes are cylinders of radius 312 on the Xbox).
+V26 now compares each enabled volume's `boxcollision` with its XML1 source.
 
 ### Player-only ravine: the HAARP exterior volume (maintainer decision, 2026-10-05)
 
@@ -5008,6 +5059,31 @@ units under an island floor) and `nuke1_3`'s three small boxes (208 under the fl
 93 units below its box inside the footprint, and `arb3_2` and `nuke2_2`'s `kill_target01` have floor 4 and 40 units over
 the top: test those first for a walk through the box.
 
+### Original touch shape in game (2026-10-12)
+
+Build with the cylinder conversion (only `smartent="false"`), xml2-fix 1.4.0, windowed, real keyboard input through
+the test pipe, every party member's position and health on every state read, the hero's world box read from memory
+(bottom = origin, 72 high). Staged and named: new game, party seats, XP, zone loads, one revive, the start positions
+below and the mid-air placements (the fall after them is gravity and the touch query, not a teleport into the box).
+
+| Volume | v0.2.1 (inert) | Cylinder | Result |
+|---|---|---|---|
+| `haarp_ext01` `kill_target` (enabled, player-only) | - | nav walk from the zone start to the ravine edge with four heroes and fights, real double jump: the controlled hero 245 -> -31755 at z -214.5 (top -193); followers on the edge alive | still lethal, gate kept |
+| `nyc1_1_4` `kill_target01` | staged drop over the street (1300,2600,420) + one key tap: fell through the box (inside at z 306, no damage), died only by the engine void (-999779 at z -168) | the same drop: 32,000 at z 326.9 / 331.5; the billboard ramp crossed both ways with the AI follower and the escort, jumps on it, three falls off its side into the walled pocket at z 361 (21 above the top): nobody entered, closest 21.3 | **enabled** |
+| `sewers1_2_4` `kill_target` | - | north walkway x 1300-2000 with the party twice (closest 132.8 over the top); the controlled hero double-jumped the railing: 32,000 at z -158 / -195 (top -132) twice; followers stayed | **enabled** |
+| `arb3_2` `kill_target` | - | the hero 35 units past the last nav cell at the foot of the ramp (floor -80, 4 above the top) dropped to z -89 and took 32,000 (it is the ice-bridge water room; the step happened right after a staged placement) | stays deferred: water at the ramp foot; AI following untested (#5 class) |
+| `arb3_3` `kill_target` | - | the hero placed on the nav cell beside it (floor -36) moved about 100 units and down to -81 within four seconds of the placement and one short key tap, then took 32,000 at z -85 (top -86): a slope into the water | stays deferred: same water-room pattern as `arb3_2`, reached right after staging |
+| `sewers2_1_3` `kill_target02` | - | party walk over/beside it and fights (closest 36.7), no entry; the deliberate jump was stopped by the railing; a follower showed an unexplained 32,000 between leaving this zone and the next start | stays deferred |
+| `nuke1_2` `kill_target02` (source box) | - | fights beside it (closest 63.9), no entry; no fall achieved | stays deferred |
+
+The billboard ramp report of 0.1.8 was not reproduced with either shape (its walkable cells are inside both, 21 above
+the top), and the slab replaces the engine's void kill rather than adding a hazard: on v0.2.1 a fall into the street
+already ends in the void kill, later. The other deferred rooms were not tested again in this run.
+
+Saved ordinals: a volume enabled after 0.2.1 goes after issue #81's settled props as well
+(`x1schema.FALL_KILL_ENABLED_LATE`, `move_late_fall_volumes` after the settle pass; nyc1_1_4 has six settled props),
+so a 0.2.1 save keeps every ordinal. `numbered_entinst_tail_problems` and V31 check it.
+
 ## 53. The first game's voice lines (2026-10-05, issue #49)
 
 XMen2.exe builds each character's sound table when the character loads (0x438d20, called from 0x4239be). For
@@ -5097,6 +5173,19 @@ first letters of the focused entry sit left of the bar (reported, not changed). 
 the Details page stayed on the first entry after moving the selection with test-pipe keys or pad; this is not caused
 by the change and is not investigated here. Enemy entries were not reached in game: `unlockCharacter` did not list
 them.
+
+**The highlight (issue #97).** The bar XML2's list draws on the focused row (`onfocus type="list_focus"`,
+`ui/models/m_codex_select`) is placed at the list item's origin, but its geometry leaves room for XML2's icon cell:
+the model's outer `igTransform` moves the bar so it spans x 26..282 from the origin, and the row's name starts at the
+origin when the list has no icons (0x5c20a7 shifts the text by the icon only when one is loaded). So the bar began
+under the middle of every name. `frontend.codex_select_igb` writes `ui/models/x1_codex_select.igb`, the player's own
+`m_codex_select.IGB` with that outer transform scaled and moved so the bar spans 0..282 (its own right end; scale
+282/256) and the outer bounds starting at 0 (an in-place edit, nothing else changes), and both codex halves point
+`list_focus` at it. It refuses (build error) a model that is not one transform holding another with matching bounds,
+or whose bar already starts at the origin. V58 (codex highlight) checks with `--frontend xml1` that the model is the
+frontend module's and both halves highlight with it. In game (the bytes the builder writes, tested in a 0.2.1 build
+with xml2-fix 1.4.0 + fix/controls-ui): the bar starts under the first letter of the focused name on every row
+(four rows, three of them unlocked with `unlockCharacter` as staged setup) and keeps XML2's right end.
 
 ## 56. Personal items (issue #47)
 
@@ -5553,6 +5642,64 @@ would silently fall back to XMen2.exe's rule: a plain punch would break it again
   rank 1 in XML1's npcstat, hit a structure-2 wall at level 4). Which of an enemy's attacks pass the sweep here
   and passed XML1's is not established attack by attack.
 
+### 63.4 Settling objects without crushes (xml2-fix `[Game] PlacementCrush=xml1`, issue #79)
+
+XMen2.exe settles every object on the floor when a zone loads, and every object spawned in play 0.5 s after it appears
+(death drops, script-spawned props, debris; the spawn-init virtual 0x474c00 posts the settle event at 0x474c63; entity
+vt+0x98 mode 3, floor routine 0x474080). The first game has no settle at all (default.xbe has no ESettle event). An object touching another during that settle may crush it (vt+0xac 0x498ef0): a 1,000,000-damage hit that
+BreakRule=xml1 refuses for most XML1 objects, but whose hit sound (`common/melee/hit_normal`) still plays. In
+mansion/man1a/mansion1a_2 the desk chair `chairdesk_x` (2648.78 1315.84) is authored tucked under `desk_rolltop_x`
+(2668.47 1315.63). On every first entry the desk crushes the chair while it settles, the chair is knocked into the
+desk, the desk's impact (0x499100) is a second hit, and two hit sounds come from Cyclops' empty room: 2 on 3/3 fresh
+entries (harness, Frida). The original Xbox plays none on the same entry (xemu recording; the port's hit sample matches
+at noise level there and at r 0.62/0.74 on the original's real punches).
+
+Moving the chair 13 units out did not stop it (4/4 still hit). So the builder writes `PlacementCrush=xml1` for every
+XML1 build (`fix_ini.PLACEMENT_CRUSH`), and XML2 Fix refuses touches while a settle is in progress: 0 hit sounds on 3/3
+fresh entries, 13 touches refused each. Settle-time touches of objects spawned in play are refused too (the first game never settles them either); other
+touches in play keep the game's rule. A fix without the feature ignores the
+key. Tests: tests/unit/test_builder_parts.py.
+
+All-zone sweep (145 XML1 zones, staged `loadMapKeepTeam`, first visit each, hit sounds and object damage in the
+first 6 s, Frida): only mansion1a_2 has a hit during a settle. Four zones have load-time hits outside any settle
+(asteroid2_2, mastermold2, nuke2_3, nyc3_1_3: fires, harm loops, scripted events), unchanged by the key.
+
+### 63.5 Packs that never heal double (xml2-fix `[Game] DoubleHeal=0`, issue #82)
+
+A health / energy pack's onactivate script is XMen2.exe's `restoreHealth` / `restoreEnergy` (0x4a2dd0 / 0x4a2c20).
+Each draws a random number against the hero's double-heal chance (the stats screen's "Double Heal Chance"). Below it,
+the pack heals two thirds instead of one and its use (0x42ca80 / 0x42cb70) plays `common/game/pickup_power_double`:
+XML2's own recording, darker than the first game's `pickup_power` (spectral centroid about 1680 Hz against 2260 Hz).
+That is the "sometimes slower / lower pitched" pack sound: 5 of 80 staged uses in the harness. The first game's pack
+use (default.xbe 0x3a7c0) takes no multiplier, and its banks have no double event. The builder writes `DoubleHeal=0`
+for every XML1 build (`fix_ini.DOUBLE_HEAL`), and the fix always takes the single branch: 0 of 80. The random number is
+still drawn. The stats screen's Body and Focus helps (XML2's own text, strings 1092 / 1093) state a double health /
+energy chance the first game never had: with DoubleHeal in, XML2 Fix's stat help (the strings manager's vt+8, as for
+[Balance]) drops the phrase and the line from both. The Focus line's number sits between two others in the screen's
+_vsnprintf call, so its directive becomes `%.0s`, which takes the argument and prints nothing (msvcr71 checked).
+The builder changes no string data for it.
+
+### 63.6 The first game's death threshold (xml2-fix `[Game] DeathRule=xml1`, gameplay rule 9)
+
+XML1's damage function (default.xbe 0x92220, shared by every class that can be hurt) kills an entity whose health
+falls below 1; XMen2.exe's (0x497e70) only at 0. XML1's health and damage are whole numbers, so its line at 1 never
+left a fraction alive; XMen2.exe's float damage did (a HAARP officer fought on at 0.2 and 0.9999993 health, his death
+script and keycard drop waiting for another hit).
+
+- `fix_ini.game_keys` writes `DeathRule=xml1` for every XML1 build; the key is port-owned (dropped again by a stock
+  merge). A fix without the feature ignores the key: entities die at 0 as before.
+- What the fix does (xml2-fix `docs/death-threshold.md`): XML1's seven 1.0 comparisons (death test, the character's
+  last-stand window and killing-hit mark, the harm entity's hazard announcement, the affectable harm's early return
+  and killer record, the power-gated bridges' reaction) and XMen2.exe's bossundying hold move to 1.0; a killing hit
+  that leaves health above 0 sets it to 0 (XML1's whole numbers always did), so kill XP, death drops and every
+  "is it alive" test follow. Undying and bossundying still hold a boss at 1.
+- Data: XML1 reads an entity's `health` as a float and keeps its maximum as a whole number (default.xbe 0x9335a);
+  an authored health below 1 would die on its first hit in both games, and a heal never runs the death test, so the
+  rule needs no data change. Validator V55 (x1schema.fractional_health_problems) reports an entity definition whose
+  numeric `health` is above 0 and below 1.
+- Not reproduced: XML1's whole-number damage itself (XMen2.exe's float damage stays; `[Balance]` rolls whole numbers
+  but multipliers still leave fractions).
+
 ## 64. The pause menu without the Blink Portal (issue #89)
 
 **What the first game does.** XML1 has no portal: its pause menu offers Objectives, Characters, Load Game, Players,
@@ -5953,7 +6100,8 @@ the name was free to choose before implementation) and raises REQUIRED_XML2FIX t
 adding the original's 116-item loot table would exceed 160 and needs an engine / DLL limit raise plus a converter
 budget change, with no LC format change. For #35 talent costs, `TAL` stores ranks, `HREC` stores level and unspent
 skill points, and the header stores `content_version`: a later two-point rank cost can grandfather or reprice
-existing saves by content version without a new field; policy is deferred until #35 lands. #5 solo mode changes
+existing saves by content version without a new field (#35 landed in 0.2.2: rank costs grandfather; the fifth-level
+points are caught up once, marked by optional-feature bits 1 / 2, 88.1). #5 solo mode changes
 runtime party behaviour only and persists nothing new.
 
 ### 70.1 The byte-level choices SPEC-new-save leaves open
@@ -6405,13 +6553,30 @@ It opens an equipment-shop menu, rather than travelling to a workshop map. The l
 (0x9f4a0) also requires its fourth service flag. XML2's full handler (0x4a6b50) has no such
 option; disabling its world map does not add services.
 
-Prepare P3 VERSION 5 writes a generated helper for each source point. Full points permit the
-shop; lite points preserve flag 4. The source contact script's existing ftalk store supplies
-the unlock, using its planned storage, without adding a saved flag or changing the packing.
-That store is cleared at the first mansion mission's start, and remains set across away
-missions. The helper calls extractionPointServices(owner, permission) behind the
-xml2fixFeature("xtractionshop") guard. Menu builds collapse the helper to its native fallback.
-Other lite permissions retain the existing section 62 behavior.
+Superseded by issue #63 (below): prepare P3 (stage version 7) passes each point's services as a bitmask and Forge
+uses the original's campaign test instead of the ftalk contact store.
+
+### 79.1 The rest of the first game's Xtraction menu (issue #63)
+
+- Original rules (default.xbe): full point 0x9f110 and lite point 0x9f4a0 add Save (2002) and Load (2006,
+  saveloadProcess(3)) always; Danger Room (2003) when 'storm' is in the campaign, Healer (2004, item shop) when
+  'healer' is, Forge (2005) when 'forge' is; a lite point also needs its 2nd / 3rd / 4th flag for them, and its
+  1st flag for Change Team (0x9f695). Its 5th flag is never read (0x9f557 reads the 4th again).
+- Prepare P3 writes one helper per distinct point call: `x1_svc = iadd(0, <bits> )` then, behind
+  `xml2fixFeature("xtractionservices")`, `extractionPointServices(owner, x1_svc )` (else the native
+  `extractionPoint`). Bits: 1 Forge offered, 2 Healer offered, 4 Load, 8 Danger Room offered, 16 Forge needs 'forge'
+  in the campaign, 32 no Change Team. Full points 31; the sub-basements 63; all-false lite points 36; Master Mold 4.
+  XML2 Fix checks the campaign bits (registry vt+0x84), greys Load and missing campaign options online with other
+  players, and skips Change Team for bit 32.
+- Campaign entry: default.xbe's mission-start table (0x44e2e8) has non-playable rows; `scripts.CAMPAIGN_NPCS`
+  keeps 'healer' (sewers_hub group, from sewers_gambit on) and 'forge' (mansion1 group) in the unlock lines of the
+  begin bodies and the zone catch-up scripts (saves from earlier builds get them on load).
+- Needs XML2 Fix >= the release with `xtractionservices` (1.5): with 1.4.0 the guard is 0 and the native menu runs
+  (Change Team and Save only; no Forge, unlike 0.2.1 with 1.4.0's ftalk permission).
+- V32 also rejects an `extractionPointServices` call without the Load bit in its own `x1_svc` line.
+- fix_ini writes `[Game] DangerRoomGate=button3` (the main menu's Danger Room greyed until Phoenix has been in a
+  campaign on the profile, xbe 0x17e93c-0x17e975) and `[Game] RevivalCost=xml1` (200 * (highest roster level)^2,
+  xbe 0xaf6b0) with the port's keys.
 
 The companion XML2 Fix registers extractionPointServices n(ai), wraps the same forced-team
 handler as the native point, and appends the source label before the native dialog finalizes.
@@ -6609,3 +6774,398 @@ decoded catalogue differs from candidate i's only in its content version; every 
 token LC26 with the fresh build's bind manifest; LC25 and every older row are unchanged. A raised (E10A2) save
 carries LC required-feature bit 0; the GCAP protocol revision 2 and entity layout rule revision 3 refuse a
 candidate-i peer at admission whatever its token. Builder/DLL versions remain 0.2.0 / 1.4.0.
+
+## 88. Skill rank costs (issue #35; XML2 Fix `[Game] RankCosts`, V-H16)
+
+**The first game.** A talent rank can cost more than one skill point: `<level cost="2">` in herostat.eng. That is
+119 ranks over the 14 heroes with costs (Beast, Colossus, Cyclops, Iceman, Jubilee, Magma, Psylocke, Rogue, Storm,
+Wolverine 9 each; Frost 8; Gambit, Nightcrawler, Phoenix 7): every Xtreme power's rank 1, the boost's ranks 1/4/7
+(Gambit 4/7), the first power's ranks 6/11 and the second power's ranks 1/6/11 (Nightcrawler and Phoenix: 6 only /
+1 and 6). They are the ranks that carry a `descname` (a new form of the power), not "the top Legend ranks". shared_talents
+has one more (psionic_fury rank 4), which no playable hero has. default.xbe's talent parser (0xb4250) keeps up to three
+(rank index, cost) pairs per talent (byte = index | cost << 5); CTalent vt+0x34 (0xb3ad0) answers the cost of a 0-based
+rank, 1 for any other. The skills menu charges and refunds it (0x16c800), greys a talent the hero can't pay for
+(0x169200), the automatic spending tries a rank only when the hero has its cost (0xae8a0/0xaf160) and losing levels
+takes ranks back until their costs cover the lost points (0xb1ca0). The first game has no respec.
+
+**The port.** heroes.py already copies `cost` onto the converted level (4.2), and every level covers one rank
+(`count="1"`), so the n-th rank is the n-th level. XMen2.exe never reads it (its only `cost` reader is the item
+loader). XML2 Fix's `[Game] RankCosts=1` (xml2-fix docs/rank-costs.md) charges each rank its level's `cost` in the
+skills screen (+ and -), its buyable test (which also decides whether the hint bar offers `[J] Add`), the screen's
+requirement sweep, the automatic spending ([Space] Auto and the level-up offer), Training's respec and losing levels;
+co-op peers agree through gameplay rule 5. `fix_ini.RANK_COSTS` writes the key for every XML1 build. A fix without the
+feature ignores the key: every rank costs 1, as before.
+
+**V-H16 (heroes validation, `rank_costs.py`).** Every cost of the XML1 source is on the same rank of the built talent,
+every level up to it has `count="1"`, the value is 1..7 (what the fix honours) and no built level carries a cost XML1
+does not. The count `rank_costs` is 119 for a full build.
+
+**Saves.** Unchanged: the unspent points and the ranks are stored, nothing recomputes them. A hero saved with ranks
+bought at 1 point keeps them and its points (checked in game: a 0.2.1-content save with the Xtreme, a rank 6 and two
+other 2-point ranks bought for 1 loads with the same ranks and 0 points); the difference stays spent. The first game
+had no respec, so nothing is stripped; Training's respec (XML2's shop service) would return the full costs.
+
+**In game (agent check, 2026-10-12; staged: XP by `awardXPToPlayable`, the extraction menu opened by script for the
+save).** Wolverine at level 17 with 16 points, real menu input on the skills tab. XML2 Fix 1.4.0 (control): wolv_xtreme
+rank 1, wolv_frenzy rank 1 and wolv_slash rank 6 cost 1 each. With RankCosts: 2 each (16 -> 14, - returns 2, the other
+ranks 1); with exactly 1 point left the hint bar offers no `[J] Add` on wolv_xtreme or wolv_berserk's rank 4 (both
+2 points) and J changes nothing, while wolv_frenzy's next rank (1 point) is offered; the last point buys a 1-point
+rank. [Space] Auto at level 20 with 3 points bought wolv_xtreme rank 1 (2) and x1_wolverine_healing_factor rank 1 (1). A save and a
+cold load in a new process keep the ranks and 0 points.
+
+### 88.1 Skill points per level (XML2 Fix `[Game] LevelSkillPoints=xml1`)
+
+**The first game.** default.xbe's level processing (0xb1ca0; it runs for every level between the hero's processed
+level, byte +0x1d, and its level +0x1c) gives 1 skill point and 1 stat point for each level gained, **2 of each for a
+level divisible by 5** (5, 10 .. 45: `level % 5 == 0`), besides stat_rules.xml's automatic stat bonus (0xaed70). A
+level lost (processed level above the level) takes the same 1 / 2 back, from the unspent points first and the rest as
+stats / ranks (the rank part costed, SPEC 88). XMen2.exe's (0x4bbae0) gives 1 skill point and 4 stat points for every
+level and takes 1 / 4 back. The grant is code (the INC at 0x4bbb6f, the min(points, 1) at 0x4bbc3e), not data, so the
+fix does it: `[Game] LevelSkillPoints=xml1` gives 2 on a level divisible by 5 and takes the same back
+(`fix_ini.LEVEL_SKILL_POINTS`, written for every XML1 build; gameplay rule 5 revision 2). Stat points stay XML2's.
+
+`[Game] XPCurve=xml1` (SPEC 23) only changes the XP a level needs and the cap (45); every level still goes through the
+processing, so by level 45 a hero has 9 more skill points than before. The SKILL pickups (SPEC 32) add their point
+directly (`addSkillPoints`) and are unaffected; together they bring a hero to XML1's total.
+
+**Saves: the one-time catch-up (maintainer decision 2026-10-12; XML2 Fix 1.5, xml2-fix docs/rank-costs.md).** A save
+stores the unspent points and each hero's processed level (`ack_level`). Heroes in a save made before the key were
+processed through their fifth levels with 1 skill / 4 stat points, so they are short 1 / 4 per multiple of 5 up to
+their processed level (5-9: 1, 10-14: 2, .. 45: 9). XML2 Fix grants exactly that once, on load: per hero block and
+valid restore record, (multiples of 5 in (1, ack_level]) x (1 skill, 4 stat) for each installed key; xpexempt heroes
+nothing. ack, not level: heroes not yet in the party carry level > 1 with ack 1 in real saves, and the engine gives
+them the new rule when it processes those levels. The count starts at 1, not at a herostat starting level: the
+level-up object's constructor (XMen2.exe 0x44a430) sets processed = 1 whatever the level, so the levels below a
+higher starting level are processed (and were given 1 / 4) like any other. Neither the content version (an import is
+written with the reference era's 13 and its resaves keep LGCY; a 0.2.2 build whose fix lacks the keys writes 19 too)
+nor the writer version marks "caught up", so the LC header's optional-feature word does (SPEC-new-save 1.1, ignored
+when unknown): bit 1 (`layout.OPTIONAL_LEVEL_SKILL_POINTS`) and bit 2 (`OPTIONAL_LEVEL_STAT_POINTS`), written by the
+fix for each key installed when it saves; a load grants a key's points only without its bit. No field, section or
+version changes; 1.4.0 and this package's reader ignore the bits (`convert.old_stream_to_new(optional_features=)`
+writes them for tests).
+
+**In game (agent check, 2026-10-12; staged: the save menu opened by `extractionPoint`, everything else real menu
+input; points read from memory).** A copy of an old campaign (Cyclops / Iceman level 21, 20 skill / 80 stat points;
+Phoenix / Wolverine level 21, 0 / 0; the other heroes level 21 with nothing processed), imported and saved again by
+XML2 Fix 1.5.0 without the catch-up (content 19, no bit): that DLL loads 20 / 80 and 0 / 0 (control). With the
+catch-up: 24 / 96 and 4 / 16 (4 fifth levels), the unprocessed heroes and both Professor X forms unchanged; the
+import itself gets the same. Saved (bits 1 and 2 set), closed, loaded in a new process: 24 / 96 and 4 / 16, no grant.
+A granted stat point is spent in the stats screen (16 -> 15). Saved with the keys removed, then loaded with them: the
+catch-up runs again (28 / 112): a file written without the keys is never taken as caught up, so a campaign that goes
+through a session without them is granted again for its earlier fifth levels (one bit per file can't say up to which
+level each hero was caught up; the builder always writes the keys).
+
+**In game (agent check, 2026-10-12; staged: XP by `awardXPToPlayable` to XML1's level thresholds - 505, 830, 4720,
+6880 - and the extraction menu opened by script for the save).** New Game, Wolverine: XML2 Fix 1.4.0 (control) gives
+3 / 4 / 8 / 9 skill points at levels 4 / 5 / 9 / 10 (+1 at 4 -> 5 and 9 -> 10); with `LevelSkillPoints=xml1` 3 / 5 / 9 /
+11 (+2 at both). Saved, closed, loaded in a new process: level 10, 11 points; level 10 -> 11 then gives +1 (12). Stat
+points identical on both sides (12 / 16 / 32 / 36).
+
+### 88.2 Stat points per level (XML2 Fix `[Game] LevelStatPoints=xml1`) and the automatic stat growth
+
+**The first game** (default.xbe 0xb1ca0 / 0xaed70; stat_rules.xml). Per level gained: 1 unspent stat point, 2 on a level
+divisible by 5 (the same rule as the skill points, 88.1); and an automatic bonus from stat_rules.xml: the hero's
+CHARACTER entry names a template class (bruiser: Beast, Colossus, Rogue, Wolverine; support: the other eleven, ProfXAstral
+included), and each `<level>` (levels 2..40; the first without `offset` is level 2) lists `bonus` stats applied at once
+(0xaea90) - one stat a level, two on levels 5, 10 .. 40, 47 stat points by level 40 (bruiser 20 body / 11 strength / 8
+speed / 8 mind; support 28 mind / 10 strength / 8 speed / 1 body); none above 40. Its `spend` entries are only the
+suggested spend of the unspent point. A level lost takes both back.
+
+**The port's scale.** The heroes' body / mind / strength are XML1's x 4 (heroes.STAT_SCALE; XML2 Fix [Balance]
+HeroStatScale=4 divides the stat coefficients by 4 for exactly these heroes), speed 10 + 2 x XML1's (SPEED_MAP).
+XMen2.exe's 4 unspent stat points a level are therefore XML1's 1, and a fifth level's 2 are 8: `LevelStatPoints=xml1`
+gives 8 on a level divisible by 5 (and takes 8 back when one is lost), 4 on the others (`fix_ini.LEVEL_STAT_POINTS`,
+gameplay rule 5 revision 3). Speed bought with points stays on XML2's 1-per-point scale (an XML1 speed point is 2 here),
+as before this change.
+
+**The automatic bonus is not reproduced, and is not changed here.** XMen2.exe's per-level bonus (0x43cf90 -> 0x43d000)
+comes from Data/autospend.XMLB: each class has periodic rules (start, rate, + body / mind / speed / strength), applied
+on every level they hit; the port maps its heroes onto XML2's four classes from XML1's ratings (heroes.AUTOSPEND,
+D13). By level 40 every XML2 class gives 79 stat points in port units; XML1's stat_rules give 47 XML1 points = 172 port
+units (bruiser: body 80, strength 44, mind 32, speed 16; support: mind 112, strength 40, speed 16, body 4), so the port's
+heroes grow about 46 % of the first game's automatic growth, in different proportions (an XML1 bruiser gains mind, an
+XML2 bruiser none). The maintainer chose option 1, implemented in SPEC 94 (xml1build.autospend: classes
+x1_bruiser / x1_support, heroes.AUTOSPEND moved to XML1's templates, validator V-H17). For the record:
+1. Data (implemented, SPEC 94): two new classes `x1_bruiser` / `x1_support` in autospend.XMLB (XML1's
+   templates), the heroes moved to them, their bonuses as periodic rules approximating stat_rules x 4.
+   A class holds at most four rules (the rule adder 0x43d370 drops the rest), the file at most four classes
+   (the parser skips every class after the fourth, 0x43d18d) and XML2 applies the rules past 40, so it can only
+   approximate; XML1's `spend` lists became the classes' auto-spend weights.
+2. Code: an XML2 Fix hook on 0x43d000's caller applying XML1's per-level table (written by the builder from
+   stat_rules.xml x 4 / speed x 2, by template) - exact, levels 2..40 only, level loss symmetric; rule 5 again.
+3. Leave it: the 0.2.0 balance work (design-balance, decision 1) tuned enemy health and the stat coefficients with the
+   port's current growth; restoring XML1's growth makes heroes stronger at high level and would need that balance
+   checked again.
+
+**In game (agent check, 2026-10-12; staged as in 88.1).** Unspent stat points of Wolverine at levels 1 / 4 / 5 / 9 /
+10: XML2 Fix 1.4.0 (control) 0 / 12 / 16 / 32 / 36 (+4 at 4 -> 5 and 9 -> 10); with `LevelStatPoints=xml1` (and the
+other two keys) 0 / 12 / 20 / 36 / 44 (+8 at both); saved, closed, loaded in a new process: level 10, 44 stat points
+and 11 skill points; level 10 -> 11 then +4 (48). The automatic bonus was not measured (static comparison above).
+
+### 88.3 Review fixes (2026-10-12)
+
+- The automatic spending now follows default.xbe's 0xaf160: a talent whose next rank the hero can't pay for is no
+  candidate of the pick (XML2 Fix site 0x43cd7e), so the next best affordable rank is bought; only when nothing
+  affordable is left does the spending end (as running out of points does). Before, it stopped at the first
+  unaffordable pick.
+- Losing a level first cancels the ranks added in an open skills menu and not yet committed (XMen2.exe 0x43a890, an
+  inlined store at 0x43a926 the first search missed): they now refund their costs, not 1 each.
+- V-H16 also refuses more than 3 costed ranks in a talent (the first game keeps 3, 0xb4250) and reads a level without
+  `count` as one rank (0x4bdea0).
+- ProfXAstral / ProfXGladiator (native stats, 88.2) are `xpexempt` level-40 forms: the level processing gives them
+  nothing, so neither level key touches them.
+- In game (agent check; staged XP to level 15, the save menu opened by script): Wolverine with wolv_xtreme rank 1
+  unbought and 2 points: [Space] Auto buys wolv_xtreme rank 1 (2 points; the pick's first choice). The same save
+  loaded in a new process, one point spent by hand: with 1 point, [Space] Auto passes over wolv_xtreme and buys
+  wolv_sharpness rank 1 (1 point), leaving 0.
+
+## 89. XML1 scan turrets (XML2 Fix `Game.Xml1Turrets`, V56)
+
+XML1's `scanturretent` stays a physent (x1schema, fixed mount, turret weapon model) and keeps its scanner attributes.
+The zones module now writes `_build/turrets.json` (xml1build.turrets, revision 2): one line per placement of a
+converted zone whose physent carries a `turretweapon`, with the inst's authored position and orientation, the model's
+`Gun1` bolt (the muzzle, read from the built model IGB; 0,0,0 without one), the scanner
+values (absent ones take default.xbe's constructor defaults, 0xa8600: visrange 600, minspeed 0, mintime 0.75,
+resetdelay 10, visextent 30, yaw/pitch extent 45, turnrate 20; filterteam hero = PC team bit 29) and the turret
+weapon from XML1's `data/weapons/weapons.eng`: kind, recoiltime, count/spread (projectile defaults 1/10, 0xbb240),
+projectilespeed, accuracy, range, the gun damage draw bounds (`weapons.gun_damage_range`, SPEC 76), tracetime,
+radius, the PC damage-type and damagemod bits of the weapon's names (XMen2.exe tables 0x6d61e0 / 0x6d6258; a name the
+PC exe does not know skips the placement and is reported), the projectile entity / entity file and the weapon's
+muzzlefx, muzzleaccfx and impactfx effect paths, and the weapon's firesound and the definition's rotatesound. A turret that a script of the zone's own folder spawns
+(`spawn("tank1", "tank_turret_sp01", "turret1", ...)`, the Hive tanks) is listed as `*turret1` (bound by name in the
+DLL). `SUPPORTED_KINDS` are projectile (HAARP exterior tanks), bullet (Arbiter, demo and Weapon X tripods) and flame
+(the Hive tanks' turrets); beam weapons (no turret uses one) are reported in the build notes and stay inert.
+
+**V56:** the zones module reports a build error when the contract is malformed (9 fields, 9 placement numbers, 9
+scanner numbers, 13 weapon numbers, 3 effects, 2 sounds, names, a ';' that would end an INI value, duplicate placements, more
+than the DLL's 32).
+
+`fix_ini.build_turrets` / `port_keys` and the harness write `[Game] Xml1Turrets=1` and `[Xml1Turrets] Count, T1..Tn`
+only for a first-game build with a valid contract; every key is port-owned (dropped again from a build without
+turrets). The DLL (docs/xml1-controllers.md in xml2-fix) runs the first game's acquisition, rotation and firing timing
+on those physents and registers rule 4 revision 2 with a hash of the applied lines, so co-op peers with different
+placements are refused. No save field, entity ordinal or content-version change: turret destruction stays the
+physent's own (deathscripts, deathspawn), and the scanner restarts from the authored placement on every load.
+
+## 90. Pack amount (XML2 Fix `[Game] PackAmount`, gameplay rule 13)
+
+Section number provisional: the 0.2.2 integrator renumbers if another branch took 88.
+
+A health or energy pack heals a fraction of the hero's maximum in both games, and the fraction is code, not data:
+both games' `Data/items` give `HEALTH_ITEM` / `ENERGY_ITEM` the scripts `restoreHealth('_ACTIVATOR_',-1)` /
+`restoreEnergy('_ACTIVATOR_',-1)` (both describe them as 25%), and -1 means "the script function's own fraction".
+default.xbe's functions (0x9bd50 / 0x9bcb0) take `(int)(max * 0.25)` (0x3c83b0) and pass it to the use (0x3a7c0 /
+0x3a870: the pending heal becomes `min(max, max(current, pending) + amount)`); no random draw, no double. XMen2.exe's
+(0x4a2dd0 / 0x4a2c20) take 0.33 (0.66 on a double heal, removed by `[Game] DoubleHeal=0`) into the same kind of
+pending heal (0x42ca80 / 0x42cb70). The port's packs therefore healed a third where the first game's healed a
+quarter, at every level (the x4 hero stat scale moves the maximum and the pack with it).
+
+`fix_ini.game_keys` writes `[Game] PackAmount=xml1` (`PACK_AMOUNT`) for every first-game opening, and the key is
+port-owned (dropped from a stock install's ini). The fix writes 0.25 over the two single-amount immediates; the
+item data is unchanged. An XML2 Fix without the key leaves the third (the ini key is ignored). Checks:
+`tests/unit/test_pack_amount.py` (the key, its ownership and the stock merge); the fix's own
+`xml2_test --pack-amount-rules`.
+
+## 91. Release 0.2.2 content identity
+
+The 0.2.2 wave changes a build's output (Professor X's seats, the resistance talents' removal tags, the solo-mode
+script calls, the Xtraction service bits and the Healer / Forge unlock rows, the resistance talents' reaction rows, the fall volumes' shape and two enabled
+rooms, the Codex highlight model, the turret placements, the leader list, the automatic stat growth classes and the new XML2 Fix keys), so CONTENT_VERSION
+advances from 18 to 19. The decoded catalogue differs from 0.2.1's only in its content version, so catalogue
+revision 6 is retained; of the `.lcbind` files only `shared_talents.lcbind` (the resistance talents) and
+`herostat.lcbind` (the automatic stat growth classes, SPEC 94) differ, and only in their data hashes (their bound lists
+are identical). The append-only history assigns (19,6) token LC27 with the fresh build's bind manifest;
+LC26 and every older row are unchanged. A 0.2.1 peer is refused at admission whatever its token: XML2 Fix 1.5.0
+registers gameplay rules 5-15. Builder/DLL versions 0.2.2 / 1.5.0; REQUIRED_XML2FIX 1.5 (fix_ini.check_release_dll).
+
+## 92. Resistance talents strip reactions again (launchers; validator V60)
+
+**Symptom.** A punch-punch-slam (the first game's launching uppercut, `popupattack`: `dmgmod_popup`) throws a
+standing HAARP officer about 80 units up on the port; the first game only lands the hit (13 of 13 tries on the Xbox
+original, 6 of 20 launches on 0.2.1, in the 0.2.2 door investigation). An officer launched next to the HAARP key door can hang
+on it and drop his keycard behind it.
+
+**Rule (the same code in both engines).** The damage receive path strips a hit's reaction bits - knockback 0x8,
+popup 0x10, trip 0x20, stun 0x40, immobilize 0x80 and bounce 0x40000 (XML1 also 0x200) - when the victim's
+`def_damage` scale for that hit is at most 0.3: default.xbe 0x45260 asks affecter 18 (`def_damage`) with the hit
+(so `scope_damage` applies) and compares with 0.3 (0x3c8828); XMen2.exe 0x437490 asks affecter 56
+(`def_damage_scope`) with the hit (0x4379e6 / 0x4379f7), multiplies the cached unscoped `def_damage`, and compares
+with 0.3 at 0x437bc3 (0x681ebc), mask at 0x437bd9. The rest of the popup decision also matches: `def_finisher` /
+`def_popup` turn the popup into a resisted reaction (XML1 affecters 26 / 28, XMen2.exe 47 / 48), `large` (XML1
+stats +0x3a1 bit 0x10, XMen2.exe +0x2ad bit 8) or `def_knockback` 0 cancel it (0x38340 / 0x427e00), and the
+launch itself is 120 units (30 for an airborne victim) in both (0x44630 / 0x435bf0).
+
+**Conversion loss.** XML1's six resistance talents (`physical_resistant`, `energy_resistant`, `mental_resistant`
+and their `_share` auras) are `def_damage` scale 0.2 scoped to one damage type. XMen2.exe ships talents of the same
+names, which win by name (characters.load_talents), built on `resist_<type>` 0.8. The damage is the same, but
+`resist_<type>` (0x4294d0) never strips a reaction. 74 XML1 npcstat entries carry one of the six; for 41 of them no
+other talent refuses the reactions (HAARPLeader, the GRSO officers, captains, commander and elite, the Shades
+leaders, Acolytes, Brotherhood and Morlock specialists, the advanced Sentinels, the Danger Room robots, the
+doppelgangers ...), so on the port they - and every ally inside a sharer's 120-unit aura - could be launched,
+knocked back, tripped and stunned by the damage types the first game refused them (a static census over the
+first game's npcstat and the 0.2.1 build: 14 entries for physical hits, 16 energy, 19 mental). A shared powerup reaches its owner in both engines (default.xbe 0x2aa90 puts it in the
+owner's list before it makes the share object).
+
+**Fix.** characters.restore_resist_talents (npc_values.resist_rewrite) keeps XMen2.exe's definitions (the aura's
+share fields and effects) and replaces each `resist_<type>` affecter with XML1's own row in XMen2.exe's scoped form,
+`<affecter affect_type="scale" attribute="def_damage_scope" level="0.2" scope_damage="dmg_<type>">`, in both
+halves. Damage taken is unchanged; names and order are unchanged (saves, `shared_talents.lcbind`). Data only: both
+co-op peers run the same build, so no gameplay agreement rule is involved.
+
+**V60** (npc_values.v_resist_talents): every shared talent XML1 defines with scoped `def_damage` rows carries them
+as `def_damage_scope` and no `resist_<type>` of those types. npc_values.verify_exe / verify_xbe also check both 0.3
+thresholds.
+
+**SPEC 30 follow-up: scoped immunity rows.** SPEC 30 wrote XML1's scoped `def_damage` immunity rows (HavokBoss's
+`def_damage dmg_energy 0`, the Morlock bruisers' `def_damage dmg_physical 0.5`) as XMen2.exe `def_damage` with a
+`scope_damage`. XMen2.exe's `def_damage` (39) is a cached per-actor value: the cache rebuild 0x53bf20 runs
+0x53a1a0 (case 0x27) for every affecter that passes its share filter (vt+0x44 = 0x534dc0), without a hit, so the
+scope does not limit it (static reading; not yet seen in game): the bruisers would take half damage from every
+type, and HavokBoss (named only by an unused map) none at all.
+npc_values.immunity_talent now writes a scoped `def_damage` row as `def_damage_scope` (XML2 retail's own spelling,
+ps_colossus), and definition_rows reads it back as the XML1 row, so V19's body comparison is unchanged.
+
+**With the removable resistances (issue #3, `tag_x1_removable_talents`, V53).** restore_resist_talents runs first
+(load_talents); the removal tag runs when shared_talents is written, so the `def_damage_scope` row is what lands in
+the `tag_name="def_damage"` powerup (other affecters - `def_mind_control` - move to the untagged one). A boss's
+`remove_tag="def_damage"` (Blob armor_off, Juggernaut armor_end / helmet_penalty, Toad, Pyro, MagnetoBoss) drops
+it by tag (0x54f7b0 -> 0x54dad0, which also marks the cached affecters dirty, 0x54da80); `def_damage_scope` is asked
+live from the current powerup list on every hit (0x550410), so the next hit already takes full damage, as in XML1
+(0x2b100 drops every def_damage powerup). Reactions do not return for these nine: each also carries
+`def_knockback` 0 (and `large` or `def_finisher`) in both games, so a launcher still does not lift them - seen in game
+on the 0.2.2 candidate for BlobAct4 (no lift before or after `armor_off`; hits about 4-9 before, 19-23 after).
+V53 counts `def_damage_scope` as a resistance affecter.
+
+## 93. The death hand-over stops the successor's AI walk (XML2 Fix `[Game] DeathSwitchClear`, gameplay rule 15)
+
+When the controlled hero dies, XMen2.exe hands the controller to a living AI party member (onDeath 0x429de0, the call
+0x420860 at 0x42a042) without clearing that member's AI move goal, which the manual switch does (0x424030 -> 0x42bd60).
+The player branch of the per-frame update (0x434540) runs a leftover goal through the AI's move driver whenever the
+pad gives no movement, so the new hero finished the AI's walk on its own - in icetunnel1's solo crossing, off the
+edge. X-Men Legends I's player branch only reads the pad (default.xbe 0x439a0): a new hero stands still until moved.
+
+- `fix_ini.game_keys` writes `DeathSwitchClear=1` for every XML1 build; the key is port-owned and one of the 1.5 keys
+  `check_release_dll` requires. A fix without the feature ignores it.
+- What the fix does (xml2-fix `docs/death-switch.md`): the hand-over call at 0x42a042 goes through the fix, which
+  clears the successor's move goal and follow handle as the manual switch does; nothing else of the switch changes.
+- Online it is rule 15 of the shared gameplay agreement. No data change.
+
+## 94. XML1's automatic stat growth in Data/autospend.XMLB (classes x1_bruiser / x1_support, validator V-H17)
+
+Maintainer decision 2026-10-12 (SPEC 88.2 option 1): approximate the first game's automatic stat bonus in data.
+
+**The first game** (default.xbe 0xaed70 / 0xaea90; stat_rules.xml): each hero names a template class (bruiser or
+support, `<CHARACTER name=.. template=..>`) and each listed level 2..40 applies its bonus stats at once (a `<level>`
+without `offset` follows the previous one; the first is level 2); nothing above 40. Port units: body / mind /
+strength x4 (heroes.STAT_SCALE), speed x2 (SPEED_MAP's slope).
+
+**The port's format** (XMen2.exe, retail):
+- Level processing 0x4bbae0 walks every level from the hero's processed level ([CStats+0xc0]+0x3c) + 1 to its level
+  (CStats+0x1c) and, per level, calls the class rule walk 0x43cf90 -> 0x43d000 (and grants the stat / skill
+  points). It skips xpexempt heroes (CStats+0x2ad bit 0x20), so ProfXAstral / ProfXGladiator never grow. It runs
+  when a hero in the party gains XP; a benched hero's levels are processed, all at once, the next time it levels in
+  the party (live: Rogue 1 -> 42 in one walk got exactly the level-42 total).
+- 0x43cf90 looks the herostat `autospend` name (set by the stats parser at 0x4bb2bf, kept at [CStats+0xc0]+0x24)
+  up in a static table of **four** class records (0x34 bytes each, from 0x712bf4). The parser 0x43d0c0 skips every
+  CharacterClass after the fourth (`cmp [ebx+0x78],4` at 0x43d18d); a hero whose class was skipped gets no growth
+  at all, silently (0x43cf90 finds nothing and returns).
+- A record holds up to four 6-byte rules at +0x14 (start, rate, four signed stat deltas), count at +0x30; the rule
+  adder 0x43d370 drops a fifth (`cmp [ecx+0x30],4` at 0x43d373). A rule fires on level L when L == start, or
+  L > start, rate > 0 and (L - start) % rate == 0 (0x43d041..0x43d05f) - rate 0 fires once, at start.
+- A fire adds the deltas to the hero's class-bonus bytes CStats+0x10..0x13 ([strength, speed, body, mind]) through
+  0x43a620, which refuses a write that would take base (CStats+8) + spent (CStats+0xc) + bonus above 250; a level
+  lost re-walks with the sign reversed (0x4bbbf6). The effective stat is base + spent + bonus (+ items); the
+  bonus bytes are saved with the hero (live: unchanged after a cold load, the next level fires on top).
+- The class attributes body / mind / speed / strength are the auto-spend weights of the unspent points
+  (normalized by the engine, 0x43d24d).
+
+**The build** (xml1build.autospend, after heroes in MODULE_ORDER): Data/autospend.XMLB = x1_bruiser, x1_support
+FIRST, then the XML2 classes the built herostat still names (support_heavy: `default`, Magneto, the x1pad entries),
+the rest dropped (they could never load anyway). heroes.AUTOSPEND maps every XML1 hero onto its template's class.
+The templates' tables and `spend` lists are read from the player's stat_rules.xml at build time (nothing XML1 is
+stored in the repo); the `spend` counts become the auto-spend weights (`agility` counted as speed).
+
+The fitted rules (least per-level deviation under the four-rule limit; a hill-climb over joint four-stat rules found
+nothing better for x1_bruiser and only the one-shot body/mind tweak below for x1_support):
+
+- x1_bruiser: body (2,2,+4), strength (3,4,+4), speed (5,5,+2), mind (5,4,+4). Max deviation over levels 2..40:
+  body 4, strength 4, speed 2, mind 4 port points (one XML1 point each).
+- x1_support: mind (2,1,+3), strength (7,4,+4), speed (5,5,+2), body+4 / mind-1 once at 6 (rate 0). Max deviation:
+  mind 5, strength 4, speed 2, body 0.
+
+**Past 40** the periodic rules keep firing to the level cap (45 with XPCurve=xml1): by 45 bruiser body +8, mind +12,
+speed +2 over XML1's flat line; support mind +19 (XML1 units: at most 5 points).
+
+**Live** (staged XP via awardXPToPlayable, read from CStats+0x10): the bonus matches the simulation exactly at
+levels 5, 10, 20, 30, 40, 41 and 42 for both classes; a control with XML2's classes reproduces XML2's growth.
+
+**V-H17** (autospend.problems, from heroes.validate_out): the built file loads x1_bruiser / x1_support and every
+class herostat names within its first four classes, carries exactly the fitted rules (<= 4, signed-byte amounts,
+byte start/rate), the simulated growth stays within the documented deviation of the player's stat_rules.xml at
+every level 2..40, the weights equal the `spend` counts, and every hero stat_rules.xml names uses its template's
+class.
+V-H17 also requires `Data/lcsave/autogrowth-legacy.txt` (below) to parse and to name every hero of heroes.AUTOSPEND.
+
+**Saves: the one-time re-base (maintainer decision 2026-10-12; XML2 Fix 1.5).** A save written before this build
+holds the class bonus XML2's ratings classes gave each hero up to its processed level. The bonus bytes also take the
+Review comics' stat rewards (XMen2.exe 0x5d0920 -> the same setter 0x43a620; section 21.4: XML1's comic rewards,
+x4), so they cannot simply be replaced. XML2 Fix re-bases once per save, on load, per hero block and valid restore
+record: bonus = saved - the old class's growth + the current class's growth, both simulated with the engine's walk
+(levels 2 .. processed level; rate 0 = once; the setter's 250 ceiling against the hero's base + spent bytes); the
+"gain" bytes CStats+0x14 the same way with the rises. A hero whose saved bonus is below its old class's growth in a
+stat is left as it is (logged). The current classes are read from the build's Data/autospend and the herostat
+`autospend` names; the old ones from `Data/lcsave/autogrowth-legacy.txt`, which `autospend.run` writes from the
+player's unmodified XML2 Data/autospend.XMLB and `autospend.LEGACY_AUTOSPEND` (heroes.AUTOSPEND before this section):
+a magic line `autogrowth-legacy 1`, then `hero<TAB>class<TAB>start,rate,strength,speed,body,mind;...` per hero
+(record order). Without that file the fix re-bases nothing. The marker is the LC header's optional-feature bit 3
+(`layout.OPTIONAL_CLASS_GROWTH`), set on every campaign write while the re-base is active; a file with it is never
+re-based again. Exempt heroes (the Professor forms) are skipped. No save-format change.
+
+**In game (agent check, 2026-10-12; build = this branch's full build + `--only autospend`; staged: the save menu
+opened by `extractionPoint`, one `awardXPToPlayable`; loads by real menu input; bonus read at CStats+0x10).** A copy of
+an old campaign with four heroes processed to level 21 (bonus [str/spd/body/mind] Wolverine 25/5/10/0, Cyclops /
+Iceman 5/10/5/20, Phoenix 0/10/5/25 = their XML2 classes' growth): XML2 Fix 1.5.0 without the re-base keeps them
+(control). With it: Wolverine 20/8/40/20 (x1_bruiser at 21), the three supports 16/8/4/59 (x1_support at 21); level
+21 -> 22 then fires the new rules on top (Wolverine body 44, supports mind 62); saved (bits 1-3), loaded in a new
+process: unchanged, "the file vouches for the build's classes". On the 0.2.2 build without the new classes (no
+legacy file) the same file keeps its bonus.
+
+## 95. Enemies' power use, melee combos and visibility: XML1's rules (XML2 Fix `[Game] NpcPowerRule`, gameplay rule 16)
+
+Report (Steam Deck tester, 2026-10-12, 0.2.x): at HAARP the Brotherhood Marauders and Revolutionaries "barely use
+regular melee attacks anymore", the party gets stuck in knock-down / stun loops. Not a 0.2.0/0.2.1 data regression:
+ps_bh_smash / ps_bh_energy, fightstyle_wrestling / _villain and the npcstat entries are identical in 0.2.1 and 0.2.2
+and carry XML1's aitype / aireusetime / powerusage (resolved per 24.2). The causes are in the engine.
+
+- **Powers** (both games share the four power slots, the aitype mask table and the picker, default.xbe 0x1081f0 /
+  XMen2.exe 0x50fe50):
+  - XML1 charges a power's cost to every NPC (0xcde90). XMen2.exe never charges an AI-flagged character unless its
+    controller says so once after a queued command (0x4318e7 -> 0x503160). **24.3 is wrong** where it says every
+    actor but a player hero spends: `x1_npc_energy` sets XML1's pool, but without the charge it never moved.
+  - XML1's melee-range power decision re-checks every 2.0 s (0.5 s for a party hero) and needs half the energy
+    (0xee260); XMen2.exe's every 0.3 s with no energy test (0x518770).
+- **Melee combos** (the brain's attack decision, 0xeea60 / 0x518fd0):
+  - Both AI inits pick a combo level the same way (2 for a ranged-type NPC without the leader bit, the top level
+    otherwise, 3 for Toad and Pyro), but XMen2.exe then overrides it with npcstat `combolevel` (0x505011), 0 for every
+    XML1 entry, and level 0 never starts a combo: the port's enemies threw single `attacklight1`s only.
+  - XML1's six combos and weights (0x452bac / 0x452c30 / 0x452c18) are not among XMen2.exe's eleven.
+  - XMen2.exe skips the decision's tail after a combo start (no next-attack time), XML1 runs it.
+- **Visibility.** XML1's AI query uses actor/target positions raised by 60, unit sweep extents, and one query per
+  tick with a reserved waiting actor. XMen2.exe uses different endpoints, extents 15, two queries, and lets the
+  first query bypass the reservation. A failed query can mean scheduling deferral, not physical obstruction.
+  Both exclude hero/enemy teams; the power picker's aitype ranges and the separate ranged-state facing gate agree.
+- **Fix.** xml2-fix `[Game] NpcPowerRule=xml1` (npc_power_rules.hpp, npc_visibility_rules.hpp, docs/npc-power-rule.md;
+  gameplay rule 16, revision 3, enabled values `{1,1,0,0}`) restores the listed power/combo rules and XML1's visibility
+  geometry and query scheduling. The combos need no data: the override goes and rows 2 / 3 / 11 of XMen2.exe's
+  combo table hold XML1's levels 2 / 3 / 6 over XML1's six combos. `fix_ini.NPC_POWER_RULE` writes the key for every
+  XML1 build. No data change (an npcstat `combolevel` would only pick among XMen2.exe's own combos), no CONTENT_VERSION
+  change, no save change. A 1.5 DLL ignores the key: the release needs the fix release that has it.
+- **Measured** (staged: hero invulnerable and idle, teleport onto a spawner point; xemu for the original; per enemy
+  per minute; docs/npc-power-rule.md has the full table): ice tunnel hero free 51-53 % original, 0-6.5 % 0.2.1 / 0.2.2,
+  22-38 % with the rule; Revolutionary stun arc 1.8-4.4 original, 12-16 0.2.x, 5.1-5.7 with the rule; chained / heavy
+  hits 4.6-4.8 original, 1-2.5 0.2.x, 3.8-5.0 with the rule. GRSO soldiers' fire: 35-36 original, 46 in 0.2.2, 32-38
+  with the power/combo rule. A later 150-second control and two compiled visibility runs measured Marauder powers
+  at 20.9/min versus 12.3 and 15.7/min; original reference 8.6–10.7. Hero free was 18.3% versus 21.2–24.8%, still
+  below the original's 51–53%. These are small staged samples, not a claim that the remaining aggression is solved.
+- **Resistance (SPEC 92)** checked with the hero punching a physically resistant Revolutionary (AI off, real pad A
+  presses): it still flinches on light hits about once per 3 points of damage in 0.2.1 and 0.2.2 alike.

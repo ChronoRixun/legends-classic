@@ -1331,6 +1331,9 @@ class Zones:
                 rows = SE.survey(root, SE.collision_triangles(map_path.read_bytes()), SE.bounds_reader(read_model))
                 st['spawn_settle'] = rows
                 self.counts['spawn_settle_instances'] += SE.convert(root, rows)
+                # fall volumes enabled after 0.2.1 follow the settled props (save ordinals)
+                from . import x1schema as XS
+                self.counts['fall_kill_volumes_late'] += XS.move_late_fall_volumes(root, f'maps/{zone}.eng')
                 for row in rows:
                     self.counts['spawn_settle_' + row['status']] += 1
             except (ValueError, OSError, KeyError, TypeError) as exc:
@@ -3030,8 +3033,15 @@ def run(ctx):
                  f'XML2 start/mid/endColor1/2 (sampled at t=0/0.5/1; ABGR; constant alpha folded into A, varying '
                  f'alpha kept with A=0xFF; exact on XML2\'s own converted test effects). Varying-colour curves are '
                  f'approximated by 3 keys: in-game check')
-    ctx.defer('XML1 scan turrets (scanturretent) are physents in XML2: they can be destroyed (deathscripts fire) '
-              'but no longer aim or fire; a turret needs an XML2 AI/NPC stand-in (powers rework)')
+    # XML1 scan turrets: physents here; XML2 Fix runs their scanner and weapon from this contract (xml1build.turrets)
+    from . import turrets as TU
+    tdata = TU.build(ctx, Z.converted)
+    ctx.write_meta('turrets.json', tdata)
+    ctx.set_count('turret_placements', len(tdata['placements']))
+    for problem in TU.validate_contract(tdata):
+        ctx.error(problem)
+    ctx.note(f'{len(tdata["placements"])} XML1 scan turret placements for the XML2 Fix controller '
+             f'({sorted({d["zone"] for d in tdata["details"]})}); not driven: {tdata["skipped"]}')
     unconverted_links = sorted({(z, l['target']) for z in Z.converted for l in Z.detail[z]['links']
                                 if l['target'] and l['target'] in Z.skipped})
     for z, t in unconverted_links:

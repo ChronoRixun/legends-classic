@@ -806,6 +806,27 @@ def v_codex_icons(v, ck):
         ck.count('codex_menu_halves')
 
 
+def v_codex_highlight(v, ck):
+    """V58 (issue #97): with --frontend xml1 the codex list highlights with the frontend's x1_codex_select (XML2's
+    bar stretched over the whole row), written by the frontend - XML2's m_codex_select leaves room for the icon
+    cell the port's list no longer draws, so its bar began under the middle of every name."""
+    if C.frontend_mode(v.ctx) != 'xml1':
+        ck.note('--frontend xml2: XML2\'s codex menu kept (not checked)')
+        return
+    model = F.CODEX_SELECT_X1 + '.igb'
+    if not _registered_by(v, model, 'frontend'):
+        ck.error(f'{model}: not written by the frontend module')
+    for ext in ('.XMLB', '.engb'):
+        rel = F.CODEX_MENU_REL + ext
+        root = _tree(v, rel)
+        if root is None:
+            ck.error(f'{rel}: missing or does not decode')
+            continue
+        for p in F.codex_select_problems(root):
+            ck.error(f'{rel}: {p} (XML2\'s bar leaves an icon gap the list no longer fills)')
+        ck.count('codex_highlight_halves')
+
+
 def v_pda_portal(v, ck):
     """V35 (issue #89; SPEC 64): in both front ends the pause menu (UI/menus/pda, both halves) is the frontend
     module's and offers no Blink Portal - no portal label item, nothing navigates to it, its panel models hidden.

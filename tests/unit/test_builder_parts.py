@@ -351,9 +351,15 @@ def test_port_keys_from_a_synthetic_build():
         assert FI.port_keys(out) == {'Game': {'NewGameTeam': 'wolverine', 'ResetUnlocks': '0',
                                               'SaveFolder': 'X-Men Legends', 'ForcedTeams': '1',
                                               'GeometrySharingBlendIndices': '1', 'CharacterLadderPaths': '1',
-                                              'ObjectiveDescriptions': '1', 'BreakRule': 'xml1', 'ExplosiveFirstHit': '1'},
+                                              'ObjectiveDescriptions': '1', 'BreakRule': 'xml1',
+                                              'PlacementCrush': 'xml1', 'DoubleHeal': '0', 'ExplosiveFirstHit': '1',
+                                              'RankCosts': '1', 'LevelSkillPoints': 'xml1',
+                                              'LevelStatPoints': 'xml1', 'Xml1Multipart': '1', 'DeathRule': 'xml1',
+                                              'NpcPowerRule': 'xml1', 'PackAmount': 'xml1', 'SoloMode': '1', 'X1Leader': '1',
+                                              'DeathSwitchClear': '1'},
                                      'Limits': {'ActorSlots': '127', 'ResourceNames': '1024', 'ItemEnhancements': '512',
-                                                'FightStyles': '32', 'EffectCurves': '3600', 'MoveTriggers': '64', 'EntityCapacity': '1'}}
+                                                'FightStyles': '32', 'EffectCurves': '3600', 'MoveTriggers': '64', 'EntityCapacity': '1',
+                                                'ScriptFunctions': '1024'}}
         menu = ET.Element('menu', type='MAIN_MENU')
         for i in range(1, 9):
             attrs = {'name': f'button{i}', 'text': f't{i}'}
@@ -373,9 +379,9 @@ def test_port_keys_from_a_synthetic_build():
         keys = FI.port_keys(out)
         g = keys['Game']
         assert g['MainMenuItems'] == 'button1,button2,button3,button4,button5,button6,button8,button7'
-        assert g['ClassicMainBackdrop'] == '1'
+        assert g['ClassicMainBackdrop'] == '1' and g['DangerRoomGate'] == 'button3'
         assert g['PostgameScript'] == FI.POSTGAME_SCRIPT and g['WindowTitle'] == 'X-Men Legends'
-        assert g['NewGamePlus'] == '0' and g['ReviewStats'] == '0' and g['XPCurve'] == 'xml1' and g['Xtract'] == '0'
+        assert g['NewGamePlus'] == '0' and g['ReviewStats'] == '0' and g['XPCurve'] == 'xml1' and g['Xtract'] == '0' and g['RevivalCost'] == 'xml1'
         assert keys['Online'] == {'GameVersion': FI.PORT_GAME_VERSION} and set(g) <= set(FI.PORT_OWNED['Game'])
         assert keys['Save'] == {'Format': 'lc'} and 'Format' in FI.PORT_OWNED['Save']
         # the harness builds its test ini from the same keys
@@ -655,6 +661,53 @@ def test_xml1_builds_ask_for_the_first_games_break_rule():
     assert 'BreakRule' not in FI.game_keys(xml1_opening=False)
     assert 'BreakRule' in FI.PORT_OWNED['Game']
     assert FI.dropped_keys({'Game': {}})['Game'].count('BreakRule') == 1
+    # SPEC 63.4: the zone loader's crushes refused while a zone places its objects, for every XML1 build
+    assert FI.game_keys(xml1_opening=True)['PlacementCrush'] == 'xml1'
+    assert 'PlacementCrush' not in FI.game_keys(xml1_opening=False)
+    assert 'PlacementCrush' in FI.PORT_OWNED['Game']
+    # SPEC 63.5: packs never heal double (nor play XML2's double sound), for every XML1 build
+    assert FI.game_keys(xml1_opening=True)['DoubleHeal'] == '0'
+    assert 'DoubleHeal' not in FI.game_keys(xml1_opening=False)
+    assert 'DoubleHeal' in FI.PORT_OWNED['Game']
+
+
+def test_xml1_builds_ask_for_the_first_games_npc_power_rule():
+    """XML1 charges its enemies for their powers and decides on a melee-range power every 2 s with half the energy;
+    XMen2.exe does neither: every XML1 build asks the fix for XML1's rule, an XML2-opening ini has no key, and the port
+    owns it, so a stock merge removes it again."""
+    assert FI.game_keys(xml1_opening=True)['NpcPowerRule'] == 'xml1'
+    assert 'NpcPowerRule' not in FI.game_keys(xml1_opening=False)
+    assert 'NpcPowerRule' in FI.PORT_OWNED['Game']
+    assert FI.dropped_keys({'Game': {}})['Game'].count('NpcPowerRule') == 1
+
+
+def test_xml1_builds_ask_for_the_first_games_death_threshold():
+    """XML1 kills below 1 health, XMen2.exe at 0: every XML1 build asks the fix for XML1's line; an XML2-opening ini
+    has no key, and the port owns it, so a stock merge removes it again."""
+    assert FI.game_keys(xml1_opening=True)['DeathRule'] == 'xml1'
+    assert 'DeathRule' not in FI.game_keys(xml1_opening=False)
+    assert 'DeathRule' in FI.PORT_OWNED['Game']
+    assert FI.dropped_keys({'Game': {}})['Game'].count('DeathRule') == 1
+    with tempfile.TemporaryDirectory() as td:
+        path = Path(td) / 'example.ini'
+        path.write_text('[Game]\nDeathRule=xml2\nKeepMe=example\n')
+        port = {'Game': FI.game_keys()}
+        FI.merge_ini(path, port, FI.dropped_keys(port))
+        assert FI.read_ini(path)['Game']['DeathRule'] == 'xml1'
+        stock = {'Game': FI.game_keys(xml1_opening=False)}
+        FI.merge_ini(path, stock, FI.dropped_keys(stock))
+        parsed = FI.read_ini(path)['Game']
+        assert 'DeathRule' not in parsed and parsed['KeepMe'] == 'example'
+
+
+def test_fractional_health_is_reported():
+    """SPEC 63.6: a definition with 0 < health < 1 would die on its first hit under DeathRule=xml1."""
+    import xml.etree.ElementTree as ET
+    from xml1build import x1schema as XS
+    root = ET.fromstring('<entities><e classname="physent" name="crate_a" health="0.5"/>'
+                         '<e classname="physent" name="crate_b" health="1"/><e classname="physent" name="crate_c" health="0"/>'
+                         '<e classname="physent" name="crate_d" health="x"/><e name="crate_e" health="0.25"/></entities>')
+    assert XS.fractional_health_problems(root) == [('crate_a', '0.5')]
 
 
 def test_xml1_builds_ask_for_no_xtract_world_map():
@@ -673,8 +726,87 @@ def test_xml1_builds_ask_for_no_xtract_world_map():
 
 def test_port_builds_ask_for_the_lc_save_format():
     """SPEC 70: [Save] Format=lc is a port build's (an XML2-opening ini has none), the port owns it, and the
-    build needs the xml2-fix that reads it (1.4)."""
+    build needs the xml2-fix that reads it (1.4; 1.5 since the 0.2.2 keys)."""
     assert FI.save_keys(port_identity=True) == {'Format': 'lc'}
     assert FI.save_keys(port_identity=False) == {}
     assert FI.PORT_OWNED['Save'] == ('Format',) and 'ContentFingerprint' in FI.PORT_OWNED['Online']
-    assert FI.REQUIRED_XML2FIX == '1.4'
+    assert FI.REQUIRED_XML2FIX == '1.5'
+
+
+def test_a_dll_without_the_15_keys_is_refused(tmp_path=None):
+    """0.2.2: a companion DLL that doesn't know a 1.5 key the build writes is refused (a 1.4 DLL ignores them)."""
+    import tempfile
+    keys = {'Game': {'RankCosts': '1', 'X1Leader': '1'}, 'Limits': {'ScriptFunctions': '1024'}}
+    with tempfile.TemporaryDirectory() as d:
+        dll = Path(d) / 'dinput.dll'
+        FI.check_release_dll(dll, keys)                                   # no DLL: a source-only build
+        dll.write_bytes(b'MZ' + 'RankCosts'.encode('utf-16le') + 'ScriptFunctions'.encode('utf-16le'))
+        try:
+            FI.check_release_dll(dll, keys)
+        except ValueError as exc:
+            assert 'X1Leader' in str(exc) and '1.5' in str(exc) and 'RankCosts' not in str(exc)
+        else:
+            raise AssertionError('an old DLL was accepted')
+        dll.write_bytes(dll.read_bytes() + 'X1Leader'.encode('utf-16le'))
+        FI.check_release_dll(dll, keys)
+        FI.check_release_dll(dll, {'Game': {'NewGameTeam': 'x'}})        # no 1.5 key asked for: nothing to check
+
+
+def test_old_fix_keys_names_every_unknown_key_and_the_cli_path_writes_anyway():
+    """FixTooOld (a ValueError) carries every key an older DLL lacks across the three checks; write_port_keys
+    refuses by default (harness, build_xml1) and writes with old_fix_ok (the xml1-builder CLI's warning path)."""
+    import tempfile
+    keys = {'Game': {'X1Leader': '1'}, 'Limits': {'MoveTriggers': '64', 'EntityCapacity': '1'}, 'Save': {'Format': 'lc'}}
+    with tempfile.TemporaryDirectory() as d:
+        dll = Path(d) / 'dinput.dll'
+        assert FI.old_fix_keys(dll, keys) == []                           # no DLL: nothing to name
+        dll.write_bytes(b'MZ ' + 'MoveTriggers'.encode('utf-16le'))     # a 1.3-era DLL that knows only one of them
+        assert FI.old_fix_keys(dll, keys) == ['[Limits] EntityCapacity', '[Game] X1Leader']
+        try:
+            FI.write_port_keys(d, {s: dict(v) for s, v in keys.items()})
+        except FI.FixTooOld as exc:
+            assert isinstance(exc, ValueError) and exc.missing == ['[Limits] EntityCapacity', '[Game] X1Leader']
+            assert 'XML2 Fix 1.5' in str(exc)
+        else:
+            raise AssertionError('an old DLL was accepted')
+        assert not (Path(d) / 'xml2-fix.ini').exists()
+        FI.write_port_keys(d, {s: dict(v) for s, v in keys.items()}, old_fix_ok=True)
+        ini = (Path(d) / 'xml2-fix.ini').read_text()
+        assert 'X1Leader=1' in ini and 'EntityCapacity=1' in ini
+        try:                                                              # a key set no DLL can run still fails
+            FI.old_fix_keys(dll, {'Limits': {'EntityCapacity': '1'}})
+        except FI.FixTooOld:
+            raise AssertionError('a missing Format=lc is not an old-fix case')
+        except ValueError as exc:
+            assert 'Format=lc' in str(exc)
+        else:
+            raise AssertionError('EntityCapacity without Format=lc was accepted')
+
+
+def test_danger_room_gate_names_the_front_ends_danger_room_item():
+    """Issue #63: DangerRoomGate is the XML1 main menu item that opens the Danger Room."""
+    from xml1build import frontend as F
+    dr = [f'button{n}' for n, _, cmd in F.MENU_BUTTONS if cmd and 'openmenu danger_room' in cmd]
+    assert dr == [FI.DANGER_ROOM_GATE_ITEM]
+    assert FI.game_keys(main_menu_items='x')['DangerRoomGate'] == FI.DANGER_ROOM_GATE_ITEM
+    assert 'DangerRoomGate' not in FI.game_keys()
+
+
+def test_existing_release_dll_without_npc_power_rule_is_refused():
+    """A pre-feature 1.5 DLL knows the other release keys but must not silently omit enemy AI."""
+    import tempfile
+    keys = {section: {name: 'xml1' for name in names} for section, names in FI.RELEASE_15_KEYS.items()}
+    keys['Game']['NpcPowerRule'] = 'xml1'
+    with tempfile.TemporaryDirectory() as d:
+        dll = Path(d) / 'dinput.dll'
+        dll.write_bytes(b'MZ' + b''.join(name.encode('utf-16le') + b'\0\0'
+                                       for section in keys.values() for name in section if name != 'NpcPowerRule'))
+        try:
+            FI.check_release_dll(dll, keys)
+        except FI.FixTooOld as exc:
+            assert exc.missing == ['[Game] NpcPowerRule']
+        else:
+            raise AssertionError('a DLL without NpcPowerRule was accepted')
+        assert FI.old_fix_keys(dll, keys) == ['[Game] NpcPowerRule']
+        dll.write_bytes(dll.read_bytes() + 'NpcPowerRule'.encode('utf-16le'))
+        FI.check_release_dll(dll, keys)

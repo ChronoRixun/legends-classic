@@ -41,6 +41,8 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 
 from . import common as C
+from . import autospend as ASP                 # SPEC 94: XML1's automatic stat growth in Data/autospend.XMLB
+from . import rank_costs as RC
 from . import combat_events as CE
 from . import hero_icons as HI        # issues #53/#73: the talent-icon atlases as 4x4 alpha-blended sheets
 from . import npc_values as NV     # SPEC 24: value codes, the NPC energy talent
@@ -158,12 +160,15 @@ def rescale_x1_hero_stats(attrs):
     return out
 
 
-AUTOSPEND = {'wolverine': 'bruiser', 'rogue': 'bruiser', 'colossus': 'bruiser',
-             'beast': 'bruiser_light', 'nightcrawler': 'bruiser_light', 'psylocke': 'bruiser_light',
-             'frost': 'support', 'phoenix': 'support', 'storm': 'support', 'profxastral': 'support',
-             'profxgladiator': 'support',
-             'cyclops': 'support_heavy', 'gambit': 'support_heavy', 'iceman': 'support_heavy',
-             'jubilee': 'support_heavy', 'magma': 'support_heavy'}
+# D13 (SPEC 94): XML1 stat_rules.xml template (bruiser: Beast, Colossus, Rogue, Wolverine; support: the
+# other eleven, ProfXAstral and ProfXGladiator included) -> the x1_bruiser / x1_support classes this build
+# adds to Data/autospend.XMLB (autospend.py). XML1's per-level bonus tables, not XML2's ratings classes.
+AUTOSPEND = {'wolverine': 'x1_bruiser', 'rogue': 'x1_bruiser', 'colossus': 'x1_bruiser',
+             'beast': 'x1_bruiser',
+             'cyclops': 'x1_support', 'frost': 'x1_support', 'gambit': 'x1_support',
+             'iceman': 'x1_support', 'jubilee': 'x1_support', 'magma': 'x1_support',
+             'nightcrawler': 'x1_support', 'phoenix': 'x1_support', 'profxastral': 'x1_support',
+             'profxgladiator': 'x1_support', 'psylocke': 'x1_support', 'storm': 'x1_support'}
 # D14: XML2's portrait cells for the same characters; 63 = the engine's own "locked / no portrait" cell (0x5b3bb0)
 TEXTUREICON = {'cyclops': '0', 'phoenix': '1', 'wolverine': '2', 'storm': '3', 'nightcrawler': '4', 'rogue': '5',
                'iceman': '6', 'colossus': '7', 'profxastral': '9', 'gambit': '11', 'profxgladiator': '9'}
@@ -1798,7 +1803,9 @@ class HeroBuilder:
         x1sh = ctx.read_x1_xml('data/shared_talents.eng')
         self.x1_shared = {t.get('name', '').lower(): t for t in x1sh.iter() if t.tag.lower() == 'talent'}
         self.base_hero = {e: ctx.read_base_xmlb(f'Data/herostat.{e}') for e in ('XMLB', 'engb')}
-        self.autospend = {c.get('name', '').lower() for c in ctx.read_base_xmlb('Data/autospend.XMLB').iter('CharacterClass')}
+        self.autospend = {c.get('name', '').lower()
+                          for c in ctx.read_base_xmlb('Data/autospend.XMLB').iter('CharacterClass')}
+        self.autospend |= set(ASP.X1_RULES)       # this build adds the XML1 template classes (SPEC 94)
         self.x2_shared_names = {t.get('name', '').lower() for t in ctx.read_base_xmlb('Data/shared_talents.engb').iter('talent')}
         try:
             cc = ctx.research_json('characters/combat_compat.json')
@@ -2722,7 +2729,8 @@ class Check:
 
 
 def _validate(ctx, report=None):
-    """V-H1..V-H13 (DESIGN 5.2; V-H13 the unlock points) over <out>. Returns (checks list, budgets dict)."""
+    """V-H1..V-H17 (DESIGN 5.2; V-H13 the unlock points, V-H16 the rank costs, V-H17 SPEC 94 the autospend
+    classes) over <out>. Returns (checks list, budgets dict)."""
     o = _Out(ctx)
     plan = hero_plan(ctx)
     checks = []
@@ -3259,7 +3267,7 @@ def _validate(ctx, report=None):
     unlocks = S.mission_start_unlocks(ctx)['missions']
     for m, hs in sorted(unlocks.items()):
         for h in hs:
-            if h.lower() not in hero_l:
+            if h.lower() not in hero_l and h.lower() not in S.CAMPAIGN_NPCS:
                 ck.error(f'unlock point {m}: {h} is not a playable herostat hero of this build')
     markers = tuple(f'XML1 beginMission({m})' for m in unlocks)
     copies = collections.Counter()
@@ -3321,6 +3329,57 @@ def _validate(ctx, report=None):
                              'cells and a valid texture-to-image object reference (issues #53/#73)')
             except OSError as e:
                 ck.error(f'{rel}: unreadable: {e}')
+
+    # ---- V-H16 (issue #35): XML1's rank costs kept where xml2-fix [Game] RankCosts reads them (rank_costs.py)
+    ck = Check('V-H16')
+    checks.append(ck)
+    costed = 0
+    for h in hero_l:
+        st = plan['x1'].get(h)
+        if st is None:
+            continue
+        source = RC.source_costs(st)
+        for ext in ('engb', 'XMLB'):
+            t = o.tree(f'Data/talents/{h}.{ext}')
+            if t is None:
+                continue
+            built = RC.built_levels(t)
+            for m in RC.problems(source, built, f'talents/{h}.{ext}'):
+                ck.error(f'V-H16: {m}')
+            if ext == 'engb':
+                costed += RC.costed_ranks(built)
+    ck.counts['rank_costs'] = costed
+
+    # ---- V-H17 (SPEC 94): XML1's automatic stat growth approximated in Data/autospend.XMLB (autospend.py)
+    ck = Check('V-H17')
+    checks.append(ck)
+    aut_tree = o.tree('Data/autospend.XMLB')
+    if aut_tree is None:
+        ck.error('V-H17: Data/autospend.XMLB missing / undecodable')
+    else:
+        try:
+            templates, x1_heroes = ASP.x1_templates(ctx.read_x1_xml('data/stat_rules.xml'))
+        except KeyError:
+            templates, x1_heroes = {}, {}
+            ck.error('V-H17: XML1 data/stat_rules.xml missing')
+        hs = [o.tree(f'Data/herostat.{ext}') for ext in ('XMLB', 'engb')]
+        hero_classes = {(s.get('name') or '').lower(): (s.get('autospend') or '').lower()
+                        for r in hs if r is not None for s in r.iter('stats')}
+        for m in ASP.problems(aut_tree, templates, x1_heroes, hero_classes, ASP.used_classes(hs)):
+            ck.error(f'V-H17: {m}')
+        # the pre-SPEC 94 classes XML2 Fix needs to re-base older saves (autospend.LEGACY_REL)
+        lp = o.idx.path(ASP.LEGACY_REL)
+        try:
+            legacy = ASP.parse_legacy(lp.read_bytes().decode('latin-1')) if lp is not None else None
+        except (OSError, ValueError) as e:
+            legacy = None
+            ck.error(f'V-H17: {ASP.LEGACY_REL} unreadable: {e}')
+        if lp is None:
+            ck.error(f'V-H17: {ASP.LEGACY_REL} missing (XML2 Fix could not re-base older saves\' class bonus)')
+        elif legacy is not None:
+            missing = sorted(set(ASP.LEGACY_AUTOSPEND) - set(legacy))
+            if missing:
+                ck.error(f'V-H17: {ASP.LEGACY_REL} lacks {missing}')
     return checks, budgets
 
 

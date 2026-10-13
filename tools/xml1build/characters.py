@@ -68,6 +68,36 @@ TALENT_CAP = 99          # 0x4c05d0 shared talent ids 0..98
 NAME_MAX = 31            # stats name strncpy 0x20 incl. NUL
 # XML1-only stats attributes XML2's parser does not handle (schema_stats.txt 'handled=NO')
 DROP_ATTRS = {'leader', 'ratingmelee', 'ratingranged', 'ratingsupport', 'ratingdurability', 'throwally'}
+
+# issue #15: XMen2.exe's stats parser (FUN_004b9c40) has no `leader` case, but the engine kept both of the
+# bit's behaviours, keyed to actor+0x3db bit 3 (its x3 spawn-variant flag) instead of a stats field:
+# the pain gate (0x43597b) skips a hero's flinch for a projectile owned by a flagged actor, and the
+# death-drop roller (0x46e4ed) always rolls drops for a flagged corpse and forces the named
+# HEALTH_ITEM/ENERGY_ITEM/XTREME_PIP slots from the second drop on. Neither flag is settable per
+# character in data, so the builder ships the set of stats entries XML1 marked leader="true" in this
+# sidecar and xml2-fix ([Game] X1Leader) treats those actors like the flagged ones. Names are derived
+# here from the converted stats; nothing game-specific is committed.
+LEADER_SIDECAR_REL = 'Data/x1leader.txt'
+
+
+def leader_sidecar_text(names):
+    """The sidecar's content: comment lines ('#' or ';'), then one stats name per line, sorted
+    (deterministic output for the build hash). Parsed back by parse_leader_sidecar and by xml2-fix."""
+    lines = ['# XML1 stats entries carrying leader="true" (issue #15), derived by xml1build.characters',
+             '# consumed by xml2-fix ([Game] X1Leader); names match case-insensitively']
+    lines.extend(sorted(names))
+    return '\r\n'.join(lines) + '\r\n'
+
+
+def parse_leader_sidecar(text):
+    """Sidecar names (lower); comment ('#' or ';'), blank lines skipped; duplicates collapse (the
+    validator reports the duplicate line separately)."""
+    out = set()
+    for line in text.splitlines():
+        s = line.strip()
+        if s and not s.startswith(('#', ';')):
+            out.add(s.lower())
+    return out
 # costume names XML2 knows (table 0x6d8aa0); other skin_<x> attributes are dropped
 COSTUMES_X2 = {'astonishing', 'aoa', '60s', '70s', 'weaponx', 'future', 'winter', 'civilian'}
 XML2_TAG = {'talent': 'talent', 'race': 'Race', 'bolton': 'BoltOn', 'multipart': 'Multipart', 'flyeffect': 'FlyEffect'}
@@ -75,9 +105,58 @@ XML2_TAG = {'talent': 'talent', 'race': 'Race', 'bolton': 'BoltOn', 'multipart':
 BOLTON_SLOTS = {'ebolton_clawright': 0, 'ebolton_clawleft': 1, 'ebolton_weapon': 0, 'ebolton_altweapon': 1,
                 'ebolton_cape': 2, 'ebolton_tail': 2, 'ebolton_wings': 2, 'ebolton_tongue': 3,
                 'ebolton_autoanim': 4, 'ebolton_autoanim2': 5}
-# XML1 Multipart attributes XMen2.exe's Multipart parser (0x48ce80: bone, NonMenuOnly, hideSkin[%d],
-# showSkin[%d]) does not read: kept in the data (harmless), but XML2 ignores them
+# XML1 Multipart attributes XMen2.exe's Multipart parser (0x48cec0: bone, NonMenuOnly, hideSkin[%d],
+# showSkin[%d]) does not read. Kept verbatim: xml2-fix multipart.cpp ([Game] Xml1Multipart, fix_ini) reads
+# health / effectOnDeath / loopEffect / effectBone / linkToPower back from the built stats (validator V52).
+# startHide and healthMul are inert: the XBE's own parser (0x89500) never reads them either.
 MULTIPART_X1_ONLY = ('effectondeath', 'linktopower', 'starthide', 'healthmul', 'loopeffect', 'effectbone')
+MULTIPART_X1_INERT = ('starthide', 'healthmul')
+# XML1's powerup removal (a trigger with remove="true", default.xbe 0xd7668 -> 0x2b100(attribute, 1)) drops EVERY
+# powerup of the actor whose attribute matches, permanent ones included - and talents' activepowerups are such
+# powerups (0x7f8b0 -> 0x2aa90). So Juggernaut's armor_end / helmet_penalty (remove def_damage) also take away his
+# mental_resistant talent (XML1: def_damage dmg_mental 0.2), Blob's armor_off his physical_resistant, and so on.
+# XMen2.exe removes by tag name only (remove_tag, 0x4e7e79 -> 0x54f7b0) and the converted triggers say
+# remove_tag="def_damage", so XML2's resistance talents (affecter resist_*, untagged) never went. The shared talents
+# whose XML1 definition is a def_damage activepowerup get tag_name="def_damage" on the powerup that carries their
+# damage resistance (other affecters - def_mind_control - move to an untagged powerup of their own, as XML1 kept
+# them: another attribute). XML2's own talents use tag_name the same way (spawn_invis). The resistance affecter is
+# XML1's own def_damage row in XMen2.exe's scoped spelling (def_damage_scope, restore_resist_talents runs first: it
+# is what strips a hit's reactions; the nine bosses that remove it keep refusing them through def_knockback 0 /
+# large / def_finisher, as in XML1, and only their damage taken returns to full); resist_ and
+# plain def_damage are still accepted for a base install whose definitions restore_resist_talents left alone.
+X1_REMOVABLE_ATTR = 'def_damage'
+X1_REMOVABLE_AFFECTERS = re.compile(r'(resist_|def_damage(_scope)?$)')
+
+
+def tag_x1_removable_talents(talent_roots, x1_talents):
+    """tag_name="def_damage" on the damage-resistance powerup of every shared talent whose XML1 definition holds a
+    def_damage activepowerup; returns the sorted tagged names. Idempotent."""
+    wanted = {name for name, t in x1_talents.items()
+              if any(e.tag.lower() == 'activepowerup' and (e.get('powerup') or '').lower() == X1_REMOVABLE_ATTR
+                     for e in t.iter())}
+    done = set()
+    for root in talent_roots:
+        for talent in root.iter('talent'):
+            name = (talent.get('name') or '').lower()
+            if name not in wanted:
+                continue
+            for level in talent.findall('level'):
+                for pu in list(level.findall('powerup')):
+                    resist = [a for a in pu.findall('affecter') if X1_REMOVABLE_AFFECTERS.match(a.get('attribute') or '')]
+                    if not resist or pu.get('tag_name'):
+                        continue
+                    others = [a for a in pu.findall('affecter') if a not in resist]
+                    if others:
+                        keep = ET.Element('powerup', {k: v for k, v in pu.attrib.items()})
+                        for a in others:
+                            pu.remove(a)
+                            keep.append(a)
+                        level.insert(list(level).index(pu) + 1, keep)
+                    pu.set('tag_name', X1_REMOVABLE_ATTR)
+                    done.add(name)
+    return sorted(done)
+
+
 # Append XML1's bolt-on actor anim mappings (data/boltonactoranims: 99_cape, 98_tail) to XML2's table under the
 # mapped anim DB names, so the XML1 capes / tails (MagnetoBoss/Act2/Scripted, nightcrawler NPCs) follow the
 # wearer's animations. Append-only (XML2 entries win). Not in SPEC 5.1 (which lists boltonactoranims as
@@ -349,6 +428,7 @@ class _Builder:
         self.import_stats = {}
         self.x1_weapons = {}
         self.talent_names = set()
+        self.x1_leaders = set()     # stats names (original case) whose leader="true" convert_stats dropped (issue #15)
         self.talent_roots = ()
         self.x1_talents = {}
         self.dep_extra = {}         # style/entity package filename -> [(kind, filename)] it needs in addition
@@ -704,6 +784,27 @@ class _Builder:
         self.base_talent_count = len(names[1])
         x1 = ctx.read_x1_xml('data/shared_talents.eng')
         self.x1_talents = {t.get('name', '').lower(): t for t in x1.iter() if t.tag.lower() == 'talent'}
+        self.restore_resist_talents()
+
+    def restore_resist_talents(self):
+        """XML1's damage-type resistance talents keep XMen2.exe's definitions of the same names (XML2 wins by name)
+        but get XML1's def_damage rows back in place of resist_<type> (npc_values.resist_rewrite): only def_damage
+        stops a launcher, a knockback or a trip on a resistant NPC (and on the allies inside its aura)."""
+        ctx = self.ctx
+        done = collections.Counter()
+        for root in self.talent_roots:
+            for t in root.iter('talent'):
+                n = (t.get('name') or '').lower()
+                rewritten, problems = NV.resist_rewrite(t, self.x1_talents.get(n))
+                done[n] += rewritten
+                for msg in problems:
+                    ctx.warn(f'shared_talents: {msg}; XMen2.exe\'s definition kept as it is (validator V60)')
+        done = {n: c for n, c in sorted(done.items()) if c}
+        self.detail['resist_talents'] = done
+        ctx.set_count('x1_resist_talents', len(done))
+        if done:
+            ctx.note(f'shared_talents: {len(done)} resistance talents carry XML1\'s def_damage rows as '
+                     f'{NV.SCOPED_DEF_DAMAGE} instead of resist_<type> (both halves): {sorted(done)}')
 
     def ensure_talent(self, name, fightstyle, who):
         """XML2 resolves a stats <talent> by name among registered talents (0x4c05b0); add an empty shared
@@ -998,6 +1099,8 @@ class _Builder:
         for k, v in a.items():
             if v == '' or k in DROP_ATTRS:
                 self.detail['dropped_attrs'].append([name, k, v])
+                if k == 'leader' and v.strip().lower() == 'true':
+                    self.x1_leaders.add(name)   # shipped in Data/x1leader.txt (issue #15)
                 continue
             if k.startswith('skin_') and k[5:] not in COSTUMES_X2:
                 self.detail['dropped_attrs'].append([name, k, v])
@@ -1715,6 +1818,19 @@ def run(ctx):
 
     # ---------------- write stats + talents + values
     ctx.write_xmlb_pair('Data/npcstat', roots['XMLB'], roots['engb'], source='xml1build.characters')
+    tagged = tag_x1_removable_talents(b.talent_roots, b.x1_talents)
+    if tagged:
+        ctx.note(f'shared_talents: {tagged} tagged {X1_REMOVABLE_ATTR!r} so XML1 def_damage removals (remove_tag) take '
+                 f'them away as XML1 did (0x2b100)')
+    ctx.set_count('x1_removable_talents', len(tagged))
+    # issue #15: the leader sidecar xml2-fix reads ([Game] X1Leader); derived from the converted stats above
+    if not b.x1_leaders:
+        ctx.error('no XML1 stats entry carried leader="true" (the officer/commander census) - '
+                  f'{LEADER_SIDECAR_REL} would be empty')
+    else:
+        ctx.write_bytes(LEADER_SIDECAR_REL, leader_sidecar_text(b.x1_leaders).encode('latin-1'),
+                        source='xml1build.characters')
+        ctx.set_count('leader_sidecar_names', len(b.x1_leaders))
     ctx.write_xmlb_pair('Data/shared_talents', b.talent_roots[0], b.talent_roots[1], source='xml1build.characters')
     ctx.set_count('talents_added', len(b.detail['talents_added']))
     ctx.note(f"shared_talents: {len(b.detail['talents_added'])} empty definitions added "
@@ -1775,11 +1891,10 @@ def run(ctx):
                   'activepowerup, power1-4, menus, textureicon, HUD heads per costume (run the heroes module)')
     mp = b.detail.get('multipart_ignored', [])
     if mp:
-        ctx.defer(f'{len(mp)} XML1 Multipart parts use attributes XMen2.exe does not parse (0x48ce80 reads only '
-                  f'bone/NonMenuOnly/hideSkin/showSkin): {sorted({a for _, x in mp for a in x})} on '
-                  f'{sorted({n for n, _ in mp})}: breakable-part death effects, loop effects, power links, '
-                  f'health multipliers and parts hidden at start (Juggernaut helmet) are lost; the scripts '
-                  f'research emulates destroyMultipartPiece with setSegmentVisible + spawnEffectBone')
+        ctx.note(f'{len(mp)} XML1 Multipart parts on {sorted({n for n, _ in mp})} keep the first game attributes '
+                 f'{sorted({a for _, x in mp for a in x})}: the XMen2.exe parser (0x48cec0) reads only '
+                 f'bone/NonMenuOnly/hideSkin/showSkin; xml2-fix [Game] Xml1Multipart reads the part health, effects '
+                 f'and power links (breakable helmet / arms); {list(MULTIPART_X1_INERT)} are inert in XML1 too')
         ctx.set_count('multipart_x1_attrs_ignored', len(mp))
     if b.detail['dropped_children']:
         heroes_dropped = sum(1 for d in b.detail['dropped_children'] if 'hero' in d[2] or d[2] == 'level 0')

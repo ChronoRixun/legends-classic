@@ -331,6 +331,24 @@ def break_rule_problems(root):
 
 
 
+def fractional_health_problems(root):
+    """[(entity name, health)] of entity definitions whose numeric health is above 0 and below 1. XML1 keeps an
+    entity's maximum health as a whole number (default.xbe 0x9335a) and, with xml2-fix's DeathRule=xml1, kills
+    below 1: such an entity would die on its first hit (SPEC 63.6)."""
+    out = []
+    for el in root.iter():
+        if el.get('classname') is None:
+            continue
+        raw = (el.get('health') or '').strip()
+        try:
+            h = float(raw) if raw else None
+        except ValueError:
+            continue
+        if h is not None and 0.0 < h < 1.0:
+            out.append((el.get('name'), raw))
+    return out
+
+
 def turret_mount_problems(root):
     """[(entity name, missing flags)] of physents that are remapped XML1 scan turrets (they carry a turretweapon)
     without the fixed-mount flags (TURRET_MOUNT_FLAGS)."""
@@ -398,11 +416,13 @@ def convert_harm_loop_start(root):
     return changed
 
 
-# Fall kill volumes use XML1's original damage, bounds and activation scripts.
-# XML2 retail enables box collision and disables smart-entity streaming for them.
-# Runtime controls: boxcollision alone leaves the HAARP ravine survivable; both
-# flags give the original 32000-damage hit on entry (SPEC 52).
-FALL_KILL_FLAGS = {'boxcollision': 'true', 'smartent': 'false'}
+# Fall kill volumes keep XML1's original damage, bounds, activation scripts and touch shape.
+# Both engines touch-test a model-less entity as a vertical cylinder (radius = the larger
+# horizontal half-extent, the box's own height) unless it sets boxcollision, then as the box.
+# The one difference: XML1 leaves an absent smartent false, XMen2.exe makes it true for physical
+# entities, and a smart entity is never in the touch query (the dead form). So only smartent is
+# written; boxcollision stays as authored (SPEC 52, "Touch shape").
+FALL_KILL_FLAGS = {'smartent': 'false'}
 # Preserve these original hazards until issue #5 party handling is available and
 # the crossings are revalidated: AI can follow a safe leader into their water.
 FALL_KILL_DEFERRED = {
@@ -411,9 +431,9 @@ FALL_KILL_DEFERRED = {
     # higher (a real pit). The others lie just under floors, ramps or ledges - nyc1_1_4's is a 300-unit slab
     # under the whole rooftop map that killed heroes on the billboard ramp - and wait for an in-game crossing
     # test each (SPEC 52, "0.1.9: shallow volumes deferred"). sewers1_1_4's channel passed it and is enabled again;
-    # nyc1_1_4 (a catch-all slab) and nuke1_2's kill_target01 (a walkway runs off into it) stay deferred, sewers1_1_1
-    # is unfinished and the rest untested (SPEC 52, "Crossing tests").
-    'maps/nyc/alison/nyc1_1_4': frozenset({'kill_target01'}),
+    # nuke1_2's kill_target01 (a walkway runs off into it) stays deferred, sewers1_1_1 is unfinished and the rest
+    # untested (SPEC 52, "Crossing tests"). 2026-10-12, with the original touch shape: nyc1_1_4 (the rooftop slab)
+    # and sewers1_2_4 passed and are enabled (SPEC 52, "Touch shape").
     'maps/arbiter/a_int/arb3_2': frozenset({'kill_target'}),
     'maps/arbiter/a_int/arb3_3': frozenset({'kill_target'}),
     'maps/demo/a_int/arb3_2': frozenset({'kill_target'}),
@@ -428,6 +448,13 @@ FALL_KILL_DEFERRED = {
     'maps/sewers/grso/sewers_marrow': frozenset({'kill_target01'}),
     'maps/sewers/healer/sewers2_1_3': frozenset({'kill_target02'}),
     'maps/sewers/hub/sewers1_1_1': frozenset({'kill_target02'}),
+}
+
+
+# Volumes first enabled after 0.2.1, where issue #81's settled props were already numbered at the end of the zone:
+# they go after those props too, so a 0.2.1 save keeps every ordinal (SPEC "Saved zone records and entity ordinals").
+FALL_KILL_ENABLED_LATE = {
+    'maps/nyc/alison/nyc1_1_4': frozenset({'kill_target01'}),
     'maps/sewers/hub/sewers1_2_4': frozenset({'kill_target'}),
 }
 
@@ -453,6 +480,18 @@ def fall_kill_volume_deferred(el, rel):
 
 def fall_kill_volume_leader_only(el, rel):
     return _fall_kill_listed(FALL_KILL_LEADER_ONLY, el, rel)
+
+
+def late_fall_volume_names(root, rel):
+    """names of the enabled volumes listed in FALL_KILL_ENABLED_LATE (they follow the settled props)."""
+    return {el.get('name') for el in fall_kill_volumes(root, rel)
+            if _fall_kill_listed(FALL_KILL_ENABLED_LATE, el, rel) and not fall_kill_volume_deferred(el, rel)}
+
+
+def move_late_fall_volumes(root, rel):
+    """after the settle pass (issue #81): late volumes' entinsts to the very end. Returns the number moved."""
+    names = late_fall_volume_names(root, rel)
+    return _append_entinsts(root, names) if names else 0
 
 
 def fall_kill_volume_flags(el, rel):
@@ -505,7 +544,13 @@ def numbered_entinst_tail_problems(root, rel):
     order = [ei.get('type') or '' for ei in root if ei.tag.lower() == 'entinst']
     first = min((i for i, t in enumerate(order) if t in names), default=len(order))
     late = sorted({t for t in order[first:] if t not in names})
-    return [f'{rel}: entinst {t!r} follows an enabled fall volume (its saved ordinal shifts)' for t in late]
+    out = [f'{rel}: entinst {t!r} follows an enabled fall volume (its saved ordinal shifts)' for t in late]
+    # a volume enabled after 0.2.1 follows the settled props as well
+    after = late_fall_volume_names(root, rel)
+    first = min((i for i, t in enumerate(order) if t in after), default=len(order))
+    out += [f'{rel}: entinst {t!r} follows a fall volume enabled after 0.2.1 (its saved ordinal shifts)'
+            for t in sorted({t for t in order[first:] if t not in after})]
+    return out
 
 
 def convert_fall_kill_volumes(root, rel):

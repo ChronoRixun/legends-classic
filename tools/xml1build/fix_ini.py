@@ -54,6 +54,11 @@ POSTGAME_SCRIPT = 'x1/menus/postgame'
 # before Play Online (SPEC 21.2.4), button1..6 + button8 since (Play Online, button7, is keys / pad only: XMen2.exe
 # clamps the mouse slots after the sixth to Quit, 0x5c944b).
 MAIN_MENU_ITEMS = 'button1,button2,button3,button4,button5,button6,button8'
+# xml2-fix [Game] DangerRoomGate (issue #63): the XML1 main menu's Danger Room item (frontend.MENU_BUTTONS, the item
+# running "openmenu danger_room"), disabled until Phoenix has been in a campaign on the profile - the first game's
+# gate (xbe 0x17e93c-0x17e975: profile bit of 'phoenix', button3), not XML2's story level 6. Written with
+# MainMenuItems; an older DLL ignores the key (the item stays always open, as before).
+DANGER_ROOM_GATE_ITEM = 'button3'
 MAIN_MENU_MOUSE_SLOTS = 6
 # xml2-fix a3b8567+ (in v1.2.0) takes an 8th name (after Quit): the mouse slot for a 7th usecmd item (Play Online,
 # button7), the mouse clamp at 0x5c944b raised from 6 to 8. An older DLL quits when that slot is clicked, so the 8th
@@ -124,8 +129,13 @@ BUILD_REPORT = ('_build', 'report.json')
 # particles (the bench fire is a faint glow). Curves are not saved.
 # MoveTriggers preserves all authored holster/redraw events and a flash/sound per gun shot.
 # Requires the companion XML2 Fix move-trigger patch; absent key means stock 19.
+# xml2-fix [Limits] ScriptFunctions (its docs/script-functions.md): XMen2.exe resolves script function names through a
+# tree of 320; its own 308 (289 + 19 builtins) and xml2-fix's functions fill it, and a function registered past it is
+# dropped together with every script line that calls it. The fix raises it to 1024 by default while ForcedTeams
+# registers its functions; written here explicitly (validate V57 script function names checks the count against it).
+# Nothing saved; online it is gameplay agreement rule 14.
 LIMITS = {'ActorSlots': '127', 'ResourceNames': '1024', 'ItemEnhancements': '512', 'FightStyles': '32',
-          'EffectCurves': '3600', 'MoveTriggers': '64', 'EntityCapacity': '1'}
+          'EffectCurves': '3600', 'MoveTriggers': '64', 'EntityCapacity': '1', 'ScriptFunctions': '1024'}
 
 # xml2-fix 1.3.1 [Game] GeometrySharingBlendIndices (SPEC 44, issue #11): XMen2.exe's geometry sharing reuses one
 # skinned mesh for another when positions and weights match although their packed blend indices differ; XML1's
@@ -154,6 +164,55 @@ OBJECTIVE_DESCRIPTIONS = '1'
 # break as they do without it. Written for every XML1 build.
 BREAK_RULE = 'xml1'
 
+# xml2-fix [Game] PlacementCrush (SPEC 63.4, issue #79): XMen2.exe settles each object on the floor - at a zone's load
+# and 0.5 s after any spawn in play (death drops, script props, debris) - and an object touching another there may "crush" it (a 1,000,000-damage hit; BreakRule=xml1 refuses most, but the hit's sound
+# still plays): XML1's furniture authored overlapping (the dormitories' desk chair under a roll-top desk) gave two hit
+# sounds from an empty room on entry. 'xml1' makes the fix refuse that touch while a settle runs; the first game has no settle at
+# all. Other touches in play keep the game's own rule. A fix without the feature ignores the key.
+PLACEMENT_CRUSH = 'xml1'
+
+# xml2-fix [Game] DoubleHeal (SPEC 63.5, issue #82): XMen2.exe's restoreHealth / restoreEnergy (the packs' onactivate
+# scripts) sometimes heal double and then play common/game/pickup_power_double, XML2's own darker recording; XML1's
+# packs never double and its banks have no such sound. '0' makes the fix always take the single branch.
+DOUBLE_HEAL = '0'
+
+# xml2-fix [Game] RankCosts (SPEC 88, issue #35): X-Men Legends 1 charges a talent rank its <level cost> (2 for the
+# 119 ranks that open a new form of a power; heroes.py keeps the attribute, V-H16 checks it) in the skills screen, its
+# buyable/greyed test, the automatic spending, the respec and when levels are lost; XMen2.exe charges 1 for every rank.
+# Off in xml2-fix unless set; a fix without the feature ignores the key (every rank costs 1). Co-op peers must agree
+# (gameplay rule 5). Written for every XML1 build.
+RANK_COSTS = '1'
+
+# xml2-fix [Game] LevelSkillPoints (SPEC 88.1): X-Men Legends 1 gives 2 skill points for a level divisible by 5 and 1
+# for any other (default.xbe 0xb1ca0; a level lost takes the same back); XMen2.exe gives 1 for every level. 'xml1' makes
+# the fix give the first game's; a fix without the feature ignores the key. Gameplay rule 5 with RankCosts. Written for
+# every XML1 build.
+LEVEL_SKILL_POINTS = 'xml1'
+
+# xml2-fix [Game] LevelStatPoints (SPEC 88.2): the same rule for the stat points on the port's scale - XML1's 1 a level
+# (2 on a level divisible by 5) is 4 (8) here, as the heroes' stats are XML1's x STAT_SCALE (4) and XMen2.exe's 4 a
+# level already is XML1's 1. 'xml1' makes the fix give 8 on every 5th level; a fix without the feature ignores the key.
+LEVEL_STAT_POINTS = 'xml1'
+
+# xml2-fix [Game] DeathRule (the 0.2.2 death threshold; xml2-fix docs/death-threshold.md, gameplay rule 9): XML1's
+# damage function (default.xbe 0x92220) kills an entity whose health falls BELOW 1, XMen2.exe's (0x497e70) only at 0,
+# so with XMen2.exe's float damage an enemy could sit alive on a fraction of a point, its death script and drops
+# waiting for another hit. 'xml1' makes the fix draw XML1's line in the damage functions. Off in xml2-fix unless set;
+# a fix without the feature ignores the key (entities die at 0, as before). Written for every XML1 build.
+DEATH_RULE = 'xml1'
+
+# xml2-fix [Game] NpcPowerRule (0.2.2 follow-up; xml2-fix docs/npc-power-rule.md; gameplay rule 16): XML1's power use
+# and melee combos for computer-controlled characters. XMen2.exe never charges an AI character for its powers (the
+# cost's AI test 0x4318e7 asks the controller, which says yes only after a queued command), re-runs the melee-range
+# power decision every 0.3 s (0x518770) and has no energy test there; XML1 charges every NPC (default.xbe 0xcde90),
+# decides every 2.0 s (0.5 s for a party hero) and needs half the energy (0xee260). Without it the NPC energy pool
+# (SPEC 24.3, x1_npc_energy) never empties and XML1's enemies fire powers whenever aireusetime allows (SPEC 95).
+# XMen2.exe also overrides the AI's combo level with npcstat `combolevel` (0 for XML1 entries: no combos) and skips the
+# pause after a combo start; the rule restores XML1's levels, combos and pause too (no data: XML1's six combos are not
+# among XMen2.exe's). Rule 16 revision 3 also restores XML1's AI visibility ray and query reservation/budget.
+# Off in xml2-fix unless set; a fix without the feature ignores the key. Written for every XML1 build.
+NPC_POWER_RULE = 'xml1'
+
 # xml2-fix [Game] ForcedTeams (SPEC 19): '1' = the scripts of a --forced-teams seat build seat XML1's parties
 # (xml2-fix forced_teams module), '0' = the functions exist but report off (team menu), 'off' = no key (nothing
 # patched). Every xml2-fix call sits behind xml2fixFeature("forcedteams") (validate V14b), so with ForcedTeams=0, a
@@ -164,8 +223,11 @@ FORCED_TEAMS_VALUES = ('1', '0', 'off')
 # addSkillPoints, the conversation hooks [Game] AutoAdvance / ReplyVoices / ReplyCursor - SPEC 32, 34; v1.3.1:
 # [Limits] FightStyles - SPEC 43, [Game] GeometrySharingBlendIndices - SPEC 44; v1.3.2: [Game] CharacterLadderPaths -
 # SPEC 46, [Game] ObjectiveDescriptions - SPEC 47, the STAT pickup's addStatPoints - SPEC 48,
-# [Game] BreakRule - SPEC 63, [Limits] EffectCurves - SPEC 65, [Game] Xtract - SPEC 66; v1.4: [Save] Format and the LC save tables - SPEC 70, [Balance] - SPEC 69)
-REQUIRED_XML2FIX = '1.4'
+# [Game] BreakRule - SPEC 63, [Limits] EffectCurves - SPEC 65, [Game] Xtract - SPEC 66; v1.4: [Save] Format and the LC save tables - SPEC 70, [Balance] - SPEC 69;
+# v1.5: the 0.2.2 wave's [Game] keys - PlacementCrush, DoubleHeal, RankCosts, LevelSkillPoints, LevelStatPoints,
+# Xml1Multipart, X1Leader, SoloMode, DeathRule, DangerRoomGate, RevivalCost, Xml1Turrets, PackAmount, DeathSwitchClear - and
+# [Limits] ScriptFunctions; a 1.4 DLL silently ignores every one of them, so check_release_dll refuses it)
+REQUIRED_XML2FIX = '1.5'
 
 # xml2-fix [Balance] (xml1build.balance; SPEC 69): the first game's combat numbers for a
 # balance build - one whose styles carry the power-attack marker (report.json build.balance 'xml1'). HeroStatScale
@@ -175,14 +237,31 @@ REQUIRED_XML2FIX = '1.4'
 BALANCE_HERO_STAT_SCALE = '4'
 BALANCE_NATIVE_STAT_HEROES = 'ProfXAstral,ProfXGladiator'
 
+# xml2-fix [Game] PackAmount (0.2.2; port gameplay rule 13): XML1's health / energy packs restore a quarter of the
+# maximum - default.xbe's restoreHealth / restoreEnergy (0x9bd50 / 0x9bcb0) turn the items' -1 into (int)(max * 0.25)
+# (0x3c83b0) - where XMen2.exe's (0x4a2dd0 / 0x4a2c20) take 0.33. Both games' HEALTH_ITEM / ENERGY_ITEM call the same
+# scripts with -1 and say "25%", so the amount is not data: the fix writes 0.25 into the two single-amount stores.
+PACK_AMOUNT = 'xml1'
+
+# xml2-fix [Game] X1Leader (issue #15; gameplay rule 7): XML1's stats `leader` bit - heroes don't flinch from a leader's
+# projectile, and a leader's corpse follows the first game's drop rule (4 drops, a forced health / energy / Xtreme
+# pick). XMen2.exe keys both to its own x3-variant flag; the fix treats the actors characters.py lists in
+# Data/x1leader.txt (V54) the same way. Off in xml2-fix unless set (the sidecar alone does nothing); a fix without the
+# feature ignores the key. Written for every XML1 build.
+X1_LEADER = '1'
+
 # every key the port may write (the builder drops the ones a build does not need); the launcher owns the rest
 PORT_OWNED = {'Game': ('NewGameTeam', 'ResetUnlocks', 'SaveFolder', 'ForcedTeams', 'PostgameScript', 'WindowTitle',
-                        'EndHeroUnlock', 'MainMenuItems', 'ClassicMainBackdrop', 'ClassicMainPanelBounds', 'NewGamePlus', 'ReviewStats', 'Xtract', 'XtractionShop', 'XPCurve',
+                        'EndHeroUnlock', 'MainMenuItems', 'DangerRoomGate', 'ClassicMainBackdrop', 'ClassicMainPanelBounds', 'NewGamePlus', 'ReviewStats', 'Xtract', 'XtractionShop', 'RevivalCost', 'XPCurve',
                        'GeometrySharingBlendIndices', 'CharacterLadderPaths', 'ObjectiveDescriptions',
-                       'BreakRule', 'ConfirmationRelease', 'ExplosiveFirstHit', 'Xml1MasterMold', 'Xml1MoldStage'),
-              'Limits': ('ActorSlots', 'ResourceNames', 'ItemEnhancements', 'FightStyles', 'EffectCurves', 'MoveTriggers', 'EntityCapacity'),
+                       'BreakRule', 'PlacementCrush', 'DoubleHeal', 'DeathRule', 'NpcPowerRule', 'ConfirmationRelease',
+                       'ExplosiveFirstHit', 'PackAmount', 'SoloMode', 'X1Leader', 'DeathSwitchClear', 'RankCosts', 'LevelSkillPoints', 'LevelStatPoints', 'Xml1Multipart',
+                       'Xml1MasterMold', 'Xml1MoldStage', 'Xml1Turrets'),
+              'Limits': ('ActorSlots', 'ResourceNames', 'ItemEnhancements', 'FightStyles', 'EffectCurves', 'MoveTriggers', 'EntityCapacity',
+                         'ScriptFunctions'),
               'Online': ('GameVersion', 'ContentFingerprint'),
-              'Save': ('Format',)}
+              'Save': ('Format',),
+              'Xml1Turrets': ('Count',) + tuple(f'T{i}' for i in range(1, 33))}
 
 
 def port_owned() -> dict:
@@ -329,6 +408,21 @@ def build_mold_controller(out):
     return dict(Xml1MasterMold='1', Xml1MoldStage=binding) if binding else {}
 
 
+def build_turrets(out) -> dict:
+    """{'Game': {'Xml1Turrets': '1'}, 'Xml1Turrets': {'Count': n, 'T1': ...}} from the builder's turret contract
+    (xml1build.turrets -> _build/turrets.json); {} without a valid one (the turrets stay inert physents)."""
+    from . import turrets as TU
+    try:
+        data = json.loads(Path(out, '_build/turrets.json').read_text(encoding='utf-8'))
+    except (OSError, ValueError):
+        return {}
+    if TU.validate_contract(data) or not data.get('placements'):
+        return {}
+    section = {'Count': str(len(data['placements']))}
+    section.update({f'T{i}': line for i, line in enumerate(data['placements'], 1)})
+    return {'Game': {'Xml1Turrets': '1'}, 'Xml1Turrets': section}
+
+
 def game_keys(*, xml1_opening=True, save_folder=None, forced_teams='1', add_hero=False, join_hero=True, postgame=None,
               port_identity=False, main_menu_items=None, new_game_plus=None, review_stats=None, xtract=None,
               xp_curve=None) -> dict:
@@ -344,7 +438,22 @@ def game_keys(*, xml1_opening=True, save_folder=None, forced_teams='1', add_hero
         game['CharacterLadderPaths'] = CHARACTER_LADDER_PATHS
         game['ObjectiveDescriptions'] = OBJECTIVE_DESCRIPTIONS
         game['BreakRule'] = BREAK_RULE
+        game['PlacementCrush'] = PLACEMENT_CRUSH
+        game['DoubleHeal'] = DOUBLE_HEAL
         game['ExplosiveFirstHit'] = '1'
+        game['RankCosts'] = RANK_COSTS
+        game['LevelSkillPoints'] = LEVEL_SKILL_POINTS
+        game['LevelStatPoints'] = LEVEL_STAT_POINTS
+        # xml2-fix multipart.cpp: XML1's breakable parts (npcstat <Multipart> health / effects / linkToPower, kept
+        # verbatim by characters.py; V52 checks them) - Juggernaut's helmet, the Sentinels' arms
+        game['Xml1Multipart'] = '1'
+        game['DeathRule'] = DEATH_RULE
+        game['NpcPowerRule'] = NPC_POWER_RULE
+        game['PackAmount'] = PACK_AMOUNT
+        # XML1's solo mode (issue #5): setSoloMode in the solo boxes / bridge scripts acts only with this key
+        game['SoloMode'] = '1'
+        game['X1Leader'] = X1_LEADER
+        game['DeathSwitchClear'] = '1'  # the hero handed a dead hero's controller stops its AI walk (XML1's hand-over)
     if forced_teams in ('0', '1'):
         game['ForcedTeams'] = forced_teams
     if add_hero:
@@ -360,6 +469,7 @@ def game_keys(*, xml1_opening=True, save_folder=None, forced_teams='1', add_hero
         game.update(WindowTitle=PORT_WINDOW_TITLE, EndHeroUnlock=PORT_END_HERO_UNLOCK, ConfirmationRelease='1')
     if main_menu_items:
         game['MainMenuItems'] = main_menu_items
+        game['DangerRoomGate'] = DANGER_ROOM_GATE_ITEM
         game['ClassicMainBackdrop'] = '1'
         game['ClassicMainPanelBounds'] = '1'
     if new_game_plus is not None:
@@ -369,6 +479,9 @@ def game_keys(*, xml1_opening=True, save_folder=None, forced_teams='1', add_hero
     if xtract is not None:
         game['Xtract'] = xtract
         game['XtractionShop'] = '1'
+        # xml2-fix [Game] RevivalCost (issue #63): a fallen hero costs the first game's 200 * (highest roster level)^2
+        # (default.xbe 0xaf6b0 / 0x54cb0), not XMen2.exe's max(200, 2 * level^2); shared gameplay agreement rule 10
+        game['RevivalCost'] = 'xml1'
     if xp_curve:
         game['XPCurve'] = xp_curve
     return game
@@ -411,9 +524,13 @@ def port_keys(out, *, save_folder=PLAY_SAVE_FOLDER, eighth=True) -> dict:
                      postgame=postgame, port_identity=bool(postgame), main_menu_items=menu,
                      new_game_plus=NEW_GAME_PLUS if menu else None, review_stats=build_review_stats(out),
                      xtract=XTRACT if postgame else None, xp_curve=build_xp_curve(out))
+    turrets = build_turrets(out) if postgame else {}
     if postgame:
         game.update(build_mold_controller(out))
+        game.update(turrets.get('Game', {}))
     keys = {'Game': game, 'Limits': dict(LIMITS)}
+    if turrets:
+        keys['Xml1Turrets'] = turrets['Xml1Turrets']
     balance = build_balance(out)
     online = online_keys(port_identity=bool(postgame), balance=balance, fingerprint=content_fingerprint(out))
     if postgame and (Path(out) / 'Data/lcsave/catalogue.lcc').is_file():
@@ -557,6 +674,17 @@ def merge_ini(path, sections: dict, drop: dict | None = None) -> bool:
     return True
 
 
+class FixTooOld(ValueError):
+    """The companion DLL in the output folder does not know keys the build writes (`missing`: '[Section] Key'
+    names). The harness and build_xml1 stop on it; the xml1-builder CLI warns and writes the ini, because the
+    launcher puts the latest fix into the folder right after a build (a Rebuild over a 0.2.1 folder still holds
+    XML2 Fix 1.4.0 until then)."""
+
+    def __init__(self, msg: str, missing: list):
+        super().__init__(msg)
+        self.missing = list(missing)
+
+
 def check_move_trigger_dll(dll, keys: dict) -> None:
     """An existing DLL must recognize the raised key before full-trigger output is installed.
     Source-only builds may omit the DLL, then install the companion build through the harness."""
@@ -564,8 +692,8 @@ def check_move_trigger_dll(dll, keys: dict) -> None:
         return
     dll = Path(dll)
     if dll.is_file() and 'MoveTriggers'.encode('utf-16le') not in dll.read_bytes():
-        raise ValueError('Full move triggers require the companion XML2 Fix DLL supporting [Limits] MoveTriggers; '
-                         'the existing DLL does not recognize it')
+        raise FixTooOld('Full move triggers require the companion XML2 Fix DLL supporting [Limits] MoveTriggers; '
+                        'the existing DLL does not recognize it', ['[Limits] MoveTriggers'])
 
 
 def check_entity_capacity_dll(dll, keys: dict) -> None:
@@ -577,16 +705,52 @@ def check_entity_capacity_dll(dll, keys: dict) -> None:
         raise ValueError('[Limits] EntityCapacity=1 requires [Save] Format=lc')
     dll = Path(dll)
     if dll.is_file() and 'EntityCapacity'.encode('utf-16le') not in dll.read_bytes():
-        raise ValueError('The entity-capacity raise requires the companion XML2 Fix DLL supporting [Limits] EntityCapacity; '
-                         'the existing DLL does not recognize it')
+        raise FixTooOld('The entity-capacity raise requires the companion XML2 Fix DLL supporting [Limits] EntityCapacity; '
+                        'the existing DLL does not recognize it', ['[Limits] EntityCapacity'])
 
 
-def write_port_keys(out, keys: dict | None = None) -> dict:
+# The [Game] / [Limits] keys first read by XML2 Fix 1.5 (REQUIRED_XML2FIX): a 1.4 DLL ignores them without a word.
+RELEASE_15_KEYS = {'Game': ('PlacementCrush', 'DoubleHeal', 'RankCosts', 'LevelSkillPoints', 'LevelStatPoints',
+                            'Xml1Multipart', 'X1Leader', 'SoloMode', 'DeathRule', 'DangerRoomGate', 'RevivalCost',
+                            'Xml1Turrets', 'PackAmount', 'DeathSwitchClear', 'NpcPowerRule'),
+                   'Limits': ('ScriptFunctions',)}
+
+
+def check_release_dll(dll, keys: dict) -> None:
+    """An existing companion DLL must know every XML2 Fix 1.5 key the build writes (as check_entity_capacity_dll does
+    for 1.4's): an older fix would run the build with those rules silently off. Source-only builds may omit the DLL."""
+    dll = Path(dll)
+    if not dll.is_file():
+        return
+    data = dll.read_bytes()
+    missing = [f'[{section}] {key}' for section, names in RELEASE_15_KEYS.items() for key in names
+               if key in keys.get(section, {}) and key.encode('utf-16le') not in data]
+    if missing:
+        raise FixTooOld(f'This build needs XML2 Fix {REQUIRED_XML2FIX} or later; the existing DLL does not recognize '
+                        + ', '.join(missing), missing)
+
+
+def old_fix_keys(dll, keys: dict) -> list:
+    """every key of `keys` the existing companion DLL does not know ('[Section] Key'; [] without a DLL). Raises
+    ValueError for a key set no DLL can run (EntityCapacity without Format=lc)."""
+    missing = []
+    for check in (check_move_trigger_dll, check_entity_capacity_dll, check_release_dll):
+        try:
+            check(dll, keys)
+        except FixTooOld as exc:
+            missing += [m for m in exc.missing if m not in missing]
+    return missing
+
+
+def write_port_keys(out, keys: dict | None = None, *, old_fix_ok: bool = False) -> dict:
     """merge the port's keys (default: port_keys(out)) into <out>/xml2-fix.ini, dropping the PORT_OWNED keys it does
-    not need; the launcher's keys stay. Returns the keys written."""
+    not need; the launcher's keys stay. Returns the keys written. An existing DLL that doesn't know every key raises
+    FixTooOld (naming them all) unless `old_fix_ok` (the CLI's warning path: FixTooOld)."""
     keys = port_keys(out) if keys is None else keys
-    check_move_trigger_dll(Path(out) / 'dinput.dll', keys)
-    check_entity_capacity_dll(Path(out) / 'dinput.dll', keys)
+    missing = old_fix_keys(Path(out) / 'dinput.dll', keys)
+    if missing and not old_fix_ok:
+        raise FixTooOld(f'This build needs XML2 Fix {REQUIRED_XML2FIX} or later; the existing DLL does not recognize '
+                        + ', '.join(missing), missing)
     if keys.get('Save', {}).get('Format') == 'lc' and (Path(out) / 'Data/lcsave/catalogue.lcc').is_file():
         import json
         identity = RI.manifest(out)

@@ -38,6 +38,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from xml1build import common as C  # noqa: E402
+from xml1build.characters import LEADER_SIDECAR_REL, parse_leader_sidecar  # noqa: E402
 from xml1build.lib import x1names as N  # noqa: E402
 
 out = Path(sys.argv[1] if len(sys.argv) > 1 else C.ROOT / 'build' / '_selftest_characters')
@@ -194,6 +195,21 @@ for ext in ('XMLB', 'engb'):
                 if s.get(a) is not None:
                     err(f'{where}: XML1-only attribute {a} left')
 info.append(f'C: {checked} XML1-origin entries checked (XMLB+engb)')
+
+# ------------------------------------------------------------------ C2 (issue #15): the leader sidecar
+x1src = C.parse_x1_text(ctx.x1_path('data/npcstat.eng'))
+want = {s.get('name').lower() for s in x1src if s.tag.lower() == 'stats'
+        and (s.get('leader') or '').strip().lower() == 'true'}
+sidecar = ctx.out_index.path(LEADER_SIDECAR_REL)
+have = parse_leader_sidecar(sidecar.read_bytes().decode('latin-1')) if sidecar is not None else set()
+if sidecar is None:
+    err(f'{LEADER_SIDECAR_REL} not written')
+else:
+    if want - have:
+        err(f'{LEADER_SIDECAR_REL}: leader="true" entries missing: {sorted(want - have)}')
+    if have - want:
+        err(f'{LEADER_SIDECAR_REL}: names without a source leader="true": {sorted(have - want)}')
+info.append(f'C2: leader sidecar {len(have)} names (source leader="true": {len(want)})')
 
 # ------------------------------------------------------------------ D
 npk = nent = 0

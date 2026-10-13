@@ -91,7 +91,7 @@ def test_collapse_single_value_entity_attrs_keeps_only_the_minimum():
     NV.collapse_single_value_entity_attrs(None)                  # tolerant
 
 
-# ---- the validator (V-TBD) on made-up built trees
+# ---- the validator (V45) on made-up built trees
 
 def built_style(damage, as_event=False):
     if as_event:

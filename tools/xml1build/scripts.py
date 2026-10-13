@@ -129,6 +129,14 @@ JOIN_HERO_MISSIONS = {'alison': 1, 'dr_mag2': 2}
 # Jubilee / Colossus / Psylocke unlock points of 2026-09-28, which stood in for this table.
 
 
+# XML1's table also puts non-playable characters in the campaign (issue #63). The Healer's campaign bit is what the
+# first game's Xtraction points test for their Healer choice (default.xbe 0x9f3bd / 0x9f7c8; the 'sewers_hub' row of
+# the table at 0x44e338), and xml2-fix reads the same registry bit (XMen2.exe vt+0x84) - XMen2.exe's own first-use
+# rule never adds her (her npcstat team is none). Forge's row (the 'mansion1' group, 0x44e310) is the first game's
+# Forge test too (0x9f3ff / 0x9f826), replacing 0.2.0's ftalk contact signal.
+CAMPAIGN_NPCS = ('healer', 'forge')
+
+
 def mission_start_unlocks(ctx) -> dict:
     """Pure (cached): {'missions': {mission: (hero, ...)}, 'cumulative': {mission: (hero, ...)}, 'dropped':
     {mission: (non-playable hero, ...)}, 'errors': [str]}, limited to the playable heroes of this build's herostat.
@@ -159,7 +167,7 @@ def mission_start_unlocks(ctx) -> dict:
             errors.append(f'missions.xml: mission {m} has no charunlock milestone')
         if rows is None or errors:
             return {'missions': {}, 'cumulative': {}, 'dropped': {}, 'errors': errors, 'rows': len(rows or ())}
-        playable = set(_port_heroes(ctx))
+        playable = set(_port_heroes(ctx)) | set(CAMPAIGN_NPCS)
         cum, drop = U.mission_unlocks(milestones, rows, playable)
         grp, _ = U.mission_unlocks(milestones, rows, playable, fn=U.group)
         return {'missions': grp, 'cumulative': cum, 'dropped': drop, 'errors': errors, 'rows': len(rows)}
@@ -2540,8 +2548,9 @@ def _defer(ctx, zone_rows, det=None):
         ctx.defer('New Game roster: XMen2.exe startFirstMission sets up magneto/cyclops/wolverine/storm (0x4a7b41-'
                   '0x4a7bef) while XML1 alison starts with Wolverine alone; --newgame chooseteam loads nyc1_1_1 with '
                   'loadMapChooseTeam (the default keepteam uses xml2-fix [Game] NewGameTeam)')
-    ctx.defer('solo mode: 18 inline enterSoloMode and 4 exitSoloMode removed (debug no-op); may change '
-              'astral/arbiter bridge puzzles')
+    ctx.note('solo mode (issue #5): 18 inline enterSoloMode and 4 exitSoloMode -> xml2-fix setSoloMode(actor, 1 / 0); '
+             'the party holds while the leader crosses only with [Game] SoloMode=1 and its AI sites installed '
+             '(without them the call does nothing, as before)')
     ctx.defer('conversation speaker markup (%X-TEAM%text vs %Name%: text) is not converted (the XML1-only speaker '
               'alias %ALISON% is: -> %MAGMA%, the stats entry default.xbe keyed it to; default.xbe labelled those '
               'lines "Alison" (string 503), the port\'s party-Magma lines say "Magma" - one key gives XMen2.exe both '

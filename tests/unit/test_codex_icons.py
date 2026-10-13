@@ -66,3 +66,88 @@ def test_validator_rejects_icon_cells_and_xml2_menu():
     assert len(errs) == 8 and all('icons' in e or 'mini_convo_icons' in e for e in errs)
     assert len(validator(fixed, owner='base').errors) == 2
     assert not validator(unfixed, mode='xml2').errors
+
+
+# ---- issue #97: the codex list's highlight over the whole row (an invented two-transform bar)
+import struct  # noqa: E402
+
+from test_main_appearance import fixture, u32  # noqa: E402
+from xml1build.igb_file import IgbFile  # noqa: E402
+
+
+def bar_igb(outer_x=40.0, outer_rows=None, gap_box=(20.0, 100.0)):
+    node = [(2, 's'), (3, 'r'), (5, 'i')]
+    group = node + [(7, 'r')]
+    list_fields = [(2, 'i'), (3, 'i'), (4, 'b')]
+    specs = [('igObject', None, []), ('igNamedObject', 'igObject', [(2, 's')]),
+             ('igNode', 'igNamedObject', node), ('igGroup', 'igNode', group),
+             ('igTransform', 'igGroup', group + [(8, 'm')]),
+             ('igAABox', 'igObject', [(2, 'v'), (3, 'v')]),
+             ('igDataList', 'igObject', list_fields), ('igNodeList', 'igDataList', list_fields)]
+
+    def matrix(x, rows=None):
+        m = [float(i in (0, 5, 10, 15)) for i in range(16)]
+        if rows:
+            m[:12] = rows
+        m[12] = x
+        return m
+    lo, hi = gap_box
+    objects = [('igTransform', {2: 'barA', 3: 2, 5: 2, 7: 4, 8: matrix(outer_x, outer_rows)}),
+               ('igTransform', {2: 'barA', 3: 3, 5: 2, 7: -1, 8: matrix(10.0)}),
+               ('igAABox', {2: (lo, 0, -5), 3: (hi, 0, 5)}),
+               ('igAABox', {2: (lo - outer_x, 0, -5), 3: (hi - outer_x, 0, 5)}),
+               ('igNodeList', {2: 1, 3: 1, 4: 6}),
+               ('igAABox', {2: (lo, 0, -5), 3: (hi, 0, 5)})]
+    return fixture(specs, objects, (u32(1),))
+
+
+def test_bar_stretched_from_the_row_origin_to_its_own_right_end():
+    data, rep = F.codex_select_igb(bar_igb())
+    assert rep == {'gap': 20.0, 'right': 100.0, 'scale': 1.25, 'bounds': 2}
+    g = IgbFile(data)
+    outer, inner = g.objects_of('igTransform')
+    m = outer.get(8)
+    assert m[0] == 1.25 and m[12] == 25.0 and m[5] == 1.0 and m[13:16] == [0.0, 0.0, 1.0]
+    assert inner.get(8)[12] == 10.0                                  # the bar's own placement untouched
+    boxes = [(list(b.get(2))[0], list(b.get(3))[0]) for b in g.objects_of('igAABox')]
+    assert boxes == [(0.0, 100.0), (-20.0, 60.0), (0.0, 100.0)]
+    # the inner span mapped through the new outer transform is exactly the row [0, right]
+    assert -20.0 * m[0] + m[12] == 0.0 and 60.0 * m[0] + m[12] == 100.0
+    assert len(data) == len(bar_igb())                               # an in-place edit
+
+
+def test_bar_refused_unless_it_is_the_expected_shape():
+    rotated = [0, 1, 0, 0, -1, 0, 0, 0, 0, 0, 1, 0]
+    assert F.codex_select_igb(bar_igb(outer_rows=rotated))[0] is None
+    assert 'already starts' in F.codex_select_igb(bar_igb(outer_x=20.0, gap_box=(0.0, 80.0)))[1]['problem']
+    assert F.codex_select_igb(b'not an igb')[0] is None
+
+
+def test_codex_list_highlight_points_at_the_ports_model():
+    x = F.codex_menu_trees(base_ctx({'UI/menus/codex.XMLB': menu('k'), 'UI/menus/codex.engb': menu('t')}))[0]
+    assert F.codex_select_problems(x)                                # XML2's model: a problem
+    assert F.use_codex_select(x) == 1 and F.use_codex_select(x) == 0
+    assert F.codex_select_problems(x) == []
+    lst = next(it for it in x.iter('item') if it.get('name') == 'list')
+    assert [f.get('model') for f in lst.findall('onfocus')] == [F.CODEX_SELECT_X1]
+
+
+def highlight_validator(trees, owners, mode='xml1'):
+    v = SimpleNamespace(ctx=SimpleNamespace(opt=lambda k: mode if k == 'frontend' else None))
+    v.tree = lambda rel: trees.get(rel)
+    v.entry = lambda rel: {'owner': owners[rel]} if rel in owners else None
+    ck = Check('V58', 'codex highlight')
+    VF.v_codex_highlight(v, ck)
+    return ck
+
+
+def test_validator_wants_the_stretched_highlight_in_both_halves():
+    fixed = F.codex_menu_trees(base_ctx({'UI/menus/codex.XMLB': menu('k'), 'UI/menus/codex.engb': menu('t')}))[0]
+    F.use_codex_select(fixed)
+    igb = F.CODEX_SELECT_X1 + '.igb'
+    good = {'UI/menus/codex.XMLB': fixed, 'UI/menus/codex.engb': fixed}
+    assert not highlight_validator(good, {igb: 'frontend'}).errors
+    assert len(highlight_validator(good, {}).errors) == 1            # the model file is missing
+    old = {'UI/menus/codex.XMLB': menu('k'), 'UI/menus/codex.engb': menu('t')}
+    assert len(highlight_validator(old, {igb: 'frontend'}).errors) == 2
+    assert not highlight_validator(old, {}, mode='xml2').errors

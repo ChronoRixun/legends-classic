@@ -425,9 +425,9 @@ class RealPipeline:
         from xml1build import fix_ini
         return (fix_ini.build_record(out) or {}).get('content_fingerprint')
 
-    def write_ini(self, out, keys):
+    def write_ini(self, out, keys, old_fix_ok=False):
         from xml1build import fix_ini
-        return fix_ini.write_port_keys(out, keys)
+        return fix_ini.write_port_keys(out, keys, old_fix_ok=old_fix_ok)
 
     def required_xml2fix(self) -> str:
         from xml1build import fix_ini

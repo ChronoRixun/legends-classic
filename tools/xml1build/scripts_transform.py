@@ -439,10 +439,13 @@ def choose_team_in_bodies(lines, bodies):
 XML2FIX_API = {'xml2fixFeature': ('i', 's'), 'seatParty': ('n', 'ssss'), 'setSkinset': ('n', 'ss'),
                'pushParty': ('n', 'a'), 'popParty': ('n', 's'), 'addHero': ('i', 's'), 'getPartyMember': ('s', 'i'),
                'joinHero': ('i', 's'), 'addSkillPoints': ('n', 'ai'), 'addStatPoints': ('n', 'ai'),
-               'extractionPointServices': ('n', 'ai')}
+               'extractionPointServices': ('n', 'ai'), 'setSoloMode': ('n', 'ai')}
 # xml2-fix functions data may call directly (SPEC 32: the SKILL item's onactivate): not forced-teams features, registered
 # with the rest whatever [Game] ForcedTeams says, inert without the DLL (the engine drops a call it doesn't know)
 XML2FIX_DATA_FUNCS = frozenset(C.XML2FIX_ALWAYS_FUNCS)
+# the ones a script may only call behind their xml2fixFeature guard (the data functions run unguarded, inert without
+# the DLL: addSkillPoints from pickups, setSoloMode from XML1's solo boxes and bridge scripts)
+XML2FIX_GUARDED_API = {k: v for k, v in XML2FIX_API.items() if k not in XML2FIX_DATA_FUNCS}
 
 
 def xtraction_menu_fallback(lines):
@@ -463,11 +466,12 @@ def xtraction_menu_fallback(lines):
 
 FT_VAR, AH_VAR, JH_VAR = 'x1ft', 'x1ah', 'x1jh'
 FT_FEATURE, AH_FEATURE, JH_FEATURE = 'forcedteams', 'addhero', 'joinhero'
-FEATURES = (FT_FEATURE, AH_FEATURE, JH_FEATURE, 'xtractionshop')
+XTRACTION_FEATURE = 'xtractionservices'           # xml2-fix >= 1.5: extractionPointServices takes a bitmask (#63)
+FEATURES = (FT_FEATURE, AH_FEATURE, JH_FEATURE, 'xtractionshop', XTRACTION_FEATURE)
 # the function each xml2-fix call needs switched on (the 'then' branch of 'if <v> == 1', <v> = xml2fixFeature(f))
 GUARD_OF = {'seatParty': FT_FEATURE, 'setSkinset': FT_FEATURE, 'pushParty': FT_FEATURE, 'popParty': FT_FEATURE,
             'addHero': AH_FEATURE, 'getPartyMember': None, 'joinHero': JH_FEATURE,
-            'extractionPointServices': 'xtractionshop'}
+            'extractionPointServices': XTRACTION_FEATURE}
 IND = '     '                                  # BehavEd's block indentation
 # a no-op (0x5aaff0) that keeps a branch non-empty when the DLL is absent and its xml2-fix calls are dropped at compile
 # (XML2 retail scripts never have an empty block; research rewrite_scripts keeps blocks non-empty the same way)
@@ -728,7 +732,7 @@ def _strip_comment(line):
     return line
 
 
-def xml2fix_guard_problems(lines, funcs=XML2FIX_API):
+def xml2fix_guard_problems(lines, funcs=XML2FIX_GUARDED_API):
     """[(lineno, problem)] for xml2-fix calls that would run without their feature switched on (validate V14b):
     every call of `funcs` must sit in the 'then' branch of 'if <v> == 1' where <v> was declared with
     '<v> = iadd(0, 0 )' and then assigned '<v> = xml2fixFeature("forcedteams"|"addhero" )' earlier in the same

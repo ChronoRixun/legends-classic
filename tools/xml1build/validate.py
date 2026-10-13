@@ -61,13 +61,15 @@ Checks (severity per SPEC 4.6: error = will not load or silently misbehaves; war
                 index counts equal, indices inside the blend palette, palette entries on skeleton bones, weights
                 summing to 1 (errors); every bone the skin's vertices use in the anim DB skeleton (skin / skeleton
                 mismatch: error, warning when the XML1 disc has it too); 1-2 blend weights noted
-  V26 fall kill volumes (SPEC 52): XML1 map lethal-touch boxes have boxcollision=true and smartent=false
+  V26 fall kill volumes (SPEC 52): XML1 map lethal-touch volumes have smartent=false and their source boxcollision
   V28 dialog platforms (SPEC 54, x1schema.dialog_platform_problems): every registered
                 Dialogs/ file has, for each filter value, a variant XMen2.exe's platform test (0x4bd650) accepts -
                 else the popup opens an empty panel (issue #50)
   V29 codex icons (SPEC 55, validate_frontend.v_codex_icons): --frontend xml1:
                 UI/menus/codex (both halves) written by frontend, its MENU_ITEM_LISTCODEX without icons / icons_cols /
                 icons_rows and no mini_convo_icons precache
+  V58 codex highlight (issue #97, validate_frontend.v_codex_highlight): --frontend xml1: the codex list's
+                list_focus is the frontend's ui/models/x1_codex_select (XML2's bar over the whole row), both halves
   V30 personal items (SPEC 56, validate_frontend.v_personal_items): every personalItem literal has
                 Data/personal/<item> from the first game (frontend), with text and a texture IGB in <out>
   V31 save positions (SPEC 61): shared_talents in the save-stable order of
@@ -91,6 +93,9 @@ Checks (severity per SPEC 4.6: error = will not load or silently misbehaves; war
                 byte-identical to the set its own data produces, every key in the master catalogue
   V50 typed entity ids (SPEC 85, savefiles.validate): Data/lcsave/typed-entity-ids.txt is present and is exactly the
       registry of the shipped Scripts tree (fingerprint and keys), as the entity-capacity DLL verifies it at load
+  V57 script function names (xml2-fix [Limits] ScriptFunctions; script_functions.validate): every function XML1
+                output calls is an XMen2.exe or xml2-fix name (V7's dead-script and inherited-drop allowances only),
+                and the names the build relies on fit fix_ini.LIMITS ScriptFunctions
   V51 Master Mold stage binding (SPEC 86, scripts module): with the boss spawn script installed, the effective
       packed mission-stage binding the DLL's Xml1MoldStage carries is valid, else a build error
   V40 melee weapons (SPEC 69.5, melee_weapons.validate): exact metadata on all and only the source armed NPCs,
@@ -103,13 +108,30 @@ Checks (severity per SPEC 4.6: error = will not load or silently misbehaves; war
                 registered talent names and distinct talent files of the permanent, zone, CHRB character and
                 worst four-hero party packages, with the NPC-only talents in their data/talents/npc set files
                 (TalentRegistry fix): over 100 names or 9 files an error, exactly full a warning
+  V53 removable resistances (issue #3): shared talents whose XML1 form is a def_damage activepowerup carry
+                tag_name="def_damage" on their resistance powerup (XML1 0x2b100 removes them; XMen2.exe by tag), and
+                every character whose style removes tag def_damage carries something that tag reaches
+  V54 leader sidecar (issue #15): Data/x1leader.txt lists exactly the XML1 stats entries whose source carries
+                leader="true" (xml2-fix [Game] X1Leader keys the restored leader behaviours to it)
+  V55 fractional health (SPEC 63.6, x1schema.fractional_health_problems): no XML1-sourced entity definition with
+                a numeric health above 0 and below 1 (it would die on its first hit under DeathRule=xml1)
+  V56 scan turrets (SPEC 89, turrets.validate_contract; zones module): the turrets.json contract is well formed
+                and within XML2 Fix's ranges, else a build error
+  V59 solo mode calls (issue #5): XML1's enterSoloMode / exitSoloMode reach xml2-fix as setSoloMode(actor, 1 / 0)
   V25 harm loops (SPEC 51): no delayed start-on ordinary harm loops that XML2 disables
+  V52 breakable parts (issue #3): every XML1 npcstat Multipart row survives with its bone / health / effectOnDeath
+                / loopEffect / effectBone / linkToPower (xml2-fix [Game] Xml1Multipart reads them), at most four
+                parts per character, and the parts' templates leave the 13-record multipart pool room for actors
   V34 ladder spawns (SPEC 46): no monster spawner without monster_spawnexactlocation runs a ladder motion path
   V35 pda portal (SPEC 64, issue #89; validate_frontend.v_pda_portal): both front ends: UI/menus/pda (both halves)
                 written by frontend without the Blink Portal (no label_option03, nothing links to it, its models
                 hidden)
   V36 recommended party (SPEC 67, issue #76; reported with V14): a mission start seeded with the first game's
                 recommended party has exactly the guarded seatParty + skinset before its original editable menu
+  V60 resistance talents (npc_values.v_resist_talents): every shared talent XML1 defines with def_damage rows
+                scoped to a damage type (the six physical / energy / mental _resistant[_share] talents) carries them
+                as def_damage_scope and no resist_<type> of those types - only def_damage strips a hit's reactions
+                (popup, knockback, trip, stun) at scale <= 0.3 in both engines
   V45 gun damage roll (SPEC 76, weapons.validate): every built gun-shot trigger
                 carries XML1's weapon-fire draw - one integer range trunc(min*0.7f)..trunc(min*1.3f) of the damage
                 declaration's minimum (default.xbe 0xbcc47-0xbcc99) - a powerstyle named for an XML1 weapon carries
@@ -142,6 +164,7 @@ import xmlb                                   # noqa: E402  tools/xmlb.py
 from .lib import x1names                      # noqa: E402  the XML1 namespace (was research/characters)
 from .lib.x1names import is_fightstyle_name   # noqa: E402  fightstyle_* / x1_fightstyle_* (issue #52)
 from . import validate_script as VS
+from . import script_functions as SFN
 from . import balance as BAL
 from . import melee_weapons as MW
 from . import savefiles as SF
@@ -160,6 +183,7 @@ from . import style_budget as SB         # V23 (SPEC 43): the fighting / power s
 from . import ladder_motion as LM       # V34 (SPEC 46): ladder paths only from the ladder top
 from . import weapons as W              # V5 (SPEC 57, issue #52): a gun-armed entry carries its gun's fighting style
 from . import scripted_approaches as SA  # V47 (SPEC 78): authored scripted approach completion
+from . import characters as CH           # V54 (issue #15): the xml2-fix leader sidecar
 from . import save_positions as SP      # V31: identities a save keeps by position
 
 MAX_REPORTED = 50                             # per check and severity, into ctx.error / ctx.warn
@@ -414,6 +438,7 @@ class Scan:
         self.ladder_floor_paths = {}  # norm rel -> [spawner name] running a ladder path without exact location
         self.physics_scale = {}    # norm rel -> [(entity name, attribute, value)] XML1-scale object physics left
         self.break_rule = {}       # norm rel -> [(entity name, structure, xml1structure)] pairs BreakRule=xml1 cannot use
+        self.fractional_health = {}  # norm rel -> [(entity name, health)] with 0 < health < 1 (DeathRule=xml1)
         self.speakers = {}         # norm rel (conversations/) -> [(attr, %TOKEN%)]
         self.anim_enums = {}       # norm rel -> [(tag, attr, enum literal)]  animenum values + EA_* in any value
         self.zoneinfo_xtraction = {}   # norm rel (data/zoneinfo.*) -> [(zone, [attrs])] Xtraction network entries
@@ -421,6 +446,63 @@ class Scan:
 
 
 # ---------------------------------------------------------------------------------------------- validator
+REMOVABLE_TAG = 'def_damage'
+_RESIST_AFFECTER = re.compile(r'(resist_|def_damage(_scope)?$)')   # characters.X1_REMOVABLE_AFFECTERS
+
+
+def removable_findings(x1_talents, shared_roots, stats, style):
+    """V53 (issue #3 follow-up). XML1's remove="true" drops every def_damage powerup of the actor, talents included
+    (default.xbe 0x2b100); XMen2.exe drops powerups by tag name (remove_tag). Errors when (a) a shared talent whose
+    XML1 definition is a def_damage activepowerup, referenced by a built character or defined in a built half, is
+    missing from a half, or a rank of it has no resistance powerup or an untagged one, or (b) a character whose style removes tag def_damage carries nothing that tag
+    reaches (no tagged talent, no tag_name="def_damage" powerup trigger in its style).
+    x1_talents {lower name: XML1 element}; shared_roots built roots; stats built <stats> elements; style(name) ->
+    root or None. Returns (errors, counts)."""
+    errors, counts = [], {'x1_removable_talents': 0, 'removing_characters': 0}
+    removable = {n for n, t in x1_talents.items()
+                 if any(e.tag.lower() == 'activepowerup' and (e.get('powerup') or '').lower() == REMOVABLE_TAG
+                        for e in t.iter())}
+    # expected: the removable talents a built character references or a built half defines (the heroes module may
+    # prune unreferenced ones from both halves); each must be defined, fully tagged, in every half
+    referenced = {(t.get('name') or '').lower() for st in stats for t in st.iter() if t.tag.lower() == 'talent'}
+    defined = {(t.get('name') or '').lower() for root in shared_roots for t in root.iter('talent')}
+    wanted = sorted(removable & (referenced | defined))
+    tagged = set(wanted)
+    for half, root in enumerate(shared_roots):
+        defs = {(t.get('name') or '').lower(): t for t in root.iter('talent')}
+        for name in wanted:
+            t = defs.get(name)
+            if t is None:
+                errors.append(f'shared talent {name}: missing from built half {half + 1} - XML1 removals of '
+                              f'{REMOVABLE_TAG} have nothing to take')
+                tagged.discard(name)
+                continue
+            # every rank: each powerup carrying a resistance affecter is tagged, and the rank has one
+            for rank, level in enumerate(t.findall('level'), 1):
+                resist = [pu for pu in level.findall('powerup')
+                          if any(_RESIST_AFFECTER.match(a.get('attribute') or '') for a in pu.iter('affecter'))]
+                bad = [pu for pu in resist if pu.get('tag_name') != REMOVABLE_TAG]
+                if not resist or bad:
+                    errors.append(f'shared talent {name} rank {rank} (half {half + 1}): '
+                                  + ('no resistance powerup' if not resist else
+                                     f'{len(bad)} resistance powerup(s) without tag_name="{REMOVABLE_TAG}"')
+                                  + f' - XML1 removals of {REMOVABLE_TAG} would leave it on')
+                    tagged.discard(name)
+    counts['x1_removable_talents'] = len(tagged)
+    for st in stats:
+        ps = (st.get('powerstyle') or '').lower()
+        root = style(ps) if ps else None
+        if root is None or not any(t.get('remove_tag') == REMOVABLE_TAG for t in root.iter('trigger')):
+            continue
+        counts['removing_characters'] += 1
+        talents = {(t.get('name') or '').lower() for t in st.iter() if t.tag.lower() == 'talent'}
+        own = any(t.get('tag_name') == REMOVABLE_TAG for t in root.iter('trigger'))
+        if not (talents & tagged) and not own:
+            errors.append(f'{st.get("name")}: style {ps} removes tag {REMOVABLE_TAG} but nothing on the character '
+                          f'carries it (no tagged resistance talent, no tag_name="{REMOVABLE_TAG}" powerup)')
+    return errors, counts
+
+
 class Validator:
     def __init__(self, ctx):
         self.ctx = ctx
@@ -575,7 +657,8 @@ class Validator:
                          XS.fall_kill_volume_deferred(el, n),
                          (XS.fall_kill_volume_leader_only(el, n),
                           all(el.get(k) == v for k, v in XS.FALL_KILL_LEADER_FLAGS.items()),
-                          any(el.get(k, '').lower() == 'true' for k in XS.FALL_KILL_LEADER_FLAGS)))
+                          any(el.get(k, '').lower() == 'true' for k in XS.FALL_KILL_LEADER_FLAGS)),
+                         el.get('boxcollision'))
                         for el in volumes]
                     tail = XS.numbered_entinst_tail_problems(root, n)
                     if tail:
@@ -605,6 +688,9 @@ class Validator:
                     br = XS.break_rule_problems(root)
                     if br:
                         sc.break_rule[n] = br
+                    fh = XS.fractional_health_problems(root)
+                    if fh:
+                        sc.fractional_health[n] = fh
                 if n.startswith('conversations/'):
                     sp = [(k, t) for el in root.iter() for k in SPEAKER_ATTRS for t in SPEAKER_RE.findall(el.get(k) or '')]
                     if sp:
@@ -772,6 +858,76 @@ class Validator:
             self._x1gren = {ch: next(iter(gs)) for ch, gs in W.grenade_override_votes(roots).items() if len(gs) == 1}
         return self._x1gren
 
+    # ------------------------------------------------------------------ breakable parts (issue #3)
+    # XML1's npcstat <Multipart> attributes the XBE's parser 0x89500 reads and xml2-fix multipart.cpp
+    # ([Game] Xml1Multipart) reads back from the built stats: losing one silently turns a part off.
+    MULTIPART_KEPT = ('bone', 'health', 'effectondeath', 'loopeffect', 'effectbone', 'linktopower')
+    MULTIPART_PARTS_MAX = 4      # XBE 0x89706: cmp [record+0x178],4 refuses a fifth part
+    MULTIPART_RECORDS = 13       # both managers hold 13 records (XBE 0x89ec0, XMen2.exe 0x48ccf0), templates + live actors
+
+    def vtbd_multipart(self, ck):
+        """V52: every XML1 npcstat Multipart row survives in the built stats with its part-health, effect and
+        power-link attributes (case-insensitive keys, as XMen2.exe's attribute getter 0x5649c0 reads them); at most
+        four parts per character; the parts' templates leave the 13-record pool room for live actors."""
+        built = self.stats()['by_name']
+        templates = 0
+        for name, (_f, x1) in sorted(self.x1_stats().items()):
+            rows = [c for c in x1 if c.tag.lower() == 'multipart']
+            if not rows:
+                continue
+            ck.count('xml1_characters')
+            if name not in built:
+                ck.error(f'{name}: XML1 Multipart character missing from the built stats')
+                continue
+            out = [c for c in built[name][1] if c.tag.lower() == 'multipart']
+            if len(out) != len(rows):
+                ck.error(f'{name}: {len(rows)} XML1 Multipart rows, {len(out)} built')
+                continue
+            if len(out) > self.MULTIPART_PARTS_MAX:
+                ck.error(f'{name}: {len(out)} parts; the first game holds {self.MULTIPART_PARTS_MAX}')
+            if any(float(c.get('health') or 0) > 0 for c in out):
+                templates += 1
+            for i, (a, b) in enumerate(zip(rows, out), 1):
+                xa = {k.lower(): v for k, v in a.attrib.items()}
+                xb = {k.lower(): v for k, v in b.attrib.items()}
+                for k in self.MULTIPART_KEPT:
+                    if (xa.get(k) or '') != (xb.get(k) or ''):
+                        ck.error(f'{name} part {i}: {k} {xb.get(k)!r}, XML1 {xa.get(k)!r}')
+                ck.count('parts')
+        ck.set('templates', templates)
+        if templates >= self.MULTIPART_RECORDS:
+            ck.error(f'{templates} characters with breakable parts fill the {self.MULTIPART_RECORDS}-record pool: '
+                     f'no spawned actor would get its parts')
+        elif templates > self.MULTIPART_RECORDS - 4:
+            ck.warn(f'{templates} characters with breakable parts leave {self.MULTIPART_RECORDS - templates} records '
+                    f'for spawned actors')
+
+    def vtbd_removable(self, ck):
+        """V53: XML1 removals take resistance talents (characters.tag_x1_removable_talents)."""
+        halves = (self.tree('data/shared_talents.engb'), self.tree('data/shared_talents.xmlb'))
+        roots = [t for t in halves if t is not None]
+        if len(roots) != len(halves):
+            ck.error('a built shared_talents half (engb / XMLB) is missing or undecodable: removable resistances unchecked there')
+        try:
+            x1 = self.ctx.read_x1_xml('data/shared_talents.eng')
+        except KeyError:
+            x1 = None
+        if x1 is None or not roots:
+            ck.error('shared_talents (built or XML1) unreadable: removable resistances not checked')
+            return
+        x1_talents = {(t.get('name') or '').lower(): t for t in x1.iter() if t.tag.lower() == 'talent'}
+        styles = {}
+
+        def style(name):
+            if name not in styles:
+                styles[name] = self.tree(f'data/powerstyles/{name}.engb') or self.tree(f'data/powerstyles/{name}.xmlb')
+            return styles[name]
+        errors, counts = removable_findings(x1_talents, roots, [el for _f, el in self.stats()['by_name'].values()], style)
+        for e in errors:
+            ck.error(e)
+        for k, v in counts.items():
+            ck.set(k, v)
+
     # ------------------------------------------------------------------ running / reporting
     def run_all(self):
         for cid, title, fn in (('V1', 'proxy', self.v1_proxy), ('V2', 'registry', self.v2_registry),
@@ -788,6 +944,7 @@ class Validator:
                                ('V17', 'review', lambda ck: VF.v17_review(self, ck)),
                                ('V18', 'combat events', lambda ck: CE.v18(self, ck)),
                                ('V19', 'npc values', lambda ck: NV.v19(self, ck)),
+                               ('V60', 'resistance talents', lambda ck: NV.v_resist_talents(self, ck)),
                                ('V20', 'automaps', lambda ck: AM.v20(self, ck)),
                                ('V21', 'skins', lambda ck: SK.validate(self, ck)),
                                ('V22', 'buoys', lambda ck: BY.validate(self, ck)),
@@ -799,10 +956,12 @@ class Validator:
                                ('V27', 'voice lines', self.voice_lines),
                                ('V28', 'dialog platforms', self.dialog_platforms),
                                ('V29', 'codex icons', lambda ck: VF.v_codex_icons(self, ck)),
+                               ('V58', 'codex highlight', lambda ck: VF.v_codex_highlight(self, ck)),
                                ('V30', 'personal items', lambda ck: VF.v_personal_items(self, ck)),
                                ('V31', 'save positions', self.save_positions),
                                ('V32', 'lite xtraction', self.lite_xtraction),
                                ('V48', 'Xtraction service routing', self.xtraction_services),
+                               ('V59', 'solo mode calls', self.solo_mode_calls),
                                ('V34', 'ladder spawns', self.ladder_spawns),
                                ('V35', 'pda portal', lambda ck: VF.v_pda_portal(self, ck)),
                                ('V37', 'xtraction beacons / rank-1 power damage', self.v37_beacons_rank_one),
@@ -812,7 +971,11 @@ class Validator:
                                ('V41', 'spawn-floor residency', self.spawn_floor_residency),
                                ('V45', 'gun damage roll', lambda ck: W.validate(self, ck)),
                                ('V47', 'scripted boss approach', lambda ck: SA.validate(self, ck)),
-                               ('V46', 'pickup models', self.v46_pickup_models)):
+                               ('V46', 'pickup models', self.v46_pickup_models),
+                               ('V52', 'breakable parts', self.vtbd_multipart),
+                               ('V53', 'removable resistances', self.vtbd_removable),
+                               ('V54', 'leader bit sidecar', self.v54_leader_sidecar),
+                               ('V57', 'script function names', lambda ck: SFN.validate(self, ck))):
             ck = Check(cid, title)
             self.checks[cid] = ck
             t0 = time.time()
@@ -843,7 +1006,7 @@ class Validator:
                 root = self.tree(f'maps/{zone}.xmlb')
             if root is None:
                 continue
-            for problem in SE.problems(root):
+            for problem in SE.problems(root, XS.late_fall_volume_names(root, f'maps/{zone}.eng')):
                 ck.error(f'{zone}: {problem}')
             defs = {e.get('name'): e for e in root.iter('entity')}
             added = sum(len(g.findall('inst')) for g in root.findall('entinst')
@@ -923,6 +1086,42 @@ class Validator:
         ctx.note(f'validate: {summary["result"]}: {summary["errors"]} errors, {summary["warnings"]} warnings, '
                  f'{summary["allowed"]} allowlisted; details in _build/validate.json')
         return doc
+
+    # ================================================================== V54 leader sidecar (issue #15)
+    def v54_leader_sidecar(self, ck):
+        """V54 (issue #15): Data/x1leader.txt must list exactly the XML1 stats entries whose source element
+        carries leader="true" - it is what xml2-fix ([Game] X1Leader) keys the restored leader behaviours
+        (death drops, no-flinch vs leader projectiles) to. Derived in code by xml1build.characters from the
+        converted stats; this cross-checks derivation against the source data."""
+        src = {n for n, (_, el) in self.x1_stats().items()
+               if (el.get('leader') or '').strip().lower() == 'true'}
+        data = self.read(CH.LEADER_SIDECAR_REL)
+        if data is None:
+            if src:
+                ck.error(f'{CH.LEADER_SIDECAR_REL} missing (xml1build.characters derives it from '
+                         f'leader="true"; xml2-fix has nothing to key the leader behaviours to)')
+            return
+        try:
+            text = data.decode('latin-1')
+        except UnicodeDecodeError:
+            ck.error(f'{CH.LEADER_SIDECAR_REL}: not latin-1 text')
+            return
+        have, dups = set(), []
+        for i, line in enumerate(text.splitlines(), 1):
+            s = line.strip()
+            if not s or s.startswith(('#', ';')):
+                continue
+            if s.lower() in have:
+                dups.append((i, s))
+            have.add(s.lower())
+        for i, s in dups:
+            ck.error(f'{CH.LEADER_SIDECAR_REL} line {i}: {s!r} is listed more than once')
+        for n in sorted(src - have):
+            ck.error(f'{CH.LEADER_SIDECAR_REL}: leader="true" entry {n!r} is missing')
+        for n in sorted(have - src):
+            ck.error(f'{CH.LEADER_SIDECAR_REL}: {n!r} has no leader="true" entry in the XML1 stats')
+        ck.set('source leader entries', len(src))
+        ck.set('sidecar names', len(have))
 
     # ================================================================== V1 proxy
     def v1_proxy(self, ck):
@@ -1130,16 +1329,42 @@ class Validator:
                      f'pair (x1schema.convert_physics), e.g. {lst[:2]}')
             n_break += len(lst)
         ck.set('x1_break_rule_unpaired', n_break)
+        # V55 (SPEC 63.6): no XML1-sourced entity definition with a health above 0 and below 1. XML1 keeps maximum
+        # health whole; with DeathRule=xml1 such an entity dies on its first hit.
+        n_frac = 0
+        for n, lst in sorted(sc.fractional_health.items()):
+            if n in sc.twins:
+                continue
+            ck.error(f'{sc.files[n]["rel"]}: {len(lst)} entity definition(s) with a health above 0 and below 1 '
+                     f'(xml2-fix DeathRule=xml1 kills below 1), e.g. {lst[:2]}')
+            n_frac += len(lst)
+        ck.set('x1_fractional_health', n_frac)
+
+    def x1_source_entity(self, n, name):
+        """attributes of the XML1 source <entity name=...> of a registered map output (None: not found)."""
+        cache = self.__dict__.setdefault('_x1_ents', {})
+        src = (self.reg.get(n) or {}).get('source')
+        if src not in cache:
+            ents = {}
+            try:
+                root = C.parse_x1_text(src)
+                for el in (root.iter('entity') if root is not None else ()):
+                    ents.setdefault(el.get('name'), dict(el.attrib))
+            except Exception:        # noqa: BLE001
+                pass
+            cache[src] = ents
+        return cache[src].get(name)
 
     def fall_kill_volumes(self, ck):
-        """V26: converted fall kill volumes must be active collision boxes; the listed player-only
-        volumes, and no others, carry the leader gate."""
+        """V26: converted fall kill volumes must be live (smartent=false) with the source's own touch
+        shape (boxcollision as authored); the listed player-only volumes, and no others, carry the
+        leader gate."""
         sc = self.scan
         for n, volumes in sorted(sc.fall_kill_volumes.items()):
             if n in sc.twins or not self.is_x1_source((self.reg.get(n) or {}).get('source')):
                 continue
             ck.count('files_checked')
-            for name, missing, deferred, (leader_listed, leader_set, leader_any) in volumes:
+            for name, missing, deferred, (leader_listed, leader_set, leader_any), box in volumes:
                 if leader_listed and not deferred:
                     ck.count('volumes_player_only')
                     if not leader_set:
@@ -1163,6 +1388,14 @@ class Validator:
                 if missing:
                     ck.error(f'{sc.files[n]["rel"]}: fall kill volume {name!r} lacks '
                              f'{", ".join(k + "=" + XS.FALL_KILL_FLAGS[k] for k in missing)}')
+                source = self.x1_source_entity(n, name)
+                if source is not None and (box or '').lower() != (source.get('boxcollision') or '').lower():
+                    # XML1 touch-tests a volume without boxcollision as a vertical cylinder; a box reaches
+                    # its corners (and misses the cylinder's sides): another hazard than the designers'
+                    ck.error(f'{sc.files[n]["rel"]}: fall kill volume {name!r} has boxcollision={box!r}, '
+                             f'the XML1 source {source.get("boxcollision")!r} (its touch shape changes)')
+                if box is None:
+                    ck.count('volumes_cylinder')
 
     def _npc_pool_names(self):
         """talent names defined by the built npc per-set files (data/talents/npc*, the TalentRegistry fix)."""
@@ -1221,26 +1454,42 @@ class Validator:
             root = self.tree(n)
             if root is None:
                 continue
-            for message in SE.numbered_tail_problems(root):
+            for message in SE.numbered_tail_problems(root, XS.late_fall_volume_names(root, n)):
                 ck.error(f'{n}: {message}')
 
     _LITE_XPOINT = re.compile(r'\bextractionPointLite\s*\(', re.I)
+    # issue #63: the services helper (prepare P3 xtraction_menu_lines): x1_svc = iadd(<forge>, <bits> ), then
+    # extractionPointServices(<owner>, x1_svc ); bit 4 is Load, which every first-game point offers
+    _XPOINT_SVC_BITS = re.compile(r'\bx1_svc\s*=\s*iadd\([^,]*,\s*(\d+)\s*\)')
+    _XPOINT_SERVICES = re.compile(r'\bextractionPointServices\s*\([^,]*,([^)]*)\)')
 
     def lite_xtraction(self, ck):
         """V32 (issue #63; SPEC 62): XMen2.exe's extractionPointLite (0x4a6d80) is team change
         only, after an X-Men Legends II hint: XML1's lite Xtraction points always offered Save, so no XML1 script or
         inline data code may call it (prepare P3 writes extractionPoint for them)."""
         sc = self.scan
-        n_scripts = 0
+        n_scripts = n_services = 0
         for r in sorted(self.script_set()):
             if not (self.exists(r) and self.is_x1(r)):
                 continue
             n_scripts += 1
+            svc_bits = None
             for i, s in self._statements(self.read(r).decode('latin-1').split('\r\n')):
                 if self._LITE_XPOINT.search(s):
                     ck.error(f'{self.idx.get(r) or r}:{i + 1}: {_short(s)}: extractionPointLite offers no Save '
                              f'(issue #63; prepare P3 writes extractionPoint)')
+                m = self._XPOINT_SVC_BITS.search(s)
+                if m:
+                    svc_bits = int(m.group(1))
+                m = self._XPOINT_SERVICES.search(s)
+                if m:
+                    n_services += 1
+                    if m.group(1).strip() != 'x1_svc' or svc_bits is None or not svc_bits & 4:
+                        ck.error(f'{self.idx.get(r) or r}:{i + 1}: {_short(s)}: an Xtraction point without Load '
+                                 "(V32, issue #63: the first game's points always offer Save and Load)")
+                    svc_bits = None                     # each call needs its own x1_svc line
         ck.set('lite_xtraction_scripts_checked', n_scripts)
+        ck.set('xtraction_services_calls_checked', n_services)
         n_code = 0
         for table in (sc.inline, sc.runscripts):
             for n, lst in self.data_items(table):
@@ -1271,6 +1520,40 @@ class Validator:
                     ck.error(f'{self.scan.files[n]["rel"]}: Xtraction actscript bypasses its services helper '
                              '(issue #95; point-local permission / contact unlock)')
         ck.set('xtraction_service_inline_checked', n_code)
+
+    _XML1_SOLO = re.compile(r'\b(?:enterSoloMode|exitSoloMode)\s*\(')
+    _SOLO_CALL = re.compile(r'\bsetSoloMode\s*\(')
+    _SOLO_FORM = re.compile(r'''\bsetSoloMode\(\s*(['"])[^'"]+\1\s*,\s*[01]\s*\)''')
+
+    def solo_mode_calls(self, ck):
+        """V59 (issue #5): XML1's enterSoloMode / exitSoloMode reach xml2-fix as setSoloMode(actor, 1 / 0) (prepare
+        P3). XMen2.exe knows no XML1 name (its compiler would drop the call silently), and every setSoloMode keeps the
+        two-argument form the DLL registers ('ai'). Counts the solo-box calls in map data and the script calls."""
+        n_data = n_scripts = 0
+        for table in (self.scan.inline, self.scan.runscripts):
+            for n, lst in self.data_items(table):
+                if not self.is_x1(n):
+                    continue
+                for item in lst:
+                    code = (item[2] if isinstance(item, tuple) else item) or ''
+                    if self._XML1_SOLO.search(code):
+                        ck.error(f'{self.scan.files[n]["rel"]}: XML1 solo call left in {_short(code, 80)!r}')
+                    calls = len(self._SOLO_CALL.findall(code))
+                    if calls != len(self._SOLO_FORM.findall(code)):
+                        ck.error(f'{self.scan.files[n]["rel"]}: setSoloMode not as (actor, 0|1) in {_short(code, 80)!r}')
+                    n_data += calls
+        for r in sorted(self.script_set()):
+            if not (self.exists(r) and self.is_x1(r)):
+                continue
+            for i, line in self._statements(self.read(r).decode('latin-1').split('\r\n')):
+                if self._XML1_SOLO.search(line):
+                    ck.error(f'{self.idx.get(r) or r}:{i + 1}: XML1 solo call left: {_short(line)}')
+                calls = len(self._SOLO_CALL.findall(line))
+                if calls != len(self._SOLO_FORM.findall(line)):
+                    ck.error(f'{self.idx.get(r) or r}:{i + 1}: setSoloMode not as (actor, 0|1): {_short(line)}')
+                n_scripts += calls
+        ck.set('solo_mode_data_calls', n_data)
+        ck.set('solo_mode_script_calls', n_scripts)
 
     # ================================================================== V37 (issues #74, #78)
     def v37_beacons_rank_one(self, ck):
