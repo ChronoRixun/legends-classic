@@ -494,6 +494,74 @@ def move_late_fall_volumes(root, rel):
     return _append_entinsts(root, names) if names else 0
 
 
+# Ignored by the engine; distinguishes newly numbered hazards from residents
+# already pinned by scripts in older releases. Those must keep their ordinals.
+HAZARD_BOUNDS_MARKER = 'xml1hazardbounds'
+
+
+def hazard_bounds_names(root):
+    return {el.get('name') for el in root.iter('entity') if el.get(HAZARD_BOUNDS_MARKER) == 'true'}
+
+
+def post_settle_names(root, rel):
+    """The successive additions after the original settled-prop tail."""
+    return late_fall_volume_names(root, rel) | hazard_bounds_names(root)
+
+
+def bounded_hazards(root, rel):
+    """Placed model-less harm entities with authored bounds, excluding fall volumes.
+
+    Run on maps after class remapping and script pinning. Preserve explicit smart
+    residency choices and leave dynamically spawned definitions to their loader.
+    """
+    if root is None or not str(rel).replace('\\', '/').lower().lstrip('/').startswith('maps/'):
+        return []
+    falls = set(fall_kill_volumes(root, rel))
+    placed = {g.get('type') for g in root.findall('entinst')
+              if any(i.get('extents', '').strip() for i in g.findall('inst'))}
+    return [el for el in root.iter('entity')
+            if el.get('classname') == 'affectableharment' and el not in falls
+            and not el.get('model', '').strip() and el.get('name') in placed
+            and el.get('smartent', '').strip().lower() in ('', 'false')]
+
+
+def convert_hazard_bounds(root, rel):
+    """Restore authored bounds lost on smart recreation; append only new residents.
+
+    Must run after script pins, settled props and late fall volumes. Moving an
+    already resident hazard would corrupt older saved zone records.
+    """
+    changed = 0
+    for el in bounded_hazards(root, rel):
+        if el.get('smartent', '').strip().lower() != 'false':
+            el.set('smartent', 'false')
+            el.set(HAZARD_BOUNDS_MARKER, 'true')
+            changed += 1
+    _append_entinsts(root, hazard_bounds_names(root))
+    return changed
+
+
+def hazard_bounds_problems(root, rel):
+    out = [f'{el.get("name")}: bounded model-less hazard needs smartent=false'
+           for el in bounded_hazards(root, rel) if el.get('smartent') != 'false']
+    names = hazard_bounds_names(root)
+    eligible = {el.get('name') for el in bounded_hazards(root, rel)}
+    out += [f'{n}: invalid hazard-bounds marker' for n in sorted(names - eligible)]
+    return out + hazard_bounds_tail_problems(root)
+
+
+def hazard_bounds_tail_problems(root):
+    names = hazard_bounds_names(root)
+    out = []
+    in_tail = False
+    for group in root.findall('entinst'):
+        if group.get('type') in names:
+            in_tail = True
+        elif in_tail:
+            out.append('newly resident hazard precedes an old entinst (saved ordinals shift)')
+    return out
+
+
 def fall_kill_volume_flags(el, rel):
     """The attributes an enabled volume must carry in the output."""
     if fall_kill_volume_leader_only(el, rel):
@@ -541,12 +609,13 @@ def numbered_entinst_tail_problems(root, rel):
     # Issue #81 appends newly numbered props after the existing fall-volume tail.
     # They do not shift the volumes' old ordinals, or any other existing ordinal.
     names.update(el.get('name') for el in root.iter('entity') if el.get('xml1settle') == 'true')
+    names.update(hazard_bounds_names(root))
     order = [ei.get('type') or '' for ei in root if ei.tag.lower() == 'entinst']
     first = min((i for i, t in enumerate(order) if t in names), default=len(order))
     late = sorted({t for t in order[first:] if t not in names})
     out = [f'{rel}: entinst {t!r} follows an enabled fall volume (its saved ordinal shifts)' for t in late]
     # a volume enabled after 0.2.1 follows the settled props as well
-    after = late_fall_volume_names(root, rel)
+    after = post_settle_names(root, rel)
     first = min((i for i, t in enumerate(order) if t in after), default=len(order))
     out += [f'{rel}: entinst {t!r} follows a fall volume enabled after 0.2.1 (its saved ordinal shifts)'
             for t in sorted({t for t in order[first:] if t not in after})]

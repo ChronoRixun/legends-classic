@@ -969,6 +969,7 @@ class Validator:
                                ('V40', 'melee weapons', lambda ck: MW.validate(self, ck)),
                                ('V39', 'save files', lambda ck: SF.validate(self, ck)),
                                ('V41', 'spawn-floor residency', self.spawn_floor_residency),
+                               ('V-TBD', 'model-less hazard bounds', self.hazard_bounds),
                                ('V45', 'gun damage roll', lambda ck: W.validate(self, ck)),
                                ('V47', 'scripted boss approach', lambda ck: SA.validate(self, ck)),
                                ('V46', 'pickup models', self.v46_pickup_models),
@@ -997,6 +998,21 @@ class Validator:
             except OSError as ex:
                 self.ctx.note(f'sound cache not saved: {ex}')
 
+    def hazard_bounds(self, ck):
+        """Placed model-less hazards retain bounds and append new saved ordinals."""
+        for zone in sorted(self.converted_zones()):
+            rel = f'maps/{zone}.engb'
+            root = self.tree(rel)
+            if root is None:
+                rel = f'maps/{zone}.xmlb'
+                root = self.tree(rel)
+            if root is None:
+                continue
+            for problem in XS.hazard_bounds_problems(root, rel):
+                ck.error(f'{zone}: {problem}')
+            ck.count('bounded_hazards', len(XS.bounded_hazards(root, rel)))
+            ck.count('new_resident_hazards', len(XS.hazard_bounds_names(root)))
+
     def spawn_floor_residency(self, ck):
         """Issue #81: cheap output checks for the new numbered prop tail."""
         from . import settle as SE
@@ -1006,7 +1022,7 @@ class Validator:
                 root = self.tree(f'maps/{zone}.xmlb')
             if root is None:
                 continue
-            for problem in SE.problems(root, XS.late_fall_volume_names(root, f'maps/{zone}.eng')):
+            for problem in SE.problems(root, XS.post_settle_names(root, f'maps/{zone}.eng')):
                 ck.error(f'{zone}: {problem}')
             defs = {e.get('name'): e for e in root.iter('entity')}
             added = sum(len(g.findall('inst')) for g in root.findall('entinst')
@@ -1454,7 +1470,9 @@ class Validator:
             root = self.tree(n)
             if root is None:
                 continue
-            for message in SE.numbered_tail_problems(root, XS.late_fall_volume_names(root, n)):
+            for message in SE.numbered_tail_problems(root, XS.post_settle_names(root, n)):
+                ck.error(f'{n}: {message}')
+            for message in XS.hazard_bounds_tail_problems(root):
                 ck.error(f'{n}: {message}')
 
     _LITE_XPOINT = re.compile(r'\bextractionPointLite\s*\(', re.I)
