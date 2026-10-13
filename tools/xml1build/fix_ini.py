@@ -201,13 +201,15 @@ LEVEL_STAT_POINTS = 'xml1'
 # a fix without the feature ignores the key (entities die at 0, as before). Written for every XML1 build.
 DEATH_RULE = 'xml1'
 
-# xml2-fix [Game] NpcPowerRule (0.2.2 follow-up; xml2-fix docs/npc-power-rule.md; gameplay rule ID not assigned yet):
-# XML1's power use for computer-controlled characters. XMen2.exe never charges an AI character for its powers (the
+# xml2-fix [Game] NpcPowerRule (0.2.2 follow-up; xml2-fix docs/npc-power-rule.md; gameplay rule 16): XML1's power use
+# and melee combos for computer-controlled characters. XMen2.exe never charges an AI character for its powers (the
 # cost's AI test 0x4318e7 asks the controller, which says yes only after a queued command), re-runs the melee-range
 # power decision every 0.3 s (0x518770) and has no energy test there; XML1 charges every NPC (default.xbe 0xcde90),
 # decides every 2.0 s (0.5 s for a party hero) and needs half the energy (0xee260). Without it the NPC energy pool
 # (SPEC 24.3, x1_npc_energy) never empties and XML1's enemies fire powers whenever aireusetime allows (SPEC 95).
-# Off in xml2-fix unless set; a fix without the feature ignores the key. Written for every XML1 build.
+# XMen2.exe also overrides the AI's combo level with npcstat `combolevel` (0 for XML1 entries: no combos) and skips the
+# pause after a combo start; the rule restores XML1's levels, combos and pause too (no data: XML1's six combos are not
+# among XMen2.exe's). Off in xml2-fix unless set; a fix without the feature ignores the key. Written for every XML1 build.
 NPC_POWER_RULE = 'xml1'
 
 # xml2-fix [Game] ForcedTeams (SPEC 19): '1' = the scripts of a --forced-teams seat build seat XML1's parties
