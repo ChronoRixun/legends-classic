@@ -171,6 +171,10 @@ BREAK_RULE = 'xml1'
 # all. Other touches in play keep the game's own rule. A fix without the feature ignores the key.
 PLACEMENT_CRUSH = 'xml1'
 
+# XML1's ordinary impact against a non-physical target has zero damage.
+# Requires the companion ObjectWorldImpact install (pending a shared rule ID).
+OBJECT_WORLD_IMPACT = 'xml1'
+
 # xml2-fix [Game] DoubleHeal (SPEC 63.5, issue #82): XMen2.exe's restoreHealth / restoreEnergy (the packs' onactivate
 # scripts) sometimes heal double and then play common/game/pickup_power_double, XML2's own darker recording; XML1's
 # packs never double and its banks have no such sound. '0' makes the fix always take the single branch.
@@ -254,7 +258,7 @@ X1_LEADER = '1'
 PORT_OWNED = {'Game': ('NewGameTeam', 'ResetUnlocks', 'SaveFolder', 'ForcedTeams', 'PostgameScript', 'WindowTitle',
                         'EndHeroUnlock', 'MainMenuItems', 'DangerRoomGate', 'ClassicMainBackdrop', 'ClassicMainPanelBounds', 'NewGamePlus', 'ReviewStats', 'Xtract', 'XtractionShop', 'RevivalCost', 'XPCurve',
                        'GeometrySharingBlendIndices', 'CharacterLadderPaths', 'ObjectiveDescriptions',
-                       'BreakRule', 'PlacementCrush', 'DoubleHeal', 'DeathRule', 'NpcPowerRule', 'ConfirmationRelease',
+                       'BreakRule', 'PlacementCrush', 'ObjectWorldImpact', 'DoubleHeal', 'DeathRule', 'NpcPowerRule', 'ConfirmationRelease',
                        'ExplosiveFirstHit', 'PackAmount', 'SoloMode', 'X1Leader', 'DeathSwitchClear', 'RankCosts', 'LevelSkillPoints', 'LevelStatPoints', 'Xml1Multipart',
                        'Xml1MasterMold', 'Xml1MoldStage', 'Xml1Turrets'),
               'Limits': ('ActorSlots', 'ResourceNames', 'ItemEnhancements', 'FightStyles', 'EffectCurves', 'MoveTriggers', 'EntityCapacity',
@@ -439,6 +443,7 @@ def game_keys(*, xml1_opening=True, save_folder=None, forced_teams='1', add_hero
         game['ObjectiveDescriptions'] = OBJECTIVE_DESCRIPTIONS
         game['BreakRule'] = BREAK_RULE
         game['PlacementCrush'] = PLACEMENT_CRUSH
+        game['ObjectWorldImpact'] = OBJECT_WORLD_IMPACT
         game['DoubleHeal'] = DOUBLE_HEAL
         game['ExplosiveFirstHit'] = '1'
         game['RankCosts'] = RANK_COSTS
@@ -710,7 +715,7 @@ def check_entity_capacity_dll(dll, keys: dict) -> None:
 
 
 # The [Game] / [Limits] keys first read by XML2 Fix 1.5 (REQUIRED_XML2FIX): a 1.4 DLL ignores them without a word.
-RELEASE_15_KEYS = {'Game': ('PlacementCrush', 'DoubleHeal', 'RankCosts', 'LevelSkillPoints', 'LevelStatPoints',
+RELEASE_15_KEYS = {'Game': ('PlacementCrush', 'ObjectWorldImpact', 'DoubleHeal', 'RankCosts', 'LevelSkillPoints', 'LevelStatPoints',
                             'Xml1Multipart', 'X1Leader', 'SoloMode', 'DeathRule', 'DangerRoomGate', 'RevivalCost',
                             'Xml1Turrets', 'PackAmount', 'DeathSwitchClear', 'NpcPowerRule'),
                    'Limits': ('ScriptFunctions',)}

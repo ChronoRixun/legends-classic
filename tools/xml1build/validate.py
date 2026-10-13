@@ -1000,6 +1000,13 @@ class Validator:
     def spawn_floor_residency(self, ck):
         """Issue #81: cheap output checks for the new numbered prop tail."""
         from . import settle as SE
+        details_path = Path(self.ctx.out) / '_build' / 'zones_detail.json'
+        details = {}
+        if details_path.is_file():
+            try:
+                details = json.loads(details_path.read_text(encoding='utf-8')).get('zones', {})
+            except (ValueError, OSError) as exc:
+                ck.error(f'V-TBD: cannot check embedded-floor selections: {exc}')
         for zone in sorted(self.zone_ids):
             root = self.tree(f'maps/{zone}.engb')
             if root is None:
@@ -1008,6 +1015,8 @@ class Validator:
                 continue
             for problem in SE.problems(root, XS.late_fall_volume_names(root, f'maps/{zone}.eng')):
                 ck.error(f'{zone}: {problem}')
+            for problem in SE.embedded_floor_problems(root, details.get(zone, {}).get('spawn_settle', [])):
+                ck.error(f'V-TBD {zone}: {problem}')
             defs = {e.get('name'): e for e in root.iter('entity')}
             added = sum(len(g.findall('inst')) for g in root.findall('entinst')
                         if defs.get(g.get('type')) is not None and defs[g.get('type')].get(SE.MARKER) == 'true')

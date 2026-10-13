@@ -547,6 +547,9 @@ def numbered_entinst_tail_problems(root, rel):
     out = [f'{rel}: entinst {t!r} follows an enabled fall volume (its saved ordinal shifts)' for t in late]
     # a volume enabled after 0.2.1 follows the settled props as well
     after = late_fall_volume_names(root, rel)
+    # The later shallow-overlap pass appends residents behind the existing
+    # late-volume ordinals as well (settle.move_embedded_floor_tail).
+    after.update(el.get('name') for el in root.iter('entity') if el.get('xml1embeddedfloor') == 'true')
     first = min((i for i, t in enumerate(order) if t in after), default=len(order))
     out += [f'{rel}: entinst {t!r} follows a fall volume enabled after 0.2.1 (its saved ordinal shifts)'
             for t in sorted({t for t in order[first:] if t not in after})]

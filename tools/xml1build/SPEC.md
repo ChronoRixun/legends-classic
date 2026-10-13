@@ -7169,3 +7169,30 @@ and carry XML1's aitype / aireusetime / powerusage (resolved per 24.2). The caus
   below the original's 51–53%. These are small staged samples, not a claim that the remaining aggression is solved.
 - **Resistance (SPEC 92)** checked with the hero punching a physically resistant Revolutionary (AI off, real pad A
   presses): it still flinches on light hits about once per 3 points of damage in 0.2.1 and 0.2.2 alike.
+
+### Shallow floor overlap and surviving prop hits
+
+The spawn-floor survey also selects shallow floor overlap for the verified model
+set `settle.EMBEDDED_MODELS`. A bottom more than 0.25 units below the static floor
+is eligible, subject to the existing gravity, script, support, and residency
+checks. Near-zero floating-point noise remains near-floor. Selection adds a separate `x1_embedded_`
+resident alias after the existing settled-prop and late-fall-volume tails; authored coordinates, hull, health, mass,
+heaviness conversion, and break thresholds are preserved. Existing candidate
+ordinals also retain their order. V41 checks resident flags, gravity and ordering;
+its V-TBD subcheck compares selected overlap placements with the built resident tail; synthetic tests distinguish actual penetration from
+rounding noise and keep unsupported models outside this extension.
+
+The tarp-crate audit found 39 placements in six zones, three shallow overlaps in
+the first ice-tunnel zone. The other 36 placements are unaffected by this
+extension (seven already qualified for the older raised-prop settlement rule).
+The original game's resident default receives the initial floor sweep; the PC
+smart-entity default can recreate a crate from its rounded authored coordinates
+after that pass. A non-breaking hit then wakes physics from below the floor.
+
+Floor placement alone is insufficient: ordinary PC floor-impact damage can kill
+the surviving prop. The companion `[Game] ObjectWorldImpact=xml1` restores zero
+impact damage for a non-physical collision target, as the XBE's impact calculation
+uses. The builder owns this key and rejects a companion DLL that does not read it.
+This companion feature needs an assigned shared gameplay rule ID before release;
+the current local implementation blocks online while enabled. Versions remain for
+the integrator to set. No save format is changed.
