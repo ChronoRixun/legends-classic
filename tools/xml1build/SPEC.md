@@ -7129,3 +7129,32 @@ Iceman 5/10/5/20, Phoenix 0/10/5/25 = their XML2 classes' growth): XML2 Fix 1.5.
 21 -> 22 then fires the new rules on top (Wolverine body 44, supports mind 62); saved (bits 1-3), loaded in a new
 process: unchanged, "the file vouches for the build's classes". On the 0.2.2 build without the new classes (no
 legacy file) the same file keeps its bonus.
+
+## 95. Enemies' power use: XML1's charge, cadence and energy test (XML2 Fix `[Game] NpcPowerRule`)
+
+Report (Steam Deck tester, 2026-10-12, 0.2.x): at HAARP the Brotherhood Marauders and Revolutionaries "barely use
+regular melee attacks anymore", the party gets stuck in knock-down / stun loops. Not a 0.2.0/0.2.1 data regression:
+ps_bh_smash / ps_bh_energy, fightstyle_wrestling / _villain and the npcstat entries are identical in 0.2.1 and 0.2.2
+and carry XML1's aitype / aireusetime / powerusage (resolved per 24.2). The cause is in the engine.
+
+- **Same design.** Both games give an AI four power slots (aitype -> the same 18-entry mask table, aireusetime) and one
+  picker (default.xbe 0x1081f0, XMen2.exe 0x50fe50) called from the same states.
+- **Difference 1, the charge.** XML1 charges a power trigger's cost to every character but a party hero handed to the
+  AI (default.xbe 0xcde90: AI flag +0x334 bit 0 AND AI time +0x550 at most -0.5 or at least 0.001 -> ask the
+  controller). XMen2.exe asks the controller for every AI-flagged character (0x4318e7: actor+0x3d8 bit 0), and the
+  controller says yes only once after a queued command (0x503160, AI+0x2bc). So no enemy pays: measured in the port, a
+  Revolutionary's energy stays 147 / 147 while 0x4318d0 is called with 60 and 40 x 3. **24.3 is wrong** where it
+  says every actor but a player hero spends: `x1_npc_energy` sets XML1's pool, but without the charge it never moves.
+- **Difference 2, the cadence.** XML1's melee-range power decision (0xee260) re-arms every 2.0 s (0.5 s for a
+  character with a controller, actor+0x330 != -1); XMen2.exe's (0x518770) every 0.3 s (0x681ebc).
+- **Difference 3, the energy test.** XML1 picks a melee-range power only with max / energy <= 2.0 (0xee37a); XMen2.exe
+  has no test there.
+- **Fix.** xml2-fix `[Game] NpcPowerRule=xml1` (npc_power_rules.hpp, docs/npc-power-rule.md) restores all three;
+  `fix_ini.NPC_POWER_RULE` writes it for every XML1 build. No data change, no CONTENT_VERSION change, no save change.
+  The gameplay-agreement rule ID is not assigned yet (online is lockstep: it must be registered before release).
+- **Measured** (HAARP ice tunnel, hero invulnerable and idle, staged teleport onto a spawner point; counts of FightMove
+  starts per enemy; xemu for the original): hero free (not stunned / knocked / getting up) 51-53 % of the time in the
+  original, 0-1.5 % in 0.2.2, 18-20 % with the fix; Revolutionary power_smash about 4.4 / min original, 12 / min 0.2.2,
+  5.4 / min fixed; Marauder powers 10-11 / min original, 19 / min 0.2.2, 17-18 / min fixed. The Marauder (power_smash
+  costs nothing in XML1's data, so its energy rarely matters) and the remaining stun-lock gap are open (see the
+  brotherhood-022 report): the port's enemies also start more attacks overall (melee + powers) than the original's.

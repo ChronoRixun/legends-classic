@@ -355,7 +355,7 @@ def test_port_keys_from_a_synthetic_build():
                                               'PlacementCrush': 'xml1', 'DoubleHeal': '0', 'ExplosiveFirstHit': '1',
                                               'RankCosts': '1', 'LevelSkillPoints': 'xml1',
                                               'LevelStatPoints': 'xml1', 'Xml1Multipart': '1', 'DeathRule': 'xml1',
-                                              'PackAmount': 'xml1', 'SoloMode': '1', 'X1Leader': '1',
+                                              'NpcPowerRule': 'xml1', 'PackAmount': 'xml1', 'SoloMode': '1', 'X1Leader': '1',
                                               'DeathSwitchClear': '1'},
                                      'Limits': {'ActorSlots': '127', 'ResourceNames': '1024', 'ItemEnhancements': '512',
                                                 'FightStyles': '32', 'EffectCurves': '3600', 'MoveTriggers': '64', 'EntityCapacity': '1',
@@ -669,6 +669,16 @@ def test_xml1_builds_ask_for_the_first_games_break_rule():
     assert FI.game_keys(xml1_opening=True)['DoubleHeal'] == '0'
     assert 'DoubleHeal' not in FI.game_keys(xml1_opening=False)
     assert 'DoubleHeal' in FI.PORT_OWNED['Game']
+
+
+def test_xml1_builds_ask_for_the_first_games_npc_power_rule():
+    """XML1 charges its enemies for their powers and decides on a melee-range power every 2 s with half the energy;
+    XMen2.exe does neither: every XML1 build asks the fix for XML1's rule, an XML2-opening ini has no key, and the port
+    owns it, so a stock merge removes it again."""
+    assert FI.game_keys(xml1_opening=True)['NpcPowerRule'] == 'xml1'
+    assert 'NpcPowerRule' not in FI.game_keys(xml1_opening=False)
+    assert 'NpcPowerRule' in FI.PORT_OWNED['Game']
+    assert FI.dropped_keys({'Game': {}})['Game'].count('NpcPowerRule') == 1
 
 
 def test_xml1_builds_ask_for_the_first_games_death_threshold():
