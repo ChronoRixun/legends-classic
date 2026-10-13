@@ -125,6 +125,8 @@ class Binds:
 
     def __init__(self, build):
         self.build = build
+        from .zonecompat import load
+        self.zone_prefixes = load(build)
         D = os.path.join(build, 'Data')
         hs, _ = _load(D, 'herostat')
         ns, _ = _load(D, 'npcstat')

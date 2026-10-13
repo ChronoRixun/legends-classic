@@ -522,6 +522,8 @@ def write_build_files(build, content_version, cat=None, model=None):
             previous = read_conversation_lcm(f.read())
     files[CONVERSATION_LCM.replace(os.sep, '/')] = write_conversation_lcm(
         model, current=current_tables(build, b.all_zone_files()), previous=previous)
+    from .zonecompat import REL, build_sidecar
+    files[REL] = build_sidecar(build)
     return files, problems
 
 

@@ -119,6 +119,9 @@ def validate(v, ck):
                 LF.read_catalogue_lcc(got)
             elif rel.endswith('/conversation.lcm'):
                 LF.read_conversation_lcm(got)
+            elif rel.endswith('/zone-prefix.lcm'):
+                from lcsave.zonecompat import decode
+                decode(got)
             elif rel.endswith('.lcm'):
                 LF.read_legacy_lcm(got)
         except LF.LCFileError as e:
@@ -138,6 +141,13 @@ def validate(v, ck):
              if os.path.relpath(p, out).replace(os.sep, '/') not in files]
     for p in extra:
         ck.error(f'{os.path.relpath(p, out).replace(os.sep, "/")}: a .lcbind no data file of this build owns')
+    # V-TBD: stale historical rows stay inert; applicable attestations must describe
+    # this build's complete resident prefix, including definition and instance data.
+    from lcsave.zonecompat import validate_current
+    try:
+        ck.set('compatible_zone_prefixes', validate_current(out))
+    except (ValueError, OSError) as e:
+        ck.error(str(e))
     ck.set('files_ok', written)
     ck.set('files_missing', missing)
     ck.set('files_bad', bad + len(extra))
