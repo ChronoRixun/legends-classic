@@ -7179,8 +7179,20 @@ experiment left that completion addition and an extra hold gate in place; native
 The AI pool layout and all new code sites are guarded, and the writes join the existing transaction. No builder
 data, content version or save format changes are required. A revision-3 peer is incompatible with revision 4.
 
-The preceding combat measurements remain historical revision-3 evidence. The candidate has native bridge,
-original-code characterization and agreement checks, but no new arena or vulnerable-fight result. It must not
-be presented as resolving the remaining stun gap until matched live controls pass. Hero stun/get-up behavior
-has not changed; default stun duration and the checked get-up speeds agree, while the original stun handler
-and the PC's timed stun powerup differ. A hero-side engine restoration would need a separately coordinated rule.
+The preceding combat measurements remain historical revision-3 evidence. Two new 150-second release-control /
+candidate pairs observed Marauder powers/min of 13.6/18.5 versus 12.1/12.8, and hero-free shares of 23.4/17.3%
+versus 31.7/27.6%. Both used four engaged Revolutionaries and one Marauder, the staged map/spawner visits, and an
+idle invulnerable hero. Other active games ran during every sample: these timing-confounded rates are not valid
+release acceptance or proof that the remaining gap is resolved. Separate vulnerable real-input fights recorded
+attacks and hero deaths; an XP-staged level-10 retry also recorded movement and enemy health loss. No win or
+normal campaign difficulty claim follows. An isolated comparison, party AI, save/load and online checks remain.
+
+Native bridge, original-code characterization and agreement checks pass. Hero stun/get-up behavior has not
+changed; default stun duration, checked get-up speeds and the audited get-up handler operations agree, while
+the original stun handler and PC timed stun powerup differ. Historical reaction mixes also differ. A hero-side
+engine restoration would need a separately coordinated rule.
+
+A separate 90-second observer saw ten PC idle-selection redirects back into stun with the powerup flag still
+set, including a landing/get-up sequence followed by another 1.115 game-clock seconds of stun. The original's
+dedicated stun handler clears its flag on exit. The mechanism is now observed; its share of the gap and a complete
+hero-side restoration remain unproved. No hero behavior or additional gameplay rule changed in this candidate.
