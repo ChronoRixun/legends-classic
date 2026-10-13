@@ -106,7 +106,7 @@ def test_v31_checks_both_halves_and_the_fall_volume_tail():
 
 def test_v31_rejects_new_resident_prop_before_existing_instance():
     # Removing V31's prop-tail check would allow an old save's ordinal to move
-    # even in a zone with no fall volumes. Exercise V31 itself, not V-TBD.
+    # even in a zone with no fall volumes. Exercise V31 itself.
     root = ET.Element('world')
     ET.SubElement(root, 'entity', name='invented_new', classname='physent',
                   smartent='false', xml1settle='true')

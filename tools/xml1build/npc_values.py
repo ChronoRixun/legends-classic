@@ -118,7 +118,7 @@ def resolve_style(root, values, where=''):
 # entity attributes XML1's entity parser reads as ONE number through the values getter with a null maximum
 # pointer: the grenade parser resolves explodedamage and stores only the code's minimum (default.xbe
 # 0x97940-0x97953, the word at entity +0x338), with no RNG draw - so a ported 'min max' range would roll where
-# XML1 dealt the minimum every time. The validator (weapons.validate, V-TBD) refuses a range here.
+# XML1 dealt the minimum every time. The validator (weapons.validate, V45) refuses a range here.
 SINGLE_VALUE_ENTITY_ATTRS = ('explodedamage',)
 
 

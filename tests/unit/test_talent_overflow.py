@@ -1,4 +1,4 @@
-"""The TalentRegistry fix pieces without game data: talent_sets partitioning/grouping, the V-TBD demand model
+"""The TalentRegistry fix pieces without game data: talent_sets partitioning/grouping, the talent registry demand model
 (talent_budget against a synthetic validator), and the 0.2.0 save_positions order contract. Invented names only.
 """
 import sys

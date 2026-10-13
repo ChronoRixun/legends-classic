@@ -59,7 +59,7 @@ def test_validator_rejects_unrouted_point_calls():
     validator.ctx = SimpleNamespace(opt=lambda _: 'seat')
     validator.is_x1 = lambda _: True
     validator.data_items = lambda table: list(table.items())
-    check = Check('V-TBD', 'invented routing')
+    check = Check('V-XTRACTION-FIXTURE', 'invented routing')
     validator.xtraction_services(check)
     assert len(check.errors) == 1
     assert check.counts['xtraction_service_inline_checked'] == 2
