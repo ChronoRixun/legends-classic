@@ -574,7 +574,8 @@ The launcher reads `requires.xml2fix` and compares it with the installed `dinput
 - **Deviations** (design -> builder, and builder vs the fake): `E_ISO_FOLDER` is reported as the fake's
   `E_ISO_NOT_XBOX` + `detected: folder`; new codes
   `E_CACHE_LOCKED` (2), `E_ISO_READ` / `E_CACHE_*` (3, from prepare), warnings `W_XML2_UNKNOWN_EXE`, `W_XML2_MODIFIED`,
-  `W_EXTRA_FILES`, `W_LINK_BASE`; a failed prepare stage is `E_PIPELINE` with `detail.code` = `E_PREPARE_*`;
+  `W_EXTRA_FILES`, `W_LINK_BASE`, `W_XML2FIX_OLD` (0.2.2: the folder's `dinput.dll` doesn't know keys the build writes -
+  `detail.missing`; the ini is still written and the launcher installs the fix after the build); a failed prepare stage is `E_PIPELINE` with `detail.code` = `E_PREPARE_*`;
   `stamp.outputs.files/bytes` count the whole build (the fake: registered files only); `build` without `--iso` works
   when the cache holds the disc; a folder holding only the launcher's files (`dinput.dll`, `xml2-fix.*`, `mods/`) is
   accepted as a destination (and `info` / `verify` call it `absent`); `--link-base` is accepted but copies

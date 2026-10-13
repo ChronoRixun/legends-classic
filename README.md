@@ -14,10 +14,10 @@ makes no network connections.
 > **Status: public test builds (builder 0.2.2, XML2 Fix 1.5.0, launcher 0.3.0).** Every mission and the ending run
 > in automated tests on the developer's PC (a full hand-played run is under way), the builder (`xml1-builder`) makes
 > that build from a disc image and an X-Men Legends II install in a few minutes, and the
-> [Ultimate Legends](https://github.com/ChronoRixun/ultimate-legends) launcher does it in a few clicks. 0.2.0 brings a
-> save format of the port's own, the first game's combat balance, its main menu, rooms that keep every object and
-> Master Mold's original fight. Known bugs and what is next: [Status](#status) and [Roadmap](#roadmap). Help and bug
-> reports: the [community Discord](https://discord.gg/tFxwHtZv8k).
+> [Ultimate Legends](https://github.com/ChronoRixun/ultimate-legends) launcher does it in a few clicks. 0.2.2 brings
+> back more of the first game's own rules: its scan turrets, the Xtraction services, its skill ranks, level points and
+> stat growth, breakable parts and armour, solo mode and leaders. Known bugs and what is next: [Status](#status) and
+> [Roadmap](#roadmap). Help and bug reports: the [community Discord](https://discord.gg/tFxwHtZv8k).
 
 ## What you need
 
@@ -123,8 +123,15 @@ without turning older saves into broken ones.
   heroes, levels, stats, talents, inventory, mission progress, unlocks, heard conversations and trivia answers.
   `SaveLC\legacy-import.txt` says what happened to each file. Where a zone changed between versions, only that zone's
   remembered state starts fresh (a notice says so), and a few conversations can play again.
-- **Rebuild and update the fix together.** The format needs the rebuilt game *and* XML2 Fix 1.4.0: the launcher does
-  both (Rebuild, then Play). The new DLL alone doesn't make the save tables the format checks at every start.
+- **Rebuild and update the fix together.** The format needs the rebuilt game *and* XML2 Fix 1.4.0 or later (1.5.0
+  for builder 0.2.2): the launcher does both (Rebuild, then Play). The new DLL alone doesn't make the save tables the
+  format checks at every start.
+- **Builder 0.2.2 catches old saves up once.** The first time a save from an earlier builder is loaded, every hero
+  gets the fifth-level points of the first game's rules (1 skill point and 4 stat points for each fifth level already
+  passed) and has its automatic stat growth recomputed with the first game's tables, comic rewards kept. The next save
+  records it, so it happens only once. Going back from 0.2.2 to 0.2.1 needs the copy of your saves made before the
+  update: XML2 Fix 1.4.0 keeps a save 1.5.0 wrote as `.lcsave.newer` rather than overwrite it, and can refuse to save
+  the profile.
 - **No way back with new saves.** Builders before 0.2.0 can't read `.lcsave` files: going back to 0.1.12 plays the old
   `Save` folder as it was before the update, without later progress. Back up the whole
   `Documents\Activision\X-Men Legends` folder before updating if you want to keep that option (Documents may be
@@ -156,7 +163,8 @@ Verified in game on the developer's PC (mostly by automated runs that drive the 
 - **The first game's front end**: main menu (since 0.2.0 with its own Cerebro room, panels, fonts and colours, in a
   widescreen layout), Danger Room, Review (load screens, cinematics), credits.
 - **Movies and music**, including the first game's layered music.
-- **Display** (xml2-fix): borderless or windowed at your desktop's resolution.
+- **Display** (xml2-fix): borderless or windowed at your desktop's resolution, and since 0.2.2 exclusive fullscreen
+  at a high-refresh desktop's own mode (2560x1440 at 180 Hz, with 8x anti-aliasing).
 - **A clean Windows 11** (Windows Sandbox: no Python, nothing preinstalled): the released builder made the game from a
   disc image in about 6.5 minutes and verified every file; a new game there played from the intro through several
   zones. The files matched the developer's own builds one for one.
@@ -164,6 +172,15 @@ Verified in game on the developer's PC (mostly by automated runs that drive the 
 Fixed in later builders (the launcher offers the rebuild when the content version rises, or run
 `xml1-builder build` again - see [CHANGELOG.md](CHANGELOG.md)):
 
+- **0.2.2 (with XML2 Fix 1.5.0):** the scan turrets (#4); the Xtraction services - Load, Danger Room, Healer and
+  Forge - and the main menu's Danger Room locked until Phoenix joins (#63); two-point ranks and the first game's
+  fifth-level points (#35) and stat growth, old saves caught up once; breakable parts and boss armour that comes off
+  (#3); resistant enemies that aren't launched or knocked back; leaders (#15); solo mode (#5); death below 1 health;
+  quarter packs and the first game's revival price; two fall volumes back (#22); the death hand-over; Professor X's
+  seats (#54), the dormitory hit sounds (#79), the pack sound (#82); pads after *Defaults* (XML2 Fix #9), the mouse
+  in cutscenes (#85), the Codex highlight (#97), exclusive fullscreen and 8x anti-aliasing (#84); 1024 script
+  functions.
+- **0.2.1:** builds made with the released builder no longer stop at the last step.
 - **0.2.0 (with XML2 Fix 1.4.0):** the port's own save format, every old save carried over once; the first game's
   combat balance (enemy health and damage, hit chance, strength bonus, power attacks, gun damage rolls; enemy melee
   punches hurt again, #94, #14); the classic main menu; rooms that keep every prop, projectile and trigger (the engine's
@@ -185,39 +202,31 @@ Fixed in later builders (the launcher offers the rebuild when the content versio
 Some of the first game's features rely on engine code X-Men Legends II doesn't have. Until they are recreated (most
 need new engine hooks in xml2-fix), the port plays without them:
 
-- **Solo mode in 18 zones.** The first game let you send the party away for bridge puzzles (from the first ice
-  tunnel on), five Astral Plane zones and a nuclear-plant zone with moving platforms. X-Men Legends II turned that
-  input into Regroup, so the party stays with you there. Whether that breaks any of those puzzles hasn't been
-  checked in game yet ([#5](https://github.com/ChronoRixun/legends-classic/issues/5)).
-- **Scan turrets** never aim or fire (12 turrets in 8 zones, starting with the HAARP tank's missiles); planned for
-  0.3.0 ([#4](https://github.com/ChronoRixun/legends-classic/issues/4)).
-- **Breakable enemy parts**: Juggernaut's helmet never comes off and the Sentinels' arms can't be destroyed
-  ([#3](https://github.com/ChronoRixun/legends-classic/issues/3)).
 - **The first game's loot and shops.** Random drops are X-Men Legends II's, not the first game's equipment. The shops
-  (the Healer's, and since 0.2.0 the one at Xtraction points once you have met Forge) are X-Men Legends II's:
-  generated stock, its prices and its training services
-  ([#6](https://github.com/ChronoRixun/legends-classic/issues/6)).
-- **Xtraction services.** Save works at every point since 0.1.11, the sequel's Xtract world map is gone since 0.1.12,
-  and 0.2.0 brings back the equipment shop where the first game offered it
-  ([#95](https://github.com/ChronoRixun/legends-classic/issues/95)). The first game's Load, Danger Room and Healer
-  choices are still absent.
-- **The Danger Room is always open** from the main menu; the first game opened it at a point in the story.
-- **Talent costs are X-Men Legends II's**: the first game's two-point Xtreme and Legend ranks cost one point
-  ([#35](https://github.com/ChronoRixun/legends-classic/issues/35)).
+  (the Healer's, and the one at Xtraction points once you have met Forge) are X-Men Legends II's: generated stock, its
+  prices and its training services ([#6](https://github.com/ChronoRixun/legends-classic/issues/6)).
+- **18 of the first game's fall volumes** stay off: several sit in water or in rooms followers can stray into, and
+  need their own checks ([#22](https://github.com/ChronoRixun/legends-classic/issues/22)). The East Rooftops and a
+  sewer walkway have theirs back since 0.2.2.
+
+Recreated in 0.2.2: the scan turrets ([#4](https://github.com/ChronoRixun/legends-classic/issues/4)), breakable
+enemy parts ([#3](https://github.com/ChronoRixun/legends-classic/issues/3)), solo mode
+([#5](https://github.com/ChronoRixun/legends-classic/issues/5)), the Xtraction services and the Danger Room's story
+lock ([#63](https://github.com/ChronoRixun/legends-classic/issues/63)) and the two-point ranks
+([#35](https://github.com/ChronoRixun/legends-classic/issues/35)).
 
 ### Known limitations
 
 - Key bindings and display settings are shared with X-Men Legends II (both read the same Windows registry key);
   saves are separate.
-- **Exclusive fullscreen can fail on high-refresh desktops** (seen at 2560x1440 and 180 Hz): the game can't create
-  its fullscreen display and resets its own resolution settings. Use borderless, the launcher's default; a fix is
-  planned for 0.2.1.
-- **A keycard can drop out of reach in HAARP:** an officer killed while pinned against a door can drop his keycard
-  behind it. If that happens, load your last save; a fix is planned for 0.2.1.
+- **A keycard behind a door in HAARP:** since 0.2.2 the HAARP officers are no longer launched onto the key door, the
+  way their keycards ended up behind it. The first game can itself push an officer through that door when the two
+  overlap; if a keycard is ever out of reach, load your last save.
 - Online play (*Play Online*) is X-Men Legends II's, through the [OpenSpy](https://openspy.net) servers; port games
   only list other port games. Joining, playing and saving for both players work in tests with two copies of the game
   on one PC; play between two PCs, and across the internet, gets a dedicated pass in 0.3.0. Reports of disconnects are
-  welcome (say whether the game showed its lag warnings first).
+  welcome (say whether the game showed its lag warnings first). In co-op, *Load Saved Campaign* can stop at "Sending
+  game information..." (start a new campaign for now; also planned for 0.3.0).
 - Local co-op on controllers should work (it is X-Men Legends II's) but has had little testing.
 - Open bugs and play-test notes: [issues](https://github.com/ChronoRixun/legends-classic/issues) and
   `research/campaign/late_game_test.md`.
@@ -226,8 +235,9 @@ need new engine hooks in xml2-fix), the port plays without them:
 
 A build records the xml2-fix version it needs (`_build\stamp.json`, `requires`). With an older fix the game may still
 start, but the new keys do nothing: a 0.2.0 build without XML2 Fix 1.4 has no saves of its own format and none of the
-combat, menu, capacity or Master Mold changes. From 0.2.2 the builder refuses an existing `dinput.dll` that doesn't know
-the keys it writes. The launcher installs the latest fix each time it starts the game.
+combat, menu, capacity or Master Mold changes. From 0.2.2 a build that finds an older `dinput.dll` in its folder warns
+and names the settings it doesn't know. The launcher installs the latest fix after each build and each time it starts
+the game.
 
 | Builder | Content version | Needs xml2-fix | Notes |
 |---|---|---|---|
@@ -255,28 +265,30 @@ Launcher: any release runs every builder; on Proton (Steam Deck, Linux) 0.2.1 or
 | | this public repository, the community Discord | done |
 | | release testing on a clean PC (Windows Sandbox): the builder alone, and the launcher's one-click setup | done |
 | M4 | **Public test period**: fixes from playthroughs through 0.1.12; 0.2.0 brings the port's own save format, the first game's combat balance and main menu, rooms that keep every object and Master Mold's original fight | now |
-| M5 | **Complete**: the first game's mechanics this engine lacks (see [What isn't there](#what-isnt-there)) | next |
+| M5 | **Complete**: the first game's mechanics this engine lacks (see [What isn't there](#what-isnt-there)) | under way: turrets, breakable parts, solo mode, Xtraction services and ranks done in 0.2.2 |
 | M6 | **Classic look**: the first game's menus, fonts, colours and HUD (the main menu is done in 0.2.0) | planned |
 | 1.0 | **Finished**: a full campaign played by hand on a release build with nothing blocking, checked on the Steam Deck, co-op checked on one PC and across the internet | goal |
 | later | settings separate from X-Men Legends II's; compressed disc images | ideas |
 
 What comes next, by version (plans move with what testing finds):
 
-- **0.2.0** (this release) - the port's own save format (every old save carried over once), the first game's combat
-  balance, its main menu, rooms that keep every object (the engine's entity capacity raised), Master Mold's original
-  fight ([#27](https://github.com/ChronoRixun/legends-classic/issues/27)) and the fixes in
+- **0.2.0** - the port's own save format (every old save carried over once), the first game's combat balance, its
+  main menu, rooms that keep every object (the engine's entity capacity raised) and Master Mold's original fight
+  ([#27](https://github.com/ChronoRixun/legends-classic/issues/27)); **0.2.1** fixed builds from the released builder.
+- **0.2.2** (this release) - the scan turrets ([#4](https://github.com/ChronoRixun/legends-classic/issues/4)), the
+  Xtraction services ([#63](https://github.com/ChronoRixun/legends-classic/issues/63)), the first game's skill ranks,
+  level points and stat growth ([#35](https://github.com/ChronoRixun/legends-classic/issues/35)), breakable parts and
+  boss armour ([#3](https://github.com/ChronoRixun/legends-classic/issues/3)), solo mode
+  ([#5](https://github.com/ChronoRixun/legends-classic/issues/5)), leaders, exclusive fullscreen and the fixes in
   [CHANGELOG.md](CHANGELOG.md).
-- **0.2.1** - small follow-ups: the keycard that can drop behind a door in HAARP, exclusive fullscreen on
-  high-refresh desktops, and the other small reports.
-- **0.3.0** - co-op: a dedicated pass with two PCs, on one network and across the internet. Also the scan turrets
-  ([#4](https://github.com/ChronoRixun/legends-classic/issues/4)) and Master Mold follow-ups, solo mode
-  ([#5](https://github.com/ChronoRixun/legends-classic/issues/5)) and breakable enemy parts
-  ([#3](https://github.com/ChronoRixun/legends-classic/issues/3)).
+- **0.3.0** - co-op: a dedicated pass with two PCs, on one network and across the internet, including the co-op
+  *Load Saved Campaign* that can stop at "Sending game information...". Also the remaining fall volumes
+  ([#22](https://github.com/ChronoRixun/legends-classic/issues/22)) and the attack sounds looping near the fires at the
+  start of the game ([#79](https://github.com/ChronoRixun/legends-classic/issues/79)).
 - **0.4** - classic look: the rest of the menus (pause, characters, Review, shops, loading) and the HUD, made from
   your own disc's art.
 - **0.5** - complete, part two: the first game's loot and shops
-  ([#6](https://github.com/ChronoRixun/legends-classic/issues/6)), two-point Xtreme and Legend ranks
-  ([#35](https://github.com/ChronoRixun/legends-classic/issues/35)) and others.
+  ([#6](https://github.com/ChronoRixun/legends-classic/issues/6)) and others.
 - **0.5 to 1.0** - more may come, spread between 0.5 and 1.0: whatever is still open from these lists, and whatever
   the playthroughs turn up next.
 

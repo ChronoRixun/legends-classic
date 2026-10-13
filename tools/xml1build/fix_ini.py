@@ -661,6 +661,17 @@ def merge_ini(path, sections: dict, drop: dict | None = None) -> bool:
     return True
 
 
+class FixTooOld(ValueError):
+    """The companion DLL in the output folder does not know keys the build writes (`missing`: '[Section] Key'
+    names). The harness and build_xml1 stop on it; the xml1-builder CLI warns and writes the ini, because the
+    launcher puts the latest fix into the folder right after a build (a Rebuild over a 0.2.1 folder still holds
+    XML2 Fix 1.4.0 until then)."""
+
+    def __init__(self, msg: str, missing: list):
+        super().__init__(msg)
+        self.missing = list(missing)
+
+
 def check_move_trigger_dll(dll, keys: dict) -> None:
     """An existing DLL must recognize the raised key before full-trigger output is installed.
     Source-only builds may omit the DLL, then install the companion build through the harness."""
@@ -668,8 +679,8 @@ def check_move_trigger_dll(dll, keys: dict) -> None:
         return
     dll = Path(dll)
     if dll.is_file() and 'MoveTriggers'.encode('utf-16le') not in dll.read_bytes():
-        raise ValueError('Full move triggers require the companion XML2 Fix DLL supporting [Limits] MoveTriggers; '
-                         'the existing DLL does not recognize it')
+        raise FixTooOld('Full move triggers require the companion XML2 Fix DLL supporting [Limits] MoveTriggers; '
+                        'the existing DLL does not recognize it', ['[Limits] MoveTriggers'])
 
 
 def check_entity_capacity_dll(dll, keys: dict) -> None:
@@ -681,8 +692,8 @@ def check_entity_capacity_dll(dll, keys: dict) -> None:
         raise ValueError('[Limits] EntityCapacity=1 requires [Save] Format=lc')
     dll = Path(dll)
     if dll.is_file() and 'EntityCapacity'.encode('utf-16le') not in dll.read_bytes():
-        raise ValueError('The entity-capacity raise requires the companion XML2 Fix DLL supporting [Limits] EntityCapacity; '
-                         'the existing DLL does not recognize it')
+        raise FixTooOld('The entity-capacity raise requires the companion XML2 Fix DLL supporting [Limits] EntityCapacity; '
+                        'the existing DLL does not recognize it', ['[Limits] EntityCapacity'])
 
 
 # The [Game] / [Limits] keys first read by XML2 Fix 1.5 (REQUIRED_XML2FIX): a 1.4 DLL ignores them without a word.
@@ -702,17 +713,31 @@ def check_release_dll(dll, keys: dict) -> None:
     missing = [f'[{section}] {key}' for section, names in RELEASE_15_KEYS.items() for key in names
                if key in keys.get(section, {}) and key.encode('utf-16le') not in data]
     if missing:
-        raise ValueError(f'This build needs XML2 Fix {REQUIRED_XML2FIX} or later; the existing DLL does not recognize '
-                         + ', '.join(missing))
+        raise FixTooOld(f'This build needs XML2 Fix {REQUIRED_XML2FIX} or later; the existing DLL does not recognize '
+                        + ', '.join(missing), missing)
 
 
-def write_port_keys(out, keys: dict | None = None) -> dict:
+def old_fix_keys(dll, keys: dict) -> list:
+    """every key of `keys` the existing companion DLL does not know ('[Section] Key'; [] without a DLL). Raises
+    ValueError for a key set no DLL can run (EntityCapacity without Format=lc)."""
+    missing = []
+    for check in (check_move_trigger_dll, check_entity_capacity_dll, check_release_dll):
+        try:
+            check(dll, keys)
+        except FixTooOld as exc:
+            missing += [m for m in exc.missing if m not in missing]
+    return missing
+
+
+def write_port_keys(out, keys: dict | None = None, *, old_fix_ok: bool = False) -> dict:
     """merge the port's keys (default: port_keys(out)) into <out>/xml2-fix.ini, dropping the PORT_OWNED keys it does
-    not need; the launcher's keys stay. Returns the keys written."""
+    not need; the launcher's keys stay. Returns the keys written. An existing DLL that doesn't know every key raises
+    FixTooOld (naming them all) unless `old_fix_ok` (the CLI's warning path: FixTooOld)."""
     keys = port_keys(out) if keys is None else keys
-    check_move_trigger_dll(Path(out) / 'dinput.dll', keys)
-    check_entity_capacity_dll(Path(out) / 'dinput.dll', keys)
-    check_release_dll(Path(out) / 'dinput.dll', keys)
+    missing = old_fix_keys(Path(out) / 'dinput.dll', keys)
+    if missing and not old_fix_ok:
+        raise FixTooOld(f'This build needs XML2 Fix {REQUIRED_XML2FIX} or later; the existing DLL does not recognize '
+                        + ', '.join(missing), missing)
     if keys.get('Save', {}).get('Format') == 'lc' and (Path(out) / 'Data/lcsave/catalogue.lcc').is_file():
         import json
         identity = RI.manifest(out)
