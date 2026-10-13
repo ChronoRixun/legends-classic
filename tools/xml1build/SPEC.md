@@ -7130,7 +7130,7 @@ Iceman 5/10/5/20, Phoenix 0/10/5/25 = their XML2 classes' growth): XML2 Fix 1.5.
 process: unchanged, "the file vouches for the build's classes". On the 0.2.2 build without the new classes (no
 legacy file) the same file keeps its bonus.
 
-## 95. Enemies' power use and melee combos: XML1's rules (XML2 Fix `[Game] NpcPowerRule`, gameplay rule 16)
+## 95. Enemies' power use, melee combos and visibility: XML1's rules (XML2 Fix `[Game] NpcPowerRule`, gameplay rule 16)
 
 Report (Steam Deck tester, 2026-10-12, 0.2.x): at HAARP the Brotherhood Marauders and Revolutionaries "barely use
 regular melee attacks anymore", the party gets stuck in knock-down / stun loops. Not a 0.2.0/0.2.1 data regression:
@@ -7150,8 +7150,13 @@ and carry XML1's aitype / aireusetime / powerusage (resolved per 24.2). The caus
     XML1 entry, and level 0 never starts a combo: the port's enemies threw single `attacklight1`s only.
   - XML1's six combos and weights (0x452bac / 0x452c30 / 0x452c18) are not among XMen2.exe's eleven.
   - XMen2.exe skips the decision's tail after a combo start (no next-attack time), XML1 runs it.
-- **Fix.** xml2-fix `[Game] NpcPowerRule=xml1` (npc_power_rules.hpp, docs/npc-power-rule.md; gameplay rule 16,
-  revision 2) restores all of it, the combos without data: the override goes and rows 2 / 3 / 11 of XMen2.exe's
+- **Visibility.** XML1's AI query uses actor/target positions raised by 60, unit sweep extents, and one query per
+  tick with a reserved waiting actor. XMen2.exe uses different endpoints, extents 15, two queries, and lets the
+  first query bypass the reservation. A failed query can mean scheduling deferral, not physical obstruction.
+  Both exclude hero/enemy teams; the power picker's aitype ranges and the separate ranged-state facing gate agree.
+- **Fix.** xml2-fix `[Game] NpcPowerRule=xml1` (npc_power_rules.hpp, npc_visibility_rules.hpp, docs/npc-power-rule.md;
+  gameplay rule 16, revision 3, enabled values `{1,1,0,0}`) restores the listed power/combo rules and XML1's visibility
+  geometry and query scheduling. The combos need no data: the override goes and rows 2 / 3 / 11 of XMen2.exe's
   combo table hold XML1's levels 2 / 3 / 6 over XML1's six combos. `fix_ini.NPC_POWER_RULE` writes the key for every
   XML1 build. No data change (an npcstat `combolevel` would only pick among XMen2.exe's own combos), no CONTENT_VERSION
   change, no save change. A 1.5 DLL ignores the key: the release needs the fix release that has it.
@@ -7159,7 +7164,8 @@ and carry XML1's aitype / aireusetime / powerusage (resolved per 24.2). The caus
   per minute; docs/npc-power-rule.md has the full table): ice tunnel hero free 51-53 % original, 0-6.5 % 0.2.1 / 0.2.2,
   22-38 % with the rule; Revolutionary stun arc 1.8-4.4 original, 12-16 0.2.x, 5.1-5.7 with the rule; chained / heavy
   hits 4.6-4.8 original, 1-2.5 0.2.x, 3.8-5.0 with the rule. GRSO soldiers' fire: 35-36 original, 46 in 0.2.2, 32-38
-  with the rule. Open: the Revolutionary still uses about twice the original's powers and the hero is free less
-  often than in the original.
+  with the power/combo rule. A later 150-second control and two compiled visibility runs measured Marauder powers
+  at 20.9/min versus 12.3 and 15.7/min; original reference 8.6–10.7. Hero free was 18.3% versus 21.2–24.8%, still
+  below the original's 51–53%. These are small staged samples, not a claim that the remaining aggression is solved.
 - **Resistance (SPEC 92)** checked with the hero punching a physically resistant Revolutionary (AI off, real pad A
   presses): it still flinches on light hits about once per 3 points of damage in 0.2.1 and 0.2.2 alike.

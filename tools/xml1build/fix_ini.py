@@ -209,7 +209,8 @@ DEATH_RULE = 'xml1'
 # (SPEC 24.3, x1_npc_energy) never empties and XML1's enemies fire powers whenever aireusetime allows (SPEC 95).
 # XMen2.exe also overrides the AI's combo level with npcstat `combolevel` (0 for XML1 entries: no combos) and skips the
 # pause after a combo start; the rule restores XML1's levels, combos and pause too (no data: XML1's six combos are not
-# among XMen2.exe's). Off in xml2-fix unless set; a fix without the feature ignores the key. Written for every XML1 build.
+# among XMen2.exe's). Rule 16 revision 3 also restores XML1's AI visibility ray and query reservation/budget.
+# Off in xml2-fix unless set; a fix without the feature ignores the key. Written for every XML1 build.
 NPC_POWER_RULE = 'xml1'
 
 # xml2-fix [Game] ForcedTeams (SPEC 19): '1' = the scripts of a --forced-teams seat build seat XML1's parties
