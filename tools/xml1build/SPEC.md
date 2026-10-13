@@ -7196,3 +7196,23 @@ A separate 90-second observer saw ten PC idle-selection redirects back into stun
 set, including a landing/get-up sequence followed by another 1.115 game-clock seconds of stun. The original's
 dedicated stun handler clears its flag on exit. The mechanism is now observed; its share of the gap and a complete
 hero-side restoration remain unproved. No hero behavior or additional gameplay rule changed in this candidate.
+
+
+### 95.2 Party-hero stun reaction ownership (`[Game] StunRule=xml1`, rule 18)
+
+The companion hook follows XML1's flag lifetime: a refused stun reaction never enters `ch_stun`, and an
+interrupted stun clears its flag through cancel/exit. XML1 uses an immediate move request, not PC's persistent
+stun powerup. Priority-protected thrown/landing moves reject stun; an ordinary priority-zero get-up can accept a
+new stun immediately. There is no deferred stun waiting for that rejected request to finish recovering.
+
+PC sets its stun flag before requesting the reaction and retains it after interruptions; idle selection then
+redirects a recovering hero back into stun. The guarded companion hook discards the flag after a refused request
+and clears it on an accepted change to another move, for seated party heroes (including AI followers) only.
+Native accepted-stun duration, refresh, susceptibility, enemy reactions and powerup affecters remain unchanged.
+This restores reaction ownership, not the entire original stun handler or PC powerup implementation.
+
+`fix_ini.STUN_RULE` writes `StunRule=xml1` for XML1 builds, owns/removes the key when appropriate, and includes it
+in `RELEASE_15_KEYS` / `check_release_dll`: an existing DLL without the capability is refused. Gameplay rule 18
+revision 1 advertises `{1,0,0,0}` when installed, verified off for absent/`xml2`, and unverified on a failed request.
+Rule 17 is reserved for ObjectWorldImpact and remains available to its later merge; no placeholder is registered.
+No version or save-format changes are made here; the release integrator owns version allocation.
