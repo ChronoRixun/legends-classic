@@ -201,6 +201,18 @@ LEVEL_STAT_POINTS = 'xml1'
 # a fix without the feature ignores the key (entities die at 0, as before). Written for every XML1 build.
 DEATH_RULE = 'xml1'
 
+# xml2-fix [Game] NpcPowerRule (0.2.2 follow-up; xml2-fix docs/npc-power-rule.md; gameplay rule 16): XML1's power use
+# and melee combos for computer-controlled characters. XMen2.exe never charges an AI character for its powers (the
+# cost's AI test 0x4318e7 asks the controller, which says yes only after a queued command), re-runs the melee-range
+# power decision every 0.3 s (0x518770) and has no energy test there; XML1 charges every NPC (default.xbe 0xcde90),
+# decides every 2.0 s (0.5 s for a party hero) and needs half the energy (0xee260). Without it the NPC energy pool
+# (SPEC 24.3, x1_npc_energy) never empties and XML1's enemies fire powers whenever aireusetime allows (SPEC 95).
+# XMen2.exe also overrides the AI's combo level with npcstat `combolevel` (0 for XML1 entries: no combos) and skips the
+# pause after a combo start; the rule restores XML1's levels, combos and pause too (no data: XML1's six combos are not
+# among XMen2.exe's). Rule 16 revision 3 also restores XML1's AI visibility ray and query reservation/budget.
+# Off in xml2-fix unless set; a fix without the feature ignores the key. Written for every XML1 build.
+NPC_POWER_RULE = 'xml1'
+
 # xml2-fix [Game] ForcedTeams (SPEC 19): '1' = the scripts of a --forced-teams seat build seat XML1's parties
 # (xml2-fix forced_teams module), '0' = the functions exist but report off (team menu), 'off' = no key (nothing
 # patched). Every xml2-fix call sits behind xml2fixFeature("forcedteams") (validate V14b), so with ForcedTeams=0, a
@@ -242,7 +254,7 @@ X1_LEADER = '1'
 PORT_OWNED = {'Game': ('NewGameTeam', 'ResetUnlocks', 'SaveFolder', 'ForcedTeams', 'PostgameScript', 'WindowTitle',
                         'EndHeroUnlock', 'MainMenuItems', 'DangerRoomGate', 'ClassicMainBackdrop', 'ClassicMainPanelBounds', 'NewGamePlus', 'ReviewStats', 'Xtract', 'XtractionShop', 'RevivalCost', 'XPCurve',
                        'GeometrySharingBlendIndices', 'CharacterLadderPaths', 'ObjectiveDescriptions',
-                       'BreakRule', 'PlacementCrush', 'DoubleHeal', 'DeathRule', 'ConfirmationRelease',
+                       'BreakRule', 'PlacementCrush', 'DoubleHeal', 'DeathRule', 'NpcPowerRule', 'ConfirmationRelease',
                        'ExplosiveFirstHit', 'PackAmount', 'SoloMode', 'X1Leader', 'DeathSwitchClear', 'RankCosts', 'LevelSkillPoints', 'LevelStatPoints', 'Xml1Multipart',
                        'Xml1MasterMold', 'Xml1MoldStage', 'Xml1Turrets'),
               'Limits': ('ActorSlots', 'ResourceNames', 'ItemEnhancements', 'FightStyles', 'EffectCurves', 'MoveTriggers', 'EntityCapacity',
@@ -436,6 +448,7 @@ def game_keys(*, xml1_opening=True, save_folder=None, forced_teams='1', add_hero
         # verbatim by characters.py; V52 checks them) - Juggernaut's helmet, the Sentinels' arms
         game['Xml1Multipart'] = '1'
         game['DeathRule'] = DEATH_RULE
+        game['NpcPowerRule'] = NPC_POWER_RULE
         game['PackAmount'] = PACK_AMOUNT
         # XML1's solo mode (issue #5): setSoloMode in the solo boxes / bridge scripts acts only with this key
         game['SoloMode'] = '1'

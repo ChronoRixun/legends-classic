@@ -7129,3 +7129,43 @@ Iceman 5/10/5/20, Phoenix 0/10/5/25 = their XML2 classes' growth): XML2 Fix 1.5.
 21 -> 22 then fires the new rules on top (Wolverine body 44, supports mind 62); saved (bits 1-3), loaded in a new
 process: unchanged, "the file vouches for the build's classes". On the 0.2.2 build without the new classes (no
 legacy file) the same file keeps its bonus.
+
+## 95. Enemies' power use, melee combos and visibility: XML1's rules (XML2 Fix `[Game] NpcPowerRule`, gameplay rule 16)
+
+Report (Steam Deck tester, 2026-10-12, 0.2.x): at HAARP the Brotherhood Marauders and Revolutionaries "barely use
+regular melee attacks anymore", the party gets stuck in knock-down / stun loops. Not a 0.2.0/0.2.1 data regression:
+ps_bh_smash / ps_bh_energy, fightstyle_wrestling / _villain and the npcstat entries are identical in 0.2.1 and 0.2.2
+and carry XML1's aitype / aireusetime / powerusage (resolved per 24.2). The causes are in the engine.
+
+- **Powers** (both games share the four power slots, the aitype mask table and the picker, default.xbe 0x1081f0 /
+  XMen2.exe 0x50fe50):
+  - XML1 charges a power's cost to every NPC (0xcde90). XMen2.exe never charges an AI-flagged character unless its
+    controller says so once after a queued command (0x4318e7 -> 0x503160). **24.3 is wrong** where it says every
+    actor but a player hero spends: `x1_npc_energy` sets XML1's pool, but without the charge it never moved.
+  - XML1's melee-range power decision re-checks every 2.0 s (0.5 s for a party hero) and needs half the energy
+    (0xee260); XMen2.exe's every 0.3 s with no energy test (0x518770).
+- **Melee combos** (the brain's attack decision, 0xeea60 / 0x518fd0):
+  - Both AI inits pick a combo level the same way (2 for a ranged-type NPC without the leader bit, the top level
+    otherwise, 3 for Toad and Pyro), but XMen2.exe then overrides it with npcstat `combolevel` (0x505011), 0 for every
+    XML1 entry, and level 0 never starts a combo: the port's enemies threw single `attacklight1`s only.
+  - XML1's six combos and weights (0x452bac / 0x452c30 / 0x452c18) are not among XMen2.exe's eleven.
+  - XMen2.exe skips the decision's tail after a combo start (no next-attack time), XML1 runs it.
+- **Visibility.** XML1's AI query uses actor/target positions raised by 60, unit sweep extents, and one query per
+  tick with a reserved waiting actor. XMen2.exe uses different endpoints, extents 15, two queries, and lets the
+  first query bypass the reservation. A failed query can mean scheduling deferral, not physical obstruction.
+  Both exclude hero/enemy teams; the power picker's aitype ranges and the separate ranged-state facing gate agree.
+- **Fix.** xml2-fix `[Game] NpcPowerRule=xml1` (npc_power_rules.hpp, npc_visibility_rules.hpp, docs/npc-power-rule.md;
+  gameplay rule 16, revision 3, enabled values `{1,1,0,0}`) restores the listed power/combo rules and XML1's visibility
+  geometry and query scheduling. The combos need no data: the override goes and rows 2 / 3 / 11 of XMen2.exe's
+  combo table hold XML1's levels 2 / 3 / 6 over XML1's six combos. `fix_ini.NPC_POWER_RULE` writes the key for every
+  XML1 build. No data change (an npcstat `combolevel` would only pick among XMen2.exe's own combos), no CONTENT_VERSION
+  change, no save change. A 1.5 DLL ignores the key: the release needs the fix release that has it.
+- **Measured** (staged: hero invulnerable and idle, teleport onto a spawner point; xemu for the original; per enemy
+  per minute; docs/npc-power-rule.md has the full table): ice tunnel hero free 51-53 % original, 0-6.5 % 0.2.1 / 0.2.2,
+  22-38 % with the rule; Revolutionary stun arc 1.8-4.4 original, 12-16 0.2.x, 5.1-5.7 with the rule; chained / heavy
+  hits 4.6-4.8 original, 1-2.5 0.2.x, 3.8-5.0 with the rule. GRSO soldiers' fire: 35-36 original, 46 in 0.2.2, 32-38
+  with the power/combo rule. A later 150-second control and two compiled visibility runs measured Marauder powers
+  at 20.9/min versus 12.3 and 15.7/min; original reference 8.6–10.7. Hero free was 18.3% versus 21.2–24.8%, still
+  below the original's 51–53%. These are small staged samples, not a claim that the remaining aggression is solved.
+- **Resistance (SPEC 92)** checked with the hero punching a physically resistant Revolutionary (AI off, real pad A
+  presses): it still flinches on light hits about once per 3 points of damage in 0.2.1 and 0.2.2 alike.
