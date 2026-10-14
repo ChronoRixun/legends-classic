@@ -17,6 +17,15 @@ comparison. Saved numbered identities must also match their original ordinal and
 placement before they map to the current placement. Saves alone lack original
 definitions, so matching saved names cannot prove compatibility.
 
+Zone keys are lower-cased as placement numbering does before canonical key hashing.
+Both runtime readers recompute the prefix digest from the opened current map;
+an edited digest or a current SHA1 rebound to a changed prefix causes that record
+to be discarded even with a valid sidecar CRC. This checks integrity, not authorship:
+historical old-map, placement and alias claims still require the trusted builder
+ledger. A deliberately rewritten, self-consistent ledger is not authenticated by
+an unsigned digest. Generator `BindError` failures reject only the affected zone;
+malformed or conflicting historical ledgers still stop generation intact.
+
 The native reader retains old state and fog/heard provenance, starts new residents
 fresh, and omits former smart/dynamic state matching the new resident tail. Missing
 or stale attestations retain exact-hash rejection; malformed sidecars refuse.

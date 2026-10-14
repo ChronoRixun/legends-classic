@@ -37,6 +37,18 @@ def fixture(folder, variant='append'):
         path.rename(path.with_suffix('.xmlb'))
     path = Path(env.binds.zone_file('zone/x/y'))
     root = xmlb.decode(path.read_bytes())
+    if variant == 'escaped':
+        # Digest parity must include authored whitespace, escapes, latin-1 and child order.
+        definition = next(e for e in root.iter('entity') if e.get('name') == 'gate')
+        definition.set('note', 'quote " slash \\ newline\n tab\t café')
+        definition.set('é', 'high attribute')
+        definition.set('z', 'ascii attribute')
+        import xml.etree.ElementTree as ET
+        ET.SubElement(definition, 'synthetic_child', value='\x01\r\b\f')
+        _xmlb(str(path), root)
+        f = container.read_file(saved)
+        f['sections']['ZONE']['data']['records'][0]['content_hash'] = __import__('hashlib').sha1(path.read_bytes()).digest()
+        saved = container.write_file(L.KIND_CAMPAIGN, _secs(f), f['header'])
     if variant == 'ambiguous':
         group = next(e for e in root if e.tag == 'entinst' and e.get('type') == 'crate')
         extra = copy.deepcopy(group[0]);extra.set('pos','1000 0 0');group.append(extra)
@@ -70,6 +82,22 @@ def fixture(folder, variant='append'):
         first = gate[0]; gate.remove(first); gate.append(first)
     _xmlb(str(path), root)
     report = Z.generate(previous, env.binds.build)
+    if variant in ('bad_digest', 'rebound_prefix'):
+        rows = Z.load(env.binds.build)
+        row = next(r for r in rows if r['zone'] == Z.zone_hash('zone/x/y'))
+        if variant == 'bad_digest':
+            row['digest'] = bytes(32)
+        else:
+            next(e for e in root.iter('entity') if e.get('name') == 'gate').set('health', '99')
+            _xmlb(str(path), root)
+            row['current'] = __import__('hashlib').sha1(path.read_bytes()).digest()
+        # Recompute a valid CRC: framing checks alone cannot catch these edits.
+        (Path(env.binds.build) / Z.REL).write_bytes(Z.encode(rows))
+    elif variant == 'past_prefix':
+        f = container.read_file(saved)
+        state = next(s for s in f['sections']['ZONE']['data']['records'][0]['states'] if s['list'] == 1)
+        state['ordinal'] = len(Z.load(env.binds.build)[-1]['placements']) + 1
+        saved = container.write_file(L.KIND_CAMPAIGN, _secs(f), f['header'])
     env.binds._zones.clear()
     env.binds.zone_prefixes = Z.load(env.binds.build)
     # Synthetic public-code fixtures can ship their own tables for C++ byte parity.
@@ -182,3 +210,51 @@ def test_ambiguous_old_smart_twins_reject_without_resetting_an_untouched_twin():
         restored,notes=convert.reverse_slot(saved,env)
         assert not restored['zones']
         assert any('aliases both new tail and retained placement' in n for n in notes)
+
+
+def test_zone_key_mixed_case_uses_numbering_normalization():
+    with tempfile.TemporaryDirectory() as folder:
+        env, saved, _ = fixture(folder)
+        record = container.read_file(saved)['sections']['ZONE']['data']['records'][0]
+        lower = env.binds.zone_numbering('zone/x/y')
+        mixed = env.binds.zone_numbering('ZoNe/X/Y')
+        assert lower is mixed
+        assert Z.match(env.binds.zone_prefixes, 'ZoNe/X/Y', record['content_hash'], mixed)
+        assert Z.zone_hash('ZONE/Étage') == Z.zone_hash('zone/étage')
+
+
+def test_runtime_digest_checks_valid_crc_edits_and_rebound_prefix():
+    for variant in ('bad_digest', 'rebound_prefix', 'escaped'):
+        with tempfile.TemporaryDirectory() as folder:
+            env, saved, _ = fixture(folder, variant)
+            restored, notes = convert.reverse_slot(saved, env)
+            assert bool(restored['zones']) == (variant == 'escaped')
+            assert bool(convert.loaded_zone_metadata(saved, env)) == (variant == 'escaped')
+            if variant != 'escaped':
+                assert any('record not applied' in n for n in notes)
+
+
+def test_saved_ordinal_past_attested_prefix_discards_cleanly():
+    with tempfile.TemporaryDirectory() as folder:
+        env, saved, _ = fixture(folder, 'past_prefix')
+        restored, notes = convert.reverse_slot(saved, env)
+        assert not restored['zones'] and any('record not applied' in n for n in notes)
+        assert convert.loaded_zone_metadata(saved, env) == []
+
+
+def test_generate_rejects_one_unmodelled_zone_and_keeps_valid_history():
+    with tempfile.TemporaryDirectory() as folder:
+        env, _, _ = fixture(folder)
+        previous = Path(folder) / 'previous'
+        # Copy a changed zone with duplicate definitions; numbering is unsafe there.
+        for build in (previous, Path(env.binds.build)):
+            source = build / 'Maps/zone/x/y.engb'
+            destination = build / 'Maps/zone/x/unmodelled.engb'
+            root = xmlb.decode(source.read_bytes())
+            root.append(copy.deepcopy(next(e for e in root if e.tag == 'entity')))
+            _xmlb(str(destination), root)
+        history = Z.load(env.binds.build)
+        report = Z.generate(previous, env.binds.build)
+        assert report['accepted'] == ['zone/x/y']
+        assert report['rejected'] == ['zone/x/unmodelled']
+        assert Z.load(env.binds.build) == history

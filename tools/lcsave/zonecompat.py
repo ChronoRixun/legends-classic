@@ -24,6 +24,15 @@ MAGIC = b'LCZPFX1\0'
 LIMIT = 4096
 
 
+def zone_hash(zone):
+    """Use the same case normalization as Binds.zone_numbering before hashing."""
+    return bytes.fromhex(key_hash(zone.lower()))
+
+
+def prefix_digest(entries):
+    return hashlib.sha256(json.dumps(entries, ensure_ascii=True, separators=(',', ':')).encode('ascii')).digest()
+
+
 def _canonical(e):
     return [e.tag, sorted(e.attrib.items()), [_canonical(c) for c in e]]
 
@@ -56,7 +65,7 @@ def attest(zone, previous, current):
     new, new_placements = resident_prefix(new_root)
     if not old or len(new) <= len(old) or new[:len(old)] != old:
         return None
-    digest = hashlib.sha256(json.dumps(old, ensure_ascii=True, separators=(',', ':')).encode('ascii')).digest()
+    digest = prefix_digest(old)
     def placed(root):
         return [(g, i) for g in root.iter('entinst') for i in g.iter('inst')]
     old_placed, new_placed = placed(old_root), placed(new_root)
@@ -98,7 +107,7 @@ def attest(zone, previous, current):
     old_defs = {n:e for n,e in old_all.items() if n not in old_tail_types}
     new_defs = {n:e for n,e in new_all.items() if n not in tail_types | old_tail_types}
     if old_defs != new_defs: return None
-    return dict(zone=bytes.fromhex(key_hash(zone)), old=hashlib.sha1(previous).digest(),
+    return dict(zone=zone_hash(zone), old=hashlib.sha1(previous).digest(),
                 current=hashlib.sha1(current).digest(), digest=digest, placements=placements,
                 fresh_aliases=sorted(fresh-ambiguous), ambiguous_aliases=sorted(ambiguous))
 
@@ -190,11 +199,11 @@ def validate_current(build):
         numbering = binds.zone_numbering(zone)
         if numbering is None: continue
         for row in rows:
-            if row['zone'] != bytes.fromhex(key_hash(zone)) or row['current'].hex() != numbering['sha1']:
+            if row['zone'] != zone_hash(zone) or row['current'].hex() != numbering['sha1']:
                 continue  # history may describe another release's current map
             entries, _ = resident_prefix(xmlb.decode(Path(numbering['path']).read_bytes()))
             n = len(row['placements'])
-            digest = hashlib.sha256(json.dumps(entries[:n], ensure_ascii=True, separators=(',', ':')).encode('ascii')).digest()
+            digest = prefix_digest(entries[:n])
             if n >= len(entries) or digest != row['digest']:
                 raise BindError('zone-prefix.lcm: current resident prefix differs from attestation')
             active += 1
@@ -204,9 +213,19 @@ def validate_current(build):
 def match(rows, zone, old_hash, numbering):
     """Current full-file SHA1 binds the builder's prefix comparison to actual opened bytes."""
     for r in rows:
-        if r['zone'] == bytes.fromhex(key_hash(zone)) and r['old'] == old_hash:
+        if r['zone'] == zone_hash(zone) and r['old'] == old_hash:
             if r['current'].hex() == numbering['sha1'] and len(r['placements']) < len(numbering['numbered']):
-                return r
+                # Check the digest against the same opened bytes as the numbering,
+                # not only the editable sidecar's CRC and whole-file hash claims.
+                raw = Path(numbering['path']).read_bytes()
+                if hashlib.sha1(raw).hexdigest() != numbering['sha1']:
+                    return None
+                try:
+                    entries, _ = resident_prefix(xmlb.decode(raw))
+                except BindError:
+                    return None
+                if prefix_digest(entries[:len(r['placements'])]) == r['digest']:
+                    return r
     return None
 
 
@@ -219,7 +238,10 @@ def generate(previous, current):
         if old is None or new is None: continue
         old_raw, new_raw = Path(old).read_bytes(), Path(new).read_bytes()
         if old_raw == new_raw: continue
-        row = attest(zone, old_raw, new_raw)
+        try:
+            row = attest(zone, old_raw, new_raw)
+        except BindError:
+            row = None  # one unmodelled zone must not abort unrelated attestations
         if row is None:
             rejected.append(zone)
         else:

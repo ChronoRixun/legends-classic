@@ -12,13 +12,18 @@ def main(destination):
     out = Path(destination)
     out.mkdir(parents=True, exist_ok=True)
     lines = []
-    for variant in ('append', 'tailstate', 'renamed', 'ambiguous', 'xmlbonly', 'position', 'definition', 'reorder','world','smartdefinition'):
+    for variant in ('append', 'tailstate', 'renamed', 'ambiguous', 'xmlbonly', 'position', 'definition', 'reorder','world','smartdefinition',
+                    'escaped', 'bad_digest', 'rebound_prefix', 'past_prefix'):
         folder = out / variant
         folder.mkdir()
         env, saved, _ = fixture(str(folder), variant)
         (folder / 'input.lcsave').write_bytes(saved)
         restored, _ = convert.reverse_slot(saved, env)
         (folder / 'expected.old').write_bytes(oldsave.write_slot(restored))
+        metadata = convert.loaded_zone_metadata(saved, env)
+        (folder / 'expected.metadata').write_bytes(''.join(
+            f"{c['zone']}\t{e['ordinal']}\t{e['placement_index']}\t{e['definition_name']}\t{e['instance_name']}\n"
+            for c in metadata for e in c['entities']).encode('utf-8'))
         lines.append(f'{variant}\t{variant}/build\treverse\t0\n')
         if variant not in ('append', 'tailstate', 'renamed'): continue
         for sequence in (2, 3):
