@@ -2,7 +2,8 @@
 
 The native floor sweep, not a calculated Z, places the object. Static collision
 triangles only select candidates; movable supports and unreadable bounds defer
-the selection. Newly numbered instances are appended to preserve old ordinals.
+the selection. Proven shallow-overlap models also need the native load sweep.
+Newly numbered instances are appended to preserve old ordinals.
 """
 from __future__ import annotations
 
@@ -11,6 +12,7 @@ import hashlib
 import itertools
 import math
 import xml.etree.ElementTree as ET
+from collections import Counter
 
 import numpy as np
 
@@ -18,7 +20,13 @@ from .buoys import numbers, model_bounds
 from .igb_file import IgbFile
 
 MARKER = 'xml1settle'
+EMBEDDED_MARKER = 'xml1embeddedfloor'
 MIN_GAP = 3.0
+# Shallow floor overlap is a different selection from an unsupported raised
+# prop. Limit it to the model checked under real hits; expanding this set needs
+# a source-hull audit and a surviving-hit check for the additional model.
+EMBEDDED_MODELS = frozenset({'haarp/crate_tarp'})
+MIN_PENETRATION = 0.25
 MAX_NEW_RESIDENTS = 64
 MAX_RESIDENTS = 128
 
@@ -182,7 +190,8 @@ def survey(root, triangles, read_bounds):
                 row['status'] = 'no_static_floor'
                 continue
             row['gap'] = box[2]-z
-            if row['gap'] <= MIN_GAP:
+            embedded = attrs.get('model', '').lower() in EMBEDDED_MODELS and row['gap'] < -MIN_PENETRATION
+            if row['gap'] <= MIN_GAP and not embedded:
                 row['status'] = 'near_floor'
                 continue
             support = floor.under_footprint(box)
@@ -190,7 +199,7 @@ def survey(root, triangles, read_bounds):
                 row['center_floor'] = z
                 row['static_floor'] = support
                 row['gap'] = box[2]-support
-                if row['gap'] <= MIN_GAP:
+                if row['gap'] <= MIN_GAP and not embedded:
                     row['status'] = 'static_footprint_support'
                     continue
             if attrs.get('smartent', '').strip().lower() in ('false', '0'):
@@ -212,6 +221,8 @@ def survey(root, triangles, read_bounds):
                 row['supports'] = [p[1].get('name') for p in supports]
                 continue
             row['status'] = 'settle'
+            if embedded:
+                row['reason'] = 'embedded_floor'
         except (ValueError, TypeError, OverflowError):
             row['status'] = 'invalid_placement'
     residents = sum(len(g.findall('inst')) for g in root.findall('entinst')
@@ -227,7 +238,8 @@ def survey(root, triangles, read_bounds):
 
 def convert(root, rows):
     """Pin only selected placements; keep old numbered entities in their order."""
-    selected = {(r['group'], r['instance']) for r in rows if r['status'] == 'settle'}
+    selected = {(r['group'], r['instance']): r.get('reason') == 'embedded_floor'
+                for r in rows if r['status'] == 'settle'}
     if not selected:
         return 0
     definitions = {e.get('name'): e for e in root.iter('entity')}
@@ -239,10 +251,13 @@ def convert(root, rows):
         source = definitions.get(group.get('type'))
         if source is None or source.get(MARKER) == 'true':
             continue
-        key = source.get('name')
-        if key not in aliases and any((gi, ii) in selected for ii, _ in enumerate(group.findall('inst'))):
-            digest = hashlib.sha256(key.encode('utf-8')).hexdigest()[:16]
-            alias = 'x1_settle_' + digest
+        for embedded in (False, True):
+            key = source.get('name'), embedded
+            if key in aliases or not any(selected.get((gi, ii)) is embedded
+                                         for ii, _ in enumerate(group.findall('inst'))):
+                continue
+            digest = hashlib.sha256(key[0].encode('utf-8')).hexdigest()[:16]
+            alias = ('x1_embedded_' if embedded else 'x1_settle_') + digest
             if alias in used:
                 raise ValueError('settle entity alias collision')
             used.add(alias)
@@ -252,43 +267,90 @@ def convert(root, rows):
         source = definitions.get(group.get('type'))
         if source is None or source.get(MARKER) == 'true':
             continue
-        new = None
+        new = {}
         for ii, inst in enumerate(list(group.findall('inst'))):
             if (gi, ii) not in selected:
                 continue
-            key = source.get('name')
+            embedded = selected[(gi, ii)]
+            key = source.get('name'), embedded
             alias = aliases[key]
             if key not in clones:
                 clone = copy.deepcopy(source)
                 clone.set('name', alias)
                 clone.set('smartent', 'false')
                 clone.set(MARKER, 'true')
+                if embedded:
+                    clone.set(EMBEDDED_MARKER, 'true')
                 root.append(clone)
                 clones.add(key)
-            if new is None:
-                new = ET.Element(group.tag, {**group.attrib, 'type': alias})
-                new_groups.append(new)
+            if embedded not in new:
+                new[embedded] = ET.Element(group.tag, {**group.attrib, 'type': alias})
+                new_groups.append((embedded, new[embedded]))
             group.remove(inst)
-            new.append(inst)
+            new[embedded].append(inst)
             changed += 1
         if not list(group):
             root.remove(group)
-    for group in new_groups:
+    # Previously generated settlement groups keep their exact instance order.
+    # The new floor-overlap residents follow them, including another group of
+    # the same source definition (saved ordinals identify placements, not names).
+    for _, group in sorted(new_groups, key=lambda item: item[0]):
         root.append(group)
     return changed
+
+
+def move_embedded_floor_tail(root):
+    """Run after late fall volumes: new overlap residents follow all old ordinals."""
+    names = {e.get('name') for e in root.iter('entity') if e.get(EMBEDDED_MARKER) == 'true'}
+    for group in list(root.findall('entinst')):
+        if group.get('type') in names:
+            root.remove(group)
+            root.append(group)
 
 
 def numbered_tail_problems(root, later=()):
     """New residents must follow every pre-existing placement (save ordinals). `later`: entinst types numbered
     after the settled props (x1schema.FALL_KILL_ENABLED_LATE), allowed behind them."""
     marked = {e.get('name') for e in root.iter('entity') if e.get(MARKER) == 'true'}
+    embedded = {e.get('name') for e in root.iter('entity') if e.get(EMBEDDED_MARKER) == 'true'}
     out, in_tail = [], False
     for group in root.findall('entinst'):
         if group.get('type') in marked:
             in_tail = True
         elif in_tail and group.get('type') not in later:
             out.append('settled prop precedes an old entinst (saved ordinals shift)')
+    in_tail = False
+    for group in root.findall('entinst'):
+        if group.get('type') in embedded:
+            in_tail = True
+        elif in_tail:
+            out.append('embedded-floor prop precedes an old entinst (saved ordinals shift)')
     return out
+
+
+def embedded_floor_problems(root, rows):
+    """V-TBD: every selected overlap must exist in the built resident tail."""
+    expected = Counter()
+    for row in rows:
+        if row.get('status') == 'settle' and row.get('reason') == 'embedded_floor':
+            alias = 'x1_embedded_' + hashlib.sha256(row['type'].encode('utf-8')).hexdigest()[:16]
+            expected[(alias, row['name'], tuple(row['pos']))] += 1
+    if not expected:
+        return []
+    definitions = {e.get('name'): e for e in root.iter('entity')}
+    actual = Counter()
+    for group in root.findall('entinst'):
+        definition = definitions.get(group.get('type'))
+        if (definition is None or definition.get('smartent', '').lower() not in ('false', '0')
+                or definition.get(MARKER) != 'true' or definition.get(EMBEDDED_MARKER) != 'true'):
+            continue
+        for inst in group:
+            try:
+                actual[(group.get('type'), inst.get('name'), numbers(inst.get('pos'), 3))] += 1
+            except ValueError:
+                continue
+    return [f'{name}: selected embedded-floor placement is missing from the resident tail ({count})'
+            for (_, name, _), count in (expected-actual).items()]
 
 
 def problems(root, later=()):

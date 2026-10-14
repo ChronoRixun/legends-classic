@@ -185,9 +185,13 @@ def main(argv=None):
             if len(groups) != 1 or typ not in source_defs:
                 fail('B_settle_source_group', f'{z}: {typ}')
                 continue
-            added_defs += sum(1 for _ in source_defs[typ].iter())
+            # Raised props and newly supported floor overlaps use distinct
+            # aliases so the previously numbered tail cannot be renumbered.
+            aliases = {r.get('reason') == 'embedded_floor' for r in selected if r['type'] == typ}
+            added_defs += len(aliases) * sum(1 for _ in source_defs[typ].iter())
             removed_groups += count == len(groups[0].findall('inst'))
-        settle_delta = added_defs + len({r['group'] for r in selected}) - removed_groups
+        added_groups = len({(r['group'], r.get('reason') == 'embedded_floor') for r in selected})
+        settle_delta = added_defs + added_groups - removed_groups
         if sum(1 for _ in o.iter()) != sum(1 for _ in s.iter()) + (1 if synth else 0) + settle_delta:
             fail('B_element_count', z)
         if o.tag != 'world':

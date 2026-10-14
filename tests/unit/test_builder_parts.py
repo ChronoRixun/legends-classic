@@ -352,7 +352,7 @@ def test_port_keys_from_a_synthetic_build():
                                               'SaveFolder': 'X-Men Legends', 'ForcedTeams': '1',
                                               'GeometrySharingBlendIndices': '1', 'CharacterLadderPaths': '1',
                                               'ObjectiveDescriptions': '1', 'BreakRule': 'xml1',
-                                              'PlacementCrush': 'xml1', 'DoubleHeal': '0', 'ExplosiveFirstHit': '1',
+                                              'PlacementCrush': 'xml1', 'ObjectWorldImpact': 'xml1', 'DoubleHeal': '0', 'ExplosiveFirstHit': '1',
                                               'RankCosts': '1', 'LevelSkillPoints': 'xml1',
                                               'LevelStatPoints': 'xml1', 'Xml1Multipart': '1', 'DeathRule': 'xml1',
                                               'NpcPowerRule': 'xml1', 'PackAmount': 'xml1', 'SoloMode': '1', 'X1Leader': '1',
@@ -665,6 +665,9 @@ def test_xml1_builds_ask_for_the_first_games_break_rule():
     assert FI.game_keys(xml1_opening=True)['PlacementCrush'] == 'xml1'
     assert 'PlacementCrush' not in FI.game_keys(xml1_opening=False)
     assert 'PlacementCrush' in FI.PORT_OWNED['Game']
+    assert FI.game_keys(xml1_opening=True)['ObjectWorldImpact'] == 'xml1'
+    assert 'ObjectWorldImpact' not in FI.game_keys(xml1_opening=False)
+    assert 'ObjectWorldImpact' in FI.PORT_OWNED['Game']
     # SPEC 63.5: packs never heal double (nor play XML2's double sound), for every XML1 build
     assert FI.game_keys(xml1_opening=True)['DoubleHeal'] == '0'
     assert 'DoubleHeal' not in FI.game_keys(xml1_opening=False)
