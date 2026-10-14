@@ -10,7 +10,8 @@ file set, zone XML element count vs source, world entity (zonescript resolves, s
 names vs research/sweep/zones.json, package shape (zonexml/characters/boy, boy last, nav iff NAVB, no
 fre/ger, lowercase, no duplicates) and every package entry resolving in <out> or, for characters/scripts
 files when those modules did not run, in their planned sets; zoneinfo (XML2 entries untouched, one entry per
-converted zone), world tables (XML2 entries preserved in order), permanent.PKGB (prefix preserved), the base
+converted zone), world tables (XML2 entries preserved in order, except source-backed missing item models),
+retained zone packages (required talent prefix only), permanent.PKGB (prefix preserved), the base
 files the module replaced, and the proven nyc1_1_1 package (xml2_test) being a subset of ours; XML1's XP pickups
 (SPEC 23.1: XP_<XML1 count> items with --xp-curve xml1, the one XP item with xml2; count 1).
 Prints a summary and exits 1 on any failure.
@@ -19,9 +20,11 @@ from __future__ import annotations
 
 import argparse
 import collections
+import copy
 import json
 import re
 import sys
+import xml.etree.ElementTree as ET
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -29,6 +32,7 @@ sys.path.insert(0, str(HERE.parent))
 
 from xml1build import common as C          # noqa: E402
 from xml1build.zones import HERO_STYLE_PREFIX   # noqa: E402  (section 28)
+from xml1build import zones as ZONES           # noqa: E402
 
 FAIL = collections.defaultdict(list)
 _PLAYABLE = {}
@@ -68,14 +72,42 @@ def decode(path):
     return C.decode_xmlb(Path(path).read_bytes())
 
 
+def world_table_prefix_matches(base, output, source_items=None):
+    """Preserve every inherited entry; d52fe3b permits only a missing pickup model from XML1.
+
+    Compare entire entries after deriving the expected model independently of fill_item_model, so
+    changes to other attributes, children, existing models or order still fail.
+    """
+    expected = []
+    for entry in base:
+        entry = copy.deepcopy(entry)
+        source = (source_items or {}).get((entry.get('name') or '').lower())
+        if entry.tag == 'item' and source is not None and source.tag == 'item' and \
+                not (entry.get('model') or '').strip() and (source.get('model') or '').strip():
+            entry.set('model', source.get('model').strip())
+            C.normalize_attrs(entry)       # the writer sorts the newly inserted attribute
+        expected.append(C.xmlb.encode(entry))
+    return expected == [C.xmlb.encode(entry) for entry in output[:len(base)]]
+
+
+def retained_package_matches(base, output, talents):
+    """f58bcc3/a911c2f: required hero-NPC talents precede an otherwise unchanged base package."""
+    if not talents or any((e.tag or '').lower() == 'xml_talents' for e in base):
+        return False
+    expected = copy.deepcopy(base)
+    for name in reversed(talents):
+        expected.insert(0, ET.Element('xml_talents', {'filename': name}))
+    return C.xmlb.encode(expected) == C.xmlb.encode(output)
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument('out')
     ap.add_argument('--base', default=str(C.DEFAULT_BASE))
     a = ap.parse_args(argv)
     out = Path(a.out).resolve()
-    ctx = C.BuildContext(out, a.base, args=C.args_for_out(out, a.base))      # the build's own options (SPEC 21)
     reg = C.Registry.load(out / '_build/registry.json')
+    ctx = C.BuildContext(out, a.base, args=C.args_for_out(out, a.base), registry=reg)  # SPEC 21
     detail = json.loads((out / '_build/zones_detail.json').read_text(encoding='utf-8'))
     zones_json = ctx.zones_info
     nsmap = ctx.nsmap
@@ -140,10 +172,29 @@ def main(argv=None):
                 fail('A_reencode', e['rel'])
             INFO['xmlb_checked'] += 1
     # F. base files replaced
+    converter = ZONES.Zones(ctx, None)       # read-only source/script access; no build passes run
+    xml1_zones = set(converter.all_zones) | set(C.FRONTEND_ZONES)
     for k, e in owned.items():
         if e['overwrote_base']:
             INFO['base_replaced'] += 1
             if not EXPECTED_BASE_REPLACED.match(k):
+                # Retained XML2 maps also need hero-NPC talent files (f58bcc3, then a911c2f).
+                # Do not allow arbitrary map replacements: recompute the required prefix and
+                # compare the complete package, including its untouched base suffix.
+                if k.startswith('packages/generated/maps/') and k.endswith('.pkgb'):
+                    zone = k[len('packages/generated/maps/'):-len('.pkgb')]
+                    if zone not in xml1_zones:
+                        base = ctx.read_base_xmlb(e['rel'])
+                        scripts = {C.script_ref(x.get('filename')) for x in base
+                                   if (x.tag or '').lower() == 'script' and x.get('filename')}
+                        talents = ZONES.zone_npc_talent_entries(ctx, zone, (), scripts, converter.script_text)
+                        actual = decode(out / e['rel'])
+                        if retained_package_matches(base, actual, talents):
+                            for talent in talents:
+                                if not ctx.out_index.find(talent, ('.XMLB', '.engb')):
+                                    fail('F_retained_talent_missing', f'{e["rel"]}: {talent}')
+                            INFO['retained_talent_packages_checked'] += 1
+                            continue
                 fail('F_unexpected_base_replace', e['rel'])
 
     converted = detail['converted']
@@ -356,7 +407,13 @@ def main(argv=None):
             fail('C_tutorial_state', ext)
         INFO[f'zoneinfo{ext}_entries'] = len(oz)
 
-    # D. world tables: XML2 children preserved in order, additions new names only
+    # D. XML2 children preserved in order, with only the missing-model fill of d52fe3b.
+    source = ctx.read_x1_xml('data/items.eng')
+    ctx.x1_schema(source, 'data/items.eng')
+    C.map_tree_refs(source)
+    from xml1build import scripts as S
+    S.rewrite_data_tree(ctx, source, 'data/items.eng')
+    source_items = {(x.get('name') or '').lower(): x for x in C.iter_roots(source)[0] if x.get('name')}
     for name in ('common_ents', 'item_ents', 'items', 'shared_nodes'):
         for ext in ('.XMLB', '.engb'):
             bp = ctx.base_index.path(f'Data/{name}{ext}')
@@ -365,7 +422,7 @@ def main(argv=None):
             b = C.iter_roots(decode(bp))[0]
             o = C.iter_roots(decode(ctx.out_index.path(f'Data/{name}{ext}')))[0]
             bl, ol = list(b), list(o)
-            if [C.xmlb.encode(x) for x in bl] != [C.xmlb.encode(x) for x in ol[:len(bl)]]:
+            if not world_table_prefix_matches(bl, ol, source_items if name == 'items' else None):
                 fail('D_world_table_xml2_changed', f'{name}{ext}')
             have = {(x.get('name') or '').lower() for x in bl}
             added = ol[len(bl):]
