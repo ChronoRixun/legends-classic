@@ -5106,6 +5106,32 @@ or dropped map hull, but does not reproduce the slope/bridge escape or establish
 traversal. No deferred volume or new boundary is enabled by this static audit. Further enables still require
 the per-room hero/follower/enemy movement checks and placement after the existing settled-prop tail.
 
+### Live follow-up: nuclear walkway and platform volumes (2026-10-13)
+
+Enable `nuke_plant/nuke/nuke1_2` `kill_target02`. Its source-authored box is retained; only `smartent="false"`
+is added. A real jump off the walkway survived the authored slab on the released control, then caused 32,000
+damage and transfer to a surviving hero on the enabled build. Nearby walkway movement and combat were checked
+with AI party members and guards; no unintended lethal hit was observed on those routes. Setup used direct
+room loads, checked nav/floor starts and party placement; later combat-survival healing was logged and never
+revived a dead hero or prevented the lethal hit. These are port runtime controls, supported by the original
+targeting/damage-path comparison; the original Xbox game was not played in this run.
+
+Enable `nuke_plant/nuke/nuke1_3` `kill_target04` as well. All four placements have real-input fall controls:
+the large lower cylinder and the three smaller cylinders permit survival on the released control, while the
+enabled build produces the lethal hit and transfers control to a survivor. Nearby lower/upper platform routes
+and combat were checked with party members and guards. Both the original instance bounds and cylinder shapes
+remain intact; no immunity or broader targeting policy is introduced.
+
+Keep `mount/mount/mount` `kill_target` deferred. Its matched real walk controls establish activation,
+but a final enabled check also killed an AI-controlled follower after the leader fell. The original harm
+path permits AI damage, but equivalent follower routing/recovery was not established; activation alone
+does not settle that question.
+
+The new exact pairs belong to `FALL_KILL_ENABLED_LATE`, after settled props, for V31/V41 save-ordinal
+compatibility. `kill_target01` remains deferred: its deliberate entry works, but the normal coolant/bridge
+follower sequence remains unvalidated. Other incomplete room controls remain deferred. No player-only gate,
+boundary, save-format change or version change is added.
+
 ## 53. The first game's voice lines (2026-10-05, issue #49)
 
 XMen2.exe builds each character's sound table when the character loads (0x438d20, called from 0x4239be). For

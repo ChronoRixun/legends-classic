@@ -440,8 +440,8 @@ FALL_KILL_DEFERRED = {
     'maps/demo/hub/sewers1_1_1': frozenset({'kill_target01'}),
     'maps/demo/hub/sewers1_1_2': frozenset({'kill_target'}),
     'maps/mount/mount/mount': frozenset({'kill_target'}),
-    'maps/nuke_plant/nuke/nuke1_2': frozenset({'kill_target01', 'kill_target02'}),
-    'maps/nuke_plant/nuke/nuke1_3': frozenset({'kill_target04'}),
+    # The authored box passed real fall and nearby party/combat controls; coolant/bridge handling remains pending.
+    'maps/nuke_plant/nuke/nuke1_2': frozenset({'kill_target01'}),
     'maps/nuke_plant/nuke/nuke2_2': frozenset({'kill_target', 'kill_target01'}),
     'maps/nuke_plant/nuke/nuke2_3': frozenset({'kill_target01'}),
     'maps/sewers/grso/sewers3_1_1': frozenset({'kill_target02'}),
@@ -456,6 +456,8 @@ FALL_KILL_DEFERRED = {
 FALL_KILL_ENABLED_LATE = {
     'maps/nyc/alison/nyc1_1_4': frozenset({'kill_target01'}),
     'maps/sewers/hub/sewers1_2_4': frozenset({'kill_target'}),
+    'maps/nuke_plant/nuke/nuke1_2': frozenset({'kill_target02'}),
+    'maps/nuke_plant/nuke/nuke1_3': frozenset({'kill_target04'}),
 }
 
 
