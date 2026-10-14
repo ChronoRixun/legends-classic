@@ -64,7 +64,7 @@ def attest(zone, previous, current):
     old_residents = set(placements)
     remaining = {(bytes.fromhex(key_hash(g.get('type') or '')), bytes.fromhex(key_hash(i.get('name') or '')))
                  for p, (g, i) in enumerate(new_placed) if p not in tail_placements}
-    fresh, ambiguous = set(), set()
+    fresh, ambiguous, promoted_old = set(), set(), set()
     for p in new_placements[len(old):]:
         group, inst = new_placed[p]
         current_pair = (bytes.fromhex(key_hash(group.get('type') or '')),bytes.fromhex(key_hash(inst.get('name') or '')))
@@ -74,8 +74,30 @@ def attest(zone, previous, current):
             if _canonical(inst) != _canonical(old_inst): continue
             if sorted((k,v) for k,v in group.attrib.items() if k != 'type') != sorted((k,v) for k,v in old_group.attrib.items() if k != 'type'):
                 return None
+            promoted_old.add(old_index)
             pair = (bytes.fromhex(key_hash(old_group.get('type') or '')), bytes.fromhex(key_hash(old_inst.get('name') or '')))
             (ambiguous if pair in remaining else fresh).add(pair)
+    # An append must not smuggle a world-setting, untouched smart-placement or
+    # unrelated definition edit through an unchanged numbered prefix.
+    def placed_value(group, inst): return [sorted(group.attrib.items()), _canonical(inst)]
+    if [placed_value(g,i) for p,(g,i) in enumerate(old_placed) if p not in promoted_old] != [
+            placed_value(g,i) for p,(g,i) in enumerate(new_placed) if p not in tail_placements]:
+        return None
+    def frame(root):
+        return [root.tag, sorted(root.attrib.items()), [_canonical(e) for e in root if e.tag not in ('entity','entinst')]]
+    if frame(old_root) != frame(new_root): return None
+    tail_types = {new_placed[p][0].get('type') for p in tail_placements}
+    old_tail_types = {old_placed[p][0].get('type') for p in promoted_old}
+    old_tail_types -= {g.get('type') for p,(g,_) in enumerate(old_placed) if p not in promoted_old}
+    # Previously unused definitions may become a new tail; no old placed state names them.
+    old_tail_types |= tail_types - {g.get('type') for g,_ in old_placed}
+    old_all = {e.get('name'):_canonical(e) for e in old_root.iter('entity')}
+    new_all = {e.get('name'):_canonical(e) for e in new_root.iter('entity')}
+    for name in old_tail_types-tail_types:
+        if name in new_all and new_all[name] != old_all[name]: return None
+    old_defs = {n:e for n,e in old_all.items() if n not in old_tail_types}
+    new_defs = {n:e for n,e in new_all.items() if n not in tail_types | old_tail_types}
+    if old_defs != new_defs: return None
     return dict(zone=bytes.fromhex(key_hash(zone)), old=hashlib.sha1(previous).digest(),
                 current=hashlib.sha1(current).digest(), digest=digest, placements=placements,
                 fresh_aliases=sorted(fresh-ambiguous), ambiguous_aliases=sorted(ambiguous))

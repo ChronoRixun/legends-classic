@@ -61,6 +61,10 @@ def fixture(folder, variant='append'):
         next(e for e in root.iter('inst') if e.get('name') == 'gate01').set('origin', '1 2 3')
     elif variant == 'definition':
         next(e for e in root.iter('entity') if e.get('name') == 'gate').set('health', '99')
+    elif variant == 'world':
+        root.set('gravity','2')
+    elif variant == 'smartdefinition':
+        next(e for e in root.iter('entity') if e.get('name')=='lamp').set('health','99')
     elif variant == 'reorder':
         gate = next(e for e in root if e.tag == 'entinst' and e.get('type') == 'gate')
         first = gate[0]; gate.remove(first); gate.append(first)
@@ -100,7 +104,7 @@ def test_append_preserves_removed_prefix_and_tail_starts_fresh():
 
 
 def test_real_prefix_changes_and_missing_or_stale_attestations_discard():
-    for variant in ('position', 'definition', 'reorder'):
+    for variant in ('position', 'definition', 'reorder', 'world', 'smartdefinition'):
         with tempfile.TemporaryDirectory() as folder:
             env, saved, report = fixture(folder, variant)
             assert not report['accepted'] and report['rejected'] == ['zone/x/y']
