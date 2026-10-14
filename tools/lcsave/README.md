@@ -211,3 +211,16 @@ Sidecar framing remains `LCCONV1` plus NUL, u32 version=1, u32 table count, u32 
 Each table has provenance[32], zone-key-hash[32], u32 bit count, then identity hashes[32]. Counts are multiples of
 four, at most 128. Duplicate keys/identities, bad framing/version/CRC refuse malformed table files. V39 checks
 the generated set. Rebuild savefiles after the era ledger changes; game asset preparation caches remain valid.
+
+### Online append-only resident transfer
+
+The reverse adapter carries host-authenticated fresh-tail provenance through the
+native stream's unused state-zero sentinel and an ordinary zone-string entry.
+The marker names the zone, old/current placement hashes and retained source
+indices. `native_zone_metadata` validates it against the receiving build and
+recovers fresh residents even without that peer's optional prefix sidecar.
+Unmarked zero slots remain historical removals. Cached resaves preserve source
+provenance; a real capture replaces it with observed current state. No durable LC
+fields, features or versions change. XML2 Fix's GCAP protocol 4 gates compatible
+readers. `export_lcsave_zonecompat_vectors.py` exports synthetic transfer,
+malformed-input and cached-resave cases for native parity tests.
