@@ -10,7 +10,7 @@ def main(destination):
     out = Path(destination)
     out.mkdir(parents=True, exist_ok=True)
     lines = []
-    for variant in ('append', 'tailstate', 'position', 'definition', 'reorder'):
+    for variant in ('append', 'tailstate', 'xmlbonly', 'position', 'definition', 'reorder'):
         folder = out / variant
         folder.mkdir()
         env, saved, _ = fixture(str(folder), variant)

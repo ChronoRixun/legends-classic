@@ -7,7 +7,7 @@ from pathlib import Path
 import xmlb
 from test_lcsave import _xmlb
 from test_lcsave_durable import _env, _converted, _secs
-from lcsave import zonecompat as Z, binds, container, convert, oldsave, layout as L, lcfiles
+from lcsave import zonecompat as Z, binds, container, convert, oldsave, layout as L, lcfiles, keys
 
 
 def fixture(folder, variant='append'):
@@ -32,6 +32,9 @@ def fixture(folder, variant='append'):
         record['states'].append(state)
         saved = container.write_file(L.KIND_CAMPAIGN, _secs(f), f['header'])
     previous = Path(folder) / 'previous'
+    if variant == 'xmlbonly':
+        path = Path(env.binds.zone_file('zone/x/y'))
+        path.rename(path.with_suffix('.xmlb'))
     shutil.copytree(env.binds.build, previous)
     path = Path(env.binds.zone_file('zone/x/y'))
     root = xmlb.decode(path.read_bytes())
@@ -125,3 +128,18 @@ def test_former_smart_tail_and_exclusive_world_dependency_start_fresh():
         assert all(w['slot'] != 5 for w in restored['items']['world'])
         capture, = convert.loaded_zone_metadata(saved, env)
         assert capture['fresh_entities']
+
+
+def test_xmlb_only_zone_attests_and_current_digest_validation_fails_closed():
+    with tempfile.TemporaryDirectory() as folder:
+        env, saved, report = fixture(folder, 'xmlbonly')
+        assert report['accepted'] == ['zone/x/y']
+        restored, _ = convert.reverse_slot(saved, env)
+        assert len(restored['zones']) == 1
+        assert Z.validate_current(env.binds.build) == 1
+        rows = Z.load(env.binds.build)
+        next(r for r in rows if r['zone'] == bytes.fromhex(keys.key_hash('zone/x/y')))['digest'] = bytes(32)
+        (Path(env.binds.build)/Z.REL).write_bytes(Z.encode(rows))
+        try: Z.validate_current(env.binds.build)
+        except binds.BindError: pass
+        else: assert False, 'incorrect active prefix digest accepted'

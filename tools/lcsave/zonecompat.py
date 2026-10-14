@@ -120,8 +120,9 @@ def validate_current(build):
     binds = Binds(build)
     rows = load(build)
     active = 0
-    for zone in binds.all_zone_files():
+    for zone in sorted(set(binds.zone_names) | set(binds.all_zone_files())):
         numbering = binds.zone_numbering(zone)
+        if numbering is None: continue
         for row in rows:
             if row['zone'] != bytes.fromhex(key_hash(zone)) or row['current'].hex() != numbering['sha1']:
                 continue  # history may describe another release's current map
@@ -147,9 +148,9 @@ def generate(previous, current):
     before, after = Binds(previous), Binds(current)
     rows = {(r['zone'], r['old'], r['current']): r for r in load(current)}
     accepted, rejected = [], []
-    for zone in after.all_zone_files():
+    for zone in sorted(set(after.zone_names) | set(after.all_zone_files())):
         old, new = before.zone_file(zone), after.zone_file(zone)
-        if old is None: continue
+        if old is None or new is None: continue
         old_raw, new_raw = Path(old).read_bytes(), Path(new).read_bytes()
         if old_raw == new_raw: continue
         row = attest(zone, old_raw, new_raw)
