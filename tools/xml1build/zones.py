@@ -1343,6 +1343,10 @@ class Zones:
                     if row['status'] == 'settle':
                         row['status'] = 'conversion_deferred'
                 ctx.warn(f'{zone}: spawn-floor survey deferred: {exc}')
+        # New hazards follow every 0.2.2 numbered placement, including late fall
+        # volumes. Existing script-pinned hazards retain their original position.
+        from . import x1schema as XS
+        self.counts['hazard_bounds'] += XS.convert_hazard_bounds(root, f'maps/{zone}.eng')
         for el in root.iter():
             if el.tag.lower() == 'precache':
                 t = (el.get('type') or '').lower()

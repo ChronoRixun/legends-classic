@@ -7244,3 +7244,36 @@ uses. The builder owns this key and rejects a companion DLL that does not read i
 This companion feature needs an assigned shared gameplay rule ID before release;
 the current local implementation blocks online while enabled. Versions remain for
 the integrator to set. No save format is changed.
+
+## Model-less placed hazard bounds (validator V-TBD)
+
+XMen2.exe recreates ordinary smart physical entities without a model-less
+placement's authored local bounds. The harm size getter at 0x41c330 derives
+half-extents from local min/max (+0x158/+0x164), scaled by +0x188. XML1's
+corresponding getter at 0x30680 uses +0x138/+0x144 and +0x168; its absent
+smartent default is false. Retaining the map extents alone therefore does not
+establish runtime preservation.
+
+After schema conversion, script pinning, spawn-floor residency and late fall
+volume ordering, `convert_hazard_bounds` gives placed, model-less
+`affectableharment` definitions with instance extents `smartent=false`.
+Damage type, timing, targeting, bounds, shape, effects and instance coordinates
+remain authored. Explicit smart residency, modeled entities, definitions with
+no bounded placements and the separately managed fall-volume pattern are
+excluded. Existing resident hazards stay at their previous positions.
+
+New residents carry ignored metadata `xml1hazardbounds=true`; only their
+instance groups move to the very end, after the complete released numbered
+prefix (including settled props and late fall volumes). This keeps old zone
+record ordinals stable. V-TBD checks residency, marker eligibility and the new
+tail; V31 and V41 recognize the successive tail additions. Synthetic tests
+check unchanged old ordinals, repeated placements, existing residents,
+exclusions, idempotence and rejected missing flags/misordered tails.
+
+This is a data conversion with no save-format or engine rule change. XML2 Fix
+1.5.0 also compares the exact placement-file SHA1 when loading an LC zone
+record: changed maps discard that record despite preserved ordinals. This
+conversion does not migrate those records, so retaining existing saved zone
+state remains an acceptance blocker. Runtime acceptance and affected-room
+coverage are reported separately; the static rule does not establish campaign
+traversal or save/load acceptance by itself.
