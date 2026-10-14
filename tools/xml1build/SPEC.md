@@ -6213,6 +6213,29 @@ save check are narrower evidence, not a full side-effect-free post-load observer
 effective mod-bind policy, network/co-op/DR acceptance and TalentRegistry work remain separate pending branches.
 
 
+### 70.5.1 Append-only resident compatibility
+
+Stable ordinals alone do not retain LC zone state: the original reverse reader
+rejects any changed placement SHA1. Optional `Data/lcsave/zone-prefix.lcm` now
+attests a previous and current whole-map hash after the builder compares complete
+resident-prefix definitions, placement-group attributes and instances exactly.
+The release ledger contains only hashes and original placement indices. Generate
+it with `python -m lcsave.zonecompat PREVIOUS_BUILD CURRENT_BUILD --ledger-out
+tools/lcsave/data/zone_prefixes.json`, against every supported old release; both
+`.engb` maps and `.xmlb`-only fallbacks participate. Savefiles retains recorded
+attestations and emits packaged history in fresh builds. V-TBD under V39 checks
+applicable prefix digests against the built output.
+
+The reader additionally matches each saved numbered ordinal, original placement
+and name pair. Unchanged prefixes keep their state; the appended residents start
+fresh, including omission of their former smart/dynamic state. Any other hash
+change retains the original discard behavior. Incomplete captures reject and
+malformed metadata refuses. Runtime metadata authenticates current opened bytes
+and distinguishes fresh factories from old removals. Cached unvisited records
+retain original hash/indices until an actual current capture replaces them.
+No durable LC field, section revision or feature bit changes. Framing, trust
+boundary and regeneration details are in `tools/lcsave/README.md`.
+
 ### 70.6 Legacy equipment eras and restore-bank evidence
 
 Legacy conversion carries the detected talent/start era separately from the item/writer era. Every item
