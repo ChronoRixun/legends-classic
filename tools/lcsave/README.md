@@ -1,5 +1,60 @@
 # lcsave: the LC save format and the old-save converter (reference implementation)
 
+Append-only resident compatibility uses `Data/lcsave/zone-prefix.lcm`, an optional
+builder attestation sidecar. Generate it against legally owned previous release
+output with `python -m lcsave.zonecompat PREVIOUS_BUILD CURRENT_BUILD
+--ledger-out tools/lcsave/data/zone_prefixes.json` after content conversion. The
+release ledger contains hashes and placement indices only; savefiles emits it in
+fresh builds and retains earlier sidecar entries. Regenerate against each supported
+old build after another map edit; compatibility is never inferred transitively.
+
+An attestation requires the new numbered list to be strictly longer and its old
+prefix to match complete entity definitions, placement-group attributes and instance
+attributes/children, in ordinal order. Attribute ordering is irrelevant; authored
+values, positions and child order are exact. The old whole-map SHA1, current
+whole-map SHA1, zone key hash, old placement indices and prefix digest bind the
+comparison. Saved numbered identities must also match their original ordinal and
+placement before they map to the current placement. Saves alone lack original
+definitions, so matching saved names cannot prove compatibility.
+
+Zone keys are lower-cased as placement numbering does before canonical key hashing.
+Both runtime readers recompute the prefix digest from the opened current map;
+an edited digest or a current SHA1 rebound to a changed prefix causes that record
+to be discarded even with a valid sidecar CRC. This checks integrity, not authorship:
+historical old-map, placement and alias claims still require the trusted builder
+ledger. A deliberately rewritten, self-consistent ledger is not authenticated by
+an unsigned digest. Generator `BindError` failures reject only the affected zone;
+malformed or conflicting historical ledgers still stop generation intact.
+
+The native reader retains old state and fog/heard provenance, starts new residents
+fresh, and omits former smart/dynamic state matching the new resident tail. Missing
+or stale attestations retain exact-hash rejection; malformed sidecars refuse.
+Incomplete captures still reject. Cached unvisited records retain their old hash
+and old placement indices until a real current-map capture replaces them. Runtime
+metadata uses the current hash/indices and identifies fresh tail factories, avoiding
+both a second provenance rejection and accidental tail tombstones. These are
+ephemeral API fields; no container field, section version or feature bit changes.
+
+Renamed tail definitions also carry original definition/instance hash aliases.
+If an old unnumbered state's alias identifies both a new tail and an untouched
+placement, the zone record still rejects: that save lacks original unnumbered
+placement provenance. Positions can move during play and cannot prove which twin
+was recorded. This prevents duplicate old smart objects or silently resetting an
+untouched twin. Consequently append-only numbered prefixes alone do not guarantee
+retention for every old save. Promoting only some identically named smart twins is
+an unresolved case; this reader fails closed without a durable format change.
+
+Sidecar framing: `LCZPFX1` plus NUL, little-endian u32 version 2, row count,
+total length and CRC32 of the body. Each row contains zone-key SHA256[32], old
+map SHA1[20], current map SHA1[20], canonical-prefix SHA256[32], u32 prefix count,
+then that many original u32 placement indices, u32 fresh-alias count with pairs
+of definition/instance SHA256[32], and u32 ambiguous-alias count with the same
+pairs. Each pair list has at most 4096 entries. Duplicate hash triples/placement
+indices, invalid framing and counts over 4096 refuse. A compatibility sidecar is
+trusted builder output, like existing bind metadata; its CRC detects damage and is
+not an authenticity signature. Full current-map hashing prevents stale claims
+from applying to edited installed maps.
+
 What it is: the builder's reference implementation of the new save container ("LC save", format 1) and of the
 one-time converter from XMen2.exe's own save format, plus the era model that tells which builder release numbered
 an old save's positional data. XML2 Fix carries the C++ translation; this package is the oracle it is checked
