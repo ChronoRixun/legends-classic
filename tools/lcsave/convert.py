@@ -1392,6 +1392,10 @@ class PositionTables:
                      smart=smart + [0] * (native.smart - len(smart)), pad_5270=0, smart_count=len(smart),
                      fog=r['fog']['data'], conversation=self.conversation_words(r, zone, notes), time_stamp=r['time_stamp'], flag=r['flag'],
                      pad_55dd=[0, 0, 0])
+            if prefix:
+                from . import fresh_tail
+                z['states'][0]['def_name'] = intern(fresh_tail.text(zone, prefix, num))
+                z['states'][0]['payload'] = fresh_tail.MAGIC
             zones.append(z)
             applied.update(dependencies(dict(states=retained_states)))
         # Shared handles and items not owned by any zone survive; rejected zones release exclusive dependencies.
@@ -1716,7 +1720,7 @@ def validate_native_sections(S, env, *, hash_conversations=True, native=L.RETAIL
 
 def native_zone_metadata(old_stream, env, *, native=L.RETAIL):
     """Validated current-build associations for a native transfer (a stream of the native layout `native`)
-    without an LC sidecar; inferred only."""
+    without an LC sidecar; recover marked append provenance, otherwise inferred only."""
     result = old_stream_to_new(old_stream, env, now=0, _hash_conversations=False, native=native)
     if result.refused:
         raise ConvertError(result.refused)
@@ -1725,13 +1729,24 @@ def native_zone_metadata(old_stream, env, *, native=L.RETAIL):
     validate_native_sections({tag: sec['data'] for tag, sec in f['sections'].items() if sec['data'] is not None}, env,
                              hash_conversations=False, native=native)
     zones = {env.catalogue.lookup('ZONE', key_hash(z)): z for z in env.binds.zone_names}
+    from . import fresh_tail
+    image = old_stream
+    if len(image) == native.payload:
+        image = bytes(0x80) + struct.pack('<I', native.payload) + image
+    fresh = fresh_tail.metadata(oldsave.read_slot(image, native), env.binds)
     captures = []
     for record in f['sections']['ZONE']['data']['records']:
+        zone = zones[record['zone']]
+        if zone in fresh:
+            captures.append(fresh.pop(zone))
+            continue
         captures.append(dict(zone=zones[record['zone']], time_stamp=record['time_stamp'],
                              placement_sha1=record['content_hash'], capture_flags=2, conversation_digest=bytes(32),
                              entities=[dict(ordinal=s['ordinal'], placement_index=s['placement_index'],
                                             definition_name=record['names'][s['def_name']], instance_name=record['names'][s['inst_name']])
                                        for s in record['states'] if s['list'] == STATE_NUMBERED]))
+    if fresh:
+        raise ConvertError('native fresh-tail record was not translated')
     return captures
 
 

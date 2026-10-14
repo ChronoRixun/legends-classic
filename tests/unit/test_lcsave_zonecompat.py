@@ -258,3 +258,70 @@ def test_generate_rejects_one_unmodelled_zone_and_keeps_valid_history():
         assert report['accepted'] == ['zone/x/y']
         assert report['rejected'] == ['zone/x/unmodelled']
         assert Z.load(env.binds.build) == history
+
+
+def test_native_transfer_retains_fresh_tail_without_receiver_sidecar():
+    for native in (L.RETAIL, L.E10A2):
+        with tempfile.TemporaryDirectory() as folder:
+            env, saved, _ = fixture(folder)
+            restored, _ = convert.reverse_slot(saved, env, native=native, registry={"keys": set()})
+            expected, = convert.loaded_zone_metadata(saved, env, native=native, registry={"keys": set()})
+            env.binds.zone_prefixes = []
+            stream = oldsave.write_slot(restored, native=native)
+            for image in (stream, stream[L.OLD_ENVELOPE:]):
+                actual, = convert.native_zone_metadata(image, env, native=native)
+                for key in ('entities', 'fresh_entities', 'placement_sha1', 'source_placement_sha1'):
+                    assert actual[key] == expected[key], key
+            # Saving an unvisited cached record preserves its original source hash.
+            result = convert.old_stream_to_new(stream, env, now=0, native=native,
+                zone_captures=[actual], require_capture_metadata=True)
+            assert result.refused is None, result.refused
+            record, = container.read_file(result.file_bytes)['sections']['ZONE']['data']['records']
+            assert record['content_hash'] == expected['source_placement_sha1']
+            assert not next(s for s in record['states'] if s['ordinal'] == 1)['flags_b'] & 8
+            env.binds.zone_prefixes = Z.load(env.binds.build)
+            again, = convert.loaded_zone_metadata(result.file_bytes, env, native=native)
+            assert again['fresh_entities'] == expected['fresh_entities']
+
+
+def test_unmarked_native_zeros_are_still_removals_and_missing_host_sidecar_resets():
+    with tempfile.TemporaryDirectory() as folder:
+        env, saved, _ = fixture(folder)
+        restored, _ = convert.reverse_slot(saved, env)
+        restored['zones'][0]['states'][0]['payload'] = bytes(8)
+        capture, = convert.native_zone_metadata(oldsave.write_slot(restored), env)
+        assert not capture.get('fresh_entities')
+        env.binds.zone_prefixes = []
+        reset, _ = convert.reverse_slot(saved, env)
+        assert not reset['zones']
+        assert convert.native_zone_metadata(oldsave.write_slot(reset), env) == []
+
+
+def test_native_fresh_tail_rejects_invalid_or_stale_provenance():
+    with tempfile.TemporaryDirectory() as folder:
+        env, saved, _ = fixture(folder)
+        restored, _ = convert.reverse_slot(saved, env)
+        for mutation in ('alive', 'dynamic', 'tailstate', 'wrong_zone', 'wrong_map', 'duplicate_placement', 'empty_prefix', 'overflow', 'leading_zero'):
+            broken = copy.deepcopy(restored)
+            record = broken['zones'][0]
+            sentinel = record['states'][0]
+            if mutation == 'alive': sentinel['flags_b'] = 8
+            elif mutation == 'dynamic': record['dynamic'][0] = 0; record['dynamic_count'] = 1
+            elif mutation == 'tailstate': record['ordinal_map'][3] = record['ordinal_map'][0]
+            else:
+                table = broken['zone_strings']; offset = table['offsets'][sentinel['def_name'] & 0xffffff]
+                fields = oldsave.zone_string(table, sentinel['def_name']).split('|')
+                if mutation == 'wrong_zone': fields[1] = '0'*64
+                elif mutation == 'wrong_map': fields[3] = '0'*40
+                elif mutation == 'duplicate_placement': fields[4] = '0,0,0'
+                elif mutation == 'overflow': fields[4] = '4294967296'
+                elif mutation == 'leading_zero': fields[4] = '01'
+                else: fields[4] = ''
+                text = '|'.join(fields).encode() + b'\0'
+                arena = bytearray(table['arena']); arena[offset:offset+len(text)] = text; table['arena'] = bytes(arena)
+            try:
+                convert.native_zone_metadata(oldsave.write_slot(broken), env)
+            except ValueError:
+                pass
+            else:
+                assert False, mutation
