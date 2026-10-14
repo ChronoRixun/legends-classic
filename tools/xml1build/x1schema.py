@@ -423,14 +423,14 @@ def convert_harm_loop_start(root):
 # entities, and a smart entity is never in the touch query (the dead form). So only smartent is
 # written; boxcollision stays as authored (SPEC 52, "Touch shape").
 FALL_KILL_FLAGS = {'smartent': 'false'}
-# Preserve these original hazards until issue #5 party handling is available and
-# the crossings are revalidated: AI can follow a safe leader into their water.
+# Preserve these original hazards until their per-room crossings and AI behavior are validated.
+# The original damage path has no blanket AI immunity; source geometry alone does not prove safe crossings.
+# Released 0.2.2 has 17 deferred definitions (25 placements), including three unreachable demo definitions.
 FALL_KILL_DEFERRED = {
     'maps/arbiter/a_int/arb3_4': frozenset({'kill_target'}),
-    # 0.1.9: a volume stays enabled only where every walkable cell above or beside it is at least 150 units
-    # higher (a real pit). The others lie just under floors, ramps or ledges - nyc1_1_4's is a 300-unit slab
-    # under the whole rooftop map that killed heroes on the billboard ramp - and wait for an in-game crossing
-    # test each (SPEC 52, "0.1.9: shallow volumes deferred"). sewers1_1_4's channel passed it and is enabled again;
+    # 0.1.9 used a conservative 150-unit clearance filter pending in-game crossing tests
+    # (SPEC 52, "0.1.9: shallow volumes deferred"). The reported billboard-ramp death was not reproduced;
+    # the nav floor stays above that volume with either touch shape. sewers1_1_4's channel passed and is enabled;
     # nuke1_2's kill_target01 (a walkway runs off into it) stays deferred, sewers1_1_1 is unfinished and the rest
     # untested (SPEC 52, "Crossing tests"). 2026-10-12, with the original touch shape: nyc1_1_4 (the rooftop slab)
     # and sewers1_2_4 passed and are enabled (SPEC 52, "Touch shape").
@@ -440,8 +440,8 @@ FALL_KILL_DEFERRED = {
     'maps/demo/hub/sewers1_1_1': frozenset({'kill_target01'}),
     'maps/demo/hub/sewers1_1_2': frozenset({'kill_target'}),
     'maps/mount/mount/mount': frozenset({'kill_target'}),
-    'maps/nuke_plant/nuke/nuke1_2': frozenset({'kill_target01', 'kill_target02'}),
-    'maps/nuke_plant/nuke/nuke1_3': frozenset({'kill_target04'}),
+    # The authored box passed real fall and nearby party/combat controls; coolant/bridge handling remains pending.
+    'maps/nuke_plant/nuke/nuke1_2': frozenset({'kill_target01'}),
     'maps/nuke_plant/nuke/nuke2_2': frozenset({'kill_target', 'kill_target01'}),
     'maps/nuke_plant/nuke/nuke2_3': frozenset({'kill_target01'}),
     'maps/sewers/grso/sewers3_1_1': frozenset({'kill_target02'}),
@@ -456,6 +456,8 @@ FALL_KILL_DEFERRED = {
 FALL_KILL_ENABLED_LATE = {
     'maps/nyc/alison/nyc1_1_4': frozenset({'kill_target01'}),
     'maps/sewers/hub/sewers1_2_4': frozenset({'kill_target'}),
+    'maps/nuke_plant/nuke/nuke1_2': frozenset({'kill_target02'}),
+    'maps/nuke_plant/nuke/nuke1_3': frozenset({'kill_target04'}),
 }
 
 
