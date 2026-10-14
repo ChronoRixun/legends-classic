@@ -172,7 +172,7 @@ BREAK_RULE = 'xml1'
 PLACEMENT_CRUSH = 'xml1'
 
 # XML1's ordinary impact against a non-physical target has zero damage.
-# Requires the companion ObjectWorldImpact install (pending a shared rule ID).
+# Requires the companion ObjectWorldImpact install (gameplay rule 17).
 OBJECT_WORLD_IMPACT = 'xml1'
 
 # xml2-fix [Game] DoubleHeal (SPEC 63.5, issue #82): XMen2.exe's restoreHealth / restoreEnergy (the packs' onactivate
@@ -235,7 +235,7 @@ FORCED_TEAMS_VALUES = ('1', '0', 'off')
 # v1.5: the 0.2.2 wave's [Game] keys - PlacementCrush, DoubleHeal, RankCosts, LevelSkillPoints, LevelStatPoints,
 # Xml1Multipart, X1Leader, SoloMode, DeathRule, DangerRoomGate, RevivalCost, Xml1Turrets, PackAmount, DeathSwitchClear - and
 # [Limits] ScriptFunctions; a 1.4 DLL silently ignores every one of them, so check_release_dll refuses it)
-REQUIRED_XML2FIX = '1.5'
+REQUIRED_XML2FIX = '1.6'
 
 # xml2-fix [Balance] (xml1build.balance; SPEC 69): the first game's combat numbers for a
 # balance build - one whose styles carry the power-attack marker (report.json build.balance 'xml1'). HeroStatScale
@@ -720,20 +720,23 @@ def check_entity_capacity_dll(dll, keys: dict) -> None:
 
 
 # The [Game] / [Limits] keys first read by XML2 Fix 1.5 (REQUIRED_XML2FIX): a 1.4 DLL ignores them without a word.
-RELEASE_15_KEYS = {'Game': ('PlacementCrush', 'ObjectWorldImpact', 'DoubleHeal', 'RankCosts', 'LevelSkillPoints', 'LevelStatPoints',
+RELEASE_15_KEYS = {'Game': ('PlacementCrush', 'DoubleHeal', 'RankCosts', 'LevelSkillPoints', 'LevelStatPoints',
                             'Xml1Multipart', 'X1Leader', 'SoloMode', 'DeathRule', 'DangerRoomGate', 'RevivalCost',
-                            'Xml1Turrets', 'PackAmount', 'DeathSwitchClear', 'NpcPowerRule', 'StunRule'),
+                            'Xml1Turrets', 'PackAmount', 'DeathSwitchClear', 'NpcPowerRule'),
                    'Limits': ('ScriptFunctions',)}
+# TestMode is an optional player preference; the builder never writes it by default.
+RELEASE_16_KEYS = {**RELEASE_15_KEYS,
+                   'Game': RELEASE_15_KEYS['Game'] + ('ObjectWorldImpact', 'StunRule')}
 
 
 def check_release_dll(dll, keys: dict) -> None:
-    """An existing companion DLL must know every XML2 Fix 1.5 key the build writes (as check_entity_capacity_dll does
+    """An existing companion DLL must know every XML2 Fix 1.6 key the build writes (as check_entity_capacity_dll does
     for 1.4's): an older fix would run the build with those rules silently off. Source-only builds may omit the DLL."""
     dll = Path(dll)
     if not dll.is_file():
         return
     data = dll.read_bytes()
-    missing = [f'[{section}] {key}' for section, names in RELEASE_15_KEYS.items() for key in names
+    missing = [f'[{section}] {key}' for section, names in RELEASE_16_KEYS.items() for key in names
                if key in keys.get(section, {}) and key.encode('utf-16le') not in data]
     if missing:
         raise FixTooOld(f'This build needs XML2 Fix {REQUIRED_XML2FIX} or later; the existing DLL does not recognize '

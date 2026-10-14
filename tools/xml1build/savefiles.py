@@ -141,7 +141,7 @@ def validate(v, ck):
              if os.path.relpath(p, out).replace(os.sep, '/') not in files]
     for p in extra:
         ck.error(f'{os.path.relpath(p, out).replace(os.sep, "/")}: a .lcbind no data file of this build owns')
-    # V-TBD: stale historical rows stay inert; applicable attestations must describe
+    # V39: stale historical rows stay inert; applicable attestations must describe
     # this build's complete resident prefix, including definition and instance data.
     from lcsave.zonecompat import validate_current
     try:

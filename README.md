@@ -11,7 +11,7 @@ It is a builder, not a download: every file of the result is made on your comput
 This project ships no game content - no game files, no parts of them, no modified executables - and the builder
 makes no network connections.
 
-> **Status: public test builds (builder 0.2.2, XML2 Fix 1.5.0, launcher 0.3.0).** Every mission and the ending run
+> **Status: public test builds (builder 0.2.3, XML2 Fix 1.6.0, launcher 0.3.0).** Every mission and the ending run
 > in automated tests on the developer's PC (a full hand-played run is under way), the builder (`xml1-builder`) makes
 > that build from a disc image and an X-Men Legends II install in a few minutes, and the
 > [Ultimate Legends](https://github.com/ChronoRixun/ultimate-legends) launcher does it in a few clicks. 0.2.2 brings
@@ -25,7 +25,7 @@ makes no network connections.
 |---|---|
 | **X-Men Legends for the original Xbox** | your own disc, made into a disc image: a full Redump-style `.iso` or an XISO both work. [How to image your own disc](docs/DUMPING.md). The PlayStation 2 and GameCube versions are different games under the hood and aren't supported (the builder recognises them and says so); compressed images (CCI / CSO) need decompressing first. |
 | **X-Men Legends II: Rise of Apocalypse for PC** | installed, English, with the retail `XMen2.exe` (the builder checks it) and unmodified game files. Your install is only read, never changed. |
-| **[xml2-fix](https://github.com/ChronoRixun/xml2-fix) 1.5.0 or later** | the in-memory engine fixes the port relies on (new-game party, forced parties, the first game's level curve and combat numbers, bigger zones, its own save format and folder, display options). The Ultimate Legends launcher installs it for you. Each builder needs a minimum version: see [Versions that go together](#versions-that-go-together). |
+| **[xml2-fix](https://github.com/ChronoRixun/xml2-fix) 1.6.0 or later** | the in-memory engine fixes the port relies on (new-game party, forced parties, the first game's level curve and combat numbers, bigger zones, its own save format and folder, display options). The Ultimate Legends launcher installs it for you. Each builder needs a minimum version: see [Versions that go together](#versions-that-go-together). |
 | **Windows 10 or 11, 64-bit** | the released builder is a Windows program. From source it is plain Python + numpy, written to run on Linux too (its tests run there in CI; a full Linux build is untested so far). |
 | **Disk space** | about 8 GB while building with movies (the game ~4.6 GB + a build cache ~3.2 GB you can delete afterwards), about 6 GB without movies. |
 | **Time** | the first build converts every sound bank: about 6-8 minutes on a current 8-core PC. Rebuilds with the cache take 2-3 minutes. |
@@ -70,7 +70,7 @@ xml1-builder clean   --out "C:\Games\X-Men Legends (Port)"
 | `clean` | deletes exactly what the builder made - never your saves; mods only with `--mods`; `--dry-run` only counts. |
 
 Then copy `dinput.dll` from the [latest xml2-fix release](https://github.com/ChronoRixun/xml2-fix/releases/latest)
-(builder 0.2.2 needs 1.5.0 or later) into the output folder and start `XMen2.exe` there. The builder has already written the `xml2-fix.ini` settings the
+(builder 0.2.3 needs 1.6.0 or later) into the output folder and start `XMen2.exe` there. The builder has already written the `xml2-fix.ini` settings the
 port needs (`--no-ini` leaves the file alone; the keys are in `_build\stamp.json`).
 
 The release zip is not code-signed yet, so Windows SmartScreen or an antivirus may warn about it: compare the
@@ -241,6 +241,7 @@ the game.
 
 | Builder | Content version | Needs xml2-fix | Notes |
 |---|---|---|---|
+| 0.2.3 | 20 | 1.6.0 | hazard bounds, floor-overlap crates, two more fall volumes, NpcPower revision 4 and StunRule; verified saved-zone prefix retention; both co-op peers need matching versions/settings |
 | 0.2.2 | 19 | 1.5.0 | the first game's rank costs and level points (`[Game] RankCosts`, `LevelSkillPoints`, `LevelStatPoints`), breakable parts (`[Game] Xml1Multipart`), leaders (`[Game] X1Leader`), solo mode (`[Game] SoloMode`), death below 1 health (`[Game] DeathRule`), the Xtraction services and Danger Room gate (`[Game] DangerRoomGate`), the revival price (`[Game] RevivalCost`), scan turrets (`[Game] Xml1Turrets`), pack amounts (`[Game] PackAmount`), settling without crushes (`[Game] PlacementCrush`), no double heals (`[Game] DoubleHeal`), 1024 script functions (`[Limits] ScriptFunctions`), the death hand-over (`[Game] DeathSwitchClear`), enemy power use and combos (`[Game] NpcPowerRule`); co-op peers need 0.2.2 / 1.5.0 on both PCs |
 | 0.2.0 - 0.2.1 | 18 | 1.4.0 | the LC save format (`[Save] Format=lc`), the first game's combat balance (`[Balance]`), the entity capacity raise (`[Limits] EntityCapacity`: 768 generic / 1024 World entities), triggers per move (`[Limits] MoveTriggers`), the Master Mold controller (`[Game] Xml1MasterMold`, `Xml1MoldStage`), explosions' first hit (`[Game] ExplosiveFirstHit`), the classic main menu (`[Game] ClassicMainBackdrop`, `ClassicMainPanelBounds`), popup answers (`[Game] ConfirmationRelease`), the Xtraction shop (`[Game] XtractionShop`), content fingerprint metadata (`[Online] ContentFingerprint`) and the shared gameplay agreement (co-op peers with different content or settings are refused, with the reason on both PCs) |
 | 0.1.12 | 15 | 1.3.2 | ladder descents (`[Game] CharacterLadderPaths`), objective completion text (`[Game] ObjectiveDescriptions`), STAT pickups (`addStatPoints`), the first game's break rule (`[Game] BreakRule`), the effect curve pool (`[Limits] EffectCurves`), no Xtract world map (`[Game] Xtract`) |
@@ -275,7 +276,7 @@ What comes next, by version (plans move with what testing finds):
 - **0.2.0** - the port's own save format (every old save carried over once), the first game's combat balance, its
   main menu, rooms that keep every object (the engine's entity capacity raised) and Master Mold's original fight
   ([#27](https://github.com/ChronoRixun/legends-classic/issues/27)); **0.2.1** fixed builds from the released builder.
-- **0.2.2** (this release) - the scan turrets ([#4](https://github.com/ChronoRixun/legends-classic/issues/4)), the
+- **0.2.2** - the scan turrets ([#4](https://github.com/ChronoRixun/legends-classic/issues/4)), the
   Xtraction services ([#63](https://github.com/ChronoRixun/legends-classic/issues/63)), the first game's skill ranks,
   level points and stat growth ([#35](https://github.com/ChronoRixun/legends-classic/issues/35)), breakable parts and
   boss armour ([#3](https://github.com/ChronoRixun/legends-classic/issues/3)), solo mode
@@ -349,3 +350,16 @@ Legends Classic is an unofficial, non-commercial fan project, not affiliated wit
 Activision, Raven Software or Beenox. Marvel, X-Men, X-Men Legends and all related character names are trademarks of
 Marvel; all other trademarks belong to their owners and are used only to say which games this project works with.
 It contains and distributes no game content: you need your own copies of both games. Full text: [LEGAL.md](LEGAL.md).
+
+
+### 0.2.3 companion settings and player testing
+
+| XML2 Fix setting | Builder default | Purpose |
+|---|---|---|
+| `[Game] ObjectWorldImpact` | `xml1` | XML1 landing-impact coefficient; rule 17 |
+| `[Game] StunRule` | `xml1` | Clear rejected/interrupted party-hero stun flags; rule 18 |
+| `[Game] NpcPowerRule` | `xml1` | XML1 power decisions and combo timing; rule 16 revision 4 |
+| `[TestMode] ForgeEverywhere` | off, unwritten | Forge at Xtraction points |
+| `[TestMode] Hotkeys` | off, unwritten | F8 clears eligible enemies, F9 toggles party protection, F10 returns to the nearest safe authored start |
+
+`[TestMode]` is optional and offline only: either switch blocks hosting and joining until both are off and the game restarts. F8 may skip script-referenced actors; F10 refuses an unsafe destination. See the companion [testing guide](https://github.com/ChronoRixun/xml2-fix/blob/main/docs/test-mode.md). Saves made with testing tools retain their gameplay effects.

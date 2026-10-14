@@ -191,7 +191,7 @@ def build_sidecar(build):
 
 
 def validate_current(build):
-    """V-TBD: each applicable release attestation agrees with the built resident prefix."""
+    """V39: each applicable release attestation agrees with the built resident prefix."""
     binds = Binds(build)
     rows = load(build)
     active = 0

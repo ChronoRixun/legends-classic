@@ -33,6 +33,7 @@ HISTORY = (
     Identity('0.2.0-candidate-i', 17, 6, 'LC25', '85fbdb54e626766891bb0d9e118f2087a24a5027309959e31a4a3b8cebe14779'),
     Identity('0.2.0-candidate-j', 18, 6, 'LC26', '7fb2123737d6eb0a604a0bb8c1f3b80b7c56407b36b73ef2ccd0a690fc33979b'),
     Identity('0.2.2', 19, 6, 'LC27', '2e2e5b4e2ef1940b7d63dc3d5cf8647940c4ff7d3c97572f5095481b37966a62'),
+    Identity('0.2.3', 20, 6, 'LC28', 'e6b547bed0ea8986cb3493a8d219bda220eec0416661ab72d9b1074b06f7e5f2'),
 )
 
 

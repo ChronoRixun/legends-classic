@@ -92,7 +92,7 @@ def test_validator_rejects_missing_residency_and_misordered_new_hazards():
     validator.converted_zones = lambda: {'invented/yard'}
     validator.tree = lambda rel: root
     def check():
-        ck = Check('V-TBD', 'hazard bounds')
+        ck = Check('V61', 'hazard bounds')
         validator.hazard_bounds(ck)
         return ck.errors
     assert any('smartent=false' in e for e in check())
@@ -101,3 +101,17 @@ def test_validator_rejects_missing_residency_and_misordered_new_hazards():
     root.remove(group)
     root.insert(0, group)
     assert any('ordinals' in e for e in check())
+
+
+def test_embedded_props_precede_new_hazards_without_weakening_old_tail_guard():
+    root = ET.Element('world')
+    add(root, 'invented_heat')
+    add(root, 'invented_old', cls='gameent')
+    add(root, 'invented_overlap', cls='physent', smartent='false',
+        xml1settle='true', xml1embeddedfloor='true')
+    before = ordinals(root)
+    S.convert_hazard_bounds(root, REL)
+    assert ordinals(root)[:len(before)] == before
+    assert not SE.problems(root, S.post_settle_names(root, REL))
+    add(root, 'invented_wrong_tail', cls='gameent')
+    assert any('embedded-floor' in p for p in SE.problems(root, S.post_settle_names(root, REL)))

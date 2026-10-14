@@ -6271,7 +6271,7 @@ The release ledger contains only hashes and original placement indices. Generate
 it with `python -m lcsave.zonecompat PREVIOUS_BUILD CURRENT_BUILD --ledger-out
 tools/lcsave/data/zone_prefixes.json`, against every supported old release; both
 `.engb` maps and `.xmlb`-only fallbacks participate. Savefiles retains recorded
-attestations and emits packaged history in fresh builds. V-TBD under V39 checks
+attestations and emits packaged history in fresh builds. V39 under V39 checks
 applicable prefix digests against the built output.
 
 The reader additionally matches each saved numbered ordinal, original placement
@@ -7246,66 +7246,6 @@ and carry XML1's aitype / aireusetime / powerusage (resolved per 24.2). The caus
 - **Resistance (SPEC 92)** checked with the hero punching a physically resistant Revolutionary (AI off, real pad A
   presses): it still flinches on light hits about once per 3 points of damage in 0.2.1 and 0.2.2 alike.
 
-### Shallow floor overlap and surviving prop hits
-
-The spawn-floor survey also selects shallow floor overlap for the verified model
-set `settle.EMBEDDED_MODELS`. A bottom more than 0.25 units below the static floor
-is eligible, subject to the existing gravity, script, support, and residency
-checks. Near-zero floating-point noise remains near-floor. Selection adds a separate `x1_embedded_`
-resident alias after the existing settled-prop and late-fall-volume tails; authored coordinates, hull, health, mass,
-heaviness conversion, and break thresholds are preserved. Existing candidate
-ordinals also retain their order. V41 checks resident flags, gravity and ordering;
-its V-TBD subcheck compares selected overlap placements with the built resident tail; synthetic tests distinguish actual penetration from
-rounding noise and keep unsupported models outside this extension.
-
-The tarp-crate audit found 39 placements in six zones, three shallow overlaps in
-the first ice-tunnel zone. The other 36 placements are unaffected by this
-extension (seven already qualified for the older raised-prop settlement rule).
-The original game's resident default receives the initial floor sweep; the PC
-smart-entity default can recreate a crate from its rounded authored coordinates
-after that pass. A non-breaking hit then wakes physics from below the floor.
-
-Floor placement alone is insufficient: ordinary PC floor-impact damage can kill
-the surviving prop. The companion `[Game] ObjectWorldImpact=xml1` restores zero
-impact damage for a non-physical collision target, as the XBE's impact calculation
-uses. The builder owns this key and rejects a companion DLL that does not read it.
-This companion feature needs an assigned shared gameplay rule ID before release;
-the current local implementation blocks online while enabled. Versions remain for
-the integrator to set. No save format is changed.
-
-## Model-less placed hazard bounds (validator V-TBD)
-
-XMen2.exe recreates ordinary smart physical entities without a model-less
-placement's authored local bounds. The harm size getter at 0x41c330 derives
-half-extents from local min/max (+0x158/+0x164), scaled by +0x188. XML1's
-corresponding getter at 0x30680 uses +0x138/+0x144 and +0x168; its absent
-smartent default is false. Retaining the map extents alone therefore does not
-establish runtime preservation.
-
-After schema conversion, script pinning, spawn-floor residency and late fall
-volume ordering, `convert_hazard_bounds` gives placed, model-less
-`affectableharment` definitions with instance extents `smartent=false`.
-Damage type, timing, targeting, bounds, shape, effects and instance coordinates
-remain authored. Explicit smart residency, modeled entities, definitions with
-no bounded placements and the separately managed fall-volume pattern are
-excluded. Existing resident hazards stay at their previous positions.
-
-New residents carry ignored metadata `xml1hazardbounds=true`; only their
-instance groups move to the very end, after the complete released numbered
-prefix (including settled props and late fall volumes). This keeps old zone
-record ordinals stable. V-TBD checks residency, marker eligibility and the new
-tail; V31 and V41 recognize the successive tail additions. Synthetic tests
-check unchanged old ordinals, repeated placements, existing residents,
-exclusions, idempotence and rejected missing flags/misordered tails.
-
-This is a data conversion with no save-format or engine rule change. XML2 Fix
-1.5.0 also compares the exact placement-file SHA1 when loading an LC zone
-record: changed maps discard that record despite preserved ordinals. This
-conversion does not migrate those records, so retaining existing saved zone
-state remains an acceptance blocker. Runtime acceptance and affected-room
-coverage are reported separately; the static rule does not establish campaign
-traversal or save/load acceptance by itself.
-
 ### 95.1 Candidate combo timing restoration (not live-accepted)
 
 The companion engine candidate extends rule 16 to revision 4, retaining enabled values `{1,1,0,0}`. It schedules
@@ -7348,7 +7288,72 @@ Native accepted-stun duration, refresh, susceptibility, enemy reactions and powe
 This restores reaction ownership, not the entire original stun handler or PC powerup implementation.
 
 `fix_ini.STUN_RULE` writes `StunRule=xml1` for XML1 builds, owns/removes the key when appropriate, and includes it
-in `RELEASE_15_KEYS` / `check_release_dll`: an existing DLL without the capability is refused. Gameplay rule 18
+in `RELEASE_16_KEYS` / `check_release_dll`: an existing DLL without the capability is refused. Gameplay rule 18
 revision 1 advertises `{1,0,0,0}` when installed, verified off for absent/`xml2`, and unverified on a failed request.
-Rule 17 is reserved for ObjectWorldImpact and remains available to its later merge; no placeholder is registered.
+Rule 17 is ObjectWorldImpact; both new rules register only when requested, preserving the released OFF digest.
 No version or save-format changes are made here; the release integrator owns version allocation.
+
+## 96. Shallow floor overlap and surviving prop hits
+
+The spawn-floor survey also selects shallow floor overlap for the verified model
+set `settle.EMBEDDED_MODELS`. A bottom more than 0.25 units below the static floor
+is eligible, subject to the existing gravity, script, support, and residency
+checks. Near-zero floating-point noise remains near-floor. Selection adds a separate `x1_embedded_`
+resident alias after the existing settled-prop and late-fall-volume tails; authored coordinates, hull, health, mass,
+heaviness conversion, and break thresholds are preserved. Existing candidate
+ordinals also retain their order. V41 checks resident flags, gravity and ordering;
+its V41 subcheck compares selected overlap placements with the built resident tail; synthetic tests distinguish actual penetration from
+rounding noise and keep unsupported models outside this extension.
+
+The tarp-crate audit found 39 placements in six zones, three shallow overlaps in
+the first ice-tunnel zone. The other 36 placements are unaffected by this
+extension (seven already qualified for the older raised-prop settlement rule).
+The original game's resident default receives the initial floor sweep; the PC
+smart-entity default can recreate a crate from its rounded authored coordinates
+after that pass. A non-breaking hit then wakes physics from below the floor.
+
+Floor placement alone is insufficient: ordinary PC floor-impact damage can kill
+the surviving prop. The companion `[Game] ObjectWorldImpact=xml1` restores zero
+impact damage for a non-physical collision target, as the XBE's impact calculation
+uses. The builder owns this key and rejects a companion DLL that does not read it.
+Gameplay rule 17 revision 1 advertises the verified installed value only when requested.
+Every no-physical-target landing impact is covered: XBE coefficient-table entry zero is zero for all of them.
+No save format is changed.
+
+## 97. Model-less placed hazard bounds (validator V61)
+
+XMen2.exe recreates ordinary smart physical entities without a model-less
+placement's authored local bounds. The harm size getter at 0x41c330 derives
+half-extents from local min/max (+0x158/+0x164), scaled by +0x188. XML1's
+corresponding getter at 0x30680 uses +0x138/+0x144 and +0x168; its absent
+smartent default is false. Retaining the map extents alone therefore does not
+establish runtime preservation.
+
+After schema conversion, script pinning, spawn-floor residency and late fall
+volume ordering, `convert_hazard_bounds` gives placed, model-less
+`affectableharment` definitions with instance extents `smartent=false`.
+Damage type, timing, targeting, bounds, shape, effects and instance coordinates
+remain authored. Explicit smart residency, modeled entities, definitions with
+no bounded placements and the separately managed fall-volume pattern are
+excluded. Existing resident hazards stay at their previous positions.
+
+New residents carry ignored metadata `xml1hazardbounds=true`; only their
+instance groups move to the very end, after the complete released numbered
+prefix (including settled props and late fall volumes). This keeps old zone
+record ordinals stable. V61 checks residency, marker eligibility and the new
+tail; V31 and V41 recognize the successive tail additions. Synthetic tests
+check unchanged old ordinals, repeated placements, existing residents,
+exclusions, idempotence and rejected missing flags/misordered tails.
+
+This is a data conversion with no save-format or engine rule change. XML2 Fix
+1.5.0 also compares the exact placement-file SHA1 when loading an LC zone
+record: changed maps discard that record despite preserved ordinals. This
+conversion does not migrate those records, so retaining existing saved zone
+state requires the verified append-only attestations in 70.5.1. Runtime acceptance and affected-room
+coverage are reported separately; the static rule does not establish campaign
+traversal or save/load acceptance by itself.
++
++## 98. Release 0.2.3 content identity
++
++Builder 0.2.3 emits content 20: model-less hazard residency, three shallow-overlap crate placements and two more fall-volume selections change maps. No persistent catalogue domain key is added; catalogue revision remains 6. The append-only identity assigns (20,6) LC28 and bind fingerprint `e6b547bed0ea8986cb3493a8d219bda220eec0416661ab72d9b1074b06f7e5f2`. Sixty hash-only prefix attestations describe the combined output; ambiguous smart-entity state still rejects safely. The durable LC save format is unchanged. The companion requirement is XML2 Fix >=1.6; `RELEASE_16_KEYS` checks ObjectWorldImpact and StunRule in addition to released keys. Optional TestMode is off and unwritten by the builder.
++

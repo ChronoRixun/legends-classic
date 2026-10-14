@@ -733,7 +733,7 @@ def test_port_builds_ask_for_the_lc_save_format():
     assert FI.save_keys(port_identity=True) == {'Format': 'lc'}
     assert FI.save_keys(port_identity=False) == {}
     assert FI.PORT_OWNED['Save'] == ('Format',) and 'ContentFingerprint' in FI.PORT_OWNED['Online']
-    assert FI.REQUIRED_XML2FIX == '1.5'
+    assert FI.REQUIRED_XML2FIX == '1.6'
 
 
 def test_a_dll_without_the_15_keys_is_refused(tmp_path=None):
@@ -747,7 +747,7 @@ def test_a_dll_without_the_15_keys_is_refused(tmp_path=None):
         try:
             FI.check_release_dll(dll, keys)
         except ValueError as exc:
-            assert 'X1Leader' in str(exc) and '1.5' in str(exc) and 'RankCosts' not in str(exc)
+            assert 'X1Leader' in str(exc) and '1.6' in str(exc) and 'RankCosts' not in str(exc)
         else:
             raise AssertionError('an old DLL was accepted')
         dll.write_bytes(dll.read_bytes() + 'X1Leader'.encode('utf-16le'))
@@ -769,7 +769,7 @@ def test_old_fix_keys_names_every_unknown_key_and_the_cli_path_writes_anyway():
             FI.write_port_keys(d, {s: dict(v) for s, v in keys.items()})
         except FI.FixTooOld as exc:
             assert isinstance(exc, ValueError) and exc.missing == ['[Limits] EntityCapacity', '[Game] X1Leader']
-            assert 'XML2 Fix 1.5' in str(exc)
+            assert 'XML2 Fix 1.6' in str(exc)
         else:
             raise AssertionError('an old DLL was accepted')
         assert not (Path(d) / 'xml2-fix.ini').exists()
@@ -798,7 +798,7 @@ def test_danger_room_gate_names_the_front_ends_danger_room_item():
 def test_existing_release_dll_without_npc_power_rule_is_refused():
     """A pre-feature 1.5 DLL knows the other release keys but must not silently omit enemy AI."""
     import tempfile
-    keys = {section: {name: 'xml1' for name in names} for section, names in FI.RELEASE_15_KEYS.items()}
+    keys = {section: {name: 'xml1' for name in names} for section, names in FI.RELEASE_16_KEYS.items()}
     keys['Game']['NpcPowerRule'] = 'xml1'
     with tempfile.TemporaryDirectory() as d:
         dll = Path(d) / 'dinput.dll'
@@ -818,7 +818,7 @@ def test_existing_release_dll_without_npc_power_rule_is_refused():
 def test_existing_release_dll_without_stun_rule_is_refused():
     """A pre-feature 1.5 DLL knows the other release keys but must not silently omit hero reaction ownership."""
     import tempfile
-    keys = {section: {name: 'xml1' for name in names} for section, names in FI.RELEASE_15_KEYS.items()}
+    keys = {section: {name: 'xml1' for name in names} for section, names in FI.RELEASE_16_KEYS.items()}
     keys['Game']['StunRule'] = 'xml1'
     with tempfile.TemporaryDirectory() as d:
         dll = Path(d) / 'dinput.dll'
@@ -840,3 +840,23 @@ def test_xml1_builds_write_and_remove_stun_rule():
     assert 'StunRule' not in FI.game_keys(xml1_opening=False)
     assert 'StunRule' in FI.PORT_OWNED['Game']
     assert FI.dropped_keys({'Game': {}})['Game'].count('StunRule') == 1
+
+
+def test_existing_release_dll_without_object_world_impact_is_refused():
+    """A pre-feature 1.5 DLL knows the other release keys but must not silently omit world impact physics."""
+    import tempfile
+    keys = {section: {name: 'xml1' for name in names} for section, names in FI.RELEASE_16_KEYS.items()}
+    keys['Game']['ObjectWorldImpact'] = 'xml1'
+    with tempfile.TemporaryDirectory() as d:
+        dll = Path(d) / 'dinput.dll'
+        dll.write_bytes(b'MZ' + b''.join(name.encode('utf-16le') + b'\0\0'
+                                       for section in keys.values() for name in section if name != 'ObjectWorldImpact'))
+        try:
+            FI.check_release_dll(dll, keys)
+        except FI.FixTooOld as exc:
+            assert exc.missing == ['[Game] ObjectWorldImpact']
+        else:
+            raise AssertionError('a DLL without ObjectWorldImpact was accepted')
+        assert FI.old_fix_keys(dll, keys) == ['[Game] ObjectWorldImpact']
+        dll.write_bytes(dll.read_bytes() + 'ObjectWorldImpact'.encode('utf-16le'))
+        FI.check_release_dll(dll, keys)

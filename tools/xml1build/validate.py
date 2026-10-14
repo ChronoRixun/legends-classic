@@ -969,7 +969,7 @@ class Validator:
                                ('V40', 'melee weapons', lambda ck: MW.validate(self, ck)),
                                ('V39', 'save files', lambda ck: SF.validate(self, ck)),
                                ('V41', 'spawn-floor residency', self.spawn_floor_residency),
-                               ('V-TBD', 'model-less hazard bounds', self.hazard_bounds),
+                               ('V61', 'model-less hazard bounds', self.hazard_bounds),
                                ('V45', 'gun damage roll', lambda ck: W.validate(self, ck)),
                                ('V47', 'scripted boss approach', lambda ck: SA.validate(self, ck)),
                                ('V46', 'pickup models', self.v46_pickup_models),
@@ -1022,7 +1022,7 @@ class Validator:
             try:
                 details = json.loads(details_path.read_text(encoding='utf-8')).get('zones', {})
             except (ValueError, OSError) as exc:
-                ck.error(f'V-TBD: cannot check embedded-floor selections: {exc}')
+                ck.error(f'V41: cannot check embedded-floor selections: {exc}')
         for zone in sorted(self.zone_ids):
             root = self.tree(f'maps/{zone}.engb')
             if root is None:
@@ -1032,7 +1032,7 @@ class Validator:
             for problem in SE.problems(root, XS.post_settle_names(root, f'maps/{zone}.eng')):
                 ck.error(f'{zone}: {problem}')
             for problem in SE.embedded_floor_problems(root, details.get(zone, {}).get('spawn_settle', [])):
-                ck.error(f'V-TBD {zone}: {problem}')
+                ck.error(f'V41 {zone}: {problem}')
             defs = {e.get('name'): e for e in root.iter('entity')}
             added = sum(len(g.findall('inst')) for g in root.findall('entinst')
                         if defs.get(g.get('type')) is not None and defs[g.get('type')].get(SE.MARKER) == 'true')

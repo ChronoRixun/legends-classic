@@ -323,13 +323,13 @@ def numbered_tail_problems(root, later=()):
     for group in root.findall('entinst'):
         if group.get('type') in embedded:
             in_tail = True
-        elif in_tail:
+        elif in_tail and group.get('type') not in {e.get('name') for e in root.iter('entity') if e.get('xml1hazardbounds') == 'true'}:
             out.append('embedded-floor prop precedes an old entinst (saved ordinals shift)')
     return out
 
 
 def embedded_floor_problems(root, rows):
-    """V-TBD: every selected overlap must exist in the built resident tail."""
+    """V41: every selected overlap must exist in the built resident tail."""
     expected = Counter()
     for row in rows:
         if row.get('status') == 'settle' and row.get('reason') == 'embedded_floor':
