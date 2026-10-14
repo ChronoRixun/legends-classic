@@ -355,7 +355,7 @@ def test_port_keys_from_a_synthetic_build():
                                               'PlacementCrush': 'xml1', 'ObjectWorldImpact': 'xml1', 'DoubleHeal': '0', 'ExplosiveFirstHit': '1',
                                               'RankCosts': '1', 'LevelSkillPoints': 'xml1',
                                               'LevelStatPoints': 'xml1', 'Xml1Multipart': '1', 'DeathRule': 'xml1',
-                                              'NpcPowerRule': 'xml1', 'PackAmount': 'xml1', 'SoloMode': '1', 'X1Leader': '1',
+                                              'NpcPowerRule': 'xml1', 'StunRule': 'xml1', 'PackAmount': 'xml1', 'SoloMode': '1', 'X1Leader': '1',
                                               'DeathSwitchClear': '1'},
                                      'Limits': {'ActorSlots': '127', 'ResourceNames': '1024', 'ItemEnhancements': '512',
                                                 'FightStyles': '32', 'EffectCurves': '3600', 'MoveTriggers': '64', 'EntityCapacity': '1',
@@ -813,3 +813,30 @@ def test_existing_release_dll_without_npc_power_rule_is_refused():
         assert FI.old_fix_keys(dll, keys) == ['[Game] NpcPowerRule']
         dll.write_bytes(dll.read_bytes() + 'NpcPowerRule'.encode('utf-16le'))
         FI.check_release_dll(dll, keys)
+
+
+def test_existing_release_dll_without_stun_rule_is_refused():
+    """A pre-feature 1.5 DLL knows the other release keys but must not silently omit hero reaction ownership."""
+    import tempfile
+    keys = {section: {name: 'xml1' for name in names} for section, names in FI.RELEASE_15_KEYS.items()}
+    keys['Game']['StunRule'] = 'xml1'
+    with tempfile.TemporaryDirectory() as d:
+        dll = Path(d) / 'dinput.dll'
+        dll.write_bytes(b'MZ' + b''.join(name.encode('utf-16le') + b'\0\0'
+                                       for section in keys.values() for name in section if name != 'StunRule'))
+        try:
+            FI.check_release_dll(dll, keys)
+        except FI.FixTooOld as exc:
+            assert exc.missing == ['[Game] StunRule']
+        else:
+            raise AssertionError('a DLL without StunRule was accepted')
+        assert FI.old_fix_keys(dll, keys) == ['[Game] StunRule']
+        dll.write_bytes(dll.read_bytes() + 'StunRule'.encode('utf-16le'))
+        FI.check_release_dll(dll, keys)
+
+
+def test_xml1_builds_write_and_remove_stun_rule():
+    assert FI.game_keys(xml1_opening=True)['StunRule'] == 'xml1'
+    assert 'StunRule' not in FI.game_keys(xml1_opening=False)
+    assert 'StunRule' in FI.PORT_OWNED['Game']
+    assert FI.dropped_keys({'Game': {}})['Game'].count('StunRule') == 1

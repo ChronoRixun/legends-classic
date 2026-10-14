@@ -7277,3 +7277,50 @@ conversion does not migrate those records, so retaining existing saved zone
 state remains an acceptance blocker. Runtime acceptance and affected-room
 coverage are reported separately; the static rule does not establish campaign
 traversal or save/load acceptance by itself.
+
+### 95.1 Candidate combo timing restoration (not live-accepted)
+
+The companion engine candidate extends rule 16 to revision 4, retaining enabled values `{1,1,0,0}`. It schedules
+each combo press using XML1's delay table instead of abandoning the combo when the next move cannot chain at the
+next AI update. Completion adds the final button delay, rather than PC's fixed 0.2 seconds. The earlier unshipped
+experiment left that completion addition and an extra hold gate in place; native execution distinguishes both.
+The AI pool layout and all new code sites are guarded, and the writes join the existing transaction. No builder
+data, content version or save format changes are required. A revision-3 peer is incompatible with revision 4.
+
+The preceding combat measurements remain historical revision-3 evidence. Two new 150-second release-control /
+candidate pairs observed Marauder powers/min of 13.6/18.5 versus 12.1/12.8, and hero-free shares of 23.4/17.3%
+versus 31.7/27.6%. Both used four engaged Revolutionaries and one Marauder, the staged map/spawner visits, and an
+idle invulnerable hero. Other active games ran during every sample: these timing-confounded rates are not valid
+release acceptance or proof that the remaining gap is resolved. Separate vulnerable real-input fights recorded
+attacks and hero deaths; an XP-staged level-10 retry also recorded movement and enemy health loss. No win or
+normal campaign difficulty claim follows. An isolated comparison, party AI, save/load and online checks remain.
+
+Native bridge, original-code characterization and agreement checks pass. Hero stun/get-up behavior has not
+changed; default stun duration, checked get-up speeds and the audited get-up handler operations agree, while
+the original stun handler and PC timed stun powerup differ. Historical reaction mixes also differ. A hero-side
+engine restoration would need a separately coordinated rule.
+
+A separate 90-second observer saw ten PC idle-selection redirects back into stun with the powerup flag still
+set, including a landing/get-up sequence followed by another 1.115 game-clock seconds of stun. The original's
+dedicated stun handler clears its flag on exit. The mechanism is now observed; its share of the gap and a complete
+hero-side restoration remain unproved. No hero behavior or additional gameplay rule changed in this candidate.
+
+
+### 95.2 Party-hero stun reaction ownership (`[Game] StunRule=xml1`, rule 18)
+
+The companion hook follows XML1's flag lifetime: a refused stun reaction never enters `ch_stun`, and an
+interrupted stun clears its flag through cancel/exit. XML1 uses an immediate move request, not PC's persistent
+stun powerup. Priority-protected thrown/landing moves reject stun; an ordinary priority-zero get-up can accept a
+new stun immediately. There is no deferred stun waiting for that rejected request to finish recovering.
+
+PC sets its stun flag before requesting the reaction and retains it after interruptions; idle selection then
+redirects a recovering hero back into stun. The guarded companion hook discards the flag after a refused request
+and clears it on an accepted change to another move, for seated party heroes (including AI followers) only.
+Native accepted-stun duration, refresh, susceptibility, enemy reactions and powerup affecters remain unchanged.
+This restores reaction ownership, not the entire original stun handler or PC powerup implementation.
+
+`fix_ini.STUN_RULE` writes `StunRule=xml1` for XML1 builds, owns/removes the key when appropriate, and includes it
+in `RELEASE_15_KEYS` / `check_release_dll`: an existing DLL without the capability is refused. Gameplay rule 18
+revision 1 advertises `{1,0,0,0}` when installed, verified off for absent/`xml2`, and unverified on a failed request.
+Rule 17 is reserved for ObjectWorldImpact and remains available to its later merge; no placeholder is registered.
+No version or save-format changes are made here; the release integrator owns version allocation.
