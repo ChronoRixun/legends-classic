@@ -11,7 +11,7 @@ It is a builder, not a download: every file of the result is made on your comput
 This project ships no game content - no game files, no parts of them, no modified executables - and the builder
 makes no network connections.
 
-> **Status: public test builds (builder 0.2.3, XML2 Fix 1.6.0, launcher 0.3.0).** Every mission and the ending run
+> **Status: public test builds (released builder 0.2.2, XML2 Fix 1.5.0, launcher 0.3.0).** Every mission and the ending run
 > in automated tests on the developer's PC (a full hand-played run is under way), the builder (`xml1-builder`) makes
 > that build from a disc image and an X-Men Legends II install in a few minutes, and the
 > [Ultimate Legends](https://github.com/ChronoRixun/ultimate-legends) launcher does it in a few clicks. 0.2.2 brings
@@ -363,3 +363,5 @@ It contains and distributes no game content: you need your own copies of both ga
 | `[TestMode] Hotkeys` | off, unwritten | F8 clears eligible enemies, F9 toggles party protection, F10 returns to the nearest safe authored start |
 
 `[TestMode]` is optional and offline only: either switch blocks hosting and joining until both are off and the game restarts. F8 may skip script-referenced actors; F10 refuses an unsafe destination. See the companion [testing guide](https://github.com/ChronoRixun/xml2-fix/blob/main/docs/test-mode.md). Saves made with testing tools retain their gameplay effects.
+
+The 0.2.3 / XML2 Fix 1.6 integration candidate is blocked on online loading of older saved campaigns: newly appended hazards can be omitted after transfer. Its offline saved-zone retention passes; it is not release-ready.
