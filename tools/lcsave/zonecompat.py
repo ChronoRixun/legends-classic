@@ -51,17 +51,40 @@ def resident_prefix(root):
 
 def attest(zone, previous, current):
     """Return a hash-bound attestation only when the entire old resident prefix survives."""
-    old, placements = resident_prefix(xmlb.decode(previous))
-    new, _ = resident_prefix(xmlb.decode(current))
+    old_root, new_root = xmlb.decode(previous), xmlb.decode(current)
+    old, placements = resident_prefix(old_root)
+    new, new_placements = resident_prefix(new_root)
     if not old or len(new) <= len(old) or new[:len(old)] != old:
         return None
     digest = hashlib.sha256(json.dumps(old, ensure_ascii=True, separators=(',', ':')).encode('ascii')).digest()
+    def placed(root):
+        return [(g, i) for g in root.iter('entinst') for i in g.iter('inst')]
+    old_placed, new_placed = placed(old_root), placed(new_root)
+    tail_placements = set(new_placements[len(old):])
+    old_residents = set(placements)
+    remaining = {(bytes.fromhex(key_hash(g.get('type') or '')), bytes.fromhex(key_hash(i.get('name') or '')))
+                 for p, (g, i) in enumerate(new_placed) if p not in tail_placements}
+    fresh, ambiguous = set(), set()
+    for p in new_placements[len(old):]:
+        group, inst = new_placed[p]
+        current_pair = (bytes.fromhex(key_hash(group.get('type') or '')),bytes.fromhex(key_hash(inst.get('name') or '')))
+        if current_pair in remaining: ambiguous.add(current_pair)
+        for old_index, (old_group, old_inst) in enumerate(old_placed):
+            if old_index in old_residents: continue
+            if _canonical(inst) != _canonical(old_inst): continue
+            if sorted((k,v) for k,v in group.attrib.items() if k != 'type') != sorted((k,v) for k,v in old_group.attrib.items() if k != 'type'):
+                return None
+            pair = (bytes.fromhex(key_hash(old_group.get('type') or '')), bytes.fromhex(key_hash(old_inst.get('name') or '')))
+            (ambiguous if pair in remaining else fresh).add(pair)
     return dict(zone=bytes.fromhex(key_hash(zone)), old=hashlib.sha1(previous).digest(),
-                current=hashlib.sha1(current).digest(), digest=digest, placements=placements)
+                current=hashlib.sha1(current).digest(), digest=digest, placements=placements,
+                fresh_aliases=sorted(fresh-ambiguous), ambiguous_aliases=sorted(ambiguous))
 
 
 def encode(rows):
     rows = sorted(rows, key=lambda r: (r['zone'], r['old'], r['current']))
+    if len(rows) > LIMIT:
+        raise BindError('zone-prefix.lcm: invalid prefix count')
     body = bytearray()
     seen = set()
     for r in rows:
@@ -69,17 +92,27 @@ def encode(rows):
         if key in seen or not 0 < len(r['placements']) <= LIMIT:
             raise BindError('zone-prefix.lcm: duplicate or invalid prefix')
         seen.add(key)
+        if any(len(r[k]) != n for k,n in (('zone',32),('old',20),('current',20),('digest',32))):
+            raise BindError('zone-prefix.lcm: invalid hash width')
         body += r['zone'] + r['old'] + r['current'] + r['digest']
         body += struct.pack('<I', len(r['placements']))
         body += struct.pack('<' + 'I' * len(r['placements']), *r['placements'])
-    return MAGIC + struct.pack('<IIII', 1, len(rows), 24 + len(body), zlib.crc32(body)) + body
+        for field in ('fresh_aliases', 'ambiguous_aliases'):
+            pairs = r.get(field, [])
+            if len(pairs) > LIMIT or len(set(pairs)) != len(pairs):
+                raise BindError('zone-prefix.lcm: invalid aliases')
+            if any(len(a)!=32 or len(b)!=32 for a,b in pairs):
+                raise BindError('zone-prefix.lcm: invalid alias hash width')
+            body += struct.pack('<I', len(pairs))
+            body += b''.join(a+b for a,b in pairs)
+    return MAGIC + struct.pack('<IIII', 2, len(rows), 24 + len(body), zlib.crc32(body)) + body
 
 
 def decode(raw):
     def bad(): raise BindError('zone-prefix.lcm: invalid framing or entry')
     if len(raw) < 24 or raw[:8] != MAGIC: bad()
     version, count, size, crc = struct.unpack_from('<IIII', raw, 8)
-    if version != 1 or count > LIMIT or size != len(raw) or crc != zlib.crc32(raw[24:]): bad()
+    if version != 2 or count > LIMIT or size != len(raw) or crc != zlib.crc32(raw[24:]): bad()
     rows, seen, off = [], set(), 24
     for _ in range(count):
         if off + 108 > len(raw): bad()
@@ -89,6 +122,14 @@ def decode(raw):
         if not 0 < n <= LIMIT or off + 4*n > len(raw): bad()
         r['placements'] = list(struct.unpack_from('<' + 'I'*n, raw, off))
         off += 4*n
+        for field in ('fresh_aliases', 'ambiguous_aliases'):
+            if off+4 > len(raw): bad()
+            count_pairs, = struct.unpack_from('<I', raw, off); off += 4
+            if count_pairs > LIMIT or off+64*count_pairs > len(raw): bad()
+            r[field] = [(raw[off+64*i:off+64*i+32],raw[off+64*i+32:off+64*i+64]) for i in range(count_pairs)]
+            off += 64*count_pairs
+            if len(set(r[field])) != count_pairs: bad()
+        if set(r['fresh_aliases']) & set(r['ambiguous_aliases']): bad()
         key = (r['zone'], r['old'], r['current'])
         if key in seen or len(set(r['placements'])) != n or r['old'] == r['current']: bad()
         seen.add(key); rows.append(r)
@@ -107,7 +148,10 @@ def build_sidecar(build):
     ledger = Path(__file__).with_name('data') / 'zone_prefixes.json'
     if ledger.exists():
         for entry in json.loads(ledger.read_text(encoding='utf-8')):
-            r = {k: (bytes.fromhex(v) if k != 'placements' else v) for k, v in entry.items()}
+            if set(entry) != {'zone','old','current','digest','placements','fresh_aliases','ambiguous_aliases'}:
+                raise BindError('zone-prefix.lcm: invalid release ledger fields')
+            r = {k: (v if k == 'placements' else [(bytes.fromhex(a),bytes.fromhex(b)) for a,b in v]
+                     if k.endswith('_aliases') else bytes.fromhex(v)) for k, v in entry.items()}
             key = (r['zone'], r['old'], r['current'])
             if key in rows and rows[key] != r:
                 raise BindError('zone-prefix.lcm: conflicting historical attestation')
@@ -181,5 +225,6 @@ if __name__ == '__main__':
     print(json.dumps(generate(args.previous, args.current), indent=2))
     if args.ledger_out:
         rows = load(args.current)
-        Path(args.ledger_out).write_text(json.dumps([{k: (v.hex() if isinstance(v,bytes) else v) for k,v in r.items()}
+        Path(args.ledger_out).write_text(json.dumps([{k: (v.hex() if isinstance(v,bytes) else [[a.hex(),b.hex()] for a,b in v]
+            if k.endswith('_aliases') else v) for k,v in r.items()}
             for r in rows], indent=2)+'\n', encoding='utf-8')

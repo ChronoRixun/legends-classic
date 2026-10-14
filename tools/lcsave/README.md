@@ -26,10 +26,21 @@ metadata uses the current hash/indices and identifies fresh tail factories, avoi
 both a second provenance rejection and accidental tail tombstones. These are
 ephemeral API fields; no container field, section version or feature bit changes.
 
-Sidecar framing: `LCZPFX1` plus NUL, little-endian u32 version 1, row count,
+Renamed tail definitions also carry original definition/instance hash aliases.
+If an old unnumbered state's alias identifies both a new tail and an untouched
+placement, the zone record still rejects: that save lacks original unnumbered
+placement provenance. Positions can move during play and cannot prove which twin
+was recorded. This prevents duplicate old smart objects or silently resetting an
+untouched twin. Consequently append-only numbered prefixes alone do not guarantee
+retention for every old save. Promoting only some identically named smart twins is
+an unresolved case; this reader fails closed without a durable format change.
+
+Sidecar framing: `LCZPFX1` plus NUL, little-endian u32 version 2, row count,
 total length and CRC32 of the body. Each row contains zone-key SHA256[32], old
 map SHA1[20], current map SHA1[20], canonical-prefix SHA256[32], u32 prefix count,
-then that many original u32 placement indices. Duplicate hash triples/placement
+then that many original u32 placement indices, u32 fresh-alias count with pairs
+of definition/instance SHA256[32], and u32 ambiguous-alias count with the same
+pairs. Each pair list has at most 4096 entries. Duplicate hash triples/placement
 indices, invalid framing and counts over 4096 refuse. A compatibility sidecar is
 trusted builder output, like existing bind metadata; its CRC detects damage and is
 not an authenticity signature. Full current-map hashing prevents stale claims

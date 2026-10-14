@@ -22,7 +22,7 @@ def fixture(folder, variant='append'):
     result = convert.old_stream_to_new(oldsave.write_slot(native), env, now=0, zone_captures=captures, require_capture_metadata=True)
     assert result.refused is None, result.refused
     saved = result.file_bytes
-    if variant == 'tailstate':
+    if variant in ('tailstate','renamed','ambiguous'):
         f = container.read_file(saved)
         record = f['sections']['ZONE']['data']['records'][0]
         state = copy.deepcopy(next(s for s in record['states'] if s['list'] != 1))
@@ -35,11 +35,26 @@ def fixture(folder, variant='append'):
     if variant == 'xmlbonly':
         path = Path(env.binds.zone_file('zone/x/y'))
         path.rename(path.with_suffix('.xmlb'))
-    shutil.copytree(env.binds.build, previous)
     path = Path(env.binds.zone_file('zone/x/y'))
     root = xmlb.decode(path.read_bytes())
+    if variant == 'ambiguous':
+        group = next(e for e in root if e.tag == 'entinst' and e.get('type') == 'crate')
+        extra = copy.deepcopy(group[0]);extra.set('pos','1000 0 0');group.append(extra)
+        _xmlb(str(path),root)
+        # The original save's provenance names this map with indistinguishable smart twins.
+        f=container.read_file(saved);record=f['sections']['ZONE']['data']['records'][0];record['content_hash']=__import__('hashlib').sha1(path.read_bytes()).digest()
+        for state in record['states']:
+            if state['list']==1 and state['placement_index']>=3: state['placement_index']+=1
+        saved=container.write_file(L.KIND_CAMPAIGN,_secs(f),f['header'])
+    shutil.copytree(env.binds.build, previous)
     group = next(e for e in root if e.tag == 'entinst' and e.get('type') == 'crate')
     definition = next(e for e in root if e.tag == 'entity' and e.get('name') == 'crate')
+    if variant in ('renamed','ambiguous'):
+        definition=copy.deepcopy(definition);definition.set('name','crate_appended');root.append(definition)
+        if variant=='ambiguous':
+            promoted=copy.deepcopy(group);promoted.remove(promoted[1]);group.remove(group[0]);group=promoted
+        else:root.remove(group)
+        group.set('type','crate_appended');root.append(group)
     definition.set('smartent', 'false')
     root.remove(group); root.append(group)
     if variant == 'position':
@@ -143,3 +158,23 @@ def test_xmlb_only_zone_attests_and_current_digest_validation_fails_closed():
         try: Z.validate_current(env.binds.build)
         except binds.BindError: pass
         else: assert False, 'incorrect active prefix digest accepted'
+
+
+def test_renamed_resident_tail_drops_old_smart_alias_without_duplication():
+    with tempfile.TemporaryDirectory() as folder:
+        env,saved,report=fixture(folder,'renamed')
+        assert report['accepted']==['zone/x/y']
+        restored,_=convert.reverse_slot(saved,env)
+        assert restored['zones'][0]['smart_count']==0
+        assert all(w['slot']!=5 for w in restored['items']['world'])
+        capture,=convert.loaded_zone_metadata(saved,env)
+        assert capture['fresh_entities'][0]['definition_name']=='crate_appended'
+
+
+def test_ambiguous_old_smart_twins_reject_without_resetting_an_untouched_twin():
+    with tempfile.TemporaryDirectory() as folder:
+        env,saved,report=fixture(folder,'ambiguous')
+        assert report['accepted']==['zone/x/y']
+        restored,notes=convert.reverse_slot(saved,env)
+        assert not restored['zones']
+        assert any('aliases both new tail and retained placement' in n for n in notes)

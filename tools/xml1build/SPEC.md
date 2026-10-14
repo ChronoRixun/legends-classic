@@ -6233,6 +6233,11 @@ change retains the original discard behavior. Incomplete captures reject and
 malformed metadata refuses. Runtime metadata authenticates current opened bytes
 and distinguishes fresh factories from old removals. Cached unvisited records
 retain original hash/indices until an actual current capture replaces them.
+Original unnumbered aliases cover renamed tail definitions. If an old state names
+both a new tail and an untouched placement, its record rejects instead: old saves
+do not identify original smart placements, and mutable positions cannot safely
+resolve identical twins. Partial promotion of identical smart twins remains an
+unresolved retention case under the unchanged durable format.
 No durable LC field, section revision or feature bit changes. Framing, trust
 boundary and regeneration details are in `tools/lcsave/README.md`.
 

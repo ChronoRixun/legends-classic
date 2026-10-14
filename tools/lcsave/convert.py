@@ -1331,6 +1331,12 @@ class PositionTables:
             if matches is not None:
                 continue
             if prefix:
+                aliases = set(prefix['ambiguous_aliases'])
+                if any(s['list'] != STATE_NUMBERED and
+                       (bytes.fromhex(key_hash(r['names'][s['def_name']])),bytes.fromhex(key_hash(r['names'][s['inst_name']]))) in aliases
+                       for s in r['states']):
+                    notes.append(f'zone {zone!r}: unnumbered state aliases both new tail and retained placement: record not applied')
+                    continue
                 notes.append(f'zone {zone!r}: verified append-only resident prefix retained; new tail starts fresh')
             promoted = {} if prefix else _legacy_pinned_states(r, num['numbered'], set(mapped.values()), legacy_import)
             states = [dict(def_name=0, inst_name=0, payload=b'\0' * 8, flags_a=0, flags_b=0, position=[0, 0, 0])]
@@ -1340,7 +1346,7 @@ class PositionTables:
             for state_index, s in enumerate(r['states']):
                 if prefix and s['list'] != STATE_NUMBERED:
                     pair = (key_hash(r['names'][s['def_name']]), key_hash(r['names'][s['inst_name']]))
-                    if any((key_hash(dn), key_hash(inn)) == pair for dn, inn, _ in num['numbered'][len(prefix['placements']):]):
+                    if tuple(bytes.fromhex(h) for h in pair) in prefix['fresh_aliases'] or any((key_hash(dn), key_hash(inn)) == pair for dn, inn, _ in num['numbered'][len(prefix['placements']):]):
                         continue  # newly resident tail must not also restore its former smart/dynamic state
                 retained_states.append(s)
                 if len(states) >= native.states:

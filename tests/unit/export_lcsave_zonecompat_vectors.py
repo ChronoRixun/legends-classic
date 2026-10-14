@@ -12,7 +12,7 @@ def main(destination):
     out = Path(destination)
     out.mkdir(parents=True, exist_ok=True)
     lines = []
-    for variant in ('append', 'tailstate', 'xmlbonly', 'position', 'definition', 'reorder'):
+    for variant in ('append', 'tailstate', 'renamed', 'ambiguous', 'xmlbonly', 'position', 'definition', 'reorder'):
         folder = out / variant
         folder.mkdir()
         env, saved, _ = fixture(str(folder), variant)
@@ -20,7 +20,7 @@ def main(destination):
         restored, _ = convert.reverse_slot(saved, env)
         (folder / 'expected.old').write_bytes(oldsave.write_slot(restored))
         lines.append(f'{variant}\t{variant}/build\treverse\t0\n')
-        if variant not in ('append', 'tailstate'): continue
+        if variant not in ('append', 'tailstate', 'renamed'): continue
         for sequence in (2, 3):
             row = out / f'{variant}_save{sequence}'
             row.mkdir()
@@ -36,7 +36,7 @@ def main(destination):
     raw = (out/'append/build'/Z.REL).read_bytes()
     rows = Z.decode(raw)
     damaged = bytearray(raw); damaged[-1] ^= 1
-    version = bytearray(raw); struct.pack_into('<I',version,8,2)
+    version = bytearray(raw); struct.pack_into('<I',version,8,99)
     overflow = bytearray(raw); struct.pack_into('<I',overflow,12,4097)
     duplicate = dict(rows[-1]); duplicate['placements'] = [duplicate['placements'][0]] * len(duplicate['placements'])
     cases = [('truncated',raw[:23]), ('crc',damaged), ('version',version), ('count',overflow),
