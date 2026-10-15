@@ -45,6 +45,13 @@ for 2 s (it holds 2 commands), the game didn't read its keyboard for 2 s, or the
     in a script file: check the effect (e.g. the team menu after unlockCharacter), not the reply.
   - no newlines in the text (one command per line); script()/console() refuse them.
 
+Saved-campaign checks: from a fresh main menu, select Load Game with normal menu input. Sending console
+loadgame there bypasses controller setup: the save can read successfully while the spawned heroes have no
+controller assignment, miss saved-position placement and fall at the origin. The same console command is useful
+for an in-campaign reload after normal session setup; it is not an equivalent cold-load test. Wait for the load UI
+before confirming, then verify live party bindings, positive health and actual movement. Unknown body fields or
+on_floor=null are not evidence of death or a fall. See research/regression/save_load_entry_paths.md.
+
 Pads (xml2-fix branch pad-input): with [Test] VirtualPads=N (1-4) in xml2-fix.ini the game sees N Logitech Dual
 Actions with nothing plugged in - virtual pad N is the game's pad N, i.e. player N's pad (pad 2 START = player 2
 joins); they replace real controllers (XInput pad N's input goes into virtual pad N while the game has the focus).
