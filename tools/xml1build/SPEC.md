@@ -7397,3 +7397,30 @@ traversal or save/load acceptance by itself.
 +
 +Builder 0.2.3 emits content 20: model-less hazard residency, three shallow-overlap crate placements and two more fall-volume selections change maps. No persistent catalogue domain key is added; catalogue revision remains 6. The append-only identity assigns (20,6) LC28 and bind fingerprint `e6b547bed0ea8986cb3493a8d219bda220eec0416661ab72d9b1074b06f7e5f2`. Sixty hash-only prefix attestations describe the combined output; ambiguous smart-entity state still rejects safely. The durable LC save format is unchanged. The companion requirement is XML2 Fix >=1.6; `RELEASE_16_KEYS` checks ObjectWorldImpact and StunRule in addition to released keys. Optional TestMode is off and unwritten by the builder.
 +
+<<<<<<< HEAD
+=======
+
+## Lock-on effect bridge (integration pending)
+
+`lockon_effects.py` derives the scan, surface-hit and acquired-target effect
+paths from the three dormant effect triggers of each compiled `ch_lockon`
+move. All styles must agree on the triple. `V-TBD` rejects malformed or
+conflicting triples and missing/empty effect files. Both XMLB and ENGB
+powerstyles are inspected. The native handlers already retain the geometry
+and targeting; changing the dormant triggers into ordinary timed effects
+would lose the original spatial behavior.
+
+The production ini writer and harness emit `[Game] Xml1LockOnEffects` and
+`Xml1LockOnAim=1` only for a port build with a valid triple. The companion capability check names this
+key when an existing DLL lacks it. XML2 Fix restores the omitted visual calls
+through guarded native bridges. The aiming flag changes the scan head query
+from the PC fixed 56-unit approximation to the animated bone used by XML1.
+This restores natural target acquisition and needs a new gameplay agreement
+rule ID. Until integration assigns it, the companion rejects online admission
+for the requested aiming feature. No ID or release version is assigned here.
+Powerstyles, effect definitions, damage values, limits and save format remain
+unchanged. The arm beam was already
+present in the candidate; the missing eye-scan beam is a distinct path.
+
+The integration owner assigns the validator number and release metadata.
+>>>>>>> 13ddf05346d692462f113c4da743e852bab64158

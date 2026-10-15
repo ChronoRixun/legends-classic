@@ -160,6 +160,7 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 from . import common as C
+from . import lockon_effects as LE
 import xmlb                                   # noqa: E402  tools/xmlb.py
 from .lib import x1names                      # noqa: E402  the XML1 namespace (was research/characters)
 from .lib.x1names import is_fightstyle_name   # noqa: E402  fightstyle_* / x1_fightstyle_* (issue #52)
@@ -970,6 +971,7 @@ class Validator:
                                ('V39', 'save files', lambda ck: SF.validate(self, ck)),
                                ('V41', 'spawn-floor residency', self.spawn_floor_residency),
                                ('V61', 'model-less hazard bounds', self.hazard_bounds),
+                               ('V-TBD', 'lock-on effects', lambda ck: LE.validate(self.ctx, ck)),
                                ('V45', 'gun damage roll', lambda ck: W.validate(self, ck)),
                                ('V47', 'scripted boss approach', lambda ck: SA.validate(self, ck)),
                                ('V46', 'pickup models', self.v46_pickup_models),
