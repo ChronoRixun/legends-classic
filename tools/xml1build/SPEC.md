@@ -2347,9 +2347,10 @@ undying target while the Danger Room is active (`0x5a8b5b..0x5a8b67`). Adding
 `showhealthbar` data cannot fix this separate gate: the physical flag it controls
 is already enabled. Changing protection or lesson limits would change gameplay.
 The builder requests `[Game] DangerRoomHealthBars=xml1`; its companion uses a
-guarded transaction to bypass only that HUD suppression branch. Actor health,
-protection, targeting, course data and campaign HUD behavior are preserved.
-This presentation setting needs no gameplay-agreement rule. The companion-key
+guarded transaction to bypass only that HUD suppression branch. The patch preserves
+protection, targeting and course data. The native HUD path can refresh dirty stats.
+Requested-only gameplay rule 22 covers possible native dirty-stat refresh and
+health-clamp scheduling; equivalent simulation timing is not established. The companion-key
 compatibility check refuses a DLL without support for the requested setting.
 
 ### 21.4 Review, codex, trivia, credits (C)
@@ -7444,3 +7445,9 @@ for this unreleased candidate. The immutable (20,6)/LC28 identity above remains
 reserved; the new (20,7) identity is LC29. Durable save fields and map placement
 ordinals are unchanged. XML2 Fix >=1.6 remains required. The release key checks
 include DangerRoomParty, Xml1LockOnEffects and Xml1LockOnAim.
+
+## 101. Candidate 0.2.3d boxed harm and protected gauges
+
+- **Opening fire (#104 follow-up):** `BoxHarmOrigin=xml1` restores the XBE zero-origin argument for boxed harm. The native victim/attacker fallback replaces the PC box-centre direction and uses the native 0.01 dispatch delay. Damage amounts, bounds and authored repeat intervals remain unchanged. This addresses the opening fire's upward repeated-contact impulse; other boxed hazards need campaign testing. Requested-only gameplay rule **21**, revision 1.
+- **Danger Room robot health bars (tester report):** `DangerRoomHealthBars=xml1` bypasses the protected training-target HUD suppression gate so ordinary attacks can show a decreasing gauge. Protection and course limits remain intact. The newly reachable native HUD path may refresh dirty stats and schedule health clamping; timing parity is unproved, so requested-only gameplay rule **22**, revision 1, covers this behavior.
+- The builder enables both keys for XML1 builds and refuses an existing companion missing either key. Matching verified installs can host/join; absent keys omit their rules, invalid/failed requests block admission, and mismatches name the setting. Ordinary XML2 defaults stay off. Builder 0.2.3 / XML2 Fix 1.6.0, content 20 / catalogue 7 / LC29 and the immutable bind fingerprint are unchanged: this candidate adds runtime switches and documentation, no game-data changes.

@@ -34,10 +34,10 @@ and disclosed; no input was sent during that exposure. This still does not
 measure original-console DPS.
 
 The companion `BoxHarmOrigin=xml1` hook changes only the box dispatch origin,
-retaining the spatial query, radius path, damage, timing and restored bounds.
-It needs an assigned gameplay-agreement rule; the candidate explicitly blocks
-online rather than negotiating as stock. No builder default or version was
-changed. The scope census is 137 definitions / 419 placements / 66 zones, with
+retaining the spatial query, radius path, damage, authored repeat settings and restored bounds.
+The zero origin also selects the native default 0.01 dispatch delay. Candidate
+0.2.3d registers requested-only rule 21 and enables the builder default; versions
+and saved-content identity remain unchanged. The scope census is 137 definitions / 419 placements / 66 zones, with
 all 348 map files unchanged; runtime coverage is the opening fire only.
 
 ## Authored damage and bounds
@@ -126,7 +126,6 @@ damage into fire damage.
 Do not lower the source damage, remove touch activation, add a cooldown, reduce
 bounds or revert hazard residency based solely on the nominal-rate calculation.
 The box-origin candidate has the demonstrated native difference, negative
-control and predicted direction change. It remains opt-in pending gameplay-rule
-assignment and wider room/difficulty/co-op acceptance. Original-console contact
+control and predicted direction change. It uses requested-only gameplay rule 21; wider room/difficulty/co-op acceptance remains. Original-console contact
 cadence, frame-rate sensitivity, four-hero exposure and full normal-health
 traversal remain separate questions from the successful controlled diagnostics.

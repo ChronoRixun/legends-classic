@@ -368,3 +368,12 @@ It contains and distributes no game content: you need your own copies of both ga
 `[TestMode]` is optional and offline only: either switch blocks hosting and joining until both are off and the game restarts. F8 may skip script-referenced actors; F10 refuses an unsafe destination. See the companion [testing guide](https://github.com/ChronoRixun/xml2-fix/blob/main/docs/test-mode.md). Saves made with testing tools retain their gameplay effects.
 
 The 0.2.3 / XML2 Fix 1.6 candidate carries newly appended hazards through online saved-campaign transfer (co-op protocol 4; XML2 Fix 1.5 and older peers are refused).
+
+### Candidate 0.2.3d settings
+
+| [Game] key | XML1 builder | Agreement |
+|---|---|---|
+| BoxHarmOrigin | xml1 | 21 revision 1, requested only |
+| DangerRoomHealthBars | xml1 | 22 revision 1, requested only |
+
+Absent, empty or xml2 omits either rule. Invalid or failed requested installs remain unverified. Both peers must match. HUD dirty-stat refresh/clamp timing parity remains unproved. Versions and content identity remain unchanged from 0.2.3c.

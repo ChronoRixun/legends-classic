@@ -5,11 +5,16 @@ build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebui
 
 ## v0.2.3 - content version 20 (needs XML2 Fix 1.6.0)
 
+- **Opening fire (#104 follow-up):** `BoxHarmOrigin=xml1` restores the XBE zero-origin argument for boxed harm. The native victim/attacker fallback replaces the PC box-centre direction and uses the native 0.01 dispatch delay. Damage amounts, bounds and authored repeat intervals remain unchanged. This addresses the opening fire's upward repeated-contact impulse; other boxed hazards need campaign testing. Requested-only gameplay rule **21**, revision 1.
+- **Danger Room robot health bars (tester report):** `DangerRoomHealthBars=xml1` bypasses the protected training-target HUD suppression gate so ordinary attacks can show a decreasing gauge. Protection and course limits remain intact. The newly reachable native HUD path may refresh dirty stats and schedule health clamping; timing parity is unproved, so requested-only gameplay rule **22**, revision 1, covers this behavior.
+- The builder enables both keys for XML1 builds and refuses an existing companion missing either key. Matching verified installs can host/join; absent keys omit their rules, invalid/failed requests block admission, and mismatches name the setting. Ordinary XML2 defaults stay off. Builder 0.2.3 / XML2 Fix 1.6.0, content 20 / catalogue 7 / LC29 and the immutable bind fingerprint are unchanged: this candidate adds runtime switches and documentation, no game-data changes.
+
+
 **Online saved-campaign transfer fixed.** Loading an older saved campaign in co-op now carries the newly appended hazards/residents to both peers, including a client without the prefix sidecar; historical removals stay removed. The durable LC save format is unchanged. Co-op protocol 4: XML2 Fix 1.5 and older peers are refused at admission, as before.
 
 Use **Rebuild**, then **Play** in the launcher. Both co-op peers need this builder and XML2 Fix 1.6.0.
 
-- **Danger Room:** course robots and other initially cloaked opponents become visible and take ordinary attack damage. Target health-bar display still needs live confirmation; the retained integration frames did not establish it. Course-only copies preserve campaign actors. An incomplete non-solo party uses XML1's Cyclops/Phoenix/Storm/Wolverine fallback, avoiding the absent PC hero/default actor (rule 19).
+- **Danger Room:** course robots and other initially cloaked opponents become visible and take ordinary attack damage. Candidate 0.2.3d adds the guarded health-bar gate fix under rule 22; see the candidate test evidence. Course-only copies preserve campaign actors. An incomplete non-solo party uses XML1's Cyclops/Phoenix/Storm/Wolverine fallback, avoiding the absent PC hero/default actor (rule 19).
 - **Sentinel flashback:** restores eye-scan, surface-hit and acquired-target effects. Animated-head aiming restores natural target acquisition (rule 20); missile and arm effects use their existing native paths.
 - **Combat (#101, progress):** StunRule revision 2 restores original party-hero animation speed and input recovery. Overall hero-free-time measurements are noisy; full combat parity remains open.
 

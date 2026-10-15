@@ -91,3 +91,21 @@ def test_training_gauges_require_the_presentation_fix_without_changing_course_da
             raise AssertionError('companion without training gauges accepted')
         dll.write_bytes(b'SYNTHETIC' + 'DangerRoomHealthBars'.encode('utf-16le'))
         FI.check_release_dll(dll, keys)
+
+
+def test_boxed_harm_requires_supported_companion():
+    keys = {'Game': {'BoxHarmOrigin': 'xml1'}}
+    assert FI.game_keys(xml1_opening=True)['BoxHarmOrigin'] == 'xml1'
+    assert 'BoxHarmOrigin' not in FI.game_keys(xml1_opening=False)
+    assert 'BoxHarmOrigin' in FI.PORT_OWNED['Game']
+    with tempfile.TemporaryDirectory() as td:
+        dll = Path(td) / 'companion.dll'
+        dll.write_bytes(b'SYNTHETIC')
+        try:
+            FI.check_release_dll(dll, keys)
+        except FI.FixTooOld as exc:
+            assert exc.missing == ['[Game] BoxHarmOrigin']
+        else:
+            raise AssertionError('companion without training gauges accepted')
+        dll.write_bytes(b'SYNTHETIC' + 'BoxHarmOrigin'.encode('utf-16le'))
+        FI.check_release_dll(dll, keys)
