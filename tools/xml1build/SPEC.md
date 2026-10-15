@@ -2340,6 +2340,18 @@ failed requests remain unverified. Missing/empty/xml2 omits the rule.
 The eleven course-only identities append STAT hashes at catalogue revision 7;
 existing serials and other domains stay unchanged. Combined identity: section 100.
 
+Visibility alone does not restore training-opponent gauges. The PC course spawner
+protects connect-limit opponents with the undying flag. They remain damageable,
+and real hits select them, but `CHudTarget::update` suppresses a non-default
+undying target while the Danger Room is active (`0x5a8b5b..0x5a8b67`). Adding
+`showhealthbar` data cannot fix this separate gate: the physical flag it controls
+is already enabled. Changing protection or lesson limits would change gameplay.
+The builder requests `[Game] DangerRoomHealthBars=xml1`; its companion uses a
+guarded transaction to bypass only that HUD suppression branch. Actor health,
+protection, targeting, course data and campaign HUD behavior are preserved.
+This presentation setting needs no gameplay-agreement rule. The companion-key
+compatibility check refuses a DLL without support for the requested setting.
+
 ### 21.4 Review, codex, trivia, credits (C)
 
 All four tables are written English in `.XMLB` and `.engb`.
