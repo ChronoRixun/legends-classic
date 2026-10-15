@@ -9,6 +9,10 @@ build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebui
 
 Use **Rebuild**, then **Play** in the launcher. Both co-op peers need this builder and XML2 Fix 1.6.0.
 
+- **Danger Room:** course robots and other initially cloaked opponents become visible and show target health bars when hit. Course-only copies preserve campaign actors. An incomplete non-solo party uses XML1's Cyclops/Phoenix/Storm/Wolverine fallback, avoiding the absent PC hero/default actor (rule 19).
+- **Sentinel flashback:** restores eye-scan, surface-hit and acquired-target effects. Animated-head aiming restores natural target acquisition (rule 20); missile and arm effects use their existing native paths.
+- **Combat (#101, progress):** StunRule revision 2 restores original party-hero animation speed and input recovery. Overall hero-free-time measurements are noisy; full combat parity remains open.
+
 - **Falling crates (#103):** the affected HAARP ice-tunnel crates settle on their floor, survive a first ordinary punch and break on later hits. `ObjectWorldImpact` restores XML1's zero impact coefficient for every landing with no physical collision target, not just punched crates: the XBE uses coefficient-table entry zero for all of them.
 - **Hazards (#104):** placed model-less fire, spike and electrical hazards keep their authored bounds and can hurt heroes and enemies. The full output audit covers 57 affected zones; source-agent live checks cover three rooms. Remaining rooms need campaign testing.
 - **Fall volumes (#22, partial):** two more source-verified volumes are enabled. Unsafe or unproved volumes remain deferred; this does not claim every fall or follower problem is fixed.
@@ -17,7 +21,7 @@ Use **Rebuild**, then **Play** in the launcher. Both co-op peers need this build
 - **Optional offline testing:** XML2 Fix's `[TestMode]` adds Forge access and F8/F9/F10 tools. It is off and unwritten by default; either switch blocks online play until disabled and restarted.
 - **Sound report (#79):** not reproduced after the hazard fix; no sound-loop fix is claimed.
 
-Content advances from 19 to 20 because hazard residency, three crate placements and two fall-volume selections change generated maps. Catalogue revision stays 6 because no persistent catalogue domain key is added; the new immutable content/bind envelope receives lobby token LC28. Zone-record sidecar attestations do not change the durable save format.
+Content 20 includes the earlier hazard/crate/fall-volume changes. Candidate 0.2.3c additionally appends eleven course-only STAT identities: catalogue revision 7 and lobby token LC29 identify the new bind envelope; (20,6)/LC28 remains reserved. Builder 0.2.3, CONTENT_VERSION 20 and requires_xml2fix >=1.6 stay unchanged for this unreleased candidate. Zone-record attestations and the durable save format are unchanged. Cold saved-game loads must use the normal Load Game menu; console loadgame from a fresh main menu bypasses controller setup and is an invalid regression entry.
 
 ## v0.2.2 - content version 19 (needs XML2 Fix 1.5.0)
 

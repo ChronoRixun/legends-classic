@@ -971,7 +971,7 @@ class Validator:
                                ('V39', 'save files', lambda ck: SF.validate(self, ck)),
                                ('V41', 'spawn-floor residency', self.spawn_floor_residency),
                                ('V61', 'model-less hazard bounds', self.hazard_bounds),
-                               ('V-TBD', 'lock-on effects', lambda ck: LE.validate(self.ctx, ck)),
+                               ('V62', 'lock-on effects', lambda ck: LE.validate(self.ctx, ck)),
                                ('V45', 'gun damage roll', lambda ck: W.validate(self, ck)),
                                ('V47', 'scripted boss approach', lambda ck: SA.validate(self, ck)),
                                ('V46', 'pickup models', self.v46_pickup_models),

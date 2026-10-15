@@ -29,7 +29,7 @@ def test_lockon_paths_preserve_roles_and_require_assets():
         fixture(out)
         assert F.build_lockon_effects(out) == {L.KEY: 'invented/scan,invented/contact,invented/marked', L.AIM_KEY: '1'}
         (out / 'Effects/invented/contact.XMLB').unlink()
-        ck = Check('V-TBD', 'lock-on effects')
+        ck = Check('V62', 'lock-on effects')
         L.validate(type('Context', (), {'out': out})(), ck)
         assert L.inspect(out)[1] == ['lock-on effect missing or empty: invented/contact']
         try:

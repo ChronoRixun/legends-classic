@@ -737,7 +737,6 @@ RELEASE_15_KEYS = {'Game': ('PlacementCrush', 'DoubleHeal', 'RankCosts', 'LevelS
 RELEASE_16_KEYS = {**RELEASE_15_KEYS,
                    'Game': RELEASE_15_KEYS['Game'] + ('ObjectWorldImpact', 'StunRule', 'DangerRoomParty',
                                                      'Xml1LockOnEffects', 'Xml1LockOnAim')}
-REQUIRED_COMPANION_KEYS = RELEASE_16_KEYS
 
 
 def check_release_dll(dll, keys: dict) -> None:
@@ -747,7 +746,7 @@ def check_release_dll(dll, keys: dict) -> None:
     if not dll.is_file():
         return
     data = dll.read_bytes()
-    missing = [f'[{section}] {key}' for section, names in REQUIRED_COMPANION_KEYS.items() for key in names
+    missing = [f'[{section}] {key}' for section, names in RELEASE_16_KEYS.items() for key in names
                if key in keys.get(section, {}) and key.encode('utf-16le') not in data]
     if missing:
         raise FixTooOld(f'This build needs XML2 Fix {REQUIRED_XML2FIX} or later; the existing DLL does not recognize '

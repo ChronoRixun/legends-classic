@@ -1110,7 +1110,7 @@ turret deathscripts gate progression (`tank_destroyed`, `setGameFlag('haarp3',1,
 XMen2.exe registers every zoneinfo entry with `extraction="true"` (0x468130, `_stricmp` 0x468155, at most 31 at
 0x46817d) and parses `towncenter`/`act`/`savename`/`description`/`mapx`/`mapy` (0x467f60). XML2's `extractionPoint`
 menu (0x4a6b50) offers `openmenu('worldmap')` over that list, `extractionPointChange(%d,0)` (0x4a7020: pushsidemission
-+ team menu with `restorelastzone('1')`) and `saveloadProcess(4)`. XML1's menu (default.xbe 0x9f110) had no world map
+ team menu with `restorelastzone('1')`) and `saveloadProcess(4)`. XML1's menu (default.xbe 0x9f110) had no world map
 (team change, save, load, danger room, item shop), and no XML1 zoneinfo entry has extraction/towncenter/mapx. So
 `zones.build_zoneinfo` strips `extraction`, `towncenter`, `mapx` and `mapy` from every XML2 entry (30 entries, 5 town
 centres) and registers no XML1 zone: an XML1 Xtraction beacon keeps team change and save, and its world map lists no
@@ -2335,15 +2335,10 @@ guarded fallback operands to Cyclops, Phoenix, Storm, Wolverine (XBE
 `0xc7414..0xc75af`, PC `0x4d21cb..0x4d236e`). An all-or-nothing transaction verifies
 signatures and readback, and rolls back failures. The builder writes the key and
 checks companion support. This restores the original four-seat fallback behavior.
-No gameplay rule ID has been assigned: the companion calls
-`reject_unregistered_rule("DangerRoomParty")` when requested, so online admission
-stays blocked until integration assigns and registers a rule. Existing IDs 1-18
-and protocol 4 are unchanged. The durable save format is unchanged.
-
-The eleven course-only actor identities append STAT hashes to the master
-catalogue (revision 7); existing serials and all other domains stay unchanged.
-Release integration must assign the combined content identity and regenerate
-bind metadata. This task does not assign a release version or lobby token.
+Requested-only gameplay rule 19 revision 1 advertises the installed state;
+failed requests remain unverified. Missing/empty/xml2 omits the rule.
+The eleven course-only identities append STAT hashes at catalogue revision 7;
+existing serials and other domains stay unchanged. Combined identity: section 100.
 
 ### 21.4 Review, codex, trivia, credits (C)
 
@@ -3815,8 +3810,8 @@ byte (+0x39) and a flag bit (+0x3b), then every item instance (the gear bag; a h
 vt+0x7c / vt+0x18), 4 bytes (+0x2c, +0x2d, +0x2f, +0x2e), then three lists (+8, +0x10, +0x18), each a dword count
 and per element the **enhancement record index** (u16) + a dword (element class vtable 0x6865ac, save 0x45e4e0,
 load 0x482ad0 -> 0x481910 -> vt+0x2c 0x45e510; the record is looked up by index, manager vt+0x10 0x47bad0). List
-+0x10 is the definition's own enhancements (0x481a10 copies the definition's up to 8 record indices, def+0x24),
-+8 / +0x18 the random affixes (manager vt+0x108 / vt+0x10c). So a saved drop unique names its own records.
+0x10 is the definition's own enhancements (0x481a10 copies the definition's up to 8 record indices, def+0x24),
+8 / +0x18 the random affixes (manager vt+0x108 / vt+0x10c). So a saved drop unique names its own records.
 
 **Measured** (item manager in the running game, def+0x24 record indices): content 7 (`build/_t15`) `APOC_BANE` (def
 55) = records 340-345, `XAVIER_DREAM` (def 63) = 371-373; with the 15 hero uniques' 54 enhancements stripped (branch
@@ -5170,7 +5165,7 @@ boundary, save-format change or version change is added.
 
 XMen2.exe builds each character's sound table when the character loads (0x438d20, called from 0x4239be). For
 every event of the build's `shared_sounds` table it checks a name with the sound system's exists method (vtable
-+0x34, 0x590120) and, when it exists, stores the handle from resolve (+0x38, 0x590bd0); a missing name stores the
+0x34, 0x590120) and, when it exists, stores the handle from resolve (+0x38, 0x590bd0); a missing name stores the
 "none" handle and the line is skipped. The first six events (pain .. death) use `char/<sounddir>/<event>`, every
 later one (tauntkd, victory, sight, the team commands, lowhealth, epitaph, solo, xtreme, levelup, bored, the banter
 events) `char/<voice folder>/<event>`, the voice folder being the sounddir with its `_m/` as `_v/`
@@ -5489,7 +5484,7 @@ punch-versus-power wall restriction is withdrawn; preserving ordinary character 
 
 The initial implementation also mapped attack levels 0-1 -> 0 and >= 2 -> 1, including shared events, styles,
 projectiles and gun beams. That broke normal attacks against living enemies. FUN_00429320 compares hit byte
-+0x2e with character byte +0x31c at 0x4293e0-0x4293e9 and accepts only unsigned **greater than**, not equality.
+0x2e with character byte +0x31c at 0x4293e0-0x4293e9 and accepts only unsigned **greater than**, not equality.
 A level-zero hit against a normal structure-zero character returns false at 0x42947c. The separate bypass bits
 0x00200000 / 0x40000000 mean kill / no-protection; they are not suitable substitutes for normal attacks.
 
@@ -7392,19 +7387,17 @@ conversion does not migrate those records, so retaining existing saved zone
 state requires the verified append-only attestations in 70.5.1. Runtime acceptance and affected-room
 coverage are reported separately; the static rule does not establish campaign
 traversal or save/load acceptance by itself.
-+
-+## 98. Release 0.2.3 content identity
-+
-+Builder 0.2.3 emits content 20: model-less hazard residency, three shallow-overlap crate placements and two more fall-volume selections change maps. No persistent catalogue domain key is added; catalogue revision remains 6. The append-only identity assigns (20,6) LC28 and bind fingerprint `e6b547bed0ea8986cb3493a8d219bda220eec0416661ab72d9b1074b06f7e5f2`. Sixty hash-only prefix attestations describe the combined output; ambiguous smart-entity state still rejects safely. The durable LC save format is unchanged. The companion requirement is XML2 Fix >=1.6; `RELEASE_16_KEYS` checks ObjectWorldImpact and StunRule in addition to released keys. Optional TestMode is off and unwritten by the builder.
-+
-<<<<<<< HEAD
-=======
 
-## Lock-on effect bridge (integration pending)
+## 98. Release 0.2.3 content identity
+
+Builder 0.2.3 emits content 20: model-less hazard residency, three shallow-overlap crate placements and two more fall-volume selections change maps. No persistent catalogue domain key is added; catalogue revision remains 6. The append-only identity assigns (20,6) LC28 and bind fingerprint `e6b547bed0ea8986cb3493a8d219bda220eec0416661ab72d9b1074b06f7e5f2`. Sixty hash-only prefix attestations describe the combined output; ambiguous smart-entity state still rejects safely. The durable LC save format is unchanged. The companion requirement is XML2 Fix >=1.6; `RELEASE_16_KEYS` checks ObjectWorldImpact and StunRule in addition to released keys. Optional TestMode is off and unwritten by the builder.
+
+
+## 99. Lock-on effect bridge and animated aiming (validator V62)
 
 `lockon_effects.py` derives the scan, surface-hit and acquired-target effect
 paths from the three dormant effect triggers of each compiled `ch_lockon`
-move. All styles must agree on the triple. `V-TBD` rejects malformed or
+move. All styles must agree on the triple. `V62` rejects malformed or
 conflicting triples and missing/empty effect files. Both XMLB and ENGB
 powerstyles are inspected. The native handlers already retain the geometry
 and targeting; changing the dormant triggers into ordinary timed effects
@@ -7415,12 +7408,20 @@ The production ini writer and harness emit `[Game] Xml1LockOnEffects` and
 key when an existing DLL lacks it. XML2 Fix restores the omitted visual calls
 through guarded native bridges. The aiming flag changes the scan head query
 from the PC fixed 56-unit approximation to the animated bone used by XML1.
-This restores natural target acquisition and needs a new gameplay agreement
-rule ID. Until integration assigns it, the companion rejects online admission
-for the requested aiming feature. No ID or release version is assigned here.
+This restores natural target acquisition under requested-only gameplay rule 20,
+revision 1, verified only after the whole transaction succeeds. OFF omits the rule.
 Powerstyles, effect definitions, damage values, limits and save format remain
 unchanged. The arm beam was already
 present in the candidate; the missing eye-scan beam is a distinct path.
 
-The integration owner assigns the validator number and release metadata.
->>>>>>> 13ddf05346d692462f113c4da743e852bab64158
+Rule 19 covers the requested DangerRoomParty fallback, revision 1. Both new
+rules use installed values {1,0,0,0}; failed requests remain unverified.
+
+## 100. Candidate 0.2.3c content identity
+
+The eleven course-only visible NPC identities append eleven STAT entries and
+advance the catalogue to revision 7. Builder 0.2.3 and content 20 stay unchanged
+for this unreleased candidate. The immutable (20,6)/LC28 identity above remains
+reserved; the new (20,7) identity is LC29. Durable save fields and map placement
+ordinals are unchanged. XML2 Fix >=1.6 remains required. The release key checks
+include DangerRoomParty, Xml1LockOnEffects and Xml1LockOnAim.

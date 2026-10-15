@@ -241,7 +241,7 @@ the game.
 
 | Builder | Content version | Needs xml2-fix | Notes |
 |---|---|---|---|
-| 0.2.3 | 20 | 1.6.0 | hazard bounds, floor-overlap crates, two more fall volumes, NpcPower revision 4 and StunRule; verified saved-zone prefix retention; both co-op peers need matching versions/settings |
+| 0.2.3 | 20 | 1.6.0 | hazard bounds, floor-overlap crates, two more fall volumes, NpcPower revision 4, StunRule revision 2, visible Danger Room opponents/original fallback, Sentinel scan effects and aiming; catalogue 7 / LC29; verified saved-zone prefix retention; both co-op peers need matching versions/settings |
 | 0.2.2 | 19 | 1.5.0 | the first game's rank costs and level points (`[Game] RankCosts`, `LevelSkillPoints`, `LevelStatPoints`), breakable parts (`[Game] Xml1Multipart`), leaders (`[Game] X1Leader`), solo mode (`[Game] SoloMode`), death below 1 health (`[Game] DeathRule`), the Xtraction services and Danger Room gate (`[Game] DangerRoomGate`), the revival price (`[Game] RevivalCost`), scan turrets (`[Game] Xml1Turrets`), pack amounts (`[Game] PackAmount`), settling without crushes (`[Game] PlacementCrush`), no double heals (`[Game] DoubleHeal`), 1024 script functions (`[Limits] ScriptFunctions`), the death hand-over (`[Game] DeathSwitchClear`), enemy power use and combos (`[Game] NpcPowerRule`); co-op peers need 0.2.2 / 1.5.0 on both PCs |
 | 0.2.0 - 0.2.1 | 18 | 1.4.0 | the LC save format (`[Save] Format=lc`), the first game's combat balance (`[Balance]`), the entity capacity raise (`[Limits] EntityCapacity`: 768 generic / 1024 World entities), triggers per move (`[Limits] MoveTriggers`), the Master Mold controller (`[Game] Xml1MasterMold`, `Xml1MoldStage`), explosions' first hit (`[Game] ExplosiveFirstHit`), the classic main menu (`[Game] ClassicMainBackdrop`, `ClassicMainPanelBounds`), popup answers (`[Game] ConfirmationRelease`), the Xtraction shop (`[Game] XtractionShop`), content fingerprint metadata (`[Online] ContentFingerprint`) and the shared gameplay agreement (co-op peers with different content or settings are refused, with the reason on both PCs) |
 | 0.1.12 | 15 | 1.3.2 | ladder descents (`[Game] CharacterLadderPaths`), objective completion text (`[Game] ObjectiveDescriptions`), STAT pickups (`addStatPoints`), the first game's break rule (`[Game] BreakRule`), the effect curve pool (`[Limits] EffectCurves`), no Xtract world map (`[Game] Xtract`) |
@@ -357,7 +357,10 @@ It contains and distributes no game content: you need your own copies of both ga
 | XML2 Fix setting | Builder default | Purpose |
 |---|---|---|
 | `[Game] ObjectWorldImpact` | `xml1` | XML1 landing-impact coefficient; rule 17 |
-| `[Game] StunRule` | `xml1` | Clear rejected/interrupted party-hero stun flags; rule 18 |
+| `[Game] StunRule` | `xml1` | Original party stun playback/recovery; rule 18 revision 2 |
+| `[Game] DangerRoomParty` | `xml1` | Original incomplete-course four-hero fallback; rule 19 |
+| `[Game] Xml1LockOnEffects` | authored triple | Scan, surface and acquired-target visuals |
+| `[Game] Xml1LockOnAim` | `1` | Animated-head targeting; rule 20 |
 | `[Game] NpcPowerRule` | `xml1` | XML1 power decisions and combo timing; rule 16 revision 4 |
 | `[TestMode] ForgeEverywhere` | off, unwritten | Forge at Xtraction points |
 | `[TestMode] Hotkeys` | off, unwritten | F8 clears eligible enemies, F9 toggles party protection, F10 returns to the nearest safe authored start |
