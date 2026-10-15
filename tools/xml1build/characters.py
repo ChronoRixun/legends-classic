@@ -49,6 +49,7 @@ from pathlib import Path
 
 from . import common as C
 from . import combat_events as CE
+from . import danger_room_actors as DR
 from . import npc_values as NV       # SPEC 24: XML1 value codes in the styles, the NPC energy pool
 from . import weapons as W           # SPEC 29: XML1 weapon definitions as style triggers (variant styles)
 from . import melee_weapons as MW    # SPEC 69.5: balance-only melee weapon metadata
@@ -322,9 +323,11 @@ def planned_stats(ctx):
         need, scanned = _scan_keep_needs(ctx, set(x2npc), hero_root)
         keep_all = set(KEEP_X2) | evidence | set(need)
         keep = [n for n in x2npc if n in keep_all and n not in x1names_l]
+        dr_variants = DR.plan(ctx)
         p = {'x1_npcs': x1_npcs, 'covered': covered, 'heroes_as_npc': heroes, 'hero_refs': hero_refs,
              'keep_x2': keep, 'keep_evidence': evidence, 'keep_need': need, 'keep_scanned': scanned,
-             'herostat': x2hero, 'names': {n.lower() for n in x2hero} | set(keep) | x1names_l,
+             'herostat': x2hero, 'names': {n.lower() for n in x2hero} | set(keep) | x1names_l | set(dr_variants.values()),
+             'dr_variants': dr_variants,
              'zone_monster_skins': zrefs['monster_skins'], 'zone_parse_errors': zrefs['errors']}
         ctx.shared['_characters_plan'] = p
         return p
@@ -1500,7 +1503,7 @@ class _Builder:
         ctx.set_count('pkg_entries_added_for_refs', n_extra)
         return written
 
-    def character_packages(self, stats_by_lname, zone_skins):
+    def character_packages(self, stats_by_lname, zone_skins, variant_sources=None):
         """Packages/generated/characters/<name>_<mapped skin>[_nc].PKGB from every XML1 bundle of every
         written XML1-origin stats name, plus synthesized ones for zone monster_skin variants without a
         bundle, plus (fallback) synthesized ones when an entry's own skin has no bundle."""
@@ -1514,7 +1517,8 @@ class _Builder:
         for lname, st in stats_by_lname.items():
             skin = st.get('skin')
             own4 = str(int(skin) - N.SKIN_OFFSET).zfill(4) if skin and skin.isdigit() and int(skin) >= N.SKIN_OFFSET else None
-            by_skin = bundles.get(lname, {})
+            source_name = (variant_sources or {}).get(lname, lname)
+            by_skin = bundles.get(source_name, {})
             if not by_skin:
                 ctx.warn(f'{st.get("name")}: no XML1 character bundle; packages synthesized from the stats entry')
             want = set(by_skin)
@@ -1543,7 +1547,7 @@ class _Builder:
                             self.detail['synth_packages'].append([actual, how])
             # generated/characters/<name>_xml (XMen2.exe 'generated/characters/%s_xml', 0x4bc1f6): the style
             # data of characters that are spawned by powers / scripts (multipleman, spiderpod, bots, heroes ...)
-            xb = ctx.manifest.get(f'packages/generated/characters/{lname}_xml.fb')
+            xb = ctx.manifest.get(f'packages/generated/characters/{source_name}_xml.fb')
             rel = f'Packages/generated/characters/{lname}_xml.PKGB'
             if xb is not None:
                 root, _ = self.build_pkg(xb, f'{lname}_xml')
@@ -1767,12 +1771,23 @@ def run(ctx):
     _hero_refs_report(ctx, unused)
     _npc_scaling(ctx, new_entries, base['engb'])
     _npc_energy(ctx, b, new_entries)
+    # Inert weapon metadata must be present before copying course variants.
+    MW.apply(b, new_entries, x1npc)
+    # The course spawner reveals an actor before passive powerups run. Keep the
+    # campaign entry, but omit its initial cloak on course-only copies.
+    by_name = {e.get('name').lower(): e for e, _ in new_entries}
+    for source_name, alias in plan['dr_variants'].items():
+        if source_name not in by_name:
+            ctx.error(f'Danger Room variant source {source_name} was not converted')
+            continue
+        new_entries.append((DR.visible_variant(by_name[source_name], alias), 'xml1_dr'))
+        if any(n.lower() == source_name for n in b.x1_leaders):
+            b.x1_leaders.add(alias)
+    ctx.set_count('dr_visible_variants', len(plan['dr_variants']))
+    b.detail['dr_visible_variants'] = plan['dr_variants']
     new_names = {e.get('name').lower() for e, _ in new_entries}
     if new_names | set(plan['keep_x2']) | {n.lower() for n in plan['herostat']} != plan['names']:
         ctx.error('internal: planned_stats names differ from the entries built')
-
-    # Inert weapon metadata: XML2 Fix adds it to matching attacks (no new talents).
-    MW.apply(b, new_entries, x1npc)
 
     # ---------------- npcstat in XML1 mode (each file from its own base)
     roots = {}
@@ -1845,7 +1860,8 @@ def run(ctx):
     # ---------------- packages
     stats_by_lname = {e.get('name').lower(): e for e, _ in new_entries}
     zone_skins = {n: s for n, s in plan['zone_monster_skins'].items() if n in stats_by_lname}
-    char_pkgs = b.character_packages(stats_by_lname, zone_skins)
+    char_pkgs = b.character_packages(stats_by_lname, zone_skins,
+                                    {alias: name for name, alias in plan['dr_variants'].items()})
     # check the two packages the engine asks for (own skin) exist for every new entry
     for lname, st in stats_by_lname.items():
         for nc in (False, True):
