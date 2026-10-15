@@ -262,7 +262,7 @@ X1_LEADER = '1'
 PORT_OWNED = {'Game': ('NewGameTeam', 'ResetUnlocks', 'SaveFolder', 'ForcedTeams', 'PostgameScript', 'WindowTitle',
                         'EndHeroUnlock', 'MainMenuItems', 'DangerRoomGate', 'ClassicMainBackdrop', 'ClassicMainPanelBounds', 'NewGamePlus', 'ReviewStats', 'Xtract', 'XtractionShop', 'RevivalCost', 'XPCurve',
                        'GeometrySharingBlendIndices', 'CharacterLadderPaths', 'ObjectiveDescriptions',
-                       'BreakRule', 'PlacementCrush', 'ObjectWorldImpact', 'DoubleHeal', 'DeathRule', 'NpcPowerRule', 'StunRule', 'DangerRoomParty', 'DangerRoomHealthBars', 'BoxHarmOrigin', 'ConfirmationRelease',
+                       'BreakRule', 'PlacementCrush', 'ObjectWorldImpact', 'DoubleHeal', 'DeathRule', 'NpcPowerRule', 'StunRule', 'DangerRoomParty', 'DangerRoomHealthBars', 'BoxHarmOrigin', 'HarmLoopStartup', 'ConfirmationRelease',
                        'ExplosiveFirstHit', 'PackAmount', 'SoloMode', 'X1Leader', 'DeathSwitchClear', 'RankCosts', 'LevelSkillPoints', 'LevelStatPoints', 'Xml1Multipart',
                        'Xml1MasterMold', 'Xml1MoldStage', 'Xml1Turrets', 'Xml1LockOnEffects', 'Xml1LockOnAim'),
               'Limits': ('ActorSlots', 'ResourceNames', 'ItemEnhancements', 'FightStyles', 'EffectCurves', 'MoveTriggers', 'EntityCapacity',
@@ -535,6 +535,11 @@ def save_keys(*, port_identity=False) -> dict:
     return {'Format': SAVE_FORMAT} if port_identity else {}
 
 
+def build_harm_loop_startup(out):
+    """Opt-in startup adapter; online remains blocked pending rule assignment."""
+    return {'HarmLoopStartup': 'xml1'} if (build_record(out) or {}).get('harm_loop_startup') == 'xml1' else {}
+
+
 def port_keys(out, *, save_folder=PLAY_SAVE_FOLDER, eighth=True) -> dict:
     """{section: {key: value}} a play build in <out> needs (= harness.py install --no-pipe --limits for an xml2-fix
     that takes the 8th menu name). Read off the finished build: its menus, report.json and scripts."""
@@ -544,6 +549,7 @@ def port_keys(out, *, save_folder=PLAY_SAVE_FOLDER, eighth=True) -> dict:
                      postgame=postgame, port_identity=bool(postgame), main_menu_items=menu,
                      new_game_plus=NEW_GAME_PLUS if menu else None, review_stats=build_review_stats(out),
                      xtract=XTRACT if postgame else None, xp_curve=build_xp_curve(out))
+    game.update(build_harm_loop_startup(out))
     turrets = build_turrets(out) if postgame else {}
     if postgame:
         game.update(build_mold_controller(out))
@@ -738,7 +744,7 @@ RELEASE_15_KEYS = {'Game': ('PlacementCrush', 'DoubleHeal', 'RankCosts', 'LevelS
 # TestMode is an optional player preference; the builder never writes it by default.
 RELEASE_16_KEYS = {**RELEASE_15_KEYS,
                    'Game': RELEASE_15_KEYS['Game'] + ('ObjectWorldImpact', 'StunRule', 'DangerRoomParty', 'DangerRoomHealthBars', 'BoxHarmOrigin',
-                                                     'Xml1LockOnEffects', 'Xml1LockOnAim')}
+                                                     'Xml1LockOnEffects', 'Xml1LockOnAim', 'HarmLoopStartup')}
 
 
 def check_release_dll(dll, keys: dict) -> None:

@@ -402,7 +402,17 @@ def delayed_harm_loops(root):
             for el in root.iter('entity') if has_delayed_harm_loop(el)]
 
 
-def convert_harm_loop_start(root):
+def native_harm_loop_startup(el):
+    """The native adapter leaves smartfire and authored on/off timers alone."""
+    if not has_delayed_harm_loop(el):
+        return False
+    try:
+        return all(float(el.get(k, '0')) == 0 for k in ('ontime', 'offtime'))
+    except ValueError:
+        return False
+
+
+def convert_harm_loop_start(root, preserve_delay=False):
     """Keep authored start-on loops, at the cost of advancing first activation.
 
     Do not choose by effect/name/path: the parser also affects non-fire loops.
@@ -411,6 +421,8 @@ def convert_harm_loop_start(root):
     changed = 0
     for el in root.iter('entity'):
         if has_delayed_harm_loop(el):
+            if preserve_delay and native_harm_loop_startup(el):
+                continue
             el.set('firstact', '0')
             changed += 1
     return changed
@@ -650,7 +662,7 @@ def is_effect_rel(rel):
     return r.startswith('effects/')
 
 
-def convert(root, rel, weapon_models=None, x1_values=None, x1_balance=None):
+def convert(root, rel, weapon_models=None, x1_values=None, x1_balance=None, *, harm_loop_startup='workaround'):
     """Apply every conversion that applies to XML1 file `rel`. x1_values: heroes.Values of XML1's data/values.xml
     (resolves the codes section 33 writes; None writes the codes). x1_balance: (balance.x1_power_events of XML1's
     shared events, balance.shared_scales of the shipped ones) for a balance build, which marks XML1's power attacks
@@ -669,7 +681,7 @@ def convert(root, rel, weapon_models=None, x1_values=None, x1_balance=None):
     if n:
         c['fall_kill_volumes'] += n
     c.update(convert_physics(root))
-    n = convert_harm_loop_start(root)
+    n = convert_harm_loop_start(root, preserve_delay=harm_loop_startup == 'xml1')
     if n:
         c['harm_loop_start'] += n
     if is_dialog_rel(rel):
