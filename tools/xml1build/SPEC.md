@@ -7274,7 +7274,7 @@ dedicated stun handler clears its flag on exit. The mechanism is now observed; i
 hero-side restoration remain unproved. No hero behavior or additional gameplay rule changed in this candidate.
 
 
-### 95.2 Party-hero stun reaction ownership (`[Game] StunRule=xml1`, rule 18)
+### 95.2 Party-hero stun timing and reaction ownership (`[Game] StunRule=xml1`, rule 18)
 
 The companion hook follows XML1's flag lifetime: a refused stun reaction never enters `ch_stun`, and an
 interrupted stun clears its flag through cancel/exit. XML1 uses an immediate move request, not PC's persistent
@@ -7284,12 +7284,18 @@ new stun immediately. There is no deferred stun waiting for that rejected reques
 PC sets its stun flag before requesting the reaction and retains it after interruptions; idle selection then
 redirects a recovering hero back into stun. The guarded companion hook discards the flag after a refused request
 and clears it on an accepted change to another move, for seated party heroes (including AI followers) only.
-Native accepted-stun duration, refresh, susceptibility, enemy reactions and powerup affecters remain unchanged.
-This restores reaction ownership, not the entire original stun handler or PC powerup implementation.
+Revision 2 also restores XML1's accepted-stun animation speed: default speed 1 becomes 2, divided by positive
+stun susceptibility and clamped to 0..10. Both common stun clips are 3.5 seconds, so the original default is a
+1.75-second animation rather than PC's two-second powerup expiry. The original `ch_stun` recovery runs behind
+the native input lock and pending-chain gates. Its idle transition clears ownership before the new handler
+enters; PC powerup expiry no longer ends a party stun or clears a later refresh's flag. Enemy reactions,
+knockback/get-up speeds, powerup lifetime calculation and affecters remain unchanged. No get-up immunity is added.
 
 `fix_ini.STUN_RULE` writes `StunRule=xml1` for XML1 builds, owns/removes the key when appropriate, and includes it
 in `RELEASE_16_KEYS` / `check_release_dll`: an existing DLL without the capability is refused. Gameplay rule 18
-revision 1 advertises `{1,0,0,0}` when installed, verified off for absent/`xml2`, and unverified on a failed request.
+revision 2 advertises `{1,0,0,0}` when installed, verified off for absent/`xml2`, and unverified on a failed request.
+Revision-1 peers are rejected in both directions. The key-presence check cannot distinguish the two revisions;
+the companion DLL must be updated to obtain this engine fix. The builder does not rewrite combat data for it.
 Rule 17 is ObjectWorldImpact; both new rules register only when requested, preserving the released OFF digest.
 No version or save-format changes are made here; the release integrator owns version allocation.
 
