@@ -262,7 +262,7 @@ X1_LEADER = '1'
 PORT_OWNED = {'Game': ('NewGameTeam', 'ResetUnlocks', 'SaveFolder', 'ForcedTeams', 'PostgameScript', 'WindowTitle',
                         'EndHeroUnlock', 'MainMenuItems', 'DangerRoomGate', 'ClassicMainBackdrop', 'ClassicMainPanelBounds', 'NewGamePlus', 'ReviewStats', 'Xtract', 'XtractionShop', 'RevivalCost', 'XPCurve',
                        'GeometrySharingBlendIndices', 'CharacterLadderPaths', 'ObjectiveDescriptions',
-                       'BreakRule', 'PlacementCrush', 'ObjectWorldImpact', 'DoubleHeal', 'DeathRule', 'NpcPowerRule', 'StunRule', 'DangerRoomParty', 'ConfirmationRelease',
+                       'BreakRule', 'PlacementCrush', 'ObjectWorldImpact', 'DoubleHeal', 'DeathRule', 'NpcPowerRule', 'StunRule', 'DangerRoomParty', 'DangerRoomHealthBars', 'ConfirmationRelease',
                        'ExplosiveFirstHit', 'PackAmount', 'SoloMode', 'X1Leader', 'DeathSwitchClear', 'RankCosts', 'LevelSkillPoints', 'LevelStatPoints', 'Xml1Multipart',
                        'Xml1MasterMold', 'Xml1MoldStage', 'Xml1Turrets', 'Xml1LockOnEffects', 'Xml1LockOnAim'),
               'Limits': ('ActorSlots', 'ResourceNames', 'ItemEnhancements', 'FightStyles', 'EffectCurves', 'MoveTriggers', 'EntityCapacity',
@@ -442,9 +442,10 @@ def game_keys(*, xml1_opening=True, save_folder=None, forced_teams='1', add_hero
     """the [Game] keys, in the order tools/harness.py always wrote them (a dict: insertion order)."""
     game = {}
     if xml1_opening:
-        # Course fallback defaults must name XML1 heroes. The companion currently
-        # refuses online admission until integration assigns this gameplay rule an ID.
+        # Course fallback defaults must name XML1 heroes; protected training
+        # opponents must retain their target gauges without changing protection.
         game['DangerRoomParty'] = 'xml1'
+        game['DangerRoomHealthBars'] = 'xml1'
         # XML1's opening: startFirstMission seats Wolverine alone, resetgame unlocks nobody (xml2-fix new_game.cpp;
         # the build's New Game hook uses loadMapKeepTeam - build_xml1.py --newgame keepteam, the default)
         game.update(NewGameTeam='wolverine', ResetUnlocks='0')
@@ -735,7 +736,7 @@ RELEASE_15_KEYS = {'Game': ('PlacementCrush', 'DoubleHeal', 'RankCosts', 'LevelS
                    'Limits': ('ScriptFunctions',)}
 # TestMode is an optional player preference; the builder never writes it by default.
 RELEASE_16_KEYS = {**RELEASE_15_KEYS,
-                   'Game': RELEASE_15_KEYS['Game'] + ('ObjectWorldImpact', 'StunRule', 'DangerRoomParty',
+                   'Game': RELEASE_15_KEYS['Game'] + ('ObjectWorldImpact', 'StunRule', 'DangerRoomParty', 'DangerRoomHealthBars',
                                                      'Xml1LockOnEffects', 'Xml1LockOnAim')}
 
 

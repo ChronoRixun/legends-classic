@@ -73,3 +73,21 @@ def test_party_fallback_requires_a_companion_that_recognizes_the_key():
             raise AssertionError('unsupported companion accepted')
         dll.write_bytes(b'SYNTHETIC' + 'DangerRoomParty'.encode('utf-16le'))
         FI.check_release_dll(dll, keys)
+
+
+def test_training_gauges_require_the_presentation_fix_without_changing_course_data():
+    keys = {'Game': {'DangerRoomHealthBars': 'xml1'}}
+    assert FI.game_keys(xml1_opening=True)['DangerRoomHealthBars'] == 'xml1'
+    assert 'DangerRoomHealthBars' not in FI.game_keys(xml1_opening=False)
+    assert 'DangerRoomHealthBars' in FI.PORT_OWNED['Game']
+    with tempfile.TemporaryDirectory() as td:
+        dll = Path(td) / 'companion.dll'
+        dll.write_bytes(b'SYNTHETIC')
+        try:
+            FI.check_release_dll(dll, keys)
+        except FI.FixTooOld as exc:
+            assert exc.missing == ['[Game] DangerRoomHealthBars']
+        else:
+            raise AssertionError('companion without training gauges accepted')
+        dll.write_bytes(b'SYNTHETIC' + 'DangerRoomHealthBars'.encode('utf-16le'))
+        FI.check_release_dll(dll, keys)
