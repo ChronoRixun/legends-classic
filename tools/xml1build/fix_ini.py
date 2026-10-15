@@ -264,7 +264,7 @@ PORT_OWNED = {'Game': ('NewGameTeam', 'ResetUnlocks', 'SaveFolder', 'ForcedTeams
                        'GeometrySharingBlendIndices', 'CharacterLadderPaths', 'ObjectiveDescriptions',
                        'BreakRule', 'PlacementCrush', 'ObjectWorldImpact', 'DoubleHeal', 'DeathRule', 'NpcPowerRule', 'StunRule', 'ConfirmationRelease',
                        'ExplosiveFirstHit', 'PackAmount', 'SoloMode', 'X1Leader', 'DeathSwitchClear', 'RankCosts', 'LevelSkillPoints', 'LevelStatPoints', 'Xml1Multipart',
-                       'Xml1MasterMold', 'Xml1MoldStage', 'Xml1Turrets'),
+                       'Xml1MasterMold', 'Xml1MoldStage', 'Xml1Turrets', 'Xml1LockOnEffects', 'Xml1LockOnAim'),
               'Limits': ('ActorSlots', 'ResourceNames', 'ItemEnhancements', 'FightStyles', 'EffectCurves', 'MoveTriggers', 'EntityCapacity',
                          'ScriptFunctions'),
               'Online': ('GameVersion', 'ContentFingerprint'),
@@ -404,6 +404,11 @@ def mold_stage_binding(layout, width=None):
     return f'{flag}:{first}:{width}'
 
 
+def build_lockon_effects(out):
+    from .lockon_effects import keys
+    return keys(out)
+
+
 def build_mold_controller(out):
     """Only a builder-generated, supported script contract opts into the DLL."""
     try:
@@ -537,6 +542,7 @@ def port_keys(out, *, save_folder=PLAY_SAVE_FOLDER, eighth=True) -> dict:
     turrets = build_turrets(out) if postgame else {}
     if postgame:
         game.update(build_mold_controller(out))
+        game.update(build_lockon_effects(out))
         game.update(turrets.get('Game', {}))
     keys = {'Game': game, 'Limits': dict(LIMITS)}
     if turrets:
@@ -727,16 +733,19 @@ RELEASE_15_KEYS = {'Game': ('PlacementCrush', 'DoubleHeal', 'RankCosts', 'LevelS
 # TestMode is an optional player preference; the builder never writes it by default.
 RELEASE_16_KEYS = {**RELEASE_15_KEYS,
                    'Game': RELEASE_15_KEYS['Game'] + ('ObjectWorldImpact', 'StunRule')}
+# Capability for the next integration; the integrator assigns release versions.
+REQUIRED_COMPANION_KEYS = {**RELEASE_16_KEYS,
+                           'Game': RELEASE_16_KEYS['Game'] + ('Xml1LockOnEffects', 'Xml1LockOnAim')}
 
 
 def check_release_dll(dll, keys: dict) -> None:
-    """An existing companion DLL must know every XML2 Fix 1.6 key the build writes (as check_entity_capacity_dll does
+    """An existing companion DLL must know every required key the build writes (as check_entity_capacity_dll does
     for 1.4's): an older fix would run the build with those rules silently off. Source-only builds may omit the DLL."""
     dll = Path(dll)
     if not dll.is_file():
         return
     data = dll.read_bytes()
-    missing = [f'[{section}] {key}' for section, names in RELEASE_16_KEYS.items() for key in names
+    missing = [f'[{section}] {key}' for section, names in REQUIRED_COMPANION_KEYS.items() for key in names
                if key in keys.get(section, {}) and key.encode('utf-16le') not in data]
     if missing:
         raise FixTooOld(f'This build needs XML2 Fix {REQUIRED_XML2FIX} or later; the existing DLL does not recognize '
