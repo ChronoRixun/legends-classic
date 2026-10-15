@@ -4860,7 +4860,8 @@ every report of a fire appearing after circling has the same cause.
 
 XML1's action parser reads loopfxstarton at 0x28c66 independently of firstact
 at 0x28d32. The latter schedules an activation via 0x277e0 and the first-act
-callback at 0x27550. XML1's harm parser at 0x7c440 does not clear the loop bit.
+callback at 0x27550. XML1's affectable-harm parser at 0x46f10 does not clear
+the loop bit; 0x7c440 is the separate harm-target parser, which also leaves it set.
 XML2's harm parser at 0x4396a0 clears the authored loop-on bit at 0x4399d9 when
 firstact is positive. Zero bypasses that branch. The builder therefore loses
 the initial activation delay (one second in the matching source definitions):
@@ -4868,6 +4869,12 @@ damage can begin earlier, and the phase of repeated activations can shift.
 Damage values, repeat delays, contact settings, reaction powers, health and
 death scripts remain authored. Enabling smartfire is not a substitute: it
 selects a different damage scheduler (SPEC 45).
+
+Repeat delays are not minimum contact intervals. Both engines can start another
+repeat chain from a touch activation; `actinactivedelay` is the separate cooldown
+field. See [the damage-rate investigation](../../research/audit/hazard_damage_rate_2026-10-15.md)
+for the original/PC handler comparison and the distinction between fire hits,
+visual fire effects and secondary physical-impact damage.
 
 A future, guarded XML2 Fix change could preserve the authored loop bit while
 retaining the delayed activation. It needs separate evaluation of the preceding
