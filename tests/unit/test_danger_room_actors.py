@@ -5,6 +5,7 @@ from pathlib import Path
 
 from xml1build import danger_room_actors as D
 from xml1build import fix_ini as FI
+from xml1build import frontend as F
 
 
 def fixture():
@@ -55,6 +56,28 @@ def test_alias_collision_is_rejected_instead_of_replacing_a_real_actor():
     except ValueError:
         return
     raise AssertionError('existing actor would be overwritten')
+
+
+def test_course_goals_reject_removing_combo_protection_or_adding_kill_requirements():
+    source = ET.Element('COURSE', name='practice_a', combatnode='finisher_example', connectlimit='3',
+                        timelimit='60')
+    output = ET.fromstring(ET.tostring(source))
+    output.set('singleplayer', 'true')
+    assert not F.dangerroom_goal_problems(source, output)
+    del output.attrib['connectlimit']
+    output.set('killlimit', '3')
+    errors = F.dangerroom_goal_problems(source, output)
+    assert len(errors) == 2 and any('connectlimit' in e for e in errors) and any('killlimit' in e for e in errors)
+
+
+def test_course_goals_check_secondary_moves_execution_and_timer_triggers():
+    source = ET.Element('COURSE', name='practice_b', combatnode='grab_example', combatnode2='other_example',
+                        executelimit='7', killlimittimerstart='2', timeduration='30')
+    for field in ('combatnode', 'combatnode2', 'executelimit', 'killlimittimerstart', 'timeduration'):
+        output = ET.fromstring(ET.tostring(source))
+        output.set(field, 'wrong')
+        errors = F.dangerroom_goal_problems(source, output)
+        assert len(errors) == 1 and errors[0].startswith(field + '=')
 
 
 def test_party_fallback_requires_a_companion_that_recognizes_the_key():

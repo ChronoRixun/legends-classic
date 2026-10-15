@@ -495,6 +495,7 @@ def v16_danger_room(v, ck):
     course_names, startloaded = set(), set()
     curve, xp_mode = F.xp_curve(ctx), C.xp_curve_mode(ctx)
     variants = DR.plan(ctx)
+    original_courses = {c.get('name'): c for c in ctx.read_x1_xml(F.X1_DANGERROOM).iter('COURSE')}
     for ext in ('.engb', '.XMLB'):
         rel = F.DR_REL + ext
         root = _tree(v, rel)
@@ -503,6 +504,9 @@ def v16_danger_room(v, ck):
             continue
         if not _registered_by(v, rel, 'frontend'):
             ck.error(f'{rel}: not written by the frontend module')
+        missing_courses = sorted(original_courses.keys() - {c.get('name') for c in root.iter('COURSE')})
+        if missing_courses:
+            ck.error(f'{rel}: original courses missing: {missing_courses}')
         npc = v.tree('Data/npcstat' + ext)
         stats = {(s.get('name') or '').lower(): s for s in (npc.iter('stats') if npc is not None else ())}
         for source, alias in variants.items():
@@ -539,6 +543,13 @@ def v16_danger_room(v, ck):
             for c in cs:
                 cn = c.get('name') or ''
                 course_names.add(cn.lower())
+                original = original_courses.get(cn)
+                if original is None:
+                    ck.error(f'{rel}: {cn}: no original course definition')
+                else:
+                    for problem in F.dangerroom_goal_problems(original, c):
+                        ck.error(f'{rel}: {cn}: changed course goal: {problem}')
+                    ck.count('original_course_goals_checked')
                 if c.get('arena') not in arenas:
                     ck.error(f'{rel}: {cn}: arena {c.get("arena")!r} is no ARENA title')
                 for k in F.DR_DROP_ATTRS:
