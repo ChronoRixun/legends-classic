@@ -9,7 +9,7 @@ build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebui
 
 Use **Rebuild**, then **Play** in the launcher. Both co-op peers need this builder and XML2 Fix 1.6.0.
 
-- **Danger Room:** course robots and other initially cloaked opponents become visible and show target health bars when hit. Course-only copies preserve campaign actors. An incomplete non-solo party uses XML1's Cyclops/Phoenix/Storm/Wolverine fallback, avoiding the absent PC hero/default actor (rule 19).
+- **Danger Room:** course robots and other initially cloaked opponents become visible and take ordinary attack damage. Target health-bar display still needs live confirmation; the retained integration frames did not establish it. Course-only copies preserve campaign actors. An incomplete non-solo party uses XML1's Cyclops/Phoenix/Storm/Wolverine fallback, avoiding the absent PC hero/default actor (rule 19).
 - **Sentinel flashback:** restores eye-scan, surface-hit and acquired-target effects. Animated-head aiming restores natural target acquisition (rule 20); missile and arm effects use their existing native paths.
 - **Combat (#101, progress):** StunRule revision 2 restores original party-hero animation speed and input recovery. Overall hero-free-time measurements are noisy; full combat parity remains open.
 
