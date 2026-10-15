@@ -1120,6 +1120,8 @@ class Validator:
         converted stats; this cross-checks derivation against the source data."""
         src = {n for n, (_, el) in self.x1_stats().items()
                if (el.get('leader') or '').strip().lower() == 'true'}
+        from . import danger_room_actors as DR
+        src |= {alias for name, alias in DR.plan(self.ctx).items() if name in src}
         data = self.read(CH.LEADER_SIDECAR_REL)
         if data is None:
             if src:

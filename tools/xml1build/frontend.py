@@ -99,6 +99,7 @@ import re
 import xml.etree.ElementTree as ET
 
 from . import common as C
+from . import danger_room_actors as DR
 from . import main_appearance as MA
 from . import main_fonts as MF
 
@@ -790,6 +791,7 @@ def dangerroom_tree(ctx):
     if x1 is None:
         return None, {'error': f'{X1_DANGERROOM} missing on the XML1 disc'}
     curve = xp_curve(ctx)
+    variants = DR.plan(ctx)
     root = ET.Element('DANGERROOM')
     grades = [g for g in x1 if g.tag == 'GRADE']
     for a in x1:
@@ -835,7 +837,12 @@ def dangerroom_tree(ctx):
             ce = ET.SubElement(ge, 'COURSE', ca)
             for s in c:
                 if s.tag in ('SPAWNER', 'MUSTDIE', 'MUSTSURVIVE'):
-                    ET.SubElement(ce, s.tag, {k.lower(): v for k, v in s.attrib.items()})
+                    attrs = {k.lower(): v for k, v in s.attrib.items()}
+                    character = (attrs.get('character') or '').lower()
+                    if character in variants:
+                        attrs['character'] = variants[character]
+                        rep['visible_actor_spawners'] += 1
+                    ET.SubElement(ce, s.tag, attrs)
                     rep['spawners'] += 1
             if item:
                 ET.SubElement(ce, 'REWARD', {'type': 'Titanium', 'rewarditem': item})

@@ -2311,6 +2311,40 @@ ps_bishop's form). Rogue's `drain_time` has no XML2 affecter use and is dropped 
 (`arena/*`) get `nosave="true"` like XML2's DR arenas. characters' "XML2 Danger Room spawns dropped NPCs" defer is a
 note under xml1.
 
+#### 21.3.1 Course actor visibility and fallback party
+
+The PC course spawner reveals a spawned character at `0x4d0b58`, before queued
+passive powerups activate. The native invisible powerup then calls `0x41d020(1)`
+from `0x54844b` on the following update, hiding it again and suppressing its target
+health bar. XML1's spawner also explicitly reveals characters (`0xc6c9b`); its
+callback `invisible_activate` (`0x2c360`) uses the original visibility setter.
+
+`danger_room_actors.plan` derives course-only variants for every referenced NPC
+with the initial `spawn_invis` talent. Characters appends stable, short names,
+copies converted stats except that talent, inherits leader metadata, and emits
+the source character's packages under each variant name. Frontend rewrites all
+SPAWNER / MUSTDIE / MUSTSURVIVE references to those variants. Campaign stats,
+skins, combat styles, later cloak powers and course limits remain unchanged.
+V16 checks both table halves, visible copies, package availability and every
+course spawner; V54 includes inherited leaders.
+
+Both executables replace an incomplete non-solo course party with a default
+four-hero team. The PC fallback names an absent XML2 hero in the port, producing
+the default actor. The companion's `[Game] DangerRoomParty=xml1` changes the four
+guarded fallback operands to Cyclops, Phoenix, Storm, Wolverine (XBE
+`0xc7414..0xc75af`, PC `0x4d21cb..0x4d236e`). An all-or-nothing transaction verifies
+signatures and readback, and rolls back failures. The builder writes the key and
+checks companion support. This restores the original four-seat fallback behavior.
+No gameplay rule ID has been assigned: the companion calls
+`reject_unregistered_rule("DangerRoomParty")` when requested, so online admission
+stays blocked until integration assigns and registers a rule. Existing IDs 1-18
+and protocol 4 are unchanged. The durable save format is unchanged.
+
+The eleven course-only actor identities append STAT hashes to the master
+catalogue (revision 7); existing serials and all other domains stay unchanged.
+Release integration must assign the combined content identity and regenerate
+bind metadata. This task does not assign a release version or lobby token.
+
 ### 21.4 Review, codex, trivia, credits (C)
 
 All four tables are written English in `.XMLB` and `.engb`.

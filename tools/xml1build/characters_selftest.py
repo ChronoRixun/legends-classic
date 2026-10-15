@@ -38,6 +38,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from xml1build import common as C  # noqa: E402
+from xml1build import danger_room_actors as DR  # noqa: E402
 from xml1build.characters import LEADER_SIDECAR_REL, parse_leader_sidecar  # noqa: E402
 from xml1build.lib import x1names as N  # noqa: E402
 
@@ -138,7 +139,7 @@ for a in ctx.out_index.under('data/talents/'):
 CH_SLOTS = {'ebolton_clawright', 'ebolton_clawleft', 'ebolton_weapon', 'ebolton_altweapon', 'ebolton_cape',
             'ebolton_tail', 'ebolton_wings', 'ebolton_tongue', 'ebolton_autoanim', 'ebolton_autoanim2'}
 x1n = {s.get('name').lower() for s in C.parse_x1_text(ctx.x1_path('data/npcstat.eng')) if s.tag.lower() == 'stats'}
-x1_origin = x1n | {h.lower() for h in detail['heroes_as_npc']}
+x1_origin = x1n | {h.lower() for h in detail['heroes_as_npc']} | set(DR.plan(ctx).values())
 checked = 0
 for ext in ('XMLB', 'engb'):
     for s in tabs[('npcstat', ext)]:
@@ -200,6 +201,7 @@ info.append(f'C: {checked} XML1-origin entries checked (XMLB+engb)')
 x1src = C.parse_x1_text(ctx.x1_path('data/npcstat.eng'))
 want = {s.get('name').lower() for s in x1src if s.tag.lower() == 'stats'
         and (s.get('leader') or '').strip().lower() == 'true'}
+want |= {alias for name, alias in DR.plan(ctx).items() if name in want}
 sidecar = ctx.out_index.path(LEADER_SIDECAR_REL)
 have = parse_leader_sidecar(sidecar.read_bytes().decode('latin-1')) if sidecar is not None else set()
 if sidecar is None:

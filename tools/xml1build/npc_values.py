@@ -753,17 +753,20 @@ def v19(v, ck):
     # ---- the NPC energy talent
     st = v.stats()
     x1 = v.x1_stats()
+    from . import danger_room_actors as DR
+    variants = {alias: source for source, alias in DR.plan(v.ctx).items()}
     for ext in ('.xmlb', '.engb'):
         t = v.tree(f'data/shared_talents{ext}')
         defs = [x for x in t.iter('talent') if (x.get('name') or '').lower() == ENERGY_TALENT] if t is not None else []
         ranks = {}
         for el in st['variants'].get(ext, {}).get('npcstat', []):
             name = (el.get('name') or '').lower()
+            source_name = variants.get(name, name)
             refs = [x for x in el if isinstance(x.tag, str) and x.tag.lower() == 'talent'
                     and (x.get('name') or '').lower() == ENERGY_TALENT]
-            want = energy_rank(el) if name in x1 else None
+            want = energy_rank(el) if source_name in x1 else None
             got = [int(x.get('level') or 0) for x in refs]
-            if name not in x1:
+            if source_name not in x1:
                 if refs:
                     ck.error(f'npcstat{ext} {el.get("name")}: XML2 entry carries {ENERGY_TALENT}')
                 continue
