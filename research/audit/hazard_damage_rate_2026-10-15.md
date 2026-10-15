@@ -1,8 +1,44 @@
 # Opening fire damage: amounts, scheduling and impact attribution
 
 Investigation against the original Xbox executable and the PC executable used by
-the port. This records static interoperability findings; it does not certify
-original-console damage per second or propose a balance adjustment.
+the port. The raw damage and repeat delays are preserved, but the PC box
+dispatcher supplies a different impact origin. An opt-in companion-engine
+candidate restores that original argument without changing builder data. The
+original-console damage rate has not been measured.
+
+## Confirmed box-origin difference
+
+Original box service 0x5a8f0 passes zero to the dispatcher at 0x5a9b9-0x5a9d5;
+PC 0x451ba0 passes the box centre at 0x451c6e-0x451c79. A zero origin skips
+direction generation in the dispatcher. The original actor hit context at
+0x44fb0 then reconstructs direction from victim/attacker entity origins. PC's
+equivalent fallback at 0x436870 is bypassed by its explicit centre-based vector.
+
+At the tested fire centre these yield opposite vertical signs: the native party
+knockback call receives +0.55 on PC and -0.45 on the original-compatible path,
+both at strength 100 from authored knockback 200. PC repeatedly lifts the idle
+hero and adds touch activations; the correction keeps the hero on the floor.
+
+Standalone, level-five survival diagnostics measured approximately 68-72 HP/s
+before and 15-20 HP/s after during five-second no-input windows. Maximum/current
+health was staged high to survive; native damage remained 3 per hit. These are
+measured PC contact histories, not original-console DPS or a universal cap.
+Short fixed-input edge contacts lost 33 HP before and 36 HP after; the correction
+does not reduce every walking contact. Verified outside-fire tails showed no
+damage over five seconds on either path.
+
+With native health instead of survival health, the level-five hero started at
+100 current HP and died on the 34th three-point hit: 0.752 game-seconds from first
+hit to fatal hit before, 6.484 seconds after. Position setup was floor-verified
+and disclosed; no input was sent during that exposure. This still does not
+measure original-console DPS.
+
+The companion `BoxHarmOrigin=xml1` hook changes only the box dispatch origin,
+retaining the spatial query, radius path, damage, timing and restored bounds.
+It needs an assigned gameplay-agreement rule; the candidate explicitly blocks
+online rather than negotiating as stock. No builder default or version was
+changed. The scope census is 137 definitions / 419 placements / 66 zones, with
+all 348 map files unchanged; runtime coverage is the opening fire only.
 
 ## Authored damage and bounds
 
@@ -74,6 +110,11 @@ attack categories. Neither helper creates a damaging burn powerup or schedules
 a health subtraction. The PC render-effect name `burning` is a separate visual
 flag (0x200); its existence does not establish a damage-over-time mechanic.
 
+The original and PC effect files selected for a fire hit both specify a
+0.1-second effect loop time, 0.4-second flame-particle lives and 0.15-second flash
+lives. These are visual component timings, not health-damage ticks. Repeated hit
+effects can overlap without a stacking damaging burn status.
+
 In the historical bounds trace, the later 10.416667-HP losses have **direct
 damage type 0x80** and originate in physical impact handler 0x499100, at return
 sites 0x4994cc and 0x499724. They must not be described as burning ticks. An
@@ -84,9 +125,8 @@ damage into fire damage.
 
 Do not lower the source damage, remove touch activation, add a cooldown, reduce
 bounds or revert hazard residency based solely on the nominal-rate calculation.
-A gameplay correction needs a demonstrated original/PC difference and a negative
-control. A fresh level-five run must separate contact, impact, enemy attacks and
-post-exit health changes, record simultaneous game processes, and use real
-movement after any disclosed setup. Original-console contact cadence, frame-rate
-sensitivity, four-hero exposure and a complete post-exit tail remain separate
-questions from the static findings above.
+The box-origin candidate has the demonstrated native difference, negative
+control and predicted direction change. It remains opt-in pending gameplay-rule
+assignment and wider room/difficulty/co-op acceptance. Original-console contact
+cadence, frame-rate sensitivity, four-hero exposure and full normal-health
+traversal remain separate questions from the successful controlled diagnostics.
