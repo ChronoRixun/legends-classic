@@ -376,4 +376,8 @@ The 0.2.3 / XML2 Fix 1.6 candidate carries newly appended hazards through online
 | BoxHarmOrigin | xml1 | 21 revision 1, requested only |
 | DangerRoomHealthBars | xml1 | 22 revision 1, requested only |
 
+| [Online] key | Builder | Agreement |
+|---|---|---|
+| FastTransfer | 1 | needs a rule ID, requested only |
+
 Absent, empty or xml2 omits either rule. Invalid or failed requested installs remain unverified. Both peers must match. HUD dirty-stat refresh/clamp timing parity remains unproved. Versions and content identity remain unchanged from 0.2.3c.
