@@ -783,6 +783,14 @@ def _trim_extra_credit(v):
     return v[:m.start()].rstrip() if m else v
 
 
+def dangerroom_goal_problems(original, converted):
+    """Keep authored death/progress rules, including absent native-default fields."""
+    keys = {k for c in (original, converted) for k in c.attrib
+            if 'limit' in k or k == 'timeduration' or k.startswith('combatnode')}
+    return [f'{k}={converted.get(k)!r}, expected original {original.get(k)!r}'
+            for k in sorted(keys) if original.get(k) != converted.get(k)]
+
+
 def dangerroom_tree(ctx):
     """(root, report) of Data/dangerroom from XML1's table (XMen2.exe schema). report: counts and changes."""
     x1 = _x1_dr(ctx)

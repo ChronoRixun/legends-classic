@@ -2353,6 +2353,23 @@ Requested-only gameplay rule 22 covers possible native dirty-stat refresh and
 health-clamp scheduling; equivalent simulation timing is not established. The companion-key
 compatibility check refuses a DLL without support for the requested setting.
 
+Training protection is temporary. XML1's connected-move handler (`0xc7c10`)
+clears the victim's undying flag and makes the required combo hit lethal;
+the PC retains that behavior (`0x4d3c40`, setter `0x41c560`). FR101–FR105 count
+three/three/four/five/six connections of their authored combat node, then
+complete. They contain seven protected robot spawn records. FR112 instead
+counts seven `grabstart` executions and has no connect-limit protection;
+CHMAG requires twenty kills and also has no such protection. Ordinary punches
+can lower a combo target to minimum health without killing it. A successful
+required combo kills it and the spawner supplies the next target. These courses
+are not permanently undying targets. The original completion path (`0xc5e00`)
+and PC path (`0x4d2c30`) test execution, connection and kill goals separately.
+V16 compares each course's limit/timer/combat-node attributes with the original,
+including absent native-default fields, to prevent changing the authored
+exercise into a different death/progress rule. Course variants retain only
+the visibility changes described above; no protection-removal fix is needed
+when this native combo path works.
+
 ### 21.4 Review, codex, trivia, credits (C)
 
 All four tables are written English in `.XMLB` and `.engb`.
