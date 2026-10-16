@@ -4828,6 +4828,26 @@ coordinator owns that bump; this change intentionally leaves its value untouched
 
 ## 51. Ordinary harm-loop startup (issue #12)
 
+The developer-only `--harm-loop-startup xml1` candidate preserves positive
+authored firstact for ordinary start-on loops without on/off timers. It requires
+the companion's opt-in `[Game] HarmLoopStartup=xml1` adapter. The build record
+drives that key in the harness and port configuration; old companions are
+rejected. Changing the option invalidates every content module because entity
+libraries can be imported by several modules. V25 accepts delayed loops only
+when the recorded native mode and decoded entity configuration both qualify.
+Default `workaround` retains the conversion below. A gameplay rule is still
+unassigned, so the native candidate refuses online negotiation and is not a
+release default. VERSION and CONTENT_VERSION are left to integration.
+
+`firstact` is relative to entity creation, not player entry. The XBE first-act
+callback at 0x27550 runs from the event posted by its action parser; it does not
+wait for contact. Restoring this field alone cannot promise a one-second grace
+period for a hero who enters an already-active fire, or a single repeat chain.
+The companion separately offers opt-in `HarmSingleChain=single`, retaining one
+pending repeat for ordinary boxed touch fires. That policy is not enabled by
+this builder option and is not claimed as XBE parity; per-entry grace remains
+unimplemented. Its gameplay-rule assignment is also pending.
+
 `x1schema.convert_harm_loop_start` runs after entity class remapping on every
 imported XML1 tree. An entity qualifies when its class is affectableharment,
 loopfx is nonempty, loopfxstarton is true, and firstact is a finite positive

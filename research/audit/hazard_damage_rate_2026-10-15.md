@@ -1,5 +1,31 @@
 # Opening fire damage: amounts, scheduling and impact attribution
 
+## Follow-up: startup delay and repeated contacts
+
+The 0.2.3d follow-up trace identifies additional repeat requests from repeated
+contact by the same hero with one hazard. Several party members or overlapping
+fire placements are not required. Each native touch can add a chain because the
+harm handler clears pending after the base action schedules its repeat.
+
+The XBE has the same relevant sequence: touch 0x27310, request 0x27a60, callback
+0x27510, repeat scheduling 0x28420 and final pending clear 0x46dbf. This does not
+establish identical console damage rates, which remain unmeasured, but it
+contradicts an assumed code-level single-chain guarantee.
+
+Likewise, original `firstact=1` is creation-relative. The parser posts the first
+activation independently of contact. The optional startup adapter in SPEC 51
+preserves that delay without clearing the visible loop; it does not impose an
+entry grace period or remove touch-created chains. A separate gameplay rule is
+needed for that adapter. A one-chain/per-entry-delay policy needs an explicit
+behavioral decision and must not be called proven original behavior.
+
+The companion now provides an opt-in `HarmSingleChain=single` candidate. It keeps
+the native pending bit after harm completion and immediate-request completion,
+while the delayed callback still clears it before scheduling the next repeat.
+One live walking/re-entry run retained exactly one pending repeat despite 528
+contacts, with native three-point fire hits and no damage in either outside
+tail. The default remains off; a per-entry grace period is not implemented.
+
 Investigation against the original Xbox executable and the PC executable used by
 the port. The raw damage and repeat delays are preserved, but the PC box
 dispatcher supplies a different impact origin. An opt-in companion-engine

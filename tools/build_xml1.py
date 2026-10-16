@@ -58,6 +58,8 @@ def parse_args(argv=None):
     ap.add_argument('--tour', type=float, help='smoke-test tour: every reachable zone waits N seconds, then loads the next')
     ap.add_argument('--no-movies', dest='no_movies', action='store_true', help='leave out all .sfd movies (base and XML1)')
     ap.add_argument('--only', help='comma list of content modules to run: ' + ','.join(C.MODULE_ORDER))
+    ap.add_argument('--harm-loop-startup', choices=('workaround', 'xml1'), default='workaround',
+                    help='experimental authored startup delay; xml1 needs the HarmLoopStartup native adapter (offline only)')
     ap.add_argument('--no-validate', dest='no_validate', action='store_true')
     ap.add_argument('--test-ini', dest='test_ini', action='store_true',
                     help='windowed mode + engine reporting in alchemy.ini, and a .codegpt-game.json launch manifest')
@@ -172,7 +174,8 @@ def check_out_dir(out: Path, adopt: bool):
 HOOK_OWNER = 'testhooks'
 # content options: option -> (the module whose output depends on it, default). A carried-over module output
 # built with a different value is stale, so that module is re-run (plan_content_opts).
-CONTENT_OPTS = {'blackbird': ('scripts', 'menu'), 'npc_scaling': ('characters', 'off'), 'tiles': ('zones', 'used'),
+CONTENT_OPTS = {'harm_loop_startup': (tuple(C.MODULE_ORDER), 'workaround'),
+                'blackbird': ('scripts', 'menu'), 'npc_scaling': ('characters', 'off'), 'tiles': ('zones', 'used'),
                 'main_menu_layout': ('frontend', 'classic'),
                 'hero_roster': ('heroes', '21'), 'hero_icons': ('heroes', 'xml1'), 'hero_bleed': ('heroes', 'on'),
                 'newgame': ('scripts', 'keepteam'),
@@ -430,6 +433,7 @@ def main(argv=None):
                     'hero_roster': args.hero_roster, 'hero_icons': args.hero_icons, 'hero_bleed': args.hero_bleed,
                     'newgame': args.newgame, 'forced_teams': args.forced_teams, 'frontend': args.frontend,
                     'xp_curve': args.xp_curve, 'buoys': args.buoys, 'main_menu_layout': args.main_menu_layout,
+                    'harm_loop_startup': getattr(args, 'harm_loop_startup', 'workaround'),
                     BAL.REPORT_KEY: BAL.REPORT_ON if BAL.enabled() else 'xml2',
                     'content_fingerprint': ctx.shared.get('content_fingerprint'),
                     'start_party': args.start_party, 'start_skinset': args.start_skinset,

@@ -37,6 +37,63 @@ def test_explicit_non_smart_harm_keeps_its_configuration():
     assert el.get('smartfire') == 'false'
 
 
+def test_native_startup_preserves_authored_delay_and_damage():
+    for rel in ('maps/invented/room.eng', 'data/entities/invented.xml'):
+        root, el = hazard()
+        before = dict(el.attrib)
+        S.convert(root, rel, harm_loop_startup='xml1')
+        assert el.attrib == before
+        assert S.delayed_harm_loops(root) == [('invented_hazard', 'invented/steam_loop', '1.25')]
+
+
+def test_native_startup_keeps_timed_hazards_on_compatibility_path():
+    for attr, value in (('ontime', '2'), ('offtime', '3'), ('ontime', 'nan'), ('offtime', 'invalid')):
+        root, el = hazard(**{attr: value})
+        S.convert(root, 'maps/invented/room.eng', harm_loop_startup='xml1')
+        assert el.get('firstact') == '0'
+        assert el.get(attr) == value
+    root, el = hazard(ontime='-0.0', offtime='0')
+    S.convert(root, 'maps/invented/room.eng', harm_loop_startup='xml1')
+    assert el.get('firstact') == '1.25'
+
+
+def test_native_startup_key_follows_recorded_build_and_requires_companion():
+    import json
+    import tempfile
+    from pathlib import Path
+    from xml1build import fix_ini as FI
+    from xml1build import common as C
+    with tempfile.TemporaryDirectory() as folder:
+        tmp_path = Path(folder)
+        assert FI.build_harm_loop_startup(tmp_path) == {}
+        (tmp_path / '_build').mkdir()
+        (tmp_path / '_build/report.json').write_text(json.dumps({'build': {'harm_loop_startup': 'xml1'}}))
+        assert FI.build_harm_loop_startup(tmp_path) == {'HarmLoopStartup': 'xml1'}
+        assert C.args_for_out(tmp_path).harm_loop_startup == 'xml1'
+        dll = tmp_path / 'invented.dll'
+        dll.write_bytes(b'invented older companion')
+        assert FI.old_fix_keys(dll, {'Game': FI.build_harm_loop_startup(tmp_path)}) == ['[Game] HarmLoopStartup']
+        dll.write_bytes('HarmLoopStartup'.encode('utf-16le'))
+        assert FI.old_fix_keys(dll, {'Game': FI.build_harm_loop_startup(tmp_path)}) == []
+
+
+def test_native_startup_validator_requires_supported_configuration():
+    root, el = hazard()
+    item = S.delayed_harm_loops(root)[0]
+    scan = SimpleNamespace(delayed_harm_loops={'invented': [item]}, native_harm_loops={'invented': [item]},
+                           twins=set(), files={'invented': {'rel': 'maps/invented/room.engb'}})
+    validator = object.__new__(Validator)
+    validator._scan = scan
+    validator.ctx = SimpleNamespace(opt=lambda key: 'xml1')
+    ck = Check('V25', 'harm loop startup')
+    validator.harm_loop_startup(ck)
+    assert not ck.errors
+    scan.native_harm_loops = {}
+    ck = Check('V25', 'harm loop startup')
+    validator.harm_loop_startup(ck)
+    assert len(ck.errors) == 1
+
+
 def test_unrelated_loops_and_authored_off_states_keep_timing():
     for overrides in (
         {'classname': 'physent'}, {'classname': 'actionent'}, {'loopfx': ''},

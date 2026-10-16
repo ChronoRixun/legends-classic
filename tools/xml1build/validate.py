@@ -436,6 +436,7 @@ class Scan:
         self.inv_items = {}        # norm rel -> [inventoryitem values]
         self.turret_mount = {}     # norm rel -> [(entity name, missing flags)] remapped scan turrets not fixed-mount
         self.delayed_harm_loops = {}  # norm rel -> [(entity name, loop effect, firstact)]
+        self.native_harm_loops = {}  # same tuples, within the native startup adapter's guard
         self.ladder_floor_paths = {}  # norm rel -> [spawner name] running a ladder path without exact location
         self.physics_scale = {}    # norm rel -> [(entity name, attribute, value)] XML1-scale object physics left
         self.break_rule = {}       # norm rel -> [(entity name, structure, xml1structure)] pairs BreakRule=xml1 cannot use
@@ -675,6 +676,8 @@ class Validator:
                 loops = XS.delayed_harm_loops(root)
                 if loops:
                     sc.delayed_harm_loops[n] = loops
+                    sc.native_harm_loops[n] = [(el.get('name'), el.get('loopfx'), el.get('firstact'))
+                                               for el in root.iter('entity') if XS.native_harm_loop_startup(el)]
                 floor = LM.path_spawner_problems(root)
                 if floor:
                     sc.ladder_floor_paths[n] = floor
@@ -1690,16 +1693,22 @@ class Validator:
     def harm_loop_startup(self, ck):
         """V25 (SPEC 51): no dead ordinary harm loops."""
         sc = self.scan
+        native = getattr(self, 'ctx', None) is not None and self.ctx.opt('harm_loop_startup') == 'xml1'
         count = 0
+        supported = 0
         for n, loops in sorted(sc.delayed_harm_loops.items()):
             if n in sc.twins:
                 continue
             for name, effect, delay in loops:
+                if native and (name, effect, delay) in getattr(sc, 'native_harm_loops', {}).get(n, ()):
+                    supported += 1
+                    continue
                 ck.error(f'V25: {sc.files[n]["rel"]}: entity {name!r} has loopfx={effect!r}, '
                          f'loopfxstarton=true and firstact={delay!r}; the XML2 harm parser '
                          'clears the loop-on bit (invisible hazard)')
                 count += 1
         ck.set('dead_harm_loops', count)
+        ck.set('native_delayed_harm_loops', supported)
 
     def ladder_spawns(self, ck):
         """V34 (SPEC 46): a monster spawner without monster_spawnexactlocation puts its spawn on the ground, so
