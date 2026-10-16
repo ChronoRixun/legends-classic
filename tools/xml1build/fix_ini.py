@@ -262,7 +262,7 @@ X1_LEADER = '1'
 PORT_OWNED = {'Game': ('NewGameTeam', 'ResetUnlocks', 'SaveFolder', 'ForcedTeams', 'PostgameScript', 'WindowTitle',
                         'EndHeroUnlock', 'MainMenuItems', 'DangerRoomGate', 'ClassicMainBackdrop', 'ClassicMainPanelBounds', 'NewGamePlus', 'ReviewStats', 'Xtract', 'XtractionShop', 'RevivalCost', 'XPCurve',
                        'GeometrySharingBlendIndices', 'CharacterLadderPaths', 'ObjectiveDescriptions',
-                       'BreakRule', 'PlacementCrush', 'ObjectWorldImpact', 'DoubleHeal', 'DeathRule', 'NpcPowerRule', 'StunRule', 'DangerRoomParty', 'DangerRoomHealthBars', 'BoxHarmOrigin', 'HarmLoopStartup', 'ConfirmationRelease',
+                       'BreakRule', 'PlacementCrush', 'ObjectWorldImpact', 'DoubleHeal', 'DeathRule', 'NpcPowerRule', 'StunRule', 'DangerRoomParty', 'DangerRoomHealthBars', 'BoxHarmOrigin', 'HarmSingleChain', 'HarmLoopStartup', 'ConfirmationRelease',
                        'ExplosiveFirstHit', 'PackAmount', 'SoloMode', 'X1Leader', 'DeathSwitchClear', 'RankCosts', 'LevelSkillPoints', 'LevelStatPoints', 'Xml1Multipart',
                        'Xml1MasterMold', 'Xml1MoldStage', 'Xml1Turrets', 'Xml1LockOnEffects', 'Xml1LockOnAim'),
               'Limits': ('ActorSlots', 'ResourceNames', 'ItemEnhancements', 'FightStyles', 'EffectCurves', 'MoveTriggers', 'EntityCapacity',
@@ -447,6 +447,7 @@ def game_keys(*, xml1_opening=True, save_folder=None, forced_teams='1', add_hero
         game['DangerRoomParty'] = 'xml1'
         game['DangerRoomHealthBars'] = 'xml1'
         game['BoxHarmOrigin'] = 'xml1'
+        game['HarmSingleChain'] = 'single'
         # XML1's opening: startFirstMission seats Wolverine alone, resetgame unlocks nobody (xml2-fix new_game.cpp;
         # the build's New Game hook uses loadMapKeepTeam - build_xml1.py --newgame keepteam, the default)
         game.update(NewGameTeam='wolverine', ResetUnlocks='0')
@@ -743,7 +744,7 @@ RELEASE_15_KEYS = {'Game': ('PlacementCrush', 'DoubleHeal', 'RankCosts', 'LevelS
                    'Limits': ('ScriptFunctions',)}
 # TestMode is an optional player preference; the builder never writes it by default.
 RELEASE_16_KEYS = {**RELEASE_15_KEYS,
-                   'Game': RELEASE_15_KEYS['Game'] + ('ObjectWorldImpact', 'StunRule', 'DangerRoomParty', 'DangerRoomHealthBars', 'BoxHarmOrigin',
+                   'Game': RELEASE_15_KEYS['Game'] + ('ObjectWorldImpact', 'StunRule', 'DangerRoomParty', 'DangerRoomHealthBars', 'BoxHarmOrigin', 'HarmSingleChain',
                                                      'Xml1LockOnEffects', 'Xml1LockOnAim', 'HarmLoopStartup')}
 
 

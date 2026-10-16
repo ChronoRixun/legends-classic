@@ -24,7 +24,7 @@ the native pending bit after harm completion and immediate-request completion,
 while the delayed callback still clears it before scheduling the next repeat.
 One live walking/re-entry run retained exactly one pending repeat despite 528
 contacts, with native three-point fire hits and no damage in either outside
-tail. The default remains off; a per-entry grace period is not implemented.
+tail. Candidate 0.2.3e registers it as rule 23 and turns the builder default on; a per-entry grace period is not implemented.
 
 Investigation against the original Xbox executable and the PC executable used by
 the port. The raw damage and repeat delays are preserved, but the PC box

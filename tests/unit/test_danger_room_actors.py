@@ -132,3 +132,21 @@ def test_boxed_harm_requires_supported_companion():
             raise AssertionError('companion without training gauges accepted')
         dll.write_bytes(b'SYNTHETIC' + 'BoxHarmOrigin'.encode('utf-16le'))
         FI.check_release_dll(dll, keys)
+
+
+def test_single_repeat_chain_requires_supported_companion():
+    keys = {'Game': {'HarmSingleChain': 'single'}}
+    assert FI.game_keys(xml1_opening=True)['HarmSingleChain'] == 'single'
+    assert 'HarmSingleChain' not in FI.game_keys(xml1_opening=False)
+    assert 'HarmSingleChain' in FI.PORT_OWNED['Game']
+    with tempfile.TemporaryDirectory() as td:
+        dll = Path(td) / 'companion.dll'
+        dll.write_bytes(b'SYNTHETIC')
+        try:
+            FI.check_release_dll(dll, keys)
+        except FI.FixTooOld as exc:
+            assert exc.missing == ['[Game] HarmSingleChain']
+        else:
+            raise AssertionError('companion without training gauges accepted')
+        dll.write_bytes(b'SYNTHETIC' + 'HarmSingleChain'.encode('utf-16le'))
+        FI.check_release_dll(dll, keys)

@@ -4852,9 +4852,8 @@ drives that key in the harness and port configuration; old companions are
 rejected. Changing the option invalidates every content module because entity
 libraries can be imported by several modules. V25 accepts delayed loops only
 when the recorded native mode and decoded entity configuration both qualify.
-Default `workaround` retains the conversion below. A gameplay rule is still
-unassigned, so the native candidate refuses online negotiation and is not a
-release default. VERSION and CONTENT_VERSION are left to integration.
+Default `workaround` retains the conversion below. `HarmLoopStartup` has no gameplay rule: it refuses online negotiation and is a
+developer option only. VERSION and CONTENT_VERSION are left to integration.
 
 `firstact` is relative to entity creation, not player entry. The XBE first-act
 callback at 0x27550 runs from the event posted by its action parser; it does not
@@ -4863,7 +4862,8 @@ period for a hero who enters an already-active fire, or a single repeat chain.
 The companion separately offers opt-in `HarmSingleChain=single`, retaining one
 pending repeat for ordinary boxed touch fires. That policy is not enabled by
 this builder option and is not claimed as XBE parity; per-entry grace remains
-unimplemented. Its gameplay-rule assignment is also pending.
+unimplemented. Its gameplay rule is **23** (requested-only, revision 1); the
+builder default writes `HarmSingleChain=single` for XML1 builds.
 
 `x1schema.convert_harm_loop_start` runs after entity class remapping on every
 imported XML1 tree. An entity qualifies when its class is affectableharment,
