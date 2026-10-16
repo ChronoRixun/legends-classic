@@ -258,6 +258,11 @@ PACK_AMOUNT = 'xml1'
 # feature ignores the key. Written for every XML1 build.
 X1_LEADER = '1'
 
+# [Online] FastTransfer=1: the saved-campaign transfer as data/zero-run records with a pool-bounded window (seconds
+# instead of minutes; xml2-fix docs/online-campaign-transfer.md). A gameplay-agreement rule: every co-op PC must use
+# it, and a peer without it is refused by name. Written for every port build.
+FAST_TRANSFER = '1'
+
 # every key the port may write (the builder drops the ones a build does not need); the launcher owns the rest
 PORT_OWNED = {'Game': ('NewGameTeam', 'ResetUnlocks', 'SaveFolder', 'ForcedTeams', 'PostgameScript', 'WindowTitle',
                         'EndHeroUnlock', 'MainMenuItems', 'DangerRoomGate', 'ClassicMainBackdrop', 'ClassicMainPanelBounds', 'NewGamePlus', 'ReviewStats', 'Xtract', 'XtractionShop', 'RevivalCost', 'XPCurve',
@@ -267,7 +272,7 @@ PORT_OWNED = {'Game': ('NewGameTeam', 'ResetUnlocks', 'SaveFolder', 'ForcedTeams
                        'Xml1MasterMold', 'Xml1MoldStage', 'Xml1Turrets', 'Xml1LockOnEffects', 'Xml1LockOnAim'),
               'Limits': ('ActorSlots', 'ResourceNames', 'ItemEnhancements', 'FightStyles', 'EffectCurves', 'MoveTriggers', 'EntityCapacity',
                          'ScriptFunctions'),
-              'Online': ('GameVersion', 'ContentFingerprint'),
+              'Online': ('GameVersion', 'ContentFingerprint', 'FastTransfer'),
               'Save': ('Format',),
               'Xml1Turrets': ('Count',) + tuple(f'T{i}' for i in range(1, 33))}
 
@@ -525,7 +530,7 @@ def online_keys(*, port_identity=False, balance=False, fingerprint=None) -> dict
     the save tables, the content fingerprint a co-op peer must share (SPEC-new-save 6)."""
     if not port_identity:
         return {}
-    keys = {'GameVersion': RI.game_version()}
+    keys = {'GameVersion': RI.game_version(), 'FastTransfer': FAST_TRANSFER}
     if fingerprint:
         keys['ContentFingerprint'] = fingerprint
     return keys
@@ -745,7 +750,8 @@ RELEASE_15_KEYS = {'Game': ('PlacementCrush', 'DoubleHeal', 'RankCosts', 'LevelS
 # TestMode is an optional player preference; the builder never writes it by default.
 RELEASE_16_KEYS = {**RELEASE_15_KEYS,
                    'Game': RELEASE_15_KEYS['Game'] + ('ObjectWorldImpact', 'StunRule', 'DangerRoomParty', 'DangerRoomHealthBars', 'BoxHarmOrigin', 'HarmSingleChain',
-                                                     'Xml1LockOnEffects', 'Xml1LockOnAim', 'HarmLoopStartup')}
+                                                     'Xml1LockOnEffects', 'Xml1LockOnAim', 'HarmLoopStartup'),
+                   'Online': ('FastTransfer',)}
 
 
 def check_release_dll(dll, keys: dict) -> None:
