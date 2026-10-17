@@ -64,10 +64,12 @@ xml1-builder clean   --out "C:\Games\X-Men Legends (Port)"
 
 | Command | Does |
 |---|---|
-| `info` | identifies the disc image and the XML2 install, estimates space and time, reports the state of an existing build. Reads only. |
-| `build` | makes, updates or resumes the build. Options: `--no-movies` (-1.1 GB), `--cache DIR` (default `%LOCALAPPDATA%\xml1-builder\cache`), `--drop-cache`, `--jobs N`, `--no-ini`. |
-| `verify` | checks a build against its record: up to date, needs a rebuild, damaged, incomplete; writes `_build\verify-report.json`. `--deep` also re-checks every file inside the disc image. |
+| `info` | identifies the disc image and the XML2 install, estimates space and time, reports the state of an existing build. Options: `--iso`, `--xml2`, `--out`, `--cache`. Reads only. |
+| `build` | makes, updates or resumes the build. Options: `--iso`, `--xml2`, `--out`, `--cache DIR` (default `%LOCALAPPDATA%\xml1-builder\cache`), `--movies` (the default) or `--no-movies` (-1.1 GB), `--keep-cache` (the default) or `--drop-cache`, `--jobs N` (sound-conversion workers, default every CPU), `--no-ini`, `--main-menu-layout classic\|widescreen` (widescreen is a retired name for classic), `--allow-unknown-exe` (testers: an `XMen2.exe` that is not a known retail build). |
+| `verify` | checks a build against its record: up to date, needs a rebuild, damaged, incomplete; writes `_build\verify-report.json`. Options: `--out`, `--iso`, `--xml2`; `--deep` also re-checks every file inside the disc image. |
 | `clean` | deletes exactly what the builder made - never your saves; mods only with `--mods`; `--dry-run` only counts. |
+
+Options that work with every command: `--events jsonl|text` (`jsonl` prints JSON-lines events for the launcher), `--log FILE`, `--quiet` and `--version`. `xml1-builder --help` lists them all.
 
 Then copy `dinput.dll` from the [latest xml2-fix release](https://github.com/ChronoRixun/xml2-fix/releases/latest)
 (builder 0.2.3 needs 1.6.0 or later) into the output folder and start `XMen2.exe` there. The builder has already written the `xml2-fix.ini` settings the
@@ -156,7 +158,7 @@ Verified in game on the developer's PC (mostly by automated runs that drive the 
 
 - **The whole campaign, in automated runs**: the opening, every mission start (73) with the party the first game used
   (forced parties, flashbacks with their fixed heroes and costumes, heroes joining mid-level), the ending chain (the
-  final bosses' defeats triggered by script), the credits and back to the main menu; a 154-zone tour in one session
+  final bosses' defeats triggered by script), the credits and back to the main menu; a tour of every converted zone reachable from New Game, in one session
   without a crash. A full hand-played run is under way (act 1 so far).
 - **The first game's heroes** with their own stats, powers (64 of 64 fire), unlock points and level curve (its
   45-level table, via xml2-fix), and its enemies with their own damage and energy values.
@@ -225,8 +227,9 @@ lock ([#63](https://github.com/ChronoRixun/legends-classic/issues/63)) and the t
 - Online play (*Play Online*) is X-Men Legends II's, through the [OpenSpy](https://openspy.net) servers; port games
   only list other port games. Joining, playing and saving for both players work in tests with two copies of the game
   on one PC; play between two PCs, and across the internet, gets a dedicated pass in 0.3.0. Reports of disconnects are
-  welcome (say whether the game showed its lag warnings first). In co-op, *Load Saved Campaign* can stop at "Sending
-  game information..." (start a new campaign for now; also planned for 0.3.0).
+  welcome (say whether the game showed its lag warnings first). In co-op, *Load Saved Campaign* sends the host's save
+  to the joining player since 0.2.3, in seconds; both PCs need builder 0.2.3 with XML2 Fix 1.6.0. *Connect by IP* and the
+  LAN search list and admit port games since 0.2.3 (before, two port builds could not see each other that way).
 - Local co-op on controllers should work (it is X-Men Legends II's) but has had little testing.
 - Open bugs and play-test notes: [issues](https://github.com/ChronoRixun/legends-classic/issues) and
   `research/campaign/late_game_test.md`.
@@ -257,7 +260,7 @@ Launcher: any release runs every builder; on Proton (Steam Deck, Linux) 0.2.1 or
 |---|---|---|
 | M1 | Playable start to finish | done in automated runs; hand-played run under way |
 | M2 | Faithful: the first game's front end, Danger Room, parties, level curve, enemy values | done, polishing |
-| M3 | **Shippable** | done: builder 0.1.0 and launcher 0.1.0 released 2026-09-29 |
+| M3 | **Shippable** | done: builder 0.1.0 released 2026-09-29 and launcher 0.1.0 released 2026-09-30 (UTC) |
 | | build everything from the disc image on the player's PC (the prepare stages) | done |
 | | fast sound conversion (a compiled encoder; first build in minutes) | done |
 | | the `xml1-builder` program (info / build / verify / clean, progress, cancel and resume) | done |
@@ -282,15 +285,25 @@ What comes next, by version (plans move with what testing finds):
   boss armour ([#3](https://github.com/ChronoRixun/legends-classic/issues/3)), solo mode
   ([#5](https://github.com/ChronoRixun/legends-classic/issues/5)), leaders, exclusive fullscreen and the fixes in
   [CHANGELOG.md](CHANGELOG.md).
-- **0.3.0** - co-op: a dedicated pass with two PCs, on one network and across the internet, including the co-op
-  *Load Saved Campaign* that can stop at "Sending game information...". Also the remaining fall volumes
-  ([#22](https://github.com/ChronoRixun/legends-classic/issues/22)) and the attack sounds looping near the fires at the
-  start of the game ([#79](https://github.com/ChronoRixun/legends-classic/issues/79)).
+- **0.2.3** (this release) - the first game's fires, spikes and electricity hazards hurt again, at a steady rhythm
+  ([#104](https://github.com/ChronoRixun/legends-classic/issues/104)); co-op *Load Saved Campaign* works again and
+  takes seconds, and *Connect by IP* and the LAN search work between port builds; the falling crates
+  ([#103](https://github.com/ChronoRixun/legends-classic/issues/103)), the Danger Room's robot health bars and
+  cloaked opponents, the Sentinel flashback's lock-on effects, two more fall volumes
+  ([#22](https://github.com/ChronoRixun/legends-classic/issues/22)) and more of the enemy-AI stun gap
+  ([#101](https://github.com/ChronoRixun/legends-classic/issues/101)) - needs XML2 Fix 1.6.0.
+- **0.3.0** - co-op modernization: a new encrypted network layer that adapts to bad connections, join codes and
+  internet play without port forwarding (with a relay as the fallback), and joining a game in progress at the next
+  level change. Also the remaining fall volumes ([#22](https://github.com/ChronoRixun/legends-classic/issues/22))
+  and the attack sounds looping near the fires at the start of the game
+  ([#79](https://github.com/ChronoRixun/legends-classic/issues/79)).
 - **0.4** - classic look: the rest of the menus (pause, characters, Review, shops, loading) and the HUD, made from
   your own disc's art.
 - **0.5** - complete, part two: the first game's loot and shops
   ([#6](https://github.com/ChronoRixun/legends-classic/issues/6)) and others.
-- **0.5 to 1.0** - more may come, spread between 0.5 and 1.0: whatever is still open from these lists, and whatever
+- **0.6** - graphics: an optional DXVK toggle, and an investigation into graphical engine upgrades.
+- **0.6 to 0.7** - the online section and join screen overhaul: a modern lobby.
+- **0.6 to 1.0** - more may come, spread between 0.6 and 1.0: whatever is still open from these lists, and whatever
   the playthroughs turn up next.
 
 ## Repository layout
@@ -369,7 +382,7 @@ It contains and distributes no game content: you need your own copies of both ga
 
 The 0.2.3 / XML2 Fix 1.6 candidate carries newly appended hazards through online saved-campaign transfer (co-op protocol 4; XML2 Fix 1.5 and older peers are refused).
 
-### Candidate 0.2.3e settings (rules 21-23)
+### Candidate 0.2.3g settings (rules 21-24)
 
 | [Game] key | XML1 builder | Agreement |
 |---|---|---|
