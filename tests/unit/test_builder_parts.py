@@ -382,7 +382,7 @@ def test_port_keys_from_a_synthetic_build():
         assert g['ClassicMainBackdrop'] == '1' and g['DangerRoomGate'] == 'button3'
         assert g['PostgameScript'] == FI.POSTGAME_SCRIPT and g['WindowTitle'] == 'X-Men Legends'
         assert g['NewGamePlus'] == '0' and g['ReviewStats'] == '0' and g['XPCurve'] == 'xml1' and g['Xtract'] == '0' and g['RevivalCost'] == 'xml1'
-        assert keys['Online'] == {'GameVersion': FI.PORT_GAME_VERSION, 'FastTransfer': '1'} and set(g) <= set(FI.PORT_OWNED['Game'])
+        assert keys['Online'] == {'GameVersion': FI.PORT_GAME_VERSION, 'FastTransfer': '1', 'ReceiveValidation': '1'} and set(g) <= set(FI.PORT_OWNED['Game'])
         assert keys['Save'] == {'Format': 'lc'} and 'Format' in FI.PORT_OWNED['Save']
         # the harness builds its test ini from the same keys
         sys.path.insert(0, str(Path(C.__file__).resolve().parents[1]))
@@ -734,6 +734,27 @@ def test_port_builds_ask_for_the_lc_save_format():
     assert FI.save_keys(port_identity=False) == {}
     assert FI.PORT_OWNED['Save'] == ('Format',) and 'ContentFingerprint' in FI.PORT_OWNED['Online']
     assert FI.REQUIRED_XML2FIX == '1.6'
+
+
+def test_receive_validation_defaults_on_and_requires_supported_companion():
+    """Stock receive validation is a local safety switch, written on for every port build."""
+    import tempfile
+    assert FI.online_keys(port_identity=True)['ReceiveValidation'] == '1'
+    assert 'ReceiveValidation' in FI.PORT_OWNED['Online']
+    assert 'ReceiveValidation' in FI.RELEASE_16_KEYS['Online']
+    keys = {'Online': {'ReceiveValidation': '1'}}
+    with tempfile.TemporaryDirectory() as d:
+        dll = Path(d) / 'dinput.dll'
+        FI.check_release_dll(dll, keys)
+        dll.write_bytes(b'MZ older companion')
+        try:
+            FI.check_release_dll(dll, keys)
+        except FI.FixTooOld as exc:
+            assert exc.missing == ['[Online] ReceiveValidation']
+        else:
+            raise AssertionError('a DLL without receive validation was accepted')
+        dll.write_bytes(dll.read_bytes() + 'ReceiveValidation'.encode('utf-16le'))
+        FI.check_release_dll(dll, keys)
 
 
 def test_a_dll_without_the_15_keys_is_refused(tmp_path=None):

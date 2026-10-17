@@ -8,7 +8,7 @@ keys:
                           ReviewStats / Xtract / XPCurve / GeometrySharingBlendIndices / CharacterLadderPaths /
                           ObjectiveDescriptions / BreakRule, [Limits]
                           ActorSlots / ResourceNames / ItemEnhancements / FightStyles / EffectCurves, [Online] GameVersion /
-                          ContentFingerprint, [Save] Format. They are
+                          ContentFingerprint / FastTransfer / ReceiveValidation, [Save] Format. They are
                           functions of the build's content (the menus it wrote, its report.json, its scripts), so the
                           builder (tools/xml1builder) writes them after a build, and tools/harness.py takes its
                           [Game] / [Limits] / [Online] lines from here too (the harness and the shipped build cannot
@@ -263,6 +263,11 @@ X1_LEADER = '1'
 # it, and a peer without it is refused by name. Written for every port build.
 FAST_TRANSFER = '1'
 
+# [Online] ReceiveValidation=1: reject malformed stock network messages before their handlers run. This is local
+# receive-side hardening: it changes no wire format and needs no gameplay-agreement rule, so older peers still
+# interoperate. Written for every port build.
+RECEIVE_VALIDATION = '1'
+
 # every key the port may write (the builder drops the ones a build does not need); the launcher owns the rest
 PORT_OWNED = {'Game': ('NewGameTeam', 'ResetUnlocks', 'SaveFolder', 'ForcedTeams', 'PostgameScript', 'WindowTitle',
                         'EndHeroUnlock', 'MainMenuItems', 'DangerRoomGate', 'ClassicMainBackdrop', 'ClassicMainPanelBounds', 'NewGamePlus', 'ReviewStats', 'Xtract', 'XtractionShop', 'RevivalCost', 'XPCurve',
@@ -272,7 +277,7 @@ PORT_OWNED = {'Game': ('NewGameTeam', 'ResetUnlocks', 'SaveFolder', 'ForcedTeams
                        'Xml1MasterMold', 'Xml1MoldStage', 'Xml1Turrets', 'Xml1LockOnEffects', 'Xml1LockOnAim'),
               'Limits': ('ActorSlots', 'ResourceNames', 'ItemEnhancements', 'FightStyles', 'EffectCurves', 'MoveTriggers', 'EntityCapacity',
                          'ScriptFunctions'),
-              'Online': ('GameVersion', 'ContentFingerprint', 'FastTransfer'),
+              'Online': ('GameVersion', 'ContentFingerprint', 'FastTransfer', 'ReceiveValidation'),
               'Save': ('Format',),
               'Xml1Turrets': ('Count',) + tuple(f'T{i}' for i in range(1, 33))}
 
@@ -530,7 +535,7 @@ def online_keys(*, port_identity=False, balance=False, fingerprint=None) -> dict
     the save tables, the content fingerprint a co-op peer must share (SPEC-new-save 6)."""
     if not port_identity:
         return {}
-    keys = {'GameVersion': RI.game_version(), 'FastTransfer': FAST_TRANSFER}
+    keys = {'GameVersion': RI.game_version(), 'FastTransfer': FAST_TRANSFER, 'ReceiveValidation': RECEIVE_VALIDATION}
     if fingerprint:
         keys['ContentFingerprint'] = fingerprint
     return keys
@@ -751,7 +756,7 @@ RELEASE_15_KEYS = {'Game': ('PlacementCrush', 'DoubleHeal', 'RankCosts', 'LevelS
 RELEASE_16_KEYS = {**RELEASE_15_KEYS,
                    'Game': RELEASE_15_KEYS['Game'] + ('ObjectWorldImpact', 'StunRule', 'DangerRoomParty', 'DangerRoomHealthBars', 'BoxHarmOrigin', 'HarmSingleChain',
                                                      'Xml1LockOnEffects', 'Xml1LockOnAim', 'HarmLoopStartup'),
-                   'Online': ('FastTransfer',)}
+                   'Online': ('FastTransfer', 'ReceiveValidation')}
 
 
 def check_release_dll(dll, keys: dict) -> None:
