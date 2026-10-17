@@ -7383,6 +7383,20 @@ revision 2 advertises `{1,0,0,0}` when installed, verified off for absent/`xml2`
 Revision-1 peers are rejected in both directions. The key-presence check cannot distinguish the two revisions;
 the companion DLL must be updated to obtain this engine fix. The builder does not rewrite combat data for it.
 Rule 17 is ObjectWorldImpact; both new rules register only when requested, preserving the released OFF digest.
+
+Exterior follow-up: the four `haarp/ext/haarp_ext01` through `haarp_ext04` maps retain their
+original 18/28/18/33 authored spawn instances and world levels 3/5/6/7. They contain HAARP
+soldiers/security/flamethrowers; the Brotherhood ice tunnels are separate level-7 maps.
+Map totals include deferred spawns and are not simultaneous attacker counts. Historical
+solo interior measurements are not a level-five exterior party comparison.
+
+The weapon converter still adds priority 5 to gun moves without an authored priority.
+XML1 defaults these moves to zero. Both engines' native priority comparisons accept pain
+override 4 against zero and reject it against five. This is an interruption-parity finding,
+not a demonstrated cause of the reported death; effective MP5/flamethrower damage and the
+audited NPC base levels/traits agree. No conversion or StunRule revision changes follow
+from this investigation. A weapon-interruption restoration needs its own scoped validation
+and gameplay-agreement decision, including the affected-room checks for a data-wide change.
 No version or save-format changes are made here; the release integrator owns version allocation.
 
 ## 96. Shallow floor overlap and surviving prop hits
