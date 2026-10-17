@@ -132,7 +132,7 @@ Checks (severity per SPEC 4.6: error = will not load or silently misbehaves; war
                 scoped to a damage type (the six physical / energy / mental _resistant[_share] talents) carries them
                 as def_damage_scope and no resist_<type> of those types - only def_damage strips a hit's reactions
                 (popup, knockback, trip, stun) at scale <= 0.3 in both engines
-  V45 gun damage roll (SPEC 76, weapons.validate): every built gun-shot trigger
+  V45 weapon damage and reaction priority (SPEC 76/95.3, weapons.validate): every built gun-shot trigger
                 carries XML1's weapon-fire draw - one integer range trunc(min*0.7f)..trunc(min*1.3f) of the damage
                 declaration's minimum (default.xbe 0xbcc47-0xbcc99) - a powerstyle named for an XML1 weapon carries
                 exactly that weapon's draw, and a built entity file's single-value attributes (explodedamage)

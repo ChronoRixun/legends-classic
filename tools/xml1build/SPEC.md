@@ -3448,8 +3448,9 @@ effect - checked in game below.
   with the attack data; `chargefx` / `chargesound` `warmuptime` before the first shot (never before 0). A move
   keeps at most 19 triggers (0x4f6aa7): a 7-shot burst gets its muzzle `effect_sound` on every other shot. Every
   move that got weapon triggers and has no `aitype` gets XML2's retail AI marking (`AI_TYPE` / `AI_REUSE`:
-  bullets and beams `beamanyrange` 3 s, projectiles `projectile` 2.5 s, the flame `projectilenear` 4 s, and
-  `priority="5"` when absent). Value codes stay codes (L1..L5, K10): `npc_values.resolve_style` turns them into
+  bullets and beams `beamanyrange` 3 s, projectiles `projectile` 2.5 s, the flame `projectilenear` 4 s). Reaction priority and `priority_override` remain authored;
+  omitted priority remains the original default zero. V45 checks these fields against the source.
+  Value codes stay codes (L1..L5, K10): `npc_values.resolve_style` turns them into
   XML1's numbers (section 24; L1 -> "4 5", L3 -> "15 18"), and `_data_patch` resolves them in the two projectile
   entity files (`data/entities/freezegun_ents` ice_bullet L3, `knockbackgun_ents` bullet_time K10).
 - `characters.py`: `weapon_style()` imports the XML1 style under `Data/powerstyles/<variant>` with `W.apply` as the
@@ -6498,7 +6499,7 @@ weapon's `grenade=`. `characters.load_grenade_overrides` tallies the source maps
 weapon and emits a warning. A non-default weapon style uses the grenade-suffixed SPEC 29 name
 `x1_<style>_<weapon>_<grenade>` (`weapons.variant_grenade_name`), keeping a shared gun's default and overridden
 holders separate. The variant retains the auxiliary `power_grenade` copy, XML1's `aitype="grenade"` and reuse
-7, at priority 9 above the guns' 5. Observed throws execute the canonical moveset node; these checks do not
+7, retaining the existing auxiliary priority 9. Observed throws execute the canonical moveset node; these checks do not
 establish that the auxiliary node or its raised priority is necessary.
 
 The actual thrown entity is also written into `x1_moveset_grenade_<grenade>`: an XML1 moveset copy with its
@@ -7384,19 +7385,35 @@ Revision-1 peers are rejected in both directions. The key-presence check cannot 
 the companion DLL must be updated to obtain this engine fix. The builder does not rewrite combat data for it.
 Rule 17 is ObjectWorldImpact; both new rules register only when requested, preserving the released OFF digest.
 
-Exterior follow-up: the four `haarp/ext/haarp_ext01` through `haarp_ext04` maps retain their
-original 18/28/18/33 authored spawn instances and world levels 3/5/6/7. They contain HAARP
-soldiers/security/flamethrowers; the Brotherhood ice tunnels are separate level-7 maps.
-Map totals include deferred spawns and are not simultaneous attacker counts. Historical
-solo interior measurements are not a level-five exterior party comparison.
+### 95.3 Weapon reaction priority (content-only restoration)
 
-The weapon converter still adds priority 5 to gun moves without an authored priority.
-XML1 defaults these moves to zero. Both engines' native priority comparisons accept pain
-override 4 against zero and reject it against five. This is an interruption-parity finding,
-not a demonstrated cause of the reported death; effective MP5/flamethrower damage and the
-audited NPC base levels/traits agree. No conversion or StunRule revision changes follow
-from this investigation. A weapon-interruption restoration needs its own scoped validation
-and gameplay-agreement decision, including the affected-room checks for a data-wide change.
+The weapon converter no longer adds priority 5 to gun moves without an authored priority.
+XML1 defaults those moves to zero. Both engines accept a requested reaction when its override
+meets the current move's priority: ordinary pain override 4 passes against zero and fails
+against five. Real damaging hits confirmed the old refusal during gunfire; rebuilt styles
+allow the pain reaction to interrupt that move. Explicit priorities and priority overrides
+are preserved, including unrelated authored Brotherhood power priorities.
+
+This changes 27 moves in ten generated weapon styles, used by 21 NPC entries: HAARP gun
+users, GRSO gun variants, nuclear and Weapon X guards, police and one generated Danger Room
+entry. Damage, attack triggers, AI types, reuse times, spawn data and grenade auxiliary
+priority are unchanged. The output comparison found only the intended priority removals.
+V45 compares source/output priority fields; synthetic tests cover omitted/explicit values,
+existing AI declarations, weapon types and rejection of the old output.
+
+Two isolated staged level-five party observations of the same initial exterior group
+recorded clear times 20.5/29.7 seconds and leader HP losses 55/59 before, versus 15.9/13.7
+seconds and losses 19/45 after. These small unseeded samples support the scoped correction,
+not a general difficulty claim. Damage per minute did not decrease in both pairs because
+the fights ended sooner. Broader pursuit samples varied substantially. The interior
+Brotherhood styles are byte-identical across the experiment; variable negative-control
+results must not be attributed to this change.
+
+This is builder content, with no new engine rule. StunRule remains 18 revision 2; version
+constants and save/protocol formats are unchanged here. The original weapon input/repeat-fire
+handler still has no direct PC counterpart. Complete weapon cadence, party-AI parity, and
+the maintainer's exact death encounter remain unverified; the broader stun issue stays open.
+
 No version or save-format changes are made here; the release integrator owns version allocation.
 
 ## 96. Shallow floor overlap and surviving prop hits
