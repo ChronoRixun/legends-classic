@@ -120,7 +120,7 @@ def test_weapon_moves_get_an_ai_type_so_xml2_fires_them():
     rep = W.apply(root, MP5)
     m = root.find('FightMove')
     assert rep['aitype_added'] == 1
-    assert m.get('aitype') == 'beamanyrange' and m.get('aireusetime') == '3' and m.get('priority') == '5'
+    assert m.get('aitype') == 'beamanyrange' and m.get('aireusetime') == '3' and m.get('priority') is None
     root = style([('power_attack', [{'name': 'weapon_fire', 'time': '0.1'}])])
     W.apply(root, FREEZE)
     assert root.find('FightMove').get('aitype') == 'projectile'
@@ -130,6 +130,34 @@ def test_weapon_moves_get_an_ai_type_so_xml2_fires_them():
     root = style([('power_attack', [{'name': 'weapon_fire', 'time': '0'}])])
     root.find('FightMove').set('aitype', 'beam')                  # an XML1 move that already says
     assert not W.apply(root, MP5)['aitype_added'] and root.find('FightMove').get('aitype') == 'beam'
+
+
+def test_weapon_ai_translation_preserves_reaction_priority():
+    # V45: an AI type schedules a shot; it does not grant reaction immunity.
+    # Exercise all translated weapon types, explicit/omitted priorities, and an
+    # existing AI declaration. Unrelated moves and the override stay authored.
+    for kind in ('bullet', 'beam', 'projectile', 'flame'):
+        weapon = dict(TOY, name='wp_test_launcher', type=kind,
+                      entfile='test_entities', projectileent='test_bolt')
+        for priority in (None, '0', '3', 'uninterruptable'):
+            for ai in (None, 'test_existing_ai'):
+                root = style([('test_shot', [{'name': 'weapon_fire', 'time': '0'}]),
+                              ('test_idle', [{'name': 'stop', 'time': '0'}])])
+                shot, idle = root.findall('FightMove')
+                shot.set('priority_override', '2')
+                if priority is not None:
+                    shot.set('Priority', priority)
+                if ai is not None:
+                    shot.set('aitype', ai)
+                idle.set('priority', '6')
+                W.apply(root, weapon)
+                priorities = {k.lower(): v for k, v in shot.attrib.items() if k.lower().startswith('priority')}
+                expected = {'priority_override': '2'}
+                if priority is not None:
+                    expected['priority'] = priority
+                assert priorities == expected
+                assert idle.get('priority') == '6'
+                assert shot.get('aitype') == (ai or W.AI_TYPE[kind])
 
 
 # SPEC 29.3: weapon events named by the style itself (invented weapon, effects and names)
