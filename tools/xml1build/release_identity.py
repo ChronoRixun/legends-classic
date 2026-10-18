@@ -35,6 +35,7 @@ HISTORY = (
     Identity('0.2.2', 19, 6, 'LC27', '2e2e5b4e2ef1940b7d63dc3d5cf8647940c4ff7d3c97572f5095481b37966a62'),
     Identity('0.2.3', 20, 6, 'LC28', 'e6b547bed0ea8986cb3493a8d219bda220eec0416661ab72d9b1074b06f7e5f2'),
     Identity('0.2.3c', 20, 7, 'LC29', 'fceba8e8092e5eb4c363d7a9054c6e3db16fb4adbbc9f193193f16ed76a7c549'),
+    Identity('0.2.3h', 21, 7, 'LC30', '1b87836ed197fe8b101325d8a8171c01f19c4691c2c5216da2741d61db41cafd'),
 )
 
 

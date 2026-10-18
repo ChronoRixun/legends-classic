@@ -3,7 +3,11 @@
 The builder's releases, newest first. The version is `xml1-builder --version`; the content version is what a
 build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebuild.
 
-## v0.2.3 - content version 20 (needs XML2 Fix 1.6.0)
+## v0.2.3 - content version 21 (needs XML2 Fix 1.6.0)
+- **Candidate 0.2.3h:** stock co-op receive validation checks native messages before dispatch, including reliable wrappers and padded native records; the builder defaults `[Online] ReceiveValidation=1`. Drop log lines name reliable wrapper type `0x00`, rather than the inner type (cosmetic). Malformed-message survival checks are not a claim that every tested message crashed the earlier candidate.
+- **Gun priority (#101 progress):** preserve XML1 gun-move priority 0 instead of adding XML2 priority 5, allowing real nonlethal hits to trigger pain and interrupt firing. This is a scoped fidelity correction; broader HAARP/Brotherhood combat parity remains open.
+- Candidate identity: content 20 -> 21, catalogue 7 retained, LC29 -> LC30. Builder 0.2.3 / XML2 Fix 1.6.0, save format and gameplay agreement rules are unchanged. Both peers need this candidate.
+
 - **Connect by IP and the LAN search work for LC builds:** the host's game-info answer carried the game's own version `1.30` in its first version field (written by the game-info constructor, not copied from the string `[Online] GameVersion` patches), so a joiner on `LC29` filed every LC29 host as another game and listed or admitted nothing by *Connect by IP* or LAN search (only the OpenSpy list worked). `[Online] GameVersion` now also rewrites that constructor store (19 guarded bytes at 0x61571c, same transaction, readback); with the key unset the stock bytes stay. Lobby metadata only: no gameplay rule, protocol 4 and the record are unchanged; LC28 and no-key builds are still not listed or admitted by LC29.
 
 
