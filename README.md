@@ -11,12 +11,13 @@ It is a builder, not a download: every file of the result is made on your comput
 This project ships no game content - no game files, no parts of them, no modified executables - and the builder
 makes no network connections.
 
-> **Status: public test builds (released builder 0.2.2, XML2 Fix 1.5.0, launcher 0.3.0).** Every mission and the ending run
+> **Status: public test builds (released builder 0.2.3, XML2 Fix 1.6.0, launcher 0.3.1).** Every mission and the ending run
 > in automated tests on the developer's PC (a full hand-played run is under way), the builder (`xml1-builder`) makes
 > that build from a disc image and an X-Men Legends II install in a few minutes, and the
-> [Ultimate Legends](https://github.com/ChronoRixun/ultimate-legends) launcher does it in a few clicks. 0.2.2 brings
-> back more of the first game's own rules: its scan turrets, the Xtraction services, its skill ranks, level points and
-> stat growth, breakable parts and armour, solo mode and leaders. Known bugs and what is next: [Status](#status) and
+> [Ultimate Legends](https://github.com/ChronoRixun/ultimate-legends) launcher does it in a few clicks. 0.2.3 brings
+> back the first game's fires, spikes and electricity, its gunmen's flinch and more combat timing, and makes co-op
+> *Load Saved Campaign* work in seconds (0.2.2 brought its scan turrets, the Xtraction services, skill ranks, breakable
+> parts and solo mode). Known bugs and what is next: [Status](#status) and
 > [Roadmap](#roadmap). Help and bug reports: the [community Discord](https://discord.gg/tFxwHtZv8k).
 
 ## What you need
@@ -244,7 +245,7 @@ the game.
 
 | Builder | Content version | Needs xml2-fix | Notes |
 |---|---|---|---|
-| 0.2.3 | 20 | 1.6.0 | hazard bounds, floor-overlap crates, two more fall volumes, NpcPower revision 4, StunRule revision 2, visible Danger Room opponents/original fallback, Sentinel scan effects and aiming; catalogue 7 / LC29; verified saved-zone prefix retention; both co-op peers need matching versions/settings |
+| 0.2.3 | 21 | 1.6.0 | hazard bounds and the opening fire's rhythm (`[Game] BoxHarmOrigin`, `HarmSingleChain`), floor-overlap crates (`ObjectWorldImpact`), two more fall volumes, the first game's gun-move priority, NpcPower revision 4, StunRule revision 2, visible Danger Room opponents with health bars and the original fallback party (`DangerRoomHealthBars`, `DangerRoomParty`), Sentinel scan effects and aiming, fast saved-campaign transfer (`[Online] FastTransfer`), received-message checks (`[Online] ReceiveValidation`); catalogue 7 / LC30; verified saved-zone prefix retention; co-op peers need 0.2.3 / 1.6.0 on both PCs |
 | 0.2.2 | 19 | 1.5.0 | the first game's rank costs and level points (`[Game] RankCosts`, `LevelSkillPoints`, `LevelStatPoints`), breakable parts (`[Game] Xml1Multipart`), leaders (`[Game] X1Leader`), solo mode (`[Game] SoloMode`), death below 1 health (`[Game] DeathRule`), the Xtraction services and Danger Room gate (`[Game] DangerRoomGate`), the revival price (`[Game] RevivalCost`), scan turrets (`[Game] Xml1Turrets`), pack amounts (`[Game] PackAmount`), settling without crushes (`[Game] PlacementCrush`), no double heals (`[Game] DoubleHeal`), 1024 script functions (`[Limits] ScriptFunctions`), the death hand-over (`[Game] DeathSwitchClear`), enemy power use and combos (`[Game] NpcPowerRule`); co-op peers need 0.2.2 / 1.5.0 on both PCs |
 | 0.2.0 - 0.2.1 | 18 | 1.4.0 | the LC save format (`[Save] Format=lc`), the first game's combat balance (`[Balance]`), the entity capacity raise (`[Limits] EntityCapacity`: 768 generic / 1024 World entities), triggers per move (`[Limits] MoveTriggers`), the Master Mold controller (`[Game] Xml1MasterMold`, `Xml1MoldStage`), explosions' first hit (`[Game] ExplosiveFirstHit`), the classic main menu (`[Game] ClassicMainBackdrop`, `ClassicMainPanelBounds`), popup answers (`[Game] ConfirmationRelease`), the Xtraction shop (`[Game] XtractionShop`), content fingerprint metadata (`[Online] ContentFingerprint`) and the shared gameplay agreement (co-op peers with different content or settings are refused, with the reason on both PCs) |
 | 0.1.12 | 15 | 1.3.2 | ladder descents (`[Game] CharacterLadderPaths`), objective completion text (`[Game] ObjectiveDescriptions`), STAT pickups (`addStatPoints`), the first game's break rule (`[Game] BreakRule`), the effect curve pool (`[Limits] EffectCurves`), no Xtract world map (`[Game] Xtract`) |
@@ -285,13 +286,14 @@ What comes next, by version (plans move with what testing finds):
   boss armour ([#3](https://github.com/ChronoRixun/legends-classic/issues/3)), solo mode
   ([#5](https://github.com/ChronoRixun/legends-classic/issues/5)), leaders, exclusive fullscreen and the fixes in
   [CHANGELOG.md](CHANGELOG.md).
-- **0.2.3** (this release) - the first game's fires, spikes and electricity hazards hurt again, at a steady rhythm
+- **0.2.3** - the first game's fires, spikes and electricity hazards hurt again, at a steady rhythm
   ([#104](https://github.com/ChronoRixun/legends-classic/issues/104)); co-op *Load Saved Campaign* works again and
   takes seconds, and *Connect by IP* and the LAN search work between port builds; the falling crates
   ([#103](https://github.com/ChronoRixun/legends-classic/issues/103)), the Danger Room's robot health bars and
   cloaked opponents, the Sentinel flashback's lock-on effects, two more fall volumes
   ([#22](https://github.com/ChronoRixun/legends-classic/issues/22)) and more of the enemy-AI stun gap
-  ([#101](https://github.com/ChronoRixun/legends-classic/issues/101)) - needs XML2 Fix 1.6.0.
+  ([#101](https://github.com/ChronoRixun/legends-classic/issues/101)) - needs XML2 Fix 1.6.0. Toad's HAARP fight
+  ([#105](https://github.com/ChronoRixun/legends-classic/issues/105)) is planned for 0.2.4.
 - **0.3.0** - co-op modernization: a new encrypted network layer that adapts to bad connections, join codes and
   internet play without port forwarding (with a relay as the fallback), and joining a game in progress at the next
   level change. Also the remaining fall volumes ([#22](https://github.com/ChronoRixun/legends-classic/issues/22))
@@ -380,9 +382,9 @@ It contains and distributes no game content: you need your own copies of both ga
 
 `[TestMode]` is optional and offline only: either switch blocks hosting and joining until both are off and the game restarts. F8 may skip script-referenced actors; F10 refuses an unsafe destination. See the companion [testing guide](https://github.com/ChronoRixun/xml2-fix/blob/main/docs/test-mode.md). Saves made with testing tools retain their gameplay effects.
 
-The 0.2.3 / XML2 Fix 1.6 candidate carries newly appended hazards through online saved-campaign transfer (co-op protocol 4; XML2 Fix 1.5 and older peers are refused).
+Builder 0.2.3 / XML2 Fix 1.6 carries newly appended hazards through online saved-campaign transfer (co-op protocol 4; XML2 Fix 1.5 and older peers are refused).
 
-### Candidate 0.2.3g settings (rules 21-24)
+### 0.2.3 settings (rules 21-24)
 
 | [Game] key | XML1 builder | Agreement |
 |---|---|---|
@@ -394,4 +396,4 @@ The 0.2.3 / XML2 Fix 1.6 candidate carries newly appended hazards through online
 |---|---|---|
 | FastTransfer | 1 | 24 revision 1, requested only |
 
-Absent, empty, off or xml2 omits a rule. Invalid or failed requested installs remain unverified. Both peers must match. HUD dirty-stat refresh/clamp timing parity remains unproved. Versions and content identity remain unchanged from 0.2.3c.
+Absent, empty, off or xml2 omits a rule. Invalid or failed requested installs remain unverified. Both peers must match. HUD dirty-stat refresh/clamp timing parity remains unproved. Content 21, catalogue 7, lobby token LC30. The builder also writes `[Online] ReceiveValidation=1`.

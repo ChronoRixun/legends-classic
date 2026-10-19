@@ -4,42 +4,98 @@ The builder's releases, newest first. The version is `xml1-builder --version`; t
 build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebuild.
 
 ## v0.2.3 - content version 21 (needs XML2 Fix 1.6.0)
-- **Candidate 0.2.3h:** stock co-op receive validation checks native messages before dispatch, including reliable wrappers and padded native records; the builder defaults `[Online] ReceiveValidation=1`. Drop log lines name reliable wrapper type `0x00`, rather than the inner type (cosmetic). Malformed-message survival checks are not a claim that every tested message crashed the earlier candidate.
-- **Gun priority (#101 progress):** preserve XML1 gun-move priority 0 instead of adding XML2 priority 5, allowing real nonlethal hits to trigger pain and interrupt firing. This is a scoped fidelity correction; broader HAARP/Brotherhood combat parity remains open.
-- Candidate identity: content 20 -> 21, catalogue 7 retained, LC29 -> LC30. Builder 0.2.3 / XML2 Fix 1.6.0, save format and gameplay agreement rules are unchanged. Both peers need this candidate.
 
-- **Connect by IP and the LAN search work for LC builds:** the host's game-info answer carried the game's own version `1.30` in its first version field (written by the game-info constructor, not copied from the string `[Online] GameVersion` patches), so a joiner on `LC29` filed every LC29 host as another game and listed or admitted nothing by *Connect by IP* or LAN search (only the OpenSpy list worked). `[Online] GameVersion` now also rewrites that constructor store (19 guarded bytes at 0x61571c, same transaction, readback); with the key unset the stock bytes stay. Lobby metadata only: no gameplay rule, protocol 4 and the record are unchanged; LC28 and no-key builds are still not listed or admitted by LC29.
+This build needs **XML2 Fix 1.6.0**: in the launcher, **Rebuild**, then **Play** (the launcher installs the fix after
+the build). Your saves carry over.
 
+**Updating**
 
-- **Opening fire rhythm (#104 follow-up):** `HarmSingleChain=single` keeps ONE repeat chain per boxed touch fire. Before, every new contact could add another persistent 0.4 s repeat chain, so standing in or re-entering a fire stacked hits (one hero produced 130 outstanding repeat events in a test). Now an ordinary fire hits about once per 0.4 s (3 HP per hit at the opening fire), and stops hurting when you step out. Damage amounts, repeat values, bounds and knockback are native and unchanged; this is a deliberate scheduling policy, not a measured original-console damage rate, and not a one-second grace period after entering a fire. Requested-only gameplay rule **23**, revision 1; the builder defaults it on. The authored-startup adapter `HarmLoopStartup` stays a developer option and still blocks online play.
-- **Co-op Load Saved Campaign fixed:** the host's saved-campaign transfer could stall or end the session when the joiner's shared network message pools filled up. The receiving side now reserves room in all four shared pools (headers, large bodies, small bodies, queue nodes), defers a datagram it cannot store instead of acknowledging it, refuses an outgoing reply it cannot fit before copying, and ends a session that stays pressure-blocked for 30 s with one clear log line. This repair has no gameplay rule of its own; the speed-up below (rule 24) makes the saved-campaign transfer take seconds instead of minutes.
-- **Danger Room lesson goals documented:** the original protects combo-training robots until the required move connects. The builder validator V16 now checks the original lesson goals (FR101-105 count specific combat-node connections, FR112 counts seven grabs, CHMAG needs 20 kills); the engine docs describe the course death/progress path. No gameplay change: punching a protected robot with other moves lowers its bar but does not kill it - use the move the lesson names.
-- Builder 0.2.3 / XML2 Fix 1.6.0, content 20 / catalogue 7 / LC29, protocol 4 and the bind fingerprint are unchanged: this candidate adds one runtime switch (rule 23), the transfer repair and documentation, no game-data changes.
+- **Online, both players need 0.2.3 with XML2 Fix 1.6.0.** A 0.2.2 / XML2 Fix 1.5.0 player and a 0.2.3 player refuse
+  each other at join, with the reason on both PCs.
+- **Old saved zones keep what they had.** A zone your save already holds keeps its objects, and anything this
+  version adds to that zone (a hazard, a crate) starts fresh. If a save's zone record can't be matched safely, the
+  game does what it did before and rebuilds that zone from scratch (a zone with identical crates is one such case).
+  The save format is unchanged.
 
+**The big ones**
 
-- **Opening fire (#104 follow-up):** `BoxHarmOrigin=xml1` restores the XBE zero-origin argument for boxed harm. The native victim/attacker fallback replaces the PC box-centre direction and uses the native 0.01 dispatch delay. Damage amounts, bounds and authored repeat intervals remain unchanged. This addresses the opening fire's upward repeated-contact impulse; other boxed hazards need campaign testing. Requested-only gameplay rule **21**, revision 1.
-- **Danger Room robot health bars (tester report):** `DangerRoomHealthBars=xml1` bypasses the protected training-target HUD suppression gate so ordinary attacks can show a decreasing gauge. Protection and course limits remain intact. The newly reachable native HUD path may refresh dirty stats and schedule health clamping; timing parity is unproved, so requested-only gameplay rule **22**, revision 1, covers this behavior.
-- **Fast co-op Load Saved Campaign (rule 24):** `[Online] FastTransfer=1` (with `[Limits] EntityCapacity=1`) sends the 2 MiB campaign image as data and zero-run records, up to 32 in flight per peer within shared-pool margins, and raises a peer's datagram budget from 100,000 to 400,000 bytes/s. Two real saved slots took about 3 s and 1 s of transfer (15 s and 5 s whole load) on a LAN, against about 160 s before. Both PCs must use it: requested-only gameplay rule **24**, revision 1, builder default on; absent or 0 keeps the stock sender and the released digest, a mismatched peer is refused naming FastTransfer in both directions. Details: [campaign transfer](docs/online-campaign-transfer.md).
-- The builder enables both keys for XML1 builds and refuses an existing companion missing either key. Matching verified installs can host/join; absent keys omit their rules, invalid/failed requests block admission, and mismatches name the setting. Ordinary XML2 defaults stay off. Builder 0.2.3 / XML2 Fix 1.6.0, content 20 / catalogue 7 / LC29 and the immutable bind fingerprint are unchanged: this candidate adds runtime switches and documentation, no game-data changes.
+- **Co-op *Load Saved Campaign* works, in seconds.** The host's saved campaign used to stall at "Sending game
+  information..." or end the session. It now reaches the joining player in a few seconds on a LAN (two real saves took
+  about 15 and 5 seconds from clicking to playing, against minutes before), without stalls. Both PCs need 0.2.3 with
+  XML2 Fix 1.6.0.
+- **Connect by IP and the LAN search work between port builds.** Before, two port games could only find each other
+  through the OpenSpy list. Builds that differ (another builder release) still don't list or admit each other.
+- **Fires, spikes and electricity hurt again** (issue #104): the placed hazards that had no model, in 57 levels, keep
+  their authored size and hurt heroes and enemies as in the first game. The opening fire hits about every 0.4 seconds
+  (3 health a hit) with its knockback, and stops hurting when you step out of it.
+- **Enemy combat closer to the first game** (issue #101, progress): the HAARP gunmen flinch when you hit them and stop
+  firing, as in the first game; enemy combos follow its button timing; a hero's stun animation plays at the original
+  speed and the hero recovers control as soon as in the original, and a refused or interrupted stun no longer comes
+  back after recovery.
+- **Danger Room:** the training robots (and other opponents that start cloaked) are visible and take damage, their
+  health bars go down, and a lesson that starts without a full party gets the first game's four heroes, Phoenix among them. A robot protected by
+  a lesson only goes down to the move the lesson names - other moves lower its bar but don't finish it.
+- **Sentinel flashback:** the Sentinels' eye scan, the surface hits and the acquired-target effect are back, and the
+  Sentinel's head aims naturally at a target.
 
+**Fixes**
 
-**Online saved-campaign transfer fixed.** Loading an older saved campaign in co-op now carries the newly appended hazards/residents to both peers, including a client without the prefix sidecar; historical removals stay removed. The durable LC save format is unchanged. Co-op protocol 4: XML2 Fix 1.5 and older peers are refused at admission, as before.
+- **The HAARP ice-tunnel crates** (issue #103) settle on the floor, survive the first ordinary punch and break on
+  later hits, instead of falling through the floor. Every landing with nothing to collide with now deals no damage, as
+  in the first game.
+- **Two more fall spots** (issue #22, partly): two fall volumes whose first-game position is proven are on, so a hero
+  who falls there dies as in the first game. The rest stay off (known issues).
+- **Co-op robustness:** the game checks the network messages it receives before using them and drops malformed ones
+  instead of acting on them. Ordinary game messages that carry extra bytes, or that the game sends while a movie plays,
+  are not dropped (a Blob-fight kill used to produce false drops on the joining player).
+- **Launcher settings survive a rebuild:** the Display and Discord settings the launcher keeps in `xml2-fix.ini`
+  stay as they were; the builder merges its own keys into the existing file.
+- **Optional testing tools:** XML2 Fix's `[TestMode]` (off by default and not written by the builder) adds Forge access
+  at Xtraction points and F8 / F9 / F10 tools for testers. Either switch blocks online play until it is off and the
+  game restarted.
 
-Use **Rebuild**, then **Play** in the launcher. Both co-op peers need this builder and XML2 Fix 1.6.0.
+**Known issues**
 
-- **Danger Room:** course robots and other initially cloaked opponents become visible and take ordinary attack damage. Candidate 0.2.3d adds the guarded health-bar gate fix under rule 22; see the candidate test evidence. Course-only copies preserve campaign actors. An incomplete non-solo party uses XML1's Cyclops/Phoenix/Storm/Wolverine fallback, avoiding the absent PC hero/default actor (rule 19).
-- **Sentinel flashback:** restores eye-scan, surface-hit and acquired-target effects. Animated-head aiming restores natural target acquisition (rule 20); missile and arm effects use their existing native paths.
-- **Combat (#101, progress):** StunRule revision 2 restores original party-hero animation speed and input recovery. Overall hero-free-time measurements are noisy; full combat parity remains open.
+- **Co-op *New Game* with the first game's solo story segments** (Wolverine's opening, Magma's mansion tour): the
+  second online player has no hero during a solo segment. A co-op *New Game* starts with Wolverine alone, and a player
+  who joins during a solo segment is dropped at the next level load. Use *Load Saved Campaign* for co-op; the fix is
+  planned with 0.3.0's drop-in co-op.
+- **Toad's fight at HAARP** (issue #105) skips the jets, his armour and the soldier waves; planned for 0.2.4.
+- **Enemy powers and stun** (issue #101): enemies still use powers and stun heroes more than in the first game
+  (Brotherhood, HAARP); only parts of it are fixed here.
+- **A double jump on slopes or the HAARP bridge** can land a hero outside the play area (issue #22); the remaining
+  fall volumes are off.
+- **Attack and impact sounds that loop** in the Manhattan streets (issue #79) were not reproduced lately, but no fix
+  is claimed.
+- **Loot and the item shop** (issue #6) are not in this version.
+- **Cosmetic reports** from the first playthrough (issue #54) are still tracked.
+- **Hazards** (issue #104): 57 levels were fixed from an audit of the game's data, but only three rooms were played
+  in the checks. Report any fire, spike or electricity that still doesn't hurt.
+- Co-op was tested with two copies of the game on one PC; the two-PC pass, on one network and across the internet,
+  is 0.3.0.
 
-- **Falling crates (#103):** the affected HAARP ice-tunnel crates settle on their floor, survive a first ordinary punch and break on later hits. `ObjectWorldImpact` restores XML1's zero impact coefficient for every landing with no physical collision target, not just punched crates: the XBE uses coefficient-table entry zero for all of them.
-- **Hazards (#104):** placed model-less fire, spike and electrical hazards keep their authored bounds and can hurt heroes and enemies. The full output audit covers 57 affected zones; source-agent live checks cover three rooms. Remaining rooms need campaign testing.
-- **Fall volumes (#22, partial):** two more source-verified volumes are enabled. Unsafe or unproved volumes remain deferred; this does not claim every fall or follower problem is fixed.
-- **Combat (#101, progress):** enemy combos follow the first game's button delays, and rejected/interrupted party-hero stun flags no longer resume after recovery. Full original combat parity remains open.
-- **Old saved zones:** verified identical resident prefixes retain old zone records while appended residents start fresh. The LC save format is unchanged. Missing attestations, changed prefixes or ambiguous old smart-entity identities keep the safe discard behavior; the identical-crate case is a known limitation.
-- **Optional offline testing:** XML2 Fix's `[TestMode]` adds Forge access and F8/F9/F10 tools. It is off and unwritten by default; either switch blocks online play until disabled and restarted.
-- **Sound report (#79):** not reproduced after the hazard fix; no sound-loop fix is claimed.
+<details><summary>Technical details</summary>
 
-Content 20 includes the earlier hazard/crate/fall-volume changes. Candidate 0.2.3c additionally appends eleven course-only STAT identities: catalogue revision 7 and lobby token LC29 identify the new bind envelope; (20,6)/LC28 remains reserved. Builder 0.2.3, CONTENT_VERSION 20 and requires_xml2fix >=1.6 stay unchanged for this unreleased candidate. Zone-record attestations and the durable save format are unchanged. Cold saved-game loads must use the normal Load Game menu; console loadgame from a fresh main menu bypasses controller setup and is an invalid regression entry.
+- Content version 21, catalogue revision 7, lobby token LC30 (0.2.2 was content 19, catalogue 6, LC27). Online, both
+  players need the same content version.
+- New `[Game]` keys written for every XML1 build: `ObjectWorldImpact`, `StunRule`, `DangerRoomParty`,
+  `Xml1LockOnEffects`, `Xml1LockOnAim`, `BoxHarmOrigin`, `DangerRoomHealthBars`, `HarmSingleChain`; new `[Online]`
+  keys `FastTransfer` and `ReceiveValidation`. `[Game] NpcPowerRule` is at revision 4 (per-button combo delays).
+  The builder refuses an existing fix companion that lacks a key it needs.
+- Gun priority: XML2 adds priority 5 to a gun move; the build keeps the first game's priority 0, so a real hit that
+  doesn't kill can interrupt a firing gunman. 18 gun-style files change.
+- Hazards: model-less fire / spike / electrical volumes keep their authored bounds (output audit over 57 zones;
+  live checks in three rooms, the rest need campaign testing).
+- Danger Room: the validator V16 now checks the first game's lesson goals (FR101-105 count specific combat
+  connections, FR112 counts seven grabs, CHMAG needs 20 kills).
+- Co-op: the receiving side reserves room in all four shared network pools, defers a datagram it cannot store instead
+  of acknowledging it, and ends a session that stays blocked for 30 seconds with one log line. *Fast transfer* sends
+  the 2 MiB campaign image as data and zero-run records with up to 32 in flight and a 400,000 bytes/s budget, and both
+  PCs must use it. XML2 Fix 1.6.0's agreement protocol is 4 (1.5 and older peers are refused).
+- Cold saved-game loads must use the normal Load Game menu: the console `loadgame` command from a fresh main menu
+  bypasses the controller setup.
+
+</details>
 
 ## v0.2.2 - content version 19 (needs XML2 Fix 1.5.0)
 
