@@ -7519,3 +7519,23 @@ include DangerRoomParty, Xml1LockOnEffects and Xml1LockOnAim.
 - **Opening fire (#104 follow-up):** `BoxHarmOrigin=xml1` restores the XBE zero-origin argument for boxed harm. The native victim/attacker fallback replaces the PC box-centre direction and uses the native 0.01 dispatch delay. Damage amounts, bounds and authored repeat intervals remain unchanged. This addresses the opening fire's upward repeated-contact impulse; other boxed hazards need campaign testing. Requested-only gameplay rule **21**, revision 1.
 - **Danger Room robot health bars (tester report):** `DangerRoomHealthBars=xml1` bypasses the protected training-target HUD suppression gate so ordinary attacks can show a decreasing gauge. Protection and course limits remain intact. The newly reachable native HUD path may refresh dirty stats and schedule health clamping; timing parity is unproved, so requested-only gameplay rule **22**, revision 1, covers this behavior.
 - The builder enables both keys for XML1 builds and refuses an existing companion missing either key. Matching verified installs can host/join; absent keys omit their rules, invalid/failed requests block admission, and mismatches name the setting. Ordinary XML2 defaults stay off. Builder 0.2.3 / XML2 Fix 1.6.0, content 20 / catalogue 7 / LC29 and the immutable bind fingerprint are unchanged: this candidate adds runtime switches and documentation, no game-data changes.
+
+## 102. Target resistance subtitles (validator V63)
+
+The original target HUD (`default.xbe` `0x15ff60`, formatter `0x94a70`) reads active
+`def_damage` (18) for physical, energy and mental scopes. It shows colored localized
+resistance/immunity labels beneath the gauge, collapsing three scopes to string
+103. Its `~NN` prefixes select colors; this path does not require a separate image.
+
+The PC HUD (`0x5a8920`) instead asks native `resist_*` (13..19). SPEC 92 correctly
+converts the original talents to `def_damage_scope` (56), which preserves combat
+but leaves that display query empty. Do not add a second gameplay resistance row.
+The builder requests XML2 Fix `[Game] ResistanceDisplay=xml1`, owns the key during
+merges and checks companion support. The adapter only replaces the native target
+resistance query, using current modifier bounds without drawing RNG. No gameplay
+rule, save-layout change, new talent or additional art is needed.
+
+V63 verifies the setting and compares the existing English resistance string slots
+103/201/202/210/211/212 and colors 22/23/24 against the corresponding original
+resources. The PC swaps energy and mental indices; their rendered colors remain
+the original ones. No resource text or pixels are embedded in the builder.
