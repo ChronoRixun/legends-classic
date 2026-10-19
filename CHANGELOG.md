@@ -3,6 +3,12 @@
 The builder's releases, newest first. The version is `xml1-builder --version`; the content version is what a
 build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebuild.
 
+## Unreleased
+
+- Request the companion's original resistance subtitles beneath targeted enemy
+  health bars. V63 checks the existing localized labels and type colors against
+  the player's original data; an older companion reports the missing setting.
+
 ## v0.2.3 - content version 21 (needs XML2 Fix 1.6.0)
 
 This build needs **XML2 Fix 1.6.0**: in the launcher, **Rebuild**, then **Play** (the launcher installs the fix after

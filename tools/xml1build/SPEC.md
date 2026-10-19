@@ -7536,3 +7536,22 @@ fail conversion before mutation. V-TBD checks the generated landing volumes.
 
 This changes the boss map hash; the existing save reader may discard an older record
 for that zone. It does not change the save schema or allocate a gameplay rule ID.
+## 102. Target resistance subtitles (validator V63)
+
+The original target HUD (`default.xbe` `0x15ff60`, formatter `0x94a70`) reads active
+`def_damage` (18) for physical, energy and mental scopes. It shows colored localized
+resistance/immunity labels beneath the gauge, collapsing three scopes to string
+103. Its `~NN` prefixes select colors; this path does not require a separate image.
+
+The PC HUD (`0x5a8920`) instead asks native `resist_*` (13..19). SPEC 92 correctly
+converts the original talents to `def_damage_scope` (56), which preserves combat
+but leaves that display query empty. Do not add a second gameplay resistance row.
+The builder requests XML2 Fix `[Game] ResistanceDisplay=xml1`, owns the key during
+merges and checks companion support. The adapter only replaces the native target
+resistance query, using current modifier bounds without drawing RNG. No gameplay
+rule, save-layout change, new talent or additional art is needed.
+
+V63 verifies the setting and compares the existing English resistance string slots
+103/201/202/210/211/212 and colors 22/23/24 against the corresponding original
+resources. The PC swaps energy and mental indices; their rendered colors remain
+the original ones. No resource text or pixels are embedded in the builder.
