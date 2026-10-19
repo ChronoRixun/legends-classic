@@ -7519,3 +7519,20 @@ include DangerRoomParty, Xml1LockOnEffects and Xml1LockOnAim.
 - **Opening fire (#104 follow-up):** `BoxHarmOrigin=xml1` restores the XBE zero-origin argument for boxed harm. The native victim/attacker fallback replaces the PC box-centre direction and uses the native 0.01 dispatch delay. Damage amounts, bounds and authored repeat intervals remain unchanged. This addresses the opening fire's upward repeated-contact impulse; other boxed hazards need campaign testing. Requested-only gameplay rule **21**, revision 1.
 - **Danger Room robot health bars (tester report):** `DangerRoomHealthBars=xml1` bypasses the protected training-target HUD suppression gate so ordinary attacks can show a decreasing gauge. Protection and course limits remain intact. The newly reachable native HUD path may refresh dirty stats and schedule health clamping; timing parity is unproved, so requested-only gameplay rule **22**, revision 1, covers this behavior.
 - The builder enables both keys for XML1 builds and refuses an existing companion missing either key. Matching verified installs can host/join; absent keys omit their rules, invalid/failed requests block admission, and mismatches name the setting. Ordinary XML2 defaults stay off. Builder 0.2.3 / XML2 Fix 1.6.0, content 20 / catalogue 7 / LC29 and the immutable bind fingerprint are unchanged: this candidate adds runtime switches and documentation, no game-data changes.
+
+
+## HAARP boss landing triggers (issue #105)
+
+The four jet landing volumes in haarp/ext/haarp_ext_boss are enemy-team touch triggers.
+XML1 allows their boss activator through `actteamplayer` (activation function 0x28420,
+actor flag +0x335 bit 0x20). XMen2.exe 0x41b5b0 instead requires a player-controller
+assignment at actor+0x3d4; the boss has -1 and the landing script never starts.
+
+`boss_phases.allow_npc_landings` clears only that filter in this encounter, retaining
+the team match, named-activator script check, enable targets, placements and ordinals.
+The original armor moves, attack pattern, jet structure changes, health thresholds,
+soldier relays and ending scripts run unchanged. Changed or missing source filters
+fail conversion before mutation. V-TBD checks the generated landing volumes.
+
+This changes the boss map hash; the existing save reader may discard an older record
+for that zone. It does not change the save schema or allocate a gameplay rule ID.

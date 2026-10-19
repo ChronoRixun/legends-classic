@@ -1,6 +1,6 @@
 """Narrow script/data replacements for XML1 boss phase states absent from XMen2.exe.
 
-Only issue #2's Magneto and Shadow King encounters are handled. Original phase counters, timers, rewards and
+Handles the Magneto, Shadow King and HAARP boss encounters. Original phase counters, timers, rewards and
 follow-on scripts remain authoritative. Output scripts use CRLF, like the rest of the builder.
 """
 import re
@@ -12,6 +12,8 @@ SHADOW_START = 'astral/savepx/final_astral'
 SHADOW_ZONE = 'maps/astral/savepx/final_astral'
 SHADOW_FLOOR_MARKER = 'wp_bossmaster3000_04'
 SHADOW_DEFEATED = 'astral/savepx/shadowking_defeated'
+TOAD_ZONE = 'maps/haarp/ext/haarp_ext_boss'
+TOAD_LANDING_SCRIPTS = frozenset(f'haarp/ext/pillar{i:02}' for i in range(1, 5))
 
 
 def _ref(path):
@@ -159,7 +161,52 @@ def protect_relay(root, relay, actor, phase):
     return count
 
 
+def npc_landing_triggers(root, scripts):
+    """Find the encounter's authored enemy-only landing volumes; reject changed filters.
+
+    XML1's actteamplayer tests actor+0x335 bit 0x20 (0x28420); XML2 instead requires
+    actor+0x3d4 != -1 (0x41b5b0), excluding the boss. Its team check and the script's
+    named-activator check still restrict each volume after removing this extra filter.
+    """
+    found = []
+    for el in root.iter('entity'):
+        if _ref(el.get('actscript', '')) not in scripts:
+            continue
+        expected = {'classname': 'gameent', 'team': 'enemy', 'actmatchteam': 'true',
+                    'actontouch': 'true', 'actleader': 'false'}
+        if any(el.get(k, '').lower() != v for k, v in expected.items()):
+            raise ValueError('boss landing trigger: unexpected activation filter')
+        found.append(el)
+    if len(found) != len(scripts) or {_ref(el.get('actscript')) for el in found} != set(scripts):
+        raise ValueError('boss landing trigger: expected one volume per landing script')
+    return found
+
+
+def allow_npc_landings(root, scripts):
+    """Keep placement, ordinals, targets and scripts; only remove the player-controller gate."""
+    rows = npc_landing_triggers(root, scripts)
+    count = 0
+    for el in rows:
+        if el.get('actteamplayer', '').lower() != 'false':
+            el.set('actteamplayer', 'false')
+            count += 1
+    return count
+
+
+def landing_trigger_problems(root, rel):
+    if _ref(rel) != TOAD_ZONE:
+        return []
+    try:
+        rows = npc_landing_triggers(root, TOAD_LANDING_SCRIPTS)
+    except ValueError as exc:
+        return [str(exc)]
+    return [f'{el.get("name")}: boss landing requires a player controller'
+            for el in rows if el.get('actteamplayer', '').lower() != 'false']
+
+
 def rewrite_data(root, rel):
+    if _ref(rel) == TOAD_ZONE:
+        return allow_npc_landings(root, TOAD_LANDING_SCRIPTS)
     if _ref(rel) == SHADOW_ZONE:
         return relocate_spawn(root, 'sp_shadowking01', 'waypoint',
                               floor_name=SHADOW_FLOOR_MARKER, height_type='player_start')
