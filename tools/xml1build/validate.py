@@ -957,6 +957,7 @@ class Validator:
                                ('V24', 'conversation portraits', self.conversation_portraits),
                                ('V25', 'harm loop startup', self.harm_loop_startup),
                                ('V26', 'fall kill volumes', self.fall_kill_volumes),
+                               ('V-TBD', 'boss landing triggers', self.boss_landing_triggers),
                                ('V27', 'voice lines', self.voice_lines),
                                ('V28', 'dialog platforms', self.dialog_platforms),
                                ('V29', 'codex icons', lambda ck: VF.v_codex_icons(self, ck)),
@@ -1002,6 +1003,18 @@ class Validator:
                 self._banks.save()
             except OSError as ex:
                 self.ctx.note(f'sound cache not saved: {ex}')
+
+    def boss_landing_triggers(self, ck):
+        """The HAARP boss must be able to activate each jet landing volume."""
+        from . import boss_phases as BP
+        for suffix in ('engb', 'xmlb'):
+            rel = f'{BP.TOAD_ZONE}.{suffix}'
+            root = self.tree(rel)
+            if root is None:
+                continue
+            ck.count('map_variants')
+            for problem in BP.landing_trigger_problems(root, rel):
+                ck.error(f'{rel}: {problem}')
 
     def hazard_bounds(self, ck):
         """Placed model-less hazards retain bounds and append new saved ordinals."""
