@@ -438,7 +438,7 @@ def _zone_record(env, res, old, z, index, candidate_eras, what, captures=None, r
             entities = [e for e in capture['entities'] if e['ordinal'] == k]
             if len(entities) != 1 or (key_hash(entities[0]['definition_name']), key_hash(entities[0]['instance_name'])) != names_by_ordinal[k]:
                 raise ConvertError(f'{what}: captured entity association missing or differs')
-            placement = entities[0]['placement_index']
+            placement = entities[0].get('source_placement_index', entities[0]['placement_index'])
         else:
             t, n, placement = num['numbered'][ref_k - 1]
         r = state_rec(z['states'][z['ordinal_map'][k - 1]], STATE_NUMBERED, ref_k, placement)
@@ -447,7 +447,7 @@ def _zone_record(env, res, old, z, index, candidate_eras, what, captures=None, r
     if capture:
         ordinals, placements = set(), set()
         for e in capture['entities']:
-            ordinal, placement = e['ordinal'], e['placement_index']
+            ordinal, placement = e['ordinal'], e.get('source_placement_index', e['placement_index'])
             if not 1 <= ordinal <= len(z['ordinal_map']) or ordinal in ordinals or placement in placements:
                 raise ConvertError(f'{what}: invalid or duplicate observed entity association')
             ordinals.add(ordinal); placements.add(placement)
@@ -469,7 +469,7 @@ def _zone_record(env, res, old, z, index, candidate_eras, what, captures=None, r
     if capture is None and captures is not None:
         from .conversations import zone_digest
         capture_digest = bytes.fromhex(zone_digest(env.binds.build, zone))
-    rec = dict(zone=zid, identity_mode=IDENTITY_MODE_ORDINAL, content_hash=capture['placement_sha1'] if capture else bytes.fromhex(num['sha1']),
+    rec = dict(zone=zid, identity_mode=IDENTITY_MODE_ORDINAL, content_hash=capture.get('source_placement_sha1', capture['placement_sha1']) if capture else bytes.fromhex(num['sha1']),
                time_stamp=z['time_stamp'], flag=z['flag'], capture_flags=capture['capture_flags'] if capture else 2, conversation=list(z['conversation']),
                conversation_digest=capture_digest, names=names, states=states,
                fog=dict(encoding=FOG_ENCODING_ENGINE, width=FOG_SIDE, height=FOG_SIDE, data=z['fog']))
@@ -1310,14 +1310,17 @@ class PositionTables:
             if r['capture_flags'] & 1:
                 notes.append(f'zone {zone!r}: incomplete capture: record not applied')
                 continue
-            if r['content_hash'] != bytes.fromhex(num['sha1']):
+            from .zonecompat import match
+            prefix = match(self.b.zone_prefixes, zone, r['content_hash'], num)
+            if r['content_hash'] != bytes.fromhex(num['sha1']) and prefix is None:
                 notes.append(f'zone {zone!r}: placement file changed since the record was made: record not applied')
                 continue
             mapped = {}
             for state in r['states']:
                 if state['list'] != STATE_NUMBERED:
                     continue
-                matches = [k + 1 for k, (dn, inn, pi) in enumerate(num['numbered']) if pi == state['placement_index'] and
+                matches = [k + 1 for k, (dn, inn, pi) in enumerate(num['numbered']) if
+                           (k < len(prefix['placements']) and prefix['placements'][k] == state['placement_index'] and k + 1 == state['ordinal'] if prefix else pi == state['placement_index']) and
                            key_hash(dn) == key_hash(r['names'][state['def_name']]) and key_hash(inn) == key_hash(r['names'][state['inst_name']])]
                 if len(matches) != 1:
                     notes.append(f'zone {zone!r}: entity placement/name changed: record not applied')
@@ -1327,11 +1330,25 @@ class PositionTables:
                 matches = None
             if matches is not None:
                 continue
-            promoted = _legacy_pinned_states(r, num['numbered'], set(mapped.values()), legacy_import)
+            if prefix:
+                aliases = set(prefix['ambiguous_aliases'])
+                if any(s['list'] != STATE_NUMBERED and
+                       (bytes.fromhex(key_hash(r['names'][s['def_name']])),bytes.fromhex(key_hash(r['names'][s['inst_name']]))) in aliases
+                       for s in r['states']):
+                    notes.append(f'zone {zone!r}: unnumbered state aliases both new tail and retained placement: record not applied')
+                    continue
+                notes.append(f'zone {zone!r}: verified append-only resident prefix retained; new tail starts fresh')
+            promoted = {} if prefix else _legacy_pinned_states(r, num['numbered'], set(mapped.values()), legacy_import)
             states = [dict(def_name=0, inst_name=0, payload=b'\0' * 8, flags_a=0, flags_b=0, position=[0, 0, 0])]
             ordinal_map = [0] * native.ordinals
             dynamic, smart = [], []
+            retained_states = []
             for state_index, s in enumerate(r['states']):
+                if prefix and s['list'] != STATE_NUMBERED:
+                    pair = (key_hash(r['names'][s['def_name']]), key_hash(r['names'][s['inst_name']]))
+                    if tuple(bytes.fromhex(h) for h in pair) in prefix['fresh_aliases'] or any((key_hash(dn), key_hash(inn)) == pair for dn, inn, _ in num['numbered'][len(prefix['placements']):]):
+                        continue  # newly resident tail must not also restore its former smart/dynamic state
+                retained_states.append(s)
                 if len(states) >= native.states:
                     raise ConvertError('more states than the engine record holds')
                 if s['payload_kind'] == PAYLOAD_WORLD_ITEM:
@@ -1370,13 +1387,17 @@ class PositionTables:
                 raise ConvertError(f'pack expected {native.dynamic} items for packing')
             if len(smart) > native.smart:
                 raise ConvertError(f'pack expected {native.smart} items for packing')
-            z = dict(name_handle=intern(zone), states=states, pad_4804=0, state_count=1 + len(r['states']), ordinal_map=ordinal_map,
+            z = dict(name_handle=intern(zone), states=states, pad_4804=0, state_count=1 + len(retained_states), ordinal_map=ordinal_map,
                      pad_4a0c=0, dynamic=dynamic + [0] * (native.dynamic - len(dynamic)), pad_4c68=0, dynamic_count=len(dynamic),
                      smart=smart + [0] * (native.smart - len(smart)), pad_5270=0, smart_count=len(smart),
                      fog=r['fog']['data'], conversation=self.conversation_words(r, zone, notes), time_stamp=r['time_stamp'], flag=r['flag'],
                      pad_55dd=[0, 0, 0])
+            if prefix:
+                from . import fresh_tail
+                z['states'][0]['def_name'] = intern(fresh_tail.text(zone, prefix, num))
+                z['states'][0]['payload'] = fresh_tail.MAGIC
             zones.append(z)
-            applied.update(dependencies(r))
+            applied.update(dependencies(dict(states=retained_states)))
         # Shared handles and items not owned by any zone survive; rejected zones release exclusive dependencies.
         world[:] = [w for w in world if w['slot'] not in owned or w['slot'] in applied]
         strings['arena'] = bytes(strings['arena'])
@@ -1699,7 +1720,7 @@ def validate_native_sections(S, env, *, hash_conversations=True, native=L.RETAIL
 
 def native_zone_metadata(old_stream, env, *, native=L.RETAIL):
     """Validated current-build associations for a native transfer (a stream of the native layout `native`)
-    without an LC sidecar; inferred only."""
+    without an LC sidecar; recover marked append provenance, otherwise inferred only."""
     result = old_stream_to_new(old_stream, env, now=0, _hash_conversations=False, native=native)
     if result.refused:
         raise ConvertError(result.refused)
@@ -1708,13 +1729,24 @@ def native_zone_metadata(old_stream, env, *, native=L.RETAIL):
     validate_native_sections({tag: sec['data'] for tag, sec in f['sections'].items() if sec['data'] is not None}, env,
                              hash_conversations=False, native=native)
     zones = {env.catalogue.lookup('ZONE', key_hash(z)): z for z in env.binds.zone_names}
+    from . import fresh_tail
+    image = old_stream
+    if len(image) == native.payload:
+        image = bytes(0x80) + struct.pack('<I', native.payload) + image
+    fresh = fresh_tail.metadata(oldsave.read_slot(image, native), env.binds)
     captures = []
     for record in f['sections']['ZONE']['data']['records']:
+        zone = zones[record['zone']]
+        if zone in fresh:
+            captures.append(fresh.pop(zone))
+            continue
         captures.append(dict(zone=zones[record['zone']], time_stamp=record['time_stamp'],
                              placement_sha1=record['content_hash'], capture_flags=2, conversation_digest=bytes(32),
                              entities=[dict(ordinal=s['ordinal'], placement_index=s['placement_index'],
                                             definition_name=record['names'][s['def_name']], instance_name=record['names'][s['inst_name']])
                                        for s in record['states'] if s['list'] == STATE_NUMBERED]))
+    if fresh:
+        raise ConvertError('native fresh-tail record was not translated')
     return captures
 
 
@@ -1745,12 +1777,22 @@ def loaded_zone_metadata(new_bytes, env, *, native=L.RETAIL, registry=None):
     for r in records:
         zone = pos.zone_name(r['zone'])
         if zone not in applied: continue
-        num = env.binds.zone_numbering(zone)['numbered']
+        numbering = env.binds.zone_numbering(zone)
+        num = numbering['numbered']
+        from .zonecompat import match
+        prefix = match(env.binds.zone_prefixes, zone, r['content_hash'], numbering)
         restored = next(z for z in native['zones'] if oldsave.zone_string(native['zone_strings'], z['name_handle']) == zone)
         entities = [dict(ordinal=k + 1, placement_index=num[k][2],
                         definition_name=oldsave.zone_string(native['zone_strings'], restored['states'][idx]['def_name']),
                         instance_name=oldsave.zone_string(native['zone_strings'], restored['states'][idx]['inst_name']))
                     for k, idx in enumerate(restored['ordinal_map']) if idx]
-        out.append(dict(zone=zone, time_stamp=r['time_stamp'], placement_sha1=r['content_hash'],
-                        conversation_digest=bytes.fromhex(zone_digest(env.binds.build, zone)), capture_flags=r['capture_flags'] | (2 if f['sections']['META']['data']['origin'] == 1 or r['conversation_digest'] == bytes(32) else 0), entities=entities))
+        capture = dict(zone=zone, time_stamp=r['time_stamp'], placement_sha1=bytes.fromhex(numbering['sha1']),
+                        conversation_digest=bytes.fromhex(zone_digest(env.binds.build, zone)), capture_flags=r['capture_flags'] | (2 if f['sections']['META']['data']['origin'] == 1 or r['conversation_digest'] == bytes(32) else 0), entities=entities)
+        if prefix:
+            capture['source_placement_sha1'] = r['content_hash']
+            for entity in entities:
+                entity['source_placement_index'] = prefix['placements'][entity['ordinal'] - 1]
+            capture['fresh_entities'] = [dict(ordinal=k + 1, placement_index=pi, definition_name=dn, instance_name=inn)
+                                         for k, (dn, inn, pi) in enumerate(num) if k >= len(prefix['placements'])]
+        out.append(capture)
     return out

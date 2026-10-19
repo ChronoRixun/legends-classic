@@ -42,6 +42,7 @@ from pathlib import Path
 
 from . import common as C
 from . import frontend as F
+from . import danger_room_actors as DR
 
 _IMAGE_VIEWER = re.compile(r'''imageViewer\s*\(\s*['"]([^'"]*)['"]''', re.I)
 _LOAD_DR = re.compile(r'''loadDangerRoomCourse\s*\(\s*['"]([^'"]*)['"]''', re.I)
@@ -493,6 +494,8 @@ def v16_danger_room(v, ck):
         items[(it.get('name') or '').lower()] = it
     course_names, startloaded = set(), set()
     curve, xp_mode = F.xp_curve(ctx), C.xp_curve_mode(ctx)
+    variants = DR.plan(ctx)
+    original_courses = {c.get('name'): c for c in ctx.read_x1_xml(F.X1_DANGERROOM).iter('COURSE')}
     for ext in ('.engb', '.XMLB'):
         rel = F.DR_REL + ext
         root = _tree(v, rel)
@@ -501,6 +504,24 @@ def v16_danger_room(v, ck):
             continue
         if not _registered_by(v, rel, 'frontend'):
             ck.error(f'{rel}: not written by the frontend module')
+        missing_courses = sorted(original_courses.keys() - {c.get('name') for c in root.iter('COURSE')})
+        if missing_courses:
+            ck.error(f'{rel}: original courses missing: {missing_courses}')
+        npc = v.tree('Data/npcstat' + ext)
+        stats = {(s.get('name') or '').lower(): s for s in (npc.iter('stats') if npc is not None else ())}
+        for source, alias in variants.items():
+            original, clone = stats.get(source), stats.get(alias)
+            if original is None or clone is None or \
+                    C.encode_xmlb(DR.visible_variant(original, alias)) != C.encode_xmlb(clone):
+                ck.error(f'{rel}: course actor {alias} must preserve {source} except its initial spawn cloak')
+            elif DR.has_spawn_cloak(clone):
+                ck.error(f'{rel}: course actor {alias} still has its initial spawn cloak')
+            else:
+                ck.count('visible_course_variants')
+            if clone is not None:
+                for suffix in ('', '_nc'):
+                    if not v.exists(f'Packages/generated/characters/{alias}_{clone.get("skin")}{suffix}.PKGB'):
+                        ck.error(f'{rel}: course actor {alias} has no {suffix or "combat"} package')
         arenas = {a.get('title'): a for a in root.iter('ARENA')}
         for t, a in arenas.items():
             z = C.norm(a.get('zone') or '')
@@ -522,6 +543,13 @@ def v16_danger_room(v, ck):
             for c in cs:
                 cn = c.get('name') or ''
                 course_names.add(cn.lower())
+                original = original_courses.get(cn)
+                if original is None:
+                    ck.error(f'{rel}: {cn}: no original course definition')
+                else:
+                    for problem in F.dangerroom_goal_problems(original, c):
+                        ck.error(f'{rel}: {cn}: changed course goal: {problem}')
+                    ck.count('original_course_goals_checked')
                 if c.get('arena') not in arenas:
                     ck.error(f'{rel}: {cn}: arena {c.get("arena")!r} is no ARENA title')
                 for k in F.DR_DROP_ATTRS:
@@ -534,6 +562,10 @@ def v16_danger_room(v, ck):
                         ch = (s.get('character') or '').lower()
                         if ch not in names:
                             ck.error(f'{rel}: {cn}: {s.tag} character {s.get("character")!r} is not in the stats')
+                        if ch in variants or (ch in stats and DR.has_spawn_cloak(stats[ch])):
+                            ck.error(f'{rel}: {cn}: {s.tag} {ch} can be hidden by its delayed spawn cloak')
+                        if ch in variants.values():
+                            ck.count('visible_course_spawners')
                 rewards = [r for r in c.findall('REWARD') if r.get('type') == 'Titanium']
                 if not rewards:
                     ck.error(f'{rel}: {cn}: no Titanium REWARD')

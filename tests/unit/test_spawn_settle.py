@@ -1,7 +1,9 @@
 """Synthetic spawn-floor selection and saved-ordinal regressions."""
 import math
 import hashlib
+import copy
 import xml.etree.ElementTree as ET
+from unittest.mock import patch
 
 from xml1build import settle as S
 from xml1build import x1schema as XS
@@ -163,3 +165,66 @@ def test_spawn_settle_narrow_curb_inside_footprint_is_support():
     assert report[0]['static_floor'] == 0
     assert report[0]['status'] == 'static_footprint_support'
     assert S.convert(root, report) == 0
+
+
+def test_embedded_prop_gets_native_floor_sweep_without_baking_a_height():
+    root, original, group = fixture()
+    group[0].set('pos', '20 20 -1.25')
+    group[1].set('pos', '40 40 -0.001')
+    with patch.object(S, 'EMBEDDED_MODELS', frozenset({'invented/box'})):
+        report = rows(root)
+    assert report[0]['status'] == 'settle' and report[0]['reason'] == 'embedded_floor'
+    assert report[1]['status'] == 'near_floor'  # rounding noise is not penetration
+    assert S.convert(root, report) == 1
+    assert root.findall('entinst')[-1][0].get('pos') == '20 20 -1.25'
+    assert S.problems(root) == []
+    assert original.get('smartent') is None
+    assert S.embedded_floor_problems(root, report) == []
+    tail = root.findall('entinst')[-1]
+    # A stale/unconverted output must fail even if the rest of the resident
+    # definitions and ordinal ordering are otherwise valid.
+    tail[0].set('pos', '20 20 -1.5')
+    assert S.embedded_floor_problems(root, report)
+
+
+def test_embedded_selection_defers_unverified_models_and_scripted_props():
+    root, original, group = fixture()
+    group[0].set('pos', '20 20 -1.25')
+    assert rows(root)[0]['status'] == 'near_floor'
+    with patch.object(S, 'EMBEDDED_MODELS', frozenset({'invented/box'})):
+        original.set('spawnscript', 'invented/setup')
+        assert rows(root)[0]['status'] == 'scripted_or_disabled'
+        original.attrib.pop('spawnscript')
+        original.set('nogravity', 'true')
+        assert rows(root)[0]['status'] == 'fixed'
+
+
+def test_embedded_tail_preserves_existing_settle_and_late_volume_ordinals():
+    root, _, group = fixture()
+    group[0].set('pos', '20 20 -1.25')
+    group[1].set('pos', '40 40 50')
+    ET.SubElement(root, 'entity', name='late_drop', classname='affectableharment',
+                  damage='32000', damagetype='dmg_direct', actontouch='true',
+                  nocollide='true', smartent='false')
+    late = ET.SubElement(root, 'entinst', type='late_drop')
+    ET.SubElement(late, 'inst', name='drop', pos='-20 -20 -50')
+    old = copy.deepcopy(root)
+    rel = 'maps/invented/yard.eng'
+    with patch.object(XS, 'FALL_KILL_ENABLED_LATE', {'maps/invented/yard': ('late_drop',)}):
+        S.convert(old, rows(old))
+        XS.move_late_fall_volumes(old, rel)
+        with patch.object(S, 'EMBEDDED_MODELS', frozenset({'invented/box'})):
+            report = rows(root)
+        S.convert(root, report)
+        XS.move_late_fall_volumes(root, rel)
+        assert S.numbered_tail_problems(root, {'late_drop'})  # new group was ahead of the old volume
+        S.move_embedded_floor_tail(root)
+        assert not S.numbered_tail_problems(root, {'late_drop'})
+        assert not XS.numbered_entinst_tail_problems(root, rel)
+    def numbered(tree):
+        defs = {e.get('name'): e for e in tree.iter('entity')}
+        return [(g.get('type'), tuple(sorted(i.attrib.items()))) for g in tree.findall('entinst')
+                if defs[g.get('type')].get('smartent') == 'false' for i in g]
+    assert numbered(root)[:-1] == numbered(old)
+    assert numbered(root)[-1][0].startswith('x1_embedded_')
+    assert not S.embedded_floor_problems(root, report)

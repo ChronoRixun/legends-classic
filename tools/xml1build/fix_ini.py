@@ -8,7 +8,7 @@ keys:
                           ReviewStats / Xtract / XPCurve / GeometrySharingBlendIndices / CharacterLadderPaths /
                           ObjectiveDescriptions / BreakRule, [Limits]
                           ActorSlots / ResourceNames / ItemEnhancements / FightStyles / EffectCurves, [Online] GameVersion /
-                          ContentFingerprint, [Save] Format. They are
+                          ContentFingerprint / FastTransfer / ReceiveValidation, [Save] Format. They are
                           functions of the build's content (the menus it wrote, its report.json, its scripts), so the
                           builder (tools/xml1builder) writes them after a build, and tools/harness.py takes its
                           [Game] / [Limits] / [Online] lines from here too (the harness and the shipped build cannot
@@ -171,6 +171,10 @@ BREAK_RULE = 'xml1'
 # all. Other touches in play keep the game's own rule. A fix without the feature ignores the key.
 PLACEMENT_CRUSH = 'xml1'
 
+# XML1's ordinary impact against a non-physical target has zero damage.
+# Requires the companion ObjectWorldImpact install (gameplay rule 17).
+OBJECT_WORLD_IMPACT = 'xml1'
+
 # xml2-fix [Game] DoubleHeal (SPEC 63.5, issue #82): XMen2.exe's restoreHealth / restoreEnergy (the packs' onactivate
 # scripts) sometimes heal double and then play common/game/pickup_power_double, XML2's own darker recording; XML1's
 # packs never double and its banks have no such sound. '0' makes the fix always take the single branch.
@@ -213,6 +217,10 @@ DEATH_RULE = 'xml1'
 # Off in xml2-fix unless set; a fix without the feature ignores the key. Written for every XML1 build.
 NPC_POWER_RULE = 'xml1'
 
+# XML1's stun flag lasts only while the accepted stun reaction owns it. The companion DLL's rule 18
+# drops rejected party-hero stuns and clears interrupted stuns; NPC reactions and accepted durations stay native.
+STUN_RULE = 'xml1'
+
 # xml2-fix [Game] ForcedTeams (SPEC 19): '1' = the scripts of a --forced-teams seat build seat XML1's parties
 # (xml2-fix forced_teams module), '0' = the functions exist but report off (team menu), 'off' = no key (nothing
 # patched). Every xml2-fix call sits behind xml2fixFeature("forcedteams") (validate V14b), so with ForcedTeams=0, a
@@ -227,7 +235,7 @@ FORCED_TEAMS_VALUES = ('1', '0', 'off')
 # v1.5: the 0.2.2 wave's [Game] keys - PlacementCrush, DoubleHeal, RankCosts, LevelSkillPoints, LevelStatPoints,
 # Xml1Multipart, X1Leader, SoloMode, DeathRule, DangerRoomGate, RevivalCost, Xml1Turrets, PackAmount, DeathSwitchClear - and
 # [Limits] ScriptFunctions; a 1.4 DLL silently ignores every one of them, so check_release_dll refuses it)
-REQUIRED_XML2FIX = '1.5'
+REQUIRED_XML2FIX = '1.6'
 
 # xml2-fix [Balance] (xml1build.balance; SPEC 69): the first game's combat numbers for a
 # balance build - one whose styles carry the power-attack marker (report.json build.balance 'xml1'). HeroStatScale
@@ -250,16 +258,26 @@ PACK_AMOUNT = 'xml1'
 # feature ignores the key. Written for every XML1 build.
 X1_LEADER = '1'
 
+# [Online] FastTransfer=1: the saved-campaign transfer as data/zero-run records with a pool-bounded window (seconds
+# instead of minutes; xml2-fix docs/online-campaign-transfer.md). A gameplay-agreement rule: every co-op PC must use
+# it, and a peer without it is refused by name. Written for every port build.
+FAST_TRANSFER = '1'
+
+# [Online] ReceiveValidation=1: reject malformed stock network messages before their handlers run. This is local
+# receive-side hardening: it changes no wire format and needs no gameplay-agreement rule, so older peers still
+# interoperate. Written for every port build.
+RECEIVE_VALIDATION = '1'
+
 # every key the port may write (the builder drops the ones a build does not need); the launcher owns the rest
 PORT_OWNED = {'Game': ('NewGameTeam', 'ResetUnlocks', 'SaveFolder', 'ForcedTeams', 'PostgameScript', 'WindowTitle',
                         'EndHeroUnlock', 'MainMenuItems', 'DangerRoomGate', 'ClassicMainBackdrop', 'ClassicMainPanelBounds', 'NewGamePlus', 'ReviewStats', 'Xtract', 'XtractionShop', 'RevivalCost', 'XPCurve',
                        'GeometrySharingBlendIndices', 'CharacterLadderPaths', 'ObjectiveDescriptions',
-                       'BreakRule', 'PlacementCrush', 'DoubleHeal', 'DeathRule', 'NpcPowerRule', 'ConfirmationRelease',
+                       'BreakRule', 'PlacementCrush', 'ObjectWorldImpact', 'DoubleHeal', 'DeathRule', 'NpcPowerRule', 'StunRule', 'DangerRoomParty', 'DangerRoomHealthBars', 'BoxHarmOrigin', 'HarmSingleChain', 'HarmLoopStartup', 'ConfirmationRelease',
                        'ExplosiveFirstHit', 'PackAmount', 'SoloMode', 'X1Leader', 'DeathSwitchClear', 'RankCosts', 'LevelSkillPoints', 'LevelStatPoints', 'Xml1Multipart',
-                       'Xml1MasterMold', 'Xml1MoldStage', 'Xml1Turrets'),
+                       'Xml1MasterMold', 'Xml1MoldStage', 'Xml1Turrets', 'Xml1LockOnEffects', 'Xml1LockOnAim'),
               'Limits': ('ActorSlots', 'ResourceNames', 'ItemEnhancements', 'FightStyles', 'EffectCurves', 'MoveTriggers', 'EntityCapacity',
                          'ScriptFunctions'),
-              'Online': ('GameVersion', 'ContentFingerprint'),
+              'Online': ('GameVersion', 'ContentFingerprint', 'FastTransfer', 'ReceiveValidation'),
               'Save': ('Format',),
               'Xml1Turrets': ('Count',) + tuple(f'T{i}' for i in range(1, 33))}
 
@@ -396,6 +414,11 @@ def mold_stage_binding(layout, width=None):
     return f'{flag}:{first}:{width}'
 
 
+def build_lockon_effects(out):
+    from .lockon_effects import keys
+    return keys(out)
+
+
 def build_mold_controller(out):
     """Only a builder-generated, supported script contract opts into the DLL."""
     try:
@@ -429,6 +452,12 @@ def game_keys(*, xml1_opening=True, save_folder=None, forced_teams='1', add_hero
     """the [Game] keys, in the order tools/harness.py always wrote them (a dict: insertion order)."""
     game = {}
     if xml1_opening:
+        # Course fallback defaults must name XML1 heroes; protected training
+        # opponents must retain their target gauges without changing protection.
+        game['DangerRoomParty'] = 'xml1'
+        game['DangerRoomHealthBars'] = 'xml1'
+        game['BoxHarmOrigin'] = 'xml1'
+        game['HarmSingleChain'] = 'single'
         # XML1's opening: startFirstMission seats Wolverine alone, resetgame unlocks nobody (xml2-fix new_game.cpp;
         # the build's New Game hook uses loadMapKeepTeam - build_xml1.py --newgame keepteam, the default)
         game.update(NewGameTeam='wolverine', ResetUnlocks='0')
@@ -439,6 +468,7 @@ def game_keys(*, xml1_opening=True, save_folder=None, forced_teams='1', add_hero
         game['ObjectiveDescriptions'] = OBJECTIVE_DESCRIPTIONS
         game['BreakRule'] = BREAK_RULE
         game['PlacementCrush'] = PLACEMENT_CRUSH
+        game['ObjectWorldImpact'] = OBJECT_WORLD_IMPACT
         game['DoubleHeal'] = DOUBLE_HEAL
         game['ExplosiveFirstHit'] = '1'
         game['RankCosts'] = RANK_COSTS
@@ -449,6 +479,7 @@ def game_keys(*, xml1_opening=True, save_folder=None, forced_teams='1', add_hero
         game['Xml1Multipart'] = '1'
         game['DeathRule'] = DEATH_RULE
         game['NpcPowerRule'] = NPC_POWER_RULE
+        game['StunRule'] = STUN_RULE
         game['PackAmount'] = PACK_AMOUNT
         # XML1's solo mode (issue #5): setSoloMode in the solo boxes / bridge scripts acts only with this key
         game['SoloMode'] = '1'
@@ -504,7 +535,7 @@ def online_keys(*, port_identity=False, balance=False, fingerprint=None) -> dict
     the save tables, the content fingerprint a co-op peer must share (SPEC-new-save 6)."""
     if not port_identity:
         return {}
-    keys = {'GameVersion': RI.game_version()}
+    keys = {'GameVersion': RI.game_version(), 'FastTransfer': FAST_TRANSFER, 'ReceiveValidation': RECEIVE_VALIDATION}
     if fingerprint:
         keys['ContentFingerprint'] = fingerprint
     return keys
@@ -513,6 +544,11 @@ def online_keys(*, port_identity=False, balance=False, fingerprint=None) -> dict
 def save_keys(*, port_identity=False) -> dict:
     """[Save] Format=lc: the LC save format (xml2-fix 1.4; SPEC 70), written for a port build."""
     return {'Format': SAVE_FORMAT} if port_identity else {}
+
+
+def build_harm_loop_startup(out):
+    """Opt-in startup adapter; online remains blocked pending rule assignment."""
+    return {'HarmLoopStartup': 'xml1'} if (build_record(out) or {}).get('harm_loop_startup') == 'xml1' else {}
 
 
 def port_keys(out, *, save_folder=PLAY_SAVE_FOLDER, eighth=True) -> dict:
@@ -524,9 +560,11 @@ def port_keys(out, *, save_folder=PLAY_SAVE_FOLDER, eighth=True) -> dict:
                      postgame=postgame, port_identity=bool(postgame), main_menu_items=menu,
                      new_game_plus=NEW_GAME_PLUS if menu else None, review_stats=build_review_stats(out),
                      xtract=XTRACT if postgame else None, xp_curve=build_xp_curve(out))
+    game.update(build_harm_loop_startup(out))
     turrets = build_turrets(out) if postgame else {}
     if postgame:
         game.update(build_mold_controller(out))
+        game.update(build_lockon_effects(out))
         game.update(turrets.get('Game', {}))
     keys = {'Game': game, 'Limits': dict(LIMITS)}
     if turrets:
@@ -714,16 +752,21 @@ RELEASE_15_KEYS = {'Game': ('PlacementCrush', 'DoubleHeal', 'RankCosts', 'LevelS
                             'Xml1Multipart', 'X1Leader', 'SoloMode', 'DeathRule', 'DangerRoomGate', 'RevivalCost',
                             'Xml1Turrets', 'PackAmount', 'DeathSwitchClear', 'NpcPowerRule'),
                    'Limits': ('ScriptFunctions',)}
+# TestMode is an optional player preference; the builder never writes it by default.
+RELEASE_16_KEYS = {**RELEASE_15_KEYS,
+                   'Game': RELEASE_15_KEYS['Game'] + ('ObjectWorldImpact', 'StunRule', 'DangerRoomParty', 'DangerRoomHealthBars', 'BoxHarmOrigin', 'HarmSingleChain',
+                                                     'Xml1LockOnEffects', 'Xml1LockOnAim', 'HarmLoopStartup'),
+                   'Online': ('FastTransfer', 'ReceiveValidation')}
 
 
 def check_release_dll(dll, keys: dict) -> None:
-    """An existing companion DLL must know every XML2 Fix 1.5 key the build writes (as check_entity_capacity_dll does
+    """An existing companion DLL must know every required key the build writes (as check_entity_capacity_dll does
     for 1.4's): an older fix would run the build with those rules silently off. Source-only builds may omit the DLL."""
     dll = Path(dll)
     if not dll.is_file():
         return
     data = dll.read_bytes()
-    missing = [f'[{section}] {key}' for section, names in RELEASE_15_KEYS.items() for key in names
+    missing = [f'[{section}] {key}' for section, names in RELEASE_16_KEYS.items() for key in names
                if key in keys.get(section, {}) and key.encode('utf-16le') not in data]
     if missing:
         raise FixTooOld(f'This build needs XML2 Fix {REQUIRED_XML2FIX} or later; the existing DLL does not recognize '

@@ -29,10 +29,10 @@ def test_variant_grenade_name_and_suffix_parse():
 def test_grenade_move_is_an_ai_selected_throw():
     m = W.grenade_move('sparkbang')
     a = {k.lower(): v for k, v in m.attrib.items()}
-    # XML1's own aitype, kept: XMen2.exe's aitype table knows "grenade" (0x2dba6c); at the guns' priority the AI
-    # never picks it, so the throw outranks the guns
+    # XML1's aitype is kept. The auxiliary throw's existing priority is outside
+    # the authored gun-move priority restoration; selection necessity is unproved.
     assert a['name'] == W.GRENADE_MOVE and a['aitype'] == 'grenade' and a['aireusetime'] == '7'
-    assert int(a['priority']) > int(W.AI_PRIORITY)
+    assert a['priority'] == '9'
     trig = {c.get('name'): {k.lower(): v for k, v in c.attrib.items()} for c in m if c.tag == 'trigger'}
     assert trig['grenade_projectile']['entity'] == 'sparkbang'
     assert trig['grenade_projectile']['filename'] == 'grenade_ents'

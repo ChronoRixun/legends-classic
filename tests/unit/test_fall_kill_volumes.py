@@ -291,3 +291,27 @@ def test_volume_enabled_after_settled_props_goes_behind_them():
     root = ordinal_fixture()
     S.convert(root, rel)
     assert S.move_late_fall_volumes(root, rel) == 0
+
+
+def test_partial_room_enable_keeps_deferred_volume_and_old_prop_order():
+    from unittest.mock import patch
+    from xml1build import settle as SE
+    root = ordinal_fixture()
+    rel = 'maps/invented/ridge.eng'
+    ET.SubElement(root, 'entity', name='pit_beta', classname='affectableharment', damage='32000',
+                  damagetype='dmg_direct', actontouch='true', nocollide='true', boxcollision='true')
+    group = ET.Element('entinst', type='pit_beta')
+    ET.SubElement(group, 'inst', name='pit_second', pos='0 0 0')
+    root.insert(list(root).index(root.find("entinst[@type='pit_alpha']")) + 1, group)
+    with patch.object(S, 'FALL_KILL_DEFERRED', {'maps/invented/ridge': frozenset({'pit_alpha'})}), \
+            patch.object(S, 'FALL_KILL_ENABLED_LATE', {'maps/invented/ridge': frozenset({'pit_beta'})}):
+        S.convert(root, rel)
+        ET.SubElement(root, 'entity', name='x1_settle_crate', classname='physent', smartent='false', xml1settle='true')
+        ET.SubElement(ET.SubElement(root, 'entinst', type='x1_settle_crate'), 'inst', name='crate_1', pos='0 0 0')
+        S.move_late_fall_volumes(root, rel)
+        assert entinst_order(root) == ['beacon_a', 'pit_alpha', 'trigger_b', 'pad_c', 'x1_settle_crate', 'pit_beta']
+        assert root.find("entity[@name='pit_alpha']").get('smartent') is None
+        assert root.find("entity[@name='pit_beta']").get('boxcollision') == 'true'
+        assert root.find("entity[@name='pit_beta']").get('smartent') == 'false'
+        assert S.numbered_entinst_tail_problems(root, rel) == []
+        assert SE.numbered_tail_problems(root, S.late_fall_volume_names(root, rel)) == []

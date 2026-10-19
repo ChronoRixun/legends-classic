@@ -1,5 +1,18 @@
 # Issue #12 validation
 
+## Authored-startup candidate
+
+The developer option `--harm-loop-startup xml1` and the companion
+`HarmLoopStartup=xml1` restore the source delay without the ordinary PC parser's
+loop-on clear. Default builds still use the compatibility conversion described
+below. This candidate needs a separate gameplay-rule assignment; online is
+blocked when requested, and it is not enabled for releases.
+
+The delay starts at hazard creation. It is not a per-entry grace period. Both
+reviewed engines allow touch activations to add repeat chains, so this startup
+correction is not a completed damage-rate fix. See SPEC 51 and the
+[follow-up timing findings](../research/audit/hazard_damage_rate_2026-10-15.md).
+
 ## Original HAARP fix (SPEC 45)
 
 The original fresh-process before/after comparison in `haarp/ext/haarp_ext01`

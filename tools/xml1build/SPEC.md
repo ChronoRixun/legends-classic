@@ -1110,7 +1110,7 @@ turret deathscripts gate progression (`tank_destroyed`, `setGameFlag('haarp3',1,
 XMen2.exe registers every zoneinfo entry with `extraction="true"` (0x468130, `_stricmp` 0x468155, at most 31 at
 0x46817d) and parses `towncenter`/`act`/`savename`/`description`/`mapx`/`mapy` (0x467f60). XML2's `extractionPoint`
 menu (0x4a6b50) offers `openmenu('worldmap')` over that list, `extractionPointChange(%d,0)` (0x4a7020: pushsidemission
-+ team menu with `restorelastzone('1')`) and `saveloadProcess(4)`. XML1's menu (default.xbe 0x9f110) had no world map
+ team menu with `restorelastzone('1')`) and `saveloadProcess(4)`. XML1's menu (default.xbe 0x9f110) had no world map
 (team change, save, load, danger room, item shop), and no XML1 zoneinfo entry has extraction/towncenter/mapx. So
 `zones.build_zoneinfo` strips `extraction`, `towncenter`, `mapx` and `mapy` from every XML2 entry (30 entries, 5 town
 centres) and registers no XML1 zone: an XML1 Xtraction beacon keeps team change and save, and its world map lists no
@@ -2311,6 +2311,65 @@ ps_bishop's form). Rogue's `drain_time` has no XML2 affecter use and is dropped 
 (`arena/*`) get `nosave="true"` like XML2's DR arenas. characters' "XML2 Danger Room spawns dropped NPCs" defer is a
 note under xml1.
 
+#### 21.3.1 Course actor visibility and fallback party
+
+The PC course spawner reveals a spawned character at `0x4d0b58`, before queued
+passive powerups activate. The native invisible powerup then calls `0x41d020(1)`
+from `0x54844b` on the following update, hiding it again and suppressing its target
+health bar. XML1's spawner also explicitly reveals characters (`0xc6c9b`); its
+callback `invisible_activate` (`0x2c360`) uses the original visibility setter.
+
+`danger_room_actors.plan` derives course-only variants for every referenced NPC
+with the initial `spawn_invis` talent. Characters appends stable, short names,
+copies converted stats except that talent, inherits leader metadata, and emits
+the source character's packages under each variant name. Frontend rewrites all
+SPAWNER / MUSTDIE / MUSTSURVIVE references to those variants. Campaign stats,
+skins, combat styles, later cloak powers and course limits remain unchanged.
+V16 checks both table halves, visible copies, package availability and every
+course spawner; V54 includes inherited leaders.
+
+Both executables replace an incomplete non-solo course party with a default
+four-hero team. The PC fallback names an absent XML2 hero in the port, producing
+the default actor. The companion's `[Game] DangerRoomParty=xml1` changes the four
+guarded fallback operands to Cyclops, Phoenix, Storm, Wolverine (XBE
+`0xc7414..0xc75af`, PC `0x4d21cb..0x4d236e`). An all-or-nothing transaction verifies
+signatures and readback, and rolls back failures. The builder writes the key and
+checks companion support. This restores the original four-seat fallback behavior.
+Requested-only gameplay rule 19 revision 1 advertises the installed state;
+failed requests remain unverified. Missing/empty/xml2 omits the rule.
+The eleven course-only identities append STAT hashes at catalogue revision 7;
+existing serials and other domains stay unchanged. Combined identity: section 100.
+
+Visibility alone does not restore training-opponent gauges. The PC course spawner
+protects connect-limit opponents with the undying flag. They remain damageable,
+and real hits select them, but `CHudTarget::update` suppresses a non-default
+undying target while the Danger Room is active (`0x5a8b5b..0x5a8b67`). Adding
+`showhealthbar` data cannot fix this separate gate: the physical flag it controls
+is already enabled. Changing protection or lesson limits would change gameplay.
+The builder requests `[Game] DangerRoomHealthBars=xml1`; its companion uses a
+guarded transaction to bypass only that HUD suppression branch. The patch preserves
+protection, targeting and course data. The native HUD path can refresh dirty stats.
+Requested-only gameplay rule 22 covers possible native dirty-stat refresh and
+health-clamp scheduling; equivalent simulation timing is not established. The companion-key
+compatibility check refuses a DLL without support for the requested setting.
+
+Training protection is temporary. XML1's connected-move handler (`0xc7c10`)
+clears the victim's undying flag and makes the required combo hit lethal;
+the PC retains that behavior (`0x4d3c40`, setter `0x41c560`). FR101–FR105 count
+three/three/four/five/six connections of their authored combat node, then
+complete. They contain seven protected robot spawn records. FR112 instead
+counts seven `grabstart` executions and has no connect-limit protection;
+CHMAG requires twenty kills and also has no such protection. Ordinary punches
+can lower a combo target to minimum health without killing it. A successful
+required combo kills it and the spawner supplies the next target. These courses
+are not permanently undying targets. The original completion path (`0xc5e00`)
+and PC path (`0x4d2c30`) test execution, connection and kill goals separately.
+V16 compares each course's limit/timer/combat-node attributes with the original,
+including absent native-default fields, to prevent changing the authored
+exercise into a different death/progress rule. Course variants retain only
+the visibility changes described above; no protection-removal fix is needed
+when this native combo path works.
+
 ### 21.4 Review, codex, trivia, credits (C)
 
 All four tables are written English in `.XMLB` and `.engb`.
@@ -3389,8 +3448,9 @@ effect - checked in game below.
   with the attack data; `chargefx` / `chargesound` `warmuptime` before the first shot (never before 0). A move
   keeps at most 19 triggers (0x4f6aa7): a 7-shot burst gets its muzzle `effect_sound` on every other shot. Every
   move that got weapon triggers and has no `aitype` gets XML2's retail AI marking (`AI_TYPE` / `AI_REUSE`:
-  bullets and beams `beamanyrange` 3 s, projectiles `projectile` 2.5 s, the flame `projectilenear` 4 s, and
-  `priority="5"` when absent). Value codes stay codes (L1..L5, K10): `npc_values.resolve_style` turns them into
+  bullets and beams `beamanyrange` 3 s, projectiles `projectile` 2.5 s, the flame `projectilenear` 4 s). Reaction priority and `priority_override` remain authored;
+  omitted priority remains the original default zero. V45 checks these fields against the source.
+  Value codes stay codes (L1..L5, K10): `npc_values.resolve_style` turns them into
   XML1's numbers (section 24; L1 -> "4 5", L3 -> "15 18"), and `_data_patch` resolves them in the two projectile
   entity files (`data/entities/freezegun_ents` ice_bullet L3, `knockbackgun_ents` bullet_time K10).
 - `characters.py`: `weapon_style()` imports the XML1 style under `Data/powerstyles/<variant>` with `W.apply` as the
@@ -3781,8 +3841,8 @@ byte (+0x39) and a flag bit (+0x3b), then every item instance (the gear bag; a h
 vt+0x7c / vt+0x18), 4 bytes (+0x2c, +0x2d, +0x2f, +0x2e), then three lists (+8, +0x10, +0x18), each a dword count
 and per element the **enhancement record index** (u16) + a dword (element class vtable 0x6865ac, save 0x45e4e0,
 load 0x482ad0 -> 0x481910 -> vt+0x2c 0x45e510; the record is looked up by index, manager vt+0x10 0x47bad0). List
-+0x10 is the definition's own enhancements (0x481a10 copies the definition's up to 8 record indices, def+0x24),
-+8 / +0x18 the random affixes (manager vt+0x108 / vt+0x10c). So a saved drop unique names its own records.
+0x10 is the definition's own enhancements (0x481a10 copies the definition's up to 8 record indices, def+0x24),
+8 / +0x18 the random affixes (manager vt+0x108 / vt+0x10c). So a saved drop unique names its own records.
 
 **Measured** (item manager in the running game, def+0x24 record indices): content 7 (`build/_t15`) `APOC_BANE` (def
 55) = records 340-345, `XAVIER_DREAM` (def 63) = 371-373; with the 15 hero uniques' 54 enhancements stripped (branch
@@ -4786,6 +4846,26 @@ coordinator owns that bump; this change intentionally leaves its value untouched
 
 ## 51. Ordinary harm-loop startup (issue #12)
 
+The developer-only `--harm-loop-startup xml1` candidate preserves positive
+authored firstact for ordinary start-on loops without on/off timers. It requires
+the companion's opt-in `[Game] HarmLoopStartup=xml1` adapter. The build record
+drives that key in the harness and port configuration; old companions are
+rejected. Changing the option invalidates every content module because entity
+libraries can be imported by several modules. V25 accepts delayed loops only
+when the recorded native mode and decoded entity configuration both qualify.
+Default `workaround` retains the conversion below. `HarmLoopStartup` has no gameplay rule: it refuses online negotiation and is a
+developer option only. VERSION and CONTENT_VERSION are left to integration.
+
+`firstact` is relative to entity creation, not player entry. The XBE first-act
+callback at 0x27550 runs from the event posted by its action parser; it does not
+wait for contact. Restoring this field alone cannot promise a one-second grace
+period for a hero who enters an already-active fire, or a single repeat chain.
+The companion separately offers opt-in `HarmSingleChain=single`, retaining one
+pending repeat for ordinary boxed touch fires. That policy is not enabled by
+this builder option and is not claimed as XBE parity; per-entry grace remains
+unimplemented. Its gameplay rule is **23** (requested-only, revision 1); the
+builder default writes `HarmSingleChain=single` for XML1 builds.
+
 `x1schema.convert_harm_loop_start` runs after entity class remapping on every
 imported XML1 tree. An entity qualifies when its class is affectableharment,
 loopfx is nonempty, loopfxstarton is true, and firstact is a finite positive
@@ -4819,7 +4899,8 @@ every report of a fire appearing after circling has the same cause.
 
 XML1's action parser reads loopfxstarton at 0x28c66 independently of firstact
 at 0x28d32. The latter schedules an activation via 0x277e0 and the first-act
-callback at 0x27550. XML1's harm parser at 0x7c440 does not clear the loop bit.
+callback at 0x27550. XML1's affectable-harm parser at 0x46f10 does not clear
+the loop bit; 0x7c440 is the separate harm-target parser, which also leaves it set.
 XML2's harm parser at 0x4396a0 clears the authored loop-on bit at 0x4399d9 when
 firstact is positive. Zero bypasses that branch. The builder therefore loses
 the initial activation delay (one second in the matching source definitions):
@@ -4827,6 +4908,12 @@ damage can begin earlier, and the phase of repeated activations can shift.
 Damage values, repeat delays, contact settings, reaction powers, health and
 death scripts remain authored. Enabling smartfire is not a substitute: it
 selects a different damage scheduler (SPEC 45).
+
+Repeat delays are not minimum contact intervals. Both engines can start another
+repeat chain from a touch activation; `actinactivedelay` is the separate cooldown
+field. See [the damage-rate investigation](../../research/audit/hazard_damage_rate_2026-10-15.md)
+for the original/PC handler comparison and the distinction between fire hits,
+visual fire effects and secondary physical-impact damage.
 
 A future, guarded XML2 Fix change could preserve the authored loop bit while
 retaining the delayed activation. It needs separate evaluation of the preceding
@@ -4879,7 +4966,8 @@ Experimental XMLB writes must use `common.encode_xmlb`: unsorted attributes
 invalidate the engine's binary-search lookups and any resulting mechanism claim.
 
 V26 checks registered XML1-sourced map outputs for matching volumes missing
-either flag; identical localized twins are counted once. Deferred volumes are
+`smartent="false"` or changing the source's `boxcollision`; identical localized twins are counted once.
+Deferred volumes are
 reported separately, and `smartent="false"` on one is an error (`boxcollision` alone is inert, and nuke1_2's `kill_target02` carries it in the source). A volume listed in
 `FALL_KILL_LEADER_ONLY` must carry `actleader="true"` (without it the volume kills AI followers again), and
 a matching volume that is not listed must not carry it; the count is reported as `volumes_player_only`.
@@ -4935,7 +5023,7 @@ Decision: at the HAARP exterior ravine the hero a player controls dies when he f
 in is not killed and comes back to the party as he does when the volume is inert.
 
 `FALL_KILL_LEADER_ONLY` names an exact map stem and entity name (`maps/haarp/ext/haarp_ext01` / `kill_target`).
-That volume gets the two flags above plus `actleader="true"`; nothing else about it changes, and no other volume
+That volume gets `smartent="false"` plus `actleader="true"`, retaining its source touch shape; no other volume
 gets the attribute. It stays the designers' harm entity with its bounds and its 32,000 direct damage: no script
 trigger, no new damage source.
 
@@ -4978,7 +5066,8 @@ the follower result rests on the placed falls. Staged: new game, party, levellin
 positions, the mid-air placements; never the falls, the box entries, jumps, crossings, hero switches or the
 second player's join and movement.
 
-The other 30 enabled volumes keep killing every toucher. Whether the gate suits any of them is a per-room
+Volumes outside this exception retain their authored target eligibility when enabled. Whether the gate suits
+any of them is a per-room
 question (does a fallen follower get placed back there, and can a player inherit a hero on the floor); do not
 extend the list without the same test.
 
@@ -5084,11 +5173,57 @@ Saved ordinals: a volume enabled after 0.2.1 goes after issue #81's settled prop
 (`x1schema.FALL_KILL_ENABLED_LATE`, `move_late_fall_volumes` after the settle pass; nyc1_1_4 has six settled props),
 so a 0.2.1 save keeps every ordinal. `numbered_entinst_tail_problems` and V31 check it.
 
+### Deferred definitions and AI eligibility audit (2026-10-13)
+
+The released 0.2.2 policy contains **17 deferred definitions in 15 maps, with 25 placements**, rather than the
+18 stated in the earlier report. A source/output audit covering English and XML-only maps finds 32 lethal-touch
+definitions and 41 placements in all: 15 definitions remain enabled. The three demo definitions are outside the
+packaged campaign's reachability graph. Each deferred definition retains its source attributes and every placement
+retains its bounds after the world-to-local conversion. This is a data check, not a live crossing result.
+
+The original harm path does not grant blanket immunity to AI teammates or enemies. Its generic activation gate
+can restrict a source that requests team/leader filtering; the deferred definitions do not request those filters.
+The original lethal damage value also excludes these entities from the ordinary AI danger-notification tick.
+The PC tick has different damage and health thresholds, so matching geometry does not establish matching AI
+navigation. See [the engine comparison](../../research/audit/fall_volumes_2026-10-13.md) for addresses and limits.
+
+All authored HAARP exterior fall-volume placements are already enabled in 0.2.2. All five exterior rooms retain
+the original raw map collision triangle blocks and navigation. That rules out an omitted authored kill volume
+or dropped map hull, but does not reproduce the slope/bridge escape or establish identical native collision
+traversal. No deferred volume or new boundary is enabled by this static audit. Further enables still require
+the per-room hero/follower/enemy movement checks and placement after the existing settled-prop tail.
+
+### Live follow-up: nuclear walkway and platform volumes (2026-10-13)
+
+Enable `nuke_plant/nuke/nuke1_2` `kill_target02`. Its source-authored box is retained; only `smartent="false"`
+is added. A real jump off the walkway survived the authored slab on the released control, then caused 32,000
+damage and transfer to a surviving hero on the enabled build. Nearby walkway movement and combat were checked
+with AI party members and guards; no unintended lethal hit was observed on those routes. Setup used direct
+room loads, checked nav/floor starts and party placement; later combat-survival healing was logged and never
+revived a dead hero or prevented the lethal hit. These are port runtime controls, supported by the original
+targeting/damage-path comparison; the original Xbox game was not played in this run.
+
+Enable `nuke_plant/nuke/nuke1_3` `kill_target04` as well. All four placements have real-input fall controls:
+the large lower cylinder and the three smaller cylinders permit survival on the released control, while the
+enabled build produces the lethal hit and transfers control to a survivor. Nearby lower/upper platform routes
+and combat were checked with party members and guards. Both the original instance bounds and cylinder shapes
+remain intact; no immunity or broader targeting policy is introduced.
+
+Keep `mount/mount/mount` `kill_target` deferred. Its matched real walk controls establish activation,
+but a final enabled check also killed an AI-controlled follower after the leader fell. The original harm
+path permits AI damage, but equivalent follower routing/recovery was not established; activation alone
+does not settle that question.
+
+The new exact pairs belong to `FALL_KILL_ENABLED_LATE`, after settled props, for V31/V41 save-ordinal
+compatibility. `kill_target01` remains deferred: its deliberate entry works, but the normal coolant/bridge
+follower sequence remains unvalidated. Other incomplete room controls remain deferred. No player-only gate,
+boundary, save-format change or version change is added.
+
 ## 53. The first game's voice lines (2026-10-05, issue #49)
 
 XMen2.exe builds each character's sound table when the character loads (0x438d20, called from 0x4239be). For
 every event of the build's `shared_sounds` table it checks a name with the sound system's exists method (vtable
-+0x34, 0x590120) and, when it exists, stores the handle from resolve (+0x38, 0x590bd0); a missing name stores the
+0x34, 0x590120) and, when it exists, stores the handle from resolve (+0x38, 0x590bd0); a missing name stores the
 "none" handle and the line is skipped. The first six events (pain .. death) use `char/<sounddir>/<event>`, every
 later one (tauntkd, victory, sight, the team commands, lowhealth, epitaph, solo, xtreme, levelup, bored, the banter
 events) `char/<voice folder>/<event>`, the voice folder being the sounddir with its `_m/` as `_v/`
@@ -5407,7 +5542,7 @@ punch-versus-power wall restriction is withdrawn; preserving ordinary character 
 
 The initial implementation also mapped attack levels 0-1 -> 0 and >= 2 -> 1, including shared events, styles,
 projectiles and gun beams. That broke normal attacks against living enemies. FUN_00429320 compares hit byte
-+0x2e with character byte +0x31c at 0x4293e0-0x4293e9 and accepts only unsigned **greater than**, not equality.
+0x2e with character byte +0x31c at 0x4293e0-0x4293e9 and accepts only unsigned **greater than**, not equality.
 A level-zero hit against a normal structure-zero character returns false at 0x42947c. The separate bypass bits
 0x00200000 / 0x40000000 mean kill / no-protection; they are not suitable substitutes for normal attacks.
 
@@ -6213,6 +6348,34 @@ save check are narrower evidence, not a full side-effect-free post-load observer
 effective mod-bind policy, network/co-op/DR acceptance and TalentRegistry work remain separate pending branches.
 
 
+### 70.5.1 Append-only resident compatibility
+
+Stable ordinals alone do not retain LC zone state: the original reverse reader
+rejects any changed placement SHA1. Optional `Data/lcsave/zone-prefix.lcm` now
+attests a previous and current whole-map hash after the builder compares complete
+resident-prefix definitions, placement-group attributes and instances exactly.
+The release ledger contains only hashes and original placement indices. Generate
+it with `python -m lcsave.zonecompat PREVIOUS_BUILD CURRENT_BUILD --ledger-out
+tools/lcsave/data/zone_prefixes.json`, against every supported old release; both
+`.engb` maps and `.xmlb`-only fallbacks participate. Savefiles retains recorded
+attestations and emits packaged history in fresh builds. V39 under V39 checks
+applicable prefix digests against the built output.
+
+The reader additionally matches each saved numbered ordinal, original placement
+and name pair. Unchanged prefixes keep their state; the appended residents start
+fresh, including omission of their former smart/dynamic state. Any other hash
+change retains the original discard behavior. Incomplete captures reject and
+malformed metadata refuses. Runtime metadata authenticates current opened bytes
+and distinguishes fresh factories from old removals. Cached unvisited records
+retain original hash/indices until an actual current capture replaces them.
+Original unnumbered aliases cover renamed tail definitions. If an old state names
+both a new tail and an untouched placement, its record rejects instead: old saves
+do not identify original smart placements, and mutable positions cannot safely
+resolve identical twins. Partial promotion of identical smart twins remains an
+unresolved retention case under the unchanged durable format.
+No durable LC field, section revision or feature bit changes. Framing, trust
+boundary and regeneration details are in `tools/lcsave/README.md`.
+
 ### 70.6 Legacy equipment eras and restore-bank evidence
 
 Legacy conversion carries the detected talent/start era separately from the item/writer era. Every item
@@ -6336,7 +6499,7 @@ weapon's `grenade=`. `characters.load_grenade_overrides` tallies the source maps
 weapon and emits a warning. A non-default weapon style uses the grenade-suffixed SPEC 29 name
 `x1_<style>_<weapon>_<grenade>` (`weapons.variant_grenade_name`), keeping a shared gun's default and overridden
 holders separate. The variant retains the auxiliary `power_grenade` copy, XML1's `aitype="grenade"` and reuse
-7, at priority 9 above the guns' 5. Observed throws execute the canonical moveset node; these checks do not
+7, retaining the existing auxiliary priority 9. Observed throws execute the canonical moveset node; these checks do not
 establish that the auxiliary node or its raised priority is necessary.
 
 The actual thrown entity is also written into `x1_moveset_grenade_<grenade>`: an XML1 moveset copy with its
@@ -7169,3 +7332,190 @@ and carry XML1's aitype / aireusetime / powerusage (resolved per 24.2). The caus
   below the original's 51–53%. These are small staged samples, not a claim that the remaining aggression is solved.
 - **Resistance (SPEC 92)** checked with the hero punching a physically resistant Revolutionary (AI off, real pad A
   presses): it still flinches on light hits about once per 3 points of damage in 0.2.1 and 0.2.2 alike.
+
+### 95.1 Candidate combo timing restoration (not live-accepted)
+
+The companion engine candidate extends rule 16 to revision 4, retaining enabled values `{1,1,0,0}`. It schedules
+each combo press using XML1's delay table instead of abandoning the combo when the next move cannot chain at the
+next AI update. Completion adds the final button delay, rather than PC's fixed 0.2 seconds. The earlier unshipped
+experiment left that completion addition and an extra hold gate in place; native execution distinguishes both.
+The AI pool layout and all new code sites are guarded, and the writes join the existing transaction. No builder
+data, content version or save format changes are required. A revision-3 peer is incompatible with revision 4.
+
+The preceding combat measurements remain historical revision-3 evidence. Two new 150-second release-control /
+candidate pairs observed Marauder powers/min of 13.6/18.5 versus 12.1/12.8, and hero-free shares of 23.4/17.3%
+versus 31.7/27.6%. Both used four engaged Revolutionaries and one Marauder, the staged map/spawner visits, and an
+idle invulnerable hero. Other active games ran during every sample: these timing-confounded rates are not valid
+release acceptance or proof that the remaining gap is resolved. Separate vulnerable real-input fights recorded
+attacks and hero deaths; an XP-staged level-10 retry also recorded movement and enemy health loss. No win or
+normal campaign difficulty claim follows. An isolated comparison, party AI, save/load and online checks remain.
+
+Native bridge, original-code characterization and agreement checks pass. Hero stun/get-up behavior has not
+changed; default stun duration, checked get-up speeds and the audited get-up handler operations agree, while
+the original stun handler and PC timed stun powerup differ. Historical reaction mixes also differ. A hero-side
+engine restoration would need a separately coordinated rule.
+
+A separate 90-second observer saw ten PC idle-selection redirects back into stun with the powerup flag still
+set, including a landing/get-up sequence followed by another 1.115 game-clock seconds of stun. The original's
+dedicated stun handler clears its flag on exit. The mechanism is now observed; its share of the gap and a complete
+hero-side restoration remain unproved. No hero behavior or additional gameplay rule changed in this candidate.
+
+
+### 95.2 Party-hero stun timing and reaction ownership (`[Game] StunRule=xml1`, rule 18)
+
+The companion hook follows XML1's flag lifetime: a refused stun reaction never enters `ch_stun`, and an
+interrupted stun clears its flag through cancel/exit. XML1 uses an immediate move request, not PC's persistent
+stun powerup. Priority-protected thrown/landing moves reject stun; an ordinary priority-zero get-up can accept a
+new stun immediately. There is no deferred stun waiting for that rejected request to finish recovering.
+
+PC sets its stun flag before requesting the reaction and retains it after interruptions; idle selection then
+redirects a recovering hero back into stun. The guarded companion hook discards the flag after a refused request
+and clears it on an accepted change to another move, for seated party heroes (including AI followers) only.
+Revision 2 also restores XML1's accepted-stun animation speed: default speed 1 becomes 2, divided by positive
+stun susceptibility and clamped to 0..10. Both common stun clips are 3.5 seconds, so the original default is a
+1.75-second animation rather than PC's two-second powerup expiry. The original `ch_stun` recovery runs behind
+the native input lock and pending-chain gates. Its idle transition clears ownership before the new handler
+enters; PC powerup expiry no longer ends a party stun or clears a later refresh's flag. Enemy reactions,
+knockback/get-up speeds, powerup lifetime calculation and affecters remain unchanged. No get-up immunity is added.
+
+`fix_ini.STUN_RULE` writes `StunRule=xml1` for XML1 builds, owns/removes the key when appropriate, and includes it
+in `RELEASE_16_KEYS` / `check_release_dll`: an existing DLL without the capability is refused. Gameplay rule 18
+revision 2 advertises `{1,0,0,0}` when installed, verified off for absent/`xml2`, and unverified on a failed request.
+Revision-1 peers are rejected in both directions. The key-presence check cannot distinguish the two revisions;
+the companion DLL must be updated to obtain this engine fix. The builder does not rewrite combat data for it.
+Rule 17 is ObjectWorldImpact; both new rules register only when requested, preserving the released OFF digest.
+
+### 95.3 Weapon reaction priority (content-only restoration)
+
+The weapon converter no longer adds priority 5 to gun moves without an authored priority.
+XML1 defaults those moves to zero. Both engines accept a requested reaction when its override
+meets the current move's priority: ordinary pain override 4 passes against zero and fails
+against five. Real damaging hits confirmed the old refusal during gunfire; rebuilt styles
+allow the pain reaction to interrupt that move. Explicit priorities and priority overrides
+are preserved, including unrelated authored Brotherhood power priorities.
+
+This changes 27 moves in ten generated weapon styles, used by 21 NPC entries: HAARP gun
+users, GRSO gun variants, nuclear and Weapon X guards, police and one generated Danger Room
+entry. Damage, attack triggers, AI types, reuse times, spawn data and grenade auxiliary
+priority are unchanged. The output comparison found only the intended priority removals.
+V45 compares source/output priority fields; synthetic tests cover omitted/explicit values,
+existing AI declarations, weapon types and rejection of the old output.
+
+Two isolated staged level-five party observations of the same initial exterior group
+recorded clear times 20.5/29.7 seconds and leader HP losses 55/59 before, versus 15.9/13.7
+seconds and losses 19/45 after. These small unseeded samples support the scoped correction,
+not a general difficulty claim. Damage per minute did not decrease in both pairs because
+the fights ended sooner. Broader pursuit samples varied substantially. The interior
+Brotherhood styles are byte-identical across the experiment; variable negative-control
+results must not be attributed to this change.
+
+This is builder content, with no new engine rule. StunRule remains 18 revision 2; version
+constants and save/protocol formats are unchanged here. The original weapon input/repeat-fire
+handler still has no direct PC counterpart. Complete weapon cadence, party-AI parity, and
+the maintainer's exact death encounter remain unverified; the broader stun issue stays open.
+
+No version or save-format changes are made here; the release integrator owns version allocation.
+
+## 96. Shallow floor overlap and surviving prop hits
+
+The spawn-floor survey also selects shallow floor overlap for the verified model
+set `settle.EMBEDDED_MODELS`. A bottom more than 0.25 units below the static floor
+is eligible, subject to the existing gravity, script, support, and residency
+checks. Near-zero floating-point noise remains near-floor. Selection adds a separate `x1_embedded_`
+resident alias after the existing settled-prop and late-fall-volume tails; authored coordinates, hull, health, mass,
+heaviness conversion, and break thresholds are preserved. Existing candidate
+ordinals also retain their order. V41 checks resident flags, gravity and ordering;
+its V41 subcheck compares selected overlap placements with the built resident tail; synthetic tests distinguish actual penetration from
+rounding noise and keep unsupported models outside this extension.
+
+The tarp-crate audit found 39 placements in six zones, three shallow overlaps in
+the first ice-tunnel zone. The other 36 placements are unaffected by this
+extension (seven already qualified for the older raised-prop settlement rule).
+The original game's resident default receives the initial floor sweep; the PC
+smart-entity default can recreate a crate from its rounded authored coordinates
+after that pass. A non-breaking hit then wakes physics from below the floor.
+
+Floor placement alone is insufficient: ordinary PC floor-impact damage can kill
+the surviving prop. The companion `[Game] ObjectWorldImpact=xml1` restores zero
+impact damage for a non-physical collision target, as the XBE's impact calculation
+uses. The builder owns this key and rejects a companion DLL that does not read it.
+Gameplay rule 17 revision 1 advertises the verified installed value only when requested.
+Every no-physical-target landing impact is covered: XBE coefficient-table entry zero is zero for all of them.
+No save format is changed.
+
+## 97. Model-less placed hazard bounds (validator V61)
+
+XMen2.exe recreates ordinary smart physical entities without a model-less
+placement's authored local bounds. The harm size getter at 0x41c330 derives
+half-extents from local min/max (+0x158/+0x164), scaled by +0x188. XML1's
+corresponding getter at 0x30680 uses +0x138/+0x144 and +0x168; its absent
+smartent default is false. Retaining the map extents alone therefore does not
+establish runtime preservation.
+
+After schema conversion, script pinning, spawn-floor residency and late fall
+volume ordering, `convert_hazard_bounds` gives placed, model-less
+`affectableharment` definitions with instance extents `smartent=false`.
+Damage type, timing, targeting, bounds, shape, effects and instance coordinates
+remain authored. Explicit smart residency, modeled entities, definitions with
+no bounded placements and the separately managed fall-volume pattern are
+excluded. Existing resident hazards stay at their previous positions.
+
+New residents carry ignored metadata `xml1hazardbounds=true`; only their
+instance groups move to the very end, after the complete released numbered
+prefix (including settled props and late fall volumes). This keeps old zone
+record ordinals stable. V61 checks residency, marker eligibility and the new
+tail; V31 and V41 recognize the successive tail additions. Synthetic tests
+check unchanged old ordinals, repeated placements, existing residents,
+exclusions, idempotence and rejected missing flags/misordered tails.
+
+This is a data conversion with no save-format or engine rule change. XML2 Fix
+1.5.0 also compares the exact placement-file SHA1 when loading an LC zone
+record: changed maps discard that record despite preserved ordinals. This
+conversion does not migrate those records, so retaining existing saved zone
+state requires the verified append-only attestations in 70.5.1. Runtime acceptance and affected-room
+coverage are reported separately; the static rule does not establish campaign
+traversal or save/load acceptance by itself.
+
+## 98. Release 0.2.3 content identity
+
+Builder 0.2.3 emits content 20: model-less hazard residency, three shallow-overlap crate placements and two more fall-volume selections change maps. No persistent catalogue domain key is added; catalogue revision remains 6. The append-only identity assigns (20,6) LC28 and bind fingerprint `e6b547bed0ea8986cb3493a8d219bda220eec0416661ab72d9b1074b06f7e5f2`. Sixty hash-only prefix attestations describe the combined output; ambiguous smart-entity state still rejects safely. The durable LC save format is unchanged. The companion requirement is XML2 Fix >=1.6; `RELEASE_16_KEYS` checks ObjectWorldImpact and StunRule in addition to released keys. Optional TestMode is off and unwritten by the builder.
+
+
+## 99. Lock-on effect bridge and animated aiming (validator V62)
+
+`lockon_effects.py` derives the scan, surface-hit and acquired-target effect
+paths from the three dormant effect triggers of each compiled `ch_lockon`
+move. All styles must agree on the triple. `V62` rejects malformed or
+conflicting triples and missing/empty effect files. Both XMLB and ENGB
+powerstyles are inspected. The native handlers already retain the geometry
+and targeting; changing the dormant triggers into ordinary timed effects
+would lose the original spatial behavior.
+
+The production ini writer and harness emit `[Game] Xml1LockOnEffects` and
+`Xml1LockOnAim=1` only for a port build with a valid triple. The companion capability check names this
+key when an existing DLL lacks it. XML2 Fix restores the omitted visual calls
+through guarded native bridges. The aiming flag changes the scan head query
+from the PC fixed 56-unit approximation to the animated bone used by XML1.
+This restores natural target acquisition under requested-only gameplay rule 20,
+revision 1, verified only after the whole transaction succeeds. OFF omits the rule.
+Powerstyles, effect definitions, damage values, limits and save format remain
+unchanged. The arm beam was already
+present in the candidate; the missing eye-scan beam is a distinct path.
+
+Rule 19 covers the requested DangerRoomParty fallback, revision 1. Both new
+rules use installed values {1,0,0,0}; failed requests remain unverified.
+
+## 100. Candidate 0.2.3c content identity
+
+The eleven course-only visible NPC identities append eleven STAT entries and
+advance the catalogue to revision 7. Builder 0.2.3 and content 20 stay unchanged
+for this unreleased candidate. The immutable (20,6)/LC28 identity above remains
+reserved; the new (20,7) identity is LC29. Durable save fields and map placement
+ordinals are unchanged. XML2 Fix >=1.6 remains required. The release key checks
+include DangerRoomParty, Xml1LockOnEffects and Xml1LockOnAim.
+
+## 101. Candidate 0.2.3d boxed harm and protected gauges
+
+- **Opening fire (#104 follow-up):** `BoxHarmOrigin=xml1` restores the XBE zero-origin argument for boxed harm. The native victim/attacker fallback replaces the PC box-centre direction and uses the native 0.01 dispatch delay. Damage amounts, bounds and authored repeat intervals remain unchanged. This addresses the opening fire's upward repeated-contact impulse; other boxed hazards need campaign testing. Requested-only gameplay rule **21**, revision 1.
+- **Danger Room robot health bars (tester report):** `DangerRoomHealthBars=xml1` bypasses the protected training-target HUD suppression gate so ordinary attacks can show a decreasing gauge. Protection and course limits remain intact. The newly reachable native HUD path may refresh dirty stats and schedule health clamping; timing parity is unproved, so requested-only gameplay rule **22**, revision 1, covers this behavior.
+- The builder enables both keys for XML1 builds and refuses an existing companion missing either key. Matching verified installs can host/join; absent keys omit their rules, invalid/failed requests block admission, and mismatches name the setting. Ordinary XML2 defaults stay off. Builder 0.2.3 / XML2 Fix 1.6.0, content 20 / catalogue 7 / LC29 and the immutable bind fingerprint are unchanged: this candidate adds runtime switches and documentation, no game-data changes.

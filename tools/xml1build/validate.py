@@ -132,7 +132,7 @@ Checks (severity per SPEC 4.6: error = will not load or silently misbehaves; war
                 scoped to a damage type (the six physical / energy / mental _resistant[_share] talents) carries them
                 as def_damage_scope and no resist_<type> of those types - only def_damage strips a hit's reactions
                 (popup, knockback, trip, stun) at scale <= 0.3 in both engines
-  V45 gun damage roll (SPEC 76, weapons.validate): every built gun-shot trigger
+  V45 weapon damage and reaction priority (SPEC 76/95.3, weapons.validate): every built gun-shot trigger
                 carries XML1's weapon-fire draw - one integer range trunc(min*0.7f)..trunc(min*1.3f) of the damage
                 declaration's minimum (default.xbe 0xbcc47-0xbcc99) - a powerstyle named for an XML1 weapon carries
                 exactly that weapon's draw, and a built entity file's single-value attributes (explodedamage)
@@ -160,6 +160,7 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 from . import common as C
+from . import lockon_effects as LE
 import xmlb                                   # noqa: E402  tools/xmlb.py
 from .lib import x1names                      # noqa: E402  the XML1 namespace (was research/characters)
 from .lib.x1names import is_fightstyle_name   # noqa: E402  fightstyle_* / x1_fightstyle_* (issue #52)
@@ -435,6 +436,7 @@ class Scan:
         self.inv_items = {}        # norm rel -> [inventoryitem values]
         self.turret_mount = {}     # norm rel -> [(entity name, missing flags)] remapped scan turrets not fixed-mount
         self.delayed_harm_loops = {}  # norm rel -> [(entity name, loop effect, firstact)]
+        self.native_harm_loops = {}  # same tuples, within the native startup adapter's guard
         self.ladder_floor_paths = {}  # norm rel -> [spawner name] running a ladder path without exact location
         self.physics_scale = {}    # norm rel -> [(entity name, attribute, value)] XML1-scale object physics left
         self.break_rule = {}       # norm rel -> [(entity name, structure, xml1structure)] pairs BreakRule=xml1 cannot use
@@ -674,6 +676,8 @@ class Validator:
                 loops = XS.delayed_harm_loops(root)
                 if loops:
                     sc.delayed_harm_loops[n] = loops
+                    sc.native_harm_loops[n] = [(el.get('name'), el.get('loopfx'), el.get('firstact'))
+                                               for el in root.iter('entity') if XS.native_harm_loop_startup(el)]
                 floor = LM.path_spawner_problems(root)
                 if floor:
                     sc.ladder_floor_paths[n] = floor
@@ -969,7 +973,9 @@ class Validator:
                                ('V40', 'melee weapons', lambda ck: MW.validate(self, ck)),
                                ('V39', 'save files', lambda ck: SF.validate(self, ck)),
                                ('V41', 'spawn-floor residency', self.spawn_floor_residency),
-                               ('V45', 'gun damage roll', lambda ck: W.validate(self, ck)),
+                               ('V61', 'model-less hazard bounds', self.hazard_bounds),
+                               ('V62', 'lock-on effects', lambda ck: LE.validate(self.ctx, ck)),
+                               ('V45', 'weapon damage and reaction priority', lambda ck: W.validate(self, ck)),
                                ('V47', 'scripted boss approach', lambda ck: SA.validate(self, ck)),
                                ('V46', 'pickup models', self.v46_pickup_models),
                                ('V52', 'breakable parts', self.vtbd_multipart),
@@ -997,17 +1003,41 @@ class Validator:
             except OSError as ex:
                 self.ctx.note(f'sound cache not saved: {ex}')
 
+    def hazard_bounds(self, ck):
+        """Placed model-less hazards retain bounds and append new saved ordinals."""
+        for zone in sorted(self.converted_zones()):
+            rel = f'maps/{zone}.engb'
+            root = self.tree(rel)
+            if root is None:
+                rel = f'maps/{zone}.xmlb'
+                root = self.tree(rel)
+            if root is None:
+                continue
+            for problem in XS.hazard_bounds_problems(root, rel):
+                ck.error(f'{zone}: {problem}')
+            ck.count('bounded_hazards', len(XS.bounded_hazards(root, rel)))
+            ck.count('new_resident_hazards', len(XS.hazard_bounds_names(root)))
+
     def spawn_floor_residency(self, ck):
         """Issue #81: cheap output checks for the new numbered prop tail."""
         from . import settle as SE
+        details_path = Path(self.ctx.out) / '_build' / 'zones_detail.json'
+        details = {}
+        if details_path.is_file():
+            try:
+                details = json.loads(details_path.read_text(encoding='utf-8')).get('zones', {})
+            except (ValueError, OSError) as exc:
+                ck.error(f'V41: cannot check embedded-floor selections: {exc}')
         for zone in sorted(self.zone_ids):
             root = self.tree(f'maps/{zone}.engb')
             if root is None:
                 root = self.tree(f'maps/{zone}.xmlb')
             if root is None:
                 continue
-            for problem in SE.problems(root, XS.late_fall_volume_names(root, f'maps/{zone}.eng')):
+            for problem in SE.problems(root, XS.post_settle_names(root, f'maps/{zone}.eng')):
                 ck.error(f'{zone}: {problem}')
+            for problem in SE.embedded_floor_problems(root, details.get(zone, {}).get('spawn_settle', [])):
+                ck.error(f'V41 {zone}: {problem}')
             defs = {e.get('name'): e for e in root.iter('entity')}
             added = sum(len(g.findall('inst')) for g in root.findall('entinst')
                         if defs.get(g.get('type')) is not None and defs[g.get('type')].get(SE.MARKER) == 'true')
@@ -1095,6 +1125,8 @@ class Validator:
         converted stats; this cross-checks derivation against the source data."""
         src = {n for n, (_, el) in self.x1_stats().items()
                if (el.get('leader') or '').strip().lower() == 'true'}
+        from . import danger_room_actors as DR
+        src |= {alias for name, alias in DR.plan(self.ctx).items() if name in src}
         data = self.read(CH.LEADER_SIDECAR_REL)
         if data is None:
             if src:
@@ -1454,7 +1486,9 @@ class Validator:
             root = self.tree(n)
             if root is None:
                 continue
-            for message in SE.numbered_tail_problems(root, XS.late_fall_volume_names(root, n)):
+            for message in SE.numbered_tail_problems(root, XS.post_settle_names(root, n)):
+                ck.error(f'{n}: {message}')
+            for message in XS.hazard_bounds_tail_problems(root):
                 ck.error(f'{n}: {message}')
 
     _LITE_XPOINT = re.compile(r'\bextractionPointLite\s*\(', re.I)
@@ -1659,16 +1693,22 @@ class Validator:
     def harm_loop_startup(self, ck):
         """V25 (SPEC 51): no dead ordinary harm loops."""
         sc = self.scan
+        native = getattr(self, 'ctx', None) is not None and self.ctx.opt('harm_loop_startup') == 'xml1'
         count = 0
+        supported = 0
         for n, loops in sorted(sc.delayed_harm_loops.items()):
             if n in sc.twins:
                 continue
             for name, effect, delay in loops:
+                if native and (name, effect, delay) in getattr(sc, 'native_harm_loops', {}).get(n, ()):
+                    supported += 1
+                    continue
                 ck.error(f'V25: {sc.files[n]["rel"]}: entity {name!r} has loopfx={effect!r}, '
                          f'loopfxstarton=true and firstact={delay!r}; the XML2 harm parser '
                          'clears the loop-on bit (invisible hazard)')
                 count += 1
         ck.set('dead_harm_loops', count)
+        ck.set('native_delayed_harm_loops', supported)
 
     def ladder_spawns(self, ck):
         """V34 (SPEC 46): a monster spawner without monster_spawnexactlocation puts its spawn on the ground, so

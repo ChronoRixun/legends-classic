@@ -57,6 +57,8 @@ global font indices. The bright Cerebro backdrop requires a companion XML2 Fix b
 | Equivalence of two builds | `python tools/build_equiv.py <build A> <build B>` | two builds |
 
 Tests that need the games never run in CI: a public repository's workflows must not reach game files.
+The [release checklist](RELEASE_CHECKLIST.md) makes the zones output self-test a required local gate
+for every release candidate and gives its exact command (its build directory is positional).
 
 ## The developer build
 

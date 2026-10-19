@@ -99,6 +99,7 @@ import re
 import xml.etree.ElementTree as ET
 
 from . import common as C
+from . import danger_room_actors as DR
 from . import main_appearance as MA
 from . import main_fonts as MF
 
@@ -782,6 +783,14 @@ def _trim_extra_credit(v):
     return v[:m.start()].rstrip() if m else v
 
 
+def dangerroom_goal_problems(original, converted):
+    """Keep authored death/progress rules, including absent native-default fields."""
+    keys = {k for c in (original, converted) for k in c.attrib
+            if 'limit' in k or k == 'timeduration' or k.startswith('combatnode')}
+    return [f'{k}={converted.get(k)!r}, expected original {original.get(k)!r}'
+            for k in sorted(keys) if original.get(k) != converted.get(k)]
+
+
 def dangerroom_tree(ctx):
     """(root, report) of Data/dangerroom from XML1's table (XMen2.exe schema). report: counts and changes."""
     x1 = _x1_dr(ctx)
@@ -790,6 +799,7 @@ def dangerroom_tree(ctx):
     if x1 is None:
         return None, {'error': f'{X1_DANGERROOM} missing on the XML1 disc'}
     curve = xp_curve(ctx)
+    variants = DR.plan(ctx)
     root = ET.Element('DANGERROOM')
     grades = [g for g in x1 if g.tag == 'GRADE']
     for a in x1:
@@ -835,7 +845,12 @@ def dangerroom_tree(ctx):
             ce = ET.SubElement(ge, 'COURSE', ca)
             for s in c:
                 if s.tag in ('SPAWNER', 'MUSTDIE', 'MUSTSURVIVE'):
-                    ET.SubElement(ce, s.tag, {k.lower(): v for k, v in s.attrib.items()})
+                    attrs = {k.lower(): v for k, v in s.attrib.items()}
+                    character = (attrs.get('character') or '').lower()
+                    if character in variants:
+                        attrs['character'] = variants[character]
+                        rep['visible_actor_spawners'] += 1
+                    ET.SubElement(ce, s.tag, attrs)
                     rep['spawners'] += 1
             if item:
                 ET.SubElement(ce, 'REWARD', {'type': 'Titanium', 'rewarditem': item})

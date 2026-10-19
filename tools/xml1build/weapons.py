@@ -51,7 +51,8 @@ DAMAGE_SCALE = 'difficulty'       # XML2's retail NPC attacks
 # Pyro's short flame (ps_pyro power_attack) "projectilenear" 4.
 AI_TYPE = {'bullet': 'beamanyrange', 'beam': 'beamanyrange', 'projectile': 'projectile', 'flame': 'projectilenear'}
 AI_REUSE = {'bullet': '3', 'beam': '3', 'projectile': '2.5', 'flame': '4'}
-AI_PRIORITY = '5'
+# Keep the source move's priority (omitted means zero). Giving a weapon an AI type
+# must not make it reject XML1's pain/stun reactions; priority is not AI selection weight.
 
 
 def variant_name(mapped_style: str, weapon_name: str) -> str:
@@ -75,7 +76,7 @@ GRENADE_MOVE = 'power_grenade'        # auxiliary copy in the variant powerstyle
 GRENADE_TRIGGER = 'grenade_projectile'
 AI_GRENADE_TYPE = 'grenade'           # XML1's aitype; a name XMen2.exe's aitype table knows (0x2dba6c)
 GRENADE_AIREUSE = '7'                 # XML1's aireusetime on moveset_grenade's power_smash
-GRENADE_PRIORITY = '9'                # retained auxiliary-copy policy, above the guns' AI_PRIORITY
+GRENADE_PRIORITY = '9'                # retained auxiliary-copy policy; separate from authored gun moves
 
 
 def grenade_variant_name(mapped_style: str, grenade: str) -> str:
@@ -619,8 +620,6 @@ def apply(root, w: dict, where: str = '', grenade: str = '', values=None, *, max
         if not ma.get('aitype'):                      # let XML2's AI pick the move (see AI_TYPE)
             move.set('aitype', AI_TYPE[kind])
             move.set('aireusetime', AI_REUSE[kind])
-            if not ma.get('priority'):
-                move.set('priority', AI_PRIORITY)
             rep['aitype_added'] += 1
         if kind == 'flame':
             for c in move:
@@ -669,6 +668,32 @@ def _is_gun_draw(lo: int, hi: int) -> bool:
                for m in range(max(0, centre - 3), centre + 4))
 
 
+def _validate_variant_priorities(ctx, ck, rel, built, variant, weapon_suffix):
+    """V45: compare the source moves, excluding conversion-only auxiliary moves."""
+    source_name = variant[3:-(len(weapon_suffix) + 1)]
+    source_rel = next((p for ext in ('.xml', '.eng')
+                       if ctx.x1_path(p := f'data/powerstyles/{source_name}{ext}')), None)
+    if source_rel is None:
+        return
+    source = {_lower(m).get('name', '').lower(): _lower(m)
+              for m in ctx.read_x1_xml(source_rel).iter()
+              if isinstance(m.tag, str) and m.tag.lower() == 'fightmove'}
+    for move in built.iter():
+        if not isinstance(move.tag, str) or move.tag.lower() != 'fightmove':
+            continue
+        attrs = _lower(move)
+        original = source.get(attrs.get('name', '').lower())
+        if original is None:
+            continue
+        ck.count('gun_priority_moves_checked')
+        for key in ('priority', 'priority_override'):
+            expected = original.get(key, '0').lower()
+            actual = attrs.get(key, '0').lower()
+            if actual != expected:
+                ck.error(f'{rel}: move {attrs.get("name")!r} {key} {actual!r}, '
+                         f'XML1 source {expected!r} expected (SPEC 29 weapon reaction priority)')
+
+
 def validate(v, ck) -> None:
     """V45 (SPEC 76): XML1's weapon fire rolls ONE integer draw between
     trunc(min x 0.7f) and trunc(min x 1.3f) of the damage code's MINIMUM (default.xbe 0xbcc47-0xbcc99; the
@@ -676,7 +701,8 @@ def validate(v, ck) -> None:
     that is exactly that draw of some minimum, and (2) a powerstyle named for an XML1 weapon
     (weapons.variant_name, a non-default grenade suffix aside) must carry exactly that weapon's draw.
     XML1's entity parser reads explodedamage as ONE number - the code's minimum (0x97940-0x97953) - so
-    (3) a built entity file's single-value attributes must hold one number, never a 'min max' range."""
+    (3) a built entity file's single-value attributes must hold one number, never a 'min max' range;
+    (4) original gun moves retain their source priority and priority_override."""
     ctx = v.ctx
     from . import heroes as H                  # noqa: WPS433 - heroes imports this package's modules lazily too
     from . import npc_values as NV             # noqa: WPS433 - the single-value entity attribute names
@@ -735,6 +761,7 @@ def validate(v, ck) -> None:
             if not (name.startswith('x1_') and name.endswith('_' + suffix)):
                 continue
             ck.count('gun_variant_styles_checked')
+            _validate_variant_priorities(ctx, ck, rel, v.tree(rel), name, suffix)
             want = gun_damage_range(values, wrec.get('damage'))
             if want is None:
                 ck.warn(f'{rel}: {wname} damage {wrec.get("damage")!r} does not resolve; its draw not checked')

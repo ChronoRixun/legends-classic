@@ -103,17 +103,18 @@ def built_style(damage, as_event=False):
                        'damagelevel': '1', 'damage': damage})
 
 
-def fake_v(style_rels, entity_rels):
+def fake_v(style_rels, entity_rels, source_styles=None):
     x1 = {'data/values.xml': ET.Element('values'),
           'data/weapons/weapons.eng': ET.Element('weapons_list')}
     ET.SubElement(x1['data/values.xml'], 'value', {'name': 'TZ5', 'min': '40', 'max': '52'})
     w = ET.SubElement(x1['data/weapons/weapons.eng'], 'weapon', {'name': 'wp_toy_zapper'})
     w.set('type', 'bullet')
     w.set('damage', 'TZ5')
+    x1.update(source_styles or {})
     trees = dict(style_rels)
     trees.update(entity_rels)
     return SimpleNamespace(
-        ctx=SimpleNamespace(read_x1_xml=lambda rel: x1[rel], x1_path=lambda rel: None),
+        ctx=SimpleNamespace(read_x1_xml=lambda rel: x1[rel], x1_path=lambda rel: rel if rel in x1 else None),
         idx=SimpleNamespace(under=lambda prefix: list(style_rels) if 'powerstyles' in prefix
                             else list(entity_rels)),
         entry=lambda rel: trees[rel],
@@ -159,3 +160,18 @@ def test_validator_accepts_the_draw_and_rejects_ranges_and_wrong_draws():
     errors, _, counts = check(fake_v(good, bad_ents))
     assert any('explodedamage' in e and 'single minimum' in e for e in errors)
     assert counts['entity_single_value_attrs_checked'] == 1
+
+
+def test_validator_rejects_added_gun_reaction_immunity_and_keeps_authored_priority():
+    rel = 'data/powerstyles/x1_ps_example_toy_zapper.xmlb'
+    source = style()
+    built = built_style(TZ5_DRAW)
+    v = fake_v({rel: built}, {}, {'data/powerstyles/ps_example.xml': source})
+    errors, _, counts = check(v)
+    assert errors == [] and counts['gun_priority_moves_checked'] == 1
+    built.find('FightMove').set('priority', '5')
+    assert any('weapon reaction priority' in e for e in check(v)[0])
+    source.find('FightMove').set('Priority', '5')
+    assert check(v)[0] == []
+    built.find('FightMove').set('priority_override', '4')
+    assert any('priority_override' in e for e in check(v)[0])

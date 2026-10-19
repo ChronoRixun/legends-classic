@@ -3,6 +3,101 @@
 The builder's releases, newest first. The version is `xml1-builder --version`; the content version is what a
 build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebuild.
 
+## v0.2.3 - content version 21 (needs XML2 Fix 1.6.0)
+
+This build needs **XML2 Fix 1.6.0**: in the launcher, **Rebuild**, then **Play** (the launcher installs the fix after
+the build). Your saves carry over.
+
+**Updating**
+
+- **Online, both players need 0.2.3 with XML2 Fix 1.6.0.** A 0.2.2 / XML2 Fix 1.5.0 player and a 0.2.3 player refuse
+  each other at join, with the reason on both PCs.
+- **Old saved zones keep what they had.** A zone your save already holds keeps its objects, and anything this
+  version adds to that zone (a hazard, a crate) starts fresh. If a save's zone record can't be matched safely, the
+  game does what it did before and rebuilds that zone from scratch (a zone with identical crates is one such case).
+  The save format is unchanged.
+
+**The big ones**
+
+- **Co-op *Load Saved Campaign* works, in seconds.** The host's saved campaign used to stall at "Sending game
+  information..." or end the session. It now reaches the joining player in a few seconds on a LAN (two real saves took
+  about 15 and 5 seconds from clicking to playing, against minutes before), without stalls. Both PCs need 0.2.3 with
+  XML2 Fix 1.6.0.
+- **Connect by IP and the LAN search work between port builds.** Before, two port games could only find each other
+  through the OpenSpy list. Builds that differ (another builder release) still don't list or admit each other.
+- **Fires, spikes and electricity hurt again** (issue #104): the placed hazards that had no model, in 57 levels, keep
+  their authored size and hurt heroes and enemies as in the first game. The opening fire hits about every 0.4 seconds
+  (3 health a hit) with its knockback, and stops hurting when you step out of it.
+- **Enemy combat closer to the first game** (issue #101, progress): the HAARP gunmen flinch when you hit them and stop
+  firing, as in the first game; enemy combos follow its button timing; a hero's stun animation plays at the original
+  speed and the hero recovers control as soon as in the original, and a refused or interrupted stun no longer comes
+  back after recovery.
+- **Danger Room:** the training robots (and other opponents that start cloaked) are visible and take damage, their
+  health bars go down, and a lesson that starts without a full party gets the first game's four heroes, Phoenix among them. A robot protected by
+  a lesson only goes down to the move the lesson names - other moves lower its bar but don't finish it.
+- **Sentinel flashback:** the Sentinels' eye scan, the surface hits and the acquired-target effect are back, and the
+  Sentinel's head aims naturally at a target.
+
+**Fixes**
+
+- **The HAARP ice-tunnel crates** (issue #103) settle on the floor, survive the first ordinary punch and break on
+  later hits, instead of falling through the floor. Every landing with nothing to collide with now deals no damage, as
+  in the first game.
+- **Two more fall spots** (issue #22, partly): two fall volumes whose first-game position is proven are on, so a hero
+  who falls there dies as in the first game. The rest stay off (known issues).
+- **Co-op robustness:** the game checks the network messages it receives before using them and drops malformed ones
+  instead of acting on them. Ordinary game messages that carry extra bytes, or that the game sends while a movie plays,
+  are not dropped (a Blob-fight kill used to produce false drops on the joining player).
+- **Launcher settings survive a rebuild:** the Display and Discord settings the launcher keeps in `xml2-fix.ini`
+  stay as they were; the builder merges its own keys into the existing file.
+- **Optional testing tools:** XML2 Fix's `[TestMode]` (off by default and not written by the builder) adds Forge access
+  at Xtraction points and F8 / F9 / F10 tools for testers. Either switch blocks online play until it is off and the
+  game restarted.
+
+**Known issues**
+
+- **Online co-op and the first game's solo story segments** (issue #106; Wolverine's opening, Magma's mansion tour):
+  the second online player has no hero while the story seats one hero alone. A co-op *New Game* starts with Wolverine
+  alone, and when a solo segment begins mid-campaign the second player is dropped at the next level load. Use *Load
+  Saved Campaign* for co-op and start a new session from a save after the segment; the fix is planned with 0.3.0's
+  drop-in co-op.
+- **Toad's fight at HAARP** (issue #105) skips the jets, his armour and the soldier waves; planned for 0.2.4.
+- **Enemy powers and stun** (issue #101): enemies still use powers and stun heroes more than in the first game
+  (Brotherhood, HAARP); only parts of it are fixed here.
+- **A double jump on slopes or the HAARP bridge** can land a hero outside the play area (issue #22); the remaining
+  fall volumes are off.
+- **Attack and impact sounds that loop** in the Manhattan streets (issue #79) were not reproduced lately, but no fix
+  is claimed.
+- **Loot and the item shop** (issue #6) are not in this version.
+- **Cosmetic reports** from the first playthrough (issue #54) are still tracked.
+- **Hazards** (issue #104): 57 levels were fixed from an audit of the game's data, but only three rooms were played
+  in the checks. Report any fire, spike or electricity that still doesn't hurt.
+- Co-op was tested with two copies of the game on one PC; the two-PC pass, on one network and across the internet,
+  is 0.3.0.
+
+<details><summary>Technical details</summary>
+
+- Content version 21, catalogue revision 7, lobby token LC30 (0.2.2 was content 19, catalogue 6, LC27). Online, both
+  players need the same content version.
+- New `[Game]` keys written for every XML1 build: `ObjectWorldImpact`, `StunRule`, `DangerRoomParty`,
+  `Xml1LockOnEffects`, `Xml1LockOnAim`, `BoxHarmOrigin`, `DangerRoomHealthBars`, `HarmSingleChain`; new `[Online]`
+  keys `FastTransfer` and `ReceiveValidation`. `[Game] NpcPowerRule` is at revision 4 (per-button combo delays).
+  The builder refuses an existing fix companion that lacks a key it needs.
+- Gun priority: XML2 adds priority 5 to a gun move; the build keeps the first game's priority 0, so a real hit that
+  doesn't kill can interrupt a firing gunman. 18 gun-style files change.
+- Hazards: model-less fire / spike / electrical volumes keep their authored bounds (output audit over 57 zones;
+  live checks in three rooms, the rest need campaign testing).
+- Danger Room: the validator V16 now checks the first game's lesson goals (FR101-105 count specific combat
+  connections, FR112 counts seven grabs, CHMAG needs 20 kills).
+- Co-op: the receiving side reserves room in all four shared network pools, defers a datagram it cannot store instead
+  of acknowledging it, and ends a session that stays blocked for 30 seconds with one log line. *Fast transfer* sends
+  the 2 MiB campaign image as data and zero-run records with up to 32 in flight and a 400,000 bytes/s budget, and both
+  PCs must use it. XML2 Fix 1.6.0's agreement protocol is 4 (1.5 and older peers are refused).
+- Cold saved-game loads must use the normal Load Game menu: the console `loadgame` command from a fresh main menu
+  bypasses the controller setup.
+
+</details>
+
 ## v0.2.2 - content version 19 (needs XML2 Fix 1.5.0)
 
 This build needs **XML2 Fix 1.5.0**: in the launcher, **Rebuild**, then **Play** (the launcher installs the fix after

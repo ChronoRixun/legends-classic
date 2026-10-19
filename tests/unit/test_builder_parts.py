@@ -352,10 +352,10 @@ def test_port_keys_from_a_synthetic_build():
                                               'SaveFolder': 'X-Men Legends', 'ForcedTeams': '1',
                                               'GeometrySharingBlendIndices': '1', 'CharacterLadderPaths': '1',
                                               'ObjectiveDescriptions': '1', 'BreakRule': 'xml1',
-                                              'PlacementCrush': 'xml1', 'DoubleHeal': '0', 'ExplosiveFirstHit': '1',
+                                              'PlacementCrush': 'xml1', 'ObjectWorldImpact': 'xml1', 'DoubleHeal': '0', 'ExplosiveFirstHit': '1',
                                               'RankCosts': '1', 'LevelSkillPoints': 'xml1',
                                               'LevelStatPoints': 'xml1', 'Xml1Multipart': '1', 'DeathRule': 'xml1',
-                                              'NpcPowerRule': 'xml1', 'PackAmount': 'xml1', 'SoloMode': '1', 'X1Leader': '1',
+                                              'NpcPowerRule': 'xml1', 'StunRule': 'xml1', 'DangerRoomParty': 'xml1', 'DangerRoomHealthBars': 'xml1', 'BoxHarmOrigin': 'xml1', 'HarmSingleChain': 'single', 'PackAmount': 'xml1', 'SoloMode': '1', 'X1Leader': '1',
                                               'DeathSwitchClear': '1'},
                                      'Limits': {'ActorSlots': '127', 'ResourceNames': '1024', 'ItemEnhancements': '512',
                                                 'FightStyles': '32', 'EffectCurves': '3600', 'MoveTriggers': '64', 'EntityCapacity': '1',
@@ -382,7 +382,7 @@ def test_port_keys_from_a_synthetic_build():
         assert g['ClassicMainBackdrop'] == '1' and g['DangerRoomGate'] == 'button3'
         assert g['PostgameScript'] == FI.POSTGAME_SCRIPT and g['WindowTitle'] == 'X-Men Legends'
         assert g['NewGamePlus'] == '0' and g['ReviewStats'] == '0' and g['XPCurve'] == 'xml1' and g['Xtract'] == '0' and g['RevivalCost'] == 'xml1'
-        assert keys['Online'] == {'GameVersion': FI.PORT_GAME_VERSION} and set(g) <= set(FI.PORT_OWNED['Game'])
+        assert keys['Online'] == {'GameVersion': FI.PORT_GAME_VERSION, 'FastTransfer': '1', 'ReceiveValidation': '1'} and set(g) <= set(FI.PORT_OWNED['Game'])
         assert keys['Save'] == {'Format': 'lc'} and 'Format' in FI.PORT_OWNED['Save']
         # the harness builds its test ini from the same keys
         sys.path.insert(0, str(Path(C.__file__).resolve().parents[1]))
@@ -665,6 +665,9 @@ def test_xml1_builds_ask_for_the_first_games_break_rule():
     assert FI.game_keys(xml1_opening=True)['PlacementCrush'] == 'xml1'
     assert 'PlacementCrush' not in FI.game_keys(xml1_opening=False)
     assert 'PlacementCrush' in FI.PORT_OWNED['Game']
+    assert FI.game_keys(xml1_opening=True)['ObjectWorldImpact'] == 'xml1'
+    assert 'ObjectWorldImpact' not in FI.game_keys(xml1_opening=False)
+    assert 'ObjectWorldImpact' in FI.PORT_OWNED['Game']
     # SPEC 63.5: packs never heal double (nor play XML2's double sound), for every XML1 build
     assert FI.game_keys(xml1_opening=True)['DoubleHeal'] == '0'
     assert 'DoubleHeal' not in FI.game_keys(xml1_opening=False)
@@ -730,7 +733,28 @@ def test_port_builds_ask_for_the_lc_save_format():
     assert FI.save_keys(port_identity=True) == {'Format': 'lc'}
     assert FI.save_keys(port_identity=False) == {}
     assert FI.PORT_OWNED['Save'] == ('Format',) and 'ContentFingerprint' in FI.PORT_OWNED['Online']
-    assert FI.REQUIRED_XML2FIX == '1.5'
+    assert FI.REQUIRED_XML2FIX == '1.6'
+
+
+def test_receive_validation_defaults_on_and_requires_supported_companion():
+    """Stock receive validation is a local safety switch, written on for every port build."""
+    import tempfile
+    assert FI.online_keys(port_identity=True)['ReceiveValidation'] == '1'
+    assert 'ReceiveValidation' in FI.PORT_OWNED['Online']
+    assert 'ReceiveValidation' in FI.RELEASE_16_KEYS['Online']
+    keys = {'Online': {'ReceiveValidation': '1'}}
+    with tempfile.TemporaryDirectory() as d:
+        dll = Path(d) / 'dinput.dll'
+        FI.check_release_dll(dll, keys)
+        dll.write_bytes(b'MZ older companion')
+        try:
+            FI.check_release_dll(dll, keys)
+        except FI.FixTooOld as exc:
+            assert exc.missing == ['[Online] ReceiveValidation']
+        else:
+            raise AssertionError('a DLL without receive validation was accepted')
+        dll.write_bytes(dll.read_bytes() + 'ReceiveValidation'.encode('utf-16le'))
+        FI.check_release_dll(dll, keys)
 
 
 def test_a_dll_without_the_15_keys_is_refused(tmp_path=None):
@@ -744,7 +768,7 @@ def test_a_dll_without_the_15_keys_is_refused(tmp_path=None):
         try:
             FI.check_release_dll(dll, keys)
         except ValueError as exc:
-            assert 'X1Leader' in str(exc) and '1.5' in str(exc) and 'RankCosts' not in str(exc)
+            assert 'X1Leader' in str(exc) and '1.6' in str(exc) and 'RankCosts' not in str(exc)
         else:
             raise AssertionError('an old DLL was accepted')
         dll.write_bytes(dll.read_bytes() + 'X1Leader'.encode('utf-16le'))
@@ -766,7 +790,7 @@ def test_old_fix_keys_names_every_unknown_key_and_the_cli_path_writes_anyway():
             FI.write_port_keys(d, {s: dict(v) for s, v in keys.items()})
         except FI.FixTooOld as exc:
             assert isinstance(exc, ValueError) and exc.missing == ['[Limits] EntityCapacity', '[Game] X1Leader']
-            assert 'XML2 Fix 1.5' in str(exc)
+            assert 'XML2 Fix 1.6' in str(exc)
         else:
             raise AssertionError('an old DLL was accepted')
         assert not (Path(d) / 'xml2-fix.ini').exists()
@@ -795,7 +819,7 @@ def test_danger_room_gate_names_the_front_ends_danger_room_item():
 def test_existing_release_dll_without_npc_power_rule_is_refused():
     """A pre-feature 1.5 DLL knows the other release keys but must not silently omit enemy AI."""
     import tempfile
-    keys = {section: {name: 'xml1' for name in names} for section, names in FI.RELEASE_15_KEYS.items()}
+    keys = {section: {name: 'xml1' for name in names} for section, names in FI.RELEASE_16_KEYS.items()}
     keys['Game']['NpcPowerRule'] = 'xml1'
     with tempfile.TemporaryDirectory() as d:
         dll = Path(d) / 'dinput.dll'
@@ -809,4 +833,51 @@ def test_existing_release_dll_without_npc_power_rule_is_refused():
             raise AssertionError('a DLL without NpcPowerRule was accepted')
         assert FI.old_fix_keys(dll, keys) == ['[Game] NpcPowerRule']
         dll.write_bytes(dll.read_bytes() + 'NpcPowerRule'.encode('utf-16le'))
+        FI.check_release_dll(dll, keys)
+
+
+def test_existing_release_dll_without_stun_rule_is_refused():
+    """A pre-feature 1.5 DLL knows the other release keys but must not silently omit hero reaction ownership."""
+    import tempfile
+    keys = {section: {name: 'xml1' for name in names} for section, names in FI.RELEASE_16_KEYS.items()}
+    keys['Game']['StunRule'] = 'xml1'
+    with tempfile.TemporaryDirectory() as d:
+        dll = Path(d) / 'dinput.dll'
+        dll.write_bytes(b'MZ' + b''.join(name.encode('utf-16le') + b'\0\0'
+                                       for section in keys.values() for name in section if name != 'StunRule'))
+        try:
+            FI.check_release_dll(dll, keys)
+        except FI.FixTooOld as exc:
+            assert exc.missing == ['[Game] StunRule']
+        else:
+            raise AssertionError('a DLL without StunRule was accepted')
+        assert FI.old_fix_keys(dll, keys) == ['[Game] StunRule']
+        dll.write_bytes(dll.read_bytes() + 'StunRule'.encode('utf-16le'))
+        FI.check_release_dll(dll, keys)
+
+
+def test_xml1_builds_write_and_remove_stun_rule():
+    assert FI.game_keys(xml1_opening=True)['StunRule'] == 'xml1'
+    assert 'StunRule' not in FI.game_keys(xml1_opening=False)
+    assert 'StunRule' in FI.PORT_OWNED['Game']
+    assert FI.dropped_keys({'Game': {}})['Game'].count('StunRule') == 1
+
+
+def test_existing_release_dll_without_object_world_impact_is_refused():
+    """A pre-feature 1.5 DLL knows the other release keys but must not silently omit world impact physics."""
+    import tempfile
+    keys = {section: {name: 'xml1' for name in names} for section, names in FI.RELEASE_16_KEYS.items()}
+    keys['Game']['ObjectWorldImpact'] = 'xml1'
+    with tempfile.TemporaryDirectory() as d:
+        dll = Path(d) / 'dinput.dll'
+        dll.write_bytes(b'MZ' + b''.join(name.encode('utf-16le') + b'\0\0'
+                                       for section in keys.values() for name in section if name != 'ObjectWorldImpact'))
+        try:
+            FI.check_release_dll(dll, keys)
+        except FI.FixTooOld as exc:
+            assert exc.missing == ['[Game] ObjectWorldImpact']
+        else:
+            raise AssertionError('a DLL without ObjectWorldImpact was accepted')
+        assert FI.old_fix_keys(dll, keys) == ['[Game] ObjectWorldImpact']
+        dll.write_bytes(dll.read_bytes() + 'ObjectWorldImpact'.encode('utf-16le'))
         FI.check_release_dll(dll, keys)

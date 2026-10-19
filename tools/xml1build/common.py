@@ -709,7 +709,7 @@ def args_for_out(out, base=None, **kw):
     b = build_options(out)
     keep = {k: b[k] for k in ('frontend', 'forced_teams', 'no_movies', 'newgame', 'blackbird', 'npc_scaling',
                               'tiles', 'hero_roster', 'hero_icons', 'hero_bleed', 'start_zone', 'tour', 'xp_curve',
-                              'buoys', 'main_menu_layout')
+                              'buoys', 'main_menu_layout', 'harm_loop_startup')
             if k in b and b[k] is not None}
     if 'frontend' not in b and b:
         keep['frontend'] = 'xml2'            # a build made before SPEC 21 had XML2's front end
@@ -1004,7 +1004,8 @@ class BuildContext:
         from . import combat_events
         style = combat_events.is_style_rel(x1_rel)
         ch = x1schema.convert(root, x1_rel, self.weapon_models(), self.x1_values() if style else None,
-                              self.x1_balance() if style else None)
+                              self.x1_balance() if style else None,
+                              harm_loop_startup=self.opt('harm_loop_startup', 'workaround'))
         if ch:
             key = norm(x1_rel)
             with self._lock:
