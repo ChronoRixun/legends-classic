@@ -306,7 +306,7 @@ What comes next, by version (plans move with what testing finds):
   ([#6](https://github.com/ChronoRixun/legends-classic/issues/6)) and others.
 - **0.6** - graphics: an optional DXVK toggle, and an investigation into graphical engine upgrades.
 - **0.6 to 0.7** - the online section and join screen overhaul: a modern lobby.
-- **0.6 to 1.0** - more may come, spread between 0.6 and 1.0: whatever is still open from these lists, and whatever
+- **0.7 to 1.0** - more may come, spread between 0.7 and 1.0: whatever is still open from these lists, and whatever
   the playthroughs turn up next.
 
 ## Repository layout

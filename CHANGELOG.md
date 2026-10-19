@@ -56,10 +56,11 @@ the build). Your saves carry over.
 
 **Known issues**
 
-- **Co-op *New Game* with the first game's solo story segments** (Wolverine's opening, Magma's mansion tour): the
-  second online player has no hero during a solo segment. A co-op *New Game* starts with Wolverine alone, and a player
-  who joins during a solo segment is dropped at the next level load. Use *Load Saved Campaign* for co-op; the fix is
-  planned with 0.3.0's drop-in co-op.
+- **Online co-op and the first game's solo story segments** (issue #106; Wolverine's opening, Magma's mansion tour):
+  the second online player has no hero while the story seats one hero alone. A co-op *New Game* starts with Wolverine
+  alone, and when a solo segment begins mid-campaign the second player is dropped at the next level load. Use *Load
+  Saved Campaign* for co-op and start a new session from a save after the segment; the fix is planned with 0.3.0's
+  drop-in co-op.
 - **Toad's fight at HAARP** (issue #105) skips the jets, his armour and the soldier waves; planned for 0.2.4.
 - **Enemy powers and stun** (issue #101): enemies still use powers and stun heroes more than in the first game
   (Brotherhood, HAARP); only parts of it are fixed here.
