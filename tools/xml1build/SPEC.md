@@ -7521,7 +7521,7 @@ include DangerRoomParty, Xml1LockOnEffects and Xml1LockOnAim.
 - The builder enables both keys for XML1 builds and refuses an existing companion missing either key. Matching verified installs can host/join; absent keys omit their rules, invalid/failed requests block admission, and mismatches name the setting. Ordinary XML2 defaults stay off. Builder 0.2.3 / XML2 Fix 1.6.0, content 20 / catalogue 7 / LC29 and the immutable bind fingerprint are unchanged: this candidate adds runtime switches and documentation, no game-data changes.
 
 
-## HAARP boss landing triggers (issue #105)
+## 103. HAARP boss landing triggers (issue #105, validator V64)
 
 The four jet landing volumes in haarp/ext/haarp_ext_boss are enemy-team touch triggers.
 XML1 allows their boss activator through `actteamplayer` (activation function 0x28420,
@@ -7532,7 +7532,7 @@ assignment at actor+0x3d4; the boss has -1 and the landing script never starts.
 the team match, named-activator script check, enable targets, placements and ordinals.
 The original armor moves, attack pattern, jet structure changes, health thresholds,
 soldier relays and ending scripts run unchanged. Changed or missing source filters
-fail conversion before mutation. V-TBD checks the generated landing volumes.
+fail conversion before mutation. V64 checks the generated landing volumes.
 
 This changes the boss map hash; the existing save reader may discard an older record
 for that zone. It does not change the save schema or allocate a gameplay rule ID.

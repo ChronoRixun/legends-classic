@@ -5,9 +5,17 @@ build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebui
 
 ## Unreleased
 
-- Request the companion's original resistance subtitles beneath targeted enemy
-  health bars. V63 checks the existing localized labels and type colors against
-  the player's original data; an older companion reports the missing setting.
+Legends Classic 0.2.4 - content version 22, needs XML2 Fix 1.7.0. Rebuild in the
+launcher, then Play. Both co-op players need the same build and fix.
+
+- **Toad at HAARP fights through all four jets again** (issue #105): he attacks
+  from each jet and stays protected until it breaks, then returns to ground
+  combat. The soldiers and ending use the first game's encounter scripts.
+- **Enemy resistance text is back:** physical, energy and mental resistance
+  appears beneath the target health bar, with the first game's colors. This
+  changes the display only; damage and resistance rules stay the same.
+- The save format is unchanged. The HAARP boss map changed, so an older saved
+  record for that encounter may reset when you enter it.
 
 ## v0.2.3 - content version 21 (needs XML2 Fix 1.6.0)
 

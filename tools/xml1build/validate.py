@@ -961,7 +961,7 @@ class Validator:
                                ('V24', 'conversation portraits', self.conversation_portraits),
                                ('V25', 'harm loop startup', self.harm_loop_startup),
                                ('V26', 'fall kill volumes', self.fall_kill_volumes),
-                               ('V-TBD', 'boss landing triggers', self.boss_landing_triggers),
+                               ('V64', 'boss landing triggers', self.boss_landing_triggers),
                                ('V27', 'voice lines', self.voice_lines),
                                ('V28', 'dialog platforms', self.dialog_platforms),
                                ('V29', 'codex icons', lambda ck: VF.v_codex_icons(self, ck)),

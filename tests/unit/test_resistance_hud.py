@@ -35,6 +35,8 @@ def test_resource_pairing_detects_missing_text_and_swapped_damage_colors():
 
 
 def test_port_enables_the_display_and_rejects_a_companion_that_ignores_it():
+    assert 'ResistanceDisplay' not in FI.RELEASE_16_KEYS['Game']
+    assert 'ResistanceDisplay' in FI.RELEASE_17_KEYS['Game']
     assert FI.game_keys()['ResistanceDisplay'] == 'xml1'
     assert 'ResistanceDisplay' not in FI.game_keys(xml1_opening=False)
     assert 'ResistanceDisplay' in FI.PORT_OWNED['Game']
