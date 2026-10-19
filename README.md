@@ -269,7 +269,7 @@ Launcher: any release runs every builder; on Proton (Steam Deck, Linux) 0.2.1 or
 | | the launcher's setup wizard and game page | done |
 | | this public repository, the community Discord | done |
 | | release testing on a clean PC (Windows Sandbox): the builder alone, and the launcher's one-click setup | done |
-| M4 | **Public test period**: fixes from playthroughs through 0.1.12; 0.2.0 brings the port's own save format, the first game's combat balance and main menu, rooms that keep every object and Master Mold's original fight | now |
+| M4 | **Public test period**: fixes from playthroughs, release by release (0.1.x, then 0.2.x: the port's own save format, the first game's combat balance, hazards, co-op fixes) | now |
 | M5 | **Complete**: the first game's mechanics this engine lacks (see [What isn't there](#what-isnt-there)) | under way: turrets, breakable parts, solo mode, Xtraction services and ranks done in 0.2.2 |
 | M6 | **Classic look**: the first game's menus, fonts, colours and HUD (the main menu is done in 0.2.0) | planned |
 | 1.0 | **Finished**: a full campaign played by hand on a release build with nothing blocking, checked on the Steam Deck, co-op checked on one PC and across the internet | goal |
@@ -296,7 +296,8 @@ What comes next, by version (plans move with what testing finds):
   ([#105](https://github.com/ChronoRixun/legends-classic/issues/105)) is planned for 0.2.4.
 - **0.3.0** - co-op modernization: a new encrypted network layer that adapts to bad connections, join codes and
   internet play without port forwarding (with a relay as the fallback), and joining a game in progress at the next
-  level change. Also the remaining fall volumes ([#22](https://github.com/ChronoRixun/legends-classic/issues/22))
+  level change. Hosting and joining from the Ultimate Legends launcher: host a game and share its code, or paste a
+  friend's code to join. A second online player stays in the game through the first game's solo story segments. Also the remaining fall volumes ([#22](https://github.com/ChronoRixun/legends-classic/issues/22))
   and the attack sounds looping near the fires at the start of the game
   ([#79](https://github.com/ChronoRixun/legends-classic/issues/79)).
 - **0.4** - classic look: the rest of the menus (pause, characters, Review, shops, loading) and the HUD, made from
