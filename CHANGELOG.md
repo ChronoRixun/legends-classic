@@ -8,6 +8,9 @@ build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebui
 Legends Classic 0.2.4 - content version 22, needs XML2 Fix 1.7.0. Rebuild in the
 launcher, then Play. Both co-op players need the same build and fix.
 
+- **Bedroom items show the picture once** (issue #54): the item's picture sits in the first game's picture window
+  with its panels, text and Back bar, instead of over a second, enlarged copy of itself. The builder ships the
+  first game's pictures as they are and writes `[Game] PersonalItemPicture=window` (needs the XML2 Fix of this build).
 - **Toad at HAARP fights through all four jets again** (issue #105): he attacks
   from each jet and stays protected until it breaks, then returns to ground
   combat. Soldiers ride the two elevators up each time Toad heads for the next jet, step into the arena and

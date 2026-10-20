@@ -5357,14 +5357,15 @@ the menu IGB's desk backdrop. Both games ship the same `menu_personal.IGB` (XML2
 camera and all), and the port's texture import was a byte copy, so the painted 512x256 art filled the screen ("too
 big") and covered the text area. The menu file is XML1's own, unchanged in XML2.
 
-`frontend` now re-composes every `Textures/personal/*.IGB` to 512x384 (`personal_art.recompose_igb`, pure Python -
-no imaging dependency): the art scaled into the first game's sprite window (rows 202..330, x 128..384 in the
-file's row order - the engine's v-flip shows it at z 202..330), its colours continued to the screen edges by a
-soft stretch of the art (the IGB's backdrop never shows: the sprite is opaque and ignores texture alpha - a
-fully transparent texture still drew opaque in game). The mip chain continues the halving to 1x1 under the same
-igImage count; a texture the reader cannot place falls back to the byte copy and is reported
-(`personal_textures_*_unframed`). V30 also checks the named texture's largest igImage is 512x384, so a future
-byte-copy regression fails validation.
+0.2.0-0.2.4 re-composed every `Textures/personal/*.IGB` to 512x384 (the art in the first game's window over a soft
+stretch of itself) because the sprite is opaque and ignores texture alpha. The blurred stretch showed as an oversized
+copy of the picture behind the real one (issue #54, tester, 0.2.2), and the fullscreen sprite hid the menu IGB's panels.
+0.2.5 removes the workaround (`personal_art.py` is gone): the textures are the first game's 512x256 IGBs again, and
+XML2 Fix's `[Game] PersonalItemPicture=window` (fix_ini.PERSONAL_ITEM_PICTURE, written for every port build) replaces
+PERSONAL_MENU's size and position getters (vtable +0x90 0x5b7c60 / +0x94 0x5b7c80) with default.xbe's picture
+window: 256x128 at x 128, top z 330 (the same place the re-composed window showed). The menu IGB's metal-framed
+picture panel, the honeycomb text panel and the Back bar draw as in the first game, the mansion visible around them.
+V30 now checks the largest igImage is 512x256.
 
 The item's text was hidden behind the image, rather than missing from the textbox. The earlier anchor-binding
 hypothesis is withdrawn: live probes show its hidden flag clear, binding/type-5 component present, and wrapped

@@ -414,5 +414,6 @@ Absent, empty, off or xml2 omits a rule. Invalid or failed requested installs re
 | [Game] key | XML1 builder | Agreement |
 |---|---|---|
 | OnlineConversations | lockstep | 27 revision 1, requested only |
+| PersonalItemPicture | window | the bedroom items' pictures in the first game's 256x128 window (engine display only) |
 
 Online, a conversation line that goes on by itself does so |timeDelay| seconds of game time after it appears, on every PC on the same frame, and a chosen reply's voice is cut; single-player is unchanged. Absent or `stock` keeps the 1.6.0 behaviour and omits the rule; an invalid value is unverified (online refused). Both peers must match.
