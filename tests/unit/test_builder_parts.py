@@ -733,7 +733,7 @@ def test_port_builds_ask_for_the_lc_save_format():
     assert FI.save_keys(port_identity=True) == {'Format': 'lc'}
     assert FI.save_keys(port_identity=False) == {}
     assert FI.PORT_OWNED['Save'] == ('Format',) and 'ContentFingerprint' in FI.PORT_OWNED['Online']
-    assert FI.REQUIRED_XML2FIX == '1.7'
+    assert FI.REQUIRED_XML2FIX == '1.7.1'
 
 
 def test_receive_validation_defaults_on_and_requires_supported_companion():
@@ -768,7 +768,7 @@ def test_a_dll_without_the_15_keys_is_refused(tmp_path=None):
         try:
             FI.check_release_dll(dll, keys)
         except ValueError as exc:
-            assert 'X1Leader' in str(exc) and '1.7' in str(exc) and 'RankCosts' not in str(exc)
+            assert 'X1Leader' in str(exc) and '1.7.1' in str(exc) and 'RankCosts' not in str(exc)
         else:
             raise AssertionError('an old DLL was accepted')
         dll.write_bytes(dll.read_bytes() + 'X1Leader'.encode('utf-16le'))
