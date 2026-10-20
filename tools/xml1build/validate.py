@@ -962,6 +962,7 @@ class Validator:
                                ('V25', 'harm loop startup', self.harm_loop_startup),
                                ('V26', 'fall kill volumes', self.fall_kill_volumes),
                                ('V64', 'boss landing triggers', self.boss_landing_triggers),
+                               ('V-TBD', 'boss reinforcement approaches', self.boss_reinforcements),
                                ('V27', 'voice lines', self.voice_lines),
                                ('V28', 'dialog platforms', self.dialog_platforms),
                                ('V29', 'codex icons', lambda ck: VF.v_codex_icons(self, ck)),
@@ -1019,6 +1020,30 @@ class Validator:
             ck.count('map_variants')
             for problem in BP.landing_trigger_problems(root, rel):
                 ck.error(f'{rel}: {problem}')
+
+    def boss_reinforcements(self, ck):
+        """Lift handoffs must restore collision and retain their authored destinations."""
+        from . import boss_phases as BP
+        for ref in sorted(BP.TOAD_ELEVATOR_SCRIPTS):
+            rel = f'scripts/{ref}.py'
+            if not self.is_x1(rel):
+                continue
+            data = self.read(rel)
+            if data is None:
+                ck.error(f'{rel}: missing lift script')
+                continue
+            ck.count('lift_scripts')
+            for problem in BP.reinforcement_script_problems(data.decode('utf-8-sig'), ref):
+                ck.error(f'{rel}: {problem}')
+        for zone in sorted(BP.TOAD_REINFORCEMENT_ZONES):
+            for suffix in ('engb', 'xmlb'):
+                rel = f'{zone}.{suffix}'
+                root = self.tree(rel)
+                if root is None:
+                    continue
+                ck.count('map_variants')
+                for problem in BP.reinforcement_map_problems(root, rel):
+                    ck.error(f'{rel}: {problem}')
 
     def hazard_bounds(self, ck):
         """Placed model-less hazards retain bounds and append new saved ordinals."""
