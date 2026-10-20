@@ -14,6 +14,12 @@ launcher, then Play. Both co-op players need the same build and fix.
 - **Enemy resistance text is back:** physical, energy and mental resistance
   appears beneath the target health bar, with the first game's colors. This
   changes the display only; damage and resistance rules stay the same.
+- **Co-op no longer drops during conversations:** a conversation line that
+  moves on by itself (the mansion tour, briefings) now does so at the same
+  moment on both PCs. Before, each PC waited for its own voice clip to end,
+  the games fell out of step and the session ended. Online, a reply you pick
+  no longer plays its full voice line; single-player is unchanged. The builder
+  writes `[Game] OnlineConversations=lockstep` (gameplay agreement rule 27).
 - The save format is unchanged. The HAARP boss map changed, so an older saved
   record for that encounter may reset when you enter it.
 

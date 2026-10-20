@@ -398,3 +398,11 @@ Builder 0.2.3 / XML2 Fix 1.6 carries newly appended hazards through online saved
 | FastTransfer | 1 | 24 revision 1, requested only |
 
 Absent, empty, off or xml2 omits a rule. Invalid or failed requested installs remain unverified. Both peers must match. HUD dirty-stat refresh/clamp timing parity remains unproved. Content 21, catalogue 7, lobby token LC30. The builder also writes `[Online] ReceiveValidation=1`.
+
+### 0.2.4 settings (rule 27)
+
+| [Game] key | XML1 builder | Agreement |
+|---|---|---|
+| OnlineConversations | lockstep | 27 revision 1, requested only |
+
+Online, a conversation line that goes on by itself does so |timeDelay| seconds of game time after it appears, on every PC on the same frame, and a chosen reply's voice is cut; single-player is unchanged. Absent or `stock` keeps the 1.6.0 behaviour and omits the rule; an invalid value is unverified (online refused). Both peers must match.

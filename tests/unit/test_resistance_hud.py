@@ -51,3 +51,23 @@ def test_port_enables_the_display_and_rejects_a_companion_that_ignores_it():
             raise AssertionError('unsupported resistance display was silently accepted')
         dll.write_bytes(b'MZ' + 'ResistanceDisplay'.encode('utf-16le'))
         FI.check_release_dll(dll, {'Game': {'ResistanceDisplay': 'xml1'}})
+
+
+def test_port_requests_online_conversations_and_rejects_a_companion_that_ignores_it():
+    keys = {'Game': {'OnlineConversations': 'lockstep'}}
+    assert 'OnlineConversations' not in FI.RELEASE_16_KEYS['Game']
+    assert 'OnlineConversations' in FI.RELEASE_17_KEYS['Game']
+    assert FI.game_keys()['OnlineConversations'] == 'lockstep'
+    assert 'OnlineConversations' not in FI.game_keys(xml1_opening=False)
+    assert 'OnlineConversations' in FI.PORT_OWNED['Game']
+    with tempfile.TemporaryDirectory() as folder:
+        dll = Path(folder) / 'dinput.dll'
+        dll.write_bytes(b'MZ synthetic older companion' + 'ResistanceDisplay'.encode('utf-16le'))
+        try:
+            FI.check_release_dll(dll, keys)
+        except FI.FixTooOld as exc:
+            assert exc.missing == ['[Game] OnlineConversations']
+        else:
+            raise AssertionError('a companion without the online conversation rule was silently accepted')
+        dll.write_bytes(b'MZ' + 'OnlineConversations'.encode('utf-16le'))
+        FI.check_release_dll(dll, keys)
