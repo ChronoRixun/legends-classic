@@ -10,8 +10,8 @@ launcher, then Play. Both co-op players need the same build and fix.
 
 - **Toad at HAARP fights through all four jets again** (issue #105): he attacks
   from each jet and stays protected until it breaks, then returns to ground
-  combat. Soldier entry and replacement waves are part of this restoration.
-  <!-- RELEASE GATE: merge and verify the soldier follow-up before publishing this claim. -->
+  combat. Soldiers ride the two elevators up each time Toad heads for the next jet, step into the arena and
+  fight; the next wave follows once the last one is down.
 - **Enemy resistance text is back:** physical, energy and mental resistance
   appears beneath the target health bar, with the first game's colors. This
   changes the display only; damage and resistance rules stay the same. The
