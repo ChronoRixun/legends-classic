@@ -71,3 +71,23 @@ def test_port_requests_online_conversations_and_rejects_a_companion_that_ignores
             raise AssertionError('a companion without the online conversation rule was silently accepted')
         dll.write_bytes(b'MZ' + 'OnlineConversations'.encode('utf-16le'))
         FI.check_release_dll(dll, keys)
+
+
+def test_port_requests_the_personal_item_picture_window_and_rejects_a_companion_that_ignores_it():
+    keys = {'Game': {'PersonalItemPicture': 'window'}}
+    assert 'PersonalItemPicture' not in FI.RELEASE_16_KEYS['Game']
+    assert 'PersonalItemPicture' in FI.RELEASE_17_KEYS['Game']
+    assert FI.game_keys()['PersonalItemPicture'] == 'window'
+    assert 'PersonalItemPicture' not in FI.game_keys(xml1_opening=False)
+    assert 'PersonalItemPicture' in FI.PORT_OWNED['Game']
+    with tempfile.TemporaryDirectory() as folder:
+        dll = Path(folder) / 'dinput.dll'
+        dll.write_bytes(b'MZ synthetic older companion' + 'ResistanceDisplay'.encode('utf-16le'))
+        try:
+            FI.check_release_dll(dll, keys)
+        except FI.FixTooOld as exc:
+            assert exc.missing == ['[Game] PersonalItemPicture']
+        else:
+            raise AssertionError('a companion without the picture window was silently accepted')
+        dll.write_bytes(b'MZ' + 'PersonalItemPicture'.encode('utf-16le'))
+        FI.check_release_dll(dll, keys)
