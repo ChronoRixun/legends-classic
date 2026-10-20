@@ -11,6 +11,9 @@ launcher, then Play. Both co-op players need the same build and fix.
 - **Toad at HAARP fights through all four jets again** (issue #105): he attacks
   from each jet and stays protected until it breaks, then returns to ground
   combat. The soldiers and ending use the first game's encounter scripts.
+- **Toad's soldiers come up the elevators and join the fight, wave after wave:**
+  before, they rose and then stood stuck outside the arena fence. They now step
+  in and attack, and the next wave follows once the last one is down.
 - **Enemy resistance text is back:** physical, energy and mental resistance
   appears beneath the target health bar, with the first game's colors. This
   changes the display only; damage and resistance rules stay the same.

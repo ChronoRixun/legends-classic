@@ -7557,7 +7557,7 @@ V63 verifies the setting and compares the existing English resistance string slo
 resources. The PC swaps energy and mental indices; their rendered colors remain
 the original ones. No resource text or pixels are embedded in the builder.
 
-## 104. HAARP reinforcement entrances (issue #105, validator V-TBD)
+## 104. HAARP reinforcement entrances (issue #105, validator V65)
 
 XML1's soldiers ride the two lifts and walk into the arena. On the PC engine,
 all four stop at the entrance fence around Y=+/-481 despite live waypoint paths
@@ -7582,7 +7582,7 @@ The campaign map and its demo copy share those scripts, so both receive the
 destination change. Their instance order, positions, types and saved ordinals
 remain unchanged. Conversion rejects changed timing/activation anchors, missing
 or duplicate destinations, changed waypoint actions, and definitions shared with
-unrelated instances. V-TBD checks the generated scripts and both map variants.
+unrelated instances. V65 checks the generated scripts and both map variants.
 Synthetic tests cover those guards, preservation, idempotence and both collision
 restoration paths. No engine patch, new gameplay rule or save-schema change is
 required. As with other map changes, the existing save reader may discard a zone

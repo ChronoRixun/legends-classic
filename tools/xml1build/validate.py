@@ -962,7 +962,7 @@ class Validator:
                                ('V25', 'harm loop startup', self.harm_loop_startup),
                                ('V26', 'fall kill volumes', self.fall_kill_volumes),
                                ('V64', 'boss landing triggers', self.boss_landing_triggers),
-                               ('V-TBD', 'boss reinforcement approaches', self.boss_reinforcements),
+                               ('V65', 'boss reinforcement approaches', self.boss_reinforcements),
                                ('V27', 'voice lines', self.voice_lines),
                                ('V28', 'dialog platforms', self.dialog_platforms),
                                ('V29', 'codex icons', lambda ck: VF.v_codex_icons(self, ck)),
