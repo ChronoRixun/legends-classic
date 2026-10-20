@@ -1,8 +1,10 @@
 """Narrow script/data replacements for XML1 boss phase states absent from XMen2.exe.
 
-Only issue #2's Magneto and Shadow King encounters are handled. Original phase counters, timers, rewards and
+Handles the Magneto, Shadow King and HAARP boss encounters. Original phase counters, timers, rewards and
 follow-on scripts remain authoritative. Output scripts use CRLF, like the rest of the builder.
 """
+import copy
+import math
 import re
 
 MAGNETO_STAGES = frozenset(f'asteroid_m/stage{i}' for i in range(2, 6))
@@ -12,6 +14,106 @@ SHADOW_START = 'astral/savepx/final_astral'
 SHADOW_ZONE = 'maps/astral/savepx/final_astral'
 SHADOW_FLOOR_MARKER = 'wp_bossmaster3000_04'
 SHADOW_DEFEATED = 'astral/savepx/shadowking_defeated'
+TOAD_ZONE = 'maps/haarp/ext/haarp_ext_boss'
+TOAD_LANDING_SCRIPTS = frozenset(f'haarp/ext/pillar{i:02}' for i in range(1, 5))
+TOAD_REINFORCEMENT_ZONES = frozenset((TOAD_ZONE, 'maps/demo/ext/haarp_ext_boss'))
+TOAD_ELEVATOR_SCRIPTS = {
+    'haarp/ext/elevator1': ('elevator1', ('haarpleader', 'soldiermelee_b')),
+    'haarp/ext/elevator2': ('elevator2', ('haarpsoldier', 'soldiermelee_a')),
+}
+TOAD_WAVE_MARKERS = frozenset('wp_' + actor + '02' for _, actors in TOAD_ELEVATOR_SCRIPTS.values()
+                              for actor in actors)
+
+
+def _call_pattern(function, *values):
+    args = [r'''['"]''' + re.escape(value) + r'''['"]''' for value in values]
+    return re.compile(r'^\s*' + re.escape(function) + r'\s*\(\s*' + r'\s*,\s*'.join(args) + r'\s*\)\s*$')
+
+
+def lift_handoff(text, lift, actors):
+    """Cross only the authored lift entrance, with arrival and timed collision restoration.
+
+    XML2 world collision stops these NPCs at the fence even with their native
+    direct waypoint movement. XML1 lets the pair walk through. Keep the source
+    waits and both lift acts; never make their ordinary combat ignore the world.
+    """
+    lines = text.replace('\r\n', '\n').split('\n')
+    acts = [i for i, line in enumerate(lines) if _call_pattern('act', lift, lift).fullmatch(line)]
+    upper = [i for i, line in enumerate(lines) if re.fullmatch(r'\s*waittimed\s*\(\s*4\.500\s*\)\s*', line)]
+    lower = [i for i, line in enumerate(lines) if re.fullmatch(r'\s*waittimed\s*\(\s*1\.000\s*\)\s*', line)]
+    releases = [[i for i, line in enumerate(lines) if _call_pattern('setReactToEnemies', actor, 'TRUE').fullmatch(line)]
+                for actor in actors]
+    if (len(acts) != 2 or len(upper) != 1 or len(lower) != 1 or
+            any(len(indices) != 1 for indices in releases) or
+            not acts[0] < upper[0] < min(indices[0] for indices in releases) <=
+            max(indices[0] for indices in releases) < lower[0] < acts[1]):
+        raise ValueError('lift handoff: changed raise/release/return sequence')
+    for actor in actors:
+        text, _ = insert_after_call(text, 'setReactToEnemies', actor, 'TRUE',
+                                   [f'setNoClip("{actor}", "TRUE" )',
+                                    f'setWaypointPath("{actor}", "{actor}", 2 )'])
+    lines = text.replace('\r\n', '\n').split('\n')
+    last = max(i for i, line in enumerate(lines) if _call_pattern('act', lift, lift).fullmatch(line))
+    indent = re.match(r'\s*', lines[last]).group()
+    restore = [indent + f'setNoClip("{actor}", "FALSE" )' for actor in actors]
+    if lines[last + 1:last + 1 + len(restore)] != restore:
+        lines[last + 1:last + 1] = restore
+    return '\r\n'.join(lines)
+
+
+def lift_arrivals(root, markers):
+    """Use the four existing interior destinations; keep all instance/ordinal data."""
+    definitions = {}
+    for el in root.iter('entity'):
+        definitions.setdefault(el.get('name'), []).append(el)
+    placed = [(group.get('type'), inst) for group in root.iter('entinst') for inst in group.findall('inst')]
+    chosen = [(kind, inst) for kind, inst in placed if inst.get('name') in markers]
+    if len(chosen) != len(markers) or {inst.get('name') for _, inst in chosen} != set(markers):
+        raise ValueError('lift arrival: expected one instance per interior destination')
+    kinds = {kind for kind, _ in chosen}
+    if any(kind in kinds and inst.get('name') not in markers for kind, inst in placed):
+        raise ValueError('lift arrival: definition also controls an unrelated waypoint')
+    restore = 'setNoClip("_ACTIVATOR_", "FALSE" )' + r'\n\r'
+    checked = []
+    for kind in kinds:
+        rows = definitions.get(kind, [])
+        if len(rows) != 1 or rows[0].get('classname') != 'waypointent':
+            raise ValueError('lift arrival: expected a unique waypoint definition')
+        el = rows[0]
+        code = el.get('actscript', '')
+        original = code.removeprefix(restore)
+        if not re.fullmatch(r'''setWaypointPath\s*\(\s*(['"])_ACTIVATOR_\1\s*,\s*(['"])\s*\2\s*,\s*0\s*\)''', original):
+            raise ValueError('lift arrival: changed end-of-path action')
+        checked.append((el, restore + original))
+    for _, inst in chosen:
+        try: coords = [float(v) for v in inst.get('pos', '').split()]
+        except ValueError: coords = []
+        if len(coords) != 3 or not all(math.isfinite(v) for v in coords):
+            raise ValueError('lift arrival: invalid destination coordinates')
+    changed = 0
+    for el, code in checked:
+        if el.get('beeline') != 'true' or el.get('actscript') != code:
+            el.set('beeline', 'true')
+            el.set('actscript', code)
+            changed += 1
+    return changed
+
+
+def reinforcement_script_problems(text, ref):
+    spec = TOAD_ELEVATOR_SCRIPTS.get(_ref(ref))
+    if spec is None:
+        return []
+    try: fixed = lift_handoff(text, *spec)
+    except ValueError as exc: return [str(exc)]
+    return [] if fixed == text.replace('\r\n', '\n').replace('\n', '\r\n') else ['missing bounded lift handoff/restoration']
+
+
+def reinforcement_map_problems(root, rel):
+    if _ref(rel) not in TOAD_REINFORCEMENT_ZONES:
+        return []
+    try: changed = lift_arrivals(copy.deepcopy(root), TOAD_WAVE_MARKERS)
+    except ValueError as exc: return [str(exc)]
+    return ['missing direct arrival and collision restoration'] if changed else []
 
 
 def _ref(path):
@@ -85,7 +187,9 @@ def end_on_real_death(text, store, count_check, real, images, done_var, dispel=4
 
 def rewrite_script(ref, text):
     ref = _ref(ref)
-    if ref in MAGNETO_STAGES:
+    if ref in TOAD_ELEVATOR_SCRIPTS:
+        text = lift_handoff(text, *TOAD_ELEVATOR_SCRIPTS[ref])
+    elif ref in MAGNETO_STAGES:
         stage = ref[-1]
         text, count = insert_after_call(text, 'setPatternSequence', 'magneto', f'mag{stage}',
                                        ['waittimed ( 0.100 )', 'setInvulnerable("magneto", "FALSE" )'])
@@ -159,7 +263,55 @@ def protect_relay(root, relay, actor, phase):
     return count
 
 
+def npc_landing_triggers(root, scripts):
+    """Find the encounter's authored enemy-only landing volumes; reject changed filters.
+
+    XML1's actteamplayer tests actor+0x335 bit 0x20 (0x28420); XML2 instead requires
+    actor+0x3d4 != -1 (0x41b5b0), excluding the boss. Its team check and the script's
+    named-activator check still restrict each volume after removing this extra filter.
+    """
+    found = []
+    for el in root.iter('entity'):
+        if _ref(el.get('actscript', '')) not in scripts:
+            continue
+        expected = {'classname': 'gameent', 'team': 'enemy', 'actmatchteam': 'true',
+                    'actontouch': 'true', 'actleader': 'false'}
+        if any(el.get(k, '').lower() != v for k, v in expected.items()):
+            raise ValueError('boss landing trigger: unexpected activation filter')
+        found.append(el)
+    if len(found) != len(scripts) or {_ref(el.get('actscript')) for el in found} != set(scripts):
+        raise ValueError('boss landing trigger: expected one volume per landing script')
+    return found
+
+
+def allow_npc_landings(root, scripts):
+    """Keep placement, ordinals, targets and scripts; only remove the player-controller gate."""
+    rows = npc_landing_triggers(root, scripts)
+    count = 0
+    for el in rows:
+        if el.get('actteamplayer', '').lower() != 'false':
+            el.set('actteamplayer', 'false')
+            count += 1
+    return count
+
+
+def landing_trigger_problems(root, rel):
+    if _ref(rel) != TOAD_ZONE:
+        return []
+    try:
+        rows = npc_landing_triggers(root, TOAD_LANDING_SCRIPTS)
+    except ValueError as exc:
+        return [str(exc)]
+    return [f'{el.get("name")}: boss landing requires a player controller'
+            for el in rows if el.get('actteamplayer', '').lower() != 'false']
+
+
 def rewrite_data(root, rel):
+    if _ref(rel) == TOAD_ZONE or _ref(rel) in TOAD_REINFORCEMENT_ZONES:
+        changed = lift_arrivals(root, TOAD_WAVE_MARKERS) if _ref(rel) in TOAD_REINFORCEMENT_ZONES else 0
+        if _ref(rel) == TOAD_ZONE:
+            changed += allow_npc_landings(root, TOAD_LANDING_SCRIPTS)
+        return changed
     if _ref(rel) == SHADOW_ZONE:
         return relocate_spawn(root, 'sp_shadowking01', 'waypoint',
                               floor_name=SHADOW_FLOOR_MARKER, height_type='player_start')

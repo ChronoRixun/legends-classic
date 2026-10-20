@@ -7519,3 +7519,71 @@ include DangerRoomParty, Xml1LockOnEffects and Xml1LockOnAim.
 - **Opening fire (#104 follow-up):** `BoxHarmOrigin=xml1` restores the XBE zero-origin argument for boxed harm. The native victim/attacker fallback replaces the PC box-centre direction and uses the native 0.01 dispatch delay. Damage amounts, bounds and authored repeat intervals remain unchanged. This addresses the opening fire's upward repeated-contact impulse; other boxed hazards need campaign testing. Requested-only gameplay rule **21**, revision 1.
 - **Danger Room robot health bars (tester report):** `DangerRoomHealthBars=xml1` bypasses the protected training-target HUD suppression gate so ordinary attacks can show a decreasing gauge. Protection and course limits remain intact. The newly reachable native HUD path may refresh dirty stats and schedule health clamping; timing parity is unproved, so requested-only gameplay rule **22**, revision 1, covers this behavior.
 - The builder enables both keys for XML1 builds and refuses an existing companion missing either key. Matching verified installs can host/join; absent keys omit their rules, invalid/failed requests block admission, and mismatches name the setting. Ordinary XML2 defaults stay off. Builder 0.2.3 / XML2 Fix 1.6.0, content 20 / catalogue 7 / LC29 and the immutable bind fingerprint are unchanged: this candidate adds runtime switches and documentation, no game-data changes.
+
+
+## 103. HAARP boss landing triggers (issue #105, validator V64)
+
+The four jet landing volumes in haarp/ext/haarp_ext_boss are enemy-team touch triggers.
+XML1 allows their boss activator through `actteamplayer` (activation function 0x28420,
+actor flag +0x335 bit 0x20). XMen2.exe 0x41b5b0 instead requires a player-controller
+assignment at actor+0x3d4; the boss has -1 and the landing script never starts.
+
+`boss_phases.allow_npc_landings` clears only that filter in this encounter, retaining
+the team match, named-activator script check, enable targets, placements and ordinals.
+The original armor moves, attack pattern, jet structure changes, health thresholds
+and ending scripts run unchanged. Section 104 covers the reinforcement handoff.
+Changed or missing source filters
+fail conversion before mutation. V64 checks the generated landing volumes.
+
+This changes the boss map hash; the existing save reader may discard an older record
+for that zone. It does not change the save schema or allocate a gameplay rule ID.
+## 102. Target resistance subtitles (validator V63)
+
+The original target HUD (`default.xbe` `0x15ff60`, formatter `0x94a70`) reads active
+`def_damage` (18) for physical, energy and mental scopes. It shows colored localized
+resistance/immunity labels beneath the gauge, collapsing three scopes to string
+103. Its `~NN` prefixes select colors; this path does not require a separate image.
+
+The PC HUD (`0x5a8920`) instead asks native `resist_*` (13..19). SPEC 92 correctly
+converts the original talents to `def_damage_scope` (56), which preserves combat
+but leaves that display query empty. Do not add a second gameplay resistance row.
+The builder requests XML2 Fix `[Game] ResistanceDisplay=xml1`, owns the key during
+merges and checks companion support. The adapter only replaces the native target
+resistance query, using current modifier bounds without drawing RNG. No gameplay
+rule, save-layout change, new talent or additional art is needed.
+
+V63 verifies the setting and compares the existing English resistance string slots
+103/201/202/210/211/212 and colors 22/23/24 against the corresponding original
+resources. The PC swaps energy and mental indices; their rendered colors remain
+the original ones. No resource text or pixels are embedded in the builder.
+
+## 104. HAARP reinforcement entrances (issue #105, validator V65)
+
+XML1's soldiers ride the two lifts and walk into the arena. On the PC engine,
+all four stop at the entrance fence around Y=+/-481 despite live waypoint paths
+and restored reaction flags. Both movers still reach their upper position and
+return. Resetting the path, requesting direct movement, or disabling entity
+collision does not cross this boundary. Temporarily disabling world clipping
+does: a controlled NPC walks inside, retains its floor height, and resumes combat
+after clipping is restored. This is a world-collision compatibility problem at
+the approach, not a missing reaction reset or an elevator-return failure.
+
+`boss_phases.lift_handoff` handles only the two existing elevator scripts. After
+their authored upper-position wait and reaction release, each pair follows its
+own second waypoint with `setNoClip` enabled. `lift_arrivals` marks only those
+existing interior destinations as `beeline` and restores world clipping before
+their original end-of-path action. The scripts also restore clipping after the
+existing one-second release interval and return activation, independently of
+waypoint arrival. Entity collision, gravity, positions, health and combat stats
+are not changed. The original spawn calls, `alive()` gates, phase thresholds and
+lift timing remain authoritative; a living pair still suppresses its gated wave.
+
+The campaign map and its demo copy share those scripts, so both receive the
+destination change. Their instance order, positions, types and saved ordinals
+remain unchanged. Conversion rejects changed timing/activation anchors, missing
+or duplicate destinations, changed waypoint actions, and definitions shared with
+unrelated instances. V65 checks the generated scripts and both map variants.
+Synthetic tests cover those guards, preservation, idempotence and both collision
+restoration paths. No engine patch, new gameplay rule or save-schema change is
+required. As with other map changes, the existing save reader may discard a zone
+record whose content hash no longer matches.

@@ -132,6 +132,8 @@ Checks (severity per SPEC 4.6: error = will not load or silently misbehaves; war
                 scoped to a damage type (the six physical / energy / mental _resistant[_share] talents) carries them
                 as def_damage_scope and no resist_<type> of those types - only def_damage strips a hit's reactions
                 (popup, knockback, trip, stun) at scale <= 0.3 in both engines
+  V63 resistance HUD (resistance_hud.validate): the port requests the scoped target display, and its existing
+                localized resistance labels and type colors match the original resources at the PC's indices
   V45 weapon damage and reaction priority (SPEC 76/95.3, weapons.validate): every built gun-shot trigger
                 carries XML1's weapon-fire draw - one integer range trunc(min*0.7f)..trunc(min*1.3f) of the damage
                 declaration's minimum (default.xbe 0xbcc47-0xbcc99) - a powerstyle named for an XML1 weapon carries
@@ -161,6 +163,7 @@ from pathlib import Path
 
 from . import common as C
 from . import lockon_effects as LE
+from . import resistance_hud as RH
 import xmlb                                   # noqa: E402  tools/xmlb.py
 from .lib import x1names                      # noqa: E402  the XML1 namespace (was research/characters)
 from .lib.x1names import is_fightstyle_name   # noqa: E402  fightstyle_* / x1_fightstyle_* (issue #52)
@@ -949,6 +952,7 @@ class Validator:
                                ('V18', 'combat events', lambda ck: CE.v18(self, ck)),
                                ('V19', 'npc values', lambda ck: NV.v19(self, ck)),
                                ('V60', 'resistance talents', lambda ck: NV.v_resist_talents(self, ck)),
+                               ('V63', 'resistance HUD', lambda ck: RH.validate(self, ck)),
                                ('V20', 'automaps', lambda ck: AM.v20(self, ck)),
                                ('V21', 'skins', lambda ck: SK.validate(self, ck)),
                                ('V22', 'buoys', lambda ck: BY.validate(self, ck)),
@@ -957,6 +961,8 @@ class Validator:
                                ('V24', 'conversation portraits', self.conversation_portraits),
                                ('V25', 'harm loop startup', self.harm_loop_startup),
                                ('V26', 'fall kill volumes', self.fall_kill_volumes),
+                               ('V64', 'boss landing triggers', self.boss_landing_triggers),
+                               ('V65', 'boss reinforcement approaches', self.boss_reinforcements),
                                ('V27', 'voice lines', self.voice_lines),
                                ('V28', 'dialog platforms', self.dialog_platforms),
                                ('V29', 'codex icons', lambda ck: VF.v_codex_icons(self, ck)),
@@ -1002,6 +1008,42 @@ class Validator:
                 self._banks.save()
             except OSError as ex:
                 self.ctx.note(f'sound cache not saved: {ex}')
+
+    def boss_landing_triggers(self, ck):
+        """The HAARP boss must be able to activate each jet landing volume."""
+        from . import boss_phases as BP
+        for suffix in ('engb', 'xmlb'):
+            rel = f'{BP.TOAD_ZONE}.{suffix}'
+            root = self.tree(rel)
+            if root is None:
+                continue
+            ck.count('map_variants')
+            for problem in BP.landing_trigger_problems(root, rel):
+                ck.error(f'{rel}: {problem}')
+
+    def boss_reinforcements(self, ck):
+        """Lift handoffs must restore collision and retain their authored destinations."""
+        from . import boss_phases as BP
+        for ref in sorted(BP.TOAD_ELEVATOR_SCRIPTS):
+            rel = f'scripts/{ref}.py'
+            if not self.is_x1(rel):
+                continue
+            data = self.read(rel)
+            if data is None:
+                ck.error(f'{rel}: missing lift script')
+                continue
+            ck.count('lift_scripts')
+            for problem in BP.reinforcement_script_problems(data.decode('utf-8-sig'), ref):
+                ck.error(f'{rel}: {problem}')
+        for zone in sorted(BP.TOAD_REINFORCEMENT_ZONES):
+            for suffix in ('engb', 'xmlb'):
+                rel = f'{zone}.{suffix}'
+                root = self.tree(rel)
+                if root is None:
+                    continue
+                ck.count('map_variants')
+                for problem in BP.reinforcement_map_problems(root, rel):
+                    ck.error(f'{rel}: {problem}')
 
     def hazard_bounds(self, ck):
         """Placed model-less hazards retain bounds and append new saved ordinals."""

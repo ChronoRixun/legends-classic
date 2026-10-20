@@ -3,6 +3,57 @@
 The builder's releases, newest first. The version is `xml1-builder --version`; the content version is what a
 build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebuild.
 
+## v0.2.4 - content version 22 (needs XML2 Fix 1.7.0)
+
+Legends Classic 0.2.4 - content version 22, needs XML2 Fix 1.7.0. Rebuild in the
+launcher, then Play. Both co-op players need the same build and fix.
+
+- **Toad at HAARP fights through all four jets again** (issue #105): he attacks
+  from each jet and stays protected until it breaks, then returns to ground
+  combat. Soldiers ride the two elevators up each time Toad heads for the next jet, step into the arena and
+  fight; the next wave follows once the last one is down.
+- **Enemy resistance text is back:** physical, energy and mental resistance
+  appears beneath the target health bar, with the first game's colors. This
+  changes the display only; damage and resistance rules stay the same. The
+  builder enables `[Game] ResistanceDisplay=xml1`.
+- **Co-op no longer drops during conversations:** a conversation line that
+  moves on by itself (the mansion tour, briefings) now does so at the same
+  moment on both PCs. Before, each PC waited for its own voice clip to end,
+  the games fell out of step and the session ended. Online, a reply you pick
+  no longer plays its full voice line; single-player is unchanged. The builder
+  enables this after a rebuild. Both PCs need builder 0.2.4 and XML2 Fix 1.7.0.
+- The save format is unchanged. The HAARP boss map changed, so an older saved
+  record for that encounter may reset when you enter it.
+
+**Known issues**
+
+- **Online co-op and the first game's solo story segments** (issue #106; Wolverine's opening, Magma's mansion tour):
+  the second online player has no hero while the story seats one hero alone. A co-op *New Game* starts with Wolverine
+  alone, and when a solo segment begins mid-campaign the second player is dropped at the next level load. Use *Load
+  Saved Campaign* for co-op and start a new session from a save after the segment; the fix is planned with 0.3.0's
+  drop-in co-op.
+- **Enemy powers and stun** (issue #101): enemies still use powers and stun heroes more than in the first game
+  (Brotherhood, HAARP); only parts of it are fixed here.
+- **A double jump on slopes or the HAARP bridge** can land a hero outside the play area (issue #22); the remaining
+  fall kill zones are still switched off until proven safe.
+- **Loot and the item shop** (issue #6) are not in this version.
+- **Cosmetic reports** from the first playthrough (issue #54) are still tracked.
+- **Hazards** (issue #104): 57 levels were fixed from an audit of the game's data, but only three rooms were played
+  in the checks. Report any fire, spike or electricity that still doesn't hurt.
+- Co-op was tested with two copies of the game on one PC; the two-PC pass, on one network and across the internet,
+  is 0.3.0.
+
+<details><summary>Technical details</summary>
+
+- Content version 22, catalogue revision 7, lobby token LC31; requires XML2 Fix >=1.7.
+- The builder writes `[Game] ResistanceDisplay=xml1` (display only) and
+  `[Game] OnlineConversations=lockstep` (gameplay agreement rule 27, revision 1).
+  Peers using the earlier 0.2.4a candidate are refused because their rules differ.
+- The save schema is unchanged; an older HAARP boss-zone record may reset because
+  the encounter map changes.
+
+</details>
+
 ## v0.2.3 - content version 21 (needs XML2 Fix 1.6.0)
 
 This build needs **XML2 Fix 1.6.0**: in the launcher, **Rebuild**, then **Play** (the launcher installs the fix after

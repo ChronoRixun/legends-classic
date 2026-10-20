@@ -58,6 +58,61 @@ def test_unrelated_scripts_and_zones_are_unchanged():
     assert B.rewrite_data(root, 'maps/unrelated/test.xml') == 0
 
 
+def landing_fixture():
+    root = ET.Element('world')
+    scripts = frozenset(f'invented/landing{i}' for i in range(4))
+    for i, script in enumerate(sorted(scripts)):
+        ET.SubElement(root, 'entity', name=f'invented_pad{i}', classname='gameent', team='enemy',
+                      actmatchteam='true', actontouch='true', actleader='false', actteamplayer='true',
+                      actscript=script, acttargets=f'next_pad{i}', startenabled=str(i == 0).lower())
+        group = ET.SubElement(root, 'entinst', type=f'invented_pad{i}')
+        ET.SubElement(group, 'inst', name=f'invented_pad{i}', pos='10 20 30', parent='invented_platform')
+    return root, scripts
+
+
+def test_npc_landings_keep_identity_placement_and_other_activation_filters():
+    root, scripts = landing_fixture()
+    before = [dict(el.attrib) for el in root.iter('entity')]
+    placements = [ET.tostring(el) for el in root.iter('entinst')]
+    unrelated = ET.SubElement(root, 'entity', name='invented_player_gate', actteamplayer='true')
+    assert B.allow_npc_landings(root, scripts) == 4
+    assert [dict(el.attrib) for el in list(root.iter('entity'))[:4]] == [
+        dict(attrs, actteamplayer='false') for attrs in before]
+    assert [ET.tostring(el) for el in root.iter('entinst')] == placements
+    assert unrelated.get('actteamplayer') == 'true'
+    assert B.allow_npc_landings(root, scripts) == 0
+
+
+def test_npc_landings_reject_missing_duplicate_or_changed_source_before_mutation():
+    for kind in ('missing', 'duplicate', 'filter'):
+        root, scripts = landing_fixture()
+        first = next(root.iter('entity'))
+        if kind == 'missing':
+            root.remove(first)
+        elif kind == 'duplicate':
+            ET.SubElement(root, 'entity', **first.attrib)
+        else:
+            first.set('team', 'hero')
+        before = ET.tostring(root)
+        try:
+            B.allow_npc_landings(root, scripts)
+        except ValueError:
+            pass
+        else:
+            raise AssertionError('changed source must fail closed')
+        assert ET.tostring(root) == before
+
+
+def test_landing_validator_and_dispatch_use_the_same_contract():
+    from unittest.mock import patch
+    root, scripts = landing_fixture()
+    with patch.object(B, 'TOAD_ZONE', 'maps/invented/arena'), patch.object(B, 'TOAD_LANDING_SCRIPTS', scripts):
+        assert len(B.landing_trigger_problems(root, 'maps/invented/arena.xmlb')) == 4
+        assert B.rewrite_data(root, 'maps/invented/arena.xml') == 4
+        assert not B.landing_trigger_problems(root, 'maps/invented/arena.xmlb')
+        assert not B.landing_trigger_problems(root, 'maps/invented/other.xmlb')
+
+
 def test_shield_relay_preserves_targets_and_is_idempotent():
     root = ET.Element('world')
     relay = ET.SubElement(root, 'entity', {'name': 'barrier', 'classname': 'actionent',

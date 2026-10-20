@@ -235,7 +235,7 @@ FORCED_TEAMS_VALUES = ('1', '0', 'off')
 # v1.5: the 0.2.2 wave's [Game] keys - PlacementCrush, DoubleHeal, RankCosts, LevelSkillPoints, LevelStatPoints,
 # Xml1Multipart, X1Leader, SoloMode, DeathRule, DangerRoomGate, RevivalCost, Xml1Turrets, PackAmount, DeathSwitchClear - and
 # [Limits] ScriptFunctions; a 1.4 DLL silently ignores every one of them, so check_release_dll refuses it)
-REQUIRED_XML2FIX = '1.6'
+REQUIRED_XML2FIX = '1.7'
 
 # xml2-fix [Balance] (xml1build.balance; SPEC 69): the first game's combat numbers for a
 # balance build - one whose styles carry the power-attack marker (report.json build.balance 'xml1'). HeroStatScale
@@ -268,11 +268,18 @@ FAST_TRANSFER = '1'
 # interoperate. Written for every port build.
 RECEIVE_VALIDATION = '1'
 
+# [Game] OnlineConversations=lockstep (XML2 Fix 1.7, gameplay agreement rule 27 revision 1): online, a conversation line
+# that goes on by itself does so |timeDelay| s of game time after it was drawn on every PC, and a chosen reply's voice is
+# cut; single-player is unchanged. Absent = the 1.6.0 decision by this PC's voice end, which put co-op peers one random
+# draw apart and dropped the session.
+ONLINE_CONVERSATIONS = 'lockstep'
+
 # every key the port may write (the builder drops the ones a build does not need); the launcher owns the rest
 PORT_OWNED = {'Game': ('NewGameTeam', 'ResetUnlocks', 'SaveFolder', 'ForcedTeams', 'PostgameScript', 'WindowTitle',
                         'EndHeroUnlock', 'MainMenuItems', 'DangerRoomGate', 'ClassicMainBackdrop', 'ClassicMainPanelBounds', 'NewGamePlus', 'ReviewStats', 'Xtract', 'XtractionShop', 'RevivalCost', 'XPCurve',
                        'GeometrySharingBlendIndices', 'CharacterLadderPaths', 'ObjectiveDescriptions',
-                       'BreakRule', 'PlacementCrush', 'ObjectWorldImpact', 'DoubleHeal', 'DeathRule', 'NpcPowerRule', 'StunRule', 'DangerRoomParty', 'DangerRoomHealthBars', 'BoxHarmOrigin', 'HarmSingleChain', 'HarmLoopStartup', 'ConfirmationRelease',
+                       'BreakRule', 'PlacementCrush', 'ObjectWorldImpact', 'DoubleHeal', 'DeathRule', 'NpcPowerRule', 'StunRule', 'DangerRoomParty', 'DangerRoomHealthBars', 'ResistanceDisplay', 'BoxHarmOrigin', 'HarmSingleChain', 'HarmLoopStartup', 'ConfirmationRelease',
+                       'OnlineConversations',
                        'ExplosiveFirstHit', 'PackAmount', 'SoloMode', 'X1Leader', 'DeathSwitchClear', 'RankCosts', 'LevelSkillPoints', 'LevelStatPoints', 'Xml1Multipart',
                        'Xml1MasterMold', 'Xml1MoldStage', 'Xml1Turrets', 'Xml1LockOnEffects', 'Xml1LockOnAim'),
               'Limits': ('ActorSlots', 'ResourceNames', 'ItemEnhancements', 'FightStyles', 'EffectCurves', 'MoveTriggers', 'EntityCapacity',
@@ -456,8 +463,15 @@ def game_keys(*, xml1_opening=True, save_folder=None, forced_teams='1', add_hero
         # opponents must retain their target gauges without changing protection.
         game['DangerRoomParty'] = 'xml1'
         game['DangerRoomHealthBars'] = 'xml1'
+        # Target subtitles must query the scoped damage modifiers used by the
+        # converted original talents, rather than only the PC's resist_* rows.
+        game['ResistanceDisplay'] = 'xml1'
         game['BoxHarmOrigin'] = 'xml1'
         game['HarmSingleChain'] = 'single'
+        # Online, an auto-advancing conversation line goes on after the same game time on every PC (not when this PC's
+        # voice ends): a line change draws from the shared random generator, so co-op dropped mid-conversation.
+        # Gameplay agreement rule 27, requested only (XML2 Fix 1.7).
+        game['OnlineConversations'] = ONLINE_CONVERSATIONS
         # XML1's opening: startFirstMission seats Wolverine alone, resetgame unlocks nobody (xml2-fix new_game.cpp;
         # the build's New Game hook uses loadMapKeepTeam - build_xml1.py --newgame keepteam, the default)
         game.update(NewGameTeam='wolverine', ResetUnlocks='0')
@@ -758,6 +772,10 @@ RELEASE_16_KEYS = {**RELEASE_15_KEYS,
                                                      'Xml1LockOnEffects', 'Xml1LockOnAim', 'HarmLoopStartup'),
                    'Online': ('FastTransfer', 'ReceiveValidation')}
 
+# XML2 Fix 1.7 adds the display-only adapter and the online conversation rule (27); earlier keys retain their release
+# grouping.
+RELEASE_17_KEYS = {**RELEASE_16_KEYS, 'Game': RELEASE_16_KEYS['Game'] + ('ResistanceDisplay', 'OnlineConversations')}
+
 
 def check_release_dll(dll, keys: dict) -> None:
     """An existing companion DLL must know every required key the build writes (as check_entity_capacity_dll does
@@ -766,7 +784,7 @@ def check_release_dll(dll, keys: dict) -> None:
     if not dll.is_file():
         return
     data = dll.read_bytes()
-    missing = [f'[{section}] {key}' for section, names in RELEASE_16_KEYS.items() for key in names
+    missing = [f'[{section}] {key}' for section, names in RELEASE_17_KEYS.items() for key in names
                if key in keys.get(section, {}) and key.encode('utf-16le') not in data]
     if missing:
         raise FixTooOld(f'This build needs XML2 Fix {REQUIRED_XML2FIX} or later; the existing DLL does not recognize '
