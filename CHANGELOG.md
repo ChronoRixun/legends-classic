@@ -3,7 +3,7 @@
 The builder's releases, newest first. The version is `xml1-builder --version`; the content version is what a
 build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebuild.
 
-## v0.2.5 - unreleased - content version 23 (needs XML2 Fix 1.7.1)
+## v0.2.5 - content version 23 (needs XML2 Fix 1.7.1)
 
 Legends Classic 0.2.5 - content version 23, needs XML2 Fix 1.7.1. Rebuild in the
 launcher, then Play. Both co-op players need the same build and fix.
