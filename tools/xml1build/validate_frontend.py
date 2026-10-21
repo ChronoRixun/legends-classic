@@ -934,10 +934,10 @@ def v_personal_items(v, ck):
                 problems += 1
             else:
                 size = _personal_texture_size(v, f'{tex}.igb')
-                if size is not None and size != (512, 384):
+                if size is not None and size != (512, 256):
                     ck.error(f'personalItem({lit!r}): texture {tex}.IGB ({", ".join(rels)}) is {size[0]}x{size[1]}'
-                             f', not 512x384 re-framed for the menu image sprite (frontend re-composes it; the '
-                             f'engine stretches the sprite over the whole 512x384 virtual screen)')
+                             f', not the original 512x256 picture (the engine draws it in a 256x128 window with '
+                             f'[Game] PersonalItemPicture=window; a re-composed 512x384 texture would be squeezed into it)')
                     problems += 1
         if not problems:
             ck.count('personal_items_ok')

@@ -3,6 +3,21 @@
 The builder's releases, newest first. The version is `xml1-builder --version`; the content version is what a
 build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebuild.
 
+## v0.2.5 - content version 23 (needs XML2 Fix 1.7.1)
+
+Legends Classic 0.2.5 - content version 23, needs XML2 Fix 1.7.1. Rebuild in the
+launcher, then Play. Both co-op players need the same build and fix.
+
+- **Bedroom items show their picture in the first game's picture window** (issue #54): each item in the
+  mansion bedrooms shows the first game's own picture in its picture window, with the panels, text and Back bar
+  around it, instead of an enlarged picture hiding them. The builder ships the first game's pictures unchanged and
+  writes `[Game] PersonalItemPicture=window`.
+- **Heroes are re-stunned by every stun hit, as in the first game** (issue #101, `[Game] StunRule=xml1`, rule 18
+  revision 3): a hero who is already stunned is stunned again by the next stun hit instead of ignoring it, so the
+  Brotherhood in the ice tunnels and other stunning enemies keep a hero reeling the way they did in the first
+  game. Stuns still end when the hero gets up. Both co-op PCs need builder 0.2.5 and XML2 Fix 1.7.1.
+- The save format is unchanged.
+
 ## v0.2.4 - content version 22 (needs XML2 Fix 1.7.0)
 
 Legends Classic 0.2.4 - content version 22, needs XML2 Fix 1.7.0. Rebuild in the
