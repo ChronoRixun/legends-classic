@@ -96,7 +96,8 @@ python tools/freeze_builder.py --smoke                 # -> dist/xml1-builder/, 
 one-folder mode (no UPX), runs the content guard over the bundled data, zips the result with the launcher's release
 manifest and, with `--smoke`, runs `tools/freeze_smoke.py` against it. CI does the same on every push
 (`.github/workflows/release.yml`); a `v*` tag that matches `VERSION` in `tools/xml1builder/__init__.py` publishes the
-release.
+release. Beta and rc tags match the numeric base and carry the suffix through the frozen
+builder and manifest; see [RELEASING.md](RELEASING.md).
 
 ## Where to read next
 

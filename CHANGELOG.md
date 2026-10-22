@@ -3,6 +3,66 @@
 The builder's releases, newest first. The version is `xml1-builder --version`; the content version is what a
 build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebuild.
 
+## v0.3.0 - content version 24 (needs XML2 Fix 1.8.0)
+
+Legends Classic 0.3.0 brings online play from Ultimate Legends **0.4.0**. Update the launcher to 0.4.0 first,
+then **Rebuild**, then **Play**. Everyone needs the same 0.3.0 build and XML2 Fix 1.8.0 or later;
+0.2.x and 0.3.0 never join each other. Test mode must be off.
+
+
+- **Four-player start is fixed:** participants keep distinct peers when the game starts.
+- **Hero swaps survive level changes.** Solo-segment hand-back runs only during the segment and where it ends,
+  using the heroes held when the segment began (rule 26 revision 6).
+- **Slow players stay connected.** LAG warnings may still show, but the slow-player drop is disabled.
+- **Frozen guests:** a joiner frozen for 30 seconds is removed through the agreed cut frame; survivors keep playing.
+  A host drop or freeze still ends the joiners' session with "lost connection to the host".
+
+- **Host or join by code**, without port forwarding or ini editing. The code appears in the game's online menus
+  and host lobby; the launcher copies it when it first appears.
+- **Browse public games:** opt in to a public listing with a room name, or keep the room private and share its code.
+  The list shows the host, level, mode and player count. A matching build's row can join: room tokens are exactly
+  `GameVersion` (`LC33`), with no content fingerprint appended. The normal gameplay agreement still checks content
+  and rules when joining.
+- **Drop-in co-op is on by default.** Start alone, let friends join mid-campaign, then bring them into play at the
+  next level change. When the last guest leaves, the host keeps playing and can accept another.
+- **Solo story segments:** players without a hero stay connected as watchers and regain control when the party
+  widens. This covers Wolverine's opening and Magma's mansion tour (issue #106).
+- **An abrupt guest drop in a game of three or more no longer ends the survivors' session.** XML2 Fix's rule 25
+  revision 4 agrees a cut frame before removing the lost player. That player can join again by code and return at
+  the next level change. Losing the host still ends the session; there is no host migration.
+- **Clearer room messages:** `room_closed` means the game cannot take new players right now; `room_full` means
+  all four places are taken (launcher contract v1.5).
+- Encrypted connections with relay fallback, and online hardening. Public games connect players directly, so
+  players can see each other's internet address. Use a private code to play only with friends.
+- The broker allows at most two public rooms and two seats in other people's rooms per internet address.
+- Includes 0.2.5's bedroom picture window and per-hit hero stun fix. The save format is unchanged.
+
+See [Play online](docs/ONLINE.md) for steps, privacy and troubleshooting.
+
+**Known issues**
+
+- **Enemy attack rate** (issue #101): enemies can still attack more often than in the first game. The per-hit
+  hero stun fix shipped in 0.2.5; it does not close the remaining combat report.
+- **Falls** (issue #22): a double jump on slopes or the HAARP bridge can land outside the play area; remaining
+  fall kill zones stay switched off until proven safe.
+- **Cosmetics** (issue #54): the HAARP officer's gun appearance remains open; the bedroom picture window is fixed.
+- **Loot and the item shop** (issue #6) still use the sequel's systems.
+- **Hazards** (issue #104): the earlier 57-level audit had live checks in only three rooms. Report any fire,
+  spike or electricity that still does not hurt.
+- **Host loss ends the session.** There is no host migration; host again and load the last save.
+- **Four-player internet play is not yet verified.** Local three-player abrupt-drop checks passed; the owner's
+  030e three-PC acceptance including a hotspot PC is still required before publication.
+- A failed shared-campaign restore can require rehosting. Automatic reconnection is not provided.
+
+<details><summary>Technical details</summary>
+
+- Builder 0.3.0, content 24, catalogue 7, game version LC33; requires XML2 Fix >=1.8 (CMake/DLL 1.8.0).
+- Builder defaults include `Broker`, `BrokerPin`, `JoinInProgress=1`, `FastTransfer=1` and `ReceiveValidation=1`.
+  Room starts imply GNS transport (rule 25 revision 4 / framing 3); drop-in uses rule 26 revision 6.
+- Conversation timing is the 0.2.4 fix (rule 27), retained here, rather than a new 0.3.0 feature.
+
+</details>
+
 ## v0.2.5 - content version 23 (needs XML2 Fix 1.7.1)
 
 Legends Classic 0.2.5 - content version 23, needs XML2 Fix 1.7.1. Rebuild in the

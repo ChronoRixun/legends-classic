@@ -28,6 +28,8 @@ jobs:
       # BUILDER_DESIGN.md 3.3 step 1 wants the bootloader built from source (the prebuilt one's hash is on AV lists).
       # The wheel's bootloader is used until that is switched on for releases; the choice lands in build-info.json.
       XML1_BOOTLOADER: ${{ inputs.bootloader || 'wheel' }}
+      # Used by the freezer and both smoke runs; source VERSION remains the numeric base.
+      XML1_RELEASE_TAG: ${{ github.ref_type == 'tag' && github.ref_name || '' }}
     steps:
       - uses: actions/checkout@v7
 
@@ -44,6 +46,9 @@ jobs:
       - name: Tag matches the builder version
         if: github.ref_type == 'tag'
         run: python tools/freeze_builder.py --check-tag "${{ github.ref_name }}"
+
+      - name: Test release policy
+        run: python tools/test_release_metadata.py
 
       - name: PyInstaller bootloader from source
         if: env.XML1_BOOTLOADER == 'source'
@@ -93,7 +98,9 @@ jobs:
     steps:
       - uses: actions/checkout@v7            # CHANGELOG.md for the notes (the job has no tree otherwise)
         with:
-          sparse-checkout: CHANGELOG.md
+          sparse-checkout: |
+            /CHANGELOG.md
+            /tools/release_metadata.py
           sparse-checkout-cone-mode: false
 
       - uses: actions/download-artifact@v8
@@ -106,29 +113,15 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ github.ref_name }}
         run: |
-          content=$(jq -r .content_version dist/xml1-builder.json)
-          {
-            echo "Legends Classic builder $TAG (content version $content)."
-            echo
-            # this tag's section of CHANGELOG.md (from its "## $TAG" heading to the next "## "), if there is one
-            awk -v tag="$TAG" '/^## /{p = index($0, "## " tag " ") == 1 || $0 == "## " tag} p' CHANGELOG.md 2>/dev/null | tail -n +2
-            echo
-            echo "The Ultimate Legends launcher installs and runs it for you. Standalone use: unzip, then run"
-            echo "\`xml1-builder.exe --help\`. It contains no game data: it builds X-Men Legends from your own Xbox disc"
-            echo "image and your own X-Men Legends II install, and makes no network calls."
-            echo
-            echo "SHA-256:"
-            echo '```'
-            cat dist/SHA256SUMS.txt
-            echo '```'
-          } > notes.md
+          python3 tools/release_metadata.py --tag "$TAG" --notes-output notes.md > release.json
+          mapfile -t release_flags < <(jq -r '.flags[]' release.json)
           # the tag may already carry a release (one made on the GitHub page, which is also how the tag gets pushed
           # from a phone): then the assets are added to it and its notes replaced; otherwise the release is created
           if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             gh release upload "$TAG" dist/xml1-builder-*-win64.zip dist/xml1-builder.json dist/SHA256SUMS.txt \
               --repo "$GITHUB_REPOSITORY" --clobber
-            gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --title "xml1-builder $TAG" --notes-file notes.md
+            gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --title "xml1-builder $TAG" --notes-file notes.md "${release_flags[@]}"
           else
             gh release create "$TAG" dist/xml1-builder-*-win64.zip dist/xml1-builder.json dist/SHA256SUMS.txt \
-              --repo "$GITHUB_REPOSITORY" --title "xml1-builder $TAG" --notes-file notes.md
+              --repo "$GITHUB_REPOSITORY" --title "xml1-builder $TAG" --notes-file notes.md "${release_flags[@]}"
           fi
