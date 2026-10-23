@@ -355,11 +355,12 @@ def test_port_keys_from_a_synthetic_build():
                                               'PlacementCrush': 'xml1', 'ObjectWorldImpact': 'xml1', 'DoubleHeal': '0', 'ExplosiveFirstHit': '1',
                                               'RankCosts': '1', 'LevelSkillPoints': 'xml1',
                                               'LevelStatPoints': 'xml1', 'Xml1Multipart': '1', 'DeathRule': 'xml1',
-                                              'NpcPowerRule': 'xml1', 'StunRule': 'xml1', 'DangerRoomParty': 'xml1', 'DangerRoomHealthBars': 'xml1', 'ResistanceDisplay': 'xml1', 'BoxHarmOrigin': 'xml1', 'HarmSingleChain': 'single', 'OnlineConversations': 'lockstep', 'PersonalItemPicture': 'window', 'PackAmount': 'xml1', 'SoloMode': '1', 'X1Leader': '1',
+                                              'NpcPowerRule': 'xml1', 'StunRule': 'xml1', 'DangerRoomParty': 'xml1', 'DangerRoomHealthBars': 'xml1', 'ResistanceDisplay': 'xml1', 'BoxHarmOrigin': 'xml1', 'HarmSingleChain': 'single', 'OnlineConversations': 'lockstep', 'PersonalItemPicture': 'window', 'ComboPopupGuard': '1', 'PackAmount': 'xml1', 'SoloMode': '1', 'X1Leader': '1',
                                               'DeathSwitchClear': '1'},
                                      'Limits': {'ActorSlots': '127', 'ResourceNames': '1024', 'ItemEnhancements': '512',
                                                 'FightStyles': '32', 'EffectCurves': '3600', 'MoveTriggers': '64', 'EntityCapacity': '1',
-                                                'ScriptFunctions': '1024'}}
+                                                'ScriptFunctions': '1024'},
+                                     'Engine': {'ModelPools': 'x4'}}
         menu = ET.Element('menu', type='MAIN_MENU')
         for i in range(1, 9):
             attrs = {'name': f'button{i}', 'text': f't{i}'}
@@ -392,6 +393,21 @@ def test_port_keys_from_a_synthetic_build():
                                 port_identity=True, review_stats='0', xtract='0')
         parsed = FI.parse_ini(text)
         assert parsed['Game'] == g and parsed['Limits'] == keys['Limits'] and parsed['Online'] == keys['Online']
+        assert parsed['Engine'] == keys['Engine'] == {'ModelPools': 'x4'} and 'ModelPools' in FI.PORT_OWNED['Engine']
+
+
+def test_beta2_keys_refuse_a_beta1_dll_and_require_the_beta2_fix():
+    # 0.3.0-beta.2 writes [Engine] ModelPools and [Game] ComboPopupGuard, which XML2 Fix 1.8.0-beta.1 does not read
+    # (same numeric VERSIONINFO 1.8.0.0): the DLL check names both; beta/rc builders require '>=1.8.0-beta.2'.
+    keys = {'Game': {'ComboPopupGuard': '1'}, 'Engine': {'ModelPools': 'x4'}}
+    with tempfile.TemporaryDirectory() as td:
+        dll = Path(td) / 'dinput.dll'
+        dll.write_bytes(b'MZ' + 'JoinInProgress'.encode('utf-16le'))
+        assert FI.old_fix_keys(dll, keys) == ['[Game] ComboPopupGuard', '[Engine] ModelPools']
+        dll.write_bytes(b'MZ' + 'ComboPopupGuard'.encode('utf-16le') + 'ModelPools'.encode('utf-16le'))
+        assert FI.old_fix_keys(dll, keys) == []
+    assert FI.required_xml2fix('0.3.0-beta.2') == FI.required_xml2fix('0.3.0-rc.1') == '>=1.8.0-beta.2'
+    assert FI.required_xml2fix('0.3.0') == '>=1.8'
 
 
 def test_harness_installs_write_the_shipped_limits_by_default():

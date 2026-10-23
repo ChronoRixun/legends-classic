@@ -7,9 +7,11 @@ zeroes in numeric components. The numeric base must match `VERSION` in
 or assign a new lobby identity. Changes to generated game output still require the content
 version and release-identity work described in the [release checklist](RELEASE_CHECKLIST.md).
 
-Beta and rc builders declare `requires_xml2fix: ">=1.8.0-0"` in the release manifest and
-`requires.xml2fix` in the generated build stamp, so companion `1.8.0-beta.N`, rc and final
-fixes satisfy the requirement while `1.7.x` does not. Stable builders retain the exact `>=1.8`
+Beta and rc builders declare `requires_xml2fix: ">=1.8.0-beta.2"` in the release manifest and
+`requires.xml2fix` in the generated build stamp (`REQUIRED_XML2FIX_PRERELEASE`, `beta.2` since
+0.3.0-beta.2, which writes keys first read by XML2 Fix 1.8.0-beta.2), so companion `1.8.0-beta.2`
+and later betas, rc and final fixes satisfy the requirement while `1.8.0-beta.1` and `1.7.x` do
+not (0.3.0-beta.1 declared `>=1.8.0-0`). Stable builders retain the exact `>=1.8`
 requirement. Both paths use `xml1build.fix_ini.required_xml2fix`; `REQUIRED_XML2FIX` stays numeric.
 The builder's installed-DLL checks still require the 1.8 capabilities, so beta DLLs with numeric
 `1.8.0.x` VERSIONINFO work and an older DLL missing those capabilities is refused.

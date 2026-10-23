@@ -10,6 +10,14 @@ then **Rebuild**, then **Play**. Everyone needs the same 0.3.0 build and XML2 Fi
 0.2.x and 0.3.0 never join each other. Test mode must be off.
 
 
+- **Beta 2: no more team-combo crash, bigger model pools.** Builds now write XML2 Fix's `[Engine] ModelPools = x4`
+  (4096 models, 2048 IGB, 128 actors, 128 particle clouds ...) and `[Game] ComboPopupGuard = 1`: with the game's own
+  pools a heavy fight could fill one, effects and props went missing and a team-combo popup without a hero's head
+  crashed the game (beta 1, hosting alone in the Maintenance Garage). The pools are gameplay-agreement rule 28, so a
+  beta 1 game and a beta 2 game refuse each other at join, naming `28 ModelPools` on the beta 2 PC: everyone
+  rebuilds with builder 0.3.0-beta.2 and XML2 Fix 1.8.0-beta.2. Beta and rc builders now require
+  `>=1.8.0-beta.2`; the builder refuses an older DLL that does not know the two keys. Content and the lobby token
+  (`LC33`) are unchanged.
 - **Four-player start is fixed:** participants keep distinct peers when the game starts.
 - **Hero swaps survive level changes.** Solo-segment hand-back runs only during the segment and where it ends,
   using the heroes held when the segment began (rule 26 revision 6).

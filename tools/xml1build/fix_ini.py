@@ -144,6 +144,17 @@ LIMITS = {'ActorSlots': '127', 'ResourceNames': '1024', 'ItemEnhancements': '512
 # set (stock XML2 is not known to need it), so every XML1 build asks for it.
 GEOMETRY_SHARING_BLEND_INDICES = '1'
 
+# xml2-fix 1.8.0-beta.2 [Engine] ModelPools (its docs/model-pools.md): every model the game shows takes a handle and
+# components from fixed pools (handles 692, IGB 400, actors 32, particle clouds 40, ...); a full pool silently refuses
+# the model - and the spawn that needs it (the beta 1 crash: a team-combo head the full IGB pool refused). x4 raises
+# them all (handles 4096, IGB 2048, actors 128, clouds 128). Online it is gameplay-agreement rule 28 (ModelPools): a
+# 1.8.0-beta.1 peer, which has no rule 28, and a beta.2 port build refuse each other at join by name.
+MODEL_POOLS = 'x4'
+# xml2-fix 1.8.0-beta.2 [Game] ComboPopupGuard: a team-combo popup that lacks a hero's head is hidden instead of
+# crashing (XMen2.exe+0x1a6848). On by default in the DLL; written so the builder's DLL check (check_release_dll)
+# refuses a 1.8.0-beta.1 DLL without it. Display only, no agreement rule.
+COMBO_POPUP_GUARD = '1'
+
 # xml2-fix 1.3.2 [Game] CharacterLadderPaths (SPEC 46, issue #32): the sewer and Arbiter ladder descents are driven by
 # two generated native motion paths (ladder_motion), but XMen2.exe never schedules the generic path evaluator for
 # characters. '1' makes the fix evaluate those two paths with the native movement timer; ordinary character
@@ -236,19 +247,24 @@ FORCED_TEAMS_VALUES = ('1', '0', 'off')
 # Xml1Multipart, X1Leader, SoloMode, DeathRule, DangerRoomGate, RevivalCost, Xml1Turrets, PackAmount, DeathSwitchClear - and
 # [Limits] ScriptFunctions; a 1.4 DLL silently ignores every one of them, so check_release_dll refuses it)
 REQUIRED_XML2FIX = '1.8'
+# The companion fix's prerelease a beta/rc builder needs (launcher-facing requires.xml2fix only): 0.3.0-beta.2 writes
+# [Engine] ModelPools and [Game] ComboPopupGuard, first read by XML2 Fix 1.8.0-beta.2, so its requirement is
+# '>=1.8.0-beta.2' (SemVer: beta.2, beta.N > 2, every rc and the final 1.8.0 meet it; 1.8.0-beta.1 does not).
+REQUIRED_XML2FIX_PRERELEASE = 'beta.2'
 
 
 def required_xml2fix(builder_version: str) -> str:
     """Launcher-facing requirement shared by the release manifest and generated build stamp.
 
-    Beta/rc builders accept the companion fix's prereleases as well as the final release.
-    Keep the stable requirement's original spelling. DLL capability checks below remain
-    independent of this SemVer metadata: beta fixes have the same numeric VERSIONINFO.
+    Beta/rc builders accept the companion fix's prereleases from REQUIRED_XML2FIX_PRERELEASE on
+    as well as the final release. Keep the stable requirement's original spelling. DLL capability
+    checks below remain independent of this SemVer metadata: beta fixes have the same numeric
+    VERSIONINFO (check_release_dll tells them apart by the keys they read).
     """
     if re.fullmatch(r'[0-9]+\.[0-9]+\.[0-9]+-(?:beta|rc)\.[0-9]+', builder_version):
         parts = REQUIRED_XML2FIX.split('.')
         base = '.'.join(parts + ['0'] * (3 - len(parts)))
-        return '>=' + base + '-0'
+        return '>=' + base + '-' + (REQUIRED_XML2FIX_PRERELEASE or '0')
     return '>=' + REQUIRED_XML2FIX
 
 
@@ -315,13 +331,14 @@ PORT_OWNED = {'Game': ('NewGameTeam', 'ResetUnlocks', 'SaveFolder', 'ForcedTeams
                         'EndHeroUnlock', 'MainMenuItems', 'DangerRoomGate', 'ClassicMainBackdrop', 'ClassicMainPanelBounds', 'NewGamePlus', 'ReviewStats', 'Xtract', 'XtractionShop', 'RevivalCost', 'XPCurve',
                        'GeometrySharingBlendIndices', 'CharacterLadderPaths', 'ObjectiveDescriptions',
                        'BreakRule', 'PlacementCrush', 'ObjectWorldImpact', 'DoubleHeal', 'DeathRule', 'NpcPowerRule', 'StunRule', 'DangerRoomParty', 'DangerRoomHealthBars', 'ResistanceDisplay', 'BoxHarmOrigin', 'HarmSingleChain', 'HarmLoopStartup', 'ConfirmationRelease',
-                       'OnlineConversations', 'PersonalItemPicture',
+                       'OnlineConversations', 'PersonalItemPicture', 'ComboPopupGuard',
                        'ExplosiveFirstHit', 'PackAmount', 'SoloMode', 'X1Leader', 'DeathSwitchClear', 'RankCosts', 'LevelSkillPoints', 'LevelStatPoints', 'Xml1Multipart',
                        'Xml1MasterMold', 'Xml1MoldStage', 'Xml1Turrets', 'Xml1LockOnEffects', 'Xml1LockOnAim'),
               'Limits': ('ActorSlots', 'ResourceNames', 'ItemEnhancements', 'FightStyles', 'EffectCurves', 'MoveTriggers', 'EntityCapacity',
                          'ScriptFunctions'),
               'Online': ('GameVersion', 'ContentFingerprint', 'FastTransfer', 'ReceiveValidation', 'JoinInProgress'),
               'Save': ('Format',),
+              'Engine': ('ModelPools',),
               'Xml1Turrets': ('Count',) + tuple(f'T{i}' for i in range(1, 33))}
 
 
@@ -527,6 +544,7 @@ def game_keys(*, xml1_opening=True, save_folder=None, forced_teams='1', add_hero
         game['OnlineConversations'] = ONLINE_CONVERSATIONS
         # The bedroom items' pictures are the first game's 512x256 art, drawn in its 256x128 window (SPEC 56).
         game['PersonalItemPicture'] = PERSONAL_ITEM_PICTURE
+        game['ComboPopupGuard'] = COMBO_POPUP_GUARD
         # XML1's opening: startFirstMission seats Wolverine alone, resetgame unlocks nobody (xml2-fix new_game.cpp;
         # the build's New Game hook uses loadMapKeepTeam - build_xml1.py --newgame keepteam, the default)
         game.update(NewGameTeam='wolverine', ResetUnlocks='0')
@@ -637,7 +655,7 @@ def port_keys(out, *, save_folder=PLAY_SAVE_FOLDER, eighth=True) -> dict:
         game.update(build_mold_controller(out))
         game.update(build_lockon_effects(out))
         game.update(turrets.get('Game', {}))
-    keys = {'Game': game, 'Limits': dict(LIMITS)}
+    keys = {'Game': game, 'Limits': dict(LIMITS), 'Engine': {'ModelPools': MODEL_POOLS}}
     if turrets:
         keys['Xml1Turrets'] = turrets['Xml1Turrets']
     balance = build_balance(out)
@@ -835,6 +853,10 @@ RELEASE_17_KEYS = {**RELEASE_16_KEYS, 'Game': RELEASE_16_KEYS['Game'] + ('Resist
 
 # XML2 Fix 1.8 (Legends Classic 0.3.0) adds online rooms (Broker / BrokerPin are read since then) and drop-in co-op.
 RELEASE_18_KEYS = {**RELEASE_17_KEYS, 'Online': RELEASE_17_KEYS['Online'] + ('JoinInProgress',)}
+# XML2 Fix 1.8.0-beta.2 (Legends Classic 0.3.0-beta.2): the bigger model pools (gameplay-agreement rule 28) and the
+# team-combo popup guard. A 1.8.0-beta.1 DLL knows neither, so the builder refuses it (its VERSIONINFO is the same
+# numeric 1.8.0.0; the key strings are what tells the two apart).
+RELEASE_18_KEYS = {**RELEASE_18_KEYS, 'Game': RELEASE_18_KEYS['Game'] + ('ComboPopupGuard',), 'Engine': ('ModelPools',)}
 
 
 def check_release_dll(dll, keys: dict) -> None:
