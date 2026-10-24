@@ -116,6 +116,10 @@ def main(argv=None) -> int:
         if not dll.is_file():
             missing.append(dll)
     check('layout', not missing, ', '.join(str(p) for p in missing))
+    # The classic look's frontend stage writes its PNGs through Pillow (requirements.txt); a bundle without its
+    # compiled core fails every build at the frontend stage (0.4.0-beta.5 RC: 'No module named PIL').
+    check('Pillow bundled', any((internal / 'PIL').glob('_imaging*.pyd')) or any((internal / 'PIL').glob('_imaging*.so')),
+          'PIL/_imaging is not in the bundle')
     graph = internal / 'research' / 'sweep' / 'graph.json'
     check('packaged tables', graph.is_file() and R.PACKAGED_MARK in json.loads(graph.read_text(encoding='utf-8')),
           'research/sweep/graph.json is not the packaged (text-free) copy')

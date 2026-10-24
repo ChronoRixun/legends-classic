@@ -6,11 +6,10 @@ Styles use modern colour fields, not the first game's legacy colour attribute.
 """
 from __future__ import annotations
 
-import copy
 import math
-import xml.etree.ElementTree as ET
 
 from . import igb_file as G
+from . import menu_theme as T
 
 MAIN_STYLE = 'STYLE_LC_MAIN'
 HELP_STYLE = 'STYLE_LC_MAIN_DESC'
@@ -39,45 +38,11 @@ def palette_styles(base_colors, base_styles, original_colors):
     Reuse identical non-pulsing colours and allocate unoccupied IDs deterministically.
     Refuse either native table ceiling before returning any output.
     """
-    colors, styles = copy.deepcopy(base_colors), copy.deepcopy(base_styles)
-    used = {}
-    for entry in colors:
-        idx = int(entry.get('id', '-1'))
-        if not 0 <= idx < COLOR_LIMIT or idx in used:
-            raise ValueError('PC palette has an invalid or duplicate colour ID')
-        _rgba(entry.get('value'))
-        used[idx] = entry
-    source = list(original_colors)
-    mapping = {}
-    for idx in (0, 5, 9, 10):
-        if idx >= len(source):
-            raise ValueError('original palette lacks a main-menu colour')
-        value = source[idx].get('value')
-        rgba = _rgba(value)
-        found = next((key for key, entry in sorted(used.items())
-                      if not entry.get('pulse') and _rgba(entry.get('value')) == rgba), None)
-        if found is None:
-            found = next((key for key in range(COLOR_LIMIT) if key not in used), None)
-            if found is None:
-                raise ValueError('no free native palette ID for the original main menu')
-            used[found] = ET.SubElement(colors, 'color', {'id': str(found), 'value': value})
-        mapping[idx] = str(found)
-    names = [entry.get('name') for entry in styles]
-    if len(names) != len(set(names)):
-        raise ValueError('PC style table has duplicate names')
-    for entry in list(styles):
-        if entry.get('name') in (MAIN_STYLE, HELP_STYLE):
-            styles.remove(entry)
-    if len(styles) + 2 > STYLE_LIMIT:
-        raise ValueError('original main styles exceed the native style table')
-    for name, font, normal, focus, disabled, allow in (
-            (MAIN_STYLE, 'big', 9, 10, 5, 'true'),
-            (HELP_STYLE, 'medium', 0, 0, 5, 'false')):
-        ET.SubElement(styles, 'style', {'name': name, 'font': font,
-            'color_nofocus': mapping[normal], 'color_focus': mapping[focus],
-            'color_highlight': mapping[focus], 'color_disabled': mapping[disabled],
-            'allow_focus': allow, 'focus_time': '0'})
-    return colors, styles, mapping
+    # Keep the established main allocation byte-for-byte; new screen families use
+    # the allocator's reserved headroom rather than consuming the native ceilings.
+    return T.allocate(base_colors, base_styles, original_colors, (
+        T.text_style(MAIN_STYLE, font='big', normal=9, focus=10, allow=True),
+        T.text_style(HELP_STYLE)), color_reserve=0, style_reserve=0)
 
 
 def help_alias(data, source_name='desctext1', target_name=HELP_NODE, z=HELP_Z):

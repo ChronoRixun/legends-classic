@@ -5,7 +5,7 @@ data, so every command that builds or tests the port reads your disc image and y
 
 ## Set-up
 
-- **Python 3.14, 64-bit** (the version the release is frozen with and CI tests on) and the pinned numpy:
+- **Python 3.14, 64-bit** (the version the release is frozen with and CI tests on) and the pinned numpy and Pillow:
 
   ```
   python -m pip install -r requirements.txt
@@ -106,3 +106,9 @@ builder and manifest; see [RELEASING.md](RELEASING.md).
 - `tools/xml1build/SPEC_heroes.md` - the hero conversion.
 - `research/release/BUILDER_DESIGN.md` - the builder, packaging, launcher integration and the publishing rules.
 - `research/` - the notes behind the decisions ([research/README.md](../research/README.md)).
+
+The frontend stage also builds the classic HUD atlas and models for both
+frontend modes and writes `[Game] ClassicHud=xml1` and `[Game] ClassicCodex=1`
+(0.4.0-beta.5, the classic look). They need XML2 Fix 1.8.0-beta.5 or later; the
+builder refuses an older DLL by name. See [the HUD contract](CLASSIC_HUD_PILOT.md)
+for the off switch and acceptance limits.

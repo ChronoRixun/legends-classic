@@ -66,8 +66,9 @@ def _shipped(name):
 hiddenimports = sorted(set(collect_submodules('xml1build', filter=_shipped)
                            + collect_submodules('xml1builder', filter=_shipped)
                            + collect_submodules('lcsave', filter=_shipped)
-                           + ['build_xml1', 'xmlb']))
-excludes = ['tkinter', '_tkinter', 'numpy.f2py', 'numpy.tests', 'pytest', 'PIL', 'matplotlib', 'scipy', 'IPython',
+                           + ['build_xml1', 'xmlb', 'PIL.Image', 'PIL.PngImagePlugin']))   # Pillow: the classic look's PNGs
+excludes = ['tkinter', '_tkinter', 'numpy.f2py', 'numpy.tests', 'pytest', 'matplotlib', 'scipy', 'IPython',
+            'PIL.ImageTk', 'PIL._tkinter_finder', 'PIL.ImageQt',
             'xml1build.igb_budget', 'xml1build.schema_check', 'xml1build.regress_nyc1']
 
 

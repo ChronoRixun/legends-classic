@@ -795,6 +795,8 @@ def v17_review(v, ck):
     # the review menu: XML2's REVIEW_PATHS_MENU without the Stats tab (XML1 had none; XML2's lists its acts 1-5 from
     # exe code), the four category tabs kept; xml2-fix ReviewStats=0 wraps the tab change at 4 (SPEC 21.4.3)
     want_x, want_e, _removed = F.review_menu_trees(ctx)
+    from . import review_appearance as RA
+    want_x, want_e = (RA.tree(root) if root is not None else None for root in (want_x, want_e))
     for ext, want in (('.XMLB', want_x), ('.engb', want_e)):
         rel = F.REVIEW_MENU_REL + ext
         root = _tree(v, rel)
@@ -876,6 +878,391 @@ def v_pda_portal(v, ck):
         for p in F.pda_portal_problems(root):
             ck.error(f'{rel}: {p} (the Blink Portal leads to X-Men Legends II\'s towns, issue #89)')
         ck.count('pda_menu_halves')
+
+
+def v_classic_pause(v, ck):
+    """V-TBD: native pause roles over classic art, shared scene and table headroom."""
+    if C.frontend_mode(v.ctx) != 'xml1':
+        return
+    from . import menu_conversion as M, menu_theme as T, pause_appearance as P
+    for rel in (P.OBJECTIVES_ICON, P.OBJECTIVES_FOCUS, 'UI/models/m_pda_icon_screen'):
+        frame = v.read(rel + '.IGB')
+        if frame is None:
+            ck.error('classic objective selector frame missing: ' + rel)
+        else:
+            for problem in P.selector_problems(frame):
+                ck.error(problem + ': ' + rel)
+    scene = v.read(f'UI/menus/{P.SCENE}.IGB')
+    if scene is None:
+        ck.error('classic pause scene is missing')
+        return
+    camera = F.menu_igb_camera(scene)
+    if camera.get('problem') or any(abs(a - b) > 1e-4 for a, b in
+                                   zip(camera.get('pos', ()), F.MENU_CAMERA_POS)) or \
+            camera.get('near', float('inf')) > F.MENU_CAMERA_NEAR:
+        ck.error('classic pause camera does not preserve native text/modal depths')
+    elif any(not F.MENU_CAMERA_POS[1] + camera['near'] <= depth <= F.MENU_CAMERA_POS[1] + camera['far']
+             for depth in F.MENU_OVERLAY_DEPTHS):
+        ck.error('classic pause camera clips a native overlay depth')
+    # The secondary modes depend on the native timeline. Count and compare its
+    # sequence fields at their retained reference numbers, not just scene names.
+    from . import igb_file as G
+    base_path = getattr(v.ctx, 'base_index', None)
+    base_path = base_path.path('UI/menus/x2m_pda.IGB') if base_path else None
+    if base_path is not None:
+        try:
+            base_graph, graph = G.IgbFile(base_path.read_bytes()), G.IgbFile(scene)
+            for original in base_graph.objects_of('igTransformSequence1_5'):
+                converted = graph.obj(original.ref)
+                if converted is None or converted.name != original.name or any(
+                        converted.get(slot) != field.value for slot, field in original.fields.items()):
+                    ck.error('classic pause changed a native animation sequence reference')
+                    break
+        except G.IgbError as error:
+            ck.error('classic pause animation graph is unreadable: ' + str(error))
+    native_halves = F.pda_menu_trees(v.ctx)[:2]
+    if native_halves[0] is not None and native_halves[0].find("item[@name='object_screen']") is not None:
+        for problem in M.placement_problems(scene, P.objectives_layout()):
+            ck.error('classic objectives: ' + problem)
+    for ext, native in zip(('.XMLB', '.engb'), native_halves):
+        root = v.tree(F.PDA_MENU_REL + ext)
+        if root is None:
+            ck.error('classic pause definition half is missing')
+            continue
+        if root.get('igb') != P.SCENE:
+            ck.error('pause does not bind the combined classic/native scene')
+        try:
+            for problem in M.widget_problems(root, scene, focus_names=P.ROWS, optional_anchors=P.OPTIONAL_ANCHORS):
+                ck.error('classic pause: ' + problem)
+        except (ValueError, TypeError) as error:
+            ck.error('classic pause scene is unreadable: ' + str(error))
+        if native is not None:
+            for problem in P.native_text_problems(native, root):
+                ck.error(f'classic pause {ext}: {problem}')
+            actual_items = {e.get('name'): e for e in root.iter('item')}
+            for item in native.findall('item'):
+                name = item.get('name')
+                actual = actual_items.get(name)
+                if actual is None or any(actual.get(k) != item.get(k) for k in ('type', 'mode', 'usecmd')):
+                    ck.error(f'classic pause lost a native service contract: {name}')
+        if root.findall('items'):
+            ck.error('pause widgets must share one scene and text layer')
+    colors, styles = v.tree('Data/colors.XMLB'), v.tree('Data/styles.XMLB')
+    if colors is None or styles is None or len(colors) > T.COLOR_LIMIT - T.COLOR_RESERVE or \
+            len(styles) > T.STYLE_LIMIT - T.STYLE_RESERVE:
+        ck.error('classic menu tables consumed reserved native headroom')
+    elif colors is not None and styles is not None:
+        ids = {e.get('id') for e in colors}
+        names = {e.get('name'): e for e in styles}
+        for name in (P.BODY_STYLE, P.LIST_STYLE, 'STYLE_NORMAL', 'STYLE_MENU'):
+            style = names.get(name)
+            if style is None or any(style.get(k) not in ids for k in T.COLOR_FIELDS):
+                ck.error('classic dialog/list style has missing colour bindings: ' + name)
+
+def v_classic_loading(v, ck):
+    """V-TBD-loading: keep the PC loader and its original disc presentation."""
+    if C.frontend_mode(v.ctx) != 'xml1':
+        return
+    from . import loading_appearance as L, menu_conversion as M
+    root = v.tree('UI/menus/loading.XMLB')
+    scene = v.read(f'UI/menus/{L.SCENE}.IGB')
+    if root is None or scene is None:
+        ck.error('classic loading definition/scene missing')
+        return
+    if root.get('type') != 'LOADING_MENU' or root.get('no_stack') != 'true' or root.get('igb') != L.SCENE:
+        ck.error('classic loading changed native class/lifecycle')
+    status = root.find("item[@name='loadstatus']")
+    if status is None or status.get('gamevar') != 'loadstatus':
+        ck.error('classic loading lost its live status field')
+    for problem in M.placement_problems(scene, {'loadstatus': ((53, -880, 27), (0, -8, 400, 8))}):
+        ck.error('classic loading: ' + problem)
+
+
+def v_classic_review(v, ck):
+    """V-TBD-review: native categories, list, input tokens and disc prop closure."""
+    if C.frontend_mode(v.ctx) != 'xml1':
+        return
+    from . import review_appearance as R, menu_conversion as M
+    scene = v.read('UI/menus/' + R.SCENE + '.IGB')
+    if scene is None:
+        ck.error('classic Review scene missing')
+        return
+    for problem in M.placement_problems(scene, R.layout()):
+        ck.error('classic Review: ' + problem)
+    from . import service_shell as H, igb_file as G
+    selection = v.read(R.SELECT + '.IGB')
+    if selection is None:
+        ck.error('classic Review selection missing')
+    else:
+        for problem in H.frame_problems(selection, (0, -7, 204, 7)):
+            ck.error('classic Review: ' + problem)
+        graph = G.IgbFile(selection)
+        for array in graph.objects_of('igVertexArray1_1'):
+            ys = graph.block_floats(graph.ref_list(array.get(2))[0])[1::3]
+            if min(ys) < 2-1e-4 or max(ys) > 4+1e-4:
+                ck.error('classic Review selection obscures native text')
+    for ext in ('.XMLB', '.engb'):
+        native = v.ctx.read_base_xmlb('UI/menus/review' + ext)
+        for item in list(native.findall('item')):
+            if item.get('name') in F.REVIEW_STATS_ITEMS:
+                native.remove(item)
+        root = v.tree('UI/menus/review' + ext)
+        if root is None or root.get('igb') != R.SCENE:
+            ck.error('classic Review definition/scene missing')
+            continue
+        for problem in R.control_problems(native, root):
+            ck.error(problem)
+        helper = root.find('items')
+        if helper is None or helper.get('igb') != R.BACK or helper.get('file') != R.BACK:
+            ck.error('classic Review prop helper binding missing')
+        for i, kind in enumerate(R.KINDS, 1):
+            item = root.find(f"item[@name='option{i:02d}_text']")
+            expected = 'ui/menus/lc_review_prop_' + kind
+            if item is None or not any(e.get('item') == R.PROP and e.get('model') == expected
+                                       for e in item.findall('onfocus')):
+                ck.error('classic Review category prop event missing: ' + kind)
+            if v.read(expected + '.IGB') is None:
+                ck.error('classic Review category prop missing: ' + kind)
+
+
+def v_classic_codex(v, ck):
+    """V-TBD-codex: retain bios/list modes and native actor helper roles."""
+    if C.frontend_mode(v.ctx) != 'xml1':
+        return
+    from . import codex_appearance as K, menu_conversion as M
+    scene = v.read('UI/menus/' + K.SCENE + '.IGB')
+    if scene is None:
+        ck.error('classic Codex scene missing')
+        return
+    for problem in M.placement_problems(scene, K.LAYOUT):
+        ck.error('classic Codex: ' + problem)
+    for ext in ('.XMLB', '.engb'):
+        native = v.ctx.read_base_xmlb('UI/menus/codex' + ext)
+        root = v.tree('UI/menus/codex' + ext)
+        if root is None or root.get('igb') != K.SCENE:
+            ck.error('classic Codex definition/scene missing')
+            continue
+        for problem in K.control_problems(native, root):
+            ck.error(problem)
+        helper = root.find('items')
+        if helper is None or helper.get('igb') != K.BACK or helper.get('file') != 'codex_back':
+            ck.error('classic Codex actor helper binding missing')
+    native_helper = v.ctx.read_base_xmlb('UI/menus/codex_back.XMLB')
+    helper = v.tree('UI/menus/codex_back.XMLB')
+    if helper is None or C.encode_xmlb(helper) != C.encode_xmlb(native_helper):
+        ck.error('classic Codex changed native actor/helper roles')
+    if v.read('UI/menus/' + K.BACK + '.IGB') is None:
+        ck.error('classic Codex actor backdrop missing')
+    from . import service_shell as H
+    selected = v.read(F.CODEX_SELECT_X1 + '.IGB')
+    if selected is None:
+        ck.error('classic Codex selection missing')
+    else:
+        for problem in H.frame_problems(selected, (0, -7, 204, 7), depth=(2, 4)):
+            ck.error('classic Codex: ' + problem)
+
+
+def v_classic_team(v, ck):
+    """V-TBD-team: native stats/talents/equipment callbacks and disc room closure."""
+    if C.frontend_mode(v.ctx) != 'xml1':
+        return
+    from . import team_appearance as A, menu_conversion as M, service_shell as H, igb_file as G
+    scene = v.read('UI/menus/' + A.SCENE + '.IGB')
+    native = v.ctx.base_index.path('UI/menus/x2m_team.IGB')
+    if scene is None:
+        ck.error('classic TEAM scene missing')
+        return
+    for problem in M.placement_problems(scene, H.retired_layout(native.read_bytes(), A.RETIRED)):
+        ck.error('TEAM: ' + problem)
+    native_styles = {e.get('name'): e for e in v.ctx.read_base_xmlb('Data/styles.XMLB')}
+    styles = {e.get('name'): e for e in v.tree('Data/styles.XMLB')}
+    for ext in ('.XMLB', '.engb'):
+        root = v.tree('UI/menus/team' + ext)
+        old = v.ctx.read_base_xmlb('UI/menus/team' + ext)
+        if root is None or root.get('igb') != A.SCENE:
+            ck.error('classic TEAM definition/scene missing')
+            continue
+        for problem in A.control_problems(old, root):
+            ck.error(problem)
+        current = {e.get('name'): e for e in root.findall('item')}
+        for item in old.findall('item'):
+            if not item.get('style') or item.get('name') not in current:
+                continue
+            before = native_styles.get(item.get('style'))
+            after = styles.get(current[item.get('name')].get('style'))
+            if before is None or after is None or before.get('allow_focus') != after.get('allow_focus'):
+                ck.error('TEAM style changed native focus policy: ' + item.get('name', ''))
+        helper = root.find('items')
+        if helper is None or helper.get('igb') != A.BACK or helper.get('file') != 'team_back' or \
+                helper.get('act_background') is not None:
+            ck.error('classic TEAM room binding changed')
+    old = A.helper_tree(v.ctx.read_base_xmlb('UI/menus/team_back.XMLB'))
+    helper = v.tree('UI/menus/team_back.XMLB')
+    if helper is None or C.encode_xmlb(helper) != C.encode_xmlb(old):
+        ck.error('classic TEAM changed native actor/focus/lock/camera helper contracts')
+    back = v.read('UI/menus/' + A.BACK + '.IGB')
+    if back is None:
+        ck.error('classic TEAM character room missing')
+    else:
+        before = G.IgbFile(v.ctx.base_index.path('UI/menus/x2m_team_back.IGB').read_bytes())
+        after = G.IgbFile(back)
+        aliases = lambda g: sorted(o.get(2) for o in g.objects_of('igHashedUserInfo'))
+        if not set(aliases(before)).issubset(aliases(after)) or len(after.objects_of('igSceneInfo')) != 1:
+            ck.error('classic TEAM actor/camera aliases or scene ownership missing')
+    for before, after in A.FRAMES.items():
+        native = v.ctx.base_index.path(before + '.IGB')
+        frame = v.read(after + '.IGB')
+        if frame is None:
+            ck.error('classic TEAM frame missing: ' + after)
+        else:
+            low, high = H.model_bounds(native.read_bytes())
+            for problem in H.frame_problems(frame, H.model_rectangle(native.read_bytes()), depth=(low[1], high[1])):
+                ck.error('TEAM: ' + problem)
+    from . import menu_scene as S
+    marker = v.ctx.x1_path('ui/models/model_char_persp_select.igb')
+    if marker is None or v.read('UI/models/m_team_pad_focus.IGB') != \
+            S.static_model(A.quiet_marker(marker.read_bytes()), allow_transforms=True):
+        ck.error('classic TEAM seated marker still contains selection beams/rings')
+    effect=v.tree('Effects/menu/pad_loop.XMLB')
+    if effect is None or C.encode_xmlb(effect)!=C.encode_xmlb(A.quiet_pad_effect(v.ctx.read_base_xmlb('Effects/menu/pad_loop.XMLB'))):
+        ck.error('classic TEAM additive pad pulse remains visible')
+
+
+def _classic_service(v, ck, adapter, menu, native_scene):
+    """Shared native callbacks, retired ornament and fitted frame contracts."""
+    if C.frontend_mode(v.ctx) != 'xml1':
+        return
+    from . import service_shell as H, menu_conversion as M
+    data = v.read('UI/menus/' + adapter.SCENE + '.IGB')
+    native = v.ctx.base_index.path('UI/menus/' + native_scene + '.IGB')
+    if data is None:
+        ck.error('classic service scene missing: ' + menu)
+        return
+    for problem in M.placement_problems(data, H.retired_layout(native.read_bytes(), adapter.RETIRED)):
+        ck.error(menu + ': ' + problem)
+    for ext in ('.XMLB', '.engb'):
+        root = v.tree('UI/menus/' + menu + ext)
+        if root is None or root.get('igb') != adapter.SCENE:
+            ck.error('classic service definition/scene missing: ' + menu)
+            continue
+        for problem in H.control_problems(v.ctx.read_base_xmlb('UI/menus/' + menu + ext), root, adapter.RETIRED):
+            ck.error(menu + ': ' + problem)
+        if hasattr(adapter, 'BACK'):
+            helper = root.find('items')
+            if helper is None or helper.get('igb') != adapter.BACK or helper.get('file') != adapter.BACK:
+                ck.error('classic service backdrop binding missing: ' + menu)
+    if hasattr(adapter, 'BACK') and v.read('UI/menus/' + adapter.BACK + '.IGB') is None:
+        ck.error('classic service backdrop missing: ' + menu)
+    for before, after in adapter.FRAMES.items():
+        original = v.ctx.base_index.path(before + '.IGB')
+        frame = v.read(after + '.IGB')
+        if original is None or frame is None:
+            ck.error('classic service frame missing: ' + after)
+        else:
+            low, high = H.model_bounds(original.read_bytes())
+            for problem in H.frame_problems(frame, H.model_rectangle(original.read_bytes()), depth=(low[1], high[1])):
+                ck.error(problem + ': ' + after)
+
+
+def v_classic_shop(v, ck):
+    """V-TBD-shop: native economy/service callbacks and panel rectangles."""
+    from . import shop_appearance as S
+    _classic_service(v, ck, S, 'shop', 'x2m_shop')
+
+
+def v_classic_danger(v, ck):
+    """V-TBD-danger: native courses/roster/rewards, classic frames/backdrop."""
+    from . import danger_appearance as D
+    _classic_service(v, ck, D, 'danger_room', 'x2m_dangerroom')
+
+
+def v_classic_trivia(v, ck):
+    """V-TBD-trivia: native answers/feedback/rewards with classic panel frames."""
+    from . import trivia_appearance as T
+    _classic_service(v, ck, T, 'trivia', 'x2m_trivia')
+
+
+def v_classic_options(v, ck):
+    """V-TBD-options: keep all PC controls and native sprite atlas dimensions."""
+    if C.frontend_mode(v.ctx) != 'xml1':
+        return
+    from . import options_appearance as O
+    from PIL import Image
+    import io
+    for ext in ('.XMLB','.engb'):
+        root = v.tree('UI/menus/options'+ext)
+        if root is None or root.get('igb') != O.SCENE:
+            ck.error('classic Options scene/definition missing')
+            continue
+        for problem in O.control_problems(v.ctx.read_base_xmlb('UI/menus/options'+ext),root):
+            ck.error(problem)
+    if v.read(f'UI/menus/{O.SCENE}.IGB') is None:
+        ck.error('classic Options scene is missing')
+    for name,(size,_states,_rect) in O.SPRITES.items():
+        data = v.read('Texs/'+name)
+        try:
+            with Image.open(io.BytesIO(data or b'')) as picture:
+                if picture.size != size:
+                    ck.error('Options native atlas dimensions changed: '+name)
+                picture.verify()
+        except (ValueError,OSError):
+            ck.error('Options native atlas is unreadable: '+name)
+
+
+def v_classic_dialogs(v, ck):
+    """V-TBD-dialogs: native modal rectangles and shared font/palette bindings."""
+    if C.frontend_mode(v.ctx) != 'xml1':
+        return
+    from . import dialog_appearance as D
+    colors,styles,data = v.tree('Data/colors.XMLB'),v.tree('Data/styles.XMLB'),v.read(D.FRAME)
+    if colors is None or styles is None or data is None or v.read(D.SELECT) is None:
+        ck.error('shared classic dialog resources missing')
+        return
+    for problem in D.problems(colors,styles,data):
+        ck.error(problem)
+
+
+def v_classic_viewer(v, ck):
+    """V-TBD-viewer: native paging/return semantics and foreground device hints."""
+    if C.frontend_mode(v.ctx) != 'xml1':
+        return
+    from . import viewer_appearance as W, menu_conversion as M
+    data = v.read(f'UI/menus/{W.SCENE}.IGB')
+    if data is None:
+        ck.error('classic image viewer scene is missing')
+        return
+    for problem in M.placement_problems(data,W.LAYOUT):
+        ck.error('classic image viewer: '+problem)
+    for ext in ('.XMLB','.engb'):
+        root = v.tree('UI/menus/image_viewer'+ext)
+        if root is None or root.get('igb') != W.SCENE:
+            ck.error('classic image viewer definition/scene binding missing')
+            continue
+        for problem in W.problems(v.ctx.read_base_xmlb('UI/menus/image_viewer'+ext),root):
+            ck.error(problem)
+
+
+def v_classic_credits(v, ck):
+    """V-TBD-credits: preserve native rolling/endgame behavior and clear prior images."""
+    if C.frontend_mode(v.ctx) != 'xml1':
+        return
+    for name,_source,scene in F.CREDITS_MENUS:
+        rel = f'UI/menus/{name}.XMLB'
+        root = v.tree(rel)
+        native = v.ctx.read_base_xmlb(rel)
+        if root is None:
+            ck.error('classic credits definition missing: '+name)
+            continue
+        if root.get('igb') != scene or root.get('image') != '':
+            ck.error('classic credits changed frame or retained a previous viewer image: '+name)
+        for key in ('type','endgame','name'):
+            if root.get(key) != native.get(key):
+                ck.error('classic credits native rolling/endgame contract changed: '+name+'.'+key)
+        data = v.read(f'UI/menus/{scene}.IGB')
+        camera = F.menu_igb_camera(data) if data else {'problem':'missing'}
+        if camera.get('problem') or camera.get('near',float('inf')) > F.MENU_CAMERA_NEAR:
+            ck.error('classic credits camera clips the native text overlay: '+name)
+
 
 def _personal_texture_size(v, rel):
     """(w, h) of the texture IGB's largest igImage, or None when unreadable."""

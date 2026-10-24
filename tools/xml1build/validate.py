@@ -164,6 +164,7 @@ from pathlib import Path
 from . import common as C
 from . import lockon_effects as LE
 from . import resistance_hud as RH
+from . import classic_hud as HUD
 import xmlb                                   # noqa: E402  tools/xmlb.py
 from .lib import x1names                      # noqa: E402  the XML1 namespace (was research/characters)
 from .lib.x1names import is_fightstyle_name   # noqa: E402  fightstyle_* / x1_fightstyle_* (issue #52)
@@ -947,12 +948,25 @@ class Validator:
                                ('V14', 'forced teams', self.v14_forced_teams),
                                ('V15', 'front end', lambda ck: VF.v15_front_end(self, ck)),
                                ('V49', 'main appearance', lambda ck: VF.v_main_appearance(self, ck)),
+                               ('V-TBD', 'classic pause appearance', lambda ck: VF.v_classic_pause(self, ck)),
+                               ('V-TBD-loading', 'classic loading appearance', lambda ck: VF.v_classic_loading(self, ck)),
+                               ('V-TBD-options', 'classic Options appearance', lambda ck: VF.v_classic_options(self, ck)),
+                               ('V-TBD-dialogs', 'shared classic dialog appearance', lambda ck: VF.v_classic_dialogs(self, ck)),
+                               ('V-TBD-viewer', 'classic image viewer appearance', lambda ck: VF.v_classic_viewer(self, ck)),
+                               ('V-TBD-credits', 'classic credits appearance', lambda ck: VF.v_classic_credits(self, ck)),
+                               ('V-TBD-review', 'classic Review appearance', lambda ck: VF.v_classic_review(self, ck)),
+                               ('V-TBD-codex', 'classic Codex appearance', lambda ck: VF.v_classic_codex(self, ck)),
+                               ('V-TBD-shop', 'classic shop appearance', lambda ck: VF.v_classic_shop(self, ck)),
+                               ('V-TBD-danger', 'classic Danger Room appearance', lambda ck: VF.v_classic_danger(self, ck)),
+                               ('V-TBD-trivia', 'classic Trivia appearance', lambda ck: VF.v_classic_trivia(self, ck)),
+                                ('V-TBD-team', 'classic character screens', lambda ck: VF.v_classic_team(self, ck)),
                                ('V16', 'danger room', lambda ck: VF.v16_danger_room(self, ck)),
                                ('V17', 'review', lambda ck: VF.v17_review(self, ck)),
                                ('V18', 'combat events', lambda ck: CE.v18(self, ck)),
                                ('V19', 'npc values', lambda ck: NV.v19(self, ck)),
                                ('V60', 'resistance talents', lambda ck: NV.v_resist_talents(self, ck)),
                                ('V63', 'resistance HUD', lambda ck: RH.validate(self, ck)),
+                               ('V-TBD-hud', 'classic HUD assets', lambda ck: HUD.validate(self, ck)),
                                ('V20', 'automaps', lambda ck: AM.v20(self, ck)),
                                ('V21', 'skins', lambda ck: SK.validate(self, ck)),
                                ('V22', 'buoys', lambda ck: BY.validate(self, ck)),

@@ -84,6 +84,8 @@ before SPEC 21). With --frontend xml1 (the default) it writes A-E:
   E. UI/menus/pda.{XMLB,engb} (both front ends: the pause menu in every zone, issue #89, SPEC 64): XML2's PDA_MENU
      without the Blink Portal entry (PDA_PORTAL_LABEL removed, its PDA_PORTAL_MODELS hidden, the up / down chain
      re-linked past it). The first game had no portal; XML2's opens one to X-Men Legends II's towns.
+     The XML1 frontend also uses pause_appearance: classic pause art and native secondary-mode animation in one
+     scene, native widget names/actions, shared dialog chrome and a native player list/textbox in a classic frame.
 
 Providers (pure, usable before / without run): dr_reward_items(ctx), translate_equipment(ctx, item),
 xp_curve(ctx), trivia_acts(ctx), review_entries(ctx), review_menu_trees(ctx), menu_plan(), igb_string_fields(data),
@@ -1632,6 +1634,8 @@ def _import_texture(ctx, x1_rel, out_noext):
 
 
 def run(ctx):
+    from . import classic_hud as CH
+    CH.write(ctx)
     mode = C.frontend_mode(ctx)
     ctx.set_count('frontend_xml1', int(mode == 'xml1'))
     # ---- D. personal items (in-zone data: both front ends)
@@ -1653,6 +1657,25 @@ def run(ctx):
     # ---- A. main menu
     det['main_palette'] = MA.write_styles(ctx)
     det['main_fonts'] = MF.write_fonts(ctx)
+    # Shared classic chrome over the native pause class and its PC service names.
+    from . import pause_appearance as PA
+    det['pause'] = PA.write(ctx)
+    from . import dialog_appearance as DA
+    det['dialogs'] = DA.write(ctx)
+    from . import loading_appearance as LA
+    det['loading'] = LA.write(ctx)
+    from . import options_appearance as OA
+    det['options'] = OA.write(ctx)
+    from . import viewer_appearance as VA
+    det['image_viewer'] = VA.write(ctx)
+    from . import shop_appearance as SA
+    det['shop_appearance'] = SA.write(ctx)
+    from . import danger_appearance as DRA
+    det['danger_appearance'] = DRA.write(ctx)
+    from . import trivia_appearance as TA
+    det['trivia_appearance'] = TA.write(ctx)
+    from . import team_appearance as TEAM
+    det['team_appearance'] = TEAM.write(ctx)
     data, irep = menu_igb(ctx)
     for p in irep['problems']:
         ctx.error(f'{MENU_IGB_REL}: {p}')
@@ -1801,7 +1824,10 @@ def run(ctx):
         ctx.error(f'review menu: XML2\'s {REVIEW_MENU_REL} has Stats tab items {removed}, expected '
                   f'{sorted(REVIEW_STATS_ITEMS)} in both halves')
     else:
+        from . import review_appearance as RA
+        rx, rg = RA.tree(rx), RA.tree(rg)
         ctx.write_xmlb_pair(REVIEW_MENU_REL, rx, rg, source='frontend:XML2\'s review menu without its Stats tab')
+        det['review_appearance'] = RA.write(ctx, (rx, rg))
         det['review_menu'] = {'removed': removed, 'xml2fix': '='.join(REVIEW_STATS_KEY[1:])}
         ctx.note(f'review menu: {REVIEW_MENU_REL} = XML2\'s without the Stats tab ({", ".join(removed)}); the tab '
                  f'change wraps at 4 with xml2-fix [{REVIEW_STATS_KEY[0]}] {REVIEW_STATS_KEY[1]}='
@@ -1814,6 +1840,8 @@ def run(ctx):
     elif kremoved != want:
         ctx.error(f'codex menu: XML2\'s {CODEX_MENU_REL} changes {kremoved}, expected {want} in both halves')
     else:
+        from . import codex_appearance as CA
+        kx, kg = CA.tree(kx), CA.tree(kg)
         # the highlight over the whole row (issue #97): XML2's bar with the icon gap closed
         base_select = ctx.base_index.path(CODEX_SELECT_MODEL + '.IGB')
         sdata, srep = (codex_select_igb(base_select.read_bytes()) if base_select
@@ -1826,6 +1854,7 @@ def run(ctx):
             use_codex_select(kx)
             use_codex_select(kg)
         ctx.write_xmlb_pair(CODEX_MENU_REL, kx, kg, source='frontend:XML2\'s codex menu without list icons')
+        det['codex_appearance'] = CA.write(ctx, (kx, kg))
         det['codex_menu'] = {'removed': kremoved, 'highlight': srep}
         ctx.note(f'codex menu: {CODEX_MENU_REL} = XML2\'s without the list\'s icon cells ({", ".join(kremoved)}): '
                  f'XML1\'s codex list was text only; its highlight {CODEX_SELECT_X1} spans the whole row ({srep})')

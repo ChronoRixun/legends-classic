@@ -1,3 +1,6 @@
-# Runtime dependencies of the builder and the pipeline (BUILDER_DESIGN.md 3.1): the standard library + numpy.
+# Runtime dependencies of the builder and the pipeline (BUILDER_DESIGN.md 3.1): the standard library + numpy + Pillow.
 # Pinned: the fixed music banks are byte-reproducible only with the same numpy build (BUILDER_DESIGN.md 1.5 fact 2).
 numpy==2.5.3
+# Pillow: the classic look's PNG sprites and atlases (xml1build.menu_raster / options_appearance, validate_frontend;
+# 0.4.0-beta.5). Pinned like numpy: the generated PNG bytes come from its encoder.
+pillow==12.3.0

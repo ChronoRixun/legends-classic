@@ -3,15 +3,29 @@
 The builder's releases, newest first. The version is `xml1-builder --version`; the content version is what a
 build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebuild.
 
-## v0.4.0 - content version 24 (needs XML2 Fix 1.8.0)
+## v0.4.0 - content version 25 (needs XML2 Fix 1.8.0)
 
 Renumbered from 0.3.0 while in beta (the betas 0.3.0-beta.1..3 are this release's history);
-no stable 0.3.0 was published.
+no stable 0.3.0 was published. Betas 1-4 were content 24 / `LC33`; beta 5 (the classic look) is content 25 / `LC34`.
 
 Legends Classic 0.4.0 brings online play from Ultimate Legends **0.4.0**. Update the launcher to 0.4.0 first,
 then **Rebuild**, then **Play**. Everyone needs the same 0.4.0 build and XML2 Fix 1.8.0 or later;
 0.2.x and 0.4.0 never join each other. Test mode must be off.
 
+
+- **Beta 5: the classic look.** The port's screens now wear the first game's own art, converted from your disc when
+  you build: the HUD (hero heads and bars, the power wheel, the target frame and a bigger small-map frame that keeps
+  fog and markers inside it), the pause menu, Objectives, Options and Controls, the Save/Load lists and the dialogs,
+  the character room (the Blackbird backdrop and classic frames around Stats, Skills, Gear and AI), Review, the Codex,
+  the Danger Room, the Forge, the healer, trivia, loading screens and credits. In the character room the pulsing white
+  cones and gold rings are gone; the selected hero stands on a bright blue podium and a selection mark follows the
+  keyboard and controller. In the Codex, Details opens the entry you are on, and Back from a biography returns to the
+  list with that entry still selected. Only the look changes: the port's controls, tabs, numbers, shops, gameplay and
+  saves stay the same (your saves carry over). Builds write XML2 Fix's `[Game] ClassicHud = xml1` and
+  `ClassicCodex = 1`, so beta and rc builders now require `>=1.8.0-beta.5` and the builder refuses an older DLL by
+  name. Because the build's output changes, the content version rises to 25 and the lobby token to `LC34`: the
+  launcher offers a Rebuild, and a beta 5 game and a beta 4 or older game never join each other - everyone updates
+  and rebuilds.
 
 - **Beta 3: online at 60 fps.** Builds now write XML2 Fix's `[Online] TickRate = 60`: online sessions run at 60
   frames a second like single-player instead of the game's own 30 (the game keeps its speed; about 11 KB/s upload

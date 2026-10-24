@@ -355,7 +355,7 @@ def test_port_keys_from_a_synthetic_build():
                                               'PlacementCrush': 'xml1', 'ObjectWorldImpact': 'xml1', 'DoubleHeal': '0', 'ExplosiveFirstHit': '1',
                                               'RankCosts': '1', 'LevelSkillPoints': 'xml1',
                                               'LevelStatPoints': 'xml1', 'Xml1Multipart': '1', 'DeathRule': 'xml1',
-                                              'NpcPowerRule': 'xml1', 'StunRule': 'xml1', 'DangerRoomParty': 'xml1', 'DangerRoomHealthBars': 'xml1', 'ResistanceDisplay': 'xml1', 'BoxHarmOrigin': 'xml1', 'HarmSingleChain': 'single', 'OnlineConversations': 'lockstep', 'PersonalItemPicture': 'window', 'ComboPopupGuard': '1', 'PackAmount': 'xml1', 'SoloMode': '1', 'X1Leader': '1',
+                                              'NpcPowerRule': 'xml1', 'StunRule': 'xml1', 'DangerRoomParty': 'xml1', 'DangerRoomHealthBars': 'xml1', 'ResistanceDisplay': 'xml1', 'ClassicHud': 'xml1', 'ClassicCodex': '1', 'BoxHarmOrigin': 'xml1', 'HarmSingleChain': 'single', 'OnlineConversations': 'lockstep', 'PersonalItemPicture': 'window', 'ComboPopupGuard': '1', 'PackAmount': 'xml1', 'SoloMode': '1', 'X1Leader': '1',
                                               'DeathSwitchClear': '1'},
                                      'Limits': {'ActorSlots': '127', 'ResourceNames': '1024', 'ItemEnhancements': '512',
                                                 'FightStyles': '32', 'EffectCurves': '3600', 'MoveTriggers': '64', 'EntityCapacity': '1',
@@ -398,7 +398,7 @@ def test_port_keys_from_a_synthetic_build():
 
 def test_beta2_keys_refuse_a_beta1_dll_and_require_the_beta2_fix():
     # 0.3.0-beta.2 writes [Engine] ModelPools and [Game] ComboPopupGuard, which XML2 Fix 1.8.0-beta.1 does not read
-    # (same numeric VERSIONINFO 1.8.0.0): the DLL check names both; beta/rc builders require '>=1.8.0-beta.2'.
+    # (same numeric VERSIONINFO 1.8.0.0): the DLL check names both; beta/rc builders require '>=1.8.0-beta.5' (beta 5).
     keys = {'Game': {'ComboPopupGuard': '1'}, 'Engine': {'ModelPools': 'x4'}}
     with tempfile.TemporaryDirectory() as td:
         dll = Path(td) / 'dinput.dll'
@@ -406,7 +406,7 @@ def test_beta2_keys_refuse_a_beta1_dll_and_require_the_beta2_fix():
         assert FI.old_fix_keys(dll, keys) == ['[Game] ComboPopupGuard', '[Engine] ModelPools']
         dll.write_bytes(b'MZ' + 'ComboPopupGuard'.encode('utf-16le') + 'ModelPools'.encode('utf-16le'))
         assert FI.old_fix_keys(dll, keys) == []
-    assert FI.required_xml2fix('0.3.0-beta.3') == FI.required_xml2fix('0.4.0-rc.1') == '>=1.8.0-beta.3'
+    assert FI.required_xml2fix('0.3.0-beta.3') == FI.required_xml2fix('0.4.0-rc.1') == '>=1.8.0-beta.5'
     assert FI.required_xml2fix('0.4.0') == '>=1.8'
 
 
@@ -423,6 +423,22 @@ def test_beta3_tick_rate_is_written_port_owned_and_refuses_a_beta2_dll():
         assert FI.old_fix_keys(dll, keys) == ['[Online] TickRate']
         dll.write_bytes(b'MZ' + ''.join(('JoinInProgress', 'ModelPools', 'TickRate')).encode('utf-16le'))
         assert FI.old_fix_keys(dll, keys) == []
+
+
+def test_beta5_classic_keys_refuse_a_beta4_dll_and_require_the_beta5_fix():
+    # 0.4.0-beta.5 (the classic look) writes [Game] ClassicHud=xml1 and ClassicCodex=1, first read by XML2 Fix
+    # 1.8.0-beta.5. A beta.4 DLL is refused by name, also when it carries a longer key with the same start
+    # (ClassicHudPilot): the two are matched with their UTF-16 terminator.
+    keys = {'Game': {'ClassicHud': 'xml1', 'ClassicCodex': '1'}}
+    assert all(k in FI.RELEASE_18_KEYS['Game'] for k in keys['Game'])
+    with tempfile.TemporaryDirectory() as td:
+        dll = Path(td) / 'dinput.dll'
+        dll.write_bytes(b'MZ' + ''.join(('ClassicHudPilot', 'ClassicCodexTrace')).encode('utf-16le'))
+        assert FI.old_fix_keys(dll, keys) == ['[Game] ClassicHud', '[Game] ClassicCodex']
+        dll.write_bytes(b'MZ' + ''.join(('ClassicHud\0', 'ClassicCodex\0')).encode('utf-16le'))
+        assert FI.old_fix_keys(dll, keys) == []
+    assert FI.REQUIRED_XML2FIX_PRERELEASE == 'beta.5'
+    assert FI.required_xml2fix('0.4.0-beta.5') == '>=1.8.0-beta.5' and FI.required_xml2fix('0.4.0') == '>=1.8'
 
 
 def test_harness_installs_write_the_shipped_limits_by_default():
@@ -789,19 +805,20 @@ def test_receive_validation_defaults_on_and_requires_supported_companion():
 
 
 def test_beta_fix_numeric_version_keeps_runtime_capability_checks():
-    """Beta DLLs keep numeric VERSIONINFO; require their 1.8 keys, not a textual beta suffix."""
+    """Beta DLLs keep numeric VERSIONINFO; require their 1.8 keys, not a textual beta suffix (a DLL's key strings are
+    NUL-terminated UTF-16, as the beta.5 keys are matched)."""
     import tempfile
     keys = {section: {key: '1' for key in names} for section, names in FI.RELEASE_18_KEYS.items()}
     with tempfile.TemporaryDirectory() as td:
         dll = Path(td) / 'dinput.dll'
         for numeric in ('1.8.0', '1.8.0.0', '1.8.0.2'):
             resource = ('FileVersion\0' + numeric + '\0ProductVersion\0' + numeric + '\0').encode('utf-16le')
-            markers = b''.join(key.encode('utf-16le') for names in FI.RELEASE_18_KEYS.values() for key in names)
+            markers = b''.join((key + '\0').encode('utf-16le') for names in FI.RELEASE_18_KEYS.values() for key in names)
             dll.write_bytes(b'MZ synthetic beta fix\0' + resource + markers)
             FI.check_release_dll(dll, keys)
         # 1.7.1 lacks the companion's 1.8 drop-in capability, even though it has older required keys.
         older = ('ProductVersion\0' + '1.7.1' + '\0').encode('utf-16le')
-        markers = b''.join(key.encode('utf-16le') for names in FI.RELEASE_18_KEYS.values()
+        markers = b''.join((key + '\0').encode('utf-16le') for names in FI.RELEASE_18_KEYS.values()
                            for key in names if key != 'JoinInProgress')
         dll.write_bytes(b'MZ synthetic old fix\0' + older + markers)
         try:
@@ -824,7 +841,7 @@ def test_a_dll_without_the_15_keys_is_refused(tmp_path=None):
         try:
             FI.check_release_dll(dll, keys)
         except ValueError as exc:
-            assert 'X1Leader' in str(exc) and '1.8' in str(exc) and 'RankCosts' not in str(exc)
+            assert 'X1Leader' in str(exc) and FI.REQUIRED_XML2FIX in str(exc) and 'RankCosts' not in str(exc)
         else:
             raise AssertionError('an old DLL was accepted')
         dll.write_bytes(dll.read_bytes() + 'X1Leader'.encode('utf-16le'))
@@ -846,7 +863,7 @@ def test_old_fix_keys_names_every_unknown_key_and_the_cli_path_writes_anyway():
             FI.write_port_keys(d, {s: dict(v) for s, v in keys.items()})
         except FI.FixTooOld as exc:
             assert isinstance(exc, ValueError) and exc.missing == ['[Limits] EntityCapacity', '[Game] X1Leader']
-            assert 'XML2 Fix 1.8' in str(exc)
+            assert f'XML2 Fix {FI.REQUIRED_XML2FIX}' in str(exc)
         else:
             raise AssertionError('an old DLL was accepted')
         assert not (Path(d) / 'xml2-fix.ini').exists()
@@ -992,15 +1009,22 @@ def test_join_in_progress_is_on_for_port_builds_and_needs_fix_18():
             FI.check_release_dll(dll, {'Online': {'ReceiveValidation': '1', 'JoinInProgress': '1'}})
             raise AssertionError('a fix without JoinInProgress must be refused')
         except FI.FixTooOld as exc:
-            assert exc.missing == ['[Online] JoinInProgress'] and '1.8' in str(exc)
+            assert exc.missing == ['[Online] JoinInProgress'] and FI.REQUIRED_XML2FIX in str(exc)
         dll.write_bytes(b'MZ' + 'ReceiveValidation'.encode('utf-16le') + 'JoinInProgress'.encode('utf-16le'))
         FI.check_release_dll(dll, {'Online': {'ReceiveValidation': '1', 'JoinInProgress': '1'}})
 
 
-def test_release_identity_040_is_lc33_and_never_an_02x_token():
-    """0.4.0 is content 24 / catalogue 7 / LC33: a token no 0.2.x build carries (0.2.4 LC31, 0.2.5 LC32), so the
-    stock lobby and the rooms never pair a 0.4.0 PC with an older build."""
+def test_release_identity_040_beta5_is_lc34_and_never_an_older_token():
+    """0.4.0-beta.5 (the classic look) changes the generated output, so it is content 25 / catalogue 7 / LC34: a token
+    no earlier build carries (0.2.4 LC31, 0.2.5 LC32, 0.3.0 and the 0.4.0 betas 1-4 LC33), so neither the stock lobby
+    nor the rooms pair a beta 5 PC with an older build. Content 24 stays LC33 (history is append-only)."""
     from xml1build import release_identity as RI
     from xml1builder import CONTENT_VERSION, VERSION
-    assert (VERSION, CONTENT_VERSION) == ('0.4.0', 24) and RI.game_version() == 'LC33'
-    assert all(r.token != 'LC33' for r in RI.HISTORY if r.release.startswith('0.2'))
+    assert (VERSION, CONTENT_VERSION) == ('0.4.0', 25) and RI.game_version() == 'LC34'
+    assert RI.game_version(content_version=24, catalogue_revision=7) == 'LC33'
+    assert [r.token for r in RI.HISTORY].count('LC34') == 1
+    assert all(r.token != 'LC34' for r in RI.HISTORY if r.release.startswith(('0.2', '0.3')))
+
+
+def test_private_candidate_requires_the_release_companion():
+    assert FI.required_xml2fix(FI.RI.PRIVATE_CANDIDATE.release) == '>=1.8.0-beta.5'

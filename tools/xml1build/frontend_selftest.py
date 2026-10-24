@@ -735,6 +735,96 @@ def b_build(out):
         p = ctx.out_index.path(F.MENU_IGB_REL)
         if p is None or p.read_bytes() != data:
             fail('B', f'{F.MENU_IGB_REL} differs from frontend.menu_igb')
+        from . import pause_appearance as PA, validate_frontend as VF
+        from .validate import Check, Validator
+        original = ctx.x1_path('ui/menus/menu_pause.igb')
+        native = ctx.base_index.path('UI/menus/x2m_pda.IGB')
+        expected, report = PA.pause_scene(original.read_bytes(), native.read_bytes())
+        actual = ctx.out_index.path(f'UI/menus/{PA.SCENE}.IGB')
+        if actual is None or actual.read_bytes() != expected:
+            fail('B_pause', 'pause scene differs from deterministic native/art attachment')
+        check = Check('V-TBD', 'classic pause')
+        VF.v_classic_pause(Validator(ctx), check)
+        for problem in check.errors:
+            fail('B_pause', problem)
+        INFO['pause scene attachment'] = report['attachment']
+        from . import loading_appearance as LA
+        expected, report = LA.loading_scene(ctx.x1_path('ui/menus/menu_loading.igb').read_bytes(),
+                                           ctx.base_index.path('UI/menus/x2m_loading.IGB').read_bytes(),
+                                           ctx.x1_path('ui/menus/loading_anim.igb').read_bytes())
+        actual = ctx.out_index.path(f'UI/menus/{LA.SCENE}.IGB')
+        if actual is None or actual.read_bytes() != expected:
+            fail('B_loading', 'loading scene differs from deterministic native/art attachment')
+        root = ctx.read_out_xmlb('UI/menus/loading.XMLB')
+        if root.get('type') != 'LOADING_MENU' or root.get('igb') != LA.SCENE or root.get('no_stack') != 'true':
+            fail('B_loading', 'loading service class/scene/lifecycle changed')
+        INFO['loading scene attachment'] = report['attachment']
+        from . import options_appearance as OA
+        expected, report = OA.options_scene(ctx.x1_path('ui/menus/menu_options.igb').read_bytes(),
+            ctx.base_index.path('UI/menus/x2m_options.IGB').read_bytes(),
+            ctx.x1_path('ui/models/model_button.igb').read_bytes())
+        actual = ctx.out_index.path(f'UI/menus/{OA.SCENE}.IGB')
+        if actual is None or actual.read_bytes() != expected:
+            fail('B_options', 'Options scene differs from deterministic native/art attachment')
+        for ext in ('.XMLB','.engb'):
+            for problem in OA.control_problems(ctx.read_base_xmlb('UI/menus/options'+ext),
+                                               ctx.read_out_xmlb('UI/menus/options'+ext)):
+                fail('B_options', problem)
+        INFO['Options scene attachment'] = report['attachment']
+        from . import review_appearance as RA
+        expected, report = RA.scene(ctx.x1_path('ui/menus/menu_list_view.igb').read_bytes(),
+                                   ctx.base_index.path('UI/menus/x2m_review.IGB').read_bytes())
+        actual = ctx.out_index.path('UI/menus/' + RA.SCENE + '.IGB')
+        if actual is None or actual.read_bytes() != expected:
+            fail('B_review', 'Review differs from deterministic scene conversion')
+        check = Check('V-TBD-review', 'classic Review')
+        VF.v_classic_review(Validator(ctx), check)
+        for problem in check.errors:
+            fail('B_review', problem)
+        INFO['Review scene attachment'] = report['attachment']
+        from . import codex_appearance as KA
+        expected, report = KA.scene(ctx.x1_path('ui/menus/menu_codex.igb').read_bytes(),
+                                   ctx.base_index.path('UI/menus/x2m_codex.IGB').read_bytes())
+        actual = ctx.out_index.path('UI/menus/' + KA.SCENE + '.IGB')
+        if actual is None or actual.read_bytes() != expected:
+            fail('B_codex', 'Codex differs from deterministic scene conversion')
+        check = Check('V-TBD-codex', 'classic Codex')
+        VF.v_classic_codex(Validator(ctx), check)
+        for problem in check.errors:
+            fail('B_codex', problem)
+        INFO['Codex scene attachment'] = report['attachment']
+        check = Check('V-TBD-shop', 'classic shop')
+        VF.v_classic_shop(Validator(ctx), check)
+        for problem in check.errors:
+            fail('B_shop', problem)
+        check = Check('V-TBD-danger', 'classic Danger Room')
+        VF.v_classic_danger(Validator(ctx), check)
+        for problem in check.errors:
+            fail('B_danger', problem)
+        check = Check('V-TBD-trivia', 'classic Trivia')
+        VF.v_classic_trivia(Validator(ctx), check)
+        for problem in check.errors:
+            fail('B_trivia', problem)
+        from . import team_appearance as TEAM
+        expected, report = TEAM.backdrop(ctx.x1_path('ui/menus/menu_characters_back.igb').read_bytes(),
+                                        ctx.base_index.path('UI/menus/x2m_team_back.IGB').read_bytes())
+        actual = ctx.out_index.path('UI/menus/' + TEAM.BACK + '.IGB')
+        if actual is None or actual.read_bytes() != expected:
+            fail('B_team', 'TEAM room differs from deterministic disc/native conversion')
+        check = Check('V-TBD-team', 'classic character screens')
+        VF.v_classic_team(Validator(ctx), check)
+        for problem in check.errors:
+            fail('B_team', problem)
+        INFO['TEAM room attachment'] = report
+        from . import viewer_appearance as WA
+        expected,_ = WA.viewer_scene(ctx.base_index.path('UI/menus/menu_image_viewer.IGB').read_bytes())
+        actual = ctx.out_index.path(f'UI/menus/{WA.SCENE}.IGB')
+        if actual is None or actual.read_bytes() != expected:
+            fail('B_viewer','viewer scene differs from deterministic compatible frame conversion')
+        for ext in ('.XMLB','.engb'):
+            for problem in WA.problems(ctx.read_base_xmlb('UI/menus/image_viewer'+ext),
+                                       ctx.read_out_xmlb('UI/menus/image_viewer'+ext)):
+                fail('B_viewer',problem)
         for rel in ('Maps/menu/main_back.XMLB', 'MotionPaths/menus/main_back.IGB'):
             e = reg.get(C.norm(rel))
             if e is None or e['owner'] != 'zones':

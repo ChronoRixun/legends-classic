@@ -249,9 +249,10 @@ FORCED_TEAMS_VALUES = ('1', '0', 'off')
 REQUIRED_XML2FIX = '1.8'
 # The companion fix's prerelease a beta/rc builder needs (launcher-facing requires.xml2fix only): 0.3.0-beta.2 writes
 # [Engine] ModelPools and [Game] ComboPopupGuard, first read by XML2 Fix 1.8.0-beta.2; 0.3.0-beta.3 writes [Online]
-# TickRate, first read by 1.8.0-beta.3, so its requirement is '>=1.8.0-beta.3' (SemVer: beta.3, beta.N > 3, every rc
-# and the final 1.8.0 meet it; 1.8.0-beta.2 and beta.1 do not).
-REQUIRED_XML2FIX_PRERELEASE = 'beta.3'
+# TickRate, first read by 1.8.0-beta.3; 0.4.0-beta.5 writes [Game] ClassicHud / ClassicCodex (the classic look), first
+# read by 1.8.0-beta.5, so its requirement is '>=1.8.0-beta.5' (SemVer: beta.5, beta.N > 5, every rc and the final
+# 1.8.0 meet it; 1.8.0-beta.4 and older do not).
+REQUIRED_XML2FIX_PRERELEASE = 'beta.5'
 
 
 def required_xml2fix(builder_version: str) -> str:
@@ -262,7 +263,7 @@ def required_xml2fix(builder_version: str) -> str:
     checks below remain independent of this SemVer metadata: beta fixes have the same numeric
     VERSIONINFO (check_release_dll tells them apart by the keys they read).
     """
-    if re.fullmatch(r'[0-9]+\.[0-9]+\.[0-9]+-(?:beta|rc)\.[0-9]+', builder_version):
+    if builder_version == RI.PRIVATE_CANDIDATE.release or re.fullmatch(r'[0-9]+\.[0-9]+\.[0-9]+-(?:beta|rc)\.[0-9]+', builder_version):
         parts = REQUIRED_XML2FIX.split('.')
         base = '.'.join(parts + ['0'] * (3 - len(parts)))
         return '>=' + base + '-' + (REQUIRED_XML2FIX_PRERELEASE or '0')
@@ -338,7 +339,7 @@ PORT_OWNED = {'Game': ('NewGameTeam', 'ResetUnlocks', 'SaveFolder', 'ForcedTeams
                         'EndHeroUnlock', 'MainMenuItems', 'DangerRoomGate', 'ClassicMainBackdrop', 'ClassicMainPanelBounds', 'NewGamePlus', 'ReviewStats', 'Xtract', 'XtractionShop', 'RevivalCost', 'XPCurve',
                        'GeometrySharingBlendIndices', 'CharacterLadderPaths', 'ObjectiveDescriptions',
                        'BreakRule', 'PlacementCrush', 'ObjectWorldImpact', 'DoubleHeal', 'DeathRule', 'NpcPowerRule', 'StunRule', 'DangerRoomParty', 'DangerRoomHealthBars', 'ResistanceDisplay', 'BoxHarmOrigin', 'HarmSingleChain', 'HarmLoopStartup', 'ConfirmationRelease',
-                       'OnlineConversations', 'PersonalItemPicture', 'ComboPopupGuard',
+                       'OnlineConversations', 'PersonalItemPicture', 'ComboPopupGuard', 'ClassicHud', 'ClassicHudPilot', 'ClassicCodex',
                        'ExplosiveFirstHit', 'PackAmount', 'SoloMode', 'X1Leader', 'DeathSwitchClear', 'RankCosts', 'LevelSkillPoints', 'LevelStatPoints', 'Xml1Multipart',
                        'Xml1MasterMold', 'Xml1MoldStage', 'Xml1Turrets', 'Xml1LockOnEffects', 'Xml1LockOnAim'),
               'Limits': ('ActorSlots', 'ResourceNames', 'ItemEnhancements', 'FightStyles', 'EffectCurves', 'MoveTriggers', 'EntityCapacity',
@@ -543,6 +544,8 @@ def game_keys(*, xml1_opening=True, save_folder=None, forced_teams='1', add_hero
         # Target subtitles must query the scoped damage modifiers used by the
         # converted original talents, rather than only the PC's resist_* rows.
         game['ResistanceDisplay'] = 'xml1'
+        game['ClassicHud'] = 'xml1'
+        game['ClassicCodex'] = '1'
         game['BoxHarmOrigin'] = 'xml1'
         game['HarmSingleChain'] = 'single'
         # Online, an auto-advancing conversation line goes on after the same game time on every PC (not when this PC's
@@ -867,6 +870,12 @@ RELEASE_18_KEYS = {**RELEASE_18_KEYS, 'Game': RELEASE_18_KEYS['Game'] + ('ComboP
 # XML2 Fix 1.8.0-beta.3 (Legends Classic 0.3.0-beta.3): online at 60 frames a second (gameplay-agreement rule 29). A
 # beta.2 DLL does not read [Online] TickRate, so the builder refuses it.
 RELEASE_18_KEYS = {**RELEASE_18_KEYS, 'Online': RELEASE_18_KEYS['Online'] + ('TickRate',)}
+# XML2 Fix 1.8.0-beta.5 (Legends Classic 0.4.0-beta.5): the classic look's presentation-only adapters, [Game]
+# ClassicHud=xml1 (the HUD) and ClassicCodex=1 (Codex Details/Back). A beta.4 DLL reads neither, so the builder refuses
+# it. These two are matched with their UTF-16 terminator: earlier DLLs carry longer keys with the same start
+# (ClassicHudPilot, ClassicHudTrace), which must not pass for them.
+EXACT_KEYS = {'Game': ('ClassicHud', 'ClassicCodex')}
+RELEASE_18_KEYS = {**RELEASE_18_KEYS, 'Game': RELEASE_18_KEYS['Game'] + EXACT_KEYS['Game']}
 
 
 def check_release_dll(dll, keys: dict) -> None:
@@ -877,7 +886,7 @@ def check_release_dll(dll, keys: dict) -> None:
         return
     data = dll.read_bytes()
     missing = [f'[{section}] {key}' for section, names in RELEASE_18_KEYS.items() for key in names
-               if key in keys.get(section, {}) and key.encode('utf-16le') not in data]
+               if key in keys.get(section, {}) and (key + ('\0' if key in EXACT_KEYS.get(section, ()) else '')).encode('utf-16le') not in data]
     if missing:
         raise FixTooOld(f'This build needs XML2 Fix {REQUIRED_XML2FIX} or later; the existing DLL does not recognize '
                         + ', '.join(missing), missing)

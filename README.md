@@ -26,7 +26,7 @@ makes no network connections.
 | **X-Men Legends for the original Xbox** | your own disc, made into a disc image: a full Redump-style `.iso` or an XISO both work. [How to image your own disc](docs/DUMPING.md). The PlayStation 2 and GameCube versions are different games under the hood and aren't supported (the builder recognises them and says so); compressed images (CCI / CSO) need decompressing first. |
 | **X-Men Legends II: Rise of Apocalypse for PC** | installed, English, with the retail `XMen2.exe` (the builder checks it) and unmodified game files. Your install is only read, never changed. |
 | **[xml2-fix](https://github.com/ChronoRixun/xml2-fix) 1.8.0 or later** | the in-memory engine fixes the port relies on (new-game party, forced parties, the first game's level curve and combat numbers, bigger zones, its own save format and folder, display options). The Ultimate Legends launcher installs it for you. Each builder needs a minimum version: see [Versions that go together](#versions-that-go-together). |
-| **Windows 10 or 11, 64-bit** | the released builder is a Windows program. From source it is plain Python + numpy, written to run on Linux too (its tests run there in CI; a full Linux build is untested so far). |
+| **Windows 10 or 11, 64-bit** | the released builder is a Windows program. From source it is plain Python + numpy + Pillow, written to run on Linux too (its tests run there in CI; a full Linux build is untested so far). |
 | **Disk space** | about 8 GB while building with movies (the game ~4.6 GB + a build cache ~3.2 GB you can delete afterwards), about 6 GB without movies. |
 | **Time** | the first build converts every sound bank: about 6-8 minutes on a current 8-core PC. Rebuilds with the cache take 2-3 minutes. |
 
@@ -271,6 +271,10 @@ LAG warnings may remain, but the slow-player drop is disabled. Host drop or free
   seven times, which is the louder gun.
 - **Hazards (#104):** the earlier 57-level audit had live checks in only three rooms; report remaining misses.
 - Local co-op on controllers should work (it is X-Men Legends II's) but has had little testing.
+- **The classic look (0.4.0-beta.5) is new:** it was checked on one PC at 4:3 and 16:9 with keyboard and a virtual pad,
+  not yet on physical controllers or many screens. Once, at 4:3, the first frame of Gear clipped the bottom help
+  labels; it did not happen again in any later try. If a screen's text or labels are cut off, or something looks
+  off, please report it with a screenshot.
 - Open bugs and play-test notes: [issues](https://github.com/ChronoRixun/legends-classic/issues) and
   `research/campaign/late_game_test.md`.
 
@@ -284,7 +288,7 @@ the game.
 
 | Builder | Content version | Needs xml2-fix | Notes |
 |---|---|---|---|
-| 0.4.0 | 24 | 1.8.0 | online codes, public browser, drop-in ON, solo watchers; catalogue 7 / LC33; launcher 0.4.0 for Online; matching peers required |
+| 0.4.0 | 25 | 1.8.0 | online codes, public browser, drop-in ON, solo watchers; the classic look (`[Game] ClassicHud=xml1`, `ClassicCodex=1`, beta 5: needs 1.8.0-beta.5); catalogue 7 / LC34 (betas 1-4: content 24 / LC33); launcher 0.4.0 for Online; matching peers required |
 | 0.2.5 | 23 | 1.7.1 | the bedroom items' pictures in the first game's picture window (`[Game] PersonalItemPicture=window`, #54); heroes re-stunned by every stun hit (`[Game] StunRule=xml1`, rule 18 revision 3, #101); catalogue 7 / LC32; both PCs need this pair |
 | 0.2.4 | 22 | 1.7.0 | Toad at HAARP (#105); colored enemy resistance text (`[Game] ResistanceDisplay=xml1`); co-op conversations (`[Game] OnlineConversations=lockstep`, rule 27); catalogue 7 / LC31; both PCs need this pair |
 | 0.2.3 | 21 | 1.6.0 | hazard bounds and the opening fire's rhythm (`[Game] BoxHarmOrigin`, `HarmSingleChain`), floor-overlap crates (`ObjectWorldImpact`), two more fall volumes, the first game's gun-move priority, NpcPower revision 4, StunRule revision 2, visible Danger Room opponents with health bars and the original fallback party (`DangerRoomHealthBars`, `DangerRoomParty`), Sentinel scan effects and aiming, fast saved-campaign transfer (`[Online] FastTransfer`), received-message checks (`[Online] ReceiveValidation`); catalogue 7 / LC30; verified saved-zone prefix retention; co-op peers need 0.2.3 / 1.6.0 on both PCs |
@@ -370,7 +374,7 @@ What comes next, by version (plans move with what testing finds):
 
 ## Building from source
 
-Python 3.14 (64-bit) and numpy; a C compiler is optional (the fast sound encoder). In short:
+Python 3.14 (64-bit), numpy and Pillow; a C compiler is optional (the fast sound encoder). In short:
 
 ```
 python -m pip install -r requirements.txt
@@ -399,7 +403,7 @@ Tests, the developer build, the harness and freezing the exe: [docs/BUILDING.md]
 X-Men Legends and X-Men Legends II were made by Raven Software (the PC version of X-Men Legends II with Beenox) and
 published by Activision; this project exists because those games are worth playing. Engine fixes:
 [xml2-fix](https://github.com/ChronoRixun/xml2-fix). Launcher: [Ultimate Legends](https://github.com/ChronoRixun/ultimate-legends).
-Built with Python, numpy and PyInstaller. Project: [ChronoRixun](https://github.com/ChronoRixun).
+Built with Python, numpy, Pillow and PyInstaller. Project: [ChronoRixun](https://github.com/ChronoRixun).
 
 The reverse engineering, the pipeline and these notes were made by one person working with Claude (Opus 5.5 and
 Fable 5.1) over a few days; the commit trailers and the research notes show that work as it happened. It is meant as
