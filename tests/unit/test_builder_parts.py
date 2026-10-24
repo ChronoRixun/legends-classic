@@ -383,7 +383,7 @@ def test_port_keys_from_a_synthetic_build():
         assert g['ClassicMainBackdrop'] == '1' and g['DangerRoomGate'] == 'button3'
         assert g['PostgameScript'] == FI.POSTGAME_SCRIPT and g['WindowTitle'] == 'X-Men Legends'
         assert g['NewGamePlus'] == '0' and g['ReviewStats'] == '0' and g['XPCurve'] == 'xml1' and g['Xtract'] == '0' and g['RevivalCost'] == 'xml1'
-        assert keys['Online'] == {'GameVersion': FI.PORT_GAME_VERSION, 'FastTransfer': '1', 'ReceiveValidation': '1', 'JoinInProgress': '1', **FI.broker_keys()} and set(g) <= set(FI.PORT_OWNED['Game'])
+        assert keys['Online'] == {'GameVersion': FI.PORT_GAME_VERSION, 'FastTransfer': '1', 'ReceiveValidation': '1', 'JoinInProgress': '1', 'TickRate': '60', **FI.broker_keys()} and set(g) <= set(FI.PORT_OWNED['Game'])
         assert keys['Save'] == {'Format': 'lc'} and 'Format' in FI.PORT_OWNED['Save']
         # the harness builds its test ini from the same keys
         sys.path.insert(0, str(Path(C.__file__).resolve().parents[1]))
@@ -406,8 +406,23 @@ def test_beta2_keys_refuse_a_beta1_dll_and_require_the_beta2_fix():
         assert FI.old_fix_keys(dll, keys) == ['[Game] ComboPopupGuard', '[Engine] ModelPools']
         dll.write_bytes(b'MZ' + 'ComboPopupGuard'.encode('utf-16le') + 'ModelPools'.encode('utf-16le'))
         assert FI.old_fix_keys(dll, keys) == []
-    assert FI.required_xml2fix('0.3.0-beta.2') == FI.required_xml2fix('0.3.0-rc.1') == '>=1.8.0-beta.2'
+    assert FI.required_xml2fix('0.3.0-beta.3') == FI.required_xml2fix('0.3.0-rc.1') == '>=1.8.0-beta.3'
     assert FI.required_xml2fix('0.3.0') == '>=1.8'
+
+
+def test_beta3_tick_rate_is_written_port_owned_and_refuses_a_beta2_dll():
+    # 0.3.0-beta.3: [Online] TickRate=60 (XML2 Fix 1.8.0-beta.3, gameplay-agreement rule 29) for every port build; a
+    # beta.2 DLL (which has the beta.2 keys but not TickRate) is refused by name.
+    assert FI.TICK_RATE == '60' and FI.online_keys(port_identity=True)['TickRate'] == '60'
+    assert 'TickRate' not in FI.online_keys(port_identity=False)
+    assert 'TickRate' in FI.PORT_OWNED['Online'] and 'TickRate' in FI.RELEASE_18_KEYS['Online']
+    keys = {'Online': {'JoinInProgress': '1', 'TickRate': '60'}, 'Engine': {'ModelPools': 'x4'}}
+    with tempfile.TemporaryDirectory() as td:
+        dll = Path(td) / 'dinput.dll'
+        dll.write_bytes(b'MZ' + ''.join(('JoinInProgress', 'ModelPools', 'ComboPopupGuard')).encode('utf-16le'))
+        assert FI.old_fix_keys(dll, keys) == ['[Online] TickRate']
+        dll.write_bytes(b'MZ' + ''.join(('JoinInProgress', 'ModelPools', 'TickRate')).encode('utf-16le'))
+        assert FI.old_fix_keys(dll, keys) == []
 
 
 def test_harness_installs_write_the_shipped_limits_by_default():

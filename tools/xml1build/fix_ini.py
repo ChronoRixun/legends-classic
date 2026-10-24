@@ -248,9 +248,10 @@ FORCED_TEAMS_VALUES = ('1', '0', 'off')
 # [Limits] ScriptFunctions; a 1.4 DLL silently ignores every one of them, so check_release_dll refuses it)
 REQUIRED_XML2FIX = '1.8'
 # The companion fix's prerelease a beta/rc builder needs (launcher-facing requires.xml2fix only): 0.3.0-beta.2 writes
-# [Engine] ModelPools and [Game] ComboPopupGuard, first read by XML2 Fix 1.8.0-beta.2, so its requirement is
-# '>=1.8.0-beta.2' (SemVer: beta.2, beta.N > 2, every rc and the final 1.8.0 meet it; 1.8.0-beta.1 does not).
-REQUIRED_XML2FIX_PRERELEASE = 'beta.2'
+# [Engine] ModelPools and [Game] ComboPopupGuard, first read by XML2 Fix 1.8.0-beta.2; 0.3.0-beta.3 writes [Online]
+# TickRate, first read by 1.8.0-beta.3, so its requirement is '>=1.8.0-beta.3' (SemVer: beta.3, beta.N > 3, every rc
+# and the final 1.8.0 meet it; 1.8.0-beta.2 and beta.1 do not).
+REQUIRED_XML2FIX_PRERELEASE = 'beta.3'
 
 
 def required_xml2fix(builder_version: str) -> str:
@@ -305,6 +306,12 @@ RECEIVE_VALIDATION = '1'
 # refused by name). Written for every port build (0.3.0: drop-in on by default).
 JOIN_IN_PROGRESS = '1'
 
+# [Online] TickRate=60 (XML2 Fix 1.8.0-beta.3, gameplay agreement rule 29): online sessions run at 60 frames a second
+# like single-player instead of the game's own 30 (CClient::frame's online 1/30 s frame). Lockstep runs every PC's
+# frames together, so every co-op PC must have the same rate: a 60 and a 30 PC refuse each other at join by name.
+# '30' is the fallback for slow PCs (then everyone in that session sets 30). Written for every port build.
+TICK_RATE = '60'
+
 # [Game] OnlineConversations=lockstep (XML2 Fix 1.7, gameplay agreement rule 27 revision 1): online, a conversation line
 # that goes on by itself does so |timeDelay| s of game time after it was drawn on every PC, and a chosen reply's voice is
 # cut; single-player is unchanged. Absent = the 1.6.0 decision by this PC's voice end, which put co-op peers one random
@@ -336,7 +343,7 @@ PORT_OWNED = {'Game': ('NewGameTeam', 'ResetUnlocks', 'SaveFolder', 'ForcedTeams
                        'Xml1MasterMold', 'Xml1MoldStage', 'Xml1Turrets', 'Xml1LockOnEffects', 'Xml1LockOnAim'),
               'Limits': ('ActorSlots', 'ResourceNames', 'ItemEnhancements', 'FightStyles', 'EffectCurves', 'MoveTriggers', 'EntityCapacity',
                          'ScriptFunctions'),
-              'Online': ('GameVersion', 'ContentFingerprint', 'FastTransfer', 'ReceiveValidation', 'JoinInProgress'),
+              'Online': ('GameVersion', 'ContentFingerprint', 'FastTransfer', 'ReceiveValidation', 'JoinInProgress', 'TickRate'),
               'Save': ('Format',),
               'Engine': ('ModelPools',),
               'Xml1Turrets': ('Count',) + tuple(f'T{i}' for i in range(1, 33))}
@@ -623,7 +630,7 @@ def online_keys(*, port_identity=False, balance=False, fingerprint=None) -> dict
     if not port_identity:
         return {}
     keys = {'GameVersion': RI.game_version(), 'FastTransfer': FAST_TRANSFER, 'ReceiveValidation': RECEIVE_VALIDATION,
-            'JoinInProgress': JOIN_IN_PROGRESS}
+            'JoinInProgress': JOIN_IN_PROGRESS, 'TickRate': TICK_RATE}
     if fingerprint:
         keys['ContentFingerprint'] = fingerprint
     keys.update(broker_keys())
@@ -857,6 +864,9 @@ RELEASE_18_KEYS = {**RELEASE_17_KEYS, 'Online': RELEASE_17_KEYS['Online'] + ('Jo
 # team-combo popup guard. A 1.8.0-beta.1 DLL knows neither, so the builder refuses it (its VERSIONINFO is the same
 # numeric 1.8.0.0; the key strings are what tells the two apart).
 RELEASE_18_KEYS = {**RELEASE_18_KEYS, 'Game': RELEASE_18_KEYS['Game'] + ('ComboPopupGuard',), 'Engine': ('ModelPools',)}
+# XML2 Fix 1.8.0-beta.3 (Legends Classic 0.3.0-beta.3): online at 60 frames a second (gameplay-agreement rule 29). A
+# beta.2 DLL does not read [Online] TickRate, so the builder refuses it.
+RELEASE_18_KEYS = {**RELEASE_18_KEYS, 'Online': RELEASE_18_KEYS['Online'] + ('TickRate',)}
 
 
 def check_release_dll(dll, keys: dict) -> None:

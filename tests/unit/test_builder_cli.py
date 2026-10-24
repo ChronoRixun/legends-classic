@@ -97,7 +97,7 @@ def test_beta_and_stable_stamps_declare_the_matching_fix_requirement():
     from unittest.mock import patch
     import xml1builder
     from xml1builder import commands
-    for suffix, expected in [('', '>=1.8'), ('-beta.2', '>=1.8.0-beta.2'), ('-rc.1', '>=1.8.0-beta.2')]:
+    for suffix, expected in [('', '>=1.8'), ('-beta.3', '>=1.8.0-beta.3'), ('-rc.1', '>=1.8.0-beta.3')]:
         version = '0.3.0' + suffix
         with tempfile.TemporaryDirectory() as td, patch.object(xml1builder, 'VERSION', version), \
              patch.object(commands, 'VERSION', version):

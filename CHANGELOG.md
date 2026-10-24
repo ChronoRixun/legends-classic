@@ -10,6 +10,14 @@ then **Rebuild**, then **Play**. Everyone needs the same 0.3.0 build and XML2 Fi
 0.2.x and 0.3.0 never join each other. Test mode must be off.
 
 
+- **Beta 3: online at 60 fps.** Builds now write XML2 Fix's `[Online] TickRate = 60`: online sessions run at 60
+  frames a second like single-player instead of the game's own 30 (the game keeps its speed; about 11 KB/s upload
+  per player instead of ~6). `TickRate = 30` in `xml2-fix.ini` is the fallback for a slow PC - then every player in
+  that session sets 30. The rate is gameplay-agreement rule 29, so a 60 and a 30 game refuse each other at join
+  naming `29 TickRate`, and a beta 2 game and a beta 3 game never join. Beta and rc builders now require
+  `>=1.8.0-beta.3`; the builder refuses an older DLL that does not know the key. Content and the lobby token (`LC33`)
+  are unchanged. XML2 Fix beta 3 also fixes an occasional crash on quit and the cleanup of beta 2's bigger model
+  pools on level changes and quits.
 - **Beta 2: no more team-combo crash, bigger model pools.** Builds now write XML2 Fix's `[Engine] ModelPools = x4`
   (4096 models, 2048 IGB, 128 actors, 128 particle clouds ...) and `[Game] ComboPopupGuard = 1`: with the game's own
   pools a heavy fight could fill one, effects and props went missing and a team-combo popup without a hero's head

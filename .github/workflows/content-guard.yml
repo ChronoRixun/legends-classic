@@ -50,13 +50,17 @@ jobs:
 
   # Contributors run the guard through pre-commit with whatever Python they have (its header promises 3.8+, standard
   # library only) and on Windows as well as Linux: the self-test and the tracked-file check on both systems, on the
-  # oldest Python setup-python still ships for current runners and on the builder's own.
+  # oldest Python setup-python still ships for current runners and on the builder's own. ubuntu-latest is Ubuntu 26.04,
+  # for which setup-python has no 3.9 build any more: 3.9 runs on Windows only (3.14 on both).
   portability:
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest]
         python-version: ["3.9", "3.14"]
+        exclude:
+          - os: ubuntu-latest
+            python-version: "3.9"
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v7
