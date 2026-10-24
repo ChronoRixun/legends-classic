@@ -3,6 +3,92 @@
 The builder's releases, newest first. The version is `xml1-builder --version`; the content version is what a
 build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebuild.
 
+## v0.3.0 - content version 24 (needs XML2 Fix 1.8.0)
+
+Legends Classic 0.3.0 brings online play from Ultimate Legends **0.4.0**. Update the launcher to 0.4.0 first,
+then **Rebuild**, then **Play**. Everyone needs the same 0.3.0 build and XML2 Fix 1.8.0 or later;
+0.2.x and 0.3.0 never join each other. Test mode must be off.
+
+
+- **Beta 3: online at 60 fps.** Builds now write XML2 Fix's `[Online] TickRate = 60`: online sessions run at 60
+  frames a second like single-player instead of the game's own 30 (the game keeps its speed; about 11 KB/s upload
+  per player instead of ~6). `TickRate = 30` in `xml2-fix.ini` is the fallback for a slow PC - then every player in
+  that session sets 30. The rate is gameplay-agreement rule 29, so a 60 and a 30 game refuse each other at join
+  naming `29 TickRate`, and a beta 2 game and a beta 3 game never join. Beta and rc builders now require
+  `>=1.8.0-beta.3`; the builder refuses an older DLL that does not know the key. Content and the lobby token (`LC33`)
+  are unchanged. XML2 Fix beta 3 also fixes an occasional crash on quit and the cleanup of beta 2's bigger model
+  pools on level changes and quits.
+- **Beta 2: no more team-combo crash, bigger model pools.** Builds now write XML2 Fix's `[Engine] ModelPools = x4`
+  (4096 models, 2048 IGB, 128 actors, 128 particle clouds ...) and `[Game] ComboPopupGuard = 1`: with the game's own
+  pools a heavy fight could fill one, effects and props went missing and a team-combo popup without a hero's head
+  crashed the game (beta 1, hosting alone in the Maintenance Garage). The pools are gameplay-agreement rule 28, so a
+  beta 1 game and a beta 2 game refuse each other at join, naming `28 ModelPools` on the beta 2 PC: everyone
+  rebuilds with builder 0.3.0-beta.2 and XML2 Fix 1.8.0-beta.2. Beta and rc builders now require
+  `>=1.8.0-beta.2`; the builder refuses an older DLL that does not know the two keys. Content and the lobby token
+  (`LC33`) are unchanged.
+- **Four-player start is fixed:** participants keep distinct peers when the game starts.
+- **Hero swaps survive level changes.** Solo-segment hand-back runs only during the segment and where it ends,
+  using the heroes held when the segment began (rule 26 revision 6).
+- **Slow players stay connected.** LAG warnings may still show, but the slow-player drop is disabled.
+- **Frozen guests:** a joiner frozen for 30 seconds is removed through the agreed cut frame; survivors keep playing.
+  A host drop or freeze still ends the joiners' session with "lost connection to the host".
+
+- **Host or join by code**, without port forwarding or ini editing. The code appears in the game's online menus
+  and host lobby; the launcher copies it when it first appears.
+- **Browse public games:** opt in to a public listing with a room name, or keep the room private and share its code.
+  The list shows the host, level, mode and player count. A matching build's row can join: room tokens are exactly
+  `GameVersion` (`LC33`), with no content fingerprint appended. The normal gameplay agreement still checks content
+  and rules when joining.
+- **Drop-in co-op is on by default.** Start alone, let friends join mid-campaign, then bring them into play at the
+  next level change. When the last guest leaves, the host keeps playing and can accept another.
+- **Solo story segments:** players without a hero stay connected as watchers and regain control when the party
+  widens. This covers Wolverine's opening and Magma's mansion tour (issue #106).
+- **An abrupt guest drop in a game of three or more no longer ends the survivors' session.** XML2 Fix's rule 25
+  revision 4 agrees a cut frame before removing the lost player. That player can join again by code and return at
+  the next level change. Losing the host still ends the session; there is no host migration.
+- **Clearer room messages:** `room_closed` means the game cannot take new players right now; `room_full` means
+  all four places are taken (launcher contract v1.5).
+- Encrypted connections with relay fallback, and online hardening. Public games connect players directly, so
+  players can see each other's internet address. Use a private code to play only with friends.
+- The broker allows at most two public rooms and two seats in other people's rooms per internet address.
+- Includes 0.2.5's bedroom picture window and per-hit hero stun fix. The save format is unchanged.
+
+See [Play online](docs/ONLINE.md) for steps, privacy and troubleshooting.
+
+**Known issues**
+
+- **Enemy attack rate** (issue #101): unarmed enemies (the Brotherhood in the HAARP tunnels) still attack about 1.5
+  times as often per minute as in the first game (about 19 against 28 attacks per enemy per minute with a moving
+  hero, 20 against 32 with a still one); the cause is not found. The per-hit hero stun fix shipped in 0.2.5; whether
+  heroes are now stunned as long as in the first game has not been measured again, so it does not close the
+  remaining combat report.
+- **Gun soldiers** (issues #101 and #54): the HAARP officer, and probably the other gun soldiers, still close in to
+  punch where the first game's keep their distance and shoot (matched 45 s window: 49 shots and no punches in the
+  first game, no shots and 24 punches in the port).
+- **Falls** (issue #22): 15 of the first game's fall kill zones (20 placements in 14 maps, three of the zones in demo
+  maps outside the campaign) stay switched off until proven safe for the AI followers too. The double jump out of the play area on the HAARP slopes and bridge that
+  0.2.2 listed could not be reproduced from 0.2.3 on (18 jumps, all landing inside; the zone's boundary data matches
+  the first game).
+- **Cosmetics** (issue #54): the HAARP officer's gun is louder than on the Xbox: the port fires a seven-shot burst
+  where the first game fires single spaced shots, and each shot plays its own ~1.5 s sound, so about seven stack
+  (the sound's volume is the original's). The bedroom picture window is fixed.
+- **Loot and the item shop** (issue #6) still use the sequel's systems.
+- **Hazards** (issue #104): the earlier 57-level audit had live checks in only three rooms. Report any fire,
+  spike or electricity that still does not hurt.
+- **Host loss ends the session.** There is no host migration; host again and load the last save.
+- **Four-player internet play is not yet verified.** Local three-player abrupt-drop checks passed; the owner's
+  030e three-PC acceptance including a hotspot PC is still required before publication.
+- A failed shared-campaign restore can require rehosting. Automatic reconnection is not provided.
+
+<details><summary>Technical details</summary>
+
+- Builder 0.3.0, content 24, catalogue 7, game version LC33; requires XML2 Fix >=1.8 (CMake/DLL 1.8.0).
+- Builder defaults include `Broker`, `BrokerPin`, `JoinInProgress=1`, `FastTransfer=1` and `ReceiveValidation=1`.
+  Room starts imply GNS transport (rule 25 revision 4 / framing 3); drop-in uses rule 26 revision 6.
+- Conversation timing is the 0.2.4 fix (rule 27), retained here, rather than a new 0.3.0 feature.
+
+</details>
+
 ## v0.2.5 - content version 23 (needs XML2 Fix 1.7.1)
 
 Legends Classic 0.2.5 - content version 23, needs XML2 Fix 1.7.1. Rebuild in the
@@ -51,6 +137,7 @@ launcher, then Play. Both co-op players need the same build and fix.
   (Brotherhood, HAARP); only parts of it are fixed here.
 - **A double jump on slopes or the HAARP bridge** can land a hero outside the play area (issue #22); the remaining
   fall kill zones are still switched off until proven safe.
+  *Correction, 2026-10-23: this was not reproducible on 0.2.3 or later (18 jumps, all landing inside the play area).*
 - **Loot and the item shop** (issue #6) are not in this version.
 - **Cosmetic reports** from the first playthrough (issue #54) are still tracked.
 - **Hazards** (issue #104): 57 levels were fixed from an audit of the game's data, but only three rooms were played
@@ -132,6 +219,7 @@ the build). Your saves carry over.
   (Brotherhood, HAARP); only parts of it are fixed here.
 - **A double jump on slopes or the HAARP bridge** can land a hero outside the play area (issue #22); the remaining
   fall volumes are off.
+  *Correction, 2026-10-23: 18 double jumps on the 0.2.3 release did not reproduce it (see issue #22).*
 - **Attack and impact sounds that loop** in the Manhattan streets (issue #79) were not reproduced lately, but no fix
   is claimed.
 - **Loot and the item shop** (issue #6) are not in this version.
@@ -208,6 +296,9 @@ the build). Your saves carry over.
   by a punch-punch-slam; plain soldiers still are. A boss whose armour comes off takes full damage again but
   still isn't launched, as in the first game. XML2's "Resistant" line under enemy health bars goes with it (the
   first game had none).
+  *Correction, 2026-10-23: the first game does show resistance labels (for example "Physical Resistant"); 0.2.4
+  restored the text with its colors. The enemies were resistant the whole time (a Brotherhood Revolutionary takes
+  0.2 of physical damage); only the label was missing in 0.2.2 and 0.2.3.*
 - **Solo mode** (issue #5): the first game's solo boxes and bridges keep the rest of the party behind and regroup it
   afterwards, so followers no longer walk into the void at the gaps.
 
@@ -247,6 +338,8 @@ the build). Your saves carry over.
 - The revival price is the first game's, steep at high levels (above).
 - 18 fall volumes are still off (#22): several sit in water or rooms followers can stray into, and need their own
   checks.
+  *Correction, 2026-10-23: 18 was a miscount. The 0.2.2 release left 17 zones (25 placements in 15 maps) off, and
+  0.2.3 switched two on, which leaves 15 (20 placements in 14 maps).*
 - In co-op, *Load Saved Campaign* can stop at "Sending game information..." (0.2.1 too). Start a new campaign in co-op
   for now.
 - Co-op was tested with two copies of the game on one PC; the two-PC pass, on one network and across the internet,

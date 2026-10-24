@@ -1,6 +1,7 @@
 # Local release validation
 
 Run these gates for every release candidate, after its final content build and before publishing.
+For tag naming, beta flags, notes and exact publishing commands, see [RELEASING.md](RELEASING.md).
 Use legally owned inputs and a separate output/cache folder. Keep game files and logs containing
 game content out of Git and public CI artifacts.
 

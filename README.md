@@ -11,11 +11,11 @@ It is a builder, not a download: every file of the result is made on your comput
 This project ships no game content - no game files, no parts of them, no modified executables - and the builder
 makes no network connections.
 
-> **Status: public test builds (builder 0.2.5, XML2 Fix 1.7.1, launcher 0.3.2).** Every mission and the ending run
-> in automated tests on the developer's PC (a full hand-played run is under way). The builder makes the game from
-> your own disc image and X-Men Legends II install, and the [Ultimate Legends](https://github.com/ChronoRixun/ultimate-legends)
-> launcher does it in a few clicks. 0.2.5 shows the bedroom items' pictures in the first game's picture window and re-stuns heroes on every
-> stun hit, as the first game does. Rebuild, then Play; both co-op PCs need 0.2.5 / XML2 Fix 1.7.1.
+> **Status: public test builds (builder 0.3.0, XML2 Fix 1.8.0, launcher 0.4.0).** Every mission and the ending run
+> in automated tests on the developer's PC (a full hand-played run is under way). The builder uses your own disc
+> image and X-Men Legends II install. 0.3.0 adds online codes, public games, drop-in and solo-segment watchers.
+> Update Ultimate Legends to **0.4.0 first**, then **Rebuild**, then **Play**. All online players need matching builds.
+> Owner 030e three-PC/hotspot acceptance is still pending; see [Known limitations](#known-limitations).
 > Known bugs and what is next: [Status](#status), [CHANGELOG](CHANGELOG.md) and [Roadmap](#roadmap).
 > Help and bug reports: the [community Discord](https://discord.gg/tFxwHtZv8k).
 
@@ -25,7 +25,7 @@ makes no network connections.
 |---|---|
 | **X-Men Legends for the original Xbox** | your own disc, made into a disc image: a full Redump-style `.iso` or an XISO both work. [How to image your own disc](docs/DUMPING.md). The PlayStation 2 and GameCube versions are different games under the hood and aren't supported (the builder recognises them and says so); compressed images (CCI / CSO) need decompressing first. |
 | **X-Men Legends II: Rise of Apocalypse for PC** | installed, English, with the retail `XMen2.exe` (the builder checks it) and unmodified game files. Your install is only read, never changed. |
-| **[xml2-fix](https://github.com/ChronoRixun/xml2-fix) 1.7.1 or later** | the in-memory engine fixes the port relies on (new-game party, forced parties, the first game's level curve and combat numbers, bigger zones, its own save format and folder, display options). The Ultimate Legends launcher installs it for you. Each builder needs a minimum version: see [Versions that go together](#versions-that-go-together). |
+| **[xml2-fix](https://github.com/ChronoRixun/xml2-fix) 1.8.0 or later** | the in-memory engine fixes the port relies on (new-game party, forced parties, the first game's level curve and combat numbers, bigger zones, its own save format and folder, display options). The Ultimate Legends launcher installs it for you. Each builder needs a minimum version: see [Versions that go together](#versions-that-go-together). |
 | **Windows 10 or 11, 64-bit** | the released builder is a Windows program. From source it is plain Python + numpy, written to run on Linux too (its tests run there in CI; a full Linux build is untested so far). |
 | **Disk space** | about 8 GB while building with movies (the game ~4.6 GB + a build cache ~3.2 GB you can delete afterwards), about 6 GB without movies. |
 | **Time** | the first build converts every sound bank: about 6-8 minutes on a current 8-core PC. Rebuilds with the cache take 2-3 minutes. |
@@ -35,7 +35,7 @@ makes no network connections.
 ### With the Ultimate Legends launcher (recommended)
 
 [Ultimate Legends](https://github.com/ChronoRixun/ultimate-legends) (a portable zip, no install) downloads the
-builder, runs it and installs xml2-fix for you. On a Steam Deck or another Linux PC under Proton, use launcher 0.2.1 or
+builder, runs it and installs xml2-fix for you. Use **0.4.0 or later** for the Online panel. On a Steam Deck or another Linux PC under Proton, use launcher 0.2.1 or
 later: earlier launchers could not unpack the builder there.
 
 1. Set up **X-Men Legends II** in the launcher as usual (it installs xml2-fix).
@@ -50,6 +50,8 @@ game's content (never automatic). *Verify* checks every file; *Uninstall* remove
 your saves stay.
 
 ### Standalone: the `xml1-builder` release zip
+
+Maintainers: [how to cut stable, beta and rc releases](docs/RELEASING.md).
 
 Download `xml1-builder-<version>-win64.zip` from [Releases](https://github.com/ChronoRixun/legends-classic/releases)
 (check it against `SHA256SUMS.txt`), unzip it into a folder of its own (the zip has no top-level folder) and run it
@@ -72,7 +74,7 @@ xml1-builder clean   --out "C:\Games\X-Men Legends (Port)"
 Options that work with every command: `--events jsonl|text` (`jsonl` prints JSON-lines events for the launcher), `--log FILE`, `--quiet` and `--version`. `xml1-builder --help` lists them all.
 
 Then copy `dinput.dll` from the [latest xml2-fix release](https://github.com/ChronoRixun/xml2-fix/releases/latest)
-(builder 0.2.5 needs 1.7.1 or later) into the output folder and start `XMen2.exe` there. The builder has already written the `xml2-fix.ini` settings the
+(builder 0.3.0 needs 1.8.0 or later) into the output folder and start `XMen2.exe` there. The builder has already written the `xml2-fix.ini` settings the
 port needs (`--no-ini` leaves the file alone; the keys are in `_build\stamp.json`).
 
 The release zip is not code-signed yet, so Windows SmartScreen or an antivirus may warn about it: compare the
@@ -113,6 +115,22 @@ Windows Update) stops the question, and *Skip this installation* lets the game s
    of what it made (`_build\stamp.json`, `_build\manifest.json`).
 
 Saves go to `Documents\Activision\X-Men Legends`, separate from X-Men Legends II's.
+
+## Play online
+
+Up to four players can share a campaign through **Ultimate Legends 0.4.0**. Choose **Host a game** in its Online
+section, then open **Play Online** in the game to get a code. Friends paste it under **Join a game**, then select
+the host in **Play Online -> Join Game**. To let anyone find the room, turn on **List my game publicly**;
+others choose its **Join** in **Browse games**, then join through the same in-game menu. No port forwarding is needed.
+
+Drop-in is on by default: start alone, and bring late joiners into play at the next level change. During solo story
+segments, players without heroes watch and regain control when the party widens. If a guest drops abruptly in a
+game of three or more, the survivors agree a cut frame and continue. Host loss ends the session (no host migration).
+Everyone needs matching 0.3.0 builds, XML2 Fix >=1.8.0 and Test mode off; 0.2.x cannot join 0.3.0.
+
+Public games connect directly, so players can see each other's internet address. The broker caps each internet
+address at two public rooms and two seats in other people's rooms. Normal **Play** supports LAN / Connect by IP.
+See [the online guide](docs/ONLINE.md) for full steps, privacy, limits and messages.
 
 ## Saves
 
@@ -174,11 +192,12 @@ Verified in game on the developer's PC (mostly by automated runs that drive the 
 Fixed in later builders (the launcher offers the rebuild when the content version rises, or run
 `xml1-builder build` again - see [CHANGELOG.md](CHANGELOG.md)):
 
+- **0.3.0 (with XML2 Fix 1.8.0 and launcher 0.4.0):** online codes and public games, default-on drop-in,
+  solo-segment watchers (#106), and continued play after an abrupt guest drop in three-player local checks.
 - **0.2.5 (with XML2 Fix 1.7.1):** the bedroom items' pictures in the first game's picture window (#54) and heroes
   re-stunned by every stun hit, as in the first game (#101, StunRule revision 3).
 - **0.2.4 (with XML2 Fix 1.7.0):** Toad's HAARP jets, armour and soldier waves (#105), the first game's
   colored resistance text beneath enemy health bars, and co-op conversations that stay in step.
-  See the changelog for the remaining solo-segment limitation (#106).
 - **0.2.3 (with XML2 Fix 1.6.0):** hazards, enemy combat timing, ice-tunnel crates, Danger Room health bars,
   Sentinel lock-on effects, fast co-op saved-campaign loads and Connect by IP / LAN search.
 - **0.2.2 (with XML2 Fix 1.5.0):** the scan turrets (#4); the Xtraction services - Load, Danger Room, Healer and
@@ -214,9 +233,9 @@ need new engine hooks in xml2-fix), the port plays without them:
 - **The first game's loot and shops.** Random drops are X-Men Legends II's, not the first game's equipment. The shops
   (the Healer's, and the one at Xtraction points once you have met Forge) are X-Men Legends II's: generated stock, its
   prices and its training services ([#6](https://github.com/ChronoRixun/legends-classic/issues/6)).
-- **18 of the first game's fall volumes** stay off: several sit in water or in rooms followers can stray into, and
-  need their own checks ([#22](https://github.com/ChronoRixun/legends-classic/issues/22)). The East Rooftops and a
-  sewer walkway have theirs back since 0.2.2.
+- **15 of the first game's fall kill zones** (20 placements in 14 maps, three of the zones in demo maps outside the
+  campaign) stay off: several sit in water or in rooms followers can stray into, and need their own checks ([#22](https://github.com/ChronoRixun/legends-classic/issues/22)).
+  The East Rooftops and a sewer walkway have theirs back since 0.2.2, and two more since 0.2.3.
 
 Recreated in 0.2.2: the scan turrets ([#4](https://github.com/ChronoRixun/legends-classic/issues/4)), breakable
 enemy parts ([#3](https://github.com/ChronoRixun/legends-classic/issues/3)), solo mode
@@ -224,24 +243,33 @@ enemy parts ([#3](https://github.com/ChronoRixun/legends-classic/issues/3)), sol
 lock ([#63](https://github.com/ChronoRixun/legends-classic/issues/63)) and the two-point ranks
 ([#35](https://github.com/ChronoRixun/legends-classic/issues/35)).
 
-### Known limitations
+#Hero swaps survive level changes; solo-segment hand-back runs only through the segment and its end.
+Four-player start is fixed. Frozen guests are removed by agreement; survivors keep playing.
+LAG warnings may remain, but the slow-player drop is disabled. Host drop or freeze ends the joiners' session.
+
+## Known limitations
 
 - Key bindings and display settings are shared with X-Men Legends II (both read the same Windows registry key);
   saves are separate.
 - **A keycard behind a door in HAARP:** since 0.2.2 the HAARP officers are no longer launched onto the key door, the
   way their keycards ended up behind it. The first game can itself push an officer through that door when the two
   overlap; if a keycard is ever out of reach, load your last save.
-- Online play (*Play Online*) is X-Men Legends II's, through the [OpenSpy](https://openspy.net) servers; port games
-  only list other port games. Joining, playing and saving for both players work in tests with two copies of the game
-  on one PC; play between two PCs, and across the internet, gets a dedicated pass in 0.3.0. Reports of disconnects are
-  welcome (say whether the game showed its lag warnings first). In co-op, *Load Saved Campaign* sends the host's save
-  to the joining player since 0.2.3, in seconds; both PCs now need builder 0.2.5 with XML2 Fix 1.7.1. *Connect by IP* and the
-  LAN search list and admit port games since 0.2.3 (before, two port builds could not see each other that way).
-- **Solo story segments (#106):** co-op New Game starts with Wolverine alone; Magma's mansion tour also leaves
-  the second online player without a hero. At a solo segment's next level load the joiner can be dropped. Use
-  Load Saved Campaign and restart from a save after the segment. Planned for 0.3.0 with drop-in co-op.
-- **Still open:** the rest of enemy powers and stun (#101), fall kill zones still switched off until proven safe (#22),
-  cosmetic reports (#54), and the first game's loot and item shop (#6).
+- **Online:** local three-player drop tests passed; 030e on three real PCs including a hotspot PC
+  still needs owner acceptance; four-player WAN coverage is not certified. Failed shared-campaign restore can require rehosting. LAG warnings may remain, but the slow-player drop is disabled. See [Play online](docs/ONLINE.md).
+- **Host loss ends the session:** no host migration or automatic reconnection. A guest can join again by code.
+- **Still open:** enemy attack rate (#101), remaining fall kill zones switched off until proven safe (#22),
+  the HAARP officer's gun being louder than on the Xbox and other cosmetic reports (#54), and the first game's
+  loot/shop (#6).
+- **Enemy attack rate (#101):** unarmed enemies (the Brotherhood in the HAARP tunnels) still attack about 1.5 times as
+  often per minute as in the first game (measured: about 19 against 28 attacks per enemy per minute with a moving
+  hero, 20 against 32 with a still one); the cause is not found. Whether heroes are now stunned as long as in the
+  first game has not been measured again since 0.2.5 re-stuns them on every stun hit.
+- **Gun soldiers (#101, #54):** the HAARP officer, and probably the other gun soldiers, still close in to punch more
+  than the first game's, which keep their distance and shoot. In a matched 45 s window the officer fired 49 shots
+  and never punched in the first game; in the port he fired none and punched 24 times. When the port officer does
+  shoot, he fires a burst of seven in under a second instead of single spaced shots, and the shot sound stacks about
+  seven times, which is the louder gun.
+- **Hazards (#104):** the earlier 57-level audit had live checks in only three rooms; report remaining misses.
 - Local co-op on controllers should work (it is X-Men Legends II's) but has had little testing.
 - Open bugs and play-test notes: [issues](https://github.com/ChronoRixun/legends-classic/issues) and
   `research/campaign/late_game_test.md`.
@@ -256,6 +284,7 @@ the game.
 
 | Builder | Content version | Needs xml2-fix | Notes |
 |---|---|---|---|
+| 0.3.0 | 24 | 1.8.0 | online codes, public browser, drop-in ON, solo watchers; catalogue 7 / LC33; launcher 0.4.0 for Online; matching peers required |
 | 0.2.5 | 23 | 1.7.1 | the bedroom items' pictures in the first game's picture window (`[Game] PersonalItemPicture=window`, #54); heroes re-stunned by every stun hit (`[Game] StunRule=xml1`, rule 18 revision 3, #101); catalogue 7 / LC32; both PCs need this pair |
 | 0.2.4 | 22 | 1.7.0 | Toad at HAARP (#105); colored enemy resistance text (`[Game] ResistanceDisplay=xml1`); co-op conversations (`[Game] OnlineConversations=lockstep`, rule 27); catalogue 7 / LC31; both PCs need this pair |
 | 0.2.3 | 21 | 1.6.0 | hazard bounds and the opening fire's rhythm (`[Game] BoxHarmOrigin`, `HarmSingleChain`), floor-overlap crates (`ObjectWorldImpact`), two more fall volumes, the first game's gun-move priority, NpcPower revision 4, StunRule revision 2, visible Danger Room opponents with health bars and the original fallback party (`DangerRoomHealthBars`, `DangerRoomParty`), Sentinel scan effects and aiming, fast saved-campaign transfer (`[Online] FastTransfer`), received-message checks (`[Online] ReceiveValidation`); catalogue 7 / LC30; verified saved-zone prefix retention; co-op peers need 0.2.3 / 1.6.0 on both PCs |
@@ -266,7 +295,9 @@ the game.
 | 0.1.6 - 0.1.7 | 8 - 9 | 1.3.0 | conversation hooks, skill points, the item-enhancement pool |
 | 0.1.0 - 0.1.5 | 2 - 7 | 1.2.0 | |
 
-Launcher: any release runs every builder; on Proton (Steam Deck, Linux) 0.2.1 or later.
+Launcher: **0.4.0 or later for 0.3.0 online play**. The builder manifest still has `min_launcher=0.0.0`;
+older launchers can build and use normal Play but do not provide the new Online panel. On Proton (Steam Deck,
+Linux), archive support needs 0.2.1 or later; 0.4.0 online/Deck acceptance remains in the launcher checklist.
 
 ## Roadmap
 
@@ -311,12 +342,12 @@ What comes next, by version (plans move with what testing finds):
 - **0.2.5 - done:** the bedroom items' pictures in the first game's picture window
   ([#54](https://github.com/ChronoRixun/legends-classic/issues/54)) and heroes re-stunned by every stun hit
   ([#101](https://github.com/ChronoRixun/legends-classic/issues/101)). Needs XML2 Fix 1.7.1.
-- **0.3.0** - online by code, a public game browser, drop-in co-op and the solo story segments
+- **0.3.0 - done when released:** online by code, a public game browser, drop-in co-op and the solo story segments
   ([#106](https://github.com/ChronoRixun/legends-classic/issues/106)): host and join from Ultimate Legends,
   share a code or browse public games, join a running campaign at the next level change, and keep the second
   player connected through Wolverine's opening and Magma's mansion tour. A new encrypted network layer adapts
   to bad connections, with relay fallback for internet play without port forwarding.
-- **0.4** - classic look: the rest of the menus (pause, characters, Review, shops, loading) and the HUD, made from
+- **0.4 - next:** classic look: the rest of the menus (pause, characters, Review, shops, loading) and the HUD, made from
   your own disc's art.
 - **0.5** - complete, part two: the first game's loot and shops
   ([#6](https://github.com/ChronoRixun/legends-classic/issues/6)) and others.

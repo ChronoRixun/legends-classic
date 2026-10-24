@@ -144,6 +144,17 @@ LIMITS = {'ActorSlots': '127', 'ResourceNames': '1024', 'ItemEnhancements': '512
 # set (stock XML2 is not known to need it), so every XML1 build asks for it.
 GEOMETRY_SHARING_BLEND_INDICES = '1'
 
+# xml2-fix 1.8.0-beta.2 [Engine] ModelPools (its docs/model-pools.md): every model the game shows takes a handle and
+# components from fixed pools (handles 692, IGB 400, actors 32, particle clouds 40, ...); a full pool silently refuses
+# the model - and the spawn that needs it (the beta 1 crash: a team-combo head the full IGB pool refused). x4 raises
+# them all (handles 4096, IGB 2048, actors 128, clouds 128). Online it is gameplay-agreement rule 28 (ModelPools): a
+# 1.8.0-beta.1 peer, which has no rule 28, and a beta.2 port build refuse each other at join by name.
+MODEL_POOLS = 'x4'
+# xml2-fix 1.8.0-beta.2 [Game] ComboPopupGuard: a team-combo popup that lacks a hero's head is hidden instead of
+# crashing (XMen2.exe+0x1a6848). On by default in the DLL; written so the builder's DLL check (check_release_dll)
+# refuses a 1.8.0-beta.1 DLL without it. Display only, no agreement rule.
+COMBO_POPUP_GUARD = '1'
+
 # xml2-fix 1.3.2 [Game] CharacterLadderPaths (SPEC 46, issue #32): the sewer and Arbiter ladder descents are driven by
 # two generated native motion paths (ladder_motion), but XMen2.exe never schedules the generic path evaluator for
 # characters. '1' makes the fix evaluate those two paths with the native movement timer; ordinary character
@@ -235,7 +246,28 @@ FORCED_TEAMS_VALUES = ('1', '0', 'off')
 # v1.5: the 0.2.2 wave's [Game] keys - PlacementCrush, DoubleHeal, RankCosts, LevelSkillPoints, LevelStatPoints,
 # Xml1Multipart, X1Leader, SoloMode, DeathRule, DangerRoomGate, RevivalCost, Xml1Turrets, PackAmount, DeathSwitchClear - and
 # [Limits] ScriptFunctions; a 1.4 DLL silently ignores every one of them, so check_release_dll refuses it)
-REQUIRED_XML2FIX = '1.7.1'
+REQUIRED_XML2FIX = '1.8'
+# The companion fix's prerelease a beta/rc builder needs (launcher-facing requires.xml2fix only): 0.3.0-beta.2 writes
+# [Engine] ModelPools and [Game] ComboPopupGuard, first read by XML2 Fix 1.8.0-beta.2; 0.3.0-beta.3 writes [Online]
+# TickRate, first read by 1.8.0-beta.3, so its requirement is '>=1.8.0-beta.3' (SemVer: beta.3, beta.N > 3, every rc
+# and the final 1.8.0 meet it; 1.8.0-beta.2 and beta.1 do not).
+REQUIRED_XML2FIX_PRERELEASE = 'beta.3'
+
+
+def required_xml2fix(builder_version: str) -> str:
+    """Launcher-facing requirement shared by the release manifest and generated build stamp.
+
+    Beta/rc builders accept the companion fix's prereleases from REQUIRED_XML2FIX_PRERELEASE on
+    as well as the final release. Keep the stable requirement's original spelling. DLL capability
+    checks below remain independent of this SemVer metadata: beta fixes have the same numeric
+    VERSIONINFO (check_release_dll tells them apart by the keys they read).
+    """
+    if re.fullmatch(r'[0-9]+\.[0-9]+\.[0-9]+-(?:beta|rc)\.[0-9]+', builder_version):
+        parts = REQUIRED_XML2FIX.split('.')
+        base = '.'.join(parts + ['0'] * (3 - len(parts)))
+        return '>=' + base + '-' + (REQUIRED_XML2FIX_PRERELEASE or '0')
+    return '>=' + REQUIRED_XML2FIX
+
 
 # xml2-fix [Balance] (xml1build.balance; SPEC 69): the first game's combat numbers for a
 # balance build - one whose styles carry the power-attack marker (report.json build.balance 'xml1'). HeroStatScale
@@ -268,11 +300,33 @@ FAST_TRANSFER = '1'
 # interoperate. Written for every port build.
 RECEIVE_VALIDATION = '1'
 
+# [Online] JoinInProgress=1 (XML2 Fix 1.8, gameplay agreement rule 26): drop-in co-op - the host may start alone, a
+# player joins a running game and is brought in at the next level change, solo story segments keep the other players
+# watching, and the host keeps hosting when the last player leaves. Every co-op PC must have it (a peer without it is
+# refused by name). Written for every port build (0.3.0: drop-in on by default).
+JOIN_IN_PROGRESS = '1'
+
+# [Online] TickRate=60 (XML2 Fix 1.8.0-beta.3, gameplay agreement rule 29): online sessions run at 60 frames a second
+# like single-player instead of the game's own 30 (CClient::frame's online 1/30 s frame). Lockstep runs every PC's
+# frames together, so every co-op PC must have the same rate: a 60 and a 30 PC refuse each other at join by name.
+# '30' is the fallback for slow PCs (then everyone in that session sets 30). Written for every port build.
+TICK_RATE = '60'
+
 # [Game] OnlineConversations=lockstep (XML2 Fix 1.7, gameplay agreement rule 27 revision 1): online, a conversation line
 # that goes on by itself does so |timeDelay| s of game time after it was drawn on every PC, and a chosen reply's voice is
 # cut; single-player is unchanged. Absent = the 1.6.0 decision by this PC's voice end, which put co-op peers one random
 # draw apart and dropped the session.
 ONLINE_CONVERSATIONS = 'lockstep'
+
+# [Online] Broker / BrokerPin: the project broker the launcher's "Host online" / "Join by code" use (0.3.0, the
+# launcher <-> XML2 Fix contract: the BUILDER writes them as defaults, the launcher never writes or removes them).
+# THIS IS THE ONE PLACE TO SET THEM. The deployed project broker uses pinned self-signed TLS; empty = neither key is
+# written and neither is port-owned, so a tester's hand-set Broker/BrokerPin survives a rebuild. When deployed:
+# PROJECT_BROKER = '<public DNS name or IPv4>[:port]' (port 10020 when omitted) and, for the self-signed TLS option,
+# PROJECT_BROKER_PIN = the 64-hex SPKI SHA-256 from the deploy kit's secrets/broker/broker-spki-sha256.txt
+# (leave the pin empty with a publicly trusted certificate).
+PROJECT_BROKER = 'broker.aethyrion.org:10020'
+PROJECT_BROKER_PIN = 'ac569104f671775703f3e36a8109519f4e219fb1e8bc68aaa77793cfb3dbad09'
 
 # [Game] PersonalItemPicture=window (XML2 Fix 1.7.1): a bedroom item's picture is drawn as the first game's 256x128 picture
 # window over the menu panels (SPEC 56), so the builder ships the first game's 512x256 pictures as they are. Absent = the
@@ -284,20 +338,38 @@ PORT_OWNED = {'Game': ('NewGameTeam', 'ResetUnlocks', 'SaveFolder', 'ForcedTeams
                         'EndHeroUnlock', 'MainMenuItems', 'DangerRoomGate', 'ClassicMainBackdrop', 'ClassicMainPanelBounds', 'NewGamePlus', 'ReviewStats', 'Xtract', 'XtractionShop', 'RevivalCost', 'XPCurve',
                        'GeometrySharingBlendIndices', 'CharacterLadderPaths', 'ObjectiveDescriptions',
                        'BreakRule', 'PlacementCrush', 'ObjectWorldImpact', 'DoubleHeal', 'DeathRule', 'NpcPowerRule', 'StunRule', 'DangerRoomParty', 'DangerRoomHealthBars', 'ResistanceDisplay', 'BoxHarmOrigin', 'HarmSingleChain', 'HarmLoopStartup', 'ConfirmationRelease',
-                       'OnlineConversations', 'PersonalItemPicture',
+                       'OnlineConversations', 'PersonalItemPicture', 'ComboPopupGuard',
                        'ExplosiveFirstHit', 'PackAmount', 'SoloMode', 'X1Leader', 'DeathSwitchClear', 'RankCosts', 'LevelSkillPoints', 'LevelStatPoints', 'Xml1Multipart',
                        'Xml1MasterMold', 'Xml1MoldStage', 'Xml1Turrets', 'Xml1LockOnEffects', 'Xml1LockOnAim'),
               'Limits': ('ActorSlots', 'ResourceNames', 'ItemEnhancements', 'FightStyles', 'EffectCurves', 'MoveTriggers', 'EntityCapacity',
                          'ScriptFunctions'),
-              'Online': ('GameVersion', 'ContentFingerprint', 'FastTransfer', 'ReceiveValidation'),
+              'Online': ('GameVersion', 'ContentFingerprint', 'FastTransfer', 'ReceiveValidation', 'JoinInProgress', 'TickRate'),
               'Save': ('Format',),
+              'Engine': ('ModelPools',),
               'Xml1Turrets': ('Count',) + tuple(f'T{i}' for i in range(1, 33))}
+
+
+def broker_keys() -> dict:
+    """[Online] Broker / BrokerPin defaults: {} until PROJECT_BROKER is set (see above); the pin only with a broker."""
+    broker = PROJECT_BROKER.strip()
+    if not broker:
+        return {}
+    keys = {'Broker': broker}
+    pin = PROJECT_BROKER_PIN.strip().lower()
+    if pin:
+        if len(pin) != 64 or any(c not in '0123456789abcdef' for c in pin):
+            raise ValueError('PROJECT_BROKER_PIN must be 64 hexadecimal characters (the SPKI SHA-256)')
+        keys['BrokerPin'] = pin
+    return keys
 
 
 def port_owned() -> dict:
     """PORT_OWNED, and with the balance switch on (xml1build.balance) the [Balance] section too. With the switch
-    off the port does not own that section at all: nothing of it is written or dropped."""
+    off the port does not own that section at all: nothing of it is written or dropped. The broker keys are owned
+    only once the project broker is set (broker_keys)."""
     owned = dict(PORT_OWNED)
+    if broker_keys():
+        owned['Online'] = PORT_OWNED['Online'] + ('Broker', 'BrokerPin')
     if BAL.enabled():
         owned['Balance'] = tuple(BAL.BALANCE_KEYS) + BAL.TUNING_KEYS
     return owned
@@ -479,6 +551,7 @@ def game_keys(*, xml1_opening=True, save_folder=None, forced_teams='1', add_hero
         game['OnlineConversations'] = ONLINE_CONVERSATIONS
         # The bedroom items' pictures are the first game's 512x256 art, drawn in its 256x128 window (SPEC 56).
         game['PersonalItemPicture'] = PERSONAL_ITEM_PICTURE
+        game['ComboPopupGuard'] = COMBO_POPUP_GUARD
         # XML1's opening: startFirstMission seats Wolverine alone, resetgame unlocks nobody (xml2-fix new_game.cpp;
         # the build's New Game hook uses loadMapKeepTeam - build_xml1.py --newgame keepteam, the default)
         game.update(NewGameTeam='wolverine', ResetUnlocks='0')
@@ -556,9 +629,11 @@ def online_keys(*, port_identity=False, balance=False, fingerprint=None) -> dict
     the save tables, the content fingerprint a co-op peer must share (SPEC-new-save 6)."""
     if not port_identity:
         return {}
-    keys = {'GameVersion': RI.game_version(), 'FastTransfer': FAST_TRANSFER, 'ReceiveValidation': RECEIVE_VALIDATION}
+    keys = {'GameVersion': RI.game_version(), 'FastTransfer': FAST_TRANSFER, 'ReceiveValidation': RECEIVE_VALIDATION,
+            'JoinInProgress': JOIN_IN_PROGRESS, 'TickRate': TICK_RATE}
     if fingerprint:
         keys['ContentFingerprint'] = fingerprint
+    keys.update(broker_keys())
     return keys
 
 
@@ -587,7 +662,7 @@ def port_keys(out, *, save_folder=PLAY_SAVE_FOLDER, eighth=True) -> dict:
         game.update(build_mold_controller(out))
         game.update(build_lockon_effects(out))
         game.update(turrets.get('Game', {}))
-    keys = {'Game': game, 'Limits': dict(LIMITS)}
+    keys = {'Game': game, 'Limits': dict(LIMITS), 'Engine': {'ModelPools': MODEL_POOLS}}
     if turrets:
         keys['Xml1Turrets'] = turrets['Xml1Turrets']
     balance = build_balance(out)
@@ -777,11 +852,21 @@ RELEASE_15_KEYS = {'Game': ('PlacementCrush', 'DoubleHeal', 'RankCosts', 'LevelS
 RELEASE_16_KEYS = {**RELEASE_15_KEYS,
                    'Game': RELEASE_15_KEYS['Game'] + ('ObjectWorldImpact', 'StunRule', 'DangerRoomParty', 'DangerRoomHealthBars', 'BoxHarmOrigin', 'HarmSingleChain',
                                                      'Xml1LockOnEffects', 'Xml1LockOnAim', 'HarmLoopStartup'),
-                   'Online': ('FastTransfer', 'ReceiveValidation')}
+                   'Online': ('FastTransfer', 'ReceiveValidation', 'Broker', 'BrokerPin')}  # Broker/BrokerPin: 0.3.0, only when set
 
 # XML2 Fix 1.7 adds the display-only adapter and the online conversation rule (27), 1.7.1 the personal-item picture window; earlier keys retain their release
 # grouping.
 RELEASE_17_KEYS = {**RELEASE_16_KEYS, 'Game': RELEASE_16_KEYS['Game'] + ('ResistanceDisplay', 'OnlineConversations', 'PersonalItemPicture')}
+
+# XML2 Fix 1.8 (Legends Classic 0.3.0) adds online rooms (Broker / BrokerPin are read since then) and drop-in co-op.
+RELEASE_18_KEYS = {**RELEASE_17_KEYS, 'Online': RELEASE_17_KEYS['Online'] + ('JoinInProgress',)}
+# XML2 Fix 1.8.0-beta.2 (Legends Classic 0.3.0-beta.2): the bigger model pools (gameplay-agreement rule 28) and the
+# team-combo popup guard. A 1.8.0-beta.1 DLL knows neither, so the builder refuses it (its VERSIONINFO is the same
+# numeric 1.8.0.0; the key strings are what tells the two apart).
+RELEASE_18_KEYS = {**RELEASE_18_KEYS, 'Game': RELEASE_18_KEYS['Game'] + ('ComboPopupGuard',), 'Engine': ('ModelPools',)}
+# XML2 Fix 1.8.0-beta.3 (Legends Classic 0.3.0-beta.3): online at 60 frames a second (gameplay-agreement rule 29). A
+# beta.2 DLL does not read [Online] TickRate, so the builder refuses it.
+RELEASE_18_KEYS = {**RELEASE_18_KEYS, 'Online': RELEASE_18_KEYS['Online'] + ('TickRate',)}
 
 
 def check_release_dll(dll, keys: dict) -> None:
@@ -791,7 +876,7 @@ def check_release_dll(dll, keys: dict) -> None:
     if not dll.is_file():
         return
     data = dll.read_bytes()
-    missing = [f'[{section}] {key}' for section, names in RELEASE_17_KEYS.items() for key in names
+    missing = [f'[{section}] {key}' for section, names in RELEASE_18_KEYS.items() for key in names
                if key in keys.get(section, {}) and key.encode('utf-16le') not in data]
     if missing:
         raise FixTooOld(f'This build needs XML2 Fix {REQUIRED_XML2FIX} or later; the existing DLL does not recognize '

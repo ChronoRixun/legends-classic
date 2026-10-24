@@ -430,8 +430,9 @@ class RealPipeline:
         return fix_ini.write_port_keys(out, keys, old_fix_ok=old_fix_ok)
 
     def required_xml2fix(self) -> str:
+        from . import VERSION
         from xml1build import fix_ini
-        return '>=' + fix_ini.REQUIRED_XML2FIX
+        return fix_ini.required_xml2fix(VERSION)
 
     def install_checkpoint(self, fn):
         return self.C.set_checkpoint(fn)

@@ -1,3 +1,5 @@
+> **Superseded (2026-10-23):** a historical snapshot from 2026-10-01, not the current state. G7 (talent `cost` unread) was fixed afterwards by RankCosts (issue #35, 0.2.2); other rows have changed too, so read it with CHANGELOG.md.
+
 # XML1 combat and character data on XMen2.exe: forward compatibility audit (2026-10-01)
 
 Half of a two-agent audit; this half covers stats (herostat / npcstat), talents, power styles and fightstyles,
