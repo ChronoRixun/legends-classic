@@ -1,3 +1,5 @@
+> **Superseded (2026-10-23):** a historical snapshot from 2026-10-01, not the current state. Finding 8 (per-zone music overrides lost) was withdrawn: those attributes are dead in the first game's retail code too (tools/xml1build/SPEC.md section 38); other rows have changed too, so read it with CHANGELOG.md.
+
 # XML1 world-side compatibility audit (2026-10-01)
 
 Scope: scripts, zones and entities, conversations and dialogs, missions / objectives / zoneinfo, HUD and menus, items and

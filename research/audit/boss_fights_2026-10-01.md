@@ -1,3 +1,5 @@
+> **Superseded (2026-10-23):** a historical snapshot from 2026-10-01, not the current state. Since then Master Mold has a native controller, and Magneto's shield and Shadow King's first form are restored by script; the other boss brains are still the generic ones (fidelity gap audit G6).
+
 # XML1 boss fights on XMen2.exe: what the missing AI states (issue #2 / audit G2) cost (2026-10-01)
 
 Question: is #2 cosmetic, or does it break the climax fights? Short answer from all ten fights played through the harness (two sessions): **nothing blocks progression** - every scripted phase, pain-script threshold,
