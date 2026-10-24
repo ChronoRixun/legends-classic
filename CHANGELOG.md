@@ -57,11 +57,21 @@ See [Play online](docs/ONLINE.md) for steps, privacy and troubleshooting.
 
 **Known issues**
 
-- **Enemy attack rate** (issue #101): enemies can still attack more often than in the first game. The per-hit
-  hero stun fix shipped in 0.2.5; it does not close the remaining combat report.
-- **Falls** (issue #22): a double jump on slopes or the HAARP bridge can land outside the play area; remaining
-  fall kill zones stay switched off until proven safe.
-- **Cosmetics** (issue #54): the HAARP officer's gun appearance remains open; the bedroom picture window is fixed.
+- **Enemy attack rate** (issue #101): unarmed enemies (the Brotherhood in the HAARP tunnels) still attack about 1.5
+  times as often per minute as in the first game (about 19 against 28 attacks per enemy per minute with a moving
+  hero, 20 against 32 with a still one); the cause is not found. The per-hit hero stun fix shipped in 0.2.5; whether
+  heroes are now stunned as long as in the first game has not been measured again, so it does not close the
+  remaining combat report.
+- **Gun soldiers** (issues #101 and #54): the HAARP officer, and probably the other gun soldiers, still close in to
+  punch where the first game's keep their distance and shoot (matched 45 s window: 49 shots and no punches in the
+  first game, no shots and 24 punches in the port).
+- **Falls** (issue #22): 15 of the first game's fall kill zones (20 placements in 14 maps, three of the zones in demo
+  maps outside the campaign) stay switched off until proven safe for the AI followers too. The double jump out of the play area on the HAARP slopes and bridge that
+  0.2.2 listed could not be reproduced from 0.2.3 on (18 jumps, all landing inside; the zone's boundary data matches
+  the first game).
+- **Cosmetics** (issue #54): the HAARP officer's gun is louder than on the Xbox: the port fires a seven-shot burst
+  where the first game fires single spaced shots, and each shot plays its own ~1.5 s sound, so about seven stack
+  (the sound's volume is the original's). The bedroom picture window is fixed.
 - **Loot and the item shop** (issue #6) still use the sequel's systems.
 - **Hazards** (issue #104): the earlier 57-level audit had live checks in only three rooms. Report any fire,
   spike or electricity that still does not hurt.
@@ -127,6 +137,7 @@ launcher, then Play. Both co-op players need the same build and fix.
   (Brotherhood, HAARP); only parts of it are fixed here.
 - **A double jump on slopes or the HAARP bridge** can land a hero outside the play area (issue #22); the remaining
   fall kill zones are still switched off until proven safe.
+  *Correction, 2026-10-23: this was not reproducible on 0.2.3 or later (18 jumps, all landing inside the play area).*
 - **Loot and the item shop** (issue #6) are not in this version.
 - **Cosmetic reports** from the first playthrough (issue #54) are still tracked.
 - **Hazards** (issue #104): 57 levels were fixed from an audit of the game's data, but only three rooms were played
@@ -208,6 +219,7 @@ the build). Your saves carry over.
   (Brotherhood, HAARP); only parts of it are fixed here.
 - **A double jump on slopes or the HAARP bridge** can land a hero outside the play area (issue #22); the remaining
   fall volumes are off.
+  *Correction, 2026-10-23: 18 double jumps on the 0.2.3 release did not reproduce it (see issue #22).*
 - **Attack and impact sounds that loop** in the Manhattan streets (issue #79) were not reproduced lately, but no fix
   is claimed.
 - **Loot and the item shop** (issue #6) are not in this version.
@@ -284,6 +296,9 @@ the build). Your saves carry over.
   by a punch-punch-slam; plain soldiers still are. A boss whose armour comes off takes full damage again but
   still isn't launched, as in the first game. XML2's "Resistant" line under enemy health bars goes with it (the
   first game had none).
+  *Correction, 2026-10-23: the first game does show resistance labels (for example "Physical Resistant"); 0.2.4
+  restored the text with its colors. The enemies were resistant the whole time (a Brotherhood Revolutionary takes
+  0.2 of physical damage); only the label was missing in 0.2.2 and 0.2.3.*
 - **Solo mode** (issue #5): the first game's solo boxes and bridges keep the rest of the party behind and regroup it
   afterwards, so followers no longer walk into the void at the gaps.
 
@@ -323,6 +338,8 @@ the build). Your saves carry over.
 - The revival price is the first game's, steep at high levels (above).
 - 18 fall volumes are still off (#22): several sit in water or rooms followers can stray into, and need their own
   checks.
+  *Correction, 2026-10-23: 18 was a miscount. The 0.2.2 release left 17 zones (25 placements in 15 maps) off, and
+  0.2.3 switched two on, which leaves 15 (20 placements in 14 maps).*
 - In co-op, *Load Saved Campaign* can stop at "Sending game information..." (0.2.1 too). Start a new campaign in co-op
   for now.
 - Co-op was tested with two copies of the game on one PC; the two-PC pass, on one network and across the internet,

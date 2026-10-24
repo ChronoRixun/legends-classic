@@ -233,9 +233,9 @@ need new engine hooks in xml2-fix), the port plays without them:
 - **The first game's loot and shops.** Random drops are X-Men Legends II's, not the first game's equipment. The shops
   (the Healer's, and the one at Xtraction points once you have met Forge) are X-Men Legends II's: generated stock, its
   prices and its training services ([#6](https://github.com/ChronoRixun/legends-classic/issues/6)).
-- **18 of the first game's fall volumes** stay off: several sit in water or in rooms followers can stray into, and
-  need their own checks ([#22](https://github.com/ChronoRixun/legends-classic/issues/22)). The East Rooftops and a
-  sewer walkway have theirs back since 0.2.2.
+- **15 of the first game's fall kill zones** (20 placements in 14 maps, three of the zones in demo maps outside the
+  campaign) stay off: several sit in water or in rooms followers can stray into, and need their own checks ([#22](https://github.com/ChronoRixun/legends-classic/issues/22)).
+  The East Rooftops and a sewer walkway have theirs back since 0.2.2, and two more since 0.2.3.
 
 Recreated in 0.2.2: the scan turrets ([#4](https://github.com/ChronoRixun/legends-classic/issues/4)), breakable
 enemy parts ([#3](https://github.com/ChronoRixun/legends-classic/issues/3)), solo mode
@@ -258,7 +258,17 @@ LAG warnings may remain, but the slow-player drop is disabled. Host drop or free
   still needs owner acceptance; four-player WAN coverage is not certified. Failed shared-campaign restore can require rehosting. LAG warnings may remain, but the slow-player drop is disabled. See [Play online](docs/ONLINE.md).
 - **Host loss ends the session:** no host migration or automatic reconnection. A guest can join again by code.
 - **Still open:** enemy attack rate (#101), remaining fall kill zones switched off until proven safe (#22),
-  the HAARP officer's gun appearance and other cosmetic reports (#54), and the first game's loot/shop (#6).
+  the HAARP officer's gun being louder than on the Xbox and other cosmetic reports (#54), and the first game's
+  loot/shop (#6).
+- **Enemy attack rate (#101):** unarmed enemies (the Brotherhood in the HAARP tunnels) still attack about 1.5 times as
+  often per minute as in the first game (measured: about 19 against 28 attacks per enemy per minute with a moving
+  hero, 20 against 32 with a still one); the cause is not found. Whether heroes are now stunned as long as in the
+  first game has not been measured again since 0.2.5 re-stuns them on every stun hit.
+- **Gun soldiers (#101, #54):** the HAARP officer, and probably the other gun soldiers, still close in to punch more
+  than the first game's, which keep their distance and shoot. In a matched 45 s window the officer fired 49 shots
+  and never punched in the first game; in the port he fired none and punched 24 times. When the port officer does
+  shoot, he fires a burst of seven in under a second instead of single spaced shots, and the shot sound stacks about
+  seven times, which is the louder gun.
 - **Hazards (#104):** the earlier 57-level audit had live checks in only three rooms; report remaining misses.
 - Local co-op on controllers should work (it is X-Men Legends II's) but has had little testing.
 - Open bugs and play-test notes: [issues](https://github.com/ChronoRixun/legends-classic/issues) and
