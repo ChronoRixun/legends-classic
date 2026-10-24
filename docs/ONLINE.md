@@ -1,8 +1,8 @@
-﻿# Play online in 0.3.0
+﻿# Play online in 0.4.0
 
-Player guide for Legends Classic 0.3.0, XML2 Fix 1.8.0 and Ultimate Legends 0.4.0. Owner 030e acceptance on three real PCs including a hotspot PC is pending before publication; four-player WAN coverage is not certified.
+Player guide for Legends Classic 0.4.0, XML2 Fix 1.8.0 and Ultimate Legends 0.4.0. Owner 030e acceptance on three real PCs including a hotspot PC is pending before publication; four-player WAN coverage is not certified.
 
-Up to four players can share a campaign. Start from the **Online** section on X-Men Legends' page in Ultimate Legends. Everyone needs the same 0.3.0 build and XML2 Fix **1.8.0 or later**, with Test mode off. Update the launcher to **0.4.0 first**, then **Rebuild** in the **Build** section, then **Play**. 0.2.x and 0.3.0 never join each other; **Verify Files** installs or updates the fix.
+Up to four players can share a campaign. Start from the **Online** section on X-Men Legends' page in Ultimate Legends. Everyone needs the same 0.4.0 build and XML2 Fix **1.8.0 or later**, with Test mode off. Update the launcher to **0.4.0 first**, then **Rebuild** in the **Build** section, then **Play**. 0.2.x and 0.4.0 never join each other; **Verify Files** installs or updates the fix.
 
 ## Host and share a code
 
@@ -31,7 +31,7 @@ The list refreshes about every ten seconds while visible and idle. Use **Refresh
 
 ## Join during a campaign
 
-**Drop-in is on by default** in the 0.3.0 build. You can join a running game with a free place. You wait on **Joined Game** while the others keep playing. At the **next level change**, the game brings you into the shared campaign. You do not appear immediately in the current level. The party needs enough heroes for everyone to control one.
+**Drop-in is on by default** in the 0.4.0 build. You can join a running game with a free place. You wait on **Joined Game** while the others keep playing. At the **next level change**, the game brings you into the shared campaign. You do not appear immediately in the current level. The party needs enough heroes for everyone to control one.
 
 During a solo story segment, players without a hero stay connected and watch the shared camera. The game says **Solo story segment - you rejoin when it ends**. When the story restores a larger party, you regain a hero; the game tries to return your previous hero when the group has not changed. Wolverine's opening and Magma's mansion tour are examples. Keep the watching PC connected and responsive.
 
@@ -77,7 +77,7 @@ These are the English Online-panel messages, including input checks, disabled co
 | Code expired | Ask the host to open a new room and share its new code. |
 | The game is full | All four places are taken (`room_full`); wait for a place. |
 | That game can't take new players right now. Try again in a moment. | The room exists but is temporarily not accepting players (`room_closed`, contract v1.5). Wait and retry; it need not be full. |
-| Different game version | Everyone should Rebuild to 0.3.0 and use matching game content/settings. 0.2.x cannot join 0.3.0. Browse games compares the room token with your build's GameVersion (`LC33`); matching builds should have Join enabled when a place is available. |
+| Different game version | Everyone should Rebuild to 0.4.0 and use matching game content/settings. 0.2.x cannot join 0.4.0. Browse games compares the room token with your build's GameVersion (`LC33`); matching builds should have Join enabled when a place is available. |
 | Test mode is on | Turn Test mode off, close the game and host/join again. |
 | The online service could not be verified | Update the game and launcher, check for connection interception on the network, and report persistent failures. Do not bypass the check. |
 | Something went wrong | Close the game and retry. If repeated, collect `xml2-fix.log`. |
@@ -96,7 +96,7 @@ These are the English Online-panel messages, including input checks, disabled co
 | Another game is updating: host or join when it has finished. | Wait for the launcher's update work to finish. |
 | Test mode is on, and the XML2 Fix turns online play off while it is. Turn it off to play online. / Test mode is on: turn it off, then host or join again. | Use Turn test mode off, then restart through Host or Join. |
 | X-Men Legends is running. Close it to host or join a game. / X-Men Legends is already running. Close it, then host or join again. | Close the running game first. |
-| This game has no online play here. | Use the X-Men Legends page and a launcher with the 0.3.0 online panel. |
+| This game has no online play here. | Use the X-Men Legends page and a launcher with the 0.4.0 online panel. |
 | The game has not finished building. | Finish or resume the build before trying again. |
 | The launcher sent the game a request it does not know: {error} | Update the launcher; report the full error if it repeats. |
 | The online settings could not be saved: {error} | Close the game, check that its folder can be written to and retry. Keep the full error if it repeats. |

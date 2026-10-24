@@ -406,8 +406,8 @@ def test_beta2_keys_refuse_a_beta1_dll_and_require_the_beta2_fix():
         assert FI.old_fix_keys(dll, keys) == ['[Game] ComboPopupGuard', '[Engine] ModelPools']
         dll.write_bytes(b'MZ' + 'ComboPopupGuard'.encode('utf-16le') + 'ModelPools'.encode('utf-16le'))
         assert FI.old_fix_keys(dll, keys) == []
-    assert FI.required_xml2fix('0.3.0-beta.3') == FI.required_xml2fix('0.3.0-rc.1') == '>=1.8.0-beta.3'
-    assert FI.required_xml2fix('0.3.0') == '>=1.8'
+    assert FI.required_xml2fix('0.3.0-beta.3') == FI.required_xml2fix('0.4.0-rc.1') == '>=1.8.0-beta.3'
+    assert FI.required_xml2fix('0.4.0') == '>=1.8'
 
 
 def test_beta3_tick_rate_is_written_port_owned_and_refuses_a_beta2_dll():
@@ -940,7 +940,7 @@ def test_existing_release_dll_without_object_world_impact_is_refused():
 
 
 def test_online_broker_defaults_for_deployed_project_broker():
-    """[Online] Broker / BrokerPin (0.3.0 launcher contract): one builder setting (fix_ini.PROJECT_BROKER /
+    """[Online] Broker / BrokerPin (0.4.0 launcher contract): one builder setting (fix_ini.PROJECT_BROKER /
     PROJECT_BROKER_PIN). Every port build writes and owns the deployed defaults; empty settings preserve a tester's
     hand-set broker instead."""
     assert FI.PROJECT_BROKER == 'broker.aethyrion.org:10020'
@@ -979,7 +979,7 @@ def test_online_broker_defaults_for_deployed_project_broker():
 
 
 def test_join_in_progress_is_on_for_port_builds_and_needs_fix_18():
-    """0.3.0: drop-in co-op ([Online] JoinInProgress=1, rule 26) is written for every port build, is port-owned, and
+    """0.4.0: drop-in co-op ([Online] JoinInProgress=1, rule 26) is written for every port build, is port-owned, and
     an XML2 Fix that does not know the key (older than 1.8) is refused by name."""
     assert FI.online_keys(port_identity=True)['JoinInProgress'] == '1' and FI.JOIN_IN_PROGRESS == '1'
     assert FI.online_keys(port_identity=False) == {}
@@ -997,10 +997,10 @@ def test_join_in_progress_is_on_for_port_builds_and_needs_fix_18():
         FI.check_release_dll(dll, {'Online': {'ReceiveValidation': '1', 'JoinInProgress': '1'}})
 
 
-def test_release_identity_030_is_lc33_and_never_an_02x_token():
-    """0.3.0 is content 24 / catalogue 7 / LC33: a token no 0.2.x build carries (0.2.4 LC31, 0.2.5 LC32), so the
-    stock lobby and the rooms never pair a 0.3.0 PC with an older build."""
+def test_release_identity_040_is_lc33_and_never_an_02x_token():
+    """0.4.0 is content 24 / catalogue 7 / LC33: a token no 0.2.x build carries (0.2.4 LC31, 0.2.5 LC32), so the
+    stock lobby and the rooms never pair a 0.4.0 PC with an older build."""
     from xml1build import release_identity as RI
     from xml1builder import CONTENT_VERSION, VERSION
-    assert (VERSION, CONTENT_VERSION) == ('0.3.0', 24) and RI.game_version() == 'LC33'
+    assert (VERSION, CONTENT_VERSION) == ('0.4.0', 24) and RI.game_version() == 'LC33'
     assert all(r.token != 'LC33' for r in RI.HISTORY if r.release.startswith('0.2'))

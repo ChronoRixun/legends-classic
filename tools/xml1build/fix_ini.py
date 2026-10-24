@@ -303,7 +303,7 @@ RECEIVE_VALIDATION = '1'
 # [Online] JoinInProgress=1 (XML2 Fix 1.8, gameplay agreement rule 26): drop-in co-op - the host may start alone, a
 # player joins a running game and is brought in at the next level change, solo story segments keep the other players
 # watching, and the host keeps hosting when the last player leaves. Every co-op PC must have it (a peer without it is
-# refused by name). Written for every port build (0.3.0: drop-in on by default).
+# refused by name). Written for every port build (0.4.0: drop-in on by default).
 JOIN_IN_PROGRESS = '1'
 
 # [Online] TickRate=60 (XML2 Fix 1.8.0-beta.3, gameplay agreement rule 29): online sessions run at 60 frames a second
@@ -318,7 +318,7 @@ TICK_RATE = '60'
 # draw apart and dropped the session.
 ONLINE_CONVERSATIONS = 'lockstep'
 
-# [Online] Broker / BrokerPin: the project broker the launcher's "Host online" / "Join by code" use (0.3.0, the
+# [Online] Broker / BrokerPin: the project broker the launcher's "Host online" / "Join by code" use (0.4.0, the
 # launcher <-> XML2 Fix contract: the BUILDER writes them as defaults, the launcher never writes or removes them).
 # THIS IS THE ONE PLACE TO SET THEM. The deployed project broker uses pinned self-signed TLS; empty = neither key is
 # written and neither is port-owned, so a tester's hand-set Broker/BrokerPin survives a rebuild. When deployed:
@@ -852,13 +852,13 @@ RELEASE_15_KEYS = {'Game': ('PlacementCrush', 'DoubleHeal', 'RankCosts', 'LevelS
 RELEASE_16_KEYS = {**RELEASE_15_KEYS,
                    'Game': RELEASE_15_KEYS['Game'] + ('ObjectWorldImpact', 'StunRule', 'DangerRoomParty', 'DangerRoomHealthBars', 'BoxHarmOrigin', 'HarmSingleChain',
                                                      'Xml1LockOnEffects', 'Xml1LockOnAim', 'HarmLoopStartup'),
-                   'Online': ('FastTransfer', 'ReceiveValidation', 'Broker', 'BrokerPin')}  # Broker/BrokerPin: 0.3.0, only when set
+                   'Online': ('FastTransfer', 'ReceiveValidation', 'Broker', 'BrokerPin')}  # Broker/BrokerPin: 0.4.0, only when set
 
 # XML2 Fix 1.7 adds the display-only adapter and the online conversation rule (27), 1.7.1 the personal-item picture window; earlier keys retain their release
 # grouping.
 RELEASE_17_KEYS = {**RELEASE_16_KEYS, 'Game': RELEASE_16_KEYS['Game'] + ('ResistanceDisplay', 'OnlineConversations', 'PersonalItemPicture')}
 
-# XML2 Fix 1.8 (Legends Classic 0.3.0) adds online rooms (Broker / BrokerPin are read since then) and drop-in co-op.
+# XML2 Fix 1.8 (Legends Classic 0.4.0) adds online rooms (Broker / BrokerPin are read since then) and drop-in co-op.
 RELEASE_18_KEYS = {**RELEASE_17_KEYS, 'Online': RELEASE_17_KEYS['Online'] + ('JoinInProgress',)}
 # XML2 Fix 1.8.0-beta.2 (Legends Classic 0.3.0-beta.2): the bigger model pools (gameplay-agreement rule 28) and the
 # team-combo popup guard. A 1.8.0-beta.1 DLL knows neither, so the builder refuses it (its VERSIONINFO is the same

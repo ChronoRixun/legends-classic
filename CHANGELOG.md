@@ -3,11 +3,14 @@
 The builder's releases, newest first. The version is `xml1-builder --version`; the content version is what a
 build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebuild.
 
-## v0.3.0 - content version 24 (needs XML2 Fix 1.8.0)
+## v0.4.0 - content version 24 (needs XML2 Fix 1.8.0)
 
-Legends Classic 0.3.0 brings online play from Ultimate Legends **0.4.0**. Update the launcher to 0.4.0 first,
-then **Rebuild**, then **Play**. Everyone needs the same 0.3.0 build and XML2 Fix 1.8.0 or later;
-0.2.x and 0.3.0 never join each other. Test mode must be off.
+Renumbered from 0.3.0 while in beta (the betas 0.3.0-beta.1..3 are this release's history);
+no stable 0.3.0 was published.
+
+Legends Classic 0.4.0 brings online play from Ultimate Legends **0.4.0**. Update the launcher to 0.4.0 first,
+then **Rebuild**, then **Play**. Everyone needs the same 0.4.0 build and XML2 Fix 1.8.0 or later;
+0.2.x and 0.4.0 never join each other. Test mode must be off.
 
 
 - **Beta 3: online at 60 fps.** Builds now write XML2 Fix's `[Online] TickRate = 60`: online sessions run at 60
@@ -82,10 +85,10 @@ See [Play online](docs/ONLINE.md) for steps, privacy and troubleshooting.
 
 <details><summary>Technical details</summary>
 
-- Builder 0.3.0, content 24, catalogue 7, game version LC33; requires XML2 Fix >=1.8 (CMake/DLL 1.8.0).
+- Builder 0.4.0, content 24, catalogue 7, game version LC33; requires XML2 Fix >=1.8 (CMake/DLL 1.8.0).
 - Builder defaults include `Broker`, `BrokerPin`, `JoinInProgress=1`, `FastTransfer=1` and `ReceiveValidation=1`.
   Room starts imply GNS transport (rule 25 revision 4 / framing 3); drop-in uses rule 26 revision 6.
-- Conversation timing is the 0.2.4 fix (rule 27), retained here, rather than a new 0.3.0 feature.
+- Conversation timing is the 0.2.4 fix (rule 27), retained here, rather than a new 0.4.0 feature.
 
 </details>
 

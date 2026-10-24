@@ -38,6 +38,7 @@ HISTORY = (
     Identity('0.2.3h', 21, 7, 'LC30', '1b87836ed197fe8b101325d8a8171c01f19c4691c2c5216da2741d61db41cafd'),
     Identity('0.2.4', 22, 7, 'LC31', 'd20e76286784f46971ccb903bc4813513607e62c9df2c07aaf327eaeeca9eebe'),
     Identity('0.2.5', 23, 7, 'LC32', '03b447adfb79a60a7ac84e52d7cb801a11b69a50c40e5e0c6fcb922db69017fe'),
+    # Issued as 0.3.0; renumbered 0.4.0 while in beta. The release label is history (append-only), the token LC33 is unchanged.
     Identity('0.3.0', 24, 7, 'LC33', '240ef860ad0a8676bff9bcd9302ad40fe12993af0f27768d45e0e172e11d424a'),
 )
 

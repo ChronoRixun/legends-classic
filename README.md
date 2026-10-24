@@ -11,9 +11,9 @@ It is a builder, not a download: every file of the result is made on your comput
 This project ships no game content - no game files, no parts of them, no modified executables - and the builder
 makes no network connections.
 
-> **Status: public test builds (builder 0.3.0, XML2 Fix 1.8.0, launcher 0.4.0).** Every mission and the ending run
+> **Status: public test builds (builder 0.4.0, XML2 Fix 1.8.0, launcher 0.4.0).** Every mission and the ending run
 > in automated tests on the developer's PC (a full hand-played run is under way). The builder uses your own disc
-> image and X-Men Legends II install. 0.3.0 adds online codes, public games, drop-in and solo-segment watchers.
+> image and X-Men Legends II install. 0.4.0 adds online codes, public games, drop-in and solo-segment watchers.
 > Update Ultimate Legends to **0.4.0 first**, then **Rebuild**, then **Play**. All online players need matching builds.
 > Owner 030e three-PC/hotspot acceptance is still pending; see [Known limitations](#known-limitations).
 > Known bugs and what is next: [Status](#status), [CHANGELOG](CHANGELOG.md) and [Roadmap](#roadmap).
@@ -74,7 +74,7 @@ xml1-builder clean   --out "C:\Games\X-Men Legends (Port)"
 Options that work with every command: `--events jsonl|text` (`jsonl` prints JSON-lines events for the launcher), `--log FILE`, `--quiet` and `--version`. `xml1-builder --help` lists them all.
 
 Then copy `dinput.dll` from the [latest xml2-fix release](https://github.com/ChronoRixun/xml2-fix/releases/latest)
-(builder 0.3.0 needs 1.8.0 or later) into the output folder and start `XMen2.exe` there. The builder has already written the `xml2-fix.ini` settings the
+(builder 0.4.0 needs 1.8.0 or later) into the output folder and start `XMen2.exe` there. The builder has already written the `xml2-fix.ini` settings the
 port needs (`--no-ini` leaves the file alone; the keys are in `_build\stamp.json`).
 
 The release zip is not code-signed yet, so Windows SmartScreen or an antivirus may warn about it: compare the
@@ -126,7 +126,7 @@ others choose its **Join** in **Browse games**, then join through the same in-ga
 Drop-in is on by default: start alone, and bring late joiners into play at the next level change. During solo story
 segments, players without heroes watch and regain control when the party widens. If a guest drops abruptly in a
 game of three or more, the survivors agree a cut frame and continue. Host loss ends the session (no host migration).
-Everyone needs matching 0.3.0 builds, XML2 Fix >=1.8.0 and Test mode off; 0.2.x cannot join 0.3.0.
+Everyone needs matching 0.4.0 builds, XML2 Fix >=1.8.0 and Test mode off; 0.2.x cannot join 0.4.0.
 
 Public games connect directly, so players can see each other's internet address. The broker caps each internet
 address at two public rooms and two seats in other people's rooms. Normal **Play** supports LAN / Connect by IP.
@@ -192,7 +192,7 @@ Verified in game on the developer's PC (mostly by automated runs that drive the 
 Fixed in later builders (the launcher offers the rebuild when the content version rises, or run
 `xml1-builder build` again - see [CHANGELOG.md](CHANGELOG.md)):
 
-- **0.3.0 (with XML2 Fix 1.8.0 and launcher 0.4.0):** online codes and public games, default-on drop-in,
+- **0.4.0 (with XML2 Fix 1.8.0 and launcher 0.4.0):** online codes and public games, default-on drop-in,
   solo-segment watchers (#106), and continued play after an abrupt guest drop in three-player local checks.
 - **0.2.5 (with XML2 Fix 1.7.1):** the bedroom items' pictures in the first game's picture window (#54) and heroes
   re-stunned by every stun hit, as in the first game (#101, StunRule revision 3).
@@ -284,7 +284,7 @@ the game.
 
 | Builder | Content version | Needs xml2-fix | Notes |
 |---|---|---|---|
-| 0.3.0 | 24 | 1.8.0 | online codes, public browser, drop-in ON, solo watchers; catalogue 7 / LC33; launcher 0.4.0 for Online; matching peers required |
+| 0.4.0 | 24 | 1.8.0 | online codes, public browser, drop-in ON, solo watchers; catalogue 7 / LC33; launcher 0.4.0 for Online; matching peers required |
 | 0.2.5 | 23 | 1.7.1 | the bedroom items' pictures in the first game's picture window (`[Game] PersonalItemPicture=window`, #54); heroes re-stunned by every stun hit (`[Game] StunRule=xml1`, rule 18 revision 3, #101); catalogue 7 / LC32; both PCs need this pair |
 | 0.2.4 | 22 | 1.7.0 | Toad at HAARP (#105); colored enemy resistance text (`[Game] ResistanceDisplay=xml1`); co-op conversations (`[Game] OnlineConversations=lockstep`, rule 27); catalogue 7 / LC31; both PCs need this pair |
 | 0.2.3 | 21 | 1.6.0 | hazard bounds and the opening fire's rhythm (`[Game] BoxHarmOrigin`, `HarmSingleChain`), floor-overlap crates (`ObjectWorldImpact`), two more fall volumes, the first game's gun-move priority, NpcPower revision 4, StunRule revision 2, visible Danger Room opponents with health bars and the original fallback party (`DangerRoomHealthBars`, `DangerRoomParty`), Sentinel scan effects and aiming, fast saved-campaign transfer (`[Online] FastTransfer`), received-message checks (`[Online] ReceiveValidation`); catalogue 7 / LC30; verified saved-zone prefix retention; co-op peers need 0.2.3 / 1.6.0 on both PCs |
@@ -295,7 +295,7 @@ the game.
 | 0.1.6 - 0.1.7 | 8 - 9 | 1.3.0 | conversation hooks, skill points, the item-enhancement pool |
 | 0.1.0 - 0.1.5 | 2 - 7 | 1.2.0 | |
 
-Launcher: **0.4.0 or later for 0.3.0 online play**. The builder manifest still has `min_launcher=0.0.0`;
+Launcher: **0.4.0 or later for 0.4.0 online play**. The builder manifest still has `min_launcher=0.0.0`;
 older launchers can build and use normal Play but do not provide the new Online panel. On Proton (Steam Deck,
 Linux), archive support needs 0.2.1 or later; 0.4.0 online/Deck acceptance remains in the launcher checklist.
 
@@ -342,7 +342,7 @@ What comes next, by version (plans move with what testing finds):
 - **0.2.5 - done:** the bedroom items' pictures in the first game's picture window
   ([#54](https://github.com/ChronoRixun/legends-classic/issues/54)) and heroes re-stunned by every stun hit
   ([#101](https://github.com/ChronoRixun/legends-classic/issues/101)). Needs XML2 Fix 1.7.1.
-- **0.3.0 - done when released:** online by code, a public game browser, drop-in co-op and the solo story segments
+- **0.4.0 - done when released:** online by code, a public game browser, drop-in co-op and the solo story segments
   ([#106](https://github.com/ChronoRixun/legends-classic/issues/106)): host and join from Ultimate Legends,
   share a code or browse public games, join a running campaign at the next level change, and keep the second
   player connected through Wolverine's opening and Magma's mansion tour. A new encrypted network layer adapts

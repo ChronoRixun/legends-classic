@@ -31,7 +31,7 @@ Frozen (BUILDER_DESIGN.md 3.2; SPEC.md 27.13): xml1-builder.spec here, driven by
 check, packaged tables, PyInstaller one folder, content guard over the bundled data, the release zip and the
 launcher's xml1-builder.json) and tested by tools/freeze_smoke.py; CI: .github/workflows/release.yml.
 """
-VERSION = '0.3.0'                 # the builder release (semver; the launcher compares it with the release manifest)
+VERSION = '0.4.0'                 # the builder release (semver; the launcher compares it with the release manifest)
 # Frozen beta/rc builds report the full release identity recorded by freeze_builder.
 # Source runs keep the numeric base above; environment variables cannot change the runtime version.
 from . import resources as _resources

@@ -27,7 +27,7 @@ dotted-number comparator is not semver-aware; Beta release selection uses the co
 launcher's semver/API logic. Stable users continue receiving the stable `releases/latest` feed.
 Assets use the same names in both channels:
 
-- `xml1-builder-<version>-win64.zip`, for example `xml1-builder-0.3.0-beta.1-win64.zip`.
+- `xml1-builder-<version>-win64.zip`, for example `xml1-builder-0.4.0-beta.4-win64.zip`.
 - `xml1-builder.json`.
 - `SHA256SUMS.txt`.
 
@@ -42,24 +42,26 @@ release including prereleases and fetch the manifest and zip by the selected tag
 
 First commit and review the workflow changes, check the numeric source base and its changelog
 section, and complete the applicable [local release gates](RELEASE_CHECKLIST.md). From this
-repository, for the current `0.3.0` base:
+repository, for the current `0.4.0` base:
 
 ```powershell
 python tools/test_release_metadata.py
-python tools/freeze_builder.py --check-tag v0.3.0-beta.1
-git tag -a v0.3.0-beta.1 -m "Legends Classic 0.3.0 beta 1"
-git push https://github.com/ChronoRixun/legends-classic.git refs/tags/v0.3.0-beta.1
+python tools/freeze_builder.py --check-tag v0.4.0-beta.4
+git tag -a v0.4.0-beta.4 -m "Legends Classic 0.4.0 beta 4"
+git push https://github.com/ChronoRixun/legends-classic.git refs/tags/v0.4.0-beta.4
 ```
 
-Increment to `v0.3.0-beta.2` for the next candidate, or use `v0.3.0-rc.1`. Do not reuse tags.
-The stable tag is `v0.3.0`, placed on the reviewed stable commit. Pushing a tag starts the
+Increment to `v0.4.0-beta.5` for the next candidate, or use `v0.4.0-rc.1`. Do not reuse tags.
+The betas `v0.3.0-beta.1` to `v0.3.0-beta.3` were cut before the line was renumbered (no stable 0.3.0 was
+published); the numbering continues at `v0.4.0-beta.4`.
+The stable tag is `v0.4.0`, placed on the reviewed stable commit. Pushing a tag starts the
 release workflow and publishes the release; these maintainer instructions do not authorize
 publication during a local-only task.
 
 To freeze a prerelease locally with the pinned toolchain and compiled sound kernel:
 
 ```powershell
-$env:XML1_RELEASE_TAG = 'v0.3.0-beta.1'
+$env:XML1_RELEASE_TAG = 'v0.4.0-beta.4'
 python tools/freeze_builder.py --smoke
 Remove-Item Env:XML1_RELEASE_TAG
 ```
