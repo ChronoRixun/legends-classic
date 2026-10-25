@@ -6746,8 +6746,11 @@ uses the original's campaign test instead of the ftalk contact store.
   (Change Team and Save only; no Forge, unlike 0.2.1 with 1.4.0's ftalk permission).
 - V32 also rejects an `extractionPointServices` call without the Load bit in its own `x1_svc` line.
 - fix_ini writes `[Game] DangerRoomGate=button3` (the main menu's Danger Room greyed until Phoenix has been in a
-  campaign on the profile, xbe 0x17e93c-0x17e975) and `[Game] RevivalCost=xml1` (200 * (highest roster level)^2,
-  xbe 0xaf6b0) with the port's keys.
+  campaign on the profile, xbe 0x17e93c-0x17e975) and `[Game] RevivalCost=xml1` with the port's keys: the first
+  game's 200 * G^2, G = min(5, highest roster level / 10 + 1), guests not counted (xbe 0xaf6b0 reads the group that
+  registry vt+0x58 = 0x54150 makes from vt+0x50 = 0x54c30) - 200 / 800 / 1,800 / 3,200 / 5,000. XML2 Fix 1.5.0 to
+  1.8.0-beta.7 charged 200 * level^2 (the acknowledged-level slot vt+0x54 = 0x54cb0 was taken for the group); 1.8.0
+  charges the group price as gameplay agreement rule 10 revision 3, which refuses the older fix.
 
 The companion XML2 Fix registers extractionPointServices n(ai), wraps the same forced-team
 handler as the native point, and appends the source label before the native dialog finalizes.

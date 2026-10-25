@@ -24,6 +24,10 @@ passed the unit tests and its native tests; the live checks are in the beta 8 te
 - **Beta 8: room for graphics mods.** `[Limits] IGBCache=1024` with `ResourceNames=2048` and `[Engine]
   ModelHandles=8192` (rules 31-32). The conversion still keeps every package under the game's own 200 (V12).
 - **Beta 8: the HAARP officer's aura** plays the original's art (`physical_resistant_share`).
+- **Beta 8: reviving a hero costs what it did in the first game:** 200 / 800 / 1,800 / 3,200 / 5,000 Tech Bits by
+  team level band; beta 7 charged far more. The build's `[Game] RevivalCost=xml1` is unchanged; XML2 Fix
+  1.9.0-beta.1 (and 1.8.0) charge X-Men Legends I's 200 x G^2, G = min(5, highest roster level / 10 + 1) (rule 10
+  revision 3).
 - The builder requires XML2 Fix `>=1.9.0-beta.1` (a 1.8.0 fix, beta 7 or stable, is refused by name: it knows none of
   the new keys and runs rule 16 as revision 11; the 1.9.0 DLL's `NPR14` marker shows revision 14).
 
@@ -444,6 +448,9 @@ the build). Your saves carry over.
 
 - Professor X keeps his old seat in the rooms an existing save already visited (above).
 - The revival price is the first game's, steep at high levels (above).
+  *Correction, 2026-10-25: it was not the first game's price. X-Men Legends charges 200 x G^2 Tech Bits, G = min(5,
+  highest roster level / 10 + 1) (200 to 5,000); XML2 Fix 1.5.0 to 1.8.0-beta.7 charged 200 x level^2 (80,000 at
+  level 20). Fixed in XML2 Fix 1.8.0 with Legends Classic 0.4.0.*
 - 18 fall volumes are still off (#22): several sit in water or rooms followers can stray into, and need their own
   checks.
   *Correction, 2026-10-23: 18 was a miscount. The 0.2.2 release left 17 zones (25 placements in 15 maps) off, and
