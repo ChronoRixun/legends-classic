@@ -213,8 +213,9 @@ UNRESOLVED_ALLOWED = {
 # XML1 handlers XMen2.exe does not register and that have no XML2 counterpart: the move runs as %default%
 # (animation + triggers, no handler logic). Reported (V18 warning), not rewritten.
 UNREGISTERED_HANDLER_NOTES = {
-    'ch_grab_attack': "Juggernaut's grab-and-pound (x1_ps_juggernaut grabattack); XML2 has no grab-attack handler "
-                      "(ch_grab_hold / ch_grab_victim are the hold and the victim side)",
+    'ch_grab_attack': "Juggernaut's single hit-and-release attack; candidate XML2 Fix rule 45 restores the "
+                      "entry lookup (normally absent grabattackvictim), large hold and shared victim retention. "
+                      "The authored juggrabthrowforwardvictim trigger remains distinct; see docs/GRAB_CARRY.md",
     'ch_weapon_semi_auto': "XML1's entry arms shared weapon recoil (0xe14d0); the separate input gate (0x42f60) "
                            "selects power_attack. Retail PC's fallback loses this timing; generic per-slot reuse "
                            "is not equivalent. See research/npc-semi-auto.md for the opt-in compatibility candidate",

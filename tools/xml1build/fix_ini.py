@@ -392,7 +392,7 @@ _ZONE_PATH = re.compile(r'^[a-z0-9_.\-]+(/[a-z0-9_.\-]+)*$')
 PORT_OWNED = {'Game': ('NewGameTeam', 'ResetUnlocks', 'SaveFolder', 'ForcedTeams', 'PostgameScript', 'WindowTitle',
                         'EndHeroUnlock', 'MainMenuItems', 'DangerRoomGate', 'ClassicMainBackdrop', 'ClassicMainPanelBounds', 'NewGamePlus', 'ReviewStats', 'Xtract', 'XtractionShop', 'RevivalCost', 'XPCurve',
                        'GeometrySharingBlendIndices', 'CharacterLadderPaths', 'ObjectiveDescriptions',
-                       'BreakRule', 'LiftRule', 'Xml1RogueDecide', 'Xml1WallCling', *SHARED_HANDLERS, 'PlacementCrush', 'ObjectWorldImpact', 'DoubleHeal', 'DeathRule', 'NpcPowerRule', 'StunRule', 'DangerRoomParty', 'DangerRoomHealthBars', 'ResistanceDisplay', 'BoxHarmOrigin', 'HarmSingleChain', 'HarmLoopStartup', 'ConfirmationRelease',
+                       'BreakRule', 'LiftRule', 'Xml1GrabCarry', 'Xml1RogueDecide', 'Xml1WallCling', *SHARED_HANDLERS, 'PlacementCrush', 'ObjectWorldImpact', 'DoubleHeal', 'DeathRule', 'NpcPowerRule', 'StunRule', 'DangerRoomParty', 'DangerRoomHealthBars', 'ResistanceDisplay', 'BoxHarmOrigin', 'HarmSingleChain', 'HarmLoopStartup', 'ConfirmationRelease',
                        'OnlineConversations', 'PersonalItemPicture', 'ComboPopupGuard', 'ClassicHud', 'ClassicHudPilot', 'ClassicCodex', 'ClassicObjectives', 'NpcSemiAuto', 'ClassicSpeakers', 'WorldBackfaces',
                        'ExplosiveFirstHit', 'PackAmount', 'SoloMode', 'X1Leader', 'DeathSwitchClear', 'RankCosts', 'LevelSkillPoints', 'LevelStatPoints', 'Xml1Multipart',
                        'Xml1MasterMold', 'Xml1MoldStage', 'Xml1Turrets', 'Xml1LockOnEffects', 'Xml1LockOnAim', 'Xml1Bosses'),
@@ -860,6 +860,8 @@ def port_keys(out, *, save_folder=PLAY_SAVE_FOLDER, eighth=True) -> dict:
     game.update(build_harm_loop_startup(out))
     # Same recorded content option that heroes uses. Never infer this from an
     # existing INI: rebuilding with the feature off must remove the owned key.
+    if (build_record(out) or {}).get('grab_carry') == 'xml1':
+        game['Xml1GrabCarry'] = 'xml1'
     if (build_record(out) or {}).get('rogue_decide') == 'xml1':
         game['Xml1RogueDecide'] = 'xml1'
     turrets = build_turrets(out) if postgame else {}
@@ -1128,6 +1130,9 @@ RELEASE_18_KEYS = {**RELEASE_18_KEYS,
 # NpcPowerRule=xml1 as revision 11. The 1.9.0 DLL's install log carries "NPR14" (xml2-fix src/npc_power.cpp), so the
 # builder requires that marker wherever it writes the rule.
 RELEASE_MARKERS[('Game', 'NpcPowerRule')] = (b'NPR14', '[Game] NpcPowerRule revision 14')
+# Candidate rule 45 is opt-in. The key must exist in the companion DLL when
+# requested; a pre-candidate DLL would silently ignore the restored ground rule.
+RELEASE_18_KEYS = {**RELEASE_18_KEYS, 'Game': RELEASE_18_KEYS['Game'] + ('Xml1GrabCarry',)}
 
 
 def check_release_dll(dll, keys: dict) -> None:
