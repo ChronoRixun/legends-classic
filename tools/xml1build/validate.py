@@ -134,6 +134,8 @@ Checks (severity per SPEC 4.6: error = will not load or silently misbehaves; war
                 scoped to a damage type (the six physical / energy / mental _resistant[_share] talents) carries them
                 as def_damage_scope and no resist_<type> of those types - only def_damage strips a hit's reactions
                 (popup, knockback, trip, stun) at scale <= 0.3 in both engines
+                and (C4) physical_resistant_share's two primary effects are XML1's powerups/aura_physical and
+                powerups/aura_physical_src, built and listed in permanent.PKGB
   V63 resistance HUD (resistance_hud.validate): the port requests the scoped target display, and its existing
                 localized resistance labels and type colors match the original resources at the PC's indices
   V45 weapon damage and reaction priority (SPEC 76/95.3, weapons.validate): every built gun-shot trigger

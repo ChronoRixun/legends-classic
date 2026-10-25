@@ -7187,6 +7187,17 @@ co-op peers run the same build, so no gameplay agreement rule is involved.
 as `def_damage_scope` and no `resist_<type>` of those types. npc_values.verify_exe / verify_xbe also check both 0.3
 thresholds.
 
+**Aura art (COVERAGE C4, green-shield).** The HAARP officer's `physical_resistant_share` plays XML1's own effects, not
+XMen2.exe's `aura_physical_loop` (also a cylinder of `swipeband.png`, but without the officer's ripple/smoke): the
+shared powerup's `<special_fx>` is `powerups/aura_physical` (the recipients' swirl) and the apply_self powerup's is
+`powerups/aura_physical_src` (the source's `ripple.png` / `misc_smokepuff.png` sprites), both without `fxlevel`
+(XML1 has none). `npc_values.aura_fx_rewrite` (called from characters.restore_resist_talents, both halves) changes
+only those two references, for the talents in `X1_AURA_FX_TALENTS` (the physical aura; green-shield matched it
+against the original, the energy and mental auras use the same mechanism and are not listed). The two files are
+XML1-only entries of `permanent.PKGB` already (zones.build_permanent), so no package changes. Modifiers, radius 120,
+share life 1 and death cleanup are untouched (a data diff of shared_talents against the beta 7 build shows exactly one
+differing talent). V60 (`aura_fx_problems`) checks the references and that the files are built and listed.
+
 **SPEC 30 follow-up: scoped immunity rows.** SPEC 30 wrote XML1's scoped `def_damage` immunity rows (HavokBoss's
 `def_damage dmg_energy 0`, the Morlock bruisers' `def_damage dmg_physical 0.5`) as XMen2.exe `def_damage` with a
 `scope_damage`. XMen2.exe's `def_damage` (39) is a cached per-actor value: the cache rebuild 0x53bf20 runs

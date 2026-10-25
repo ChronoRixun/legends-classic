@@ -800,6 +800,11 @@ class _Builder:
                 n = (t.get('name') or '').lower()
                 rewritten, problems = NV.resist_rewrite(t, self.x1_talents.get(n))
                 done[n] += rewritten
+                fx_done, fx_problems = NV.aura_fx_rewrite(t, self.x1_talents.get(n))
+                problems = list(problems) + fx_problems
+                if fx_done:
+                    self.detail.setdefault('aura_fx', {}).setdefault(n, 0)
+                    self.detail['aura_fx'][n] += fx_done
                 for msg in problems:
                     ctx.warn(f'shared_talents: {msg}; XMen2.exe\'s definition kept as it is (validator V60)')
         done = {n: c for n, c in sorted(done.items()) if c}
