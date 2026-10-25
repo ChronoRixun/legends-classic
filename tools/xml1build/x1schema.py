@@ -262,6 +262,13 @@ def structure_x1_to_x2(value):
 # scale (a punch is 1; powers, Might and the damageLevel affecter go higher); without the key, or with an older fix,
 # the attribute is not read and the converted structure decides alone, as before.
 XML1_STRUCTURE_ATTR = 'xml1structure'
+# XML1's own heaviness for the two classes HEAVINESS_X1_TO_X2 merges into XMen2.exe's 3 (4 = Might rank 3 lifts it,
+# 5 = never), kept beside the converted byte for xml2-fix [Game] LiftRule=xml1 (gameplay rule 38): the fix reads it
+# where the game reads `heaviness` (0x498991) and lifts such an object by XML1's rule (rank + 1 >= heaviness, 5
+# never). XMen2.exe never reads the attribute; without the key the converted byte decides alone, as before. Classes
+# 0-3 need no attribute: the rescale already reproduces XML1 there at every rank.
+XML1_HEAVINESS_ATTR = 'xml1heaviness'
+XML1_HEAVINESS_KEPT_FROM = 4
 XML1_STRUCTURE_MAX = len(STRUCTURE_X1_TO_X2) - 1
 
 
@@ -285,6 +292,10 @@ def convert_physics(root):
         if kept is not None and el.get(XML1_STRUCTURE_ATTR) is None:
             el.set(XML1_STRUCTURE_ATTR, kept)
             c['xml1structure_kept'] += 1
+        heavy = _ival(el.get('heaviness')) if (el.get('heaviness') or '').strip() else None
+        if heavy is not None and heavy >= XML1_HEAVINESS_KEPT_FROM and el.get(XML1_HEAVINESS_ATTR) is None:
+            el.set(XML1_HEAVINESS_ATTR, str(min(heavy, len(HEAVINESS_X1_TO_X2) - 1)))
+            c['xml1heaviness_kept'] += 1
         for attr, fn in (('heaviness', heaviness_x1_to_x2), ('structure', structure_x1_to_x2)):
             old = el.get(attr)
             if old is not None and old.strip():

@@ -351,7 +351,7 @@ def test_port_keys_from_a_synthetic_build():
         assert FI.port_keys(out) == {'Game': {'NewGameTeam': 'wolverine', 'ResetUnlocks': '0',
                                               'SaveFolder': 'X-Men Legends', 'ForcedTeams': '1',
                                               'GeometrySharingBlendIndices': '1', 'CharacterLadderPaths': '1',
-                                              'ObjectiveDescriptions': '1', 'BreakRule': 'xml1',
+                                              'ObjectiveDescriptions': '1', 'BreakRule': 'xml1', 'LiftRule': 'xml1',
                                               'PlacementCrush': 'xml1', 'ObjectWorldImpact': 'xml1', 'DoubleHeal': '0', 'ExplosiveFirstHit': '1',
                                               'RankCosts': '1', 'LevelSkillPoints': 'xml1',
                                               'LevelStatPoints': 'xml1', 'Xml1Multipart': '1', 'DeathRule': 'xml1',
@@ -744,6 +744,11 @@ def test_xml1_builds_ask_for_the_first_games_break_rule():
     assert 'BreakRule' not in FI.game_keys(xml1_opening=False)
     assert 'BreakRule' in FI.PORT_OWNED['Game']
     assert FI.dropped_keys({'Game': {}})['Game'].count('BreakRule') == 1
+    # gameplay rule 38: XML1's lift rule for the objects that carry xml1heaviness
+    assert FI.game_keys(xml1_opening=True)['LiftRule'] == 'xml1'
+    assert 'LiftRule' not in FI.game_keys(xml1_opening=False)
+    assert 'LiftRule' in FI.PORT_OWNED['Game']
+    assert FI.dropped_keys({'Game': {}})['Game'].count('LiftRule') == 1
     # SPEC 63.4: the zone loader's crushes refused while a zone places its objects, for every XML1 build
     assert FI.game_keys(xml1_opening=True)['PlacementCrush'] == 'xml1'
     assert 'PlacementCrush' not in FI.game_keys(xml1_opening=False)
