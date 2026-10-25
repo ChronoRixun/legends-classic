@@ -372,7 +372,7 @@ PORT_OWNED = {'Game': ('NewGameTeam', 'ResetUnlocks', 'SaveFolder', 'ForcedTeams
                        'BreakRule', 'LiftRule', 'Xml1RogueDecide', 'PlacementCrush', 'ObjectWorldImpact', 'DoubleHeal', 'DeathRule', 'NpcPowerRule', 'StunRule', 'DangerRoomParty', 'DangerRoomHealthBars', 'ResistanceDisplay', 'BoxHarmOrigin', 'HarmSingleChain', 'HarmLoopStartup', 'ConfirmationRelease',
                        'OnlineConversations', 'PersonalItemPicture', 'ComboPopupGuard', 'ClassicHud', 'ClassicHudPilot', 'ClassicCodex', 'NpcSemiAuto', 'ClassicSpeakers', 'WorldBackfaces',
                        'ExplosiveFirstHit', 'PackAmount', 'SoloMode', 'X1Leader', 'DeathSwitchClear', 'RankCosts', 'LevelSkillPoints', 'LevelStatPoints', 'Xml1Multipart',
-                       'Xml1MasterMold', 'Xml1MoldStage', 'Xml1Turrets', 'Xml1LockOnEffects', 'Xml1LockOnAim'),
+                       'Xml1MasterMold', 'Xml1MoldStage', 'Xml1Turrets', 'Xml1LockOnEffects', 'Xml1LockOnAim', 'Xml1Bosses'),
               'Limits': ('ActorSlots', 'ResourceNames', 'ItemEnhancements', 'FightStyles', 'EffectCurves', 'MoveTriggers', 'EntityCapacity',
                          'ScriptFunctions'),
               'Online': ('GameVersion', 'ContentFingerprint', 'FastTransfer', 'ReceiveValidation', 'JoinInProgress', 'TickRate'),
@@ -547,6 +547,26 @@ def build_mold_controller(out):
     except (OSError, ValueError, AttributeError, TypeError):
         return {}
     return dict(Xml1MasterMold='1', Xml1MoldStage=binding) if binding else {}
+
+
+# XML1 boss brains (xml2-fix [Game] Xml1Bosses, gameplay rule 40, the shared boss dispatcher): each boss the DLL can run,
+# with the converted zone it binds to and the instance names it binds by. A boss is listed only when the build carries
+# that zone with every one of those names (a missing or renamed instance would leave its controller idle while rule 40
+# says it is on).
+BOSS_BINDINGS = (('dopples', 'Maps/astral/ast3/colosseum.XMLB', ('evilwolverine', 'evilcolossus', 'eviljean', 'evilcyc')),)
+
+
+def build_bosses(out) -> dict:
+    """{'Xml1Bosses': 'name,...'} for the bosses whose zone and instances the finished build carries; {} for none."""
+    names = []
+    for name, zone, instances in BOSS_BINDINGS:
+        try:
+            data = Path(out, zone).read_bytes()
+        except OSError:
+            continue
+        if all(instance.encode('ascii') in data for instance in instances):
+            names.append(name)
+    return {'Xml1Bosses': ','.join(names)} if names else {}
 
 
 def build_turrets(out) -> dict:
@@ -740,6 +760,7 @@ def port_keys(out, *, save_folder=PLAY_SAVE_FOLDER, eighth=True) -> dict:
     turrets = build_turrets(out) if postgame else {}
     if postgame:
         game.update(build_mold_controller(out))
+        game.update(build_bosses(out))
         game.update(build_lockon_effects(out))
         game.update(turrets.get('Game', {}))
     semi_auto = build_semi_auto(out) if game.get('NpcPowerRule') == NPC_POWER_RULE else {}
@@ -978,6 +999,9 @@ RELEASE_18_KEYS = {**RELEASE_18_KEYS, 'Game': RELEASE_18_KEYS['Game'] + ('Classi
 # private candidate DLL) knows [Game] WorldBackfaces but not the list and would apply the rule to every zone, so the
 # builder also requires the list's key by name.
 RELEASE_18_KEYS = {**RELEASE_18_KEYS, 'WorldBackfaces': ('ZoneCount',)}
+# XML2 Fix 1.8.0-beta.8 (Legends Classic 0.4.0-beta.8): [Game] Xml1Bosses (the shared boss dispatcher, rule 40). A beta.7
+# DLL ignores it, so the dopples would fight with the stock AI while the build says otherwise; the builder refuses it.
+RELEASE_18_KEYS = {**RELEASE_18_KEYS, 'Game': RELEASE_18_KEYS['Game'] + ('Xml1Bosses',)}
 # Byte markers for formats a key name cannot show. The schema 4 weapon rows (bullet trace time + accuracy) are read only
 # by a DLL whose rule 16 detail digest says "NSA4"; an earlier beta 7 DLL knows [Game] NpcSemiAuto but refuses the wider
 # rows and withdraws rule 16, so the builder refuses it, naming the rows.

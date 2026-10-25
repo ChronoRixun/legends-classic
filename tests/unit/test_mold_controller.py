@@ -35,3 +35,19 @@ def test_harness_only_enables_mold_for_port_identity():
     assert 'Xml1MasterMold=1' in harness.ini_text('windowed', 1280, 720, True, port_identity=True, mold_controller=keys)
     assert 'Xml1MasterMold' not in harness.ini_text('windowed', 1280, 720, True, mold_controller=keys)
     assert 'Xml1MasterMold' not in harness.ini_text('windowed', 1280, 720, True, xml1_opening=False, port_identity=True, mold_controller=keys)
+
+
+def test_bosses_key_lists_only_bosses_whose_zone_and_instances_are_built():
+    # Invented bytes; only the instance names the DLL binds by are real (fix_ini.BOSS_BINDINGS).
+    name, zone, instances = F.BOSS_BINDINGS[0]
+    assert name == 'dopples'
+    with tempfile.TemporaryDirectory() as temp:
+        out = Path(temp)
+        assert F.build_bosses(out) == {}
+        path = out / zone
+        path.parent.mkdir(parents=True)
+        path.write_bytes(b'\0'.join(i.encode() for i in instances[:-1]))
+        assert F.build_bosses(out) == {}
+        path.write_bytes(b'\0'.join(i.encode() for i in instances))
+        assert F.build_bosses(out) == {'Xml1Bosses': 'dopples'}
+    assert 'Xml1Bosses' in F.PORT_OWNED['Game'] and 'Xml1Bosses' in F.RELEASE_18_KEYS['Game']
