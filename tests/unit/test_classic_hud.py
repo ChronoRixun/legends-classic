@@ -84,7 +84,7 @@ def test_repack_preserves_native_cells_and_original_gradient_direction():
     assert np.array_equal(out[264,:,1][:64],np.arange(64))
     assert np.array_equal(out[360:363,:64],original[:64,28:31].transpose(1,0,2))
     assert np.array_equal(out[361,:64,2],np.arange(64))
-    assert not out[363:384].any() and not out[384:,128:].any()
+    assert not out[363:].any()  # no small-map frame: everything under the XP strip is transparent
     raises(ValueError,lambda:H.atlas(pc[:128],original))
 
 
@@ -172,12 +172,8 @@ def test_target_inner_masks_keep_native_pulses_inside_the_bevel():
         assert np.all(mask[:,:,3] <= outer[1:-1,1:-1,3])
 
 
-def test_map_frame_has_no_opaque_interior_or_terrain():
+def test_atlas_carries_no_small_map_frame():
     original=np.full((256,128,4),255,np.uint8)
-    out=H.small_map_frame(original)
-    assert out.shape==(128,128,4)
-    assert not out[8:-8,8:-8,3].any()
-    assert out[0,64,3]==255 and out[64,0,3]==255
-    assert not out[0,0].any()
-    assert np.array_equal(out,out[::-1]) and np.array_equal(out,out[:,::-1])
+    assert not hasattr(H,'small_map_frame')
+    assert not H.atlas(original,original)[363:].any()
     raises(ValueError,lambda:H.frame(original,128,257))

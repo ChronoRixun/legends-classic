@@ -3,10 +3,27 @@
 The builder's releases, newest first. The version is `xml1-builder --version`; the content version is what a
 build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebuild.
 
-## v0.4.0 - content version 25 (needs XML2 Fix 1.8.0)
+## v0.4.0 - content version 26 (needs XML2 Fix 1.8.0)
+
+- **Beta 6: enemy AI fidelity.** Every XML1 build now turns on the first game's weapon brain for
+  its semi-auto gunmen (`[Game] NpcSemiAuto=xml1` and the `[NpcSemiAuto]` rows, derived from your XML1 data during
+  the build): the HAARP officer fires one aimed shot about every 0.9 s, never bursts or melees at range, closes from
+  far away, and holds his grenade at full energy, as on the Xbox. With XML2 Fix 1.8.0-beta.6 the existing
+  `NpcPowerRule=xml1` also becomes gameplay rule 16 **revision 10** (enemy combos stop when a hit makes them react,
+  as in the first game). Needs XML2 Fix `>=1.8.0-beta.6`; a beta 5 fix is refused by name (`[Game] NpcSemiAuto`),
+  and a beta 6 PC and a beta 5 PC refuse each other in co-op (`16 NpcPowerRule`).
+
+- **Beta 6: no small-map frame.** The bigger bevel beta 5 drew around the small map was too large, so it is gone:
+  the HUD atlas no longer carries the frame (that region is transparent) and the companion XML2 Fix draws the
+  small map where the game itself puts it. Everything else of the classic HUD is unchanged.
+
+- **Beta 6: a new content identity.** The build's output changes (the HUD atlas and the new `xml2-fix.ini` keys), so
+  the content version rises to 26 and the lobby token to `LC35`: the launcher offers a Rebuild, and a beta 6 game and
+  a beta 5 or older game never join each other - everyone updates both parts and rebuilds. Saves carry over.
 
 Renumbered from 0.3.0 while in beta (the betas 0.3.0-beta.1..3 are this release's history);
-no stable 0.3.0 was published. Betas 1-4 were content 24 / `LC33`; beta 5 (the classic look) is content 25 / `LC34`.
+no stable 0.3.0 was published. Betas 1-4 were content 24 / `LC33`; beta 5 (the classic look) content 25 / `LC34`; beta 6 (enemy AI fidelity) is
+content 26 / `LC35`.
 
 Legends Classic 0.4.0 brings online play from Ultimate Legends **0.4.0**. Update the launcher to 0.4.0 first,
 then **Rebuild**, then **Play**. Everyone needs the same 0.4.0 build and XML2 Fix 1.8.0 or later;

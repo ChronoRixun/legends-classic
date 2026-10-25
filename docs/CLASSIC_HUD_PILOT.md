@@ -62,11 +62,11 @@ acceptance gaps. Do not infer complete party-wheel, 1-4-player, power-wheel,
 font or aspect-ratio parity from one successful primary HUD frame.
 
 
-The atlas also carries a transparent-interior128x128 bevel for the small map.
-The companion draws it at96x96 around the native centre in small-map mode only.
-This is requested classic chrome around the existing map; original small-map
-reference captures were unframed. No terrain, fog, markers or map data is replaced.
-The final private asset contract is LC-HUD-4; older markers are refused.
+The small map is XMen2.exe's own and is drawn without a frame, as in the original
+game's reference captures. Beta 5 composited a transparent-interior 128x128 bevel for it
+at atlas rows 384..511; that region is now left transparent, and the companion
+(the next XML2 Fix beta) neither draws it nor moves the map's safe-area inset. The atlas
+size and sprite numbering are unchanged. The final private asset contract is LC-HUD-4; older markers are refused.
 
 
 The XP meter uses the original silver atlas strip: XBE draw0x15b85d selects

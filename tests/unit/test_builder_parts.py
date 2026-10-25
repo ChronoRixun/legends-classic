@@ -398,7 +398,7 @@ def test_port_keys_from_a_synthetic_build():
 
 def test_beta2_keys_refuse_a_beta1_dll_and_require_the_beta2_fix():
     # 0.3.0-beta.2 writes [Engine] ModelPools and [Game] ComboPopupGuard, which XML2 Fix 1.8.0-beta.1 does not read
-    # (same numeric VERSIONINFO 1.8.0.0): the DLL check names both; beta/rc builders require '>=1.8.0-beta.5' (beta 5).
+    # (same numeric VERSIONINFO 1.8.0.0): the DLL check names both; beta/rc builders require '>=1.8.0-beta.6' (beta 6).
     keys = {'Game': {'ComboPopupGuard': '1'}, 'Engine': {'ModelPools': 'x4'}}
     with tempfile.TemporaryDirectory() as td:
         dll = Path(td) / 'dinput.dll'
@@ -406,7 +406,7 @@ def test_beta2_keys_refuse_a_beta1_dll_and_require_the_beta2_fix():
         assert FI.old_fix_keys(dll, keys) == ['[Game] ComboPopupGuard', '[Engine] ModelPools']
         dll.write_bytes(b'MZ' + 'ComboPopupGuard'.encode('utf-16le') + 'ModelPools'.encode('utf-16le'))
         assert FI.old_fix_keys(dll, keys) == []
-    assert FI.required_xml2fix('0.3.0-beta.3') == FI.required_xml2fix('0.4.0-rc.1') == '>=1.8.0-beta.5'
+    assert FI.required_xml2fix('0.3.0-beta.3') == FI.required_xml2fix('0.4.0-rc.1') == '>=1.8.0-beta.6'
     assert FI.required_xml2fix('0.4.0') == '>=1.8'
 
 
@@ -437,8 +437,25 @@ def test_beta5_classic_keys_refuse_a_beta4_dll_and_require_the_beta5_fix():
         assert FI.old_fix_keys(dll, keys) == ['[Game] ClassicHud', '[Game] ClassicCodex']
         dll.write_bytes(b'MZ' + ''.join(('ClassicHud\0', 'ClassicCodex\0')).encode('utf-16le'))
         assert FI.old_fix_keys(dll, keys) == []
-    assert FI.REQUIRED_XML2FIX_PRERELEASE == 'beta.5'
-    assert FI.required_xml2fix('0.4.0-beta.5') == '>=1.8.0-beta.5' and FI.required_xml2fix('0.4.0') == '>=1.8'
+    assert FI.required_xml2fix('0.4.0') == '>=1.8'
+
+
+def test_beta6_weapon_brain_keys_refuse_a_beta5_dll_and_require_the_beta6_fix():
+    # 0.4.0-beta.6 writes [Game] NpcSemiAuto=xml1 and its [NpcSemiAuto] rows (the officer's weapon brain, XML2 Fix
+    # 1.8.0-beta.6, gameplay-agreement rule 16 revision 10). A beta.5 DLL (the classic-look keys, no NpcSemiAuto) would
+    # run the stock officer AI, so it is refused by name; beta/rc builders require '>=1.8.0-beta.6'.
+    keys = {'Game': {'ClassicHud': 'xml1', 'NpcPowerRule': 'xml1', 'NpcSemiAuto': 'xml1'},
+            'NpcSemiAuto': {'Count': '1', 'W1': 'guard|3f200000|43c80000|3f800000|00000000'}}
+    assert 'NpcSemiAuto' in FI.RELEASE_18_KEYS['Game'] and 'NpcSemiAuto' in FI.PORT_OWNED['Game']
+    assert FI.PORT_OWNED['NpcSemiAuto'][:2] == ('Count', 'W1') and FI.PORT_OWNED['NpcSemiAuto'][-1] == 'W64'
+    with tempfile.TemporaryDirectory() as td:
+        dll = Path(td) / 'dinput.dll'
+        dll.write_bytes(b'MZ' + ''.join(('ClassicHud\0', 'NpcPowerRule', 'Count')).encode('utf-16le'))
+        assert FI.old_fix_keys(dll, keys) == ['[Game] NpcSemiAuto']
+        dll.write_bytes(b'MZ' + ''.join(('ClassicHud\0', 'NpcPowerRule', 'NpcSemiAuto', 'Count')).encode('utf-16le'))
+        assert FI.old_fix_keys(dll, keys) == []
+    assert FI.REQUIRED_XML2FIX_PRERELEASE == 'beta.6'
+    assert FI.required_xml2fix('0.4.0-beta.6') == '>=1.8.0-beta.6' and FI.required_xml2fix('0.4.0') == '>=1.8'
 
 
 def test_harness_installs_write_the_shipped_limits_by_default():
@@ -1014,17 +1031,22 @@ def test_join_in_progress_is_on_for_port_builds_and_needs_fix_18():
         FI.check_release_dll(dll, {'Online': {'ReceiveValidation': '1', 'JoinInProgress': '1'}})
 
 
-def test_release_identity_040_beta5_is_lc34_and_never_an_older_token():
-    """0.4.0-beta.5 (the classic look) changes the generated output, so it is content 25 / catalogue 7 / LC34: a token
-    no earlier build carries (0.2.4 LC31, 0.2.5 LC32, 0.3.0 and the 0.4.0 betas 1-4 LC33), so neither the stock lobby
-    nor the rooms pair a beta 5 PC with an older build. Content 24 stays LC33 (history is append-only)."""
+def test_release_identity_040_beta6_is_lc35_and_never_an_older_token():
+    """0.4.0-beta.6 (enemy AI fidelity: the officer's weapon brain rows in xml2-fix.ini; the classic HUD atlas without
+    the small-map frame) changes the generated output, so it is content 26 / catalogue 7 / LC35: a token no earlier
+    build carries (0.2.4 LC31, 0.2.5 LC32, 0.3.0 and the 0.4.0 betas 1-4 LC33, beta 5 LC34), so neither the stock lobby
+    nor the rooms pair a beta 6 PC with an older build. Content 25 stays LC34 and content 24 LC33 (append-only)."""
     from xml1build import release_identity as RI
     from xml1builder import CONTENT_VERSION, VERSION
-    assert (VERSION, CONTENT_VERSION) == ('0.4.0', 25) and RI.game_version() == 'LC34'
+    assert (VERSION, CONTENT_VERSION) == ('0.4.0', 26) and RI.game_version() == 'LC35'
+    assert RI.game_version(content_version=25, catalogue_revision=7) == 'LC34'
     assert RI.game_version(content_version=24, catalogue_revision=7) == 'LC33'
-    assert [r.token for r in RI.HISTORY].count('LC34') == 1
-    assert all(r.token != 'LC34' for r in RI.HISTORY if r.release.startswith(('0.2', '0.3')))
+    assert [r.token for r in RI.HISTORY].count('LC35') == 1 and RI.HISTORY[-1].token == 'LC35'
+    assert all(r.token != 'LC35' for r in RI.HISTORY[:-1])
+    row = RI.HISTORY[-1]
+    assert (row.release, row.content_version, row.catalogue_revision) == ('0.4.0-beta.6', 26, 7)
+    assert len(row.bind_manifest) == 64 and row.bind_manifest != RI.HISTORY[-2].bind_manifest
 
 
 def test_private_candidate_requires_the_release_companion():
-    assert FI.required_xml2fix(FI.RI.PRIVATE_CANDIDATE.release) == '>=1.8.0-beta.5'
+    assert FI.required_xml2fix(FI.RI.PRIVATE_CANDIDATE.release) == '>=1.8.0-beta.6'

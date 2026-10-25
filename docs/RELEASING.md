@@ -7,11 +7,11 @@ zeroes in numeric components. The numeric base must match `VERSION` in
 or assign a new lobby identity. Changes to generated game output still require the content
 version and release-identity work described in the [release checklist](RELEASE_CHECKLIST.md).
 
-Beta and rc builders declare `requires_xml2fix: ">=1.8.0-beta.5"` in the release manifest and
-`requires.xml2fix` in the generated build stamp (`REQUIRED_XML2FIX_PRERELEASE`, `beta.5` since
-0.4.0-beta.5, which writes `[Game] ClassicHud` / `ClassicCodex`, first read by XML2 Fix 1.8.0-beta.5), so companion
-`1.8.0-beta.5` and later betas, rc and final fixes satisfy the requirement while `1.8.0-beta.4` and older
-and `1.7.x` do not (0.3.0-beta.3 and 0.4.0-beta.4 declared `>=1.8.0-beta.3`, 0.3.0-beta.2 `>=1.8.0-beta.2`,
+Beta and rc builders declare `requires_xml2fix: ">=1.8.0-beta.6"` in the release manifest and
+`requires.xml2fix` in the generated build stamp (`REQUIRED_XML2FIX_PRERELEASE`, `beta.6` since
+0.4.0-beta.6, which writes `[Game] NpcSemiAuto` and the `[NpcSemiAuto]` rows, first read by XML2 Fix 1.8.0-beta.6), so
+companion `1.8.0-beta.6` and later betas, rc and final fixes satisfy the requirement while `1.8.0-beta.5` and older
+and `1.7.x` do not (0.4.0-beta.5 declared `>=1.8.0-beta.5`, 0.3.0-beta.3 and 0.4.0-beta.4 `>=1.8.0-beta.3`, 0.3.0-beta.2 `>=1.8.0-beta.2`,
 0.3.0-beta.1 `>=1.8.0-0`). Stable builders retain the exact `>=1.8`
 requirement. Both paths use `xml1build.fix_ini.required_xml2fix`; `REQUIRED_XML2FIX` stays numeric.
 The builder's installed-DLL checks still require the 1.8 capabilities, so beta DLLs with numeric

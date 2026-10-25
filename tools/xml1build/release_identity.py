@@ -48,6 +48,9 @@ HISTORY = (
     Identity('0.3.0', 24, 7, 'LC33', '240ef860ad0a8676bff9bcd9302ad40fe12993af0f27768d45e0e172e11d424a'),
     # Issued at 0.4.0-beta.5: the classic look (classic HUD, menus and map assets, team-room selection cones/rings off).
     Identity('0.4.0', 25, 7, 'LC34', '28230ad0107151f048560c0ef475322d658dee4644a0726ea9fc95c8e533b5d4'),
+    # Issued at 0.4.0-beta.6: enemy AI fidelity (rule 16 revision 10, the officer's weapon brain) and the classic HUD
+    # atlas without the small-map frame.
+    Identity('0.4.0-beta.6', 26, 7, 'LC35', '3f378bccc40eee3e2830b944ba69ee2c41b8cc721dcb02f7ed10666866958de5'),
 )
 
 

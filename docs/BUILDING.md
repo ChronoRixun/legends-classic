@@ -112,3 +112,9 @@ frontend modes and writes `[Game] ClassicHud=xml1` and `[Game] ClassicCodex=1`
 (0.4.0-beta.5, the classic look). They need XML2 Fix 1.8.0-beta.5 or later; the
 builder refuses an older DLL by name. See [the HUD contract](CLASSIC_HUD_PILOT.md)
 for the off switch and acceptance limits.
+
+The characters stage also derives the NPC weapon-brain contract from your XML1
+npcstat, weapons and powerstyles (`_build/semi_auto.json`), and every XML1 build
+writes `[Game] NpcSemiAuto=xml1` with its `[NpcSemiAuto]` rows (0.4.0-beta.6,
+gameplay rule 16 revision 10; SPEC 95.4). They need XML2 Fix 1.8.0-beta.6 or
+later; the builder refuses an older DLL by name.

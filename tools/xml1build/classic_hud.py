@@ -121,15 +121,6 @@ def inner_mask(width, height):
     return out
 
 
-def small_map_frame(original):
-    """Classic chrome adaptation around the port map; no terrain is imported."""
-    out = frame(original, 128, 128)
-    # Only the bevel is opaque. The existing vector map and its fog/markers
-    # must remain visible through the entire interior.
-    out[:, :, 3] *= out[:, :, :3].any(axis=2)
-    return out
-
-
 def atlas(pc, original):
     if any(a.shape != (256, 128, 4) or a.dtype != np.uint8 for a in (pc, original)):
         raise ValueError('HUD atlas source shape/dtype')
@@ -147,7 +138,8 @@ def atlas(pc, original):
     # vertical strip (x=27..30, y=0..64), rotated across the meter.
     # Sample the interior texels, excluding the adjacent blue energy strip.
     out[360:363, :64] = original[:64, 28:31].transpose(1, 0, 2)
-    out[384:512, :128] = small_map_frame(original)
+    # Rows 363..511 stay transparent. The small map is XMen2.exe's own, unframed (beta 5
+    # drew a 128x128 bevel at 384..511; the paired XML2 Fix no longer does).
     return out
 
 

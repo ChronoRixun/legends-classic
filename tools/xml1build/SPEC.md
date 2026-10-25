@@ -7417,6 +7417,24 @@ the maintainer's exact death encounter remain unverified; the broader stun issue
 
 No version or save-format changes are made here; the release integrator owns version allocation.
 
+### 95.4 The original weapon brain, by default (`[Game] NpcSemiAuto=xml1`, rule 16 revision 10; 0.4.0-beta.6)
+
+XML1's `ch_weapon_semi_auto` handler arms an actor-wide recoil deadline on entry and a separate input gate selects
+`power_attack`; XMen2.exe registers no such handler, so the converted HAARP officer burst-fired and meleed at range.
+XML2 Fix 1.8.0-beta.6 restores the original weapon brain inside gameplay rule 16 (revision 10, enabled values
+`{1,1,1,metadata fingerprint}`; revision 10 also carries the reaction-spent combo steps of the combo-reaction work;
+revisions 5-9 were unreleased candidates and are refused). The builder now enables it for every XML1 build, as it
+does `NpcPowerRule`: the characters stage runs `xml1build.semi_auto.build_contract` on the owner's XML1 npcstat,
+`weapons/weapons.eng` and the named powerstyles and records `_build/semi_auto.json` (schema 2; rows
+`actor|recoil|range|burst|leader` as binary32 bits, exclusions with reasons; rows for actors the build does not carry
+are excluded); `fix_ini.port_keys` writes `[Game] NpcSemiAuto=xml1` and `[NpcSemiAuto] Count / W1..Wn` from it
+(`build_semi_auto`; PORT_OWNED, so a rebuild with fewer rows drops the stale ones). On the 0.4 sources the contract
+has one row (the officer), the 20-brain audit's other weapons stay explicit exclusions (bullet aiming, warm-up,
+continuous fire, the pistol handler; research/npc-semi-auto.md). No contract or no row = no keys and the released
+`{1,1,0,0}` officer. A 1.8.0-beta.5 DLL reads neither key and is refused by name (`[Game] NpcSemiAuto`); the beta
+builder requires `>=1.8.0-beta.6`. The generated game files do not change for this (only xml2-fix.ini and `_build`
+metadata); co-op peers must agree on rule 16 (a revision-10 PC refuses a beta 5 PC naming `16 NpcPowerRule`).
+
 ## 96. Shallow floor overlap and surviving prop hits
 
 The spawn-floor survey also selects shallow floor overlap for the verified model

@@ -264,11 +264,12 @@ LAG warnings may remain, but the slow-player drop is disabled. Host drop or free
   often per minute as in the first game (measured: about 19 against 28 attacks per enemy per minute with a moving
   hero, 20 against 32 with a still one); the cause is not found. Whether heroes are now stunned as long as in the
   first game has not been measured again since 0.2.5 re-stuns them on every stun hit.
-- **Gun soldiers (#101, #54):** the HAARP officer, and probably the other gun soldiers, still close in to punch more
-  than the first game's, which keep their distance and shoot. In a matched 45 s window the officer fired 49 shots
-  and never punched in the first game; in the port he fired none and punched 24 times. When the port officer does
-  shoot, he fires a burst of seven in under a second instead of single spaced shots, and the shot sound stacks about
-  seven times, which is the louder gun.
+- **Gun soldiers (#101, #54):** since 0.4.0-beta.6 the HAARP officer has the first game's weapon brain: single aimed
+  shots about every 0.9 s, no bursts or punches from range, he backs off, and he holds his grenade at full energy.
+  The other gun soldiers do not have it yet and probably still close in to punch more than the first game's, which
+  keep their distance and shoot; before beta 6 the port officer, in a matched 45 s window, fired none of the
+  original's 49 shots and punched 24 times, and when he did shoot he fired bursts of seven whose sound stacked
+  (the louder gun).
 - **Hazards (#104):** the earlier 57-level audit had live checks in only three rooms; report remaining misses.
 - Local co-op on controllers should work (it is X-Men Legends II's) but has had little testing.
 - **The classic look (0.4.0-beta.5) is new:** it was checked on one PC at 4:3 and 16:9 with keyboard and a virtual pad,
@@ -288,7 +289,7 @@ the game.
 
 | Builder | Content version | Needs xml2-fix | Notes |
 |---|---|---|---|
-| 0.4.0 | 25 | 1.8.0 | online codes, public browser, drop-in ON, solo watchers; the classic look (`[Game] ClassicHud=xml1`, `ClassicCodex=1`, beta 5: needs 1.8.0-beta.5); catalogue 7 / LC34 (betas 1-4: content 24 / LC33); launcher 0.4.0 for Online; matching peers required |
+| 0.4.0 | 26 | 1.8.0 | online codes, public browser, drop-in ON, solo watchers; the classic look (`[Game] ClassicHud=xml1`, `ClassicCodex=1`, beta 5: needs 1.8.0-beta.5); the officer's weapon brain and rule 16 revision 10 (`[Game] NpcSemiAuto=xml1`, beta 6: needs 1.8.0-beta.6), no small-map frame; catalogue 7 / LC35 (beta 5: content 25 / LC34; betas 1-4: content 24 / LC33); launcher 0.4.0 for Online; matching peers required |
 | 0.2.5 | 23 | 1.7.1 | the bedroom items' pictures in the first game's picture window (`[Game] PersonalItemPicture=window`, #54); heroes re-stunned by every stun hit (`[Game] StunRule=xml1`, rule 18 revision 3, #101); catalogue 7 / LC32; both PCs need this pair |
 | 0.2.4 | 22 | 1.7.0 | Toad at HAARP (#105); colored enemy resistance text (`[Game] ResistanceDisplay=xml1`); co-op conversations (`[Game] OnlineConversations=lockstep`, rule 27); catalogue 7 / LC31; both PCs need this pair |
 | 0.2.3 | 21 | 1.6.0 | hazard bounds and the opening fire's rhythm (`[Game] BoxHarmOrigin`, `HarmSingleChain`), floor-overlap crates (`ObjectWorldImpact`), two more fall volumes, the first game's gun-move priority, NpcPower revision 4, StunRule revision 2, visible Danger Room opponents with health bars and the original fallback party (`DangerRoomHealthBars`, `DangerRoomParty`), Sentinel scan effects and aiming, fast saved-campaign transfer (`[Online] FastTransfer`), received-message checks (`[Online] ReceiveValidation`); catalogue 7 / LC30; verified saved-zone prefix retention; co-op peers need 0.2.3 / 1.6.0 on both PCs |
@@ -428,7 +429,8 @@ It contains and distributes no game content: you need your own copies of both ga
 | `[Game] DangerRoomParty` | `xml1` | Original incomplete-course four-hero fallback; rule 19 |
 | `[Game] Xml1LockOnEffects` | authored triple | Scan, surface and acquired-target visuals |
 | `[Game] Xml1LockOnAim` | `1` | Animated-head targeting; rule 20 |
-| `[Game] NpcPowerRule` | `xml1` | XML1 power decisions and combo timing; rule 16 revision 4 |
+| `[Game] NpcPowerRule` | `xml1` | XML1 power decisions, combo timing and reaction-spent combo steps; rule 16 revision 10 (XML2 Fix 1.8.0-beta.6; revision 4 before) |
+| `[Game] NpcSemiAuto` + `[NpcSemiAuto]` | `xml1` + source rows | XML1's weapon brain for semi-auto NPCs (the HAARP officer), rows derived from your XML1 data; rule 16 revision 10 (0.4.0-beta.6) |
 | `[TestMode] ForgeEverywhere` | off, unwritten | Forge at Xtraction points |
 | `[TestMode] Hotkeys` | off, unwritten | F8 clears eligible enemies, F9 toggles party protection, F10 returns to the nearest safe authored start |
 

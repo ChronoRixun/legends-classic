@@ -228,6 +228,16 @@ DEATH_RULE = 'xml1'
 # Off in xml2-fix unless set; a fix without the feature ignores the key. Written for every XML1 build.
 NPC_POWER_RULE = 'xml1'
 
+# xml2-fix [Game] NpcSemiAuto + [NpcSemiAuto] Count / W1..Wn (XML2 Fix 1.8.0-beta.6; xml2-fix docs/npc-semi-auto.md;
+# gameplay rule 16 revision 10): XML1's weapon brain for its plain-projectile semi-auto NPCs (the HAARP officer: one
+# aimed shot per recoil period, no bursts, no melee at range, the grenade held at full energy). XMen2.exe registers no
+# ch_weapon_semi_auto handler, so its converted gunmen burst-fire and melee. The rows are the characters stage's
+# source-derived contract (xml1build.semi_auto -> _build/semi_auto.json; `actor|recoil|range|burst|leader`); fidelity
+# is the goal, so every XML1 build with a contract writes them (like NpcPowerRule). No contract / no row = no keys
+# (rule 16 stays {1,1,0,0}, the stock PC officer).
+NPC_SEMI_AUTO = 'xml1'
+NPC_SEMI_AUTO_MAX_ROWS = 64          # the native bound (xml2-fix npc_semi_auto; semi_auto.contract refuses more)
+
 # XML1's stun flag lasts only while the accepted stun reaction owns it. The companion DLL's rule 18
 # drops rejected party-hero stuns and clears interrupted stuns; NPC reactions and accepted durations stay native.
 STUN_RULE = 'xml1'
@@ -250,9 +260,10 @@ REQUIRED_XML2FIX = '1.8'
 # The companion fix's prerelease a beta/rc builder needs (launcher-facing requires.xml2fix only): 0.3.0-beta.2 writes
 # [Engine] ModelPools and [Game] ComboPopupGuard, first read by XML2 Fix 1.8.0-beta.2; 0.3.0-beta.3 writes [Online]
 # TickRate, first read by 1.8.0-beta.3; 0.4.0-beta.5 writes [Game] ClassicHud / ClassicCodex (the classic look), first
-# read by 1.8.0-beta.5, so its requirement is '>=1.8.0-beta.5' (SemVer: beta.5, beta.N > 5, every rc and the final
-# 1.8.0 meet it; 1.8.0-beta.4 and older do not).
-REQUIRED_XML2FIX_PRERELEASE = 'beta.5'
+# read by 1.8.0-beta.5; 0.4.0-beta.6 writes [Game] NpcSemiAuto / [NpcSemiAuto] (the officer's weapon brain, rule 16
+# revision 10), first read by 1.8.0-beta.6, so its requirement is '>=1.8.0-beta.6' (SemVer: beta.6, beta.N > 6, every
+# rc and the final 1.8.0 meet it; 1.8.0-beta.5 and older do not).
+REQUIRED_XML2FIX_PRERELEASE = 'beta.6'
 
 
 def required_xml2fix(builder_version: str) -> str:
@@ -339,7 +350,7 @@ PORT_OWNED = {'Game': ('NewGameTeam', 'ResetUnlocks', 'SaveFolder', 'ForcedTeams
                         'EndHeroUnlock', 'MainMenuItems', 'DangerRoomGate', 'ClassicMainBackdrop', 'ClassicMainPanelBounds', 'NewGamePlus', 'ReviewStats', 'Xtract', 'XtractionShop', 'RevivalCost', 'XPCurve',
                        'GeometrySharingBlendIndices', 'CharacterLadderPaths', 'ObjectiveDescriptions',
                        'BreakRule', 'PlacementCrush', 'ObjectWorldImpact', 'DoubleHeal', 'DeathRule', 'NpcPowerRule', 'StunRule', 'DangerRoomParty', 'DangerRoomHealthBars', 'ResistanceDisplay', 'BoxHarmOrigin', 'HarmSingleChain', 'HarmLoopStartup', 'ConfirmationRelease',
-                       'OnlineConversations', 'PersonalItemPicture', 'ComboPopupGuard', 'ClassicHud', 'ClassicHudPilot', 'ClassicCodex',
+                       'OnlineConversations', 'PersonalItemPicture', 'ComboPopupGuard', 'ClassicHud', 'ClassicHudPilot', 'ClassicCodex', 'NpcSemiAuto',
                        'ExplosiveFirstHit', 'PackAmount', 'SoloMode', 'X1Leader', 'DeathSwitchClear', 'RankCosts', 'LevelSkillPoints', 'LevelStatPoints', 'Xml1Multipart',
                        'Xml1MasterMold', 'Xml1MoldStage', 'Xml1Turrets', 'Xml1LockOnEffects', 'Xml1LockOnAim'),
               'Limits': ('ActorSlots', 'ResourceNames', 'ItemEnhancements', 'FightStyles', 'EffectCurves', 'MoveTriggers', 'EntityCapacity',
@@ -347,7 +358,8 @@ PORT_OWNED = {'Game': ('NewGameTeam', 'ResetUnlocks', 'SaveFolder', 'ForcedTeams
               'Online': ('GameVersion', 'ContentFingerprint', 'FastTransfer', 'ReceiveValidation', 'JoinInProgress', 'TickRate'),
               'Save': ('Format',),
               'Engine': ('ModelPools',),
-              'Xml1Turrets': ('Count',) + tuple(f'T{i}' for i in range(1, 33))}
+              'Xml1Turrets': ('Count',) + tuple(f'T{i}' for i in range(1, 33)),
+              'NpcSemiAuto': ('Count',) + tuple(f'W{i}' for i in range(1, NPC_SEMI_AUTO_MAX_ROWS + 1))}
 
 
 def broker_keys() -> dict:
@@ -531,6 +543,20 @@ def build_turrets(out) -> dict:
     return {'Game': {'Xml1Turrets': '1'}, 'Xml1Turrets': section}
 
 
+def build_semi_auto(out) -> dict:
+    """{'Game': {'NpcPowerRule': 'xml1', 'NpcSemiAuto': 'xml1'}, 'NpcSemiAuto': {'Count': n, 'W1': ...}} from the
+    characters stage's weapon-brain contract (xml1build.semi_auto -> _build/semi_auto.json); {} without a valid one
+    with at least one row (the officers keep the stock PC weapon AI)."""
+    from . import semi_auto as SA
+    try:
+        data = json.loads(Path(out, '_build', SA.CONTRACT_FILE).read_text(encoding='utf-8'))
+        sections = SA.ini_sections(data)
+    except (OSError, ValueError, AttributeError, TypeError):
+        return {}
+    sections['Game']['NpcSemiAuto'] = NPC_SEMI_AUTO
+    return sections
+
+
 def game_keys(*, xml1_opening=True, save_folder=None, forced_teams='1', add_hero=False, join_hero=True, postgame=None,
               port_identity=False, main_menu_items=None, new_game_plus=None, review_stats=None, xtract=None,
               xp_curve=None) -> dict:
@@ -665,9 +691,13 @@ def port_keys(out, *, save_folder=PLAY_SAVE_FOLDER, eighth=True) -> dict:
         game.update(build_mold_controller(out))
         game.update(build_lockon_effects(out))
         game.update(turrets.get('Game', {}))
+    semi_auto = build_semi_auto(out) if game.get('NpcPowerRule') == NPC_POWER_RULE else {}
+    game.update(semi_auto.get('Game', {}))
     keys = {'Game': game, 'Limits': dict(LIMITS), 'Engine': {'ModelPools': MODEL_POOLS}}
     if turrets:
         keys['Xml1Turrets'] = turrets['Xml1Turrets']
+    if semi_auto:
+        keys['NpcSemiAuto'] = semi_auto['NpcSemiAuto']
     balance = build_balance(out)
     online = online_keys(port_identity=bool(postgame), balance=balance, fingerprint=content_fingerprint(out))
     if postgame and (Path(out) / 'Data/lcsave/catalogue.lcc').is_file():
@@ -876,6 +906,10 @@ RELEASE_18_KEYS = {**RELEASE_18_KEYS, 'Online': RELEASE_18_KEYS['Online'] + ('Ti
 # (ClassicHudPilot, ClassicHudTrace), which must not pass for them.
 EXACT_KEYS = {'Game': ('ClassicHud', 'ClassicCodex')}
 RELEASE_18_KEYS = {**RELEASE_18_KEYS, 'Game': RELEASE_18_KEYS['Game'] + EXACT_KEYS['Game']}
+# XML2 Fix 1.8.0-beta.6 (Legends Classic 0.4.0-beta.6): the original weapon brain, [Game] NpcSemiAuto=xml1 with its
+# [NpcSemiAuto] rows (gameplay-agreement rule 16 revision 10). A beta.5 DLL reads neither and would run the officer's
+# stock burst/melee AI while its rule 16 record says revision 4, so the builder refuses it.
+RELEASE_18_KEYS = {**RELEASE_18_KEYS, 'Game': RELEASE_18_KEYS['Game'] + ('NpcSemiAuto',)}
 
 
 def check_release_dll(dll, keys: dict) -> None:
