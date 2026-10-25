@@ -393,7 +393,7 @@ PORT_OWNED = {'Game': ('NewGameTeam', 'ResetUnlocks', 'SaveFolder', 'ForcedTeams
                         'EndHeroUnlock', 'MainMenuItems', 'DangerRoomGate', 'ClassicMainBackdrop', 'ClassicMainPanelBounds', 'NewGamePlus', 'ReviewStats', 'Xtract', 'XtractionShop', 'RevivalCost', 'XPCurve',
                        'GeometrySharingBlendIndices', 'CharacterLadderPaths', 'ObjectiveDescriptions',
                        'BreakRule', 'LiftRule', 'Xml1RogueDecide', 'Xml1WallCling', *SHARED_HANDLERS, 'PlacementCrush', 'ObjectWorldImpact', 'DoubleHeal', 'DeathRule', 'NpcPowerRule', 'StunRule', 'DangerRoomParty', 'DangerRoomHealthBars', 'ResistanceDisplay', 'BoxHarmOrigin', 'HarmSingleChain', 'HarmLoopStartup', 'ConfirmationRelease',
-                       'OnlineConversations', 'PersonalItemPicture', 'ComboPopupGuard', 'ClassicHud', 'ClassicHudPilot', 'ClassicCodex', 'NpcSemiAuto', 'ClassicSpeakers', 'WorldBackfaces',
+                       'OnlineConversations', 'PersonalItemPicture', 'ComboPopupGuard', 'ClassicHud', 'ClassicHudPilot', 'ClassicCodex', 'ClassicObjectives', 'NpcSemiAuto', 'ClassicSpeakers', 'WorldBackfaces',
                        'ExplosiveFirstHit', 'PackAmount', 'SoloMode', 'X1Leader', 'DeathSwitchClear', 'RankCosts', 'LevelSkillPoints', 'LevelStatPoints', 'Xml1Multipart',
                        'Xml1MasterMold', 'Xml1MoldStage', 'Xml1Turrets', 'Xml1LockOnEffects', 'Xml1LockOnAim', 'Xml1Bosses'),
               'Limits': ('ActorSlots', 'ResourceNames', 'ItemEnhancements', 'FightStyles', 'EffectCurves', 'MoveTriggers', 'EntityCapacity',
@@ -732,6 +732,9 @@ def game_keys(*, xml1_opening=True, save_folder=None, forced_teams='1', add_hero
         game['ResistanceDisplay'] = 'xml1'
         game['ClassicHud'] = 'xml1'
         game['ClassicCodex'] = '1'
+        # The PDA's Objectives page as in the first game: visible objectives only, opening on the current one
+        # (xml2-fix classic_objectives.cpp). Local presentation only, no agreement record.
+        game['ClassicObjectives'] = '1'
         # XML1's speaker labels: a line the builder gave speakerlabel (scripts.SPEAKER_TOKEN_LABELS, the party Magma's
         # ex-%ALISON% lines) reads "Alison" with Magma's portrait and talk animation. Display only (an XML2 Fix that
         # does not know the key ignores it and the line reads "Magma"); it is in RELEASE_18_KEYS as 1.8.0-beta.7's
@@ -1104,6 +1107,10 @@ RELEASE_18_KEYS = {**RELEASE_18_KEYS, 'WorldBackfaces': ('ZoneCount',)}
 # XML2 Fix 1.9.0-beta.1 (Legends Classic 0.4.1-beta.1, the port's beta 8): [Game] Xml1Bosses (the shared boss dispatcher, rule 40). A beta.7
 # DLL ignores it, so the dopples would fight with the stock AI while the build says otherwise; the builder refuses it.
 RELEASE_18_KEYS = {**RELEASE_18_KEYS, 'Game': RELEASE_18_KEYS['Game'] + ('Xml1Bosses',)}
+# XML2 Fix 1.9.0-beta.1 (Legends Classic 0.4.1-beta.1, the port's beta 8): [Game] ClassicObjectives (the PDA objective page lists the
+# visible objectives and opens on the current one). A beta.7 DLL leaves the native page: a hole for every hidden
+# objective and the first slot, often a finished mission, so the builder refuses it.
+RELEASE_18_KEYS = {**RELEASE_18_KEYS, 'Game': RELEASE_18_KEYS['Game'] + ('ClassicObjectives',)}
 # Byte markers for formats a key name cannot show. The schema 4 weapon rows (bullet trace time + accuracy) are read only
 # by a DLL whose rule 16 detail digest says "NSA4"; an earlier beta 7 DLL knows [Game] NpcSemiAuto but refuses the wider
 # rows and withdraws rule 16, so the builder refuses it, naming the rows.

@@ -355,7 +355,7 @@ def test_port_keys_from_a_synthetic_build():
                                               'PlacementCrush': 'xml1', 'ObjectWorldImpact': 'xml1', 'DoubleHeal': '0', 'ExplosiveFirstHit': '1',
                                               'RankCosts': '1', 'LevelSkillPoints': 'xml1',
                                               'LevelStatPoints': 'xml1', 'Xml1Multipart': '1', 'DeathRule': 'xml1',
-                                              'NpcPowerRule': 'xml1', 'StunRule': 'xml1', 'DangerRoomParty': 'xml1', 'DangerRoomHealthBars': 'xml1', 'ResistanceDisplay': 'xml1', 'ClassicHud': 'xml1', 'ClassicCodex': '1', 'ClassicSpeakers': '1', 'BoxHarmOrigin': 'xml1', 'HarmSingleChain': 'single', 'OnlineConversations': 'lockstep', 'PersonalItemPicture': 'window', 'ComboPopupGuard': '1', 'PackAmount': 'xml1', 'SoloMode': '1', 'X1Leader': '1',
+                                              'NpcPowerRule': 'xml1', 'StunRule': 'xml1', 'DangerRoomParty': 'xml1', 'DangerRoomHealthBars': 'xml1', 'ResistanceDisplay': 'xml1', 'ClassicHud': 'xml1', 'ClassicCodex': '1', 'ClassicObjectives': '1', 'ClassicSpeakers': '1', 'BoxHarmOrigin': 'xml1', 'HarmSingleChain': 'single', 'OnlineConversations': 'lockstep', 'PersonalItemPicture': 'window', 'ComboPopupGuard': '1', 'PackAmount': 'xml1', 'SoloMode': '1', 'X1Leader': '1',
                                               'DeathSwitchClear': '1'},
                                      'Limits': {'ActorSlots': '127', 'ResourceNames': '2048', 'ItemEnhancements': '512',
                                                 'FightStyles': '32', 'EffectCurves': '3600', 'MoveTriggers': '64', 'EntityCapacity': '1',
@@ -1118,3 +1118,17 @@ def test_the_unscoped_beta7_dll_is_refused_by_the_zone_list_key():
         dll.write_bytes(b'MZ' + '\0'.join(known + ('ZoneCount',)).encode('utf-16le') + b'NSA4' + b'NPR14')
         assert FI.old_fix_keys(dll, keys) == []
         assert FI.old_fix_keys(dll, {'Game': {'NpcPowerRule': 'xml1'}}) == []   # no rule 30 written: no list needed
+
+
+def test_beta8_classic_objectives_key_refuses_a_beta7_dll():
+    # 0.4.0-beta.8 writes [Game] ClassicObjectives=1 (the PDA objective page lists visible objectives and opens on the
+    # current one, XML2 Fix 1.8.0-beta.8). A beta.7 DLL leaves holes and opens on slot 1, so it is refused by name.
+    keys = {'Game': {'ClassicHud': 'xml1', 'ClassicObjectives': '1'}}
+    assert 'ClassicObjectives' in FI.RELEASE_18_KEYS['Game'] and 'ClassicObjectives' in FI.PORT_OWNED['Game']
+    assert FI.game_keys()['ClassicObjectives'] == '1'
+    with tempfile.TemporaryDirectory() as td:
+        dll = Path(td) / 'dinput.dll'
+        dll.write_bytes(b'MZ' + ''.join(('ClassicHud\0', 'ClassicCodex\0')).encode('utf-16le'))
+        assert FI.old_fix_keys(dll, keys) == ['[Game] ClassicObjectives']
+        dll.write_bytes(b'MZ' + ''.join(('ClassicHud\0', 'ClassicObjectives')).encode('utf-16le'))
+        assert FI.old_fix_keys(dll, keys) == []
