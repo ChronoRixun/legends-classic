@@ -29,6 +29,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import struct
 from pathlib import Path
 
 from . import balance as BAL
@@ -554,19 +555,72 @@ def build_mold_controller(out):
 # that zone with every one of those names (a missing or renamed instance would leave its controller idle while rule 40
 # says it is on).
 BOSS_BINDINGS = (('dopples', ('Maps/astral/ast3/colosseum.XMLB',), ('evilwolverine', 'evilcolossus', 'eviljean', 'evilcyc')),
-                 ('avalanche', ('Maps/mount/mount/mount2.XMLB', 'Maps/astral/ast3/astral3_4.XMLB'), ('avalanche',)))
+                 ('avalanche', ('Maps/mount/mount/mount2.XMLB', 'Maps/astral/ast3/astral3_4.XMLB'), ('avalanche',)),
+                 ('pyro', ('Maps/astral/ast3/astral3_3.XMLB',), ('pyro',)),
+                 ('mystique', ('Maps/nyc/alison/nyc1_1_2b.XMLB', 'Maps/mansion/dr_mag2/mag_nyc3.XMLB',
+                              'Maps/astroid_m/visit1/asteroid2_1.XMLB'), ('mystique',)),
+                 ('shadowking', ('Maps/astral/savepx/final_astral.XMLB',), ('shadowking', 'shadowking2')),
+                 ('marrow', ('Maps/sewers/hub/sewers1_2_4.XMLB',), ('marrow',)))
+BOSS_IMPLEMENTATIONS = {'marrow': 'native'}  # request agreement/signature verification, never a replacement tick
+BOSS_SCRIPT_CONTRACTS = {'shadowking': ('astral/savepx/sk1pain', 'astral/savepx/dropshield')}
 
 
-def build_bosses(out) -> dict:
+def boss_instance_names(root):
+    """Shipped bosses are named spawns; waypoint names, references and substrings cannot bind an actor."""
+    return {e.get('monster_name') for e in root.iter('entity')
+            if e.get('classname', '').lower() == 'monsterspawnerent' and e.get('monster_name')}
+
+
+def source_bosses(ctx):
+    """Plan script substitutes from the same zone/name contract the finished-build INI checks."""
+    cache_key = 'boss_controller_plan'
+    if cache_key not in ctx.shared:
+        selected = ctx.shared.get('selected_modules', getattr(getattr(ctx, 'args', None), 'only', None))
+        if selected is not None and 'zones' not in selected:
+            # A scripts-only rebuild may carry maps from a previous build, but must not assume new maps will appear.
+            ctx.shared[cache_key] = frozenset(build_bosses(ctx.out, check_scripts=False).get('Xml1Bosses', '').split(',')) - {''}
+            return ctx.shared[cache_key]
+        zones_built = set(ctx.x1_zones())
+        names = set()
+        for name, zones, instances in BOSS_BINDINGS:
+            for zone in zones:
+                source = zone[5:-5].lower()
+                if source not in zones_built:
+                    continue
+                root = None
+                for ext in ('.eng', '.xml'):
+                    try:
+                        root = ctx.read_x1_xml(f'maps/{source}{ext}')
+                    except KeyError:
+                        continue
+                    if root is not None:
+                        break
+                if root is not None and set(instances) <= boss_instance_names(root):
+                    names.add(name)
+                    break
+        ctx.shared[cache_key] = frozenset(names)
+    return ctx.shared[cache_key]
+
+
+def build_bosses(out, *, check_scripts=True) -> dict:
     """{'Xml1Bosses': 'name,...'} for the bosses whose zone and instances the finished build carries; {} for none."""
+    import xmlb
     names = []
     for name, zones, instances in BOSS_BINDINGS:
-        for zone in zones:
+        if check_scripts and name in BOSS_SCRIPT_CONTRACTS:
             try:
-                data = Path(out, zone).read_bytes()
+                scripts = [Path(out, 'Scripts', script + '.py').read_text(encoding='latin-1')
+                           for script in BOSS_SCRIPT_CONTRACTS[name]]
             except OSError:
                 continue
-            if all(instance.encode('ascii') in data for instance in instances):
+            if any(re.search(r'\bsetInvulnerable\s*\(', script, re.I) for script in scripts):
+                continue  # a partial/older build retains the SPEC 36 shield substitute
+        for zone in zones:
+            try:
+                root = xmlb.decode(Path(out, zone).read_bytes())
+            except (OSError, ValueError, IndexError, KeyError, RecursionError, struct.error):
+                continue
+            if set(instances) <= boss_instance_names(root):
                 names.append(name)
                 break
     return {'Xml1Bosses': ','.join(names)} if names else {}

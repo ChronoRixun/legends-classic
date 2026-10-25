@@ -506,7 +506,9 @@ def _base_text(ctx, ref):
                 text = '\r\n'.join(stmts)
                 info['bounded_loops'] = bl
                 info['bounded_loops_skipped'] = sk
-        text = BP.rewrite_script(ref, text)
+        from . import fix_ini as FI
+        controllers = FI.source_bosses(ctx) if ref in BP.SHADOW_SCRIPTS else ()
+        text = BP.rewrite_script(ref, text, controller_bosses=controllers)
         text = SA.rewrite_script(ref, text)
         return text, info
     return _cached(ctx, ('base_text', ref), build)

@@ -9,6 +9,16 @@ build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebui
   (schema 4) and the converted bullets carry an inert marker, so XML2 Fix 1.8.0-beta.7 lands a bullet's hit only when
   its trace timer has run out (the MP5's half second), as in X-Men Legends, while the shot sound and muzzle flash stay
   on every shot. The builder refuses a beta 7 fix that cannot read schema 4 rows.
+## Unreleased: boss wave two (content version assigned at release integration)
+
+- Request the companion DLL's astral Pyro, Mystique and Shadow King controllers only when their named spawns
+  exist in a converted encounter. Record Marrow's retained native backboss brain without replacing it.
+- Shadow King uses the authored timed shield powers; retain the first-form floor relocation while the pillar
+  damage cause awaits a live trace. Partial builds with the old shield scripts keep their existing substitute.
+- Verify exact spawner names, including both Shadow King forms. Avalanche's companion controller includes AI
+  heroes in close targeting. Runtime acceptance is still pending (SPEC 106.1); this is not a release assignment.
+
+## v0.4.0 - content version 26 (needs XML2 Fix 1.8.0)
 
 - **Beta 8 candidate: the colosseum dopples fight as in the first game.** With XML2 Fix's `[Game] Xml1Bosses=dopples`
   (rule 40) Wolverine and Colossus throw the fastball special again and Jean sets off the arena's traps near you;

@@ -58,6 +58,18 @@ def test_unrelated_scripts_and_zones_are_unchanged():
     assert B.rewrite_data(root, 'maps/unrelated/test.xml') == 0
 
 
+def test_shadow_controller_uses_authored_shield_requests_and_keeps_floor_fix():
+    for ref in B.SHADOW_SCRIPTS:
+        source = 'setPatternSequence("shadowking", "sk3")\r\nwaittimed(30)\r\nsetPatternSequence("shadowking", "sk4")\r\n'
+        assert B.rewrite_script(ref, source, controller_bosses={'shadowking'}) == source
+        off = B.rewrite_script(ref, source)
+        assert 'setInvulnerable("shadowking", "TRUE" )' in off
+        assert 'setInvulnerable("shadowking", "FALSE" )' in off
+        assert B.rewrite_script(ref, source, controller_bosses={'mystique'}) == off
+    entry = 'setDefaultTarget("shadowking" )\r\n'
+    assert B.rewrite_script(B.SHADOW_START, entry, controller_bosses={'shadowking'}) == B.rewrite_script(B.SHADOW_START, entry)
+
+
 def landing_fixture():
     root = ET.Element('world')
     scripts = frozenset(f'invented/landing{i}' for i in range(4))

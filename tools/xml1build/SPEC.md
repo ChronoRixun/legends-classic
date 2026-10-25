@@ -7709,3 +7709,32 @@ is on). Entries: `dopples` (`Maps/astral/ast3/colosseum.XMLB`, the four dopple i
 two zones with the `avalanche` instance). `RELEASE_18_KEYS`
 refuses a companion DLL that does not know the key. No content, save or content-version change. Live acceptance
 (the original side by side, PLAN G6) is owed per boss; the dopples' list is in XML2 Fix's docs (D1-D3).
+
+### 106.1 Wave two (unreleased)
+
+The list now also supports `pyro` (astral/ast3/astral3_3, pyro), `mystique`
+(nyc/alison/nyc1_1_2b, mansion/dr_mag2/mag_nyc3 or astroid_m/visit1/asteroid2_1, mystique),
+`shadowking` (astral/savepx/final_astral, both shadowking and shadowking2), and `marrow`
+(sewers/hub/sewers1_2_4, marrow). Marrow is the retained native backboss brain; its entry asks the DLL to verify
+that path and advertise it under rule 40. It never requests a replacement tick. Bits 4/8/16/32 extend rule 40;
+Master Mold's rule 3 is unchanged. Avalanche revision 2 includes AI companions in nearest-hero selection and
+separately remembers the controlled hero for ranged facing.
+
+The builder decodes each finished map and checks exact named monsterspawnerent spawns, rather than accepting
+name substrings, waypoint names or references. Source planning accepts both .eng and .xml maps. A scripts-only
+rebuild uses the maps already present; a full zones build checks planned source maps.
+
+For a planned Shadow King controller, `boss_phases.rewrite_script` preserves sk3/sk4 requests without adding
+the section 36 hard invulnerability statements. The authored boost remains def_damage scale 0, life 31; its
+xtreme overrides the tagged lifetime to 0.01. The final INI lists Shadow King only when both actors and both
+generated shield scripts are present and those scripts contain no old hard invulnerability substitute. Thus a
+partial build carrying the old scripts keeps the substitute. The first-form floor relocation and death-script
+completion fix remain: no causal pillar damage fix is established.
+
+Generated shield scripts change, so CONTENT_VERSION advances 26 to 27. VERSION remains 0.4.0. Official identity
+history and save catalogue IDs are unchanged. Unfrozen source validation uses private token BW02; a frozen build
+refuses that source-only envelope. The coordinator must assign the integrated release's immutable identity.
+
+Synthetic coverage is in test_mold_controller.py and test_boss_phases.py. The companion DLL's controller fixtures,
+production Mystique bridge fixtures and synthetic image-install proof are recorded in its REPORT.md. No live
+acceptance is claimed: the complete per-boss checklist is in XML2 Fix docs/xml1-controllers.md.

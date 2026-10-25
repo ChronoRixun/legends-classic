@@ -185,7 +185,7 @@ def end_on_real_death(text, store, count_check, real, images, done_var, dispel=4
     return '\r\n'.join(lines)
 
 
-def rewrite_script(ref, text):
+def rewrite_script(ref, text, *, controller_bosses=()):
     ref = _ref(ref)
     if ref in TOAD_ELEVATOR_SCRIPTS:
         text = lift_handoff(text, *TOAD_ELEVATOR_SCRIPTS[ref])
@@ -195,7 +195,7 @@ def rewrite_script(ref, text):
                                        ['waittimed ( 0.100 )', 'setInvulnerable("magneto", "FALSE" )'])
         if not count and 'setInvulnerable("magneto", "FALSE" )' not in text:
             raise ValueError(f'{ref}: missing boss phase transition')
-    elif ref in SHADOW_SCRIPTS:
+    elif ref in SHADOW_SCRIPTS and 'shadowking' not in controller_bosses:
         for state, enabled in (('sk3', 'TRUE'), ('sk4', 'FALSE')):
             text, _ = insert_after_call(text, 'setPatternSequence', 'shadowking', state,
                                        [f'setInvulnerable("shadowking", "{enabled}" )'])

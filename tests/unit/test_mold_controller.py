@@ -3,6 +3,15 @@ import tempfile
 from pathlib import Path
 from xml1build import fix_ini as F
 import harness
+import xmlb
+import xml.etree.ElementTree as ET
+
+
+def boss_map(instances):
+    root = ET.Element('world')
+    for i, name in enumerate(instances):
+        ET.SubElement(root, 'entity', name=f'invented_spawner{i}', monster_name=name, classname='monsterspawnerent')
+    return xmlb.encode(root)
 
 
 def test_effective_stage_binding_uses_narrowed_width():
@@ -40,18 +49,74 @@ def test_harness_only_enables_mold_for_port_identity():
 def test_bosses_key_lists_only_bosses_whose_zone_and_instances_are_built():
     # Invented bytes; only the instance names the DLL binds by are real (fix_ini.BOSS_BINDINGS).
     name, zones, instances = F.BOSS_BINDINGS[0]
-    assert name == 'dopples' and [b[0] for b in F.BOSS_BINDINGS] == ['dopples', 'avalanche']
+    assert name == 'dopples' and [b[0] for b in F.BOSS_BINDINGS] == [
+        'dopples', 'avalanche', 'pyro', 'mystique', 'shadowking', 'marrow']
     with tempfile.TemporaryDirectory() as temp:
         out = Path(temp)
         assert F.build_bosses(out) == {}
         path = out / zones[0]
         path.parent.mkdir(parents=True)
-        path.write_bytes(b'\0'.join(i.encode() for i in instances[:-1]))
+        path.write_bytes(boss_map(instances[:-1]))
         assert F.build_bosses(out) == {}
-        path.write_bytes(b'\0'.join(i.encode() for i in instances))
+        path.write_bytes(boss_map(instances))
         assert F.build_bosses(out) == {'Xml1Bosses': 'dopples'}
         second = out / F.BOSS_BINDINGS[1][1][1]          # the second zone alone lists the boss
         second.parent.mkdir(parents=True, exist_ok=True)
-        second.write_bytes(b'x' + F.BOSS_BINDINGS[1][2][0].encode() + b'y')
+        second.write_bytes(boss_map(F.BOSS_BINDINGS[1][2]))
         assert F.build_bosses(out) == {'Xml1Bosses': 'dopples,avalanche'}
     assert 'Xml1Bosses' in F.PORT_OWNED['Game'] and 'Xml1Bosses' in F.RELEASE_18_KEYS['Game']
+
+
+def test_wave2_binding_requires_actual_actor_names_and_complete_forms():
+    with tempfile.TemporaryDirectory() as temp:
+        out = Path(temp)
+        for name, zones, actors in F.BOSS_BINDINGS[2:]:
+            path = out / zones[-1]
+            path.parent.mkdir(parents=True, exist_ok=True)
+            # A reference or substring is insufficient, even if every byte spelling appears.
+            root = ET.Element('world', references=','.join(actors))
+            ET.SubElement(root, 'entity', monster_name='prefix_' + actors[0])
+            group = ET.SubElement(root, 'entinst', type='invented_waypoints')
+            for actor in actors:
+                ET.SubElement(group, 'inst', name=actor)
+            path.write_bytes(xmlb.encode(root))
+            assert name not in F.build_bosses(out).get('Xml1Bosses', '').split(',')
+            path.write_bytes(boss_map(actors))
+            for script in F.BOSS_SCRIPT_CONTRACTS.get(name, ()):
+                generated = out / 'Scripts' / (script + '.py')
+                generated.parent.mkdir(parents=True, exist_ok=True)
+                generated.write_text('setPatternSequence("shadowking", "sk3")\n')
+            assert name in F.build_bosses(out)['Xml1Bosses'].split(',')
+        assert F.build_bosses(out)['Xml1Bosses'] == 'pyro,mystique,shadowking,marrow'
+        assert F.BOSS_IMPLEMENTATIONS['marrow'] == 'native'
+
+
+def test_partial_shadow_build_keeps_substitute_without_listing_controller():
+    with tempfile.TemporaryDirectory() as temp:
+        out = Path(temp)
+        _, zones, actors = F.BOSS_BINDINGS[4]
+        path = out / zones[0]
+        path.parent.mkdir(parents=True)
+        path.write_bytes(boss_map(actors))
+        assert F.build_bosses(out) == {}
+        assert F.build_bosses(out, check_scripts=False) == {'Xml1Bosses': 'shadowking'}
+        for script in F.BOSS_SCRIPT_CONTRACTS['shadowking']:
+            generated = out / 'Scripts' / (script + '.py')
+            generated.parent.mkdir(parents=True, exist_ok=True)
+            generated.write_text('setInvulnerable("shadowking", "TRUE")\n')
+        assert F.build_bosses(out) == {}
+        from types import SimpleNamespace
+        ctx = SimpleNamespace(shared={'selected_modules': ['scripts']}, out=out)
+        assert F.source_bosses(ctx) == {'shadowking'}
+
+
+def test_source_script_plan_uses_same_zone_and_instance_contract():
+    from types import SimpleNamespace
+    zone = F.BOSS_BINDINGS[4][1][0][5:-5].lower()
+    root = ET.Element('world')
+    ET.SubElement(root, 'entity', monster_name='shadowking', classname='monsterspawnerent')
+    ctx = SimpleNamespace(shared={}, x1_zones=lambda: [zone], read_x1_xml=lambda _: root)
+    assert 'shadowking' not in F.source_bosses(ctx)
+    ET.SubElement(root, 'entity', monster_name='shadowking2', classname='monsterspawnerent')
+    ctx.shared.clear()
+    assert F.source_bosses(ctx) == {'shadowking'}
