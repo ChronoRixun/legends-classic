@@ -11,11 +11,12 @@ It is a builder, not a download: every file of the result is made on your comput
 This project ships no game content - no game files, no parts of them, no modified executables - and the builder
 makes no network connections.
 
-> **Status: public test builds (builder 0.4.0, XML2 Fix 1.8.0, launcher 0.4.0).** Every mission and the ending run
-> in automated tests on the developer's PC (a full hand-played run is under way). The builder uses your own disc
-> image and X-Men Legends II install. 0.4.0 adds online codes, public games, drop-in and solo-segment watchers.
-> Update Ultimate Legends to **0.4.0 first**, then **Rebuild**, then **Play**. All online players need matching builds.
-> Owner 030e three-PC/hotspot acceptance is still pending; see [Known limitations](#known-limitations).
+> **Status: stable release 0.4.0 (builder 0.4.0, XML2 Fix 1.8.0, launcher 0.4.0).** Every mission and the ending
+> run in automated tests on the developer's PC (a full hand-played run is under way). The builder uses your own
+> disc image and X-Men Legends II install. 0.4.0 adds online co-op (codes, public games, drop-in, solo-segment
+> watchers), the classic look and enemies that fight like the first game. Update Ultimate Legends to **0.4.0
+> first**, then **Rebuild**, then **Play**. All online players need matching builds. Online was tested on one PC
+> with two instances; see [Known limitations](#known-limitations).
 > Known bugs and what is next: [Status](#status), [CHANGELOG](CHANGELOG.md) and [Roadmap](#roadmap).
 > Help and bug reports: the [community Discord](https://discord.gg/tFxwHtZv8k).
 
@@ -254,12 +255,13 @@ LAG warnings may remain, but the slow-player drop is disabled. Host drop or free
 - **A keycard behind a door in HAARP:** since 0.2.2 the HAARP officers are no longer launched onto the key door, the
   way their keycards ended up behind it. The first game can itself push an officer through that door when the two
   overlap; if a keycard is ever out of reach, load your last save.
-- **Online:** local three-player drop tests passed; 030e on three real PCs including a hotspot PC
-  still needs owner acceptance; four-player WAN coverage is not certified. Failed shared-campaign restore can require rehosting. LAG warnings may remain, but the slow-player drop is disabled. See [Play online](docs/ONLINE.md).
+- **Online:** 0.4.0 was tested on one PC with two instances of the game, and local three-player drop tests
+  passed; internet play between different PCs and four-player games are not certified yet. Failed shared-campaign restore can require rehosting. LAG warnings may remain, but the slow-player drop is disabled. See [Play online](docs/ONLINE.md).
 - **Host loss ends the session:** no host migration or automatic reconnection. A guest can join again by code.
 - **Still open:** enemy attack rate (#101), remaining fall kill zones switched off until proven safe (#22),
   the HAARP officer's gun being louder than on the Xbox and other cosmetic reports (#54), and the first game's
-  loot/shop (#6).
+  loot/shop (#6); solo story parts online are watched now but #106 stays open until played through in more
+  sessions; button prompts after rebinding or with Steam Input (XML2 Fix #8).
 - **Enemy attack rate (#101):** unarmed enemies (the Brotherhood in the HAARP tunnels) still attack about 1.5 times as
   often per minute as in the first game (measured: about 19 against 28 attacks per enemy per minute with a moving
   hero, 20 against 32 with a still one); the cause is not found. Whether heroes are now stunned as long as in the
@@ -270,7 +272,7 @@ LAG warnings may remain, but the slow-player drop is disabled. Host drop or free
   charge-up, lightning and flamethrower commanders, police pistols), and bullets hit only on the weapon's XML1 trace
   timer (the MP5's half second). Measured against the original on one PC: the MP5 soldier's shot rate matches and
   its hits never outnumber the trace timer, but at mid range it still does about 1.6-2.2 times the original's damage
-  (the original misses the first trace or two after each pause; planned for beta 8); the engaged officer's shots and
+  (the original misses the first trace or two after each pause; planned for a later release); the engaged officer's shots and
   damage are within 10 %. The warm-up, continuous-beam (lightning commander), flame, pistol and line-of-sight paths
   still need their live comparison with the original. Before beta 6 the port officer, in a matched 45 s window, fired none of the
   original's 49 shots and punched 24 times, and when he did shoot he fired bursts of seven whose sound stacked
@@ -294,7 +296,7 @@ the game.
 
 | Builder | Content version | Needs xml2-fix | Notes |
 |---|---|---|---|
-| 0.4.0 | 27 | 1.8.0 | online codes, public browser, drop-in ON, solo watchers; the classic look (`[Game] ClassicHud=xml1`, `ClassicCodex=1`, beta 5: needs 1.8.0-beta.5); the officer's weapon brain and rule 16 revision 10 (`[Game] NpcSemiAuto=xml1`, beta 6: needs 1.8.0-beta.6), no small-map frame; every gun NPC's weapon brain with the XML1 bullet trace timer (schema 4 rows), rule 16 revision 11, one-sided walls in the XML1 zones (`[Game] WorldBackfaces=xml1`, rule 30) and the "Alison" label (`[Game] ClassicSpeakers=1`, beta 7: needs 1.8.0-beta.7); catalogue 7 / LC36 (beta 6: content 26 / LC35; beta 5: content 25 / LC34; betas 1-4: content 24 / LC33); launcher 0.4.0 for Online; matching peers required |
+| 0.4.0 | 27 | 1.8.0 | online codes, public browser, drop-in ON, solo watchers; the classic look (`[Game] ClassicHud=xml1`, `ClassicCodex=1`, beta 5: needs 1.8.0-beta.5); the officer's weapon brain and rule 16 revision 10 (`[Game] NpcSemiAuto=xml1`, beta 6: needs 1.8.0-beta.6), no small-map frame; every gun NPC's weapon brain with the XML1 bullet trace timer (schema 4 rows), rule 16 revision 11, one-sided walls in the XML1 zones (`[Game] WorldBackfaces=xml1`, rule 30) and the "Alison" label (`[Game] ClassicSpeakers=1`, beta 7: needs 1.8.0-beta.7); the first game's revival price (XML2 Fix 1.8.0, rule 10 revision 3); catalogue 7 / LC36 (beta 6: content 26 / LC35; beta 5: content 25 / LC34; betas 1-4: content 24 / LC33); launcher 0.4.0 for Online; matching peers required |
 | 0.2.5 | 23 | 1.7.1 | the bedroom items' pictures in the first game's picture window (`[Game] PersonalItemPicture=window`, #54); heroes re-stunned by every stun hit (`[Game] StunRule=xml1`, rule 18 revision 3, #101); catalogue 7 / LC32; both PCs need this pair |
 | 0.2.4 | 22 | 1.7.0 | Toad at HAARP (#105); colored enemy resistance text (`[Game] ResistanceDisplay=xml1`); co-op conversations (`[Game] OnlineConversations=lockstep`, rule 27); catalogue 7 / LC31; both PCs need this pair |
 | 0.2.3 | 21 | 1.6.0 | hazard bounds and the opening fire's rhythm (`[Game] BoxHarmOrigin`, `HarmSingleChain`), floor-overlap crates (`ObjectWorldImpact`), two more fall volumes, the first game's gun-move priority, NpcPower revision 4, StunRule revision 2, visible Danger Room opponents with health bars and the original fallback party (`DangerRoomHealthBars`, `DangerRoomParty`), Sentinel scan effects and aiming, fast saved-campaign transfer (`[Online] FastTransfer`), received-message checks (`[Online] ReceiveValidation`); catalogue 7 / LC30; verified saved-zone prefix retention; co-op peers need 0.2.3 / 1.6.0 on both PCs |

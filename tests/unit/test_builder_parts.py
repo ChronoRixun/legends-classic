@@ -1069,6 +1069,29 @@ def test_release_identity_040_beta7_is_lc36_and_never_an_older_token():
     assert len(row.bind_manifest) == 64 and row.bind_manifest != RI.HISTORY[-2].bind_manifest
 
 
+def test_release_identity_stable_040_keeps_beta7s_identity():
+    """The stable 0.4.0 builder makes the same output as 0.4.0-beta.7 (a tag suffix assigns no identity, RELEASING.md;
+    a new identity only when the generated output changes, RELEASE_CHECKLIST.md), so it resolves to beta 7's issued
+    row - content 27 / catalogue 7 / LC36 - and stays joinable with beta 7. A second row for the same content (a stable
+    alias, or a fresh token for unchanged output) is refused by the append-only history. Only the launcher-facing
+    requirement differs: stable keeps '>=1.8' (the released fix, never a beta), the betas their own prerelease."""
+    from xml1build import release_identity as RI
+    from xml1builder import CONTENT_VERSION, VERSION
+    import release_metadata as RM
+    assert (VERSION, CONTENT_VERSION) == ('0.4.0', 27) and RI.game_version() == 'LC36'
+    assert RM.release_version('v0.4.0', VERSION) == '0.4.0' and RM.metadata('v0.4.0')['prerelease'] is False
+    rows = [r for r in RI.HISTORY if (r.content_version, r.catalogue_revision) == (27, 7)]
+    assert [(r.release, r.token) for r in rows] == [('0.4.0-beta.7', 'LC36')]
+    for extra in (RI.Identity('0.4.0-stable', 27, 7, 'LC37', rows[0].bind_manifest),
+                  RI.Identity('0.4.0-stable', 27, 7, 'LC36', rows[0].bind_manifest)):
+        try:
+            RI.validate_history(RI.HISTORY + (extra,), previous=RI.HISTORY)
+        except ValueError:
+            continue
+        raise AssertionError(f'{extra} was accepted')
+    assert FI.required_xml2fix('0.4.0') == '>=1.8' and FI.required_xml2fix('0.4.0-beta.7') == '>=1.8.0-beta.7'
+
+
 def test_private_candidate_requires_the_release_companion():
     assert FI.required_xml2fix(FI.RI.PRIVATE_CANDIDATE.release) == '>=1.8.0-beta.7'
 

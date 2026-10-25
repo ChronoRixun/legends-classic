@@ -672,8 +672,8 @@ def game_keys(*, xml1_opening=True, save_folder=None, forced_teams='1', add_hero
     if xtract is not None:
         game['Xtract'] = xtract
         game['XtractionShop'] = '1'
-        # xml2-fix [Game] RevivalCost (issue #63): a fallen hero costs the first game's 200 * (highest roster level)^2
-        # (default.xbe 0xaf6b0 / 0x54cb0), not XMen2.exe's max(200, 2 * level^2); shared gameplay agreement rule 10
+        # xml2-fix [Game] RevivalCost (issue #63): the first game's 200 * G^2, G = min(5, highest roster level / 10 + 1)
+        # (default.xbe 0xaf6b0 / 0x54150), not XMen2.exe's max(200, 2 * level^2); agreement rule 10 (revision 3, 1.8.0)
         game['RevivalCost'] = 'xml1'
     if xp_curve:
         game['XPCurve'] = xp_curve

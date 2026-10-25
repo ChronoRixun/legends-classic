@@ -1,6 +1,6 @@
 ﻿# Play online in 0.4.0
 
-Player guide for Legends Classic 0.4.0, XML2 Fix 1.8.0 and Ultimate Legends 0.4.0. Owner 030e acceptance on three real PCs including a hotspot PC is pending before publication; four-player WAN coverage is not certified.
+Player guide for Legends Classic 0.4.0, XML2 Fix 1.8.0 and Ultimate Legends 0.4.0. Online was tested on one PC with two instances of the game; play between separate PCs and four-player internet games are not certified yet.
 
 Up to four players can share a campaign. Start from the **Online** section on X-Men Legends' page in Ultimate Legends. Everyone needs the same 0.4.0 build and XML2 Fix **1.8.0 or later**, with Test mode off. Update the launcher to **0.4.0 first**, then **Rebuild** in the **Build** section, then **Play**. 0.2.x and 0.4.0 never join each other; **Verify Files** installs or updates the fix.
 
@@ -45,7 +45,7 @@ Use the game's normal leave option when you can. The host keeps playing, the dep
 
 If a guest freezes, crashes or loses their connection in a game of three or more, the remaining players agree a cut frame before removing that player and continue together. The departed player can join again by code and enter play at the next level change. With only a host and one guest, the host keeps hosting after the guest leaves.
 
-**If the host leaves, freezes or loses connection, the session ends for joiners** with "lost connection to the host". There is no host migration or automatic reconnection: host again and load the last save. A failed shared-campaign restore can also require rehosting. Owner 030e acceptance still needs three real PCs including a hotspot PC, swapped heroes across a level change, a joiner frozen for 30 seconds, public-browser join and drop-in.
+**If the host leaves, freezes or loses connection, the session ends for joiners** with "lost connection to the host". There is no host migration or automatic reconnection: host again and load the last save. A failed shared-campaign restore can also require rehosting. Still to be verified on separate PCs: three real PCs including a hotspot PC, swapped heroes across a level change, a joiner frozen for 30 seconds, public-browser join and drop-in.
 
 If the online service becomes unavailable, existing player connections may continue, but new joins stop. A service restart loses its rooms: host again for a new code if you need to reconnect.
 
