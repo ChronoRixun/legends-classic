@@ -23,12 +23,13 @@ OBJECTIVES_FOCUS = 'ui/models/lc_objectives_focus'
 # its slot's picture centre, with a square frame and hit box centred there.
 PDA_PICTURE_X, PDA_PICTURE_TOP, PDA_PICTURE_STEP, PDA_PICTURE_SIZE = 36, 346, 45, 34
 OBJECTIVES_PICTURE_FRAME = (-22, -22, 22, 22)
-# The first game's objectives screen (menu_objectives.igb through its camera) is a
-# frame inset from the screen edge with the Back prompt in its bottom strip, about
-# 14 units above the bottom (text 14..32). The PDA keeps a full-width panel for the
-# fixed picture column; its bottom strip rises off the screen edge like XML1's.
-OBJECTIVES_PANEL_RECT = (0, 8, 512, 384)
-PROMPT_Z = 26
+# The first game's objectives screen (captured on the Xbox original) is an inset
+# honeycomb panel with its Back prompt in a separate bar 30..56 units above the bottom
+# edge. The PDA keeps a full-width panel for the fixed picture column; its bottom
+# strip rises off the screen edge towards that bar, as far as slot 7's frame (z 54)
+# allows, and stays clear of a desktop taskbar shown over a borderless window.
+OBJECTIVES_PANEL_RECT = (0, 14, 512, 384)
+PROMPT_Z = 33
 
 
 def picture_centre(slot):

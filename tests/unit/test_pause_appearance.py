@@ -217,11 +217,11 @@ def test_objective_selectors_sit_on_the_engine_drawn_pictures():
 
 
 def test_objective_panel_and_prompts_rise_off_the_screen_edge():
-    # The Back / Completed prompts sat 6 units above the bottom edge; the first game's sit about 14 above it.
+    # The Back / Completed prompts sat 6 units above the bottom edge; the first game's bar sits 30..56 above it.
     layout = P.objectives_layout()
     (x, _, z), (l, b, r, t) = layout['object_screen']
     assert (x + l, z + b, x + r, z + t) == P.OBJECTIVES_PANEL_RECT
     assert P.OBJECTIVES_PANEL_RECT[1] > 0 and P.OBJECTIVES_PANEL_RECT[3] <= 384
-    assert P.PROMPT_Z - 10 >= 14
+    assert P.PROMPT_Z - 10 >= 20 and P.OBJECTIVES_PANEL_RECT[1] >= 14
     lowered = dict(layout, object_steps=((288, -120, 132), (-174, -88, 174, 88)))
     assert any('object_steps leaves' in p for p in P.objectives_layout_problems(lowered))

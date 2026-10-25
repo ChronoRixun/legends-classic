@@ -153,7 +153,7 @@ frame and hit box, including the native dynamically loaded selector resource. Th
 beta 5 column (36-unit spacing from z 306) matched the pictures only at slot 3: slot
 1's picture covered the title and slot 7's hung below its frame. The title sits to
 the right of the column. The panel's bottom strip and the prompts rise off the
-screen edge as in the first game's objectives screen (prompts 16..36 above the
+screen edge towards the first game's Back bar (prompts 23..43 above the
 bottom). `objectives_layout_problems` and the selector validator check the layout
 and the serialized frame vertices; picture, objective state and input stay native.
 With XML2 Fix's `[Game] ClassicObjectives=1` the slots hold only visible objectives
