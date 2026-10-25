@@ -619,6 +619,14 @@ def u10_codex(ctx):
     names = [c.get('name') for c in root.iter('character')]
     if len(names) != 26 or 'MagnetoScripted' not in names or 'Magneto' in names:
         fail('U10', f'names {names}')
+    # SPEC 105: a tab inside a bio (XML1's parser kept it, ElementTree turns it into a space) reaches the codex
+    from xml1build import text_trace as TT
+    want = TT.raw_whitespace_values(ctx.x1_path(F.X1_CODEX).read_bytes())
+    got = {c.get('description') for c in root.iter('character')}
+    if [w for w in want if w not in got]:
+        fail('U10', f'{len([w for w in want if w not in got])} codex descriptions lost a tab or line break')
+    if rep['counts'].get('bio_tabs_restored', 0) != len(want):
+        fail('U10', f'bio_tabs_restored {rep["counts"].get("bio_tabs_restored")} vs {len(want)} raw tabs')
 
 
 def u11_scripts():

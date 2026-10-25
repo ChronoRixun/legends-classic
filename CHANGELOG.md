@@ -3,7 +3,58 @@
 The builder's releases, newest first. The version is `xml1-builder --version`; the content version is what a
 build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebuild.
 
-## v0.4.0 - content version 26 (needs XML2 Fix 1.8.0)
+## v0.4.0 - content version 27 (needs XML2 Fix 1.8.0)
+
+- **Beta 7: gun hits on the first game's timer.** The weapon rows now carry each gun's XML1 trace time and accuracy
+  (schema 4) and the converted bullets carry an inert marker, so XML2 Fix 1.8.0-beta.7 lands a bullet's hit only when
+  its trace timer has run out (the MP5's half second), as in X-Men Legends, while the shot sound and muzzle flash stay
+  on every shot. The builder refuses a beta 7 fix that cannot read schema 4 rows.
+
+- **Beta 7: every gun NPC gets the first game's weapon brain.** The characters stage now exports all 20 gun NPCs of
+  your XML1 data (schema 4 rows `actor|recoil|range|burst|leader|warmup|flags|tracetime|accuracy`, 8 melee-weapon exclusions): the
+  officer, the MP5 and laser/super-laser soldiers, the nullifier and knockback officers (warm-up before every shot),
+  the lightning and flamethrower commanders (continuous beam, warm-up once) and the police pistol (default-handler
+  primary). XML2 Fix 1.8.0-beta.7 runs them with the original input gate, the bullet line-of-sight drop and the
+  empty-query branches (gameplay rule 16 revision 11).
+
+- **Beta 7: enemy powers on time, power attacks never blocked.** With XML2 Fix 1.8.0-beta.7 the existing
+  `NpcPowerRule=xml1` is rule 16 **revision 11**: power re-checks and attack decisions that fell due while an enemy
+  was busy attacking are spent as in the first game (powers no longer fire seconds late), and an enemy's power attack
+  is never rolled for a block, as in X-Men Legends. A beta 7 PC and a beta 6 PC refuse each other in co-op
+  (`16 NpcPowerRule`).
+
+- **Beta 7: "Alison" beside Magma's early lines, as in the first game.** X-Men Legends showed "Alison" next to the
+  212 lines Magma speaks before she takes her codename (the Danger Room training, Emma Frost's introduction, ...); the
+  port showed "Magma". The builder now marks those lines (`speakerlabel`, SPEC 12.1) and writes
+  `[Game] ClassicSpeakers=1`; XML2 Fix shows the label while the portrait and the talking animation stay Magma's.
+
+- **Beta 7: one-sided level walls for movement, as in the first game.** Builds write `[Game] WorldBackfaces=xml1`
+  (XML2 Fix 1.8.0-beta.7, gameplay rule 30): movement no longer collides with the back faces of the level's walls,
+  which XML1 never tests, so actors stop wedging against walls seen from behind (the HAARP officer's positioning
+  stall). Only in the XML1 levels: the build writes the zones it converted as `[WorldBackfaces] ZoneCount / Z1..Zn`
+  (198 zones, the XML1 Danger Room arenas and the menu backdrop included; gameplay rule 30 revision 2), and the
+  X-Men Legends II maps an install still carries keep XML2's collision; no zone list (no zones stage output) = no key.
+  The builder refuses a DLL that does not read the list (`[WorldBackfaces] ZoneCount`).
+  It touches every character's movement there; a beta 7 PC and one without it (or with another zone list) refuse
+  each other (`30 WorldBackfaces`).
+- **Beta 7 review fixes.** V66 (text coverage) checks a Danger Room reward item's enhancement descriptions by running
+  the conversion (a converted item whose descriptions were lost is now reported; XML2's own items keep the item-table
+  policy); companion docs say beta 7 (RELEASING, BUILDING, research/npc-semi-auto.md revision 11, README's
+  NpcPowerRule row); the release checklist names the release-identity step; the speaker-label test uses invented
+  wording.
+
+- **Beta 7: text fixes from the full XML1 text trace.** Magneto's two codex biographies keep the tab the first game's
+  text has (the builder's XML reader had turned it into a space), and three zone labels XML1's own data misfiled are
+  repaired: mount reads "Mount Entrance", mount2 "Transport Conduit", muir_in2 "Muir Island". A new validator check
+  (V66, SPEC 105) accounts for every XML1 text string (shipped, moved, rewritten by a named rule, XML2's by design or
+  dropped with a reason). Codex and zoneinfo output change; saves are unaffected.
+
+- **Beta 7: needs XML2 Fix `>=1.8.0-beta.7`.** A beta 6 fix cannot read the new weapon-brain rows and does not know
+  `[Game] ClassicSpeakers`, so the builder refuses it by name.
+
+- **Beta 7: a new content identity.** The conversations, the powerstyles' bullet markers and `xml2-fix.ini` change, so
+  the content version rises to 27 and the lobby token to `LC36`: the launcher offers a Rebuild, and a beta 7 game and
+  a beta 6 or older game never join each other - everyone updates both parts and rebuilds. Saves carry over.
 
 - **Beta 6: enemy AI fidelity.** Every XML1 build now turns on the first game's weapon brain for
   its semi-auto gunmen (`[Game] NpcSemiAuto=xml1` and the `[NpcSemiAuto]` rows, derived from your XML1 data during
@@ -22,8 +73,8 @@ build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebui
   a beta 5 or older game never join each other - everyone updates both parts and rebuilds. Saves carry over.
 
 Renumbered from 0.3.0 while in beta (the betas 0.3.0-beta.1..3 are this release's history);
-no stable 0.3.0 was published. Betas 1-4 were content 24 / `LC33`; beta 5 (the classic look) content 25 / `LC34`; beta 6 (enemy AI fidelity) is
-content 26 / `LC35`.
+no stable 0.3.0 was published. Betas 1-4 were content 24 / `LC33`; beta 5 (the classic look) content 25 / `LC34`; beta 6
+(enemy AI fidelity) content 26 / `LC35`; beta 7 (every gunman's weapon brain, one-sided walls) is content 27 / `LC36`.
 
 Legends Classic 0.4.0 brings online play from Ultimate Legends **0.4.0**. Update the launcher to 0.4.0 first,
 then **Rebuild**, then **Play**. Everyone needs the same 0.4.0 build and XML2 Fix 1.8.0 or later;

@@ -291,6 +291,10 @@ def _beam(w: dict, t: str, bolt: str, flame: bool = False) -> ET.Element:
          'pierce': 'true' if flame else 'false'}
     if flame:
         a.update({'noaimfx': 'true', 'useboltinfo': 'true'})      # XML2's ps_pyro flame_dmg form
+    elif w.get('type', '').lower() == 'bullet':
+        # Inert on stock PC: zero split rays, so split damage is never applied. The DLL
+        # recognises this exact pair at ce_atk_beam; ordinary beams carry no marker.
+        a.update({'split_count': '0', 'split_damage': '32766 32766'})
     if w.get('muzzleaccfx'):
         a['beameffect'] = w['muzzleaccfx']                        # the tracer / the flame along the ray
     if w.get('impactfx'):
@@ -316,7 +320,8 @@ def shot_triggers(w: dict, t: str, with_fx: bool = True) -> list:
             a['speed'] = w['projectilespeed']
         out.append(_attack(w, a))
     if with_fx:
-        out += _fx_sound(w, t, 'muzzlefx', 'firesound', bolt)
+        fx = _fx_sound(w, t, 'muzzlefx', 'firesound', bolt)
+        out = fx + out if kind == 'bullet' else out + fx
     return out
 
 
@@ -472,7 +477,7 @@ def rewrite_weapon_events(root, weapons: dict, where: str = '', values=None, *, 
             w, bolt = shots[(_lower(c).get('name') or '').lower()]
             fx = _fx_sound(w, _lower(c).get('time', '0'), 'muzzlefx', 'firesound', bolt)
             for el in fx[:room]:
-                move.insert(list(move).index(c) + 1, el)
+                move.insert(list(move).index(c) + (0 if w.get('type', '').lower() == 'bullet' else 1), el)
                 room -= 1
                 rep['weapon_event_fx_added'] += 1
         if sum(1 for c in move if c.tag.lower() == 'trigger') > max_triggers:
@@ -514,8 +519,12 @@ def silent_shots(root, *, event_names=None) -> list:
             if not fired:
                 continue
             after = {id(a): b for a, b in zip(trigs, trigs[1:])}
+            before = {id(b): a for a, b in zip(trigs, trigs[1:])}
+            marked = {(_lower(ev).get('name') or '').lower() for ev in top.iter('event')
+                      if _lower(ev).get('split_damage') == '32766 32766' and _lower(ev).get('split_count') == '0'}
             quiet = [c for c in fired
-                     if after.get(id(c)) is None or (_lower(after[id(c)]).get('name') or '').lower() != 'effect_sound']
+                     if (neighbour := (before if (_lower(c).get('name') or '').lower() in marked else after).get(id(c))) is None
+                     or (_lower(neighbour).get('name') or '').lower() != 'effect_sound']
             if not quiet:
                 continue
             if trigger_capacity() > STOCK_TRIGGERS or _drop_bolton_churn(move, dry=True):

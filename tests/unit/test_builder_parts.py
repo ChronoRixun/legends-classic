@@ -355,7 +355,7 @@ def test_port_keys_from_a_synthetic_build():
                                               'PlacementCrush': 'xml1', 'ObjectWorldImpact': 'xml1', 'DoubleHeal': '0', 'ExplosiveFirstHit': '1',
                                               'RankCosts': '1', 'LevelSkillPoints': 'xml1',
                                               'LevelStatPoints': 'xml1', 'Xml1Multipart': '1', 'DeathRule': 'xml1',
-                                              'NpcPowerRule': 'xml1', 'StunRule': 'xml1', 'DangerRoomParty': 'xml1', 'DangerRoomHealthBars': 'xml1', 'ResistanceDisplay': 'xml1', 'ClassicHud': 'xml1', 'ClassicCodex': '1', 'BoxHarmOrigin': 'xml1', 'HarmSingleChain': 'single', 'OnlineConversations': 'lockstep', 'PersonalItemPicture': 'window', 'ComboPopupGuard': '1', 'PackAmount': 'xml1', 'SoloMode': '1', 'X1Leader': '1',
+                                              'NpcPowerRule': 'xml1', 'StunRule': 'xml1', 'DangerRoomParty': 'xml1', 'DangerRoomHealthBars': 'xml1', 'ResistanceDisplay': 'xml1', 'ClassicHud': 'xml1', 'ClassicCodex': '1', 'ClassicSpeakers': '1', 'BoxHarmOrigin': 'xml1', 'HarmSingleChain': 'single', 'OnlineConversations': 'lockstep', 'PersonalItemPicture': 'window', 'ComboPopupGuard': '1', 'PackAmount': 'xml1', 'SoloMode': '1', 'X1Leader': '1',
                                               'DeathSwitchClear': '1'},
                                      'Limits': {'ActorSlots': '127', 'ResourceNames': '1024', 'ItemEnhancements': '512',
                                                 'FightStyles': '32', 'EffectCurves': '3600', 'MoveTriggers': '64', 'EntityCapacity': '1',
@@ -398,7 +398,7 @@ def test_port_keys_from_a_synthetic_build():
 
 def test_beta2_keys_refuse_a_beta1_dll_and_require_the_beta2_fix():
     # 0.3.0-beta.2 writes [Engine] ModelPools and [Game] ComboPopupGuard, which XML2 Fix 1.8.0-beta.1 does not read
-    # (same numeric VERSIONINFO 1.8.0.0): the DLL check names both; beta/rc builders require '>=1.8.0-beta.6' (beta 6).
+    # (same numeric VERSIONINFO 1.8.0.0): the DLL check names both; beta/rc builders require '>=1.8.0-beta.7' (beta 7).
     keys = {'Game': {'ComboPopupGuard': '1'}, 'Engine': {'ModelPools': 'x4'}}
     with tempfile.TemporaryDirectory() as td:
         dll = Path(td) / 'dinput.dll'
@@ -406,7 +406,7 @@ def test_beta2_keys_refuse_a_beta1_dll_and_require_the_beta2_fix():
         assert FI.old_fix_keys(dll, keys) == ['[Game] ComboPopupGuard', '[Engine] ModelPools']
         dll.write_bytes(b'MZ' + 'ComboPopupGuard'.encode('utf-16le') + 'ModelPools'.encode('utf-16le'))
         assert FI.old_fix_keys(dll, keys) == []
-    assert FI.required_xml2fix('0.3.0-beta.3') == FI.required_xml2fix('0.4.0-rc.1') == '>=1.8.0-beta.6'
+    assert FI.required_xml2fix('0.3.0-beta.3') == FI.required_xml2fix('0.4.0-rc.1') == '>=1.8.0-beta.7'
     assert FI.required_xml2fix('0.4.0') == '>=1.8'
 
 
@@ -443,7 +443,7 @@ def test_beta5_classic_keys_refuse_a_beta4_dll_and_require_the_beta5_fix():
 def test_beta6_weapon_brain_keys_refuse_a_beta5_dll_and_require_the_beta6_fix():
     # 0.4.0-beta.6 writes [Game] NpcSemiAuto=xml1 and its [NpcSemiAuto] rows (the officer's weapon brain, XML2 Fix
     # 1.8.0-beta.6, gameplay-agreement rule 16 revision 10). A beta.5 DLL (the classic-look keys, no NpcSemiAuto) would
-    # run the stock officer AI, so it is refused by name; beta/rc builders require '>=1.8.0-beta.6'.
+    # run the stock officer AI, so it is refused by name (beta 7 raises the beta/rc requirement to '>=1.8.0-beta.7').
     keys = {'Game': {'ClassicHud': 'xml1', 'NpcPowerRule': 'xml1', 'NpcSemiAuto': 'xml1'},
             'NpcSemiAuto': {'Count': '1', 'W1': 'guard|3f200000|43c80000|3f800000|00000000'}}
     assert 'NpcSemiAuto' in FI.RELEASE_18_KEYS['Game'] and 'NpcSemiAuto' in FI.PORT_OWNED['Game']
@@ -451,11 +451,30 @@ def test_beta6_weapon_brain_keys_refuse_a_beta5_dll_and_require_the_beta6_fix():
     with tempfile.TemporaryDirectory() as td:
         dll = Path(td) / 'dinput.dll'
         dll.write_bytes(b'MZ' + ''.join(('ClassicHud\0', 'NpcPowerRule', 'Count')).encode('utf-16le'))
-        assert FI.old_fix_keys(dll, keys) == ['[Game] NpcSemiAuto']
-        dll.write_bytes(b'MZ' + ''.join(('ClassicHud\0', 'NpcPowerRule', 'NpcSemiAuto', 'Count')).encode('utf-16le'))
+        assert FI.old_fix_keys(dll, keys) == ['[Game] NpcSemiAuto', '[NpcSemiAuto] schema 4 rows']
+        dll.write_bytes(b'MZ' + ''.join(('ClassicHud\0', 'NpcPowerRule', 'NpcSemiAuto', 'Count')).encode('utf-16le') + b'NSA4')
         assert FI.old_fix_keys(dll, keys) == []
-    assert FI.REQUIRED_XML2FIX_PRERELEASE == 'beta.6'
-    assert FI.required_xml2fix('0.4.0-beta.6') == '>=1.8.0-beta.6' and FI.required_xml2fix('0.4.0') == '>=1.8'
+    assert FI.required_xml2fix('0.4.0') == '>=1.8'
+
+
+def test_beta7_keys_refuse_a_beta6_dll_and_require_the_beta7_fix():
+    # 0.4.0-beta.7 writes schema 3 [NpcSemiAuto] rows (every gun family) and [Game] ClassicSpeakers=1, both first read
+    # by XML2 Fix 1.8.0-beta.7. A beta.6 DLL (NpcSemiAuto, no ClassicSpeakers) refuses the schema 3 rows, so it is
+    # refused by name; beta/rc builders require '>=1.8.0-beta.7'.
+    keys = {'Game': {'NpcPowerRule': 'xml1', 'NpcSemiAuto': 'xml1', 'ClassicSpeakers': '1'},
+            'NpcSemiAuto': {'Count': '1', 'W1': 'guard|3f200000|43c80000|3f800000|00000000|00000000|00000002'}}
+    assert 'ClassicSpeakers' in FI.RELEASE_18_KEYS['Game'] and 'ClassicSpeakers' in FI.PORT_OWNED['Game']
+    assert 'WorldBackfaces' not in FI.game_keys() and 'WorldBackfaces' in FI.PORT_OWNED['Game'] and 'WorldBackfaces' in FI.RELEASE_18_KEYS['Game']
+    with tempfile.TemporaryDirectory() as td:
+        dll = Path(td) / 'dinput.dll'
+        dll.write_bytes(b'MZ' + ''.join(('ClassicHud\0', 'NpcPowerRule', 'NpcSemiAuto', 'Count')).encode('utf-16le'))
+        assert FI.old_fix_keys(dll, keys) == ['[Game] ClassicSpeakers', '[NpcSemiAuto] schema 4 rows']
+        dll.write_bytes(b'MZ' + ''.join(('NpcPowerRule', 'NpcSemiAuto', 'ClassicSpeakers', 'Count')).encode('utf-16le'))
+        assert FI.old_fix_keys(dll, keys) == ['[NpcSemiAuto] schema 4 rows']   # beta 7 before the trace gate
+        dll.write_bytes(b'MZ' + ''.join(('NpcPowerRule', 'NpcSemiAuto', 'ClassicSpeakers', 'Count')).encode('utf-16le') + b'NSA4')
+        assert FI.old_fix_keys(dll, keys) == []
+    assert FI.REQUIRED_XML2FIX_PRERELEASE == 'beta.7'
+    assert FI.required_xml2fix('0.4.0-beta.7') == '>=1.8.0-beta.7' and FI.required_xml2fix('0.4.0') == '>=1.8'
 
 
 def test_harness_installs_write_the_shipped_limits_by_default():
@@ -831,13 +850,13 @@ def test_beta_fix_numeric_version_keeps_runtime_capability_checks():
         for numeric in ('1.8.0', '1.8.0.0', '1.8.0.2'):
             resource = ('FileVersion\0' + numeric + '\0ProductVersion\0' + numeric + '\0').encode('utf-16le')
             markers = b''.join((key + '\0').encode('utf-16le') for names in FI.RELEASE_18_KEYS.values() for key in names)
-            dll.write_bytes(b'MZ synthetic beta fix\0' + resource + markers)
+            dll.write_bytes(b'MZ synthetic beta fix\0' + resource + markers + b'NSA4')
             FI.check_release_dll(dll, keys)
         # 1.7.1 lacks the companion's 1.8 drop-in capability, even though it has older required keys.
         older = ('ProductVersion\0' + '1.7.1' + '\0').encode('utf-16le')
         markers = b''.join((key + '\0').encode('utf-16le') for names in FI.RELEASE_18_KEYS.values()
                            for key in names if key != 'JoinInProgress')
-        dll.write_bytes(b'MZ synthetic old fix\0' + older + markers)
+        dll.write_bytes(b'MZ synthetic old fix\0' + older + markers + b'NSA4')
         try:
             FI.check_release_dll(dll, keys)
         except FI.FixTooOld as exc:
@@ -1031,22 +1050,64 @@ def test_join_in_progress_is_on_for_port_builds_and_needs_fix_18():
         FI.check_release_dll(dll, {'Online': {'ReceiveValidation': '1', 'JoinInProgress': '1'}})
 
 
-def test_release_identity_040_beta6_is_lc35_and_never_an_older_token():
-    """0.4.0-beta.6 (enemy AI fidelity: the officer's weapon brain rows in xml2-fix.ini; the classic HUD atlas without
-    the small-map frame) changes the generated output, so it is content 26 / catalogue 7 / LC35: a token no earlier
-    build carries (0.2.4 LC31, 0.2.5 LC32, 0.3.0 and the 0.4.0 betas 1-4 LC33, beta 5 LC34), so neither the stock lobby
-    nor the rooms pair a beta 6 PC with an older build. Content 25 stays LC34 and content 24 LC33 (append-only)."""
+def test_release_identity_040_beta7_is_lc36_and_never_an_older_token():
+    """0.4.0-beta.7 (every gun NPC's weapon brain with the bullet trace gate in xml2-fix.ini, the "Alison" speaker
+    label in the conversations, the XML1 zone list for one-sided walls) changes the generated output, so it is content
+    27 / catalogue 7 / LC36: a token no earlier build carries (0.2.5 LC32, 0.3.0 and the 0.4.0 betas 1-4 LC33, beta 5
+    LC34, beta 6 LC35), so neither the stock lobby nor the rooms pair a beta 7 PC with an older build. Content 26 stays
+    LC35, 25 LC34 and 24 LC33 (append-only)."""
     from xml1build import release_identity as RI
     from xml1builder import CONTENT_VERSION, VERSION
-    assert (VERSION, CONTENT_VERSION) == ('0.4.0', 26) and RI.game_version() == 'LC35'
+    assert (VERSION, CONTENT_VERSION) == ('0.4.0', 27) and RI.game_version() == 'LC36'
+    assert RI.game_version(content_version=26, catalogue_revision=7) == 'LC35'
     assert RI.game_version(content_version=25, catalogue_revision=7) == 'LC34'
     assert RI.game_version(content_version=24, catalogue_revision=7) == 'LC33'
-    assert [r.token for r in RI.HISTORY].count('LC35') == 1 and RI.HISTORY[-1].token == 'LC35'
-    assert all(r.token != 'LC35' for r in RI.HISTORY[:-1])
+    assert [r.token for r in RI.HISTORY].count('LC36') == 1 and RI.HISTORY[-1].token == 'LC36'
+    assert all(r.token != 'LC36' for r in RI.HISTORY[:-1])
     row = RI.HISTORY[-1]
-    assert (row.release, row.content_version, row.catalogue_revision) == ('0.4.0-beta.6', 26, 7)
+    assert (row.release, row.content_version, row.catalogue_revision) == ('0.4.0-beta.7', 27, 7)
     assert len(row.bind_manifest) == 64 and row.bind_manifest != RI.HISTORY[-2].bind_manifest
 
 
 def test_private_candidate_requires_the_release_companion():
-    assert FI.required_xml2fix(FI.RI.PRIVATE_CANDIDATE.release) == '>=1.8.0-beta.6'
+    assert FI.required_xml2fix(FI.RI.PRIVATE_CANDIDATE.release) == '>=1.8.0-beta.7'
+
+
+def test_world_backfaces_is_written_for_the_converted_xml1_zones_only():
+    # Owner decision 2026-10-25: rule 30 (XML2 Fix 1.8.0-beta.7, revision 2) applies to the XML1 levels only. The zone
+    # list is the zones stage's converted zones; without it no WorldBackfaces key is written (the DLL would apply it to
+    # every zone). Invented zone names.
+    import json
+    with tempfile.TemporaryDirectory() as td:
+        out = Path(td)
+        assert 'WorldBackfaces' not in FI.port_keys(out)['Game'] and 'WorldBackfaces' not in FI.port_keys(out)
+        (out / '_build').mkdir()
+        detail = out / '_build' / 'zones_detail.json'
+        detail.write_text(json.dumps({'converted': ['zz/b_zone', 'ZZ\\a_zone', 'yy/c/d_zone', 'zz/b_zone']}), encoding='utf-8')
+        keys = FI.port_keys(out)
+        assert keys['Game']['WorldBackfaces'] == 'xml1'
+        assert keys['WorldBackfaces'] == {'ZoneCount': '3', 'Z1': 'yy/c/d_zone', 'Z2': 'zz/a_zone', 'Z3': 'zz/b_zone'}
+        assert FI.dropped_keys(keys)['WorldBackfaces'][0] == 'Z4'          # a longer old list's tail is removed
+        for bad in ([], ['a//b'], ['../x'], ['a b'], ['x' * 64], ['z%d' % i for i in range(FI.WORLD_BACKFACES_MAX_ZONES + 1)]):
+            detail.write_text(json.dumps({'converted': bad}), encoding='utf-8')
+            assert FI.build_world_backfaces(out) == {} and 'WorldBackfaces' not in FI.port_keys(out)['Game'], bad
+        detail.write_text('not json', encoding='utf-8')
+        assert FI.build_world_backfaces(out) == {}
+    assert len(FI.PORT_OWNED['WorldBackfaces']) == 1 + FI.WORLD_BACKFACES_MAX_ZONES
+
+
+def test_the_unscoped_beta7_dll_is_refused_by_the_zone_list_key():
+    # The first beta 7 DLL knew [Game] WorldBackfaces but not [WorldBackfaces] ZoneCount (it would apply rule 30 to
+    # every zone); the fixed one reads both. Invented DLL bytes.
+    keys = {'Game': {'NpcPowerRule': 'xml1', 'NpcSemiAuto': 'xml1', 'ClassicSpeakers': '1', 'WorldBackfaces': 'xml1'},
+            'WorldBackfaces': {'ZoneCount': '1', 'Z1': 'zz/a_zone'}}
+    with tempfile.TemporaryDirectory() as td:
+        dll = Path(td) / 'dinput.dll'
+        known = ('NpcPowerRule', 'NpcSemiAuto', 'ClassicSpeakers', 'WorldBackfaces', 'Count')
+        dll.write_bytes(b'MZ' + '\0'.join(known).encode('utf-16le'))
+        assert FI.old_fix_keys(dll, keys) == ['[WorldBackfaces] ZoneCount', '[NpcSemiAuto] schema 4 rows']
+        dll.write_bytes(b'MZ' + '\0'.join(known + ('ZoneCount',)).encode('utf-16le'))
+        assert FI.old_fix_keys(dll, keys) == ['[NpcSemiAuto] schema 4 rows']   # the zone list alone is not enough
+        dll.write_bytes(b'MZ' + '\0'.join(known + ('ZoneCount',)).encode('utf-16le') + b'NSA4')
+        assert FI.old_fix_keys(dll, keys) == []
+        assert FI.old_fix_keys(dll, {'Game': {'NpcPowerRule': 'xml1'}}) == []   # no rule 30 written: no list needed

@@ -5,6 +5,12 @@ For tag naming, beta flags, notes and exact publishing commands, see [RELEASING.
 Use legally owned inputs and a separate output/cache folder. Keep game files and logs containing
 game content out of Git and public CI artifacts.
 
+- [ ] Assign the release identity first (a new `CONTENT_VERSION` in `tools/xml1builder/__init__.py`, its lobby token
+  row and recorded fingerprint in `tools/xml1build/release_identity.py`) whenever generated game output changed. A
+  release branch keeps the previous release's identity until this step (0.4.0-beta.7's branch carried beta 6's
+  content 26 / LC35 until this step assigned content 27 / LC36: the old identity reproduces beta 6's issued
+  fingerprint, so the content rebuild would not trigger); a private candidate identity commit (e.g. candidate/070a,
+  candidate/070b) is never merged.
 - [ ] Run `python tests/unit/run.py` and both content guard modes (`--all` and `--self-test`).
 - [ ] Build the candidate from prepared sources and require zero build/validator errors.
 - [ ] From `tools/`, run `python -m xml1build.zones_selftest "<candidate output>" --base "<XML2 install>"`.

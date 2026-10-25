@@ -266,8 +266,13 @@ LAG warnings may remain, but the slow-player drop is disabled. Host drop or free
   first game has not been measured again since 0.2.5 re-stuns them on every stun hit.
 - **Gun soldiers (#101, #54):** since 0.4.0-beta.6 the HAARP officer has the first game's weapon brain: single aimed
   shots about every 0.9 s, no bursts or punches from range, he backs off, and he holds his grenade at full energy.
-  The other gun soldiers do not have it yet and probably still close in to punch more than the first game's, which
-  keep their distance and shoot; before beta 6 the port officer, in a matched 45 s window, fired none of the
+  Since 0.4.0-beta.7 all 20 gun NPCs have it (MP5 and laser soldiers, nullifier / knockback officers with their
+  charge-up, lightning and flamethrower commanders, police pistols), and bullets hit only on the weapon's XML1 trace
+  timer (the MP5's half second). Measured against the original on one PC: the MP5 soldier's shot rate matches and
+  its hits never outnumber the trace timer, but at mid range it still does about 1.6-2.2 times the original's damage
+  (the original misses the first trace or two after each pause; planned for beta 8); the engaged officer's shots and
+  damage are within 10 %. The warm-up, continuous-beam (lightning commander), flame, pistol and line-of-sight paths
+  still need their live comparison with the original. Before beta 6 the port officer, in a matched 45 s window, fired none of the
   original's 49 shots and punched 24 times, and when he did shoot he fired bursts of seven whose sound stacked
   (the louder gun).
 - **Hazards (#104):** the earlier 57-level audit had live checks in only three rooms; report remaining misses.
@@ -289,7 +294,7 @@ the game.
 
 | Builder | Content version | Needs xml2-fix | Notes |
 |---|---|---|---|
-| 0.4.0 | 26 | 1.8.0 | online codes, public browser, drop-in ON, solo watchers; the classic look (`[Game] ClassicHud=xml1`, `ClassicCodex=1`, beta 5: needs 1.8.0-beta.5); the officer's weapon brain and rule 16 revision 10 (`[Game] NpcSemiAuto=xml1`, beta 6: needs 1.8.0-beta.6), no small-map frame; catalogue 7 / LC35 (beta 5: content 25 / LC34; betas 1-4: content 24 / LC33); launcher 0.4.0 for Online; matching peers required |
+| 0.4.0 | 27 | 1.8.0 | online codes, public browser, drop-in ON, solo watchers; the classic look (`[Game] ClassicHud=xml1`, `ClassicCodex=1`, beta 5: needs 1.8.0-beta.5); the officer's weapon brain and rule 16 revision 10 (`[Game] NpcSemiAuto=xml1`, beta 6: needs 1.8.0-beta.6), no small-map frame; every gun NPC's weapon brain with the XML1 bullet trace timer (schema 4 rows), rule 16 revision 11, one-sided walls in the XML1 zones (`[Game] WorldBackfaces=xml1`, rule 30) and the "Alison" label (`[Game] ClassicSpeakers=1`, beta 7: needs 1.8.0-beta.7); catalogue 7 / LC36 (beta 6: content 26 / LC35; beta 5: content 25 / LC34; betas 1-4: content 24 / LC33); launcher 0.4.0 for Online; matching peers required |
 | 0.2.5 | 23 | 1.7.1 | the bedroom items' pictures in the first game's picture window (`[Game] PersonalItemPicture=window`, #54); heroes re-stunned by every stun hit (`[Game] StunRule=xml1`, rule 18 revision 3, #101); catalogue 7 / LC32; both PCs need this pair |
 | 0.2.4 | 22 | 1.7.0 | Toad at HAARP (#105); colored enemy resistance text (`[Game] ResistanceDisplay=xml1`); co-op conversations (`[Game] OnlineConversations=lockstep`, rule 27); catalogue 7 / LC31; both PCs need this pair |
 | 0.2.3 | 21 | 1.6.0 | hazard bounds and the opening fire's rhythm (`[Game] BoxHarmOrigin`, `HarmSingleChain`), floor-overlap crates (`ObjectWorldImpact`), two more fall volumes, the first game's gun-move priority, NpcPower revision 4, StunRule revision 2, visible Danger Room opponents with health bars and the original fallback party (`DangerRoomHealthBars`, `DangerRoomParty`), Sentinel scan effects and aiming, fast saved-campaign transfer (`[Online] FastTransfer`), received-message checks (`[Online] ReceiveValidation`); catalogue 7 / LC30; verified saved-zone prefix retention; co-op peers need 0.2.3 / 1.6.0 on both PCs |
@@ -429,8 +434,10 @@ It contains and distributes no game content: you need your own copies of both ga
 | `[Game] DangerRoomParty` | `xml1` | Original incomplete-course four-hero fallback; rule 19 |
 | `[Game] Xml1LockOnEffects` | authored triple | Scan, surface and acquired-target visuals |
 | `[Game] Xml1LockOnAim` | `1` | Animated-head targeting; rule 20 |
-| `[Game] NpcPowerRule` | `xml1` | XML1 power decisions, combo timing and reaction-spent combo steps; rule 16 revision 10 (XML2 Fix 1.8.0-beta.6; revision 4 before) |
-| `[Game] NpcSemiAuto` + `[NpcSemiAuto]` | `xml1` + source rows | XML1's weapon brain for semi-auto NPCs (the HAARP officer), rows derived from your XML1 data; rule 16 revision 10 (0.4.0-beta.6) |
+| `[Game] NpcPowerRule` | `xml1` | XML1 power decisions, combo timing, reaction-spent combo steps, the brain running through locked moves (power re-checks made inside attacks and powers) and XML1's block rule; rule 16 revision 11 (XML2 Fix 1.8.0-beta.7; revision 10 in beta.6, 4 before) |
+| `[Game] NpcSemiAuto` + `[NpcSemiAuto]` | `xml1` + source rows | XML1's weapon brain for every gun NPC (20 schema 4 rows since 0.4.0-beta.7; the HAARP officer only in beta 6), rows derived from your XML1 data; rule 16 revision 11 |
+| `[Game] ClassicSpeakers` | `1` | XML1's "Alison" label on the party Magma's ex-`%ALISON%` lines (portrait and talk animation stay Magma's; display only; 0.4.0-beta.7, XML2 Fix 1.8.0-beta.7) |
+| `[Game] WorldBackfaces` + `[WorldBackfaces]` | `xml1` + the converted XML1 zones | XML1's one-sided level walls for movement, in the XML1 levels only (XML2-origin maps keep XML2's); rule 30 revision 2 (0.4.0-beta.7, XML2 Fix 1.8.0-beta.7) |
 | `[TestMode] ForgeEverywhere` | off, unwritten | Forge at Xtraction points |
 | `[TestMode] Hotkeys` | off, unwritten | F8 clears eligible enemies, F9 toggles party protection, F10 returns to the nearest safe authored start |
 

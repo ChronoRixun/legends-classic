@@ -38,7 +38,7 @@ from . import resources as _resources
 if _resources.frozen():
     VERSION = _resources.load_json('build-info.json', {})['version']
 
-CONTENT_VERSION = 26              # bumped only when a build's output changes (a rebuild is offered to players)
+CONTENT_VERSION = 27              # bumped only when a build's output changes (a rebuild is offered to players)
 SCHEMA = 1                        # the event schema (the "v" of the hello event)
 MIN_LAUNCHER = '0.0.0'            # release manifest min_launcher: no minimum until the first launcher release with the
                                   # X-Men Legends entry is tagged (then that version; tools/freeze_builder.py)

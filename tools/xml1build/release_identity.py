@@ -51,6 +51,9 @@ HISTORY = (
     # Issued at 0.4.0-beta.6: enemy AI fidelity (rule 16 revision 10, the officer's weapon brain) and the classic HUD
     # atlas without the small-map frame.
     Identity('0.4.0-beta.6', 26, 7, 'LC35', '3f378bccc40eee3e2830b944ba69ee2c41b8cc721dcb02f7ed10666866958de5'),
+    # Issued at 0.4.0-beta.7: every gun NPC's weapon brain with the XML1 bullet trace gate (schema 4 rows, rule 16
+    # revision 11), the "Alison" speaker label, one-sided level walls in the XML1 zones (rule 30 revision 2).
+    Identity('0.4.0-beta.7', 27, 7, 'LC36', '22a8c77d592f9e436adb724d6be5a9fdff4f4108ddd89bc2ba4d6c513f403e72'),
 )
 
 

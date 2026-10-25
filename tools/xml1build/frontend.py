@@ -95,6 +95,7 @@ Everything is written through ctx; nothing outside <out> is touched.
 from __future__ import annotations
 
 import collections
+import html
 import re
 import xml.etree.ElementTree as ET
 
@@ -1114,10 +1115,45 @@ def anim_db_has(ctx, animdb, anim):
         rb'[\x00-\x04]' + re.escape(anim.encode()) + rb'\x00', p.read_bytes()) is not None
 
 
+_START_TAG = re.compile(rb'<(?P<tag>[A-Za-z_][\w.\-]*)(?P<attrs>(?:\s+[A-Za-z_][\w.\-]*\s*=\s*"[^"]*")*)\s*/?>')
+_RAW_ATTR = re.compile(rb'([A-Za-z_][\w.\-]*)\s*=\s*"([^"]*)"')
+
+
+def attribute_tabs(raw, root, tag, attr):
+    """SPEC 105: an XML parser turns a literal tab inside an attribute value into a space; XML1's own parser kept it,
+    and so does XMen2.exe's text (XML2's own Iceman codex entry has one, as an indent). Restores the tabs of `attr`
+    on the `tag` children of `root` (an Element parsed from the raw bytes `raw`) from the raw start tags, matched by
+    position and only where the raw text differs from the parsed one by the tabs. Returns the number restored."""
+    raws = []
+    for m in _START_TAG.finditer(raw):
+        if m.group('tag').decode('latin-1').lower() != tag.lower():
+            continue
+        v = None
+        for a in _RAW_ATTR.finditer(m.group('attrs')):
+            if a.group(1).decode('latin-1').lower() == attr.lower():
+                v = a.group(2)
+        raws.append(v)
+    kids = [c for c in root if c.tag.lower() == tag.lower()]
+    if len(raws) != len(kids):
+        return 0
+    n = 0
+    for kid, rv in zip(kids, raws):
+        got = kid.get(attr)
+        if rv is None or got is None or b'\t' not in rv:
+            continue
+        want = html.unescape(rv.decode('latin-1'))
+        if re.sub(r'[\t\r\n]', ' ', want) == got:
+            kid.set(attr, want)
+            n += 1
+    return n
+
+
 def codex_tree(ctx):
     x1 = _x1(ctx, X1_CODEX)
     if x1 is None:
         return None, {'error': f'{X1_CODEX} missing on the XML1 disc'}
+    path = ctx.x1_path(X1_CODEX)
+    tabs = attribute_tabs(path.read_bytes(), x1, 'character', 'description') if path is not None else 0
     stats = _stats_index(ctx)
     root = ET.Element('characters')
     notes, rep = [], collections.Counter()
@@ -1148,6 +1184,9 @@ def codex_tree(ctx):
         a['anim'] = chosen
         ET.SubElement(root, 'character', a)
         rep['characters'] += 1
+    if tabs:
+        rep['bio_tabs_restored'] = tabs
+        notes.append(f'{tabs} bio descriptions keep XML1\'s literal tab (an XML parser turns it into a space)')
     return root, {'counts': dict(rep), 'notes': notes}
 
 

@@ -17,12 +17,37 @@ def _attrs(element):
     return {key.lower(): value for key, value in element.attrib.items()}
 
 
+# The original weapon prototype's type enum (default.xbe parser table 0x44fc44) and flag bits
+# of the schema 4 flags word; XML2 Fix's npc_semi_auto_rules.hpp uses the same values.
+TYPES = {'bullet': 0, 'flame': 1, 'projectile': 2, 'beam': 3}
+CONTINUOUS, RAPIDFIRE, DEFAULT_HANDLER = 0x10, 0x20, 0x40
+KNOWN_FLAGS = 3 | CONTINUOUS | RAPIDFIRE | DEFAULT_HANDLER
+SCHEMA = 4
+_ROW = re.compile(r'[a-z0-9_]{1,31}(\|[0-9a-f]{8}){8}')
+
+
+def _true(value):
+    return (value or '').lower() in ('true', '1', 'yes', 'on')
+
+
+def _bits(value):
+    return struct.unpack('<I', struct.pack('<f', value))[0]
+
+
 def contract(stats, weapons, styles):
     """Return canonical INI records and explicit exclusions, without editing data.
 
-    styles maps case-insensitive source style stems to parsed trees. Only simple
-    non-bullet semi-auto weapons qualify: no continuous beam or warm-up. A
-    missing style/handler is not permission to treat another weapon as semi-auto.
+    styles maps case-insensitive source style stems to parsed trees. Every gun primary of the
+    original weapon brain qualifies: a ch_weapon_semi_auto power_attack of any weapon type
+    (bullet, flame, projectile, beam) - discrete, with a warm-up before every shot, or a
+    continuous beam that warms up once - and a default-handler (no handler) power_attack of
+    a discrete weapon without warm-up (the pistol). Zero recoil is admitted only for a
+    continuous beam. A missing style or another handler is not permission to treat the
+    weapon as a gun primary, and source-authored gun AI attributes stay excluded.
+
+    Schema 4 rows carry name|recoil|range|burst|leader|warmup|flags|tracetime|accuracy (eight lowercase hex
+    digits each; IEEE-754 binary32 for the timings and range; flags = the type enum in bits
+    0-1, continuous beam 0x10, rapid fire 0x20, default-handler primary 0x40).
     """
     definitions = {_attrs(w).get('name', '').lower(): _attrs(w)
                    for w in weapons.iter() if w.tag.lower() == 'weapon'}
@@ -37,20 +62,25 @@ def contract(stats, weapons, styles):
         if not weapon:
             continue
         reason = ''
-        if weapon.get('type', '').lower() not in ('beam', 'projectile'):
-            reason = 'bullet aiming and continuous/melee weapon brains require separate acceptance'
-        elif any(weapon.get(key, '').lower() in ('true', '1', 'yes', 'on')
-                 for key in ('rapidfire', 'continuousbeam')):
-            reason = 'rapid or continuous weapon requires its own firing-window restore'
+        kind = weapon.get('type', '').lower()
+        continuous = _true(weapon.get('continuousbeam'))
+        recoil = warmup = distance = burst = tracetime = accuracy = 0.0
         try:
             recoil = float(weapon.get('recoiltime', '0'))
             warmup = float(weapon.get('warmuptime', '0'))
             distance = float(weapon.get('range', '0'))
             # Original prototype constructor: omitted bursttime is 1.0 second.
             burst = float(weapon.get('bursttime', '1'))
-            if not math.isfinite(warmup) or warmup != 0:
-                reason = 'warm-up requires its separate deadline and charge path'
-            if not math.isfinite(recoil) or not 0 < recoil <= 60:
+            # Weapon prototype defaults: trace time (+0x1bc) and accuracy (+0x1b0) are zero.
+            tracetime = float(weapon.get('tracetime', '0'))
+            accuracy = float(weapon.get('accuracy', '0'))
+            if not math.isfinite(tracetime) or not 0 <= tracetime <= 60:
+                reason = 'invalid source trace time'
+            if not math.isfinite(accuracy) or not 0 <= accuracy <= 360:
+                reason = 'invalid source accuracy'
+            if not math.isfinite(warmup) or not 0 <= warmup <= 60:
+                reason = 'invalid source warm-up'
+            if not math.isfinite(recoil) or not 0 <= recoil <= 60 or (recoil == 0 and not continuous):
                 reason = 'invalid or absent recoil'
             if not math.isfinite(distance) or not 75 < distance <= 65535 or not distance.is_integer():
                 reason = 'invalid or absent source weapon range'
@@ -61,23 +91,32 @@ def contract(stats, weapons, styles):
         style = styles.get(attrs.get('powerstyle', weapon.get('powerstyle', '')).lower())
         primary = next((m for m in style.iter() if m.tag.lower() == 'fightmove'
                         and _attrs(m).get('name', '').lower() == 'power_attack'), None) if style is not None else None
-        if primary is None or _attrs(primary).get('handler', '').lower() != 'ch_weapon_semi_auto':
-            reason = 'no source semi-auto primary move'
-        elif any(m.tag.lower() == 'fightmove' and _attrs(m).get('handler', '').lower() == 'ch_weapon_semi_auto'
+        handler = _attrs(primary).get('handler', '').lower() if primary is not None else None
+        default = handler == ''
+        if primary is None or handler not in ('ch_weapon_semi_auto', ''):
+            reason = 'no source gun primary move'
+        elif default and (continuous or warmup != 0):
+            reason = 'default-handler primary with a warm-up or continuous beam has no original gate path'
+        elif any(m.tag.lower() == 'fightmove' and (_attrs(m).get('handler', '').lower() == 'ch_weapon_semi_auto'
+                                                    or (default and m is primary))
                  and any(key in _attrs(m) for key in ('aitype', 'aireusetime')) for m in style.iter()):
             reason = 'authored gun AI attributes require a separate compatibility contract'
+        if kind not in TYPES:
+            reason = 'melee weapons have no gun primary'
         if reason:
             excluded.append({'actor': name, 'reason': reason})
             continue
         if not re.fullmatch(r'[a-z0-9_]{1,31}', name) or name in seen:
             raise ValueError('invalid or duplicate semi-auto actor identity')
         seen.add(name)
-        words = [struct.unpack('<I', struct.pack('<f', value))[0] for value in (recoil, distance, burst)]
-        words.append(int(attrs.get('leader', '').lower() in ('true', '1', 'yes', 'on')))
+        flags = (TYPES[kind] | (CONTINUOUS if continuous else 0) |
+                 (RAPIDFIRE if _true(weapon.get('rapidfire')) else 0) | (DEFAULT_HANDLER if default else 0))
+        words = [_bits(recoil), _bits(distance), _bits(burst), int(_true(attrs.get('leader'))), _bits(warmup), flags,
+                 _bits(tracetime), _bits(accuracy)]
         records.append(name + ''.join(f'|{bits:08x}' for bits in words))
     if len(records) > 64:
         raise ValueError('semi-auto contract exceeds the native bound')
-    return {'schema': 2, 'records': sorted(records, key=lambda row: row.split('|')[0]),
+    return {'schema': SCHEMA, 'records': sorted(records, key=lambda row: row.split('|')[0]),
             'excluded': sorted(excluded, key=lambda row: row['actor'])}
 
 
@@ -136,18 +175,27 @@ def ini_sections(data):
     """The xml2-fix.ini export of a contract: [Game] NpcPowerRule/NpcSemiAuto=xml1 and the [NpcSemiAuto] rows.
     Raises ValueError for a missing, empty or malformed contract (the caller then writes no weapon-brain keys)."""
     records = data.get('records', [])
-    if data.get('schema') != 2 or not 1 <= len(records) <= 64:
+    if data.get('schema') != SCHEMA or not 1 <= len(records) <= 64:
         raise ValueError('missing or unsupported semi-auto contract')
     names = set()
     for row in records:
-        if not isinstance(row, str) or not re.fullmatch(r'[a-z0-9_]{1,31}(\|[0-9a-f]{8}){4}', row):
+        if not isinstance(row, str) or not _ROW.fullmatch(row):
             raise ValueError('invalid semi-auto record')
         name, *words = row.split('|')
         recoil, distance, burst = [struct.unpack('<f', struct.pack('<I', int(bits, 16)))[0] for bits in words[:3]]
         leader = int(words[3], 16)
-        if (name in names or not all(map(math.isfinite, (recoil, distance, burst)))
-                or not 0 < recoil <= 60 or not 75 < distance <= 65535 or not distance.is_integer()
-                or not 0 < burst <= 60 or leader > 1):
+        warmup = struct.unpack('<f', struct.pack('<I', int(words[4], 16)))[0]
+        flags = int(words[5], 16)
+        tracetime, accuracy = [struct.unpack('<f', struct.pack('<I', int(bits, 16)))[0] for bits in words[6:]]
+        if (name in names or not all(map(math.isfinite, (recoil, distance, burst, warmup, tracetime, accuracy)))
+                or not 0 <= recoil <= 60 or (recoil == 0 and (words[0] != '00000000' or not flags & CONTINUOUS))
+                or not 75 < distance <= 65535 or not distance.is_integer()
+                or not 0 < burst <= 60 or leader > 1
+                or not 0 <= warmup <= 60 or (warmup == 0 and words[4] != '00000000')
+                or flags & ~KNOWN_FLAGS
+                or not 0 <= tracetime <= 60 or (tracetime == 0 and words[6] != '00000000')
+                or not 0 <= accuracy <= 360 or (accuracy == 0 and words[7] != '00000000')
+                or (flags & DEFAULT_HANDLER and (flags & CONTINUOUS or warmup != 0))):
             raise ValueError('duplicate actor or invalid weapon parameters')
         names.add(name)
     return {'Game': {'NpcPowerRule': 'xml1', 'NpcSemiAuto': 'xml1'},

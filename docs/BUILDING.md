@@ -115,6 +115,11 @@ for the off switch and acceptance limits.
 
 The characters stage also derives the NPC weapon-brain contract from your XML1
 npcstat, weapons and powerstyles (`_build/semi_auto.json`), and every XML1 build
-writes `[Game] NpcSemiAuto=xml1` with its `[NpcSemiAuto]` rows (0.4.0-beta.6,
-gameplay rule 16 revision 10; SPEC 95.4). They need XML2 Fix 1.8.0-beta.6 or
-later; the builder refuses an older DLL by name.
+writes `[Game] NpcSemiAuto=xml1` with its `[NpcSemiAuto]` rows (schema 4, every
+gun NPC since 0.4.0-beta.7; gameplay rule 16 revision 11; SPEC 95.4). They need
+XML2 Fix 1.8.0-beta.7 or later (beta 6 read only the officer's schema 2 row); the
+builder refuses an older DLL by name.
+
+Schema 4 requires the beta 7 bullet-trace follow-up DLL and a content rebuild
+(SPEC 95.5). Earlier beta 7 DLLs refuse these wider rows; a DLL swap alone into
+an old content build does not add the converted-bullet event markers.

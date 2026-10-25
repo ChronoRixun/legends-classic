@@ -1079,8 +1079,15 @@ default.xbe resolves `%ALISON%` itself (0x61bc6 `_stricmp` against "%ALISON%" 0x
 imports, both `.XMLB` and `.engb`). Result: 213 lines x 2 files rewritten, no `%ALISON%` left.
 **Label (2026-09-29, section 18.1):** default.xbe keys the speaker to Magma but labels the line with its string 503
 "Alison" (`0x61c88`; `data/strings.eng`), so XML1 showed "Alison" where the port shows "Magma" on the party-Magma
-lines (XMen2.exe takes label and talk-animation entity from one key: an engine alias would be needed). The NPC
-Alison's own two lines are renamed to her speaker entries, labelled "Alison" (18.1); V6 accepts `%ALISON%` only there.
+lines (XMen2.exe takes label and talk-animation entity from one key). The NPC Alison's own two lines are renamed to
+her speaker entries, labelled "Alison" (18.1); V6 accepts `%ALISON%` only there.
+**XML1's label back (2026-10-24, `scripts.SPEAKER_TOKEN_LABELS`):** every `<line>` whose XML1 `text`/`textb` starts
+with `%ALISON%` and still starts with `%MAGMA%` after the speaker rewrites (the party Magma's; not the NPC Alison's
+renamed lines) gets `speakerlabel="Alison"` (`scripts.SPEAKER_LABEL_ATTR`). XMen2.exe never reads it; XML2 Fix with
+`[Game] ClassicSpeakers=1` (written by `fix_ini.game_keys`) swaps the display name the line parser put in front of
+the text for that label, keeping the key - the line reads "Alison" with Magma's portrait and talk animation, as in
+XML1. Full build: 212 lines in 71 conversations (the inlined `2_5_10loop` copy in `mansion/man4/2_5_10b` included).
+An XML2 Fix without the key shows "Magma" as before, so the key is not in the DLL refusal set.
 **V6** checks every `%TOKEN%` of every registered conversation: a built-in or a stats name passes; the alias or an
 XML1 stats name the build lacks is an error; a token XML1 could not resolve either is an inherited warning. Full
 build: 3,601 tokens, all resolve.
@@ -1742,9 +1749,9 @@ picked in every team menu of every later New Game on that profile, before the st
   (`0x6449f`: `0xbef20` vt+8(key), the shape of XMen2.exe's by-name lookup), which names neither NPC; the NPCs now
   mouth their own lines, and the party Magma no longer mouths the simulated Alison's. Details:
   `research/heroes/conversation-speakers.md` 9a. Stats names 232 -> 235 of 296; heroes `npc_double_speakers` 8; V6
-  `hero_npc_speaker_tokens` 18, `hero_speakers_open` 0. **Not done (engine):** XML1 labelled all 213 `%ALISON%`
-  lines "Alison"; the party-Magma ones say "Magma" in the port, because one key gives XMen2.exe both the label and
-  the talk-animation entity (`magma`); showing "Alison" there needs an xml2-fix alias at `0x456d00` (section 12.1).
+  `hero_npc_speaker_tokens` 18, `hero_speakers_open` 0. XML1 labelled all 213 `%ALISON%` lines "Alison"; the
+  party-Magma ones keep `%MAGMA%` (one key gives XMen2.exe both the label and the talk-animation entity, `magma`) and
+  carry `speakerlabel="Alison"`, which XML2 Fix `[Game] ClassicSpeakers=1` shows as the label (section 12.1).
   - **Verified in game 2026-09-29** (build/_speak, pipe `speak`, one window; talker from `tools/conv_probe.py`):
     nyc1_1_3 with Wolverine (`loadMapKeepTeam`), the scene script `nyc/alison/alison_gets_away` run by the pipe (a
     teleport into `trigger_touch01` does not fire it): `1_1_5_1b` line 1 "Blob / Ow!" (no talker, `%BLOBACT1A%`),
@@ -7618,3 +7625,76 @@ UTF-16 key including its terminator in an installed companion DLL. Off, zero or
 an absent final key makes no HUD memory writes. No gameplay, save, font or menu
   palette allocation changes. See docs/CLASSIC_HUD_PILOT.md for the nine-destination
 companion contract and remaining state acceptance.
+
+## 105. Text coverage: where every XML1 string went (gap row C10, validator V66)
+
+The S8 byte-compare could only say "not byte-identical" for about 1,620 of XML1's 8,600 localized strings. This
+section records the per-key trace and what the builder now enforces. `text_trace.py` is the single source (rules and
+policies carry a one-line reason each); the validator check V66 runs it over a build.
+
+**Classes.** Every text attribute of XML1's localized `.eng` tables (not `maps/`) is `shipped` (same key, same bytes),
+`moved` (byte-identical elsewhere in the port's text tables: objectives regrouped per act, talents per hero, dialog
+platform variants), `rewritten` (a named builder rule, checked by running it), `xml2` (an XMen2.exe / XML2 table owns
+it by design) or `dropped` (no consumer or cut content, stated reason). Anything else is `unaccounted` and V66 errors.
+Zoneinfo, credits, trivia, Danger Room, codex, review labels, subtitles, movie subtitles and personal items are strict:
+the text must stay under its own key, a copy elsewhere is no proof. Raw XML1 bytes are also scanned for attribute
+values that hold a tab or line break (an XML parser turns each into a space), which must reach the port unchanged.
+
+**Rewrite rules** (each verified by running the builder's own function on the XML1 text):
+`speaker-token` (12.1, 18.1: 264 conversation lines, wording and voice files unchanged), `value-codes` (24: XML1's
+`^L3`-style codes and `BADREF:` keys become the numbers `heroes.Values.resolve_text` yields), `menu-code-escape`
+(21.4.1: 21 credit lines and 1 trivia question), `extra-credit-trim` (21.3), `zoneinfo-repair` (below),
+`item-enhancements` (21.3: a Danger Room reward item's description is split over its enhancements, with the port's
+stat scale).
+
+**Policies.** `strings-by-id` (XMen2.exe addresses `Data/strings` by its own ids; no XML1 data names an XML1 id),
+`pc-menus` (the PC menus are XMen2.exe's classes and labels), `item-table` / `item-not-added` (11.3), `weapons-table`
+(29), `move-names` (XML2's styles win a shared name; XMen2.exe shows no fight-move names), `unused-shared-talent`,
+`mission-select` (37: XMen2.exe's MISSION carries no text), `unused-mission` (mission files no script starts) and
+`cut-conversation` (3_2_6's Sabretooth reply starts a side mission in a zone neither game has).
+
+**Fixes made with the trace** (these change the build's output):
+
+- **Magneto's codex bio keeps XML1's tab.** The bio has a literal tab before its line break in two entries
+  (Magneto and the boss). The builder's reader turned it into a space. XML2's own data carries a tab in Iceman's entry
+  (an indent), so XMen2.exe takes one in codex text, and `frontend.attribute_tabs` restores it from the raw start tags (count `bio_tabs_restored`).
+- **zoneinfo, two slips in XML1's own data.** `mount\mount\mount` is listed twice ("Mount Entrance", then "Transport
+  Conduit"); the builder kept the second for `mount`. The mount zone's own link to `mount2` is described "Transport
+  Conduit", so the first entry stays on `mount` and the second belongs to `mount2` (`zones.ZONEINFO_DUPLICATE_TARGETS`).
+  `muir_is\muir2\mui_in2` names a zone file that does not exist (`muir_in2` does; its Muir Island siblings carry the
+  same savename), so the entry moves there (`zones.ZONEINFO_NAME_TYPOS`). XML1 itself never matched either name; these
+  are label repairs (the save-slot place name and the loading image), not behaviour. `zones.x1_zoneinfo_entries` does
+  both, never over an entry a target already has and only for converted zones.
+
+**Kept as rewrites on purpose.** The Danger Room FR106 outro stays "Well Done!": its extra-credit explanation names
+marks that were `default.xbe` logic the port does not have (Adamantium / Vibranium tiers are deferred, 21.3), and the
+marks' glyphs `{ | } ~` are text-renderer codes in XMen2.exe, so the text would promise what the game cannot show.
+The credits' and trivia's `|#N` escapes are required by the renderer (21.4.1).
+
+**Tests.** `tests/unit/test_text_trace.py` (made-up data): each class and rule, the strict tables, the raw-tab scan, the
+codex tab restore, the zoneinfo repairs and their guards. Against a real beta 6 candidate (not run in CI): V66 reports
+exactly the five lost items above and nothing else.
+
+
+### 95.5 Bullet trace gate contract (beta 7 follow-up)
+
+`semi_auto.py` exports schema 4: append source `tracetime` and `accuracy` as
+binary32 words to every schema-3 gun row. Both default to zero when omitted
+(prototype constructor 0xb9c15); the MP5 appends `3f000000|00000000`. The full
+canonical SHA-256 domain changes to NSA4, covering all eight words of every row.
+The DLL refuses old-width rows and withdraws the requested rule-16 configuration.
+
+`weapons._beam` marks converted bullets, including rewritten named events, with
+zero `split_count` and literal `split_damage="32766 32766"`. No split damage is
+applied with zero split count in stock PC. The companion DLL uses that exact
+pair to distinguish bullet shots from ordinary beams; sound/muzzle triggers are
+ordered before bullet events, with original times/tags and trigger budgets.
+The DLL emits the tracer before a separate actor/incarnation trace gate; rejected
+shots retain presentation but perform no collision/damage. Input entry, target
+changes and bursts do not reset last trace. Negative last timestamps bypass;
+equality admits. Admitted traces retain PC beam geometry pending the separately
+verified character bullet-ray adapter. See the companion npc-semi-auto docs for
+the native fixture and game-agent re-measurement matrix. Release integration must
+advance CONTENT_VERSION and assign its immutable lobby identity/fingerprint after
+the final build (docs/RELEASE_CHECKLIST.md); this release branch retains the
+previous issued identity until that coordinated step.
