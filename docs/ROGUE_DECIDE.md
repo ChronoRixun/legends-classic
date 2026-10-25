@@ -1,10 +1,10 @@
 # Rogue decide candidate
 
-Use `tools/build_xml1.py --rogue-decide xml1` with the companion XML2 Fix
-implementation of gameplay rule **43**, `[Game] Xml1RogueDecide=xml1`. The
-recorded content option controls both the style conversion and emitted key.
-Rebuilding with the default `--rogue-decide xml2` restores the old collapse and
-removes a stale key. Setting the INI alone cannot recreate a dropped node.
+Since 0.4.1-beta.1 (the port's beta 8) `--rogue-decide xml1` is the default,
+with the companion XML2 Fix 1.9.0-beta.1 implementation of gameplay rule **43**,
+`[Game] Xml1RogueDecide=xml1`. The recorded content option controls both the
+style conversion and emitted key. Rebuilding with `--rogue-decide xml2` restores
+the old collapse and removes a stale key (A/B builds). Setting the INI alone cannot recreate a dropped node.
 
 The two eleven-rank source chains become public `power2` (`ch_roguedecide`) and
 internal `ability_drain`; Special selects drain and Special2 selects
@@ -13,11 +13,10 @@ time-zero transplant onto drain. Other chains and talent identifiers retain
 their existing conversion. The option participates in the profile, build
 record, carried-module invalidation and standalone hero checks.
 
-The shipped builder profile stays OFF. CONTENT_VERSION and release identity
-are unchanged because its default game output is unchanged. The integrator
-must advance the content version and assign the new identity before shipping
-enabled output. This experimental developer flag requires the locally built
-companion DLL; existing release-version checks alone cannot identify it.
+The beta 8 integration turned the option on by default, which changes the
+default game output: the 0.4.1 release must advance the content version and
+assign its new identity (the private candidate 0.8.0a used content 37 / C08A).
+The builder's DLL gate refuses a companion that does not know the key.
 
 Verify with `python tests/unit/run.py -k rogue_decide`, the full unit suite,
 and both content-guard modes from AGENTS.md. The synthetic fixture uses eleven

@@ -3,37 +3,36 @@
 The builder's releases, newest first. The version is `xml1-builder --version`; the content version is what a
 build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebuild.
 
+## v0.4.1 - content version assigned at release (needs XML2 Fix 1.9.0)
+
+The port's beta 8 (`0.4.1-beta.1` with XML2 Fix `1.9.0-beta.1`). **Nothing below has been played yet**: each item
+passed the unit tests and its native tests; the live checks are in the beta 8 test guide.
+
+- **Beta 8: the first game's bosses.** Builds write `[Game] Xml1Bosses` (XML2 Fix rule 40) listing every boss whose
+  zone and spawn names the build carries: the colosseum dopples, Avalanche (both fights), Pyro, Mystique, Shadow
+  King, Magneto, Blob and Marrow (whose brain is already native). Shadow King and Magneto use their authored timed
+  shield powers again; a partial build that still carries the old hard-protection scripts keeps them and does not
+  list that boss (SPEC 106).
+- **Beta 8: more first-game moves.** Builds write `[Game] Xml1WallCling=xml1` (rule 39: the acrobats' wall cling and
+  back-flip), `LiftRule=xml1` (rule 38: Might rank 3 lifts the first game's heaviness-4 objects, kept as
+  `xml1heaviness`), the seven shared-handler keys = `xml1` (rule 42: skating, Nightcrawler's teleport landings and
+  buddy teleport, popups and their landing, the charge, Gambit's object charge) and, with Rogue's decide now the
+  default (`--rogue-decide xml1`; `xml2` keeps the old collapse), the `power2` decide + internal `ability_drain`
+  chains and `Xml1RogueDecide=xml1` (rule 43).
+- **Beta 8: damage rounds as in the first game.** Balance builds add `[Balance] ReceiveRounding=xml1` and
+  `DamageCap=xml1` (rule 41).
+- **Beta 8: room for graphics mods.** `[Limits] IGBCache=1024` with `ResourceNames=2048` and `[Engine]
+  ModelHandles=8192` (rules 31-32). The conversion still keeps every package under the game's own 200 (V12).
+- **Beta 8: the HAARP officer's aura** plays the original's art (`physical_resistant_share`).
+- The builder requires XML2 Fix `>=1.9.0-beta.1` (a 1.8.0 fix, beta 7 or stable, is refused by name: it knows none of
+  the new keys and runs rule 16 as revision 11; the 1.9.0 DLL's `NPR14` marker shows revision 14).
+
 ## v0.4.0 - content version 27 (needs XML2 Fix 1.8.0)
 
 - **Beta 7: gun hits on the first game's timer.** The weapon rows now carry each gun's XML1 trace time and accuracy
   (schema 4) and the converted bullets carry an inert marker, so XML2 Fix 1.8.0-beta.7 lands a bullet's hit only when
   its trace timer has run out (the MP5's half second), as in X-Men Legends, while the shot sound and muzzle flash stay
   on every shot. The builder refuses a beta 7 fix that cannot read schema 4 rows.
-## Unreleased: boss wave three (content version assigned at release integration)
-
-- Request Magneto and Blob under the existing boss agreement rule, including Magneto and Mystique sharing the
-  asteroid map. Require compatible generated phase scripts before listing Magneto.
-- Magneto uses authored shield powers and map counters; keep SPEC 36 substitutes for OFF builds. The matching
-  companion DLL refuses startup if an ON Magneto controller cannot install. Blob's astral armour stays script-owned.
-- Preserve all release identities for coordinator integration. Static/fixture validation is complete; live phase,
-  distance-boundary and multiplayer acceptance remains due (SPEC 106.2).
-
-## Unreleased: boss wave two (content version assigned at release integration)
-
-- Request the companion DLL's astral Pyro, Mystique and Shadow King controllers only when their named spawns
-  exist in a converted encounter. Record Marrow's retained native backboss brain without replacing it.
-- Shadow King uses the authored timed shield powers; retain the first-form floor relocation while the pillar
-  damage cause awaits a live trace. Partial builds with the old shield scripts keep their existing substitute.
-- Verify exact spawner names, including both Shadow King forms. Avalanche's companion controller includes AI
-  heroes in close targeting. Runtime acceptance is still pending (SPEC 106.1); this is not a release assignment.
-
-## v0.4.0 - content version 26 (needs XML2 Fix 1.8.0)
-
-- **Beta 8 candidate: the colosseum dopples fight as in the first game.** With XML2 Fix's `[Game] Xml1Bosses=dopples`
-  (rule 40) Wolverine and Colossus throw the fastball special again and Jean sets off the arena's traps near you;
-  Avalanche gets his own brain back in both fights (`avalanche`). The builder lists a boss only when your build carries
-  its zone and instances (SPEC 106).
-
 - **Beta 7: every gun NPC gets the first game's weapon brain.** The characters stage now exports all 20 gun NPCs of
   your XML1 data (schema 4 rows `actor|recoil|range|burst|leader|warmup|flags|tracetime|accuracy`, 8 melee-weapon exclusions): the
   officer, the MP5 and laser/super-laser soldiers, the nullifier and knockback officers (warm-up before every shot),
