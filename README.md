@@ -132,6 +132,23 @@ Public games connect directly, so players can see each other's internet address.
 address at two public rooms and two seats in other people's rooms. Normal **Play** supports LAN / Connect by IP.
 See [the online guide](docs/ONLINE.md) for full steps, privacy, limits and messages.
 
+## Additions, not fidelity
+
+Legends Classic aims to play like the first game, and the rest of this page says where it does not. The items below
+are the opposite case: things the first game never had. They are modernisation, they are not part of what is being
+matched to the original, and none of them counts as a fidelity claim.
+
+- **Online co-op** for up to four players (see [Play online](#play-online)): codes, public games, drop-in at the next
+  level change, Connect by IP and LAN search. The first game was local-only. Joiners must run matching builds.
+- **Solo-segment watchers**: players without a hero watch a solo story segment and regain control afterwards. This
+  exists because of online play.
+- **A 60 frames-per-second online rate** (`[Online] TickRate`) and the larger engine limits the port needs (model
+  pools, object capacity). They change how much the engine can hold, not what the first game's rules do.
+- **Display options**: borderless, windowed or exclusive fullscreen at your desktop's resolution and refresh rate, with
+  anti-aliasing.
+- **Saves of their own** (`Documents\Activision\X-Men Legends`, the port's save format), so the first game never
+  touches X-Men Legends II's saves.
+
 ## Saves
 
 Builder 0.2.0 moves the port to a save format of its own, once, so that later updates can add and change content
