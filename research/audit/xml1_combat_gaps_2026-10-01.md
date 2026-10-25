@@ -269,6 +269,15 @@ Cheap next step: decompile the four xbe readers.
 
 ### 2.9 G9: minor trigger attributes
 
+**Correction (2026-10-25, G12 static check):** `maxtargets` and `doattack` are in XMen2.exe after all; the lenient
+token test missed them because each string directly follows a float constant with no NUL in between (0x6910c0,
+0x6910d0). `CCEAtkTeleportDashPrep` (vtable 0x691f68) parses `maxtargets` at 0x4e42c0 (clamped 0-10, event +0x24)
+and its target collector 0x4e4330 stops after max(1, maxtargets) targets (`inc esi; cmp esi, n; jge` at
+0x4e44b0; 0 = one target). `CCEAtkTeleportDash` (vtable 0x6921a8) parses `doattack` at 0x4e5b71 into +0x2c bit 1
+(default on, ctor 0x4f8a3a) and its executor skips the hit call when the bit is clear (0x4e584b). Both match XML1,
+and the built styles carry them (Wolverine 7, Rogue 10, Rogue doattack=false), so the frenzy dash is capped and
+the relocate dash does no damage natively. The original paragraph follows unchanged.
+
 Absent from XMen2.exe (lenient token test) and present in XML1 styles: `maxtargets` (Wolverine frenzy
 dash prep 7, Rogue 10), `doattack="false"` + `dashhome` (Rogue xtreme relocate / return dashes: `dashhome`
 exists, `doattack` does not - the relocate dash may hit), `dashbolt` (Wolverine power2 trail bolt),
