@@ -550,22 +550,25 @@ def build_mold_controller(out):
 
 
 # XML1 boss brains (xml2-fix [Game] Xml1Bosses, gameplay rule 40, the shared boss dispatcher): each boss the DLL can run,
-# with the converted zone it binds to and the instance names it binds by. A boss is listed only when the build carries
+# with the converted zones it binds to (any one suffices) and the instance names it binds by. A boss is listed only when the build carries
 # that zone with every one of those names (a missing or renamed instance would leave its controller idle while rule 40
 # says it is on).
-BOSS_BINDINGS = (('dopples', 'Maps/astral/ast3/colosseum.XMLB', ('evilwolverine', 'evilcolossus', 'eviljean', 'evilcyc')),)
+BOSS_BINDINGS = (('dopples', ('Maps/astral/ast3/colosseum.XMLB',), ('evilwolverine', 'evilcolossus', 'eviljean', 'evilcyc')),
+                 ('avalanche', ('Maps/mount/mount/mount2.XMLB', 'Maps/astral/ast3/astral3_4.XMLB'), ('avalanche',)))
 
 
 def build_bosses(out) -> dict:
     """{'Xml1Bosses': 'name,...'} for the bosses whose zone and instances the finished build carries; {} for none."""
     names = []
-    for name, zone, instances in BOSS_BINDINGS:
-        try:
-            data = Path(out, zone).read_bytes()
-        except OSError:
-            continue
-        if all(instance.encode('ascii') in data for instance in instances):
-            names.append(name)
+    for name, zones, instances in BOSS_BINDINGS:
+        for zone in zones:
+            try:
+                data = Path(out, zone).read_bytes()
+            except OSError:
+                continue
+            if all(instance.encode('ascii') in data for instance in instances):
+                names.append(name)
+                break
     return {'Xml1Bosses': ','.join(names)} if names else {}
 
 

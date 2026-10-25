@@ -39,15 +39,19 @@ def test_harness_only_enables_mold_for_port_identity():
 
 def test_bosses_key_lists_only_bosses_whose_zone_and_instances_are_built():
     # Invented bytes; only the instance names the DLL binds by are real (fix_ini.BOSS_BINDINGS).
-    name, zone, instances = F.BOSS_BINDINGS[0]
-    assert name == 'dopples'
+    name, zones, instances = F.BOSS_BINDINGS[0]
+    assert name == 'dopples' and [b[0] for b in F.BOSS_BINDINGS] == ['dopples', 'avalanche']
     with tempfile.TemporaryDirectory() as temp:
         out = Path(temp)
         assert F.build_bosses(out) == {}
-        path = out / zone
+        path = out / zones[0]
         path.parent.mkdir(parents=True)
         path.write_bytes(b'\0'.join(i.encode() for i in instances[:-1]))
         assert F.build_bosses(out) == {}
         path.write_bytes(b'\0'.join(i.encode() for i in instances))
         assert F.build_bosses(out) == {'Xml1Bosses': 'dopples'}
+        second = out / F.BOSS_BINDINGS[1][1][1]          # the second zone alone lists the boss
+        second.parent.mkdir(parents=True, exist_ok=True)
+        second.write_bytes(b'x' + F.BOSS_BINDINGS[1][2][0].encode() + b'y')
+        assert F.build_bosses(out) == {'Xml1Bosses': 'dopples,avalanche'}
     assert 'Xml1Bosses' in F.PORT_OWNED['Game'] and 'Xml1Bosses' in F.RELEASE_18_KEYS['Game']
