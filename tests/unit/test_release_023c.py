@@ -9,7 +9,7 @@ def test_023c_release_capabilities_refuse_individually():
     for absent in ('DangerRoomParty', 'Xml1LockOnEffects', 'Xml1LockOnAim'):
         with tempfile.TemporaryDirectory() as temp:
             dll = Path(temp) / 'invented.dll'
-            dll.write_bytes(b'MZ' + b''.join(name.encode('utf-16le') + b'\0\0'
+            dll.write_bytes(b'MZ' + b'NPR14' + b''.join(name.encode('utf-16le') + b'\0\0'
                                            for section in keys.values() for name in section if name != absent))
             try:
                 F.check_release_dll(dll, keys)

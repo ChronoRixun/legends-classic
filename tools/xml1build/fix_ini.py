@@ -135,8 +135,14 @@ BUILD_REPORT = ('_build', 'report.json')
 # dropped together with every script line that calls it. The fix raises it to 1024 by default while ForcedTeams
 # registers its functions; written here explicitly (validate V57 script function names checks the count against it).
 # Nothing saved; online it is gameplay agreement rule 14.
-LIMITS = {'ActorSlots': '127', 'ResourceNames': '1024', 'ItemEnhancements': '512', 'FightStyles': '32',
-          'EffectCurves': '3600', 'MoveTriggers': '64', 'EntityCapacity': '1', 'ScriptFunctions': '1024'}
+# xml2-fix 1.9.0-beta.1 (limits wave 1, its docs/igb-cache.md) [Limits] IGBCache: XMen2.exe's IGB info cache holds 200
+# records (every precached model file); full, a zone's map IGB fails and the game bounces back to the previous zone
+# (the V12 budget, igb_budget.py, keeps every package under 200 - it stays the conversion's limit; 1024 is headroom
+# for graphics mods). The fix moves the cache into its own memory at 1024 records and its name table with it
+# (ResourceNames 2048). Online the cache is gameplay-agreement rule 31 (IGBCache) and the names rule 32.
+LIMITS = {'ActorSlots': '127', 'ResourceNames': '2048', 'ItemEnhancements': '512', 'FightStyles': '32',
+          'EffectCurves': '3600', 'MoveTriggers': '64', 'EntityCapacity': '1', 'ScriptFunctions': '1024',
+          'IGBCache': '1024'}
 
 # xml2-fix 1.3.1 [Game] GeometrySharingBlendIndices (SPEC 44, issue #11): XMen2.exe's geometry sharing reuses one
 # skinned mesh for another when positions and weights match although their packed blend indices differ; XML1's
@@ -151,6 +157,9 @@ GEOMETRY_SHARING_BLEND_INDICES = '1'
 # them all (handles 4096, IGB 2048, actors 128, clouds 128). Online it is gameplay-agreement rule 28 (ModelPools): a
 # 1.8.0-beta.1 peer, which has no rule 28, and a beta.2 port build refuse each other at join by name.
 MODEL_POOLS = 'x4'
+# xml2-fix 1.9.0-beta.1 [Engine] ModelHandles (limits wave 1): the model handles and transforms past ModelPools'
+# profile, sized for the 1024 IGB records above (8192; part of rule 28's values online).
+MODEL_HANDLES = '8192'
 # xml2-fix 1.8.0-beta.2 [Game] ComboPopupGuard: a team-combo popup that lacks a hero's head is hidden instead of
 # crashing (XMen2.exe+0x1a6848). On by default in the DLL; written so the builder's DLL check (check_release_dll)
 # refuses a 1.8.0-beta.1 DLL without it. Display only, no agreement rule.
@@ -182,6 +191,19 @@ BREAK_RULE = 'xml1'
 # heaviness byte stay the game's. A fix without the rule ignores the key and the attribute. Written for every XML1
 # build.
 LIFT_RULE = 'xml1'
+
+# xml2-fix 1.9.0-beta.1 [Game] Xml1WallCling (gameplay rule 39, docs/xml1-cling.md): XML1's ch_clingwalldecide /
+# ch_clingwallbackflip, the acrobat moveset's wall cling and back-flip (acrobatics 2). The converted moveset_acrobat
+# carries both moves already (XML2 shipped the data with no handler, so they ran as %default%); 'xml1' gives them
+# the first game's handlers. A fix without the rule ignores the key.
+WALL_CLING = 'xml1'
+
+# xml2-fix 1.9.0-beta.1 shared combat handlers (gameplay rule 42, docs/shared-handler-rules.md): seven callbacks every
+# moveset shares - ice/lava skating, Nightcrawler's teleport landing, the popup / air spin decision and landing, the
+# charge (Advanced Sentinel), Nightcrawler's buddy-teleport targets and Gambit's object charge - behave as XML1's.
+# The fix applies them to the whole installation, so they belong to an XML1 build's profile. One mask online.
+SHARED_HANDLERS = {'SkatingRule': 'xml1', 'TeleportLandingRule': 'xml1', 'PopupRule': 'xml1', 'PopupLandRule': 'xml1',
+                   'ChargeRule': 'xml1', 'NightcrawlerRule': 'xml1', 'GambitRule': 'xml1'}
 
 # xml2-fix [Game] PlacementCrush (SPEC 63.4, issue #79): XMen2.exe settles each object on the floor - at a zone's load
 # and 0.5 s after any spawn in play (death drops, script props, debris) - and an object touching another there may "crush" it (a 1,000,000-damage hit; BreakRule=xml1 refuses most, but the hit's sound
@@ -266,7 +288,7 @@ FORCED_TEAMS_VALUES = ('1', '0', 'off')
 # v1.5: the 0.2.2 wave's [Game] keys - PlacementCrush, DoubleHeal, RankCosts, LevelSkillPoints, LevelStatPoints,
 # Xml1Multipart, X1Leader, SoloMode, DeathRule, DangerRoomGate, RevivalCost, Xml1Turrets, PackAmount, DeathSwitchClear - and
 # [Limits] ScriptFunctions; a 1.4 DLL silently ignores every one of them, so check_release_dll refuses it)
-REQUIRED_XML2FIX = '1.8'
+REQUIRED_XML2FIX = '1.9'
 # The companion fix's prerelease a beta/rc builder needs (launcher-facing requires.xml2fix only): 0.3.0-beta.2 writes
 # [Engine] ModelPools and [Game] ComboPopupGuard, first read by XML2 Fix 1.8.0-beta.2; 0.3.0-beta.3 writes [Online]
 # TickRate, first read by 1.8.0-beta.3; 0.4.0-beta.5 writes [Game] ClassicHud / ClassicCodex (the classic look), first
@@ -275,7 +297,7 @@ REQUIRED_XML2FIX = '1.8'
 # rc and the final 1.8.0 meet it; 1.8.0-beta.5 and older do not). 0.4.0-beta.7 writes schema 3 [NpcSemiAuto] rows (every
 # gun family) and [Game] ClassicSpeakers, first read by 1.8.0-beta.7 (a beta.6 DLL refuses the schema 3 rows: weapon
 # brain off, host/join closed), so its requirement is '>=1.8.0-beta.7'.
-REQUIRED_XML2FIX_PRERELEASE = 'beta.7'
+REQUIRED_XML2FIX_PRERELEASE = 'beta.1'
 
 
 def required_xml2fix(builder_version: str) -> str:
@@ -370,15 +392,15 @@ _ZONE_PATH = re.compile(r'^[a-z0-9_.\-]+(/[a-z0-9_.\-]+)*$')
 PORT_OWNED = {'Game': ('NewGameTeam', 'ResetUnlocks', 'SaveFolder', 'ForcedTeams', 'PostgameScript', 'WindowTitle',
                         'EndHeroUnlock', 'MainMenuItems', 'DangerRoomGate', 'ClassicMainBackdrop', 'ClassicMainPanelBounds', 'NewGamePlus', 'ReviewStats', 'Xtract', 'XtractionShop', 'RevivalCost', 'XPCurve',
                        'GeometrySharingBlendIndices', 'CharacterLadderPaths', 'ObjectiveDescriptions',
-                       'BreakRule', 'LiftRule', 'Xml1RogueDecide', 'PlacementCrush', 'ObjectWorldImpact', 'DoubleHeal', 'DeathRule', 'NpcPowerRule', 'StunRule', 'DangerRoomParty', 'DangerRoomHealthBars', 'ResistanceDisplay', 'BoxHarmOrigin', 'HarmSingleChain', 'HarmLoopStartup', 'ConfirmationRelease',
+                       'BreakRule', 'LiftRule', 'Xml1RogueDecide', 'Xml1WallCling', *SHARED_HANDLERS, 'PlacementCrush', 'ObjectWorldImpact', 'DoubleHeal', 'DeathRule', 'NpcPowerRule', 'StunRule', 'DangerRoomParty', 'DangerRoomHealthBars', 'ResistanceDisplay', 'BoxHarmOrigin', 'HarmSingleChain', 'HarmLoopStartup', 'ConfirmationRelease',
                        'OnlineConversations', 'PersonalItemPicture', 'ComboPopupGuard', 'ClassicHud', 'ClassicHudPilot', 'ClassicCodex', 'NpcSemiAuto', 'ClassicSpeakers', 'WorldBackfaces',
                        'ExplosiveFirstHit', 'PackAmount', 'SoloMode', 'X1Leader', 'DeathSwitchClear', 'RankCosts', 'LevelSkillPoints', 'LevelStatPoints', 'Xml1Multipart',
                        'Xml1MasterMold', 'Xml1MoldStage', 'Xml1Turrets', 'Xml1LockOnEffects', 'Xml1LockOnAim', 'Xml1Bosses'),
               'Limits': ('ActorSlots', 'ResourceNames', 'ItemEnhancements', 'FightStyles', 'EffectCurves', 'MoveTriggers', 'EntityCapacity',
-                         'ScriptFunctions'),
+                         'ScriptFunctions', 'IGBCache'),
               'Online': ('GameVersion', 'ContentFingerprint', 'FastTransfer', 'ReceiveValidation', 'JoinInProgress', 'TickRate'),
               'Save': ('Format',),
-              'Engine': ('ModelPools',),
+              'Engine': ('ModelPools', 'ModelHandles'),
               'Xml1Turrets': ('Count',) + tuple(f'T{i}' for i in range(1, 33)),
               'NpcSemiAuto': ('Count',) + tuple(f'W{i}' for i in range(1, NPC_SEMI_AUTO_MAX_ROWS + 1)),
               'WorldBackfaces': ('ZoneCount',) + tuple(f'Z{i}' for i in range(1, WORLD_BACKFACES_MAX_ZONES + 1))}
@@ -735,6 +757,8 @@ def game_keys(*, xml1_opening=True, save_folder=None, forced_teams='1', add_hero
         game['ObjectiveDescriptions'] = OBJECTIVE_DESCRIPTIONS
         game['BreakRule'] = BREAK_RULE
         game['LiftRule'] = LIFT_RULE
+        game['Xml1WallCling'] = WALL_CLING
+        game.update(SHARED_HANDLERS)
         game['PlacementCrush'] = PLACEMENT_CRUSH
         game['ObjectWorldImpact'] = OBJECT_WORLD_IMPACT
         game['DoubleHeal'] = DOUBLE_HEAL
@@ -850,7 +874,7 @@ def port_keys(out, *, save_folder=PLAY_SAVE_FOLDER, eighth=True) -> dict:
     world_backfaces = build_world_backfaces(out)
     if world_backfaces:
         game['WorldBackfaces'] = WORLD_BACKFACES
-    keys = {'Game': game, 'Limits': dict(LIMITS), 'Engine': {'ModelPools': MODEL_POOLS}}
+    keys = {'Game': game, 'Limits': dict(LIMITS), 'Engine': {'ModelPools': MODEL_POOLS, 'ModelHandles': MODEL_HANDLES}}
     if world_backfaces:
         keys['WorldBackfaces'] = world_backfaces
     if turrets:
@@ -1077,13 +1101,26 @@ RELEASE_18_KEYS = {**RELEASE_18_KEYS, 'Game': RELEASE_18_KEYS['Game'] + ('Classi
 # private candidate DLL) knows [Game] WorldBackfaces but not the list and would apply the rule to every zone, so the
 # builder also requires the list's key by name.
 RELEASE_18_KEYS = {**RELEASE_18_KEYS, 'WorldBackfaces': ('ZoneCount',)}
-# XML2 Fix 1.8.0-beta.8 (Legends Classic 0.4.0-beta.8): [Game] Xml1Bosses (the shared boss dispatcher, rule 40). A beta.7
+# XML2 Fix 1.9.0-beta.1 (Legends Classic 0.4.1-beta.1, the port's beta 8): [Game] Xml1Bosses (the shared boss dispatcher, rule 40). A beta.7
 # DLL ignores it, so the dopples would fight with the stock AI while the build says otherwise; the builder refuses it.
 RELEASE_18_KEYS = {**RELEASE_18_KEYS, 'Game': RELEASE_18_KEYS['Game'] + ('Xml1Bosses',)}
 # Byte markers for formats a key name cannot show. The schema 4 weapon rows (bullet trace time + accuracy) are read only
 # by a DLL whose rule 16 detail digest says "NSA4"; an earlier beta 7 DLL knows [Game] NpcSemiAuto but refuses the wider
 # rows and withdraws rule 16, so the builder refuses it, naming the rows.
 RELEASE_MARKERS = {('Game', 'NpcSemiAuto'): (b'NSA4', '[NpcSemiAuto] schema 4 rows')}
+# XML2 Fix 1.9.0-beta.1 (Legends Classic 0.4.1-beta.1, the port's beta 8): limits wave 1 ([Limits] IGBCache, [Engine]
+# ModelHandles; rules 31-32), XML1's wall cling (39), lift rule (38), Rogue's decide (43), the shared handlers (42),
+# the receive-side rounding and damage cap ([Balance] ReceiveRounding / DamageCap, 41) and the boss brains (40). A
+# 1.8.0 DLL (beta 7 or the stable) ignores every one of them without a word, so the builder refuses it by name.
+RELEASE_18_KEYS = {**RELEASE_18_KEYS,
+                   'Game': RELEASE_18_KEYS['Game'] + ('LiftRule', 'Xml1WallCling', 'Xml1RogueDecide') + tuple(SHARED_HANDLERS),
+                   'Limits': RELEASE_18_KEYS.get('Limits', ()) + ('IGBCache',),
+                   'Engine': RELEASE_18_KEYS['Engine'] + ('ModelHandles',),
+                   'Balance': RELEASE_18_KEYS.get('Balance', ()) + ('ReceiveRounding', 'DamageCap')}
+# Rule 16 revision 14 (parity wave A's items 19-22 and the character bullet ray) changes no key: a 1.8.0 DLL runs
+# NpcPowerRule=xml1 as revision 11. The 1.9.0 DLL's install log carries "NPR14" (xml2-fix src/npc_power.cpp), so the
+# builder requires that marker wherever it writes the rule.
+RELEASE_MARKERS[('Game', 'NpcPowerRule')] = (b'NPR14', '[Game] NpcPowerRule revision 14')
 
 
 def check_release_dll(dll, keys: dict) -> None:

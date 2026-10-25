@@ -78,9 +78,9 @@ def test_rogue_decide_off_retains_d15_transplant_and_output_bytes():
 
 
 def test_rogue_decide_option_and_ini_are_coupled_and_off_drops_stale_key():
-    assert build_xml1.parse_args(['--out', '.']).rogue_decide == 'xml2'
+    assert build_xml1.parse_args(['--out', '.']).rogue_decide == 'xml1'  # default since 0.4.1-beta.1 (beta 8)
     assert build_xml1.parse_args(['--out', '.', '--rogue-decide', 'xml1']).rogue_decide == 'xml1'
-    assert build_xml1.CONTENT_OPTS['rogue_decide'] == ('heroes', 'xml2')
+    assert build_xml1.CONTENT_OPTS['rogue_decide'] == ('heroes', 'xml1')
     with tempfile.TemporaryDirectory() as td:
         out = Path(td)
         meta = out / '_build'
@@ -99,6 +99,6 @@ def test_rogue_decide_option_and_ini_are_coupled_and_off_drops_stale_key():
             merged = FI.merge_text('[Game]\nXml1RogueDecide=xml1\nKeepMe=7\n', keys, FI.dropped_keys(keys))
             assert ('Xml1RogueDecide=xml1' in merged) == (value == 'xml1')
             assert 'KeepMe=7' in merged
-            args = build_xml1.parse_args(['--out', td, '--rogue-decide', 'xml2' if value == 'xml1' else 'xml1'])
+            args = build_xml1.parse_args(['--out', td, '--rogue-decide', 'xml2' if value in ('xml1', None) else 'xml1'])
             assert 'heroes' in build_xml1.plan_content_opts(out, args, [])
             assert build_xml1.plan_content_opts(out, args, ['heroes']) == []

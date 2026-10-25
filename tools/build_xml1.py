@@ -85,8 +85,9 @@ def parse_args(argv=None):
                          "Sunfire as pads and has no ProfXGladiator (A/B builds; SPEC_heroes.md)")
     ap.add_argument('--hero-icons', dest='hero_icons', choices=('xml1', 'generic'), default='xml1',
                     help="hero talent icons: XML1's 2x2 <hero>_all atlases (default) or XML2's generic talent_icons.png")
-    ap.add_argument('--rogue-decide', choices=('xml1', 'xml2'), default='xml2',
-                    help="candidate Rogue power decision; xml1 requires companion XML2 Fix rule 43")
+    ap.add_argument('--rogue-decide', choices=('xml1', 'xml2'), default='xml1',
+                    help="Rogue's power decision: XML1's ch_roguedecide (default since 0.4.1-beta.1; needs XML2 Fix "
+                         "1.9.0-beta.1's rule 43) or xml2, the old D15 collapse (A/B builds)")
     ap.add_argument('--hero-bleed', dest='hero_bleed', choices=('on', 'off'), default='on',
                     help="Wolverine's bleed passive as an XML2 add_harming powerup (default) or dropped")
     ap.add_argument('--newgame', choices=('chooseteam', 'keepteam'), default='keepteam',
@@ -179,7 +180,7 @@ HOOK_OWNER = 'testhooks'
 CONTENT_OPTS = {'harm_loop_startup': (tuple(C.MODULE_ORDER), 'workaround'),
                 'blackbird': ('scripts', 'menu'), 'npc_scaling': ('characters', 'off'), 'tiles': ('zones', 'used'),
                 'main_menu_layout': ('frontend', 'classic'),
-                'rogue_decide': ('heroes', 'xml2'), 'hero_roster': ('heroes', '21'), 'hero_icons': ('heroes', 'xml1'), 'hero_bleed': ('heroes', 'on'),
+                'rogue_decide': ('heroes', 'xml1'), 'hero_roster': ('heroes', '21'), 'hero_icons': ('heroes', 'xml1'), 'hero_bleed': ('heroes', 'on'),
                 'newgame': ('scripts', 'keepteam'),
                 # SPEC 19: scripts emits the blocks; zones imports the dialogs / conversations rewrite_data_tree patches
                 'forced_teams': (('scripts', 'zones'), 'seat'),
