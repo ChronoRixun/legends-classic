@@ -7738,3 +7738,26 @@ refuses that source-only envelope. The coordinator must assign the integrated re
 Synthetic coverage is in test_mold_controller.py and test_boss_phases.py. The companion DLL's controller fixtures,
 production Mystique bridge fixtures and synthetic image-install proof are recorded in its REPORT.md. No live
 acceptance is claimed: the complete per-boss checklist is in XML2 Fix docs/xml1-controllers.md.
+
+
+### 106.2 Wave three (unreleased; identity assigned by the coordinator)
+
+`Xml1Bosses` adds `magneto` (astroid_m/visit1/asteroid2_1, named magneto spawn) and `blob`
+(nyc/alison/nyc1_1_3, mansion/dr_mag2/mag_nyc4 or astral/ast3/astral3_5, named blob spawn). The companion DLL
+uses rule 40 bits 64 and 128, each boss revision 1. Rule 3 and the existing rule-40 option bits are unchanged.
+Magneto and Mystique can share the asteroid map; both bindings survive when both named spawns are present.
+
+For planned Magneto ON content, boss_phases keeps all authored stage2-5 phase requests and relay counters,
+removing only section 36's inserted wait/invulnerability release and shieldup protection suffix. The final INI
+requires all four generated scripts, the corresponding mag2-5 requests, no hard invulnerability statements in
+those scripts and no protection substitute on shieldup. Mixed map/script rebuilds retain their old fallback
+without advertising the controller until the contract agrees. The matching wave-three DLL refuses startup if
+requested Magneto cannot install, including a verified transaction rollback. Recovery is a compatible DLL or an
+OFF rebuild retaining section 36's substitute. `mag4` returns the authored shield; shield lifetime stays in the
+powerstyle and map counter graph. Blob's astral armour/pillar/growth scripts are unchanged by its controller.
+
+No content or release identity is assigned here. CONTENT_VERSION, VERSION and release_identity.py are left for
+the coordinator at integration. Synthetic tests cover script idempotence, exact phase requests, mixed builds
+and both actors sharing one map. Focused owned-input contract validation is not a playable-package rebuild.
+The complete phase/boundary/lifecycle/multiplayer acceptance list is in the companion DLL's
+`docs/xml1-controllers.md`; no wave-three game or emulator launch is claimed.

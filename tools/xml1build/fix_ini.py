@@ -560,9 +560,13 @@ BOSS_BINDINGS = (('dopples', ('Maps/astral/ast3/colosseum.XMLB',), ('evilwolveri
                  ('mystique', ('Maps/nyc/alison/nyc1_1_2b.XMLB', 'Maps/mansion/dr_mag2/mag_nyc3.XMLB',
                               'Maps/astroid_m/visit1/asteroid2_1.XMLB'), ('mystique',)),
                  ('shadowking', ('Maps/astral/savepx/final_astral.XMLB',), ('shadowking', 'shadowking2')),
-                 ('marrow', ('Maps/sewers/hub/sewers1_2_4.XMLB',), ('marrow',)))
+                 ('marrow', ('Maps/sewers/hub/sewers1_2_4.XMLB',), ('marrow',)),
+                 ('magneto', ('Maps/astroid_m/visit1/asteroid2_1.XMLB',), ('magneto',)),
+                 ('blob', ('Maps/nyc/alison/nyc1_1_3.XMLB', 'Maps/mansion/dr_mag2/mag_nyc4.XMLB',
+                           'Maps/astral/ast3/astral3_5.XMLB'), ('blob',)))
 BOSS_IMPLEMENTATIONS = {'marrow': 'native'}  # request agreement/signature verification, never a replacement tick
-BOSS_SCRIPT_CONTRACTS = {'shadowking': ('astral/savepx/sk1pain', 'astral/savepx/dropshield')}
+BOSS_SCRIPT_CONTRACTS = {'shadowking': ('astral/savepx/sk1pain', 'astral/savepx/dropshield'),
+                         'magneto': tuple(f'asteroid_m/stage{i}' for i in range(2, 6))}
 
 
 def boss_instance_names(root):
@@ -598,8 +602,26 @@ def source_bosses(ctx):
                 if root is not None and set(instances) <= boss_instance_names(root):
                     names.add(name)
                     break
+        if selected is not None and 'scripts' not in selected and not boss_scripts_ready(ctx.out, 'magneto'):
+            names.discard('magneto')
         ctx.shared[cache_key] = frozenset(names)
     return ctx.shared[cache_key]
+
+
+def boss_scripts_ready(out, name):
+    """Check generated shield scripts independently of maps for bounded partial rebuilds."""
+    if name not in BOSS_SCRIPT_CONTRACTS:
+        return True
+    try:
+        scripts = [Path(out, 'Scripts', script + '.py').read_text(encoding='latin-1')
+                   for script in BOSS_SCRIPT_CONTRACTS[name]]
+    except OSError:
+        return False
+    if any(re.search(r'\bsetInvulnerable\s*\(', text, re.I) for text in scripts):
+        return False
+    return name != 'magneto' or all(
+        re.search(r'setPatternSequence\s*\(\s*[\'"]magneto[\'"]\s*,\s*[\'"]mag' + str(stage) + r'[\'"]\s*\)', text)
+        for stage, text in zip(range(2, 6), scripts))
 
 
 def build_bosses(out, *, check_scripts=True) -> dict:
@@ -607,20 +629,19 @@ def build_bosses(out, *, check_scripts=True) -> dict:
     import xmlb
     names = []
     for name, zones, instances in BOSS_BINDINGS:
-        if check_scripts and name in BOSS_SCRIPT_CONTRACTS:
-            try:
-                scripts = [Path(out, 'Scripts', script + '.py').read_text(encoding='latin-1')
-                           for script in BOSS_SCRIPT_CONTRACTS[name]]
-            except OSError:
-                continue
-            if any(re.search(r'\bsetInvulnerable\s*\(', script, re.I) for script in scripts):
-                continue  # a partial/older build retains the SPEC 36 shield substitute
+        if check_scripts and not boss_scripts_ready(out, name):
+            continue
         for zone in zones:
             try:
                 root = xmlb.decode(Path(out, zone).read_bytes())
             except (OSError, ValueError, IndexError, KeyError, RecursionError, struct.error):
                 continue
             if set(instances) <= boss_instance_names(root):
+                if name == 'magneto':
+                    # A map-only rebuild can still carry SPEC 36's hard protection.
+                    if any(re.search(r'setInvulnerable\s*\(', el.get('actscript', ''), re.I)
+                           for el in root.iter('entity') if el.get('name', '').lower() == 'shieldup'):
+                        continue
                 names.append(name)
                 break
     return {'Xml1Bosses': ','.join(names)} if names else {}

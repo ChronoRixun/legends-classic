@@ -9,6 +9,15 @@ build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebui
   (schema 4) and the converted bullets carry an inert marker, so XML2 Fix 1.8.0-beta.7 lands a bullet's hit only when
   its trace timer has run out (the MP5's half second), as in X-Men Legends, while the shot sound and muzzle flash stay
   on every shot. The builder refuses a beta 7 fix that cannot read schema 4 rows.
+## Unreleased: boss wave three (content version assigned at release integration)
+
+- Request Magneto and Blob under the existing boss agreement rule, including Magneto and Mystique sharing the
+  asteroid map. Require compatible generated phase scripts before listing Magneto.
+- Magneto uses authored shield powers and map counters; keep SPEC 36 substitutes for OFF builds. The matching
+  companion DLL refuses startup if an ON Magneto controller cannot install. Blob's astral armour stays script-owned.
+- Preserve all release identities for coordinator integration. Static/fixture validation is complete; live phase,
+  distance-boundary and multiplayer acceptance remains due (SPEC 106.2).
+
 ## Unreleased: boss wave two (content version assigned at release integration)
 
 - Request the companion DLL's astral Pyro, Mystique and Shadow King controllers only when their named spawns

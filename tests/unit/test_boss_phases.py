@@ -227,3 +227,30 @@ def test_real_death_rewrite_fails_closed_on_a_changed_source():
             pass
         else:
             raise AssertionError('a missing, misplaced or repeated anchor must fail')
+
+
+def test_magneto_controller_preserves_authored_phases_and_removes_only_legacy_insertions():
+    for stage in range(2, 6):
+        ref = f'asteroid_m/stage{stage}'
+        source = f'if phase == {stage}\r\n     setPatternSequence("magneto", "mag{stage}")\r\nendif\r\n'
+        off = B.rewrite_script(ref, source)
+        assert 'setInvulnerable' in off
+        assert B.rewrite_script(ref, source, controller_bosses={'magneto'}) == source
+        assert B.rewrite_script(ref, off, controller_bosses={'magneto'}) == source
+        assert B.rewrite_script(ref, off) == off
+        assert B.rewrite_script(ref, source, controller_bosses={'blob'}) == off
+    root = ET.Element('world')
+    relay = ET.SubElement(root, 'entity', name='shieldup', actcountact='4', acttargets='helpers',
+                          actscript='setPatternSequence("magneto","magshield")')
+    original = dict(relay.attrib)
+    assert B.rewrite_data(root, B.MAGNETO_ZONE, controller_bosses={'magneto'}) == 0
+    assert dict(relay.attrib) == original
+    assert B.rewrite_data(root, B.MAGNETO_ZONE) == 1
+    assert B.rewrite_data(root, B.MAGNETO_ZONE, controller_bosses={'magneto'}) == 1
+    assert dict(relay.attrib) == original
+
+
+def test_blob_brain_keeps_astral_armour_script_owned():
+    source = 'armorEvent("invented_guardian")\r\n'
+    for ref in ('astral/ast3/blobpain', 'astral/ast3/blob_pillar_death'):
+        assert B.rewrite_script(ref, source, controller_bosses={'blob'}) == source
