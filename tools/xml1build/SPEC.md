@@ -7698,3 +7698,13 @@ the native fixture and game-agent re-measurement matrix. Release integration mus
 advance CONTENT_VERSION and assign its immutable lobby identity/fingerprint after
 the final build (docs/RELEASE_CHECKLIST.md); this release branch retains the
 previous issued identity until that coordinated step.
+## 106. XML1 boss brains (XML2 Fix `[Game] Xml1Bosses`, gameplay rule 40)
+
+XML2 Fix's shared boss dispatcher (its `docs/xml1-controllers.md`, "Shared boss dispatcher") runs the first game's
+boss brains that XMen2.exe lacks, beside Master Mold (section 86, which keeps its own keys and rule 3).
+`fix_ini.build_bosses` writes `[Game] Xml1Bosses=<comma list>` with the other first-game controller keys: a boss is
+listed only when the finished build carries the converted zone its controller binds to with every instance name it
+binds by (`fix_ini.BOSS_BINDINGS`; a missing or renamed instance would leave the controller idle while rule 40 says it
+is on). First entry: `dopples` (`Maps/astral/ast3/colosseum.XMLB`, the four dopple instances). `RELEASE_18_KEYS`
+refuses a companion DLL that does not know the key. No content, save or content-version change. Live acceptance
+(the original side by side, PLAN G6) is owed per boss; the dopples' list is in XML2 Fix's docs (D1-D3).

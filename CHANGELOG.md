@@ -10,6 +10,10 @@ build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebui
   its trace timer has run out (the MP5's half second), as in X-Men Legends, while the shot sound and muzzle flash stay
   on every shot. The builder refuses a beta 7 fix that cannot read schema 4 rows.
 
+- **Beta 8 candidate: the colosseum dopples fight as in the first game.** With XML2 Fix's `[Game] Xml1Bosses=dopples`
+  (rule 40) Wolverine and Colossus throw the fastball special again and Jean sets off the arena's traps near you;
+  the builder writes the key only when your build carries the colosseum with all four dopples (SPEC 106).
+
 - **Beta 7: every gun NPC gets the first game's weapon brain.** The characters stage now exports all 20 gun NPCs of
   your XML1 data (schema 4 rows `actor|recoil|range|burst|leader|warmup|flags|tracetime|accuracy`, 8 melee-weapon exclusions): the
   officer, the MP5 and laser/super-laser soldiers, the nullifier and knockback officers (warm-up before every shot),
