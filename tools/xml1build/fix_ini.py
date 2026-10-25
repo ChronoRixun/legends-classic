@@ -369,7 +369,7 @@ _ZONE_PATH = re.compile(r'^[a-z0-9_.\-]+(/[a-z0-9_.\-]+)*$')
 PORT_OWNED = {'Game': ('NewGameTeam', 'ResetUnlocks', 'SaveFolder', 'ForcedTeams', 'PostgameScript', 'WindowTitle',
                         'EndHeroUnlock', 'MainMenuItems', 'DangerRoomGate', 'ClassicMainBackdrop', 'ClassicMainPanelBounds', 'NewGamePlus', 'ReviewStats', 'Xtract', 'XtractionShop', 'RevivalCost', 'XPCurve',
                        'GeometrySharingBlendIndices', 'CharacterLadderPaths', 'ObjectiveDescriptions',
-                       'BreakRule', 'LiftRule', 'PlacementCrush', 'ObjectWorldImpact', 'DoubleHeal', 'DeathRule', 'NpcPowerRule', 'StunRule', 'DangerRoomParty', 'DangerRoomHealthBars', 'ResistanceDisplay', 'BoxHarmOrigin', 'HarmSingleChain', 'HarmLoopStartup', 'ConfirmationRelease',
+                       'BreakRule', 'LiftRule', 'Xml1RogueDecide', 'PlacementCrush', 'ObjectWorldImpact', 'DoubleHeal', 'DeathRule', 'NpcPowerRule', 'StunRule', 'DangerRoomParty', 'DangerRoomHealthBars', 'ResistanceDisplay', 'BoxHarmOrigin', 'HarmSingleChain', 'HarmLoopStartup', 'ConfirmationRelease',
                        'OnlineConversations', 'PersonalItemPicture', 'ComboPopupGuard', 'ClassicHud', 'ClassicHudPilot', 'ClassicCodex', 'NpcSemiAuto', 'ClassicSpeakers', 'WorldBackfaces',
                        'ExplosiveFirstHit', 'PackAmount', 'SoloMode', 'X1Leader', 'DeathSwitchClear', 'RankCosts', 'LevelSkillPoints', 'LevelStatPoints', 'Xml1Multipart',
                        'Xml1MasterMold', 'Xml1MoldStage', 'Xml1Turrets', 'Xml1LockOnEffects', 'Xml1LockOnAim'),
@@ -733,6 +733,10 @@ def port_keys(out, *, save_folder=PLAY_SAVE_FOLDER, eighth=True) -> dict:
                      new_game_plus=NEW_GAME_PLUS if menu else None, review_stats=build_review_stats(out),
                      xtract=XTRACT if postgame else None, xp_curve=build_xp_curve(out))
     game.update(build_harm_loop_startup(out))
+    # Same recorded content option that heroes uses. Never infer this from an
+    # existing INI: rebuilding with the feature off must remove the owned key.
+    if (build_record(out) or {}).get('rogue_decide') == 'xml1':
+        game['Xml1RogueDecide'] = 'xml1'
     turrets = build_turrets(out) if postgame else {}
     if postgame:
         game.update(build_mold_controller(out))
