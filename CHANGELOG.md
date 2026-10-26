@@ -3,6 +3,165 @@
 The builder's releases, newest first. The version is `xml1-builder --version`; the content version is what a
 build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebuild.
 
+## v0.4.1 - content version 28 (needs XML2 Fix 1.9.0)
+
+0.4.1-beta.1 is the port's beta 8, with XML2 Fix 1.9.0-beta.1 and Ultimate Legends 0.4.0 or later (Beta channel).
+
+**What's new in beta 8**
+
+- **Colossus's charge hits:** it knocks enemies back and does damage, as in the first game.
+- **The GRSO Officer and Captain have their guns and grenades again** (also broken in 0.4.0): the Officer's nullifier
+  beam and incendiary grenade, the Captain's knockback gun and flashbang.
+- **Saved rooms stay cleared after updating.** Beta 8 changes 65 map files without moving anything in them; the save
+  reader used to throw away every saved room of a changed map, so enemies, pickups and doors came back. Now they stay
+  as you left them.
+- **Bigger engine limits** for the first game's content, and groundwork for heavier graphics mods: the model-file
+  cache (200 -> 1024), character sound sets (16 -> 127), the animation pool (500 -> 22,528) and resident character
+  stats (31 -> 320), and the build's own copy of `XMen2.exe` can use 4 GB of memory instead of 2 GB (your X-Men
+  Legends II install is never changed).
+- **The first game's bosses:** the colosseum dopples throw the fastball special and set off the arena's traps, and
+  Avalanche, Pyro, Mystique, Shadow King, Magneto and Blob fight with their X-Men Legends brains again.
+- **Juggernaut grabs** you, holds you and hits, as in the first game.
+- **More of the first game's moves:** wall cling and back-flip for the acrobats, Rogue's drain, Might rank 3 lifting
+  the first game's heavy objects, ice and lava skating, Nightcrawler's teleports, popups, Beast's bounce, the fastball
+  and the jump attack's and flying charge's damage.
+- **Guns aim like the first game's** (a thin ray from the muzzle that stops at the first thing in its way), damage
+  rounds like the first game's, and the pause menu's Objectives page lists what the first game listed.
+- **The builder accepts a retail `XMen2.exe` that a 4 GB patcher has touched** (only the header flag or checksum
+  changed); any other change is still refused, with a clearer message.
+
+**Still in progress (next beta):** the first game's telekinesis for Phoenix, its Guard choice (what a Guard press
+grabs, picks up or throws, and the acrobats' wall lunge) and the flying carry (Phoenix, Rogue and Storm carrying and
+throwing in flight) are switched off in this beta while they are finished. Guard grabs enemies and picks up objects as
+in 0.4.0, Phoenix's power 1 is the PC game's telekinesis, and flying and the flying charge are unchanged.
+
+Your saves carry over; the save format is unchanged.
+
+**How to update.** In Ultimate Legends (Beta channel), update both parts - **XML2 Fix to 1.9.0-beta.1** and the
+**builder to 0.4.1-beta.1** - then **Rebuild**, then **Play**.
+
+**Co-op needs the same version.** Everyone in a session needs XML2 Fix 1.9.0-beta.1 and a 0.4.1-beta.1 build (content
+28, `LC37`). A beta 8 game and a 0.4.0 or beta 7 game refuse each other at join. Test mode must be off for online play.
+
+**Tested:** a hand test of this release's content covered Colossus's charge, the GRSO grenades, Guard grabbing and
+picking up, and saved rooms in a HAARP save. Automated runs on the beta 8 candidates covered the boss fights,
+Juggernaut's grab, crowded rooms with the raised limits (no refusals), memory above 2 GB without a crash, and co-op on
+one PC with two instances of the game (fights and a level change, no desync; an older build refused by name). In 148
+real saves every room keeps at least what it keeps on 0.4.0. Play between separate PCs has not been tested yet.
+
+**Known issues**
+
+- The flying carry, Phoenix's XML1 telekinesis and the XML1 Guard choice are off (above).
+- With a controller connected the game can pause for a moment about once a second (easy to see on the Team
+  Management screen). It happens on 0.4.0 too; the cause is found (the game re-checking the controllers) and a fix
+  is on the way.
+- Blob fights now, but in rare runs he can still stand still.
+- Everything listed under 0.4.0's known issues below still applies (enemy power rate and the MP5 soldier's mid-range
+  damage #101, falls #22, cosmetics #54, loot and shop #6, solo parts online #106, button prompts XML2 Fix #8).
+
+See [Play online](docs/ONLINE.md) for steps, privacy and troubleshooting.
+
+### Details
+
+- **4 GB of address space (E12).** The build's own copy of `XMen2.exe` is large-address-aware: one flag word in its
+  file header (`exe_flags`, SPEC 108), so on 64-bit Windows and Wine/Proton the game can use 4 GB instead of 2 GB -
+  room for the raised engine limits and bigger assets. Your X-Men Legends II install is never changed. `--no-laa`
+  (builder) / `--laa off` (build_xml1) keeps the install's exe byte for byte. The manifest now lists `XMen2.exe` as a
+  built file; validator V1 accepts exactly the flag. Needs XML2 Fix 1.9.0's address-space lines to see it in the log.
+  Static risk check only so far; the live high-address test is queued. The builder refuses a DLL without the
+  address-space module for a build whose exe carries the flag (its `address space: laa` start line is the marker).
+
+- **Beta 8: the first game's bosses.** Builds write `[Game] Xml1Bosses` (XML2 Fix rule 40) listing every boss whose
+  zone and spawn names the build carries: the colosseum dopples, Avalanche (both fights), Pyro, Mystique, Shadow
+  King, Magneto, Blob and Marrow (whose brain is already native). Shadow King and Magneto use their authored timed
+  shield powers again; a partial build that still carries the old hard-protection scripts keeps them and does not
+  list that boss (SPEC 106).
+- **Beta 8: more first-game moves.** Builds write `[Game] Xml1WallCling=xml1` (rule 39: the acrobats' wall cling and
+  back-flip), `LiftRule=xml1` (rule 38: Might rank 3 lifts the first game's heaviness-4 objects, kept as
+  `xml1heaviness`), the seven shared-handler keys = `xml1` (rule 42: skating, Nightcrawler's teleport landings and
+  buddy teleport, popups and their landing, the charge, Gambit's object charge) and, with Rogue's decide now the
+  default (`--rogue-decide xml1`; `xml2` keeps the old collapse), the `power2` decide + internal `ability_drain`
+  chains and `Xml1RogueDecide=xml1` (rule 43).
+- **Beta 8: saves keep the zones you already cleared.** Beta 8's heaviness tags (and the Magneto controller's
+  shield script on the asteroid) changed 65 map files without moving or renumbering anything in them, and the save
+  reader used to drop every saved zone record of a changed map (enemies, pickups, doors and one-time scenes came
+  back). The save-compatibility ledger now carries equivalence rows for those maps against stable 0.4.0, and the
+  reader (XML2 Fix 1.9.0) keeps such records exactly; every zone applies at least as many saved records as on 0.4.0
+  in the real-saves gate.
+- **Beta 8: damage rounds as in the first game.** Balance builds add `[Balance] ReceiveRounding=xml1` and
+  `DamageCap=xml1` (rule 41).
+- **Beta 8: room for graphics mods.** `[Limits] IGBCache=1024` with `ResourceNames=2048` and `[Engine]
+  ModelHandles=8192` (rules 31-32). The conversion still keeps every package under the game's own 200 (V12).
+- **Beta 8: the objectives page as in the first game.** Builds write `[Game] ClassicObjectives=1` (XML2 Fix 1.9.0-beta.1:
+  the page lists the visible objectives with no gaps and opens on the current one), the pause layout puts each
+  selector on the picture the engine draws (36, 346 - 45n), lifts the bottom bar 14 units off the screen's edge
+  (prompts at z 33) and the objectives tables carry the act file's order. Checked live on 10-25 (1280x720 windowed,
+  2560x1440 borderless) beside X-Men Legends I in xemu.
+- **Beta 8: grabs as in the first game.** `--grab-carry xml1` is the default content option (`xml2` = the stock
+  handlers for A/B builds) and builds write `[Game] Xml1GrabCarry=xml1` (rule 45): Juggernaut's grab-and-hit, the
+  shared grab victim, pickup and thrown-landing recovery, the ally throw and the flying charge picking up whoever it
+  hits, and XML1's flight upkeep (rule 45 revision 3: the builder requires that DLL by its install line).
+- **In progress for beta 9: the first game's telekinesis, guard decide and flying carry.** Phoenix's XML1 telekinesis
+  (`TelekinesisRule`, rule 46 bit 512) and the flying carry (Phoenix, Rogue and Storm picking up, carrying and throwing
+  or smashing in flight) are switched off in beta 8 while their throw damage, carry pose and held-button pickup are
+  finished: builds no longer write `[Game] TelekinesisRule=xml1` (`--telekinesis xml1` keeps it for test builds) and
+  write `[Game] Xml1FlyingCarry=0` beside `Xml1GrabCarry=xml1` (`--flying-carry xml1` leaves it out). Since candidate
+  080i the first game's guard decide (`GuardDecideRule`, rule 46 bit 1024) is off too: in the 10-26 hand test a real
+  Guard press (pad X / keyboard E) with it did nothing at all - no grab, no pickup - so builds no longer write
+  `[Game] GuardDecideRule=xml1` (`--guard-decide xml1` keeps it for test builds) and Guard grabs enemies and picks up
+  objects as in 0.4.0 (XML2's guard decide). Juggernaut's grab, the flying charge and XML1's flight upkeep stay on.
+  The builder refuses a DLL without the `Xml1FlyingCarry` key or its install line (080g and older would install the
+  carry).
+- **Builder: a retail `XMen2.exe` touched by a 4 GB patcher is accepted.** The install's exe was refused
+  (`E_XML2_UNKNOWN_EXE`) when a large-address-aware patch or a checksum rewrite had changed its header. The builder
+  now identifies the retail exe by its size and a hash with the large-address-aware flag and the PE checksum zeroed
+  (the md5 check stays); any other difference is still refused, and the message now says whether the code differs
+  from retail or it is a different build.
+- **Beta 8: the first game's animation enums.** `--anim-enums xml1` is the default (the flying carry needs it;
+  `--grab-carry xml2` builds may turn it off): the 21 XML1 carry / Juggernaut-grab clips are transplanted from your
+  XML1 disc into `Actors/common.IGB`, `Data/shared_anims` gains their 23 mappings, `moveset_flying` gains XML1's carry
+  nodes and XML1's `flying` (no per-second cost: XML2 Fix charges XML1's upkeep), and `[Limits] AnimEnums=512`
+  (rule 48) is written; the DLL must carry the matching AnimEnums table (SPEC 107).
+- **Beta 8: Juggernaut grabs again.** His two fighting records (JuggernautFlashback, JuggernautAct3) carry the hidden
+  `grab` talent every hero has: XMen2.exe's guard decide grabs only with a positive `grab_scale_dmg` (0x4ec3c6), a
+  gate the first game does not have.
+- **Beta 8: nine more shared moves.** Builds write the wave C keys = `xml1` (rule 46): the jump attack's and flying
+  charge's damage (`values.xmlb`'s L3 row, which the conversion keeps), Colossus's charge, Beast's bounce, the
+  fastball, idle/bored animations, animation speed and phase for scaled characters and Nightcrawler's teleport
+  visibility. Since candidate 080d also `GuardDecideRule=xml1` (rule 46 bit 1024: the guard decide's pickups and ally
+  throws and the acrobats' wall lunge; for test builds only since 080i, `--guard-decide xml1`) and, for test builds only
+  since 080h (`--telekinesis xml1`), `TelekinesisRule=xml1` (bit 512: Phoenix's telekinesis with XML1's targets, hold,
+  damage and tk levels), written only with `Xml1GrabCarry=xml1` (they need its grab lifecycle); the builder refuses a
+  DLL without the keys it writes (080c and older). Since candidate 080e the builder also refuses a DLL whose telekinesis
+  still looks its sounds up through the Xbox slot (080d: crashed at the first hold) or whose flying carry re-enters
+  its own node every frame (080c / 080d: the carried hero never followed); the two install lines are the markers.
+  Since candidate 080g it also refuses a DLL whose still telekinesis throw divides by zero, whose tapped guard never
+  exits, whose Colossus charge reads its damage from the struck soldier (no damage) or whose thrown bodies skip the
+  world-impact damage and carry the victim on the synthetic bones (080f and older; XML2 Fix fix3's four install lines).
+- **Beta 8: room for the first game's sounds, animations and characters** (since candidate 080d). Builds with the
+  XML1 animation enums also write `[Limits] CharSounds=127` (XML2 Fix rule 49: 127 character sound sets instead of 16),
+  `MotionPool=22528` (rule 51: the animation motion pool 500 -> 22,528, each character bounded to 176 clips) and
+  `ResidentStats=320` (rule 50: 320 resident character stat records instead of 31, NPC payloads with them); the builder
+  requires each key and its rule's install line in the DLL. Rebuilding with `--anim-enums off` drops all three.
+- **Beta 8, opt-in: actor pools.** `--actor-pools 124` writes `[Limits] ActorPools=124` (XML2 Fix rule 44: path,
+  shadow and delayed-damage pools 32 -> 124). Off by default until its live runs pass.
+- **Beta 8: the HAARP officer's aura** plays the original's art (`physical_resistant_share`).
+- **Fixed: GRSO Officer and Captain had no gun moves or grenades** (also in 0.4.0). XMen2.exe keeps only 31
+  characters of a character's powerstyle name, and the builder generated longer ones for these two
+  (`x1_ps_grso_m_nullifier_incendiary`, `x1_ps_grso_knockback_gun_flashbang`): the engine asked for files that did not
+  exist, so the Officer lost his nullifier gun moves and grenade and the Captain his knockback gun moves, boost and
+  grenade. A generated style name over 31 characters now drops the `ps_` of its prefix
+  (`x1_grso_m_nullifier_incendiary`, `x1_grso_knockback_gun_flashbang`); shorter names are unchanged. Validator V5
+  refuses any herostat / npcstat string longer than the width the engine keeps of it, and V43 any style file name over
+  31 characters.
+- **Reviving a hero costs what it did in the first game** (as in 0.4.0): 200 / 800 / 1,800 / 3,200 / 5,000 Tech Bits
+  by team level band; beta 7 charged far more. The build's `[Game] RevivalCost=xml1` is unchanged; XML2 Fix
+  1.9.0-beta.1 (and 1.8.0) charge X-Men Legends I's 200 x G^2, G = min(5, highest roster level / 10 + 1) (rule 10
+  revision 3).
+- **Release identity:** content version 28, catalogue revision 7, lobby token `LC37` (0.4.0 and beta 7: 27 / `LC36`).
+- The builder requires XML2 Fix `>=1.9.0-beta.1` (a 1.8.0 fix, beta 7 or stable, is refused by name: it knows none of
+  the new keys and runs rule 16 as revision 11; the 1.9.0 DLL's `NPR14` marker shows revision 14).
+
 ## v0.4.0 - content version 27 (needs XML2 Fix 1.8.0)
 
 Legends Classic 0.4.0 is the first stable release since 0.2.5. It gathers the seven 0.4.0 betas (0.3.0-beta.1 to

@@ -17,6 +17,9 @@ makes no network connections.
 > watchers), the classic look and enemies that fight like the first game. Update Ultimate Legends to **0.4.0
 > first**, then **Rebuild**, then **Play**. All online players need matching builds. Online was tested on one PC
 > with two instances; see [Known limitations](#known-limitations).
+> **Beta: 0.4.1-beta.1** (the port's beta 8, with XML2 Fix 1.9.0-beta.1, the launcher's Beta channel): the first
+> game's bosses, moves and grabs, bigger engine limits and 4 GB of memory, saved rooms kept after updating, Colossus's
+> charge and the GRSO guns and grenades; see the [CHANGELOG](CHANGELOG.md). Beta 8 and 0.4.0 games refuse each other.
 > Known bugs and what is next: [Status](#status), [CHANGELOG](CHANGELOG.md) and [Roadmap](#roadmap).
 > Help and bug reports: the [community Discord](https://discord.gg/tFxwHtZv8k).
 
@@ -132,6 +135,23 @@ Everyone needs matching 0.4.0 builds, XML2 Fix >=1.8.0 and Test mode off; 0.2.x 
 Public games connect directly, so players can see each other's internet address. The broker caps each internet
 address at two public rooms and two seats in other people's rooms. Normal **Play** supports LAN / Connect by IP.
 See [the online guide](docs/ONLINE.md) for full steps, privacy, limits and messages.
+
+## Additions, not fidelity
+
+Legends Classic aims to play like the first game, and the rest of this page says where it does not. The items below
+are the opposite case: things the first game never had. They are modernisation, they are not part of what is being
+matched to the original, and none of them counts as a fidelity claim.
+
+- **Online co-op** for up to four players (see [Play online](#play-online)): codes, public games, drop-in at the next
+  level change, Connect by IP and LAN search. The first game was local-only. Joiners must run matching builds.
+- **Solo-segment watchers**: players without a hero watch a solo story segment and regain control afterwards. This
+  exists because of online play.
+- **A 60 frames-per-second online rate** (`[Online] TickRate`) and the larger engine limits the port needs (model
+  pools, object capacity). They change how much the engine can hold, not what the first game's rules do.
+- **Display options**: borderless, windowed or exclusive fullscreen at your desktop's resolution and refresh rate, with
+  anti-aliasing.
+- **Saves of their own** (`Documents\Activision\X-Men Legends`, the port's save format), so the first game never
+  touches X-Men Legends II's saves.
 
 ## Saves
 
@@ -296,6 +316,7 @@ the game.
 
 | Builder | Content version | Needs xml2-fix | Notes |
 |---|---|---|---|
+| 0.4.1-beta.1 | 28 | 1.9.0-beta.1 | beta 8: the first game's bosses (`[Game] Xml1Bosses`, rule 40), moves (rules 38, 39, 42, 43, 46), Juggernaut's grab (`Xml1GrabCarry=xml1` with `Xml1FlyingCarry=0`, rule 45 revision 3), damage rounding (rule 41), raised limits (IGB cache, model handles, character sounds, motion pool, resident stats, animation enums) and the large-address-aware exe, the save-compatibility ledger rows, the GRSO style names, the classic objectives page; telekinesis, the XML1 guard decide and the flying carry off (next beta); catalogue 7 / LC37; refuses 1.8.0 |
 | 0.4.0 | 27 | 1.8.0 | online codes, public browser, drop-in ON, solo watchers; the classic look (`[Game] ClassicHud=xml1`, `ClassicCodex=1`, beta 5: needs 1.8.0-beta.5); the officer's weapon brain and rule 16 revision 10 (`[Game] NpcSemiAuto=xml1`, beta 6: needs 1.8.0-beta.6), no small-map frame; every gun NPC's weapon brain with the XML1 bullet trace timer (schema 4 rows), rule 16 revision 11, one-sided walls in the XML1 zones (`[Game] WorldBackfaces=xml1`, rule 30) and the "Alison" label (`[Game] ClassicSpeakers=1`, beta 7: needs 1.8.0-beta.7); the first game's revival price (XML2 Fix 1.8.0, rule 10 revision 3); catalogue 7 / LC36 (beta 6: content 26 / LC35; beta 5: content 25 / LC34; betas 1-4: content 24 / LC33); launcher 0.4.0 for Online; matching peers required |
 | 0.2.5 | 23 | 1.7.1 | the bedroom items' pictures in the first game's picture window (`[Game] PersonalItemPicture=window`, #54); heroes re-stunned by every stun hit (`[Game] StunRule=xml1`, rule 18 revision 3, #101); catalogue 7 / LC32; both PCs need this pair |
 | 0.2.4 | 22 | 1.7.0 | Toad at HAARP (#105); colored enemy resistance text (`[Game] ResistanceDisplay=xml1`); co-op conversations (`[Game] OnlineConversations=lockstep`, rule 27); catalogue 7 / LC31; both PCs need this pair |

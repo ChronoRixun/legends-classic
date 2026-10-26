@@ -16,10 +16,25 @@ PLAYERS_SELECT = 'ui/models/lc_pda_players_select'
 OBJECTIVES_PANEL = 'ui/models/lc_objectives_panel'
 OBJECTIVES_ICON = 'ui/models/lc_objectives_icon'
 OBJECTIVES_FOCUS = 'ui/models/lc_objectives_focus'
-# PDA draws the 32-unit objective picture from a fixed upper-left inset, rather
-# than at the model origin. Centre a square frame on that picture. The native
-# selector's larger hit rectangle is independent and remains unchanged.
-OBJECTIVES_PICTURE_FRAME = (-48, 0, -4, 44)
+# XMen2.exe draws slot n's objective picture (n = 0..6) at a FIXED virtual-screen
+# point, not at its selector: centre (36, 346 - 45 n), 34 units square
+# (0x5cda36 imul 0x2d, 0x5cda3c 0x15a, 0x5cda43 34.0, 0x5cda84 36.0; the selector
+# item only gives the picture its depth). Each selector anchor therefore sits on
+# its slot's picture centre, with a square frame and hit box centred there.
+PDA_PICTURE_X, PDA_PICTURE_TOP, PDA_PICTURE_STEP, PDA_PICTURE_SIZE = 36, 346, 45, 34
+OBJECTIVES_PICTURE_FRAME = (-22, -22, 22, 22)
+# The first game's objectives screen (captured on the Xbox original) is an inset
+# honeycomb panel with its Back prompt in a separate bar 30..56 units above the bottom
+# edge. The PDA keeps a full-width panel for the fixed picture column; its bottom
+# strip rises off the screen edge towards that bar, as far as slot 7's frame (z 54)
+# allows, and stays clear of a desktop taskbar shown over a borderless window.
+OBJECTIVES_PANEL_RECT = (0, 14, 512, 384)
+PROMPT_Z = 33
+
+
+def picture_centre(slot):
+    """virtual-screen centre of the engine's objective picture for selector slot 0..6"""
+    return PDA_PICTURE_X, PDA_PICTURE_TOP - PDA_PICTURE_STEP * slot
 # The retail definition itself names these two optional decorative anchors that
 # are absent from its scene. Preserve that native fallback; neither is focusable.
 OPTIONAL_ANCHORS = ('option05_light', 'object_helpbar')
@@ -68,18 +83,22 @@ def pause_scene(data, native_data=None):
     native = M.place_anchors(native, objectives_layout())
     merged, report['attachment'] = S.attach(native, artwork)
     merged = M.place_anchors(merged, {
-        f'desctext{i}': ((x, -150, 16), (-70, -10, 70, 10))
+        f'desctext{i}': ((x, -150, PROMPT_Z), (-70, -10, 70, 10))
         for i, x in ((1, 80), (2, 232), (3, 300), (4, 410), (5, 450))})
     return merged, report
 
 
 def objectives_layout():
+    left, bottom, right, top = OBJECTIVES_PANEL_RECT
+    cx, cz, hw, hh = (left + right) / 2, (bottom + top) / 2, (right - left) / 2, (top - bottom) / 2
     layout = {
-        'object_screen': ((256, -80, 192), (-256, -192, 256, 192)),
-        'label_objectives': ((103, -120, 355), (-69, -9, 69, 9)),
+        'object_screen': ((cx, -80, cz), (-hw, -hh, hw, hh)),
+        # Left-aligned title to the right of the picture column (slot 1's frame is x 14..58, z 324..368).
+        'label_objectives': ((139, -120, 355), (-69, -9, 69, 9)),
         'object_name': ((288, -120, 313), (-174, -9, 174, 9)),
         'object_desc': ((288, -120, 263), (-174, -34, 174, 34)),
-        'object_steps': ((288, -120, 132), (-174, -88, 174, 88)),
+        # Above the panel's bottom strip (it ends about 38 units above the panel's bottom edge).
+        'object_steps': ((288, -120, 138), (-174, -82, 174, 82)),
     }
     # The native refresh restores hinge models/visibility after XML hiding.
     # Detach their animation and retire their anchors outside the menu view.
@@ -89,10 +108,58 @@ def objectives_layout():
         for suffix in ('bracket', 'light'):
             layout[f'icon{i:02d}_{suffix}'] = ((-4096, -80, -4096), (-1, -1, 1, 1))
     for i in range(1, 8):
+        x, z = picture_centre(i - 1)
         for suffix in ('', '_focus', '_current'):
-            layout[f'icon{i:02d}' + suffix] = ((62, -125 if suffix else -120, 306 - (i - 1) * 36),
-                                               (-30, -15, 30, 15))
+            layout[f'icon{i:02d}' + suffix] = ((x, -125 if suffix else -120, z), OBJECTIVES_PICTURE_FRAME)
     return layout
+
+
+def objectives_layout_problems(layout=None):
+    """Each selector frame holds its slot's engine-drawn picture; frames, title and
+    texts stay apart and inside the panel, above its bottom strip."""
+    layout = objectives_layout() if layout is None else layout
+    problems = []
+
+    def rect(name):
+        (x, _, z), (l, b, r, t) = layout[name]
+        return x + l, z + b, x + r, z + t
+
+    def overlap(a, b):
+        return a[0] < b[2] and b[0] < a[2] and a[1] < b[3] and b[1] < a[3]
+
+    panel = rect('object_screen')
+    if any(abs(a - b) > 1e-6 for a, b in zip(panel, OBJECTIVES_PANEL_RECT)):
+        problems.append('objective panel is not the classic panel rectangle')
+    if panel[0] < 0 or panel[1] < 0 or panel[2] > 512 or panel[3] > 384:
+        problems.append('objective panel leaves the 4:3 virtual screen')
+    strip_top = panel[1] + 38
+    frames = []
+    for slot in range(7):
+        name = f'icon{slot + 1:02d}'
+        frame = rect(name)
+        px, pz = picture_centre(slot)
+        half = PDA_PICTURE_SIZE / 2
+        if not (frame[0] <= px - half and px + half <= frame[2] and frame[1] <= pz - half and pz + half <= frame[3]):
+            problems.append(f'{name} frame misses its engine-drawn picture')
+        for suffix in ('_focus', '_current'):
+            if rect(name + suffix) != frame:
+                problems.append(f'{name}{suffix} is not on its selector frame')
+        if frame[1] < strip_top or frame[3] > panel[3]:
+            problems.append(f'{name} frame leaves the panel interior')
+        frames.append((name, frame))
+    for i, (name, frame) in enumerate(frames):
+        for other, second in frames[i + 1:]:
+            if overlap(frame, second):
+                problems.append(f'{name} and {other} frames overlap')
+    texts = ('label_objectives', 'object_name', 'object_desc', 'object_steps')
+    for text in texts:
+        box = rect(text)
+        if box[1] < strip_top or box[3] > panel[3] or box[0] < panel[0] or box[2] > panel[2]:
+            problems.append(f'{text} leaves the panel interior')
+        for name, frame in frames:
+            if overlap(box, frame):
+                problems.append(f'{text} overlaps the {name} frame')
+    return problems
 
 
 def selector_problems(data):
@@ -236,8 +303,9 @@ def write(ctx):
     players_frame, report['players_frame'] = M.fit_flat_panel(dialog.read_bytes(), (-147, -164, 147, 65), opaque=True)
     ctx.write_bytes(PLAYERS_PANEL + '.IGB', players_frame,
                     source='frontend:classic opaque frame around native player list/textbox')
+    _, (pl, pb, pr, pt) = objectives_layout()['object_screen']
     objective_frame, report['objectives_frame'] = M.fit_flat_panel(
-        dialog.read_bytes(), (-256, -192, 256, 192), opaque=True)
+        dialog.read_bytes(), (pl, pb, pr, pt), opaque=True)
     ctx.write_bytes(OBJECTIVES_PANEL + '.IGB', objective_frame,
                     source='frontend:full-screen classic objective frame')
     icon_frame, _ = M.fit_flat_panel(dialog.read_bytes(), OBJECTIVES_PICTURE_FRAME, border=5, opaque=True)

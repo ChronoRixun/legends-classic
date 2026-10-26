@@ -194,7 +194,8 @@ def test_ini_keys_only_for_a_balance_build_with_the_switch_on():
             assert keys['Balance'] == {'EnemyHealthPerBody': '10', 'HeroHealthPerBody': '2.5', 'HeroStatScale': str(H.STAT_SCALE),
                                        'NativeStatHeroes': 'ProfXAstral,ProfXGladiator', 'StrengthBonus': '0.1',
                                        'MindBonus': '0.1', 'MightBonus': '0.05', 'PowerAttacks': 'xml1',
-                                       'HitChance': 'xml1', 'Rounding': 'xml1', 'DamageRolls': 'xml1'}
+                                       'HitChance': 'xml1', 'Rounding': 'xml1', 'DamageRolls': 'xml1',
+                                       'ReceiveRounding': 'xml1', 'DamageCap': 'xml1'}
             assert set(keys['Balance']) <= set(FI.port_owned()['Balance'])
             # a build that stops being a balance build drops the section's keys, tuning keys included
             gone = FI.dropped_keys(FI.port_keys(plain))['Balance']

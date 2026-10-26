@@ -576,6 +576,73 @@ def resist_rewrite(x2_talent, x1_talent):
     return rewritten, problems
 
 
+# C4 (green-shield): the HAARP officer's physical_resistant_share aura. XML1 names two effects on that talent: the
+# recipients' swirl (powerups/aura_physical, on the shared powerup) and the officer's own ripple/smoke
+# (powerups/aura_physical_src, on the apply_self powerup). XMen2.exe's talent of the same name plays its own
+# base/powerup/aura/aura_physical_loop on both powerups (fxlevel 1 and 2). Only those references change: the
+# modifiers, radius, life and death cleanup stay as above. XML1's two files ship in permanent.PKGB (XML1-only
+# entries, zones.build_permanent), so no package change is needed. Only the physical aura is listed: green-shield
+# observed and matched that one in the original; the energy and mental auras use the same mechanism and can be added
+# here once someone has looked at them.
+X1_AURA_FX_TALENTS = frozenset({'physical_resistant_share'})
+
+
+def x1_aura_effects(x1_talent):
+    """XML1 <Talent> -> the effect names (relative to effects/, no extension) of its activepowerups, in document order."""
+    out = []
+    if x1_talent is None:
+        return out
+    for ap in x1_talent.iter():
+        if not isinstance(ap.tag, str) or ap.tag.lower() != 'activepowerup':
+            continue
+        e = (_lower(ap).get('effect') or '').strip().replace(chr(92), '/')
+        if not e or e.lower() in ('none', 'true', 'false'):
+            continue
+        e = e[:-4] if e.lower().endswith('.xml') else e
+        e = e[len('effects/'):] if e.lower().startswith('effects/') else e
+        out.append(e)
+    return out
+
+
+def _primary_fx(x2_talent):
+    return [f for f in x2_talent.iter() if isinstance(f.tag, str) and f.tag.lower() == 'special_fx'
+            and (f.get('how_used') or '').lower() == 'primary']
+
+
+def aura_fx_rewrite(x2_talent, x1_talent):
+    """In place on one XMen2.exe shared talent: for a name in X1_AURA_FX_TALENTS the primary <special_fx> of each
+    powerup takes XML1's effect of the same position (the shared powerup's, then the apply_self one's) and loses
+    fxlevel (XML1 has none; 0 is the default). Idempotent. Returns (rewritten, problems)."""
+    if x2_talent is None or (x2_talent.get('name') or '').lower() not in X1_AURA_FX_TALENTS:
+        return 0, []
+    name = x2_talent.get('name')
+    want = x1_aura_effects(x1_talent)
+    fx = _primary_fx(x2_talent)
+    if not want:
+        return 0, [f'{name}: XML1 names no aura effects']
+    if len(fx) != len(want):
+        return 0, [f'{name}: {len(fx)} primary effects but XML1 names {len(want)}']
+    n = 0
+    for f, e in zip(fx, want):
+        if f.get('effect') != e or 'fxlevel' in f.attrib:
+            f.set('effect', e)
+            f.attrib.pop('fxlevel', None)
+            n += 1
+    return n, []
+
+
+def aura_fx_problems(out_talent, x1_talent):
+    """the validator's view: [] when the talent's primary effects are XML1's, in order, with no fxlevel."""
+    if out_talent is None or (out_talent.get('name') or '').lower() not in X1_AURA_FX_TALENTS:
+        return []
+    name = out_talent.get('name')
+    want = x1_aura_effects(x1_talent)
+    got = [(f.get('effect'), f.get('fxlevel')) for f in _primary_fx(out_talent)]
+    if got != [(e, None) for e in want]:
+        return [f'{name}: aura effects {got} != XML1 {want} (no fxlevel)']
+    return []
+
+
 def resist_problems(out_talent, x1_talent):
     """the validator's view of one <out> definition: [] when it carries every XML1 resistance row in the scoped
     form and no resist affecter of those types, else the reasons."""
@@ -886,4 +953,12 @@ def v_resist_talents(v, ck):
             checked += 1
             for msg in resist_problems(d, src):
                 ck.error(f'shared_talents{ext} {msg}')
+            for msg in aura_fx_problems(d, src):
+                ck.error(f'shared_talents{ext} {msg}')
+            if (d.get('name') or '').lower() in X1_AURA_FX_TALENTS:
+                for e in x1_aura_effects(src):
+                    if not v.exists(f'effects/{e}.xmlb'):
+                        ck.error(f'shared_talents{ext} {d.get("name")}: effect file effects/{e}.xmlb missing from the build')
+                    elif not any((x.get('filename') or '') == e for x in (v.tree('packages/generated/maps/package/permanent.pkgb') or [])):
+                        ck.warn(f'shared_talents{ext} {d.get("name")}: effect {e} is not listed in permanent.PKGB')
     ck.set('resist_talents_checked', checked)

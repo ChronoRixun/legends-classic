@@ -110,7 +110,7 @@ def ini_text(mode, width, height, pipe, xml1_opening=True, save_folder=None, lim
     if limits:
         lines += ['[Limits]'] + [f'{k}={v}' for k, v in FI.LIMITS.items()] + ['']
         # the bigger model pools every shipped build has (fix_ini.MODEL_POOLS; xml2-fix 1.8.0-beta.2, rule 28)
-        lines += ['[Engine]', f'ModelPools={FI.MODEL_POOLS}', '']
+        lines += ['[Engine]', f'ModelPools={FI.MODEL_POOLS}', f'ModelHandles={FI.MODEL_HANDLES}', '']
     if balance:
         # a balance build (xml1build.balance): the first game's combat numbers through xml2-fix [Balance]
         lines += ['[Balance]'] + [f'{k}={v}' for k, v in (balance_keys or FI.balance_keys()).items()] + ['']

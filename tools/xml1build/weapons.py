@@ -55,11 +55,50 @@ AI_REUSE = {'bullet': '3', 'beam': '3', 'projectile': '2.5', 'flame': '4'}
 # must not make it reject XML1's pain/stun reactions; priority is not AI selection weight.
 
 
+# The engine keeps a fixed number of characters of each CStats string it copies (XMen2.exe's stats parser 0x4b9c40):
+# the 32-byte setter 0x43a690 (strncpy 0x20, NUL forced at byte 31) for powerstyle (+0x1b0), moveset1 (+0x1d0),
+# characteranims (+0x1f0), footstepfx (+0x210) and sounddir (+0x230); strncpy 0x20 / 0x1f for name (+0x150) and
+# charactername (+0x170); the 20-byte setter 0x4b7f30 (NUL forced at byte 19) for power1..power4 (+0xc4 + 0x15 n).
+# A longer value is cut silently: powerstyle then names a file that does not exist (data/powerstyles/<cut name>),
+# the engine's style load fails and the character loses the whole style (GRSO Officer / Captain, beta 8).
+STYLE_NAME_MAX = 31
+STATS_STRING_MAX = {
+    'name': 31, 'charactername': 31, 'powerstyle': 31, 'moveset1': 31, 'characteranims': 31, 'footstepfx': 31,
+    'sounddir': 31, 'power1': 19, 'power2': 19, 'power3': 19, 'power4': 19,
+}
+
+
+def fit_style_name(name: str, limit: int = STYLE_NAME_MAX) -> str:
+    """A generated style name the engine keeps whole: the name itself when it fits, else the same name without
+    the 'ps_' of its 'x1_ps_<base>' prefix ('x1_ps_grso_knockback_gun_flashbang' -> 'x1_grso_knockback_gun_flashbang').
+    The weapon and grenade suffixes (what variant_grenade and the V5 / V43 checks parse) stay intact, short names
+    are returned unchanged (so existing data keeps its identity), and the result is a pure function of the name.
+    A name that still exceeds `limit` is returned as is: callers report it (Characters.weapon_style) and V5 refuses
+    it, rather than let the engine truncate it."""
+    name = name.lower()
+    if len(name) > limit and name.startswith('x1_ps_'):
+        name = 'x1_' + name[6:]
+    return name
+
+
+def stats_string_overflows(stats_elements):
+    """[(element, attribute, value, width)] for every stats attribute whose value is longer than the fixed width
+    XMen2.exe keeps of it (STATS_STRING_MAX; `name` is the validator's own, older check and is skipped)."""
+    out = []
+    for el in stats_elements:
+        for attr, val in el.attrib.items():
+            width = STATS_STRING_MAX.get(attr.lower())
+            if width is not None and attr.lower() != 'name' and len(val) > width:
+                out.append((el, attr, val, width))
+    return out
+
+
 def variant_name(mapped_style: str, weapon_name: str) -> str:
-    """'ps_grso' + 'wp_mp5' -> 'x1_ps_grso_mp5' (a mapped 'x1_ps_x' keeps its prefix once)."""
+    """'ps_grso' + 'wp_mp5' -> 'x1_ps_grso_mp5' (a mapped 'x1_ps_x' keeps its prefix once; a name over the engine's
+    31 characters loses the 'ps_', fit_style_name)."""
     base = mapped_style[3:] if mapped_style.startswith('x1_') else mapped_style
     wp = weapon_name[3:] if weapon_name.lower().startswith('wp_') else weapon_name
-    return f'x1_{base}_{wp}'.lower()
+    return fit_style_name(f'x1_{base}_{wp}')
 
 
 # The thrown grenade (issue #36): XML1's moveset_grenade hardcodes entity="grenade" and default.xbe chose the
@@ -82,7 +121,7 @@ GRENADE_PRIORITY = '9'                # retained auxiliary-copy policy; separate
 def grenade_variant_name(mapped_style: str, grenade: str) -> str:
     """'moveset_grenade' + 'flashbang' -> 'x1_moveset_grenade_flashbang' (a mapped 'x1_foo' keeps its prefix once)."""
     base = mapped_style[3:] if mapped_style.startswith('x1_') else mapped_style
-    return f'x1_{base}_{grenade}'.lower()
+    return fit_style_name(f'x1_{base}_{grenade}')
 
 
 def apply_grenade(root, grenade: str, where: str = '') -> collections.Counter:
@@ -114,8 +153,10 @@ def grenade_moveset_want(moveset1: str, weapon, override: str, map_fightstyle) -
 
 def variant_grenade_name(variant: str, grenade: str) -> str:
     """'x1_ps_grso_mp5' + 'flashbang' -> 'x1_ps_grso_mp5_flashbang' (the variant identity of a gun whose
-    effective grenade is not the default; the default keeps the plain SPEC 29 name)."""
-    return f'{variant}_{grenade}'.lower()
+    effective grenade is not the default; the default keeps the plain SPEC 29 name). Over the engine's 31 characters
+    the variant loses the 'ps_' of its x1_ps_ prefix (fit_style_name): 'x1_ps_grso_m_nullifier' + 'incendiary' ->
+    'x1_grso_m_nullifier_incendiary'."""
+    return fit_style_name(f'{variant}_{grenade}')
 
 
 def variant_grenade(variant: str, grenades) -> str:

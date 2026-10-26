@@ -60,6 +60,13 @@ def make_parser():
     p.add_argument('--main-menu-layout', choices=('classic', 'widescreen'), default='classic',
                    help='build: the classic main menu, centred by the game at every aspect '
                         '(widescreen: a retired name for classic)')
+    p.add_argument('--no-laa', dest='laa', action='store_const', const='off', default='on',
+                   help="build: leave the build's XMen2.exe the install's byte-identical copy (2 GB address space); "
+                        "by default the build's own copy is large-address-aware (4 GB on 64-bit Windows)")
+    p.add_argument('--anim-enums', dest='anim_enums', choices=('off', 'xml1'), default='xml1',
+                   help="build: XML1's 23 animation enums - the flying carry's and Juggernaut's grab clips from your "
+                        "disc, their mappings and XML1's carry nodes - and [Limits] AnimEnums=512 (needs an XML2 Fix "
+                        "with the AnimEnums table). On by default since 0.4.1-beta.1 (the grab lifecycle needs it)")
     p.add_argument('--no-ini', dest='no_ini', action='store_true', help='do not merge the port\'s keys into '
                                                                          'xml2-fix.ini (they are in the stamp)')
     p.add_argument('--allow-unknown-exe', dest='allow_unknown_exe', action='store_true',

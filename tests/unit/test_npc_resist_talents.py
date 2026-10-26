@@ -98,3 +98,38 @@ def test_talents_without_scoped_def_damage_rows_are_not_resistance_talents():
         assert NV.resist_rewrite(out, src) == (0, [])
         assert NV.resist_problems(out, src) == []
     assert affecters(out) == [{'attribute': 'resist_physical', 'level': '0.8'}]
+
+
+def test_physical_aura_points_at_the_original_effects_and_nothing_else_moves():
+    """C4: physical_resistant_share plays XML1's recipient swirl and officer ripple, not XMen2.exe's aura loop."""
+    src = x1_talent('physical_resistant_share',
+                    scoped('dmg_physical', effect='powerups/aura_physical', share_radius='120', share_life='1'),
+                    {'powerup': 'none', 'apply_self': 'true', 'effect': 'powerups/aura_physical_src'})
+    out = x2_talent('physical_resistant_share', (AURA, [{'attribute': 'resist_physical', 'level': '0.8'}], True),
+                    ({'life': '-1', 'remove_on_death': 'true'}, [], True))
+    for f, lv in zip(out.iter('special_fx'), ('1', '2')):
+        f.set('fxlevel', lv)
+    assert NV.x1_aura_effects(src) == ['powerups/aura_physical', 'powerups/aura_physical_src']
+    assert NV.aura_fx_problems(out, src)                      # the stock loop fails the validator
+    NV.resist_rewrite(out, src)
+    before = [(dict(p.attrib), [dict(a.attrib) for a in p.iter('affecter')]) for p in out.iter('powerup')]
+    assert NV.aura_fx_rewrite(out, src) == (2, [])
+    assert [dict(f.attrib) for f in out.iter('special_fx')] == [
+        {'effect': 'powerups/aura_physical', 'how_used': 'primary'},
+        {'effect': 'powerups/aura_physical_src', 'how_used': 'primary'}]
+    # modifiers, radius, life and death cleanup are untouched
+    assert before == [(dict(p.attrib), [dict(a.attrib) for a in p.iter('affecter')]) for p in out.iter('powerup')]
+    assert NV.aura_fx_problems(out, src) == [] and NV.resist_problems(out, src) == []
+    assert NV.aura_fx_rewrite(out, src) == (0, [])            # idempotent
+
+
+def test_aura_effects_only_touch_the_listed_talent_and_report_a_shape_mismatch():
+    src = x1_talent('sturdy_aura', scoped('dmg_physical', effect='made/up/aura'))
+    out = x2_talent('sturdy_aura', (AURA, [{'attribute': 'resist_physical', 'level': '0.8'}], True))
+    assert NV.aura_fx_rewrite(out, src) == (0, []) and NV.aura_fx_problems(out, src) == []
+    assert next(out.iter('special_fx')).get('effect') == 'made/up/aura_loop'
+    src2 = x1_talent('physical_resistant_share', scoped('dmg_physical', effect='powerups/aura_physical'))
+    one = x2_talent('physical_resistant_share', (AURA, [], True), ({'life': '-1'}, [], True))
+    n, problems = NV.aura_fx_rewrite(one, src2)
+    assert n == 0 and len(problems) == 1 and '2 primary effects' in problems[0]
+    assert NV.aura_fx_rewrite(one, None)[0] == 0

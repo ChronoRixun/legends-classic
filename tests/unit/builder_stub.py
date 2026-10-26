@@ -18,6 +18,7 @@ import sys
 from pathlib import Path
 
 from xml1build import common as C
+from xml1build import exe_flags as EF
 from xml1builder import manifest as M, resources as R
 from xml1builder.pipeline import RealPipeline
 
@@ -37,6 +38,7 @@ def pe32(image_base=0x400000, extra=b''):
     struct.pack_into('<I', b, 0x3C, 0x80)
     b[0x80:0x84] = b'PE\0\0'
     struct.pack_into('<H', b, 0x84, 0x14C)
+    struct.pack_into('<H', b, 0x96, 0x10F)              # characteristics as the retail exe's (no LAA)
     struct.pack_into('<H', b, 0x98, 0x10B)
     struct.pack_into('<I', b, 0xB4, image_base)
     return bytes(b) + extra
@@ -216,6 +218,10 @@ class StubPipeline(RealPipeline):
             self._checkpoint('write', rel)
         if self.corrupt_copy:
             p.write_bytes(b'damaged')
+        # the content module exe_flags (E12): the build's own XMen2.exe with the large-address-aware flag, from the
+        # install's exe (which stays as it is); --no-laa leaves the base sync's byte-identical copy
+        if getattr(job, 'laa', 'on') == 'on':
+            self._write(job, 'XMen2.exe', EF.with_laa((Path(job.xml2) / 'XMen2.exe').read_bytes()))
         failed = []
         if StubPipeline.module_fn is not None:            # (the class attribute: a plain function, not a method)
             ctx = C.BuildContext(Path(job.out), Path(job.xml2), sources=C.Sources.developer(Path(job.xml2)),
