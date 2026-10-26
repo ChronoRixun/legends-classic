@@ -1307,7 +1307,13 @@ class Validator:
                         ck.count('merged_banks')
             if ext == '.sfd' and e.get('overwrote_base'):
                 ck.error(f'{e["rel"]}: an XML1 movie replaced XML2 movie (collisions must get the x prefix)')
-            if e['owner'] == 'characters' and e.get('overwrote_base') and \
+            if e['owner'] == 'characters' and e.get('overwrote_base') and n == 'actors/common.igb' and \
+                    AE.mode(self.ctx) == 'xml1':
+                # SPEC 107: XML2's shared anim DB plus the 21 XML1 clips (igb_anim_merge verifies every XML2 item
+                # byte-identical at its old reference number); V7 checks the clips. Nothing of XML2's is replaced.
+                ck.count('anim_enums_common_igb')
+                ck.note(f'{e["rel"]}: XML2\'s shared animation database with the XML1 clips added (--anim-enums xml1)')
+            elif e['owner'] == 'characters' and e.get('overwrote_base') and \
                     re.match(r'(actors|hud|ui/hud/characters|ui/models/characters|textures/loading)/', n):
                 ck.error(f'{e["rel"]}: characters replaced an XML2 character asset (SPEC 5.1 forbids it)')
             if n.startswith('data/herostat.') and not n.endswith('.lcbind') and e['owner'] != 'heroes':
