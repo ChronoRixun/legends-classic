@@ -616,3 +616,14 @@ def test_the_validator_hooks_run_every_check_through_a_validator_object():
     ck = Check('V-MOVES', 'x')
     functools.partial(L3.VALIDATORS[0][2], off)(ck)
     assert ck.status == 'skipped' and not ck.counts
+
+
+def test_the_static_reports_witnesses_reproduce_on_a_finished_build():
+    """env-gated (LC_W3_SELFTEST_OUT = a finished 080c-era build folder; never public CI): the replay gives the design's
+    witnesses - styles 24, moves 306, largest style 108, events 831, Master Mold 2 at 585 retained nodes."""
+    import os
+    import unittest
+    out = os.environ.get('LC_W3_SELFTEST_OUT')
+    if not out or not (Path(out) / '_build' / 'zones_detail.json').is_file():
+        raise unittest.SkipTest('LC_W3_SELFTEST_OUT (a finished build folder) is not set')
+    assert L3.main(['--out', out]) == 0
