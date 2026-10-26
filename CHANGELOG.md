@@ -73,6 +73,14 @@ the beta 8 test guide.
 - **Beta 8, opt-in: actor pools.** `--actor-pools 124` writes `[Limits] ActorPools=124` (XML2 Fix rule 44: path,
   shadow and delayed-damage pools 32 -> 124). Off by default until its live runs pass.
 - **Beta 8: the HAARP officer's aura** plays the original's art (`physical_resistant_share`).
+- **Fixed: GRSO Officer and Captain had no gun moves or grenades** (also in 0.4.0). XMen2.exe keeps only 31
+  characters of a character's powerstyle name, and the builder generated longer ones for these two
+  (`x1_ps_grso_m_nullifier_incendiary`, `x1_ps_grso_knockback_gun_flashbang`): the engine asked for files that did not
+  exist, so the Officer lost his nullifier gun moves and grenade and the Captain his knockback gun moves, boost and
+  grenade. A generated style name over 31 characters now drops the `ps_` of its prefix
+  (`x1_grso_m_nullifier_incendiary`, `x1_grso_knockback_gun_flashbang`); shorter names are unchanged. Validator V5
+  refuses any herostat / npcstat string longer than the width the engine keeps of it, and V43 any style file name over
+  31 characters.
 - **Beta 8: reviving a hero costs what it did in the first game:** 200 / 800 / 1,800 / 3,200 / 5,000 Tech Bits by
   team level band; beta 7 charged far more. The build's `[Game] RevivalCost=xml1` is unchanged; XML2 Fix
   1.9.0-beta.1 (and 1.8.0) charge X-Men Legends I's 200 x G^2, G = min(5, highest roster level / 10 + 1) (rule 10
