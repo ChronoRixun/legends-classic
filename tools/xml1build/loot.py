@@ -34,6 +34,7 @@ from . import item_bonuses as IB
 OPTION = 'loot'
 CHOICES = ('off', 'xml1')
 CONSTRUCTION_CHOICES = ('zero-draw', 'one-roll')     # DESIGN 2.5: plan A, or the accepted native fallback (D7)
+DEF_DAMAGE_SCALE_CHOICES = IB.DEF_DAMAGE_SCALE_MODES  # DESIGN 12 D8: ('noop', 'resist'); noop = the original's behaviour
 NAME_PREFIX = 'lc_x1_'
 SIDECAR_REL = 'Data/x1economy.txt'
 SIDECAR_HEADER = 'x1economy'
@@ -131,12 +132,20 @@ def construction_fallback(x) -> bool:
     return str(getattr(_args(x), 'loot_construction', 'zero-draw') or 'zero-draw').lower() == 'one-roll'
 
 
+def def_damage_resist(x) -> bool:
+    """True when the build was asked for `--loot-def-damage-scale resist` (D8: the four dead `def_damage_scale` items get
+    their authored multiplier as a damage-resistance record). Default noop: the output is the original's, byte for byte."""
+    return str(getattr(_args(x), 'loot_def_damage_scale', 'noop') or 'noop').lower() == 'resist'
+
+
 def refusal(args) -> str | None:
     """why `--loot xml1` cannot be built with `args`, or None. The economy needs the W2 item limits (185 definitions,
     records over 512) and the XML1 front end (the Danger Room rewards)."""
     if not selected(args):
         if construction_fallback(args):
             return '--loot-construction one-roll needs --loot xml1'
+        if def_damage_resist(args):
+            return '--loot-def-damage-scale resist needs --loot xml1'
         return None
     if not w2_selected(args):
         return ('--loot xml1 needs the W2 save layout (--save-layout w2): the first game\'s economy has 185 item '
@@ -286,7 +295,7 @@ def convert_definitions(ctx, plan=None):
     out = []
     for it in plan.equipment:
         conv = IB.convert_equipment(ctx, it.element, name=it.identity, displayname=display_name(it, prefixes),
-                                    values=values)
+                                    values=values, def_damage_scale='resist' if def_damage_resist(ctx) else 'noop')
         if conv.item is None:
             raise ValueError(f'{it.name}: {conv.error}')
         out.append(Definition(it, conv))
@@ -599,6 +608,8 @@ def write_outputs(zones, items_root):
                   new=[d.element.get('name') for d in defs if not d.source.rebuilt],
                   rebuilt=[d.element.get('name') for d in defs if d.source.rebuilt],
                   placed=sorted(plan.placed), construction='one-roll' if construction_fallback(ctx) else 'zero-draw')
+    if def_damage_resist(ctx):          # recorded only when asked for: the default ledger keeps its bytes
+        ledger['def_damage_scale'] = 'resist'
     ctx.write_meta(REPORT_META, ledger)
     ctx.note(f'loot: {len(names)} definitions ({len(plan.new)} new, {len(plan.kept_dr)} rebuilt), {records} enhancement '
              f'records, sidecar {count} rows, approximations {dict(kinds)}')
@@ -854,8 +865,36 @@ def validate(v, ck):
     # 9. approximations both ways
     _approximations(v, ck, plan, top, items_root)
 
+    # 9b. D8: the four dead def_damage_scale items carry a damage-resistance record exactly when `resist` was asked for
+    _def_damage_scale(ctx, ck, plan, by_name, ledger)
+
     # 10. treasure entities in the converted maps
     ck.set('treasureent_placements', _treasure_count(v))
+
+
+RESIST_ITEMS = ('magnetos_helmet', 'shiar_mind_gem', 'shiar_body_shield', 'shiar_energy_armor')    # DESIGN 12 D8
+
+
+def _def_damage_scale(ctx, ck, plan, by_name, ledger):
+    resist = def_damage_resist(ctx)
+    recorded = ledger.get('def_damage_scale', 'noop')
+    if resist != (recorded == 'resist'):
+        ck.error(f'--loot-def-damage-scale is {"resist" if resist else "noop"} but _build/loot.json records {recorded!r}')
+    found = 0
+    for low in RESIST_ITEMS:
+        it = plan.by_lname.get(low)
+        c = by_name.get(it.identity.lower()) if it is not None else None
+        if c is None:
+            ck.error(f'{low}: not in Data/items')
+            continue
+        recs = [e for e in c.findall('enhancement')]
+        scoped = [e for e in recs if any(a.get('attribute') == 'def_damage_scope' for a in e.iter('affecter'))]
+        found += len(scoped)
+        if resist and len(scoped) != 1:
+            ck.error(f'{it.identity}: expected one damage-resistance record under resist, found {len(scoped)}')
+        if not resist and recs:
+            ck.error(f'{it.identity}: carries {len(recs)} records but its only bonus is the original no-op')
+    ck.set('d8_resist_records', found)
 
 
 def _plain_semantics(plan, by_name, ck):

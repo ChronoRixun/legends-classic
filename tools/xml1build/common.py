@@ -710,7 +710,7 @@ def args_for_out(out, base=None, **kw):
     keep = {k: b[k] for k in ('frontend', 'forced_teams', 'no_movies', 'newgame', 'blackbird', 'npc_scaling',
                               'tiles', 'rogue_decide', 'hero_roster', 'hero_icons', 'hero_bleed', 'start_zone', 'tour', 'xp_curve',
                               'buoys', 'main_menu_layout', 'harm_loop_startup', 'save_layout', 'loot',
-                              'loot_construction')
+                              'loot_construction', 'loot_def_damage_scale')
             if k in b and b[k] is not None}
     if 'frontend' not in b and b:
         keep['frontend'] = 'xml2'            # a build made before SPEC 21 had XML2's front end

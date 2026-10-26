@@ -81,7 +81,8 @@ def strings():
 def ctx_for(loot='xml1', save_layout='w2', frontend='xml1', root=None, **extra):
     root = root if root is not None else x1_items()
     ctx = SimpleNamespace(shared={}, args=SimpleNamespace(loot=loot, save_layout=save_layout, frontend=frontend,
-                                                          loot_construction=extra.get('construction', 'zero-draw')),
+                                                          loot_construction=extra.get('construction', 'zero-draw'),
+                                                          loot_def_damage_scale=extra.get('def_damage_scale', 'noop')),
                           read_x1_xml=lambda rel: strings() if rel.endswith('strings.eng') else root,
                           x1_values=values, notes=[], errors=[])
     ctx.note = ctx.notes.append
@@ -114,6 +115,9 @@ def test_refusal_matrix():
     assert L.refusal(ns(loot='xml1', save_layout='w2', frontend='xml1')) is None
     assert 'needs --loot xml1' in L.refusal(ns(loot='off', loot_construction='one-roll'))
     assert L.refusal(ns(loot='xml1', save_layout='w2', loot_construction='one-roll')) is None
+    assert 'needs --loot xml1' in L.refusal(ns(loot='off', loot_def_damage_scale='resist'))
+    assert L.refusal(ns(loot='off', loot_def_damage_scale='noop')) is None
+    assert L.refusal(ns(loot='xml1', save_layout='w2', loot_def_damage_scale='resist')) is None
     assert L.w2_selected(ns(save_layout='w2')) and not L.w2_selected(ns(save_layout='retail')) and not L.w2_selected(ns())
     assert L.selected(ns(loot='xml1')) and not L.selected(ns(loot='off')) and not L.selected(ns())
     assert L.selected(SimpleNamespace(args=ns(loot='xml1')))
@@ -122,7 +126,11 @@ def test_refusal_matrix():
 def test_builder_options_default_off_and_the_cli_refuses_without_w2():
     import build_xml1
     a = build_xml1.parse_args(['--out', 'invented_output'])
-    assert a.loot == 'off' and a.loot_construction == 'zero-draw'
+    assert a.loot == 'off' and a.loot_construction == 'zero-draw' and a.loot_def_damage_scale == 'noop'
+    a = build_xml1.parse_args(['--out', 'invented_output', '--save-layout', 'w2', '--loot', 'xml1',
+                               '--loot-def-damage-scale', 'resist'])
+    assert a.loot_def_damage_scale == 'resist' and L.def_damage_resist(a) and not L.def_damage_resist(SimpleNamespace())
+    assert build_xml1.CONTENT_OPTS['loot_def_damage_scale'] == ('zones', 'noop')
     a = build_xml1.parse_args(['--out', 'invented_output', '--save-layout', 'w2', '--loot', 'xml1'])
     assert a.loot == 'xml1'
     try:
@@ -360,6 +368,122 @@ def test_writing_the_outputs_registers_the_sidecar_and_both_approximation_copies
     led = meta['loot.json']
     assert led['rebuilt'] == ['REWARD_D'] and led['new'][0] == 'lc_x1_glove_a' and led['definitions'] == len(out) + 1
     assert led['sidecar']['count'] == L.parse_sidecar(written['Data/x1economy.txt'])[1]
+
+
+# ---------------------------------------------------------------------------------------------------- D8
+def d8_items():
+    """x1_items plus the dead-item shapes of DESIGN 12 D8 (invented names and values): a unique whose only bonus is the
+    unregistered def_damage_scale at 0.5 (damage-type scope), one at 0 (full immunity), and one that also has another bonus"""
+    root = x1_items()
+    for name, level, scope, extra in (('DEAD_HALF', '0.5', {'scope_damage': 'dmg_physical'}, ()),
+                                      ('DEAD_ZERO', '0', {'scope_damage': 'dmg_mental'}, ()),
+                                      ('MIXED_I', '0.8', {'scope_attack': 'beam'}, (pu('body', '1'),))):
+        e = ET.SubElement(root, 'item', {'name': name, 'type': 'equipment', 'unique': 'true', 'class': '0',
+                                         'group': '-1', 'displayname': name, 'description': 'invented ' + name.lower()})
+        e.extend(extra)
+        e.append(pu('def_damage_scale', level, **scope))
+    return root
+
+
+def d8_rows(mode):
+    root = d8_items()
+    ctx = ctx_for(root=root, def_damage_scale=mode)
+    zones = SimpleNamespace(ctx=ctx)
+    out, _ = L.apply_items(zones, root, legacy_table(ctx), [])
+    items_root = ET.Element('items')
+    items_root.extend(out)
+    return ctx, zones, items_root, L.approximation_rows(ctx, zones.loot_defs, items_root)
+
+
+def test_def_damage_scale_default_is_the_original_noop_byte_for_byte():
+    ctx0 = ctx_for(root=d8_items())
+    ctx1 = ctx_for(root=d8_items(), def_damage_scale='noop')
+    assert not L.def_damage_resist(ctx0) and not L.def_damage_resist(ctx1)
+    a = [ET.tostring(d.element) for d in L.convert_definitions(ctx0)]
+    b = [ET.tostring(d.element) for d in L.convert_definitions(ctx1)]
+    assert a == b
+    _, _, items_root, rows = d8_rows('noop')
+    for item in ('lc_x1_dead_half', 'lc_x1_dead_zero', 'lc_x1_mixed_i'):
+        r = [x for x in rows if x['item'] == item and x['bonus'] == 'def_damage_scale']
+        assert len(r) == 1 and r[0]['kind'] == 'noop-original' and r[0]['record'] is None
+        assert r[0]['family'] == 'original no-op'
+    top = {e.get('name'): e for e in items_root.iter('item')}
+    assert not top['lc_x1_dead_half'].findall('enhancement') and not top['lc_x1_dead_zero'].findall('enhancement')
+
+
+def test_def_damage_scale_resist_writes_the_authored_multiplier_for_the_dead_items_only():
+    _, _, noop_root, noop_rows = d8_rows('noop')
+    ctx, zones, items_root, rows = d8_rows('resist')
+    assert L.def_damage_resist(ctx)
+    top = {e.get('name'): e for e in items_root.iter('item')}
+    # the two dead items carry one scoped damage-resistance record each, scale form, authored value
+    for item, level, scope in (('lc_x1_dead_half', '0.5', ('scope_damage', 'dmg_physical')),
+                               ('lc_x1_dead_zero', '0', ('scope_damage', 'dmg_mental'))):
+        recs = top[item].findall('enhancement')
+        assert len(recs) == 1
+        aff = list(recs[0].iter('affecter'))
+        assert len(aff) == 1
+        assert aff[0].get('attribute') == 'def_damage_scope' and aff[0].get('affect_type') == 'scale'
+        assert aff[0].get('level') == level and aff[0].get(scope[0]) == scope[1]
+        assert IB.single_valued(recs[0]) and recs[0].get('description') == f'Damage taken x{level}'
+        r = [x for x in rows if x['item'] == item]
+        assert len(r) == 1 and r[0]['kind'] == 'bonus-approx' and r[0]['family'] == IB.RESIST_FAMILY
+        assert r[0]['record'] in L.record_numbers(items_root)[0][item] and 'D8' in r[0]['why']
+        assert 'def_damage_scope' in r[0]['port_value'] and 'def_damage_scale' in r[0]['bonus']
+    assert 'full immunity' in next(x for x in rows if x['item'] == 'lc_x1_dead_zero')['why']
+    assert 'full immunity' not in next(x for x in rows if x['item'] == 'lc_x1_dead_half')['why']
+    # an item with another bonus is not a dead item: its def_damage_scale stays the original's no-op
+    mixed = [x for x in rows if x['item'] == 'lc_x1_mixed_i' and x['bonus'] == 'def_damage_scale']
+    assert len(mixed) == 1 and mixed[0]['kind'] == 'noop-original'
+    # REWARD_D (strength + def_damage_scale) likewise
+    assert any(x['item'] == 'REWARD_D' and x['kind'] == 'noop-original' for x in rows)
+    # nothing else changed: every other item's records are the noop build's, and the table gained exactly 2 records
+    before = {x.get('name'): x for x in noop_root.iter('item')}
+    for name, el in top.items():
+        if name not in ('lc_x1_dead_half', 'lc_x1_dead_zero'):
+            assert [ET.tostring(e) for e in el.findall('enhancement')] == \
+                [ET.tostring(e) for e in before[name].findall('enhancement')]
+    assert L.record_numbers(items_root)[1] == L.record_numbers(noop_root)[1] + 2
+    noops = lambda rs: sum(1 for x in rs if x['kind'] == 'noop-original')                  # noqa: E731
+    assert noops(noop_rows) - noops(rows) == 2
+    # the markdown/JSON pair still equals itself with the new family
+    js = json.loads(L.approximations_json(rows))
+    assert L.approximations_md(js['rows']) == L.approximations_md(rows)
+
+
+def test_def_damage_scale_validator_check_follows_the_option():
+    class Ck:
+        def __init__(self):
+            self.errors, self.values = [], {}
+
+        def error(self, m):
+            self.errors.append(m)
+
+        def set(self, k, v):
+            self.values[k] = v
+
+    def run_check(option, built, recorded):
+        ctx, _, items_root, _ = d8_rows(built)
+        by_name = {(e.get('name') or '').lower(): e for e in items_root.iter('item')}
+        ck, plan = Ck(), ctx.shared['loot_plan']
+        saved = L.RESIST_ITEMS
+        L.RESIST_ITEMS = ('dead_half', 'dead_zero')                                    # the invented dead items
+        try:
+            L._def_damage_scale(ctx_for(root=d8_items(), def_damage_scale=option), ck, plan, by_name,
+                                {'def_damage_scale': recorded} if recorded else {})
+        finally:
+            L.RESIST_ITEMS = saved
+        return ck
+    ok = run_check('resist', 'resist', 'resist')
+    assert not ok.errors and ok.values['d8_resist_records'] == 2
+    ok = run_check('noop', 'noop', None)
+    assert not ok.errors and ok.values['d8_resist_records'] == 0
+    bad = run_check('resist', 'noop', 'resist')              # the option says resist but the table carries nothing
+    assert any('expected one damage-resistance record' in e for e in bad.errors)
+    bad = run_check('noop', 'resist', None)                  # records present although the build is noop
+    assert any('only bonus is the original no-op' in e for e in bad.errors)
+    bad = run_check('resist', 'resist', None)                # the ledger does not record the option
+    assert any('records' in e and 'noop' in e for e in bad.errors)
 
 
 # ---------------------------------------------------------------------------------------------------- the INI key

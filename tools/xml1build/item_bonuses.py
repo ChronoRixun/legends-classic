@@ -49,6 +49,7 @@ class Bonus:
     status: str                     # EXACT / APPROXIMATE / SOURCE_NOOP / ADAPTER / UNSUPPORTED
     reason: str
     enhancements: list = field(default_factory=list, repr=False)
+    family_name: str = ''            # overrides the family of the source powerup (the D8 resist records)
 
     def report(self):
         return {'bonus': self.powerup, 'status': self.status, 'reason': self.reason}
@@ -59,7 +60,7 @@ class Bonus:
 
     @property
     def family(self):
-        return FAMILY.get(self.powerup, 'other')
+        return self.family_name or FAMILY.get(self.powerup, 'other')
 
 
 @dataclass
@@ -217,8 +218,17 @@ def _callback(p, values, pw, no):
     return Bonus(pw, APPROXIMATE, reason, [e])
 
 
-def map_bonus(p, values=None):
-    """Map one permanent source bonus; reject unsupported semantics explicitly. Every record written is single-valued."""
+# D8 (DESIGN 12): `def_damage_scale` is never registered by the original's parser, so the four items whose only bonus it
+# is carried no working bonus in XML1. DEF_DAMAGE_SCALE_MODES: 'noop' (default; the original's behaviour, no record) or
+# 'resist' (the authored multiplier written as the PC damage-resistance record the source `def_damage` scale items
+# already use; every such record is a `bonus-approx` row).
+DEF_DAMAGE_SCALE_MODES = ('noop', 'resist')
+RESIST_FAMILY = 'defense (resist)'
+
+
+def map_bonus(p, values=None, resist=False):
+    """Map one permanent source bonus; reject unsupported semantics explicitly. Every record written is single-valued.
+    resist: write `def_damage_scale` as a damage-resistance record instead of the original's no-op (D8)."""
     from .frontend import STAT_WORDS, stat_scale
 
     p = copy.deepcopy(p)
@@ -274,16 +284,27 @@ def map_bonus(p, values=None):
             reason = 'XML1 final attack modifier moved to XML2 damage-construction stage; '
             reason += 'standalone contribution matches, but additive/scale combinations need not commute '
             reason += '(base 100, damage add 10, attack scale 1.2: 132 vs 130 before rounding)'
-    elif pw == 'def_damage_scale':
+    elif pw == 'def_damage_scale' and not resist:
         return Bonus(pw, SOURCE_NOOP, 'unregistered in original bonus table 0x44e8c8; preserve original no-op',
                      [_enhancement('Inactive source bonus', [{'attribute': 'none', 'level': '0'}], scope)])
-    elif pw == 'def_damage':
+    elif pw == 'def_damage' or pw == 'def_damage_scale':          # (the latter only with resist: D8)
+        resisted = pw == 'def_damage_scale'
+        if resisted:
+            mode = 'scale'                  # the authored value is a multiplier (0.5 = half the damage taken)
         attr = 'def_damage_scope' if scoped else 'def_damage'
         if len(nums) != 1:
             return no('cached unscoped defense does not preserve a random range' if not scoped
                       else 'a defense range cannot be a single-valued record')
         reason = 'subtract HP before multiplying; scoped form uses the combat-context query'
-        if mode == 'scale' or any(not n.is_integer() for n in nums):
+        if resisted:
+            status = APPROXIMATE
+            reason = ('owner option D8 (resist): the original never registers def_damage_scale (bonus table 0x44e8c8), '
+                      'so the item had no working bonus there; the authored multiplier is written as the PC scoped '
+                      'damage-resistance scale record (incoming damage of the scope x the value, the form the source '
+                      'def_damage scale items use)')
+            if nums[0] == 0:
+                reason += '; a multiplier of 0 is full immunity to the scope'
+        elif mode == 'scale' or any(not n.is_integer() for n in nums):
             status, reason = APPROXIMATE, 'same defense term; XML1 truncates damage to integer HP, '
             reason += 'XML2 keeps fractional HP (less than one HP per hit before later modifiers)'
     elif pw == 'critical' and mode == 'add' and not scoped and len(nums) == 1:
@@ -389,12 +410,12 @@ def map_bonus(p, values=None):
             text += f' up to {_fmt(cap[0])} percent health'
     elif pw == 'atk_knockback_scale':
         text = f'Attack knockback x{shown}'
-    elif pw == 'def_damage' and mode == 'scale':
+    elif pw in ('def_damage', 'def_damage_scale') and mode == 'scale':
         text = f'Damage taken x{shown}'
     enh = _enhancement(text, [aff] + extras, scope)
     if not single_valued(enh):
         return no('the converted record is not single-valued')
-    return Bonus(pw, status, reason, [enh])
+    return Bonus(pw, status, reason, [enh], RESIST_FAMILY if pw == 'def_damage_scale' else '')
 
 
 # ------------------------------------------------------------------------------------------ equipment definitions
@@ -403,11 +424,13 @@ OWN_SLOTS = 8
 OWN_ABSENT = 0xffff                  # the W2 sentinel for "no own record"
 
 
-def convert_equipment(ctx, source, *, name, displayname=None, values=None):
+def convert_equipment(ctx, source, *, name, displayname=None, values=None, def_damage_scale='noop'):
     """One source equipment definition -> (Conversion): an XML2 <item type="equipment"> named `name` whose children
     are the requirements and one enhancement per converted source powerup in source order (a source no-op keeps its
     explicit `none` record's place only when ``noop_records`` is true; the economy does not write one, as XML1 does
-    nothing there). Source cost / unique / class are copied as they are; text is filled by the caller."""
+    nothing there). Source cost / unique / class are copied as they are; text is filled by the caller.
+    def_damage_scale 'resist' (D8): an item whose every bonus is `def_damage_scale` (the four dead items) gets the
+    authored multiplier as a damage-resistance record; any other mode or item keeps the original's no-op."""
     if source.get('type', '').lower() != 'equipment':
         return Conversion(None, [], 'not equipment')
     cls = CLASS_MAP.get(source.get('class'))
@@ -432,7 +455,10 @@ def convert_equipment(ctx, source, *, name, displayname=None, values=None):
             attrs['item'] = attrs['item'].lower()
         ET.SubElement(item, 'require', attrs)
     values = values if values is not None else (ctx.x1_values() if ctx is not None else None)
-    bonuses = [map_bonus(p, values) for p in source.findall('activepowerup')]
+    powerups = source.findall('activepowerup')
+    resist = (def_damage_scale == 'resist' and bool(powerups)
+              and all((p.get('powerup') or p.get('POWERUP') or '').lower() == 'def_damage_scale' for p in powerups))
+    bonuses = [map_bonus(p, values, resist=resist) for p in powerups]
     for bonus in bonuses:
         if bonus.status == SOURCE_NOOP:
             continue                  # XML1 does nothing for it either: no record

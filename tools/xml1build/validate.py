@@ -5207,7 +5207,8 @@ def main(argv=None):
     args = C.default_args(out=a.out, base=a.base, no_movies=a.no_movies, start_zone=a.start_zone, tour=a.tour,
                           jobs=a.jobs, forced_teams=a.forced_teams, start_party=a.start_party, frontend=frontend,
                           buoys=getattr(recorded, 'buoys', None),   # SPEC 42: V22 checks the mode the build used
-                          **{k: getattr(recorded, k) for k in ('save_layout', 'loot', 'loot_construction')
+                          **{k: getattr(recorded, k) for k in ('save_layout', 'loot', 'loot_construction',
+                                                       'loot_def_damage_scale')
                              if hasattr(recorded, k)})   # V67 / V-LOOT check the options the build used
     reg = C.Registry.load(Path(a.out) / '_build' / 'registry.json')
     ctx = C.BuildContext(a.out, a.base, args=args, registry=reg)

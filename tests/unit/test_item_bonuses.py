@@ -99,6 +99,41 @@ def test_bonus_original_noops_are_explicit_and_do_not_create_immunity():
         assert r.status == IB.SOURCE_NOOP and r.kind == 'noop-original' and affecters(r)[0].get('attribute') == 'none'
 
 
+def test_bonus_def_damage_scale_resist_option_writes_the_pc_scoped_resistance_scale_record():
+    # D8: default (and resist=False) is the original no-op; resist=True is the scoped damage-resistance scale record
+    default = IB.map_bonus(bonus('def_damage_scale', '0.5', scope_damage='dmg_energy'))
+    assert default.status == IB.SOURCE_NOOP and default.kind == 'noop-original' and default.family == 'original no-op'
+    r = IB.map_bonus(bonus('def_damage_scale', '0.5', scope_damage='dmg_energy'), resist=True)
+    assert r.status == IB.APPROXIMATE and r.kind == 'bonus-approx' and r.family == IB.RESIST_FAMILY and r.reason
+    a = affecters(r)
+    assert len(a) == 1 and a[0].get('attribute') == 'def_damage_scope' and a[0].get('affect_type') == 'scale'
+    assert a[0].get('level') == '0.5' and a[0].get('scope_damage') == 'dmg_energy'
+    assert IB.single_valued(r.enhancements[0]) and r.enhancements[0].get('description') == 'Damage taken x0.5'
+    # the same record the source def_damage scale items already get (its authored form is the model)
+    twin = IB.map_bonus(bonus('def_damage', '0.5', affect_type='scale', scope_damage='dmg_energy'))
+    assert ET.tostring(twin.enhancements[0]) == ET.tostring(r.enhancements[0])
+    # an attack-type scope and the zero multiplier (full immunity) convert; a negative or a range does not
+    beam = IB.map_bonus(bonus('def_damage_scale', '0.8', scope_attack='beam'), resist=True)
+    assert beam.status == IB.APPROXIMATE and affecters(beam)[0].get('scope_attack') == 'beam'
+    zero = IB.map_bonus(bonus('def_damage_scale', '0', scope_damage='dmg_mental'), resist=True)
+    assert zero.status == IB.APPROXIMATE and 'full immunity' in zero.reason and affecters(zero)[0].get('level') == '0'
+    assert IB.map_bonus(bonus('def_damage_scale', '-1', scope_damage='dmg_mental'), resist=True).status == IB.UNSUPPORTED
+    assert IB.map_bonus(bonus('def_damage_scale', 'L7', scope_damage='dmg_mental'), values(), resist=True).status \
+        == IB.UNSUPPORTED
+    # def_stun stays the original no-op in both modes
+    assert IB.map_bonus(bonus('def_stun', '0'), resist=True).status == IB.SOURCE_NOOP
+
+
+def test_equipment_resist_applies_to_items_whose_only_bonus_is_def_damage_scale():
+    dead = source(bonus('def_damage_scale', '0.5', scope_damage='dmg_physical'))
+    mixed = source(bonus('def_damage_scale', '0.5', scope_damage='dmg_physical'), bonus('body', '1'))
+    assert not IB.convert_equipment(None, dead, name='x_dead', values=None).item.findall('enhancement')
+    on = IB.convert_equipment(None, dead, name='x_dead', values=None, def_damage_scale='resist')
+    assert len(on.item.findall('enhancement')) == 1 and on.bonuses[0].status == IB.APPROXIMATE
+    m = IB.convert_equipment(None, mixed, name='x_mixed', values=None, def_damage_scale='resist')
+    assert [b.status for b in m.bonuses] == [IB.SOURCE_NOOP, IB.APPROXIMATE] and len(m.item.findall('enhancement')) == 1
+
+
 def test_bonus_callbacks_use_the_shipped_pc_forms_not_a_pending_row():
     r = IB.map_bonus(bonus('special', 'L7', func_damage='damageaddattack', damagetype='dmg_fire', scope_attack='punch'),
                      values())

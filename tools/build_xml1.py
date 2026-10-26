@@ -105,6 +105,13 @@ def parse_args(argv=None):
                     help="with --loot xml1: which item construction the DLL ships (DESIGN 2.5): zero-draw (plan A, "
                          "default) or the native one-roll fallback, which adds the construction-one-roll "
                          "approximations row")
+    ap.add_argument('--loot-def-damage-scale', dest='loot_def_damage_scale', choices=('noop', 'resist'),
+                    default='noop',
+                    help="with --loot xml1 (owner decision D8, DESIGN 12): the four items whose only bonus is the "
+                         "original's unregistered def_damage_scale (SHIAR_MIND_GEM, SHIAR_BODY_SHIELD, "
+                         "SHIAR_ENERGY_ARMOR, MAGNETOS_HELMET) carry no working bonus in the first game. noop "
+                         "(default) keeps that exactly; resist writes the authored multiplier as a PC "
+                         "damage-resistance record (bonus-approx rows)")
     ap.add_argument('--hero-bleed', dest='hero_bleed', choices=('on', 'off'), default='on',
                     help="Wolverine's bleed passive as an XML2 add_harming powerup (default) or dropped")
     ap.add_argument('--newgame', choices=('chooseteam', 'keepteam'), default='keepteam',
@@ -208,6 +215,7 @@ CONTENT_OPTS = {'harm_loop_startup': (tuple(C.MODULE_ORDER), 'workaround'),
                 # loot step 1: zones (the item table, map references, sidecar), frontend (the shop's Training tab)
                 'loot': (('zones', 'frontend'), 'off'),
                 'loot_construction': ('zones', 'zero-draw'),
+                'loot_def_damage_scale': ('zones', 'noop'),
                 # SPEC 19: scripts emits the blocks; zones imports the dialogs / conversations rewrite_data_tree patches
                 'forced_teams': (('scripts', 'zones'), 'seat'),
                 # SPEC 21: scripts (intro, main_back_main, imageViewer literals), zones (menu/main_back, zoneinfo
@@ -472,6 +480,8 @@ def main(argv=None):
     if args.loot != 'off':          # recorded only when asked for: a build without the option keeps its metadata as before
         rep['build']['loot'] = args.loot
         rep['build']['loot_construction'] = args.loot_construction
+        if getattr(args, 'loot_def_damage_scale', 'noop') != 'noop':      # D8: recorded only when asked for
+            rep['build']['loot_def_damage_scale'] = args.loot_def_damage_scale
     (out / '_build' / 'report.json').write_text(json.dumps(rep, indent=1, default=str), encoding='utf-8')
     ctx.report.print_summary()
     errors = ctx.report.error_total()
