@@ -1,7 +1,8 @@
 """xml1build.igb_file - read the structure of an Alchemy IGB file (the 0xFADA layout of XMen2.exe's .IGB and
 default.xbe's .igb files) far enough to find its objects, their fields and its memory blocks, and to patch values in
-place. Nothing is added, removed or resized: an edit keeps every byte count, so the file stays loadable wherever the
-original was (SPEC.md 21.2, the main menu IGB's camera).
+place. The set_* edits keep every byte count, so the file stays loadable wherever the original was (SPEC.md 21.2, the
+main menu IGB's camera). rebuilt() resizes memory blocks; appended() also adds new objects and memory blocks after the
+existing ones (igb_anim_merge, the XML1 animation clips): every existing item keeps its reference number and bytes.
 
 Layout (little-endian u32 unless noted), as read here and checked against every XML1 and XML2 menu IGB:
   header        12 words: [0] directory bytes, [1] directory entries, [2] meta-object bytes, [3] meta objects,
@@ -213,6 +214,15 @@ class IgbFile:
             off += used
         return fields, off - start
 
+    def _decode_bytes(self, data, off, meta):
+        """_decode over another byte string (an appended record): (fields, bytes used)."""
+        saved = self.data
+        try:
+            self.data = bytes(data)
+            return self._decode(off, meta)
+        finally:
+            self.data = saved
+
     def isa(self, obj, name):
         """obj's meta object is `name` or derives from it."""
         m = obj.meta if isinstance(obj, Obj) else obj
@@ -271,8 +281,128 @@ class IgbFile:
             raise IgbError(f'memory block {ref}: {size} bytes, {len(values)} floats given')
         struct.pack_into(f'<{len(values)}f', self.buf, off, *values)
 
+    def set_int(self, obj, slot, value):
+        """write a 4-byte integer field of `obj` in place (a count, a reference number)."""
+        f = obj.fields[slot]
+        if f.size != 4 or f.type in _FLOATS or f.type == 'igStringMetaField':
+            raise IgbError(f'{obj.name} slot {slot}: not a 4-byte integer field')
+        struct.pack_into('<i', self.buf, f.offset, value)
+
     def edited(self):
         return bytes(self.buf)
+
+    def entry_bytes(self, ref):
+        """the directory entry record (meta object, bytes, field values) item `ref` uses, as stored."""
+        o, n, _f = self._dir_entries[self.index[ref]]
+        return bytes(self.buf[o:o + n])
+
+    def appended(self, items=(), new_blocks=None):
+        """the file with `items` added after the existing ones, plus memory blocks resized by `new_blocks`
+        ({ref: bytes}, as rebuilt()) and every in-place edit made through the set_* methods (self.buf).
+
+        items: ('object', entry, record) or ('memory', entry, data), in the order they get their reference numbers
+        (len(self.items), len(self.items) + 1, ...). `entry` is a directory entry record (meta object, bytes, field
+        values) of this file's igObjectDirEntry / igMemoryDirEntry layout; `record` an object (meta object, bytes,
+        field values) whose meta object is the entry's slot 11; `data` a memory block of the entry's size (slot 7).
+        The caller remaps references and meta object numbers; nothing here interprets an item's contents. An entry
+        identical to an existing one is reused (entries are shared by every item of the same kind and type), others
+        are appended. Existing items keep their reference numbers, their bytes and their order: the new objects
+        follow the old ones in the object section, the new blocks the old blocks in the memory section (each
+        4-aligned from the section start, the section padded to 4), the index grows by len(items) and the header
+        totals follow. The result re-reads with IgbFile (checked here). appended((), b) == rebuilt(b)."""
+        new_blocks = dict(new_blocks or {})
+        for ref in new_blocks:
+            if ref not in self.blocks:
+                raise IgbError(f'memory block {ref}: not a memory block of this file')
+        buf, h = self.buf, list(self.header)
+        entries = [bytes(buf[o:o + n]) for o, n, _f in self._dir_entries]
+        index = list(self.index)
+        for ref, blob in new_blocks.items():
+            di = index[ref]
+            o, n, fields = self._dir_entries[di]
+            if len(blob) == fields[7].value:
+                continue
+            e = bytearray(entries[di])
+            struct.pack_into('<i', e, fields[7].offset - o, len(blob))
+            e = bytes(e)
+            if e in entries:
+                index[ref] = entries.index(e)
+            else:
+                index[ref] = len(entries)
+                entries.append(e)
+        kinds = {'object': 'igObjectDirEntry', 'memory': 'igMemoryDirEntry'}
+        objects, added_blocks, n_obj = bytearray(), [], 0
+        for i, item in enumerate(items):
+            try:
+                kind, entry, payload = item
+            except (TypeError, ValueError):
+                raise IgbError(f'appended item {i}: not (kind, entry, payload)') from None
+            if kind not in kinds:
+                raise IgbError(f'appended item {i}: kind {kind!r}')
+            entry, payload = bytes(entry), bytes(payload)
+            if len(entry) < 8:
+                raise IgbError(f'appended item {i}: short directory entry')
+            t, size = struct.unpack_from('<2I', entry)
+            if t >= len(self.metas) or self.metas[t]['name'] != kinds[kind] or size != len(entry):
+                raise IgbError(f'appended item {i}: directory entry is not a {kinds[kind]} of this file')
+            fields, used = self._decode_bytes(entry, 8, t)
+            if used != size - 8:
+                raise IgbError(f'appended item {i}: directory entry does not decode')
+            if kind == 'object':
+                if len(payload) < 8:
+                    raise IgbError(f'appended item {i}: short object record')
+                om, osz = struct.unpack_from('<2I', payload)
+                if osz != len(payload) or om >= len(self.metas) or fields[11].value != om:
+                    raise IgbError(f'appended item {i}: object record does not match its entry')
+                if self.metas[om]['name'].endswith('DirEntry'):
+                    raise IgbError(f'appended item {i}: a directory entry meta object is no object')
+                _of, oused = self._decode_bytes(payload, 8, om)
+                if oused != osz - 8:
+                    raise IgbError(f'appended item {i}: object record does not decode as {self.metas[om]["name"]}')
+                objects += payload
+                n_obj += 1
+            else:
+                if fields[7].value != len(payload):
+                    raise IgbError(f'appended item {i}: {len(payload)} bytes, its entry says {fields[7].value}')
+                added_blocks.append(payload)
+            if entry in entries:
+                index.append(entries.index(entry))
+            else:
+                index.append(len(entries))
+                entries.append(entry)
+        if len(entries) > 0xFFFF or len(index) > 0xFFFF:
+            raise IgbError('too many directory entries or items')
+        directory = b''.join(entries)
+        isize, icount = _u32(self.data, self._index_off, 2)
+        idx = bytearray(buf[self._index_off:self._index_off + isize])
+        if items:
+            idx = bytearray(struct.pack('<2I', 8 + 2 * len(index), len(index)))
+            idx += struct.pack(f'<{len(index)}H', *index)
+        else:
+            struct.pack_into(f'<{icount}H', idx, 8, *index)
+        mem = bytearray()
+        for ref in range(len(self.items)):
+            if ref not in self.blocks:
+                continue
+            mem += b'\0' * (-len(mem) % 4)
+            if ref in new_blocks:
+                mem += new_blocks[ref]
+            else:
+                off, size = self.blocks[ref]
+                mem += buf[off:off + size]
+        for blob in added_blocks:
+            mem += b'\0' * (-len(mem) % 4)
+            mem += blob
+        mem += b'\0' * (-len(mem) % 4)
+        h[0], h[1], h[6] = len(directory), len(entries), len(mem)
+        h[4], h[5], h[7] = h[4] + len(objects), h[5] + n_obj, h[7] + len(added_blocks)
+        head = bytearray(buf[:self._dir_start])
+        struct.pack_into('<12I', head, 0, *h)
+        tail = buf[self._index_off + isize:self._mem_start]      # the one word + the objects
+        out = bytes(head) + directory + bytes(idx) + bytes(tail) + bytes(objects) + bytes(mem)
+        if len(IgbFile(out).items) != len(self.items) + len(items):
+            raise IgbError('appended file does not re-read with every item')
+        return out
 
     def rebuilt(self, new_blocks):
         """the file with memory blocks replaced by new contents of ANY size ({ref: bytes}), plus every in-place edit
