@@ -640,3 +640,21 @@ def test_the_static_reports_witnesses_reproduce_on_a_finished_build():
     if not out or not (Path(out) / '_build' / 'zones_detail.json').is_file():
         raise unittest.SkipTest('LC_W3_SELFTEST_OUT (a finished build folder) is not set')
     assert L3.main(['--out', out]) == 0
+
+
+def test_the_builder_report_records_the_option_so_the_ini_gets_the_keys():
+    """xml1builder (prepared sources) writes report.json's build block itself: --limits-wave3 must be recorded there
+    (only when on), or fix_ini.port_keys finds no option and the build's ini keeps FightStyles=32 and no wave 3 keys."""
+    import build_xml1
+    from xml1builder import pipeline as P
+    for mode, expected in (('all', 'all'), ('on', 'on'), ('off', None)):
+        with tempfile.TemporaryDirectory() as d:
+            args = SimpleNamespace(limits_wave3=mode, **{o: v[1] for o, v in build_xml1.CONTENT_OPTS.items()})
+            ctx = SimpleNamespace(report=SimpleNamespace(to_json=lambda: {}), registry=SimpleNamespace(entries=[]), shared={})
+            job = SimpleNamespace(ctx=ctx, args=args, out=d, xml2=d, movies=True, t0=0)
+            pipe = P.RealPipeline.__new__(P.RealPipeline); pipe.C = C
+            (Path(d) / '_build').mkdir()
+            path = pipe.write_report(job, {})
+            build = json.loads(Path(path).read_text(encoding='utf-8'))['build']
+            assert build.get('limits_wave3') == expected
+            assert FI.build_record(d).get('limits_wave3') == expected
