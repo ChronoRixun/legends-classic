@@ -93,6 +93,10 @@ def parse_args(argv=None):
     ap.add_argument('--telekinesis', choices=('off', 'xml1'), default='off',
                     help="Phoenix's XML1 telekinesis ([Game] TelekinesisRule=xml1, XML2 Fix rule 46 bit 512; needs "
                          "--grab-carry xml1). Off by default in beta 8 (in progress for beta 9); the ini only")
+    ap.add_argument('--guard-decide', dest='guard_decide', choices=('off', 'xml1'), default='off',
+                    help="XML1's guard decide ([Game] GuardDecideRule=xml1, XML2 Fix rule 46 bit 1024: held Guard's "
+                         "pickups, ally throws and the acrobats' wall lunge; needs --grab-carry xml1). Off by default in "
+                         "beta 8 (in progress for beta 9: with real input Guard did nothing); the ini only")
     ap.add_argument('--flying-carry', dest='flying_carry', choices=('off', 'xml1'), default='off',
                     help="XML1's flying carry within rule 45 (needs --grab-carry xml1): off writes [Game] "
                          "Xml1FlyingCarry=0 (Juggernaut's grab, fix7 and XML1's flight upkeep stay); xml1 leaves the key "
@@ -174,8 +178,8 @@ def parse_args(argv=None):
             sel.append('heroes')              # heroes rewrites characters' npcstat / shared_talents / hero styles
             print('[build] --only characters implies heroes (it patches the characters output)')
         a.only = [m for m in C.MODULE_ORDER if m in sel]
-    if a.grab_carry != 'xml1' and (a.telekinesis == 'xml1' or a.flying_carry == 'xml1'):
-        ap.error('--telekinesis xml1 and --flying-carry xml1 need --grab-carry xml1 (XML2 Fix rules 46 / 45 refuse them '
+    if a.grab_carry != 'xml1' and 'xml1' in (a.telekinesis, a.guard_decide, a.flying_carry):
+        ap.error('--telekinesis xml1, --guard-decide xml1 and --flying-carry xml1 need --grab-carry xml1 (XML2 Fix rules 46 / 45 refuse them '
                  "without rule 45's grab lifecycle)")
     # xml2-fix 1.9.0-beta.1's rule 45 revision 3 (the flying carry, fix7, XML1's flight upkeep) installs only with
     # [Limits] AnimEnums installed: without it that DLL installs none of rule 45 (xml2-fix xml1_grab_carry.cpp)
@@ -214,7 +218,7 @@ CONTENT_OPTS = {'harm_loop_startup': (tuple(C.MODULE_ORDER), 'workaround'),
                 'blackbird': ('scripts', 'menu'), 'npc_scaling': ('characters', 'off'), 'tiles': ('zones', 'used'),
                 'main_menu_layout': ('frontend', 'classic'), 'laa': ('exe_flags', 'on'),
                 # ini only (fix_ini.port_keys): no module output depends on them
-                'telekinesis': ((), 'off'), 'flying_carry': ((), 'off'),
+                'telekinesis': ((), 'off'), 'guard_decide': ((), 'off'), 'flying_carry': ((), 'off'),
                 'grab_carry': ('characters', 'xml1'), 'actor_pools': ('characters', 'off'), 'anim_enums': ('characters', 'xml1'), 'rogue_decide': ('heroes', 'xml1'), 'hero_roster': ('heroes', '21'), 'hero_icons': ('heroes', 'xml1'), 'hero_bleed': ('heroes', 'on'),
                 'newgame': ('scripts', 'keepteam'),
                 # SPEC 19: scripts emits the blocks; zones imports the dialogs / conversations rewrite_data_tree patches
@@ -469,7 +473,7 @@ def main(argv=None):
                     'forced_rerun': list(forced) + list(opt_rerun),
                     'start_zone': args.start_zone, 'tour': args.tour, 'no_movies': args.no_movies,
                     'blackbird': args.blackbird, 'npc_scaling': args.npc_scaling, 'tiles': args.tiles,
-                    'grab_carry': args.grab_carry, 'telekinesis': args.telekinesis, 'flying_carry': args.flying_carry, 'actor_pools': args.actor_pools, 'anim_enums': args.anim_enums, 'rogue_decide': args.rogue_decide, 'hero_roster': args.hero_roster, 'hero_icons': args.hero_icons, 'hero_bleed': args.hero_bleed,
+                    'grab_carry': args.grab_carry, 'telekinesis': args.telekinesis, 'guard_decide': args.guard_decide, 'flying_carry': args.flying_carry, 'actor_pools': args.actor_pools, 'anim_enums': args.anim_enums, 'rogue_decide': args.rogue_decide, 'hero_roster': args.hero_roster, 'hero_icons': args.hero_icons, 'hero_bleed': args.hero_bleed,
                     'newgame': args.newgame, 'forced_teams': args.forced_teams, 'frontend': args.frontend,
                     'xp_curve': args.xp_curve, 'buoys': args.buoys, 'main_menu_layout': args.main_menu_layout, 'laa': args.laa,
                     'harm_loop_startup': getattr(args, 'harm_loop_startup', 'workaround'),

@@ -47,13 +47,17 @@ the beta 8 test guide.
   handlers for A/B builds) and builds write `[Game] Xml1GrabCarry=xml1` (rule 45): Juggernaut's grab-and-hit, the
   shared grab victim, pickup and thrown-landing recovery, the ally throw and the flying charge picking up whoever it
   hits, and XML1's flight upkeep (rule 45 revision 3: the builder requires that DLL by its install line).
-- **In progress for beta 9: the first game's telekinesis and flying carry.** Phoenix's XML1 telekinesis
+- **In progress for beta 9: the first game's telekinesis, guard decide and flying carry.** Phoenix's XML1 telekinesis
   (`TelekinesisRule`, rule 46 bit 512) and the flying carry (Phoenix, Rogue and Storm picking up, carrying and throwing
   or smashing in flight) are switched off in beta 8 while their throw damage, carry pose and held-button pickup are
   finished: builds no longer write `[Game] TelekinesisRule=xml1` (`--telekinesis xml1` keeps it for test builds) and
-  write `[Game] Xml1FlyingCarry=0` beside `Xml1GrabCarry=xml1` (`--flying-carry xml1` leaves it out). Juggernaut's
-  grab, the guard decide, pickups and ally throws, the flying charge and XML1's flight upkeep stay on. The builder
-  refuses a DLL without the `Xml1FlyingCarry` key or its install line (080g and older would install the carry).
+  write `[Game] Xml1FlyingCarry=0` beside `Xml1GrabCarry=xml1` (`--flying-carry xml1` leaves it out). Since candidate
+  080i the first game's guard decide (`GuardDecideRule`, rule 46 bit 1024) is off too: in the 10-26 hand test a real
+  Guard press (pad X / keyboard E) with it did nothing at all - no grab, no pickup - so builds no longer write
+  `[Game] GuardDecideRule=xml1` (`--guard-decide xml1` keeps it for test builds) and Guard grabs enemies and picks up
+  objects as in 0.4.0 (XML2's guard decide). Juggernaut's grab, the flying charge and XML1's flight upkeep stay on.
+  The builder refuses a DLL without the `Xml1FlyingCarry` key or its install line (080g and older would install the
+  carry).
 - **Builder: a retail `XMen2.exe` touched by a 4 GB patcher is accepted.** The install's exe was refused
   (`E_XML2_UNKNOWN_EXE`) when a large-address-aware patch or a checksum rewrite had changed its header. The builder
   now identifies the retail exe by its size and a hash with the large-address-aware flag and the PE checksum zeroed
@@ -71,9 +75,10 @@ the beta 8 test guide.
   charge's damage (`values.xmlb`'s L3 row, which the conversion keeps), Colossus's charge, Beast's bounce, the
   fastball, idle/bored animations, animation speed and phase for scaled characters and Nightcrawler's teleport
   visibility. Since candidate 080d also `GuardDecideRule=xml1` (rule 46 bit 1024: the guard decide's pickups and ally
-  throws and the acrobats' wall lunge) and, for test builds only since 080h (`--telekinesis xml1`), `TelekinesisRule=xml1`
-  (bit 512: Phoenix's telekinesis with XML1's targets, hold, damage and tk levels), written only with
-  `Xml1GrabCarry=xml1` (they need its grab lifecycle); the builder refuses a DLL without the keys (080c and older). Since candidate 080e the builder also refuses a DLL whose telekinesis
+  throws and the acrobats' wall lunge; for test builds only since 080i, `--guard-decide xml1`) and, for test builds only
+  since 080h (`--telekinesis xml1`), `TelekinesisRule=xml1` (bit 512: Phoenix's telekinesis with XML1's targets, hold,
+  damage and tk levels), written only with `Xml1GrabCarry=xml1` (they need its grab lifecycle); the builder refuses a
+  DLL without the keys it writes (080c and older). Since candidate 080e the builder also refuses a DLL whose telekinesis
   still looks its sounds up through the Xbox slot (080d: crashed at the first hold) or whose flying carry re-enters
   its own node every frame (080c / 080d: the carried hero never followed); the two install lines are the markers.
   Since candidate 080g it also refuses a DLL whose still telekinesis throw divides by zero, whose tapped guard never

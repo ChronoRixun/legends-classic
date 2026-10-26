@@ -27,15 +27,16 @@ def _record(out: Path, grab_carry, **opts):
 
 
 def test_tk_guard_written_only_with_grab_carry():
-    # beta 8 (080h): the telekinesis and the flying carry are off (beta 9); the guard decide stays with the grab
+    # beta 8: the telekinesis and the flying carry (080h) and the guard decide (080i: a real Guard press did nothing)
+    # are off (beta 9); each is written only on request and only with the grab
     assert FI.TK_GUARD == {'TelekinesisRule': 'xml1', 'GuardDecideRule': 'xml1'}
     assert FI.TELEKINESIS == {'TelekinesisRule': 'xml1'} and FI.GUARD_DECIDE == {'GuardDecideRule': 'xml1'}
     assert FI.FLYING_CARRY_OFF == {'Xml1FlyingCarry': '0'}
     assert all(k in FI.PORT_OWNED['Game'] and k in FI.RELEASE_18_KEYS['Game'] for k in (*FI.TK_GUARD, 'Xml1FlyingCarry'))
     args = build_xml1.parse_args(['--out', '.'])
-    assert args.telekinesis == 'off' and args.flying_carry == 'off'
-    assert build_xml1.CONTENT_OPTS['telekinesis'] == ((), 'off') and build_xml1.CONTENT_OPTS['flying_carry'] == ((), 'off')
-    for bad in (['--telekinesis', 'xml1'], ['--flying-carry', 'xml1']):
+    assert args.telekinesis == 'off' and args.guard_decide == 'off' and args.flying_carry == 'off'
+    assert all(build_xml1.CONTENT_OPTS[k] == ((), 'off') for k in ('telekinesis', 'guard_decide', 'flying_carry'))
+    for bad in (['--telekinesis', 'xml1'], ['--guard-decide', 'xml1'], ['--flying-carry', 'xml1']):
         try:
             build_xml1.parse_args(['--out', '.', '--grab-carry', 'xml2', *bad])
         except SystemExit:
@@ -46,13 +47,16 @@ def test_tk_guard_written_only_with_grab_carry():
         out = Path(td)
         for value in ('xml1', 'xml2', None):
             for tk in ('off', 'xml1', None):
+              for gd in ('off', 'xml1', None):
                 for fc in ('off', 'xml1', None):
-                    _record(out, value, telekinesis=tk, flying_carry=fc)
+                    _record(out, value, telekinesis=tk, guard_decide=gd, flying_carry=fc)
                     keys = FI.port_keys(out)
                     game, dropped = keys['Game'], FI.dropped_keys(keys).get('Game', [])
-                    guard = value == 'xml1'
-                    telekinesis = guard and tk == 'xml1'
-                    carry_off = guard and fc != 'xml1'
+                    grab = value == 'xml1'
+                    guard = grab and gd == 'xml1'
+                    telekinesis = grab and tk == 'xml1'
+                    carry_off = grab and fc != 'xml1'
+                    assert (game.get('Xml1GrabCarry') == 'xml1') == grab
                     assert (game.get('GuardDecideRule') == 'xml1') == guard and ('GuardDecideRule' in dropped) == (not guard)
                     assert (game.get('TelekinesisRule') == 'xml1') == telekinesis
                     assert ('TelekinesisRule' in dropped) == (not telekinesis)
@@ -63,12 +67,14 @@ def test_tk_guard_written_only_with_grab_carry():
                     assert ('GuardDecideRule=xml1' in merged) == guard
                     assert ('Xml1FlyingCarry=0' in merged) == carry_off
                     assert 'KeepMe=7' in merged
-                    if value == 'xml1' and tk is None and fc is None:
-                        # the default profile: guard decide, no telekinesis, flying carry off
+                    if value == 'xml1' and tk is None and gd is None and fc is None:
+                        # the default profile: the grab, no telekinesis, no guard decide, flying carry off
                         assert getattr(C.args_for_out(out), 'telekinesis', 'off') == 'off'
+                        assert getattr(C.args_for_out(out), 'guard_decide', 'off') == 'off'
+                        assert 'GuardDecideRule' not in game and 'TelekinesisRule' not in game
         # an ini-only option re-runs no module when toggled
-        _record(out, 'xml1', telekinesis='off', flying_carry='off')
-        args = build_xml1.parse_args(['--out', td, '--telekinesis', 'xml1', '--flying-carry', 'xml1'])
+        _record(out, 'xml1', telekinesis='off', guard_decide='off', flying_carry='off')
+        args = build_xml1.parse_args(['--out', td, '--telekinesis', 'xml1', '--guard-decide', 'xml1', '--flying-carry', 'xml1'])
         assert build_xml1.plan_content_opts(out, args, []) == []
 
 

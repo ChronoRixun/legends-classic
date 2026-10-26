@@ -7889,3 +7889,9 @@ docs/tk-guard.md) together with `Xml1GrabCarry=xml1` and only with it: the fix i
 rule 45 (the shared grab lifecycle and its pickup claim) and otherwise refuses them and closes online. A rebuild with
 `--grab-carry xml2` drops both keys (PORT_OWNED). Both are RELEASE_18_KEYS: a DLL without the key names (080c and
 older) is refused by name.
+
+Beta 8 candidates 080h / 080i: both are off by default and written only on request, still only with
+`Xml1GrabCarry=xml1`: `--telekinesis xml1` (080h) and `--guard-decide xml1` (080i; with the key a real Guard press did
+nothing in Owen's 10-26 hand test while the test pipe's presses worked). Without `GuardDecideRule` Guard runs XML2's
+`ch_guard_decide`, which grabs and picks up through the `grab` talent characters adds (rule 46 installs without bit
+1024). Both options are ini only (CONTENT_OPTS with no module), so toggling one re-runs nothing.

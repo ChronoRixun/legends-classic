@@ -215,7 +215,9 @@ SHARED_HANDLERS_C = {'JumpAttackDamageRule': 'xml1', 'FlyChargeDamageRule': 'xml
 # objects; the acrobat's wall lunge) behave as XML1's. Both need rule 45's installed grab lifecycle (the fix refuses them
 # without it and closes online), so port_keys writes them only with Xml1GrabCarry=xml1; a rebuild without it drops them.
 # Beta 8 (080h, owner decision): the telekinesis is in progress (beta 9), so TelekinesisRule is written only with
-# --telekinesis xml1 (default off); GuardDecideRule stays with Xml1GrabCarry.
+# --telekinesis xml1 (default off). Beta 8 (080i, Owen's hand test 10-26): with GuardDecideRule=xml1 a real Guard press
+# (pad X / keyboard E) did nothing at all, so it is written only with --guard-decide xml1 (default off) and Guard is
+# XML2's ch_guard_decide again (grabs and pickups through the grab talent characters adds).
 TELEKINESIS = {'TelekinesisRule': 'xml1'}
 GUARD_DECIDE = {'GuardDecideRule': 'xml1'}
 TK_GUARD = {**TELEKINESIS, **GUARD_DECIDE}
@@ -904,7 +906,8 @@ def port_keys(out, *, save_folder=PLAY_SAVE_FOLDER, eighth=True) -> dict:
     record = build_record(out) or {}
     if record.get('grab_carry') == 'xml1':
         game['Xml1GrabCarry'] = 'xml1'
-        game.update(GUARD_DECIDE)
+        if record.get('guard_decide') == 'xml1':
+            game.update(GUARD_DECIDE)
         if record.get('telekinesis') == 'xml1':
             game.update(TELEKINESIS)
         if record.get('flying_carry') != 'xml1':
