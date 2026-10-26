@@ -112,6 +112,26 @@ BOLTON_SLOTS = {'ebolton_clawright': 0, 'ebolton_clawleft': 1, 'ebolton_weapon':
 # startHide and healthMul are inert: the XBE's own parser (0x89500) never reads them either.
 MULTIPART_X1_ONLY = ('effectondeath', 'linktopower', 'starthide', 'healthmul', 'loopeffect', 'effectbone')
 MULTIPART_X1_INERT = ('starthide', 'healthmul')
+# Juggernaut's grab (080b live, GPT trace 2026-10-25): XML1's and XMen2.exe's class-4 sentinel attack handler both request
+# Guard (guarddecide -> grabstart), but XMen2.exe's ch_guard_decide (0x4ec3c6-0x4ec41a) only grabs when the actor's
+# grab_scale_dmg talentvalue is above 0 - XML1 (0xd99d0) has no such gate. The only provider is XML2's hidden shared
+# talent `grab` (heroes.GRAB_TALENT, which every converted hero already gets, issue #51); the NPC records of the two
+# Juggernauts that fight with x1_ps_juggernaut's grabstart get the same reference, so his grab reaches rule 45.
+NPC_GRAB_TALENT = ('juggernautflashback', 'juggernautact3')
+
+
+def add_npc_grab_talent(root) -> list:
+    """Append <talent name="grab" level="1"/> to the NPC_GRAB_TALENT stats entries of an npcstat root that do not
+    name it yet (in place); the names changed, in file order."""
+    from .heroes import GRAB_TALENT
+    done = []
+    for st in root.iter('stats'):
+        if (st.get('name') or '').lower() not in NPC_GRAB_TALENT:
+            continue
+        if not any((t.get('name') or '').lower() == GRAB_TALENT for t in st.iter('talent')):
+            ET.SubElement(st, 'talent', {'level': '1', 'name': GRAB_TALENT})
+            done.append(st.get('name'))
+    return done
 # XML1's powerup removal (a trigger with remove="true", default.xbe 0xd7668 -> 0x2b100(attribute, 1)) drops EVERY
 # powerup of the actor whose attribute matches, permanent ones included - and talents' activepowerups are such
 # powerups (0x7f8b0 -> 0x2aa90). So Juggernaut's armor_end / helmet_penalty (remove def_damage) also take away his
@@ -423,6 +443,7 @@ class _Builder:
         self.weapon_reports = {}    # variant style name -> (weapon, x1 style, weapons.apply counts) (SPEC 29)
         self.grenade_variant_base = {}  # moveset1 variants (issue #36)
         self.grenade_reports = {}
+        self.variant_ident = {}     # weapon variant style name -> (mapped style, weapon, grenade): collision guard
         self.variant_base = {}      # weapon variant style name -> the mapped base style it replaces (SPEC 29.1)
         self.grenade_overrides = {}     # character name (lower) -> unanimous spawner monster_grenade (issue #36)
         self.grenade_override_conflicts = {}  # character name (lower) -> disagreeing monster_grenade values
@@ -699,8 +720,21 @@ class _Builder:
         name = W.variant_name(mapped, weapon_name)
         if grenade and grenade.lower() != W.DEFAULT_GRENADE:
             name = W.variant_grenade_name(name, grenade)
+        if len(name) > W.STYLE_NAME_MAX:
+            # the engine keeps 31 characters of a stats powerstyle (0x43a690): it would ask for a file that is
+            # not there and the soldier would lose the whole style
+            ctx.error(f'data/powerstyles/{name}: {len(name)} characters, more than the {W.STYLE_NAME_MAX} '
+                      f'XMen2.exe keeps of a stats powerstyle name ({x1_style} + weapon {weapon_name}'
+                      f'{" + grenade " + grenade if grenade else ""})')
+            return None
         key = ('powerstyles', name)
+        ident = (mapped.lower(), weapon_name.lower(), (grenade or '').lower())
         with self.lock:
+            prev = self.variant_ident.setdefault(name, ident)
+            if prev != ident:
+                # two different variants shortened to one name: one file would silently replace the other
+                ctx.error(f'data/powerstyles/{name}: generated for {prev} and for {ident} (style, weapon, grenade)')
+                return None
             self.variant_base[name] = mapped.lower()
             if key in self.styles:
                 return self.styles[key]
@@ -739,6 +773,10 @@ class _Builder:
         variant's name, or None when the XML1 style does not exist."""
         ctx = self.ctx
         name = W.grenade_variant_name(mapped_base, grenade)
+        if len(name) > W.STYLE_NAME_MAX:
+            ctx.error(f'data/fightstyles/{name}: {len(name)} characters, more than the {W.STYLE_NAME_MAX} '
+                      f'XMen2.exe keeps of a stats moveset1 name')
+            return None
         key = ('fightstyles', name)
         with self.lock:
             self.grenade_variant_base[name] = mapped_base.lower()
@@ -800,6 +838,11 @@ class _Builder:
                 n = (t.get('name') or '').lower()
                 rewritten, problems = NV.resist_rewrite(t, self.x1_talents.get(n))
                 done[n] += rewritten
+                fx_done, fx_problems = NV.aura_fx_rewrite(t, self.x1_talents.get(n))
+                problems = list(problems) + fx_problems
+                if fx_done:
+                    self.detail.setdefault('aura_fx', {}).setdefault(n, 0)
+                    self.detail['aura_fx'][n] += fx_done
                 for msg in problems:
                     ctx.warn(f'shared_talents: {msg}; XMen2.exe\'s definition kept as it is (validator V60)')
         done = {n: c for n, c in sorted(done.items()) if c}
@@ -1803,6 +1846,11 @@ def run(ctx):
                 b.detail['x2_kept'].append(st.get('name'))
         for e, _ in new_entries:
             r.append(copy.deepcopy(e))
+        grabbed = add_npc_grab_talent(r)
+        if ext == 'engb':
+            ctx.note(f'npcstat: talent grab added to {grabbed} (ch_guard_decide 0x4ec3c6 '
+                     f'needs grab_scale_dmg > 0 for his grabstart)')
+            ctx.set_count('npc_grab_talent_added', len(grabbed))
         roots[ext] = r
     replaced = sorted(x2npc[n] for n in keep if n in new_names and n in x2npc)
     same_name = sorted(x2npc[n] for n in x2npc if n in new_names)
@@ -1949,6 +1997,10 @@ def run(ctx):
     contract = semi_auto.build_contract(ctx, set(stats))
     if contract is not None:
         ctx.set_count('npc_weapon_brains', len(contract['records']))
+    # SPEC 107 (--anim-enums xml1, xml2-fix [Limits] AnimEnums): XML1's flying-carry / Juggernaut-grab clips in
+    # Actors/common.IGB, their 23 mappings in Data/shared_anims and XML1's carry nodes in moveset_flying; off = nothing
+    from . import anim_enums
+    anim_enums.run(ctx, b)
 
 
 _ROSTER_FUNCS = {'unlockcharacter', 'ischaracterunlocked', 'setincampaign'}

@@ -196,3 +196,32 @@ def test_classic_pause_validator_checks_the_matching_localization_half():
     ck = Check('V-TBD', 'classic pause')
     V.v_classic_pause(validator, ck)
     assert any('native prompt/text contract' in error for error in ck.errors)
+
+
+def test_objective_selectors_sit_on_the_engine_drawn_pictures():
+    # XMen2.exe draws slot n's picture at a fixed point (36, 346 - 45 n), 34 square (0x5cda36..0x5cda84), not at the
+    # selector: beta 7's 36-unit column put slot 1's picture over the title and slot 7's below its frame.
+    layout = P.objectives_layout()
+    assert not P.objectives_layout_problems(layout)
+    for slot in range(7):
+        (x, _, z), bounds = layout[f'icon{slot + 1:02d}']
+        assert (x, z) == (36, 346 - 45 * slot) and bounds == P.OBJECTIVES_PICTURE_FRAME
+    beta7 = dict(layout)
+    for slot in range(7):
+        for suffix in ('', '_focus', '_current'):
+            beta7[f'icon{slot + 1:02d}{suffix}'] = ((62, -120, 306 - slot * 36), (-48, 0, -4, 44))
+    beta7['label_objectives'] = ((103, -120, 355), (-69, -9, 69, 9))
+    problems = P.objectives_layout_problems(beta7)
+    assert any('icon01 frame misses' in p for p in problems) and any('icon07 frame misses' in p for p in problems)
+    assert any('label_objectives overlaps the icon01 frame' in p for p in problems)
+
+
+def test_objective_panel_and_prompts_rise_off_the_screen_edge():
+    # The Back / Completed prompts sat 6 units above the bottom edge; the first game's bar sits 30..56 above it.
+    layout = P.objectives_layout()
+    (x, _, z), (l, b, r, t) = layout['object_screen']
+    assert (x + l, z + b, x + r, z + t) == P.OBJECTIVES_PANEL_RECT
+    assert P.OBJECTIVES_PANEL_RECT[1] > 0 and P.OBJECTIVES_PANEL_RECT[3] <= 384
+    assert P.PROMPT_Z - 10 >= 20 and P.OBJECTIVES_PANEL_RECT[1] >= 14
+    lowered = dict(layout, object_steps=((288, -120, 132), (-174, -88, 174, 88)))
+    assert any('object_steps leaves' in p for p in P.objectives_layout_problems(lowered))

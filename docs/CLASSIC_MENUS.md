@@ -145,12 +145,20 @@ callbacks, and keep the camera's text-overlay depths visible. Standard and endin
 credits share existing fonts/styles; ending/campaign-unlock runtime acceptance is
 separate from static frame validation.
 
-The PDA objective picture uses a fixed upper-left drawing inset relative to its
-selector anchor. Its classic square frame and focus frame must follow that inset,
-including the native dynamically loaded selector resource. Centring the frame on
-the larger hit rectangle leaves the picture overlapping its upper-left corner.
-The selector validator checks the serialized frame vertices; the native hit
-rectangle, picture, objective state and input actions stay native.
+XMen2.exe draws each PDA objective picture at a fixed virtual-screen point, not at
+its selector: slot n (0..6) is centred at (36, 346 - 45 n), 34 units square
+(0x5cda36..0x5cda84; the selector only supplies its depth). Each selector, focus and
+current anchor therefore sits on its slot's picture centre with a 44-unit square
+frame and hit box, including the native dynamically loaded selector resource. The
+beta 5 column (36-unit spacing from z 306) matched the pictures only at slot 3: slot
+1's picture covered the title and slot 7's hung below its frame. The title sits to
+the right of the column. The panel's bottom strip and the prompts rise off the
+screen edge towards the first game's Back bar (prompts 23..43 above the
+bottom). `objectives_layout_problems` and the selector validator check the layout
+and the serialized frame vertices; picture, objective state and input stay native.
+With XML2 Fix's `[Game] ClassicObjectives=1` the slots hold only visible objectives
+(no hole for a hidden one), in the act file's order (objectives carry `order`), and
+the page opens on the current objective, as the first game's list does.
 
 Review retains the native four-category service, its tab order, unlock filtering,
 movie callbacks, list and viewer return. Disc-authored list chrome surrounds a

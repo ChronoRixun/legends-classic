@@ -6,7 +6,8 @@ one exception that follows the launcher's fake builder: a folder is E_ISO_NOT_XB
 (prepare says E_ISO_FOLDER). A dump that is not in data/known_dumps.json builds with W_ISO_UNKNOWN_DUMP.
 
 The XML2 install: XMen2.exe present and a PE32 image at 0x400000 (E_XML2_NOT_FOUND), its md5 in data/known_xml2.json
-(E_XML2_UNKNOWN_EXE; --allow-unknown-exe turns it into W_XML2_UNKNOWN_EXE: xml2-fix guards every patch site against
+(E_XML2_UNKNOWN_EXE; a retail exe whose only differences are the large-address-aware flag and the PE checksum
+still matches through its normalized fingerprint, see identify_exe; --allow-unknown-exe turns it into W_XML2_UNKNOWN_EXE: xml2-fix guards every patch site against
 the retail bytes and leaves another build alone, so the port would silently lose New Game, forced parties, the XP
 curve and the limits), English data (E_XML2_LANGUAGE). Its base files - every file but the xml2-fix proxy - are
 compared by name and size with the retail reference (data/xml2_retail_files.json.gz) for info; the build hashes
@@ -40,6 +41,35 @@ def known_dumps() -> list:
 
 def known_exes() -> dict:
     return (R.load_json('known_xml2.json', {}) or {}).get('exes', {})
+
+
+EXE_RETAIL = 'retail'
+EXE_RETAIL_PATCHED = 'retail (header-patched: LAA/checksum)'
+EXE_CODE_DIFFERS = 'modified XMen2.exe (code differs from retail)'
+EXE_OTHER_BUILD = 'different XMen2.exe build'
+
+
+def identify_exe(data: bytes) -> tuple:
+    """(entry, found) of an XMen2.exe against data/known_xml2.json. found is EXE_RETAIL (the md5 is listed),
+    EXE_RETAIL_PATCHED (same size, and the hash with the LAA flag and the PE checksum normalized equals the retail
+    exe's: a 4 GB patcher or a rewritten checksum), EXE_CODE_DIFFERS (a listed size, anything else differs) or
+    EXE_OTHER_BUILD (no listed size). entry is the matching known_xml2 entry, else None."""
+    from xml1build import exe_flags as EF
+    exes = known_exes()
+    entry = exes.get(hashlib.md5(data).hexdigest())
+    if entry is not None:
+        return entry, EXE_RETAIL
+    same_size = [e for e in exes.values() if e.get('size') == len(data)]
+    if not same_size:
+        return None, EXE_OTHER_BUILD
+    try:
+        norm = EF.normalized_sha256(data)
+    except EF.NotPE32:
+        norm = None
+    for e in same_size:
+        if norm is not None and e.get('normalized_sha256') == norm:
+            return e, EXE_RETAIL_PATCHED
+    return None, EXE_CODE_DIFFERS
 
 
 _RETAIL = None
@@ -208,15 +238,15 @@ def check_xml2(folder, *, allow_unknown=False, warn=None, listing=None) -> dict:
         raise BuilderError('E_XML2_NOT_FOUND', 'XMen2.exe in this folder is not the X-Men Legends II program.', None,
                            {'path': mask(folder), 'reason': 'not a PE32 image at 0x400000'})
     md5 = hashlib.md5(data).hexdigest()
-    exe_info = known_exes().get(md5)
+    exe_info, exe_found = identify_exe(data)
     if exe_info is None:
-        detail = {'exe_md5': md5, 'size': len(data)}
+        detail = {'exe_md5': md5, 'size': len(data), 'found': exe_found}
         if not allow_unknown:
-            raise BuilderError('E_XML2_UNKNOWN_EXE', 'This version of X-Men Legends II (XMen2.exe) is not supported.',
-                               None, detail)
+            raise BuilderError('E_XML2_UNKNOWN_EXE', 'This version of X-Men Legends II (XMen2.exe) is not supported: '
+                               f'{exe_found}.', None, detail)
         if warn:
-            warn('W_XML2_UNKNOWN_EXE', 'This XMen2.exe is not a known retail build (--allow-unknown-exe): xml2-fix '
-                                       'may leave the port\'s engine fixes off.', detail)
+            warn('W_XML2_UNKNOWN_EXE', f'This XMen2.exe is not a known retail build ({exe_found}; '
+                                       "--allow-unknown-exe): xml2-fix may leave the port's engine fixes off.", detail)
     data_dir = next((c for c in folder.iterdir() if c.name.lower() == 'data' and c.is_dir()), None)
     sounds = next((c for c in folder.iterdir() if c.name.lower() == 'sounds' and c.is_dir()), None)
     english = data_dir is not None and any(c.name.lower() == 'herostat.engb' for c in data_dir.iterdir()) and \
@@ -227,7 +257,7 @@ def check_xml2(folder, *, allow_unknown=False, warn=None, listing=None) -> dict:
     listing = base_listing(folder) if listing is None else listing
     cmp = compare_retail(listing)
     modified = modified_list(cmp)
-    return {'path': mask(folder), 'exe_known': exe_info is not None, 'exe_md5': md5,
+    return {'path': mask(folder), 'exe_known': exe_info is not None, 'exe_md5': md5, 'exe_found': exe_found,
             'exe': (exe_info or {}).get('id', ''), 'language': 'ENG', 'base_files': len(listing),
             'base_bytes': sum(v[0] for v in listing.values()), 'base_digest': base_digest(listing),
             'reference': cmp['reference'], 'modified': modified[:MODIFIED_LIMIT], 'modified_count': len(modified)}

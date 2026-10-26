@@ -97,6 +97,25 @@ function Initialize-CandidateBlobEncounter {
     & $Request 'script setPosX("_ACTIVE_HERO_",1460)' | Out-Null
     & $Request 'script setPosY("_ACTIVE_HERO_",1500)' | Out-Null
     & $Request 'script setPosZ("_ACTIVE_HERO_",-8)' | Out-Null
+    # Complete the authored introduction's end (Scripts/nyc/alison/1_1_5_1_end.py) before Blob's AI starts: Alison (the
+    # spawner's Magma, entity name "alison") goes to her marker alison_spot (1424,1925) with her AI off, Blob to the
+    # arena centre wp_blob_center (1951,1618). Without it Alison stays beside Blob, his controller (rule 40) selects her
+    # as the prop to carry and waits at opcode 12 (080c live round: "prop 255B" = Magma, Blob never moved).
+    & $Request 'script copyOriginAndAngles("alison","alison_spot")' | Out-Null
+    & $Request 'script setAIActive("alison","FALSE")' | Out-Null
+    & $Request 'script copyOriginAndAngles("blob","wp_blob_center")' | Out-Null
+    Start-Sleep -Milliseconds 600
+    $placed = & $ReadState
+    foreach ($actor in $placed.actors) {
+        if ($actor.alive -and $actor.name -ieq 'Magma' -and $null -ne $actor.x) {
+            $dx = $actor.x - 1424; $dy = $actor.y - 1925
+            if ($dx*$dx + $dy*$dy -gt 10000) { throw 'Blob shortcut: Alison did not reach alison_spot.' }
+        }
+        if ($actor.alive -and $actor.name -ieq 'BlobAct1a' -and $null -ne $actor.x) {
+            $dx = $actor.x - 1951; $dy = $actor.y - 1618
+            if ($dx*$dx + $dy*$dy -gt 10000) { throw 'Blob shortcut: Blob did not reach wp_blob_center.' }
+        }
+    }
     # The seed can retain the spawn script's forced idle animation. Ending that
     # loop restores AI ownership; enabling the AI flag alone does not end LOOP.
     & $Request 'script playanim("EA_IDLE1","blob","STOP","")' | Out-Null
@@ -105,6 +124,8 @@ function Initialize-CandidateBlobEncounter {
     & $Request 'script setAIActive("_HERO2_","TRUE")' | Out-Null
     & $Request 'script setReactToEnemies("blob","TRUE")' | Out-Null
     & $Request 'script heroNoTarget("FALSE")' | Out-Null
+    # setDefaultTarget("blob") also resets Blob's rule 40 controller once (xml2-fix boss_blob on_default_target), so it
+    # starts from the staged arena instead of the selection it made before the relocations.
     & $Request 'script setDefaultTarget("blob")' | Out-Null
     & $Request 'script faceEntity("_ACTIVE_HERO_","blob")' | Out-Null
     Write-Host 'Blob encounter staged on clear arena floor with combat AI enabled.'

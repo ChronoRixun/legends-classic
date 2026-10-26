@@ -1,12 +1,50 @@
 # lcsave: the LC save format and the old-save converter (reference implementation)
 
 Append-only resident compatibility uses `Data/lcsave/zone-prefix.lcm`, an optional
-builder attestation sidecar. Generate it against legally owned previous release
-output with `python -m lcsave.zonecompat PREVIOUS_BUILD CURRENT_BUILD
---ledger-out tools/lcsave/data/zone_prefixes.json` after content conversion. The
-release ledger contains hashes and placement indices only; savefiles emits it in
-fresh builds and retains earlier sidecar entries. Regenerate against each supported
-old build after another map edit; compatibility is never inferred transitively.
+builder attestation sidecar. The release ledger `tools/lcsave/data/zone_prefixes.json`
+contains hashes and placement indices only; savefiles (the last content module of
+every build) emits it in fresh builds and retains earlier sidecar entries, so the
+shipped sidecar is exactly the committed ledger. Compatibility is never inferred
+transitively: a row is generated from two concrete builds.
+
+Generating the ledger for a release candidate (legally owned outputs, after content
+conversion; `plan` writes nothing but `--ledger-out`, `generate` also rewrites the
+candidate's own sidecar):
+
+```
+python -m lcsave.zonecompat plan     --previous STABLE_BUILD [--previous PREVIOUS_BETA_BUILD] CANDIDATE_BUILD
+python -m lcsave.zonecompat generate --previous STABLE_BUILD [--previous PREVIOUS_BETA_BUILD] CANDIDATE_BUILD \
+    --ledger-out tools/lcsave/data/zone_prefixes.json
+```
+
+Generate against the current STABLE release build and, for a beta after the first
+beta of a line, ALSO against the previous beta's build: players update from either.
+For beta 8 (0.4.1-beta.1) the only previous build is stable 0.4.0. For each later
+beta, pass both: the stable rows (stable map -> candidate) and the previous-beta rows
+(previous beta -> candidate, plus every row of the previous beta's sidecar re-targeted
+through an equivalence) go into one ledger; identical keys must agree or generation
+stops. Rows bind the candidate's exact map bytes, so regenerate (and commit the
+ledger) after the LAST change to the candidate's maps, then run the per-zone
+real-saves gate (XML2 Fix `scripts/zone_records_gate.py`): every zone must apply at
+least as many saved records on the candidate as on stable. The legacy two-argument
+form `python -m lcsave.zonecompat PREVIOUS CURRENT --ledger-out ...` is `generate`
+with one `--previous`. A rejected zone is reported, never silently accepted; its
+saved records are discarded as before (the zone resets).
+
+Definition-only edits use full-length equivalence rows (every numbered entity is in
+the "prefix", no tail): same framing, same placements and numbering, same definition
+names, and every definition equal once the attributes in `EQUIVALENT_ATTRIBUTES`
+(`xml1heaviness`, beta 8 rule 38) and the owner-reviewed edits in `REVIEWED_CHANGES`
+are removed. A reviewed edit is bound to one zone, one definition, one attribute and
+the SHA-256 of its exact old and new values (beta 8: `astroid_m/visit1/asteroid2_1`
+`shieldup` `actscript`, the Magneto controller's removal of SPEC 36's protection
+suffix); the same attribute changed anywhere else still rejects. Both readers treat a
+matched full-length row whose placements equal the current numbered list as the
+exact-hash path (no fresh tail; legacy promotion as for an exact record); a resave
+stamps the current map hash. Readers older than XML2 Fix 1.9.0 ignore full-length rows
+(the record is discarded, as without the row). An equivalence also re-targets the
+previous build's own prefix rows (a save made on an older map that the previous
+build accepted through a prefix row stays accepted).
 
 An attestation requires the new numbered list to be strictly longer and its old
 prefix to match complete entity definitions, placement-group attributes and instance

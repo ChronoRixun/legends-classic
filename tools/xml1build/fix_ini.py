@@ -29,6 +29,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import struct
 from pathlib import Path
 
 from . import balance as BAL
@@ -134,8 +135,14 @@ BUILD_REPORT = ('_build', 'report.json')
 # dropped together with every script line that calls it. The fix raises it to 1024 by default while ForcedTeams
 # registers its functions; written here explicitly (validate V57 script function names checks the count against it).
 # Nothing saved; online it is gameplay agreement rule 14.
-LIMITS = {'ActorSlots': '127', 'ResourceNames': '1024', 'ItemEnhancements': '512', 'FightStyles': '32',
-          'EffectCurves': '3600', 'MoveTriggers': '64', 'EntityCapacity': '1', 'ScriptFunctions': '1024'}
+# xml2-fix 1.9.0-beta.1 (limits wave 1, its docs/igb-cache.md) [Limits] IGBCache: XMen2.exe's IGB info cache holds 200
+# records (every precached model file); full, a zone's map IGB fails and the game bounces back to the previous zone
+# (the V12 budget, igb_budget.py, keeps every package under 200 - it stays the conversion's limit; 1024 is headroom
+# for graphics mods). The fix moves the cache into its own memory at 1024 records and its name table with it
+# (ResourceNames 2048). Online the cache is gameplay-agreement rule 31 (IGBCache) and the names rule 32.
+LIMITS = {'ActorSlots': '127', 'ResourceNames': '2048', 'ItemEnhancements': '512', 'FightStyles': '32',
+          'EffectCurves': '3600', 'MoveTriggers': '64', 'EntityCapacity': '1', 'ScriptFunctions': '1024',
+          'IGBCache': '1024'}
 
 # xml2-fix 1.3.1 [Game] GeometrySharingBlendIndices (SPEC 44, issue #11): XMen2.exe's geometry sharing reuses one
 # skinned mesh for another when positions and weights match although their packed blend indices differ; XML1's
@@ -150,6 +157,9 @@ GEOMETRY_SHARING_BLEND_INDICES = '1'
 # them all (handles 4096, IGB 2048, actors 128, clouds 128). Online it is gameplay-agreement rule 28 (ModelPools): a
 # 1.8.0-beta.1 peer, which has no rule 28, and a beta.2 port build refuse each other at join by name.
 MODEL_POOLS = 'x4'
+# xml2-fix 1.9.0-beta.1 [Engine] ModelHandles (limits wave 1): the model handles and transforms past ModelPools'
+# profile, sized for the 1024 IGB records above (8192; part of rule 28's values online).
+MODEL_HANDLES = '8192'
 # xml2-fix 1.8.0-beta.2 [Game] ComboPopupGuard: a team-combo popup that lacks a hero's head is hidden instead of
 # crashing (XMen2.exe+0x1a6848). On by default in the DLL; written so the builder's DLL check (check_release_dll)
 # refuses a 1.8.0-beta.1 DLL without it. Display only, no agreement rule.
@@ -174,6 +184,68 @@ OBJECTIVE_DESCRIPTIONS = '1'
 # Off in xml2-fix unless set; a fix without the feature (before 1.3.2) ignores the key and the attribute, and objects
 # break as they do without it. Written for every XML1 build.
 BREAK_RULE = 'xml1'
+
+# xml2-fix [Game] LiftRule (gameplay rule 38, owner decision 2026-10-25): XMen2.exe never lifts its heaviness 3, into
+# which x1schema's rescale folds XML1's 4 (Might rank 3 lifts it) and 5 (never). 'xml1' makes the fix lift the
+# objects that carry xml1heaviness (x1schema.XML1_HEAVINESS_ATTR) by XML1's rule; every other object and every
+# heaviness byte stay the game's. A fix without the rule ignores the key and the attribute. Written for every XML1
+# build.
+LIFT_RULE = 'xml1'
+
+# xml2-fix 1.9.0-beta.1 [Game] Xml1WallCling (gameplay rule 39, docs/xml1-cling.md): XML1's ch_clingwalldecide /
+# ch_clingwallbackflip, the acrobat moveset's wall cling and back-flip (acrobatics 2). The converted moveset_acrobat
+# carries both moves already (XML2 shipped the data with no handler, so they ran as %default%); 'xml1' gives them
+# the first game's handlers. A fix without the rule ignores the key.
+WALL_CLING = 'xml1'
+
+# xml2-fix 1.9.0-beta.1 shared combat handlers (gameplay rule 42, docs/shared-handler-rules.md): seven callbacks every
+# moveset shares - ice/lava skating, Nightcrawler's teleport landing, the popup / air spin decision and landing, the
+# charge (Advanced Sentinel), Nightcrawler's buddy-teleport targets and Gambit's object charge - behave as XML1's.
+# The fix applies them to the whole installation, so they belong to an XML1 build's profile. One mask online.
+# xml2-fix 1.9.0-beta.1 shared handlers wave C (gameplay rule 46, docs/shared-handler-c-rules.md): the jump attack's and
+# the flying charge's damage from values.xmlb's L3 row, Colossus's charge, Beast's bounce and the fastball contact, the
+# idle/bored choice, the animation rate's scale and phase and Nightcrawler's teleport visibility behave as XML1's.
+# Whole-installation, so an XML1 build's profile; one mask online. Phoenix's telekinesis and the guard decide are rule 46's
+# bits 512 / 1024 (TK_GUARD below), written only with Xml1GrabCarry.
+SHARED_HANDLERS_C = {'JumpAttackDamageRule': 'xml1', 'FlyChargeDamageRule': 'xml1', 'ColossusChargeRule': 'xml1',
+                     'BeastBounceRule': 'xml1', 'FastballRule': 'xml1', 'IdleBoredRule': 'xml1', 'LocomotionScaleRule': 'xml1',
+                     'AnimationPhaseRule': 'xml1', 'TeleportVisibilityRule': 'xml1'}
+# xml2-fix 1.9.0-beta.1 rule 46 bits 512 / 1024 (beta8/tk-guard, docs/tk-guard.md): Phoenix's telekinesis (entry / update /
+# input / cancel, XML1's candidate policy, damage and tk levels) and the guard decide (held use_button: allies, enemies and
+# objects; the acrobat's wall lunge) behave as XML1's. Both need rule 45's installed grab lifecycle (the fix refuses them
+# without it and closes online), so port_keys writes them only with Xml1GrabCarry=xml1; a rebuild without it drops them.
+# Beta 8 (080h, owner decision): the telekinesis is in progress (beta 9), so TelekinesisRule is written only with
+# --telekinesis xml1 (default off). Beta 8 (080i, Owen's hand test 10-26): with GuardDecideRule=xml1 a real Guard press
+# (pad X / keyboard E) did nothing at all, so it is written only with --guard-decide xml1 (default off) and Guard is
+# XML2's ch_guard_decide again (grabs and pickups through the grab talent characters adds).
+TELEKINESIS = {'TelekinesisRule': 'xml1'}
+GUARD_DECIDE = {'GuardDecideRule': 'xml1'}
+TK_GUARD = {**TELEKINESIS, **GUARD_DECIDE}
+# xml2-fix 1.9.0-beta.1 [Game] Xml1FlyingCarry (beta 8 080h, docs/xml1-grab-carry.md): =0 keeps rule 45 revision 3
+# without the flying carry (its five handlers and the descent admission 0x433e6c; rule values {1,23,0,0}); Juggernaut's
+# grab, pickup/recovery, the charge collision, fix7 and XML1's flight upkeep stay. The flying carry is in progress
+# (beta 9): written as 0 with Xml1GrabCarry=xml1 unless --flying-carry xml1 (the key absent = the DLL's default, on).
+FLYING_CARRY_OFF = {'Xml1FlyingCarry': '0'}
+
+# xml2-fix 1.9.0-beta.1 [Limits] ActorPools (E4 stage 1, gameplay rule 44, docs/actor-pools.md): the path, shadow and
+# delayed-damage pools sized for 32 actors grow to 124. Written only with --actor-pools 124 until its live runs pass
+# (beta 8 leaves it off: no S1-L1..L5 run yet).
+ACTOR_POOLS = '124'
+
+# xml2-fix [Limits] AnimEnums (gameplay rule 48, xml2-fix docs/anim-enums.md; SPEC 107): the animation enum table 210 ->
+# 512 with XML1's 23 flying-carry / Juggernaut-grab enums at fixed IDs. Written with --anim-enums xml1 (the default
+# since 0.4.1-beta.1; the build then also carries their clips, mappings and carry nodes; anim_enums.py).
+ANIM_ENUMS = '512'
+# Rule 49: the sound cache needs headroom once AnimEnums removes the 16-type animation cap.
+CHAR_SOUNDS = '127'
+MOTION_POOL = '22528'
+RESIDENT_STATS = '320'
+RESIDENT_STATS_MARKER = b'ResidentStats: rule 50 revision 1 installed {320,22,320,1}'
+MOTION_POOL_MARKER = b'MotionPool: rule 51 revision 1 installed {22528,0,0,0}'
+CHAR_SOUNDS_MARKER = b'CharSounds: rule 49 revision 1 installed {127,0,0,0}'
+
+SHARED_HANDLERS = {'SkatingRule': 'xml1', 'TeleportLandingRule': 'xml1', 'PopupRule': 'xml1', 'PopupLandRule': 'xml1',
+                   'ChargeRule': 'xml1', 'NightcrawlerRule': 'xml1', 'GambitRule': 'xml1'}
 
 # xml2-fix [Game] PlacementCrush (SPEC 63.4, issue #79): XMen2.exe settles each object on the floor - at a zone's load
 # and 0.5 s after any spawn in play (death drops, script props, debris) - and an object touching another there may "crush" it (a 1,000,000-damage hit; BreakRule=xml1 refuses most, but the hit's sound
@@ -258,7 +330,7 @@ FORCED_TEAMS_VALUES = ('1', '0', 'off')
 # v1.5: the 0.2.2 wave's [Game] keys - PlacementCrush, DoubleHeal, RankCosts, LevelSkillPoints, LevelStatPoints,
 # Xml1Multipart, X1Leader, SoloMode, DeathRule, DangerRoomGate, RevivalCost, Xml1Turrets, PackAmount, DeathSwitchClear - and
 # [Limits] ScriptFunctions; a 1.4 DLL silently ignores every one of them, so check_release_dll refuses it)
-REQUIRED_XML2FIX = '1.8'
+REQUIRED_XML2FIX = '1.9'
 # The companion fix's prerelease a beta/rc builder needs (launcher-facing requires.xml2fix only): 0.3.0-beta.2 writes
 # [Engine] ModelPools and [Game] ComboPopupGuard, first read by XML2 Fix 1.8.0-beta.2; 0.3.0-beta.3 writes [Online]
 # TickRate, first read by 1.8.0-beta.3; 0.4.0-beta.5 writes [Game] ClassicHud / ClassicCodex (the classic look), first
@@ -267,7 +339,7 @@ REQUIRED_XML2FIX = '1.8'
 # rc and the final 1.8.0 meet it; 1.8.0-beta.5 and older do not). 0.4.0-beta.7 writes schema 3 [NpcSemiAuto] rows (every
 # gun family) and [Game] ClassicSpeakers, first read by 1.8.0-beta.7 (a beta.6 DLL refuses the schema 3 rows: weapon
 # brain off, host/join closed), so its requirement is '>=1.8.0-beta.7'.
-REQUIRED_XML2FIX_PRERELEASE = 'beta.7'
+REQUIRED_XML2FIX_PRERELEASE = 'beta.1'
 
 
 def required_xml2fix(builder_version: str) -> str:
@@ -362,15 +434,15 @@ _ZONE_PATH = re.compile(r'^[a-z0-9_.\-]+(/[a-z0-9_.\-]+)*$')
 PORT_OWNED = {'Game': ('NewGameTeam', 'ResetUnlocks', 'SaveFolder', 'ForcedTeams', 'PostgameScript', 'WindowTitle',
                         'EndHeroUnlock', 'MainMenuItems', 'DangerRoomGate', 'ClassicMainBackdrop', 'ClassicMainPanelBounds', 'NewGamePlus', 'ReviewStats', 'Xtract', 'XtractionShop', 'RevivalCost', 'XPCurve',
                        'GeometrySharingBlendIndices', 'CharacterLadderPaths', 'ObjectiveDescriptions',
-                       'BreakRule', 'PlacementCrush', 'ObjectWorldImpact', 'DoubleHeal', 'DeathRule', 'NpcPowerRule', 'StunRule', 'DangerRoomParty', 'DangerRoomHealthBars', 'ResistanceDisplay', 'BoxHarmOrigin', 'HarmSingleChain', 'HarmLoopStartup', 'ConfirmationRelease',
-                       'OnlineConversations', 'PersonalItemPicture', 'ComboPopupGuard', 'ClassicHud', 'ClassicHudPilot', 'ClassicCodex', 'NpcSemiAuto', 'ClassicSpeakers', 'WorldBackfaces',
+                       'BreakRule', 'LiftRule', 'Xml1GrabCarry', 'Xml1FlyingCarry', 'Xml1RogueDecide', 'Xml1WallCling', *SHARED_HANDLERS, *SHARED_HANDLERS_C, *TK_GUARD, 'PlacementCrush', 'ObjectWorldImpact', 'DoubleHeal', 'DeathRule', 'NpcPowerRule', 'StunRule', 'DangerRoomParty', 'DangerRoomHealthBars', 'ResistanceDisplay', 'BoxHarmOrigin', 'HarmSingleChain', 'HarmLoopStartup', 'ConfirmationRelease',
+                       'OnlineConversations', 'PersonalItemPicture', 'ComboPopupGuard', 'ClassicHud', 'ClassicHudPilot', 'ClassicCodex', 'ClassicObjectives', 'NpcSemiAuto', 'ClassicSpeakers', 'WorldBackfaces',
                        'ExplosiveFirstHit', 'PackAmount', 'SoloMode', 'X1Leader', 'DeathSwitchClear', 'RankCosts', 'LevelSkillPoints', 'LevelStatPoints', 'Xml1Multipart',
-                       'Xml1MasterMold', 'Xml1MoldStage', 'Xml1Turrets', 'Xml1LockOnEffects', 'Xml1LockOnAim'),
+                       'Xml1MasterMold', 'Xml1MoldStage', 'Xml1Turrets', 'Xml1LockOnEffects', 'Xml1LockOnAim', 'Xml1Bosses'),
               'Limits': ('ActorSlots', 'ResourceNames', 'ItemEnhancements', 'FightStyles', 'EffectCurves', 'MoveTriggers', 'EntityCapacity',
-                         'ScriptFunctions'),
+                         'ScriptFunctions', 'IGBCache', 'ActorPools', 'AnimEnums', 'CharSounds', 'MotionPool', 'ResidentStats'),
               'Online': ('GameVersion', 'ContentFingerprint', 'FastTransfer', 'ReceiveValidation', 'JoinInProgress', 'TickRate'),
               'Save': ('Format',),
-              'Engine': ('ModelPools',),
+              'Engine': ('ModelPools', 'ModelHandles'),
               'Xml1Turrets': ('Count',) + tuple(f'T{i}' for i in range(1, 33)),
               'NpcSemiAuto': ('Count',) + tuple(f'W{i}' for i in range(1, NPC_SEMI_AUTO_MAX_ROWS + 1)),
               'WorldBackfaces': ('ZoneCount',) + tuple(f'Z{i}' for i in range(1, WORLD_BACKFACES_MAX_ZONES + 1))}
@@ -542,6 +614,103 @@ def build_mold_controller(out):
     return dict(Xml1MasterMold='1', Xml1MoldStage=binding) if binding else {}
 
 
+# XML1 boss brains (xml2-fix [Game] Xml1Bosses, gameplay rule 40, the shared boss dispatcher): each boss the DLL can run,
+# with the converted zones it binds to (any one suffices) and the instance names it binds by. A boss is listed only when the build carries
+# that zone with every one of those names (a missing or renamed instance would leave its controller idle while rule 40
+# says it is on).
+BOSS_BINDINGS = (('dopples', ('Maps/astral/ast3/colosseum.XMLB',), ('evilwolverine', 'evilcolossus', 'eviljean', 'evilcyc')),
+                 ('avalanche', ('Maps/mount/mount/mount2.XMLB', 'Maps/astral/ast3/astral3_4.XMLB'), ('avalanche',)),
+                 ('pyro', ('Maps/astral/ast3/astral3_3.XMLB',), ('pyro',)),
+                 ('mystique', ('Maps/nyc/alison/nyc1_1_2b.XMLB', 'Maps/mansion/dr_mag2/mag_nyc3.XMLB',
+                              'Maps/astroid_m/visit1/asteroid2_1.XMLB'), ('mystique',)),
+                 ('shadowking', ('Maps/astral/savepx/final_astral.XMLB',), ('shadowking', 'shadowking2')),
+                 ('marrow', ('Maps/sewers/hub/sewers1_2_4.XMLB',), ('marrow',)),
+                 ('magneto', ('Maps/astroid_m/visit1/asteroid2_1.XMLB',), ('magneto',)),
+                 ('blob', ('Maps/nyc/alison/nyc1_1_3.XMLB', 'Maps/mansion/dr_mag2/mag_nyc4.XMLB',
+                           'Maps/astral/ast3/astral3_5.XMLB'), ('blob',)))
+BOSS_IMPLEMENTATIONS = {'marrow': 'native'}  # request agreement/signature verification, never a replacement tick
+BOSS_SCRIPT_CONTRACTS = {'shadowking': ('astral/savepx/sk1pain', 'astral/savepx/dropshield'),
+                         'magneto': tuple(f'asteroid_m/stage{i}' for i in range(2, 6))}
+
+
+def boss_instance_names(root):
+    """Shipped bosses are named spawns; waypoint names, references and substrings cannot bind an actor."""
+    return {e.get('monster_name') for e in root.iter('entity')
+            if e.get('classname', '').lower() == 'monsterspawnerent' and e.get('monster_name')}
+
+
+def source_bosses(ctx):
+    """Plan script substitutes from the same zone/name contract the finished-build INI checks."""
+    cache_key = 'boss_controller_plan'
+    if cache_key not in ctx.shared:
+        selected = ctx.shared.get('selected_modules', getattr(getattr(ctx, 'args', None), 'only', None))
+        if selected is not None and 'zones' not in selected:
+            # A scripts-only rebuild may carry maps from a previous build, but must not assume new maps will appear.
+            ctx.shared[cache_key] = frozenset(build_bosses(ctx.out, check_scripts=False).get('Xml1Bosses', '').split(',')) - {''}
+            return ctx.shared[cache_key]
+        zones_built = set(ctx.x1_zones())
+        names = set()
+        for name, zones, instances in BOSS_BINDINGS:
+            for zone in zones:
+                source = zone[5:-5].lower()
+                if source not in zones_built:
+                    continue
+                root = None
+                for ext in ('.eng', '.xml'):
+                    try:
+                        root = ctx.read_x1_xml(f'maps/{source}{ext}')
+                    except KeyError:
+                        continue
+                    if root is not None:
+                        break
+                if root is not None and set(instances) <= boss_instance_names(root):
+                    names.add(name)
+                    break
+        if selected is not None and 'scripts' not in selected and not boss_scripts_ready(ctx.out, 'magneto'):
+            names.discard('magneto')
+        ctx.shared[cache_key] = frozenset(names)
+    return ctx.shared[cache_key]
+
+
+def boss_scripts_ready(out, name):
+    """Check generated shield scripts independently of maps for bounded partial rebuilds."""
+    if name not in BOSS_SCRIPT_CONTRACTS:
+        return True
+    try:
+        scripts = [Path(out, 'Scripts', script + '.py').read_text(encoding='latin-1')
+                   for script in BOSS_SCRIPT_CONTRACTS[name]]
+    except OSError:
+        return False
+    if any(re.search(r'\bsetInvulnerable\s*\(', text, re.I) for text in scripts):
+        return False
+    return name != 'magneto' or all(
+        re.search(r'setPatternSequence\s*\(\s*[\'"]magneto[\'"]\s*,\s*[\'"]mag' + str(stage) + r'[\'"]\s*\)', text)
+        for stage, text in zip(range(2, 6), scripts))
+
+
+def build_bosses(out, *, check_scripts=True) -> dict:
+    """{'Xml1Bosses': 'name,...'} for the bosses whose zone and instances the finished build carries; {} for none."""
+    import xmlb
+    names = []
+    for name, zones, instances in BOSS_BINDINGS:
+        if check_scripts and not boss_scripts_ready(out, name):
+            continue
+        for zone in zones:
+            try:
+                root = xmlb.decode(Path(out, zone).read_bytes())
+            except (OSError, ValueError, IndexError, KeyError, RecursionError, struct.error):
+                continue
+            if set(instances) <= boss_instance_names(root):
+                if name == 'magneto':
+                    # A map-only rebuild can still carry SPEC 36's hard protection.
+                    if any(re.search(r'setInvulnerable\s*\(', el.get('actscript', ''), re.I)
+                           for el in root.iter('entity') if el.get('name', '').lower() == 'shieldup'):
+                        continue
+                names.append(name)
+                break
+    return {'Xml1Bosses': ','.join(names)} if names else {}
+
+
 def build_turrets(out) -> dict:
     """{'Game': {'Xml1Turrets': '1'}, 'Xml1Turrets': {'Count': n, 'T1': ...}} from the builder's turret contract
     (xml1build.turrets -> _build/turrets.json); {} without a valid one (the turrets stay inert physents)."""
@@ -605,6 +774,9 @@ def game_keys(*, xml1_opening=True, save_folder=None, forced_teams='1', add_hero
         game['ResistanceDisplay'] = 'xml1'
         game['ClassicHud'] = 'xml1'
         game['ClassicCodex'] = '1'
+        # The PDA's Objectives page as in the first game: visible objectives only, opening on the current one
+        # (xml2-fix classic_objectives.cpp). Local presentation only, no agreement record.
+        game['ClassicObjectives'] = '1'
         # XML1's speaker labels: a line the builder gave speakerlabel (scripts.SPEAKER_TOKEN_LABELS, the party Magma's
         # ex-%ALISON% lines) reads "Alison" with Magma's portrait and talk animation. Display only (an XML2 Fix that
         # does not know the key ignores it and the line reads "Magma"); it is in RELEASE_18_KEYS as 1.8.0-beta.7's
@@ -629,6 +801,10 @@ def game_keys(*, xml1_opening=True, save_folder=None, forced_teams='1', add_hero
         game['CharacterLadderPaths'] = CHARACTER_LADDER_PATHS
         game['ObjectiveDescriptions'] = OBJECTIVE_DESCRIPTIONS
         game['BreakRule'] = BREAK_RULE
+        game['LiftRule'] = LIFT_RULE
+        game['Xml1WallCling'] = WALL_CLING
+        game.update(SHARED_HANDLERS)
+        game.update(SHARED_HANDLERS_C)
         game['PlacementCrush'] = PLACEMENT_CRUSH
         game['ObjectWorldImpact'] = OBJECT_WORLD_IMPACT
         game['DoubleHeal'] = DOUBLE_HEAL
@@ -725,9 +901,23 @@ def port_keys(out, *, save_folder=PLAY_SAVE_FOLDER, eighth=True) -> dict:
                      new_game_plus=NEW_GAME_PLUS if menu else None, review_stats=build_review_stats(out),
                      xtract=XTRACT if postgame else None, xp_curve=build_xp_curve(out))
     game.update(build_harm_loop_startup(out))
+    # Same recorded content option that heroes uses. Never infer this from an
+    # existing INI: rebuilding with the feature off must remove the owned key.
+    record = build_record(out) or {}
+    if record.get('grab_carry') == 'xml1':
+        game['Xml1GrabCarry'] = 'xml1'
+        if record.get('guard_decide') == 'xml1':
+            game.update(GUARD_DECIDE)
+        if record.get('telekinesis') == 'xml1':
+            game.update(TELEKINESIS)
+        if record.get('flying_carry') != 'xml1':
+            game.update(FLYING_CARRY_OFF)
+    if (build_record(out) or {}).get('rogue_decide') == 'xml1':
+        game['Xml1RogueDecide'] = 'xml1'
     turrets = build_turrets(out) if postgame else {}
     if postgame:
         game.update(build_mold_controller(out))
+        game.update(build_bosses(out))
         game.update(build_lockon_effects(out))
         game.update(turrets.get('Game', {}))
     semi_auto = build_semi_auto(out) if game.get('NpcPowerRule') == NPC_POWER_RULE else {}
@@ -739,7 +929,14 @@ def port_keys(out, *, save_folder=PLAY_SAVE_FOLDER, eighth=True) -> dict:
     world_backfaces = build_world_backfaces(out)
     if world_backfaces:
         game['WorldBackfaces'] = WORLD_BACKFACES
-    keys = {'Game': game, 'Limits': dict(LIMITS), 'Engine': {'ModelPools': MODEL_POOLS}}
+    keys = {'Game': game, 'Limits': dict(LIMITS), 'Engine': {'ModelPools': MODEL_POOLS, 'ModelHandles': MODEL_HANDLES}}
+    if (build_record(out) or {}).get('actor_pools') == ACTOR_POOLS:   # recorded option only (OFF rebuild drops it)
+        keys['Limits']['ActorPools'] = ACTOR_POOLS
+    if (build_record(out) or {}).get('anim_enums') == 'xml1':     # recorded option only (OFF rebuild drops it)
+        keys['Limits']['AnimEnums'] = ANIM_ENUMS
+        keys['Limits']['CharSounds'] = CHAR_SOUNDS
+        keys['Limits']['MotionPool'] = MOTION_POOL
+        keys['Limits']['ResidentStats'] = RESIDENT_STATS
     if world_backfaces:
         keys['WorldBackfaces'] = world_backfaces
     if turrets:
@@ -966,10 +1163,102 @@ RELEASE_18_KEYS = {**RELEASE_18_KEYS, 'Game': RELEASE_18_KEYS['Game'] + ('Classi
 # private candidate DLL) knows [Game] WorldBackfaces but not the list and would apply the rule to every zone, so the
 # builder also requires the list's key by name.
 RELEASE_18_KEYS = {**RELEASE_18_KEYS, 'WorldBackfaces': ('ZoneCount',)}
+# XML2 Fix 1.9.0-beta.1 (Legends Classic 0.4.1-beta.1, the port's beta 8): [Game] Xml1Bosses (the shared boss dispatcher, rule 40). A beta.7
+# DLL ignores it, so the dopples would fight with the stock AI while the build says otherwise; the builder refuses it.
+RELEASE_18_KEYS = {**RELEASE_18_KEYS, 'Game': RELEASE_18_KEYS['Game'] + ('Xml1Bosses',)}
+# XML2 Fix 1.9.0-beta.1 (Legends Classic 0.4.1-beta.1, the port's beta 8): [Game] ClassicObjectives (the PDA objective page lists the
+# visible objectives and opens on the current one). A beta.7 DLL leaves the native page: a hole for every hidden
+# objective and the first slot, often a finished mission, so the builder refuses it.
+RELEASE_18_KEYS = {**RELEASE_18_KEYS, 'Game': RELEASE_18_KEYS['Game'] + ('ClassicObjectives',)}
 # Byte markers for formats a key name cannot show. The schema 4 weapon rows (bullet trace time + accuracy) are read only
 # by a DLL whose rule 16 detail digest says "NSA4"; an earlier beta 7 DLL knows [Game] NpcSemiAuto but refuses the wider
 # rows and withdraws rule 16, so the builder refuses it, naming the rows.
 RELEASE_MARKERS = {('Game', 'NpcSemiAuto'): (b'NSA4', '[NpcSemiAuto] schema 4 rows')}
+# XML2 Fix 1.9.0-beta.1 (Legends Classic 0.4.1-beta.1, the port's beta 8): limits wave 1 ([Limits] IGBCache, [Engine]
+# ModelHandles; rules 31-32), XML1's wall cling (39), lift rule (38), Rogue's decide (43), the shared handlers (42),
+# the receive-side rounding and damage cap ([Balance] ReceiveRounding / DamageCap, 41) and the boss brains (40). A
+# 1.8.0 DLL (beta 7 or the stable) ignores every one of them without a word, so the builder refuses it by name.
+RELEASE_18_KEYS = {**RELEASE_18_KEYS,
+                   'Game': RELEASE_18_KEYS['Game'] + ('LiftRule', 'Xml1WallCling', 'Xml1RogueDecide') + tuple(SHARED_HANDLERS),
+                   'Limits': RELEASE_18_KEYS.get('Limits', ()) + ('IGBCache',),
+                   'Engine': RELEASE_18_KEYS['Engine'] + ('ModelHandles',),
+                   'Balance': RELEASE_18_KEYS.get('Balance', ()) + ('ReceiveRounding', 'DamageCap')}
+# Rule 16 revision 14 (parity wave A's items 19-22 and the character bullet ray) changes no key: a 1.8.0 DLL runs
+# NpcPowerRule=xml1 as revision 11. The 1.9.0 DLL's install log carries "NPR14" (xml2-fix src/npc_power.cpp), so the
+# builder requires that marker wherever it writes the rule.
+RELEASE_MARKERS[('Game', 'NpcPowerRule')] = (b'NPR14', '[Game] NpcPowerRule revision 14')
+# Candidate rule 45 is opt-in. The key must exist in the companion DLL when
+# requested; a pre-candidate DLL would silently ignore the restored ground rule.
+RELEASE_18_KEYS = {**RELEASE_18_KEYS, 'Game': RELEASE_18_KEYS['Game'] + ('Xml1GrabCarry',)}
+# XML2 Fix 1.9.0-beta.1 (the port's beta 8 candidate 080b): the nine shared-handler wave C keys (rule 46) and, when
+# written (--actor-pools 124), [Limits] ActorPools (rule 44). A DLL before them ignores each without a word.
+RELEASE_18_KEYS = {**RELEASE_18_KEYS, 'Game': RELEASE_18_KEYS['Game'] + tuple(SHARED_HANDLERS_C),
+                   'Limits': RELEASE_18_KEYS['Limits'] + ('ActorPools',)}
+# xml2-fix rule 48 (beta8/anim-enums): [Limits] AnimEnums, when written (--anim-enums xml1). The key's name is not enough:
+# the build's mappings name the DLL's XML1 enums, so the DLL must also carry its marked table (anim_enums.DLL_MARKER)
+# with exactly the builder's 23 names in ID order (check_anim_enums_dll); a DLL without it would leave the 23 mappings
+# unresolved (dropped by the shared_anims parser) and every carry / victim move on enum 0's animation.
+RELEASE_18_KEYS = {**RELEASE_18_KEYS, 'Limits': RELEASE_18_KEYS['Limits'] + ('AnimEnums', 'CharSounds', 'MotionPool', 'ResidentStats')}
+# The CharSounds key alone cannot certify that the DLL registers the agreement rule.
+RELEASE_MARKERS[('Limits', 'CharSounds')] = (CHAR_SOUNDS_MARKER, '[Limits] CharSounds (rule 49)')
+RELEASE_MARKERS[('Limits', 'MotionPool')] = (MOTION_POOL_MARKER, '[Limits] MotionPool (rule 51)')
+# xml2-fix 1.9.0-beta.1 rule 45 revision 3 (beta8/carry 063f2e8: the flying carry, fix7 admission, XML1's strict flight
+# upkeep) keeps the key name of revision 2 (080b), whose DLL would run the build's XML1 `flying` node (anim_enums
+# .XML1_FLIGHT_UPKEEP) with no flight cost at all. Its install line is the byte marker (xml2-fix src/xml1_grab_carry.cpp).
+GRAB_CARRY_R3_MARKER = b'flying carry, fix7 and XML1 upkeep installed'
+RELEASE_MARKERS[('Game', 'Xml1GrabCarry')] = (GRAB_CARRY_R3_MARKER, '[Game] Xml1GrabCarry revision 3')
+# xml2-fix 1.9.0-beta.1 (beta 8 candidate 080d): rule 46's TelekinesisRule / GuardDecideRule (a DLL before them - 080c and
+# older - ignores both keys without a word and runs PC's telekinesis and guard decide).
+RELEASE_18_KEYS = {**RELEASE_18_KEYS, 'Game': RELEASE_18_KEYS['Game'] + tuple(TK_GUARD)}
+# xml2-fix 1.9.0-beta.1 (beta 8 candidate 080e, beta8/fix2 c0505c8): TelekinesisRule resolves Phoenix's power1a / power1b
+# through the PC sound manager's name lookup (slot 0x38); the 080d DLL called slot 0x34 (a PC bool query, ret 4) and
+# crashed at the first telekinesis hold. The same release keeps an established flying carry node instead of re-entering
+# it every frame (080d: the victim never followed). Neither changes a key or a rule revision, so the install lines
+# (xml2-fix src/shared_handlers_c.cpp, src/xml1_grab_carry.cpp) are the byte markers.
+TK_AUDIO_MARKER = b'telekinesis sounds resolve through PC audio slot 38'
+CARRY_CHAIN_MARKER = b'flying carry keeps its established node (no self-chain)'
+RELEASE_MARKERS[('Game', 'TelekinesisRule')] = (TK_AUDIO_MARKER, '[Game] TelekinesisRule (PC audio slot 38)')
+# a second marker for a key that already has one (Xml1GrabCarry: revision 3 above)
+EXTRA_MARKERS = [(('Game', 'Xml1GrabCarry'), CARRY_CHAIN_MARKER, '[Game] Xml1GrabCarry (no carry self-chain)')]
+# xml2-fix 1.9.0-beta.1 (beta 8 candidate 080g, beta8/fix3 6f7df24): a telekinesis throw released with no velocity
+# divided zero by zero (080e/080f); a tapped guard never left the guard decide (the policy ran in the entry slot); the
+# Colossus charge evaluated its damage / knockback / range on the struck soldier (no damage); a thrown body's world
+# impact never reached its receiver (PC gate 0x42C09E) and the carry pose read the synthetic bones (victim 30 units low).
+# No key or rule revision changes, so the install lines (xml2-fix src/shared_handlers_c.cpp, src/xml1_grab_carry.cpp)
+# are the byte markers.
+TK_STILL_MARKER = b"a still telekinesis throw keeps the victim's facing (no zero divide)"
+GUARD_TAP_MARKER = b'guard decide runs at input and exits after a tap'
+COLOSSUS_CASTER_MARKER = b'Colossus charge evaluates its talents on the caster'
+THROWN_IMPACT_MARKER = b'thrown bodies forward world impacts (42C09E); carry pose on animated bones'
+# xml2-fix 1.9.0-beta.1 (beta 8 candidate 080h): [Game] Xml1FlyingCarry=0. A DLL before it (080g and older) ignores the key
+# and installs the flying carry; the key's name and its install line are both required.
+FLYING_CARRY_OFF_MARKER = b'flying carry off (Xml1FlyingCarry=0): no carry handlers, PC flight descent'
+RELEASE_18_KEYS = {**RELEASE_18_KEYS, 'Game': RELEASE_18_KEYS['Game'] + tuple(FLYING_CARRY_OFF)}
+RELEASE_MARKERS[('Game', 'Xml1FlyingCarry')] = (FLYING_CARRY_OFF_MARKER, '[Game] Xml1FlyingCarry (flying carry off)')
+EXTRA_MARKERS += [(('Game', 'TelekinesisRule'), TK_STILL_MARKER, '[Game] TelekinesisRule (still throw)'),
+                  (('Game', 'GuardDecideRule'), GUARD_TAP_MARKER, '[Game] GuardDecideRule (tap exit)'),
+                  (('Game', 'ColossusChargeRule'), COLOSSUS_CASTER_MARKER, '[Game] ColossusChargeRule (caster talents)'),
+                  (('Game', 'Xml1GrabCarry'), THROWN_IMPACT_MARKER, '[Game] Xml1GrabCarry (thrown impact, animated bones)')]
+# E12 (SPEC 108): a build whose own XMen2.exe is large-address-aware needs the fix's address-space module (the 2 GB guard
+# block, and the two test readers that refused addresses above 0x7fffffff before it). Its start line is the marker; the
+# check reads the build's exe beside the DLL (no exe yet, or --laa off: nothing to check).
+ADDRESS_SPACE_MARKER = b'address space: laa %s; 2 GB guard %s'
+
+
+def check_address_space_dll(dll, keys: dict) -> None:
+    dll = Path(dll)
+    exe = dll.parent / 'XMen2.exe'
+    if not dll.is_file() or not exe.is_file():
+        return
+    from . import exe_flags
+    try:
+        if exe_flags.laa_state(exe.read_bytes()) != 'on':
+            return
+    except exe_flags.NotPE32:
+        return
+    if ADDRESS_SPACE_MARKER not in dll.read_bytes():
+        raise FixTooOld("The build's XMen2.exe is large-address-aware; the existing DLL has no address-space guard",
+                        ['XMen2.exe large-address-aware (address space guard)'])
 
 
 def check_release_dll(dll, keys: dict) -> None:
@@ -983,16 +1272,37 @@ def check_release_dll(dll, keys: dict) -> None:
                if key in keys.get(section, {}) and (key + ('\0' if key in EXACT_KEYS.get(section, ()) else '')).encode('utf-16le') not in data]
     missing += [name for (section, key), (marker, name) in RELEASE_MARKERS.items()
                 if key in keys.get(section, {}) and marker not in data]
+    missing += [name for (section, key), marker, name in EXTRA_MARKERS
+                if key in keys.get(section, {}) and marker not in data]
     if missing:
         raise FixTooOld(f'This build needs XML2 Fix {REQUIRED_XML2FIX} or later; the existing DLL does not recognize '
                         + ', '.join(missing), missing)
+
+
+def check_anim_enums_dll(dll, keys: dict) -> None:
+    """[Limits] AnimEnums needs the companion DLL's AnimEnums table: the marker block and the builder's built-in names
+    (anim_enums.BUILTIN_ENUMS, IDs 0xD2..) in the same order. Source-only builds may omit the DLL."""
+    if 'AnimEnums' not in keys.get('Limits', {}):
+        return
+    dll = Path(dll)
+    if not dll.is_file():
+        return
+    from . import anim_enums as AE
+    names = AE.dll_builtin_names(dll.read_bytes())
+    if names is None:
+        raise FixTooOld('[Limits] AnimEnums needs the XML2 Fix with the AnimEnums table (rule 48); the existing DLL '
+                        'has none', ['[Limits] AnimEnums (AnimEnums table)'])
+    if tuple(names) != AE.BUILTIN_ENUMS:
+        raise FixTooOld(f'[Limits] AnimEnums: the AnimEnums table of the existing DLL ({len(names)} names) differs '
+                        f'from the builder\'s {len(AE.BUILTIN_ENUMS)} XML1 enums', ['[Limits] AnimEnums (AnimEnums table)'])
 
 
 def old_fix_keys(dll, keys: dict) -> list:
     """every key of `keys` the existing companion DLL does not know ('[Section] Key'; [] without a DLL). Raises
     ValueError for a key set no DLL can run (EntityCapacity without Format=lc)."""
     missing = []
-    for check in (check_move_trigger_dll, check_entity_capacity_dll, check_release_dll):
+    for check in (check_move_trigger_dll, check_entity_capacity_dll, check_release_dll, check_anim_enums_dll,
+                  check_address_space_dll):
         try:
             check(dll, keys)
         except FixTooOld as exc:
@@ -1018,3 +1328,5 @@ def write_port_keys(out, keys: dict | None = None, *, old_fix_ok: bool = False) 
         archive.write_text(json.dumps(identity, indent=2, sort_keys=True) + '\n', encoding='utf-8')
     merge_ini(Path(out) / 'xml2-fix.ini', keys, dropped_keys(keys))
     return keys
+
+RELEASE_MARKERS[('Limits', 'ResidentStats')] = (RESIDENT_STATS_MARKER, '[Limits] ResidentStats (rule 50)')

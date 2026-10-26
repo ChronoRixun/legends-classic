@@ -506,7 +506,9 @@ def _base_text(ctx, ref):
                 text = '\r\n'.join(stmts)
                 info['bounded_loops'] = bl
                 info['bounded_loops_skipped'] = sk
-        text = BP.rewrite_script(ref, text)
+        from . import fix_ini as FI
+        controllers = FI.source_bosses(ctx) if ref in BP.SHADOW_SCRIPTS or ref in BP.MAGNETO_STAGES else ()
+        text = BP.rewrite_script(ref, text, controller_bosses=controllers)
         text = SA.rewrite_script(ref, text)
         return text, info
     return _cached(ctx, ('base_text', ref), build)
@@ -1542,7 +1544,11 @@ def rewrite_data_tree(ctx, root, rel) -> int:
     doubles = T.npc_double_conversation_heroes(conv_ref) if conversation else set()
     # SPEC 18.1: hero NPCs with XML1's own entity name speak under that name (T.NPC_SPEAKER_CONVERSATIONS)
     npc_speakers = T.npc_speaker_renames(conv_ref) if conversation else {}
-    n = BP.rewrite_data(root, r)
+    if BP._ref(r) == BP.MAGNETO_ZONE:
+        from . import fix_ini as FI
+        n = BP.rewrite_data(root, r, controller_bosses=FI.source_bosses(ctx))
+    else:
+        n = BP.rewrite_data(root, r)
     n += SF.fix_player_starts(root, r)   # SPEC 41: starts that land outside the walkable area
     if conversation:
         n += CV.resolve_cross_file_tagjumps(ctx, root, rel)   # SPEC 39: first, so the copy is marked/rewritten too

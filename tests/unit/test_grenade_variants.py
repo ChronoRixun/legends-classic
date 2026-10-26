@@ -176,3 +176,56 @@ def test_validator_rejects_wrong_moveset_entity_registration_and_flash_mods():
     fixed = V.Check('test', 'grenade chain')
     V.Validator._grenade_variant_files(fake, fixed)
     assert not fixed.errors
+
+
+# beta 8: the engine keeps 31 characters of a stats powerstyle / moveset1 (CStats string setter 0x43a690, strncpy 0x20
+# with the NUL forced at byte 31) and then loads data/powerstyles/<those 31>: a longer generated name asks for a file
+# that does not exist and the soldier loses the whole style.
+GRENADES = {'grenade', 'flashbang', 'incendiary'}
+
+
+def test_generated_style_names_fit_the_engine_and_keep_their_parse():
+    officer = W.variant_grenade_name(W.variant_name('x1_ps_grso', 'wp_m_nullifier'), 'incendiary')
+    captain = W.variant_grenade_name(W.variant_name('x1_ps_grso', 'wp_knockback_gun'), 'flashbang')
+    assert officer == 'x1_grso_m_nullifier_incendiary'
+    assert captain == 'x1_grso_knockback_gun_flashbang'
+    for n in (officer, captain):
+        assert len(n) <= W.STYLE_NAME_MAX
+    # the grenade suffix and the weapon suffix (V43 / the gun-damage check) survive
+    assert W.variant_grenade(officer, GRENADES) == 'incendiary'
+    assert W.variant_grenade(captain, GRENADES) == 'flashbang'
+    assert officer[:-len('_incendiary')].endswith('_m_nullifier')
+    assert captain[:-len('_flashbang')].endswith('_knockback_gun')
+    # the want-side (validator) and the builder side agree
+    want = W.grenade_powerstyle_want('ps_grso', 'wp_knockback_gun',
+                                     {'grenade': 'flashbang'}, '', lambda s: 'x1_' + s)
+    assert want == captain
+
+
+def test_short_style_names_keep_their_identity():
+    for variant, grenade, full in (('x1_ps_grso_mp5', 'flashbang', 'x1_ps_grso_mp5_flashbang'),
+                                   ('x1_ps_grso_freeze_gun', 'flashbang', 'x1_ps_grso_freeze_gun_flashbang'),
+                                   ('x1_ps_flamethrower', 'flamethrower', 'x1_ps_flamethrower_flamethrower')):
+        assert len(full) <= W.STYLE_NAME_MAX
+        assert W.variant_grenade_name(variant, grenade) == full
+    assert W.variant_name('x1_ps_grso', 'wp_superlaser_gun') == 'x1_ps_grso_superlaser_gun'
+    assert W.variant_name('ps_grso', 'wp_mp5') == 'x1_ps_grso_mp5'
+    assert W.grenade_variant_name('moveset_grenade', 'incendiary') == 'x1_moveset_grenade_incendiary'
+    # exactly 31 stays, 32 loses only the 'ps_'
+    assert W.fit_style_name('x1_ps_' + 'a' * 25) == 'x1_ps_' + 'a' * 25
+    assert W.fit_style_name('x1_ps_' + 'a' * 26) == 'x1_' + 'a' * 26
+    # deterministic, case-folded, and a name that cannot be fitted is handed back long for the caller to refuse
+    assert W.fit_style_name('X1_PS_GRSO_KNOCKBACK_GUN_FLASHBANG') == 'x1_grso_knockback_gun_flashbang'
+    assert len(W.fit_style_name('x1_ps_' + 'a' * 40)) > W.STYLE_NAME_MAX
+
+
+def test_stats_string_overflows_name_each_fixed_width_field():
+    st = ET.fromstring('<npcstat><stats name="a" powerstyle="x1_ps_grso_knockback_gun_flashbang" '
+                       'moveset1="x1_moveset_grenade_incendiary" power1="power_knockback" power2="%s" '
+                       'charactername="%s" sounddir="grso_m"/></npcstat>' % ('p' * 20, 'c' * 32))
+    got = {(attr, width) for _, attr, _, width in W.stats_string_overflows(list(st))}
+    assert got == {('powerstyle', 31), ('power2', 19), ('charactername', 31)}
+    # exactly the width is fine; `name` is the validator's own older check
+    ok = ET.fromstring('<npcstat><stats name="%s" powerstyle="%s" power1="%s"/></npcstat>'
+                       % ('n' * 40, 'p' * 31, 'q' * 19))
+    assert W.stats_string_overflows(list(ok)) == []

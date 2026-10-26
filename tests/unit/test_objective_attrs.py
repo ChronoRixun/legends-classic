@@ -85,3 +85,11 @@ def test_conflicting_completion_text_does_not_regroup_saved_objectives():
         pass
     else:
         raise AssertionError('conflicting completion text silently changed saved objective identity')
+
+
+def test_objectives_carry_their_act_file_order_for_the_engine_sort():
+    # XMen2.exe heap-sorts an act's records by `order` (0x489680); all zero keys scramble the PDA's slots.
+    _plan, texts = mission_plan()
+    root = ET.fromstring(texts['x1_act01.xml'])
+    assert [(o.get('name'), o.get('order')) for o in root] == [('main', '1'), ('side', '2'), ('plain', '3')]
+    assert all(-128 <= int(o.get('order')) <= 127 for o in root)

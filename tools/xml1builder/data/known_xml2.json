@@ -2,6 +2,7 @@
  "exes": {
   "b34f0baf1058d518f55b3cefb3fccc5f": {
    "id": "retail-en",
+   "normalized_sha256": "146cd9c316edb57a267cd73753a7ce9af647e52aab750d449c6b278fb4a1669b",
    "size": 3129344,
    "note": "X-Men Legends II PC retail (English), 2005-09-08 build"
   }
