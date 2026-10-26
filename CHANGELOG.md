@@ -63,6 +63,11 @@ the beta 8 test guide.
   Phoenix's telekinesis with XML1's targets, hold, damage and tk levels; the guard decide's pickups and ally throws and
   the acrobats' wall lunge), written only with `Xml1GrabCarry=xml1` (they need its grab lifecycle); the builder refuses a
   DLL without the two keys (080c and older).
+- **Beta 8: room for the first game's sounds, animations and characters** (since candidate 080d). Builds with the
+  XML1 animation enums also write `[Limits] CharSounds=127` (XML2 Fix rule 49: 127 character sound sets instead of 16),
+  `MotionPool=22528` (rule 51: the animation motion pool 500 -> 22,528, each character bounded to 176 clips) and
+  `ResidentStats=320` (rule 50: 320 resident character stat records instead of 31, NPC payloads with them); the builder
+  requires each key and its rule's install line in the DLL. Rebuilding with `--anim-enums off` drops all three.
 - **Beta 8, opt-in: actor pools.** `--actor-pools 124` writes `[Limits] ActorPools=124` (XML2 Fix rule 44: path,
   shadow and delayed-damage pools 32 -> 124). Off by default until its live runs pass.
 - **Beta 8: the HAARP officer's aura** plays the original's art (`physical_resistant_share`).
