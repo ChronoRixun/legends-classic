@@ -126,6 +126,11 @@ def parse_args(argv=None):
                          "intro logos, menu music, Danger Room courses, Review / codex / trivia / credits data "
                          "(xml1, the default; also $XML1BUILD_FRONTEND) or XML2's front end exactly as before SPEC 21 "
                          "(xml2, the A/B fallback)")
+    ap.add_argument('--laa', choices=('on', 'off'), default='on',
+                    help="E12 (SPEC 108): the build's own copy of XMen2.exe is large-address-aware (on, the default: "
+                         "4 GB of address space on 64-bit Windows and Wine/Proton instead of 2 GB; one flag in the "
+                         "exe's file header, the install's exe is never written) or the install's byte-identical "
+                         "exe (off, A/B builds)")
     ap.add_argument('--main-menu-layout', choices=('classic', 'widescreen'), default='classic',
                     help='main-menu composition: classic (the original, centred by the game at every aspect); '
                          'widescreen is a retired name for classic')
@@ -197,7 +202,7 @@ HOOK_OWNER = 'testhooks'
 # built with a different value is stale, so that module is re-run (plan_content_opts).
 CONTENT_OPTS = {'harm_loop_startup': (tuple(C.MODULE_ORDER), 'workaround'),
                 'blackbird': ('scripts', 'menu'), 'npc_scaling': ('characters', 'off'), 'tiles': ('zones', 'used'),
-                'main_menu_layout': ('frontend', 'classic'),
+                'main_menu_layout': ('frontend', 'classic'), 'laa': ('exe_flags', 'on'),
                 'grab_carry': ('characters', 'xml1'), 'actor_pools': ('characters', 'off'), 'anim_enums': ('characters', 'xml1'), 'rogue_decide': ('heroes', 'xml1'), 'hero_roster': ('heroes', '21'), 'hero_icons': ('heroes', 'xml1'), 'hero_bleed': ('heroes', 'on'),
                 'newgame': ('scripts', 'keepteam'),
                 # SPEC 19: scripts emits the blocks; zones imports the dialogs / conversations rewrite_data_tree patches
@@ -214,7 +219,8 @@ LEGACY_OPT_VALUES = {'tiles': 'folder',          # zone packages listed whole ti
                      'forced_teams': 'menu',     # no xml2-fix calls before SPEC 19
                      'frontend': 'xml2',         # XML2's front end before SPEC 21
                      'xp_curve': 'xml2',         # XML2-scaled Danger Room / XP pickup amounts before SPEC 23.1
-                     'buoys': 'empty'}           # every converted zone had an empty buoy network before SPEC 42
+                     'buoys': 'empty',           # every converted zone had an empty buoy network before SPEC 42
+                     'laa': 'off'}               # the install's byte-identical exe before SPEC 108
 
 
 def _prev_build(out: Path):
@@ -453,7 +459,7 @@ def main(argv=None):
                     'blackbird': args.blackbird, 'npc_scaling': args.npc_scaling, 'tiles': args.tiles,
                     'grab_carry': args.grab_carry, 'actor_pools': args.actor_pools, 'anim_enums': args.anim_enums, 'rogue_decide': args.rogue_decide, 'hero_roster': args.hero_roster, 'hero_icons': args.hero_icons, 'hero_bleed': args.hero_bleed,
                     'newgame': args.newgame, 'forced_teams': args.forced_teams, 'frontend': args.frontend,
-                    'xp_curve': args.xp_curve, 'buoys': args.buoys, 'main_menu_layout': args.main_menu_layout,
+                    'xp_curve': args.xp_curve, 'buoys': args.buoys, 'main_menu_layout': args.main_menu_layout, 'laa': args.laa,
                     'harm_loop_startup': getattr(args, 'harm_loop_startup', 'workaround'),
                     BAL.REPORT_KEY: BAL.REPORT_ON if BAL.enabled() else 'xml2',
                     'content_fingerprint': ctx.shared.get('content_fingerprint'),

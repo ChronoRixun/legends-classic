@@ -9,6 +9,13 @@ The port's beta 8 (`0.4.1-beta.1` with XML2 Fix `1.9.0-beta.1`). **Nothing below
 passed the unit tests and its native tests (the objectives page has also been checked live); the live checks are in
 the beta 8 test guide.
 
+- **4 GB of address space (E12).** The build's own copy of `XMen2.exe` is large-address-aware: one flag word in its
+  file header (`exe_flags`, SPEC 108), so on 64-bit Windows and Wine/Proton the game can use 4 GB instead of 2 GB -
+  room for the raised engine limits and bigger assets. Your X-Men Legends II install is never changed. `--no-laa`
+  (builder) / `--laa off` (build_xml1) keeps the install's exe byte for byte. The manifest now lists `XMen2.exe` as a
+  built file; validator V1 accepts exactly the flag. Needs XML2 Fix 1.9.0's address-space lines to see it in the log.
+  Static risk check only so far; the live high-address test is queued.
+
 - **Beta 8: the first game's bosses.** Builds write `[Game] Xml1Bosses` (XML2 Fix rule 40) listing every boss whose
   zone and spawn names the build carries: the colosseum dopples, Avalanche (both fights), Pyro, Mystique, Shadow
   King, Magneto, Blob and Marrow (whose brain is already native). Shadow King and Magneto use their authored timed

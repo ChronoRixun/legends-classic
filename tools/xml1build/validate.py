@@ -197,6 +197,7 @@ from . import characters as CH           # V54 (issue #15): the xml2-fix leader 
 from . import anim_enums as AE           # V7 (SPEC 107): the XML1 enums of xml2-fix [Limits] AnimEnums
 from . import igb_anim_merge as IAM      # V7 (SPEC 107): the transplanted clips in Actors/common.IGB
 from . import save_positions as SP      # V31: identities a save keeps by position
+from . import exe_flags as EXE          # V1 (E12, SPEC 108): the build's large-address-aware exe
 
 MAX_REPORTED = 50                             # per check and severity, into ctx.error / ctx.warn
 CONTENT_OWNERS = tuple(C.MODULE_ORDER)        # characters, scripts, zones, media
@@ -1242,8 +1243,13 @@ class Validator:
         exe_out, exe_base = out / 'XMen2.exe', self.ctx.base / 'XMen2.exe'
         if not exe_out.is_file():
             ck.error('XMen2.exe missing from <out>')
-        elif exe_base.is_file() and exe_out.stat().st_size != exe_base.stat().st_size:
-            ck.error('XMen2.exe differs in size from the base install (the build never patches the exe)')
+        elif exe_base.is_file():
+            # E12 (SPEC 108): the install's exe, byte for byte, except the large-address-aware flag (and the PE
+            # checksum, if it has one) that exe_flags sets with --laa on
+            want = EXE.mode(self.ctx)
+            for msg in EXE.validate(exe_out.read_bytes(), exe_base.read_bytes(), want):
+                ck.error(msg)
+            ck.set('exe_laa', want)
         ck.set('root_entries', sum(1 for _ in out.iterdir()))
 
     # ================================================================== V2 registry

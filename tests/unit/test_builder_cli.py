@@ -13,6 +13,7 @@ from pathlib import Path
 
 import builder_stub as B
 from xml1builder import cli, events, manifest as M
+from xml1build import exe_flags as EF
 
 
 class Stdin:
@@ -183,14 +184,37 @@ def test_build_verify_repair_clean():
         code, evs, _ = run(['verify', '--out', str(out), '--events', 'jsonl'])
         assert evs[-1]['verify']['state'] == 'current'
 
-        # a base file damaged with its size and mtime kept: the build's final verification copies it again
-        exe = out / 'XMen2.exe'
+        # E12: the build's XMen2.exe is the install's exe with the large-address-aware flag (one word of the file
+        # header); the install's exe is never written; the manifest holds the flagged copy's hash (verify: current)
+        exe, src_exe = out / 'XMen2.exe', (xml2 / 'XMen2.exe').read_bytes()
+        assert src_exe == B.pe32(extra=b'stub') and EF.laa_state(src_exe) == 'off'
+        built_exe = exe.read_bytes()
+        assert EF.laa_state(built_exe) == 'on' and built_exe == EF.with_laa(src_exe)
+        assert EF.differences(src_exe, built_exe) == [0x96]
+        entry = M.load(out)['files']['XMen2.exe']
+        assert entry['kind'] == 'built' and entry['sha1'] == M.sha1_file(exe)[1]
+        # a damaged built exe is not the install's file any more: a rebuild writes the flagged copy again
         st = exe.stat()
         exe.write_bytes(b'Z' + exe.read_bytes()[1:])
         os.utime(exe, ns=(st.st_atime_ns, st.st_mtime_ns))
+        code, evs, _ = run(['verify', '--out', str(out), '--events', 'jsonl'])
+        assert evs[-1]['verify']['state'] == 'damaged'
+        code, evs, _ = run(build_argv(xml2, iso, out, cache))
+        assert code == 0 and exe.read_bytes() == built_exe and (xml2 / 'XMen2.exe').read_bytes() == src_exe
+        # --no-laa: the install's byte-identical exe, a base file again
+        code, evs, _ = run(build_argv(xml2, iso, out, cache) + ['--no-laa'])
+        assert code == 0 and exe.read_bytes() == src_exe and M.load(out)['files']['XMen2.exe']['kind'] == 'base'
+        code, evs, _ = run(build_argv(xml2, iso, out, cache))
+        assert code == 0 and exe.read_bytes() == built_exe
+
+        # a base file damaged with its size and mtime kept: the build's final verification copies it again
+        base_file = out / 'Data' / 'herostat.engb'
+        st = base_file.stat()
+        base_file.write_bytes(b'Z' + base_file.read_bytes()[1:])
+        os.utime(base_file, ns=(st.st_atime_ns, st.st_mtime_ns))
         code, evs, _ = run(build_argv(xml2, iso, out, cache))
         assert code == 0 and evs[-1]['verify']['repaired'] == 1
-        assert exe.read_bytes() == (xml2 / 'XMen2.exe').read_bytes()
+        assert base_file.read_bytes() == (xml2 / 'Data' / 'herostat.engb').read_bytes()
         # a module's copy that does not match its source is copied again from it
         code, evs, _ = run(build_argv(xml2, iso, out, cache), stub={'corrupt_copy': True})
         assert code == 0 and evs[-1]['verify']['repaired'] == 1

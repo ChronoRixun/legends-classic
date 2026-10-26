@@ -7846,3 +7846,30 @@ The companion DLL raises the resident CStats pool (31 -> 320) and the NPC stats 
 keeps the hero payload pool at 22 (the port has 21 heroes), and admits a character type only when its payload can be
 allocated (no null payload). Rule 50 values are {320,22,320,1}. The builder requires the ResidentStats key plus its
 rule-50 registration marker; rebuilding with animation enums off drops the key.
+
+## 108. Large-address-aware XMen2.exe (`--laa`, content module `exe_flags`, gap row E12)
+
+XMen2.exe is a 32-bit program without `IMAGE_FILE_LARGE_ADDRESS_AWARE`, so Windows gives it 2 GB of address space;
+with the flag a 32-bit process on 64-bit Windows (and Wine / Proton) gets 4 GB. Windows reads the flag from the exe's
+file header when the process starts, so there is no runtime switch: the content module `exe_flags` (before
+`savefiles` in `MODULE_ORDER`) writes the build's own copy of the exe with the flag set - one word of the PE file
+header (the retail exe: file offset 0x146, 0x010f -> 0x012f), the PE checksum recomputed only when the exe has one
+(the retail exe's is 0). The install's exe is never written (`ctx.write_bytes` replaces `<out>`'s file atomically;
+`_check_out_safe` keeps `<out>` away from the install). An install exe that already has the flag is left as copied.
+
+`--laa on|off` (build_xml1, default on; the builder CLI: `--no-laa`), content option owned by `exe_flags` (builds
+from before this section count as `off`). Off: no file is written, the base sync's byte-identical copy stays.
+
+What changes for the hashes: `XMen2.exe` is a built file in the manifest (kind `built`, the flagged copy's sha1)
+instead of a base file; `verify` checks it like any built file, a rebuild writes it again, and the install's own
+exe still has to match the retail reference (`known_xml2.json`, `xml2_retail_files.json.gz`: unchanged, the
+builder checks the install, not the build). The candidate kits' `check_same_build.ps1 -Full` package digest covers
+the flagged exe like every other file (both PCs of a co-op session build it the same way). The launcher has no hash
+of its own (it runs `xml1-builder verify`).
+
+V1 checks the build's exe against the install's: byte-identical with `--laa off`; with `on` identical except the
+flag word (and the checksum, if any). XML2 Fix logs `address space: laa on|off; 2 GB guard ...` at start, keeps the
+64 KB block below 2 GB reserved when the flag is on (no allocation can straddle 0x80000000: the static check found
+signed pointer compares in a D3DX8 MMX mip-filter loop that misbehave only for a buffer across that line), reports
+`memory laa ...` in the test pipe's `status`, and writes a `crash:` line with the flag and the address-space totals.
+The static risk check of every module the game loads and the live high-address test are in the E12 work notes.
