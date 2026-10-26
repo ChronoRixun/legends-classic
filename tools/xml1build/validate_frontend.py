@@ -1145,7 +1145,8 @@ def _classic_service(v, ck, adapter, menu, native_scene):
         if root is None or root.get('igb') != adapter.SCENE:
             ck.error('classic service definition/scene missing: ' + menu)
             continue
-        for problem in H.control_problems(v.ctx.read_base_xmlb('UI/menus/' + menu + ext), root, adapter.RETIRED):
+        extra = getattr(adapter, 'extra_retired', lambda _ctx: ())(v.ctx)       # --loot xml1: the shop's Training tab
+        for problem in H.control_problems(v.ctx.read_base_xmlb('UI/menus/' + menu + ext), root, adapter.RETIRED + extra):
             ck.error(menu + ': ' + problem)
         if hasattr(adapter, 'BACK'):
             helper = root.find('items')

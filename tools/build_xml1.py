@@ -94,6 +94,17 @@ def parse_args(argv=None):
                          "SaveLayout=w2 / ItemEnhancements=4096 with EntityCapacity=1 and [Save] Format=lc; the "
                          "validator and the budgets use the W2 limits and refuse data over them; needs XML2 Fix 1.9 "
                          "or newer)")
+    ap.add_argument('--loot', choices=('off', 'xml1'), default='off',
+                    help="the first game's item economy (Legends Classic 0.4.2; default off): xml1 converts the 116 XML1 "
+                         "equipment (97 new lc_x1_<name> definitions, the 19 Danger Room rewards again in place, every "
+                         "bonus), rewrites the maps' references, writes Data/x1economy.txt, approximations.json / "
+                         "APPROXIMATIONS.md and [Game] Xml1Economy=1. Needs --save-layout w2 and XML2 Fix with the "
+                         "economy key")
+    ap.add_argument('--loot-construction', dest='loot_construction', choices=('zero-draw', 'one-roll'),
+                    default='zero-draw',
+                    help="with --loot xml1: which item construction the DLL ships (DESIGN 2.5): zero-draw (plan A, "
+                         "default) or the native one-roll fallback, which adds the construction-one-roll "
+                         "approximations row")
     ap.add_argument('--hero-bleed', dest='hero_bleed', choices=('on', 'off'), default='on',
                     help="Wolverine's bleed passive as an XML2 add_harming powerup (default) or dropped")
     ap.add_argument('--newgame', choices=('chooseteam', 'keepteam'), default='keepteam',
@@ -157,6 +168,10 @@ def parse_args(argv=None):
         a.only = [m for m in C.MODULE_ORDER if m in sel]
     if a.tour is not None and a.tour <= 0:
         ap.error('--tour needs a positive number of seconds')
+    from xml1build import loot as LOOT
+    why = LOOT.refusal(a)
+    if why:
+        ap.error(why)
     if a.start_zone:
         a.start_zone = C.norm(a.start_zone).removeprefix('maps/')
     if a.main_menu_layout == 'widescreen':
@@ -190,6 +205,9 @@ CONTENT_OPTS = {'harm_loop_startup': (tuple(C.MODULE_ORDER), 'workaround'),
                 'newgame': ('scripts', 'keepteam'),
                 # limits wave 2: the talent precache budget (talent_budget.prune_zone_precache) follows the layout's pool
                 'save_layout': ('zones', 'retail'),
+                # loot step 1: zones (the item table, map references, sidecar), frontend (the shop's Training tab)
+                'loot': (('zones', 'frontend'), 'off'),
+                'loot_construction': ('zones', 'zero-draw'),
                 # SPEC 19: scripts emits the blocks; zones imports the dialogs / conversations rewrite_data_tree patches
                 'forced_teams': (('scripts', 'zones'), 'seat'),
                 # SPEC 21: scripts (intro, main_back_main, imageViewer literals), zones (menu/main_back, zoneinfo
@@ -451,6 +469,9 @@ def main(argv=None):
                     'start_party': args.start_party, 'start_skinset': args.start_skinset,
                     'files_registered': len(ctx.registry.entries), 'seconds': round(time.time() - t0, 1),
                     'shared_keys': sorted(ctx.shared)}
+    if args.loot != 'off':          # recorded only when asked for: a build without the option keeps its metadata as before
+        rep['build']['loot'] = args.loot
+        rep['build']['loot_construction'] = args.loot_construction
     (out / '_build' / 'report.json').write_text(json.dumps(rep, indent=1, default=str), encoding='utf-8')
     ctx.report.print_summary()
     errors = ctx.report.error_total()

@@ -190,6 +190,7 @@ from . import text_trace as TT           # V66 (SPEC 105): every XML1 text strin
 from . import skins as SK                # V21 (SPEC 25): skin blend weights / skeleton against the anim DB
 from . import talent_budget as TB        # V44 (SPEC 75): complete-roster TalentRegistry demand
 from . import w2_limits as WL            # V67 (limits wave 2): the data limits of --save-layout w2
+from . import loot as LT                 # V-LOOT (loot step 1): the first game's item economy, --loot xml1
 from . import style_budget as SB         # V23 (SPEC 43): the fighting / power style registry per zone
 from . import ladder_motion as LM       # V34 (SPEC 46): ladder paths only from the ladder top
 from . import weapons as W              # V5 (SPEC 57, issue #52): a gun-armed entry carries its gun's fighting style
@@ -1009,7 +1010,8 @@ class Validator:
                                ('V52', 'breakable parts', self.vtbd_multipart),
                                ('V53', 'removable resistances', self.vtbd_removable),
                                ('V54', 'leader bit sidecar', self.v54_leader_sidecar),
-                               ('V57', 'script function names', lambda ck: SFN.validate(self, ck))):
+                               ('V57', 'script function names', lambda ck: SFN.validate(self, ck)))                                 + ((('V-LOOT', 'loot economy', lambda ck: LT.validate(self, ck)),)
+                                   if LT.selected(self.ctx) else ()):      # --loot xml1 only: other builds keep their report
             ck = Check(cid, title)
             self.checks[cid] = ck
             t0 = time.time()
@@ -3532,6 +3534,8 @@ class Validator:
                 ck.error(f'inventoryitem {v!r} ({sorted(files)[:3]}) names an XML1 item missing from Data/items')
         for n in sc.items:
             for nm in ck.details.get(f'items_added_{n.rsplit(".", 1)[1]}', []):
+                if nm.startswith(LT.NAME_PREFIX) and LT.selected(ctx):
+                    continue                      # the economy's definitions are referenced by the sidecar (V-LOOT)
                 if nm not in used:
                     ck.warn(f'Data/items: XML1 item {nm!r} was added but nothing references it')
 
@@ -5202,7 +5206,9 @@ def main(argv=None):
     frontend = a.frontend or getattr(recorded, 'frontend', None)
     args = C.default_args(out=a.out, base=a.base, no_movies=a.no_movies, start_zone=a.start_zone, tour=a.tour,
                           jobs=a.jobs, forced_teams=a.forced_teams, start_party=a.start_party, frontend=frontend,
-                          buoys=getattr(recorded, 'buoys', None))   # SPEC 42: V22 checks the mode the build used
+                          buoys=getattr(recorded, 'buoys', None),   # SPEC 42: V22 checks the mode the build used
+                          **{k: getattr(recorded, k) for k in ('save_layout', 'loot', 'loot_construction')
+                             if hasattr(recorded, k)})   # V67 / V-LOOT check the options the build used
     reg = C.Registry.load(Path(a.out) / '_build' / 'registry.json')
     ctx = C.BuildContext(a.out, a.base, args=args, registry=reg)
     ok = C.run_step(ctx, 'validate', run)

@@ -20,6 +20,31 @@ build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebui
   enhancement and attached records (the items stage checks the 4096 pool), at most 1024 placements per zone, 1024
   world-item placements over the 8 heaviest resident zones and 8191 zone-string names / 0x1ffff arena bytes over the
   same. Without the option the old limits stay (25 / 299 / 75, 100 / 9 / 99). SPEC 107.
+- **Opt-in first-game item economy, builder side (loot + Forge, step 1).** `build_xml1.py --loot xml1` (and
+  `xml1-builder build --loot xml1`; default `off`, which leaves every build byte for byte as it was) converts all 116
+  equipment definitions of the player's copy of X-Men Legends with every bonus: 97 new definitions `lc_x1_<name>` after the
+  88 legacy ones (kept in order and keys), the 19 Danger Room rewards converted again in place (no cost, unique, source
+  class, every bonus; `frontend.translate_equipment`'s fixed defaults are retired for them), quality baked into the display
+  name, descriptions filled, `enemy_level` -1, no PC `quality` attribute. Map references to XML1 equipment name the new
+  identity (the astral stone's placement). It needs `--save-layout w2` and the XML1 front end and refuses without them.
+  SPEC 108.
+- **All 168 source bonuses convert; nothing is pending.** The staging converter's 30 pending bonuses now have PC forms:
+  the 21 probabilistic reflections at their expected value (no per-hit gate), the 7 secondary attacks as the PC add_attack
+  fixed-damage form and the 2 bleeds as the PC add_harming form; every record is single-valued (ranges collapse to
+  their mean). 28 exact, 134 approximate, 6 original no-ops, 0 adapter rows.
+- **`approximations.json` / `APPROXIMATIONS.md`.** Every non-exact conversion and every behaviour deviation of the economy
+  is a generated row (XML1 value, port value, why, family, record), written to `_build/` and `Docs/`.
+- **`Data/x1economy.txt`.** The sidecar the XML2 Fix economy rule reads (group, frequency, Grab Bag, sellable, rebuilt,
+  noaward, cost, vendor, quality, source index, in definition order, with a count and a SHA-256), and `[Game]
+  Xml1Economy=1` in the ini, refused for a DLL that does not carry the key. The shop's Training controls are hidden.
+- **Validator V-LOOT** (only with the option): accounting of the 132 definitions, the sidecar field for field, the Forge
+  catalog per tier (18 / 37 / 52 / 69 / 85), drop and Grab Bag pools, the 168 powerups, capacities, references, text, the
+  approximations both ways, the PC treasure entities in converted maps.
+- **Save catalogue for the economy.** `lcsave.catalogue.Catalogue.extend` (append-only, `python -m lcsave catalogue
+  --append-only`) and the `ITEM_OWN_REBUILT` attribute; a build with the option numbers its new keys on a copy of the master
+  catalogue, so builds without it are unchanged. `convert.Reverse.instance` gives an instance of a rebuilt reward the
+  definition's current own list. Two latent W2 fixes in `lcsave.convert` (definition budget of the layout in
+  `loaded_zone_metadata`, the 4096-record pool in the definition-count check).
 
 ## v0.4.1 - content version assigned at release (needs XML2 Fix 1.9.0)
 

@@ -65,6 +65,10 @@ def make_parser():
                         'no [Limits] SaveLayout key (the baseline); w2 is the wave 2 layout (Legends Classic 0.4.2, '
                         'XML2 Fix 1.9 or newer: [Limits] SaveLayout=w2 with ItemEnhancements=4096, EntityCapacity=1 '
                         'and [Save] Format=lc) and refuses data over its limits')
+    p.add_argument('--loot', choices=('off', 'xml1'), default='off',
+                   help='build: the first-game item economy (Legends Classic 0.4.2). off (default) builds exactly as '
+                        'before; xml1 converts all 116 XML1 equipment with their bonuses, writes the economy sidecar and '
+                        'the approximations files, and needs --save-layout w2 and XML2 Fix with the Xml1Economy key')
     p.add_argument('--no-ini', dest='no_ini', action='store_true', help='do not merge the port\'s keys into '
                                                                          'xml2-fix.ini (they are in the stamp)')
     p.add_argument('--allow-unknown-exe', dest='allow_unknown_exe', action='store_true',

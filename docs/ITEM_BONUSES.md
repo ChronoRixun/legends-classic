@@ -64,8 +64,9 @@ not something the builder can prove. No bonus of this table has live acceptance 
 
 ## Budgets and validation
 
-The legacy table keeps its 88 definitions and 410 records; the economy appends 97 definitions and about 190 records
-(`V-LOOT` prints the exact numbers), far under W2's 1024 / 4096. Own slots per definition stay within eight and no own
+The legacy table has 88 definitions and 410 records; the economy appends 97 definitions with 130 records and
+rebuilds the 19 rewards (36 records before, 32 now), so a build has 185 definitions and 536 records (`V-LOOT` prints
+the numbers), far under W2's 1024 / 4096. Own slots per definition stay within eight and no own
 record is the 0xffff sentinel. `V-LOOT` re-derives the accounting from the source: all 132 definitions, the sidecar
 field for field, the Forge catalog per tier (18 / 37 / 52 / 69 / 85), the drop pools per tier and bucket, the Grab Bag
 pools, the 168 powerups, single-valued records, capacities, references, text, the approximations file both ways and the

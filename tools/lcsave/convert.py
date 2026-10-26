@@ -18,7 +18,7 @@ import time
 from . import layout as L
 from . import oldsave
 from .binds import Binds, KEY_ITEM_NAMES, TRIVIA_PER_ACT, REVIEW_PER_CATEGORY, COSTUME_SLOT_COUNT
-from .catalogue import Catalogue
+from .catalogue import Catalogue, ITEM_OWN_REBUILT
 from .container import write_file, read_file, feature_decision, SECTION_FLAGS, SECTION_MINOR, CAMPAIGN_SECTIONS
 from .keys import key_hash, make_id, DOMAIN_NUMBER, id_domain, DOMAINS, canonical_key
 from .legacy import load_eras, eras_of, talent_era, zone_record_eras, CONTENT_TO_RELEASE
@@ -39,6 +39,7 @@ DEFAULT_RESTORE_ATTR = dict(trait_base=[1, 1, 1, 1], trait_pending=[0] * 4, trai
 DEFAULT_RESTORE_TAIL = dict(health=0.0, energy=0.0, player_seat=-1, vitals_valid=0, pad0d=[0, 0, 0], experience=0,
                             ack_level=1, health_boosts=0, energy_boosts=0, levels_purchased=0, points_bought=0,
                             respec_count=0, skirmish_boost=0, flags=0)
+OWN_SLOTS = 8                  # a definition's own enhancement slots (the instance's own list never holds more)
 ITEM_POOLS = (375, 512)          # enhancement record pools of XML2 Fix before / from 1.3.0 (the item table cut)
 
 
@@ -49,14 +50,15 @@ class ConvertError(ValueError):
 class Environment:
     """what a conversion needs: the era model, the catalogue, and (for names, zones and KEYS) the player's build"""
 
-    def __init__(self, build=None, eras_path=None, catalogue_path=None):
+    def __init__(self, build=None, eras_path=None, catalogue_path=None, catalogue=None):
         self.model = load_eras(eras_path) if eras_path else load_eras()
         self.eras = eras_of(self.model)                        # newest first
         self.by_cv = {e.cv: e for e in self.eras}
         self.ref = self.model['reference']
         from .conversations import historical_tables
         self.conversation_tables = historical_tables(self.model)
-        self.catalogue = Catalogue.load(catalogue_path) if catalogue_path else Catalogue.load()
+        self.catalogue = catalogue if catalogue is not None else (Catalogue.load(catalogue_path) if catalogue_path
+                                                                  else Catalogue.load())
         self.binds = Binds(build) if build else None
         if self.binds:
             from .conversations import current_tables
@@ -556,11 +558,11 @@ def _translate(old, env, res, original_name, old_bytes, slot, now=None, context=
                          f'(kept under builder {start_era.release} names): {ev["unexplained"][:6]}')
     # items: the era whose table the definition count byte fits (the engine wrote the live count: the table cut
     # by the enhancement pool of the XML2 Fix in use) and whose own-record ranges every instance agrees with
-    counts = _counts_by_era(env)
+    counts = _counts_by_era(env, getattr(res, 'native', None))
     item_eras = [e for e in eras_ok if old['items']['def_count'] in counts[e.cv]]
     if not item_eras:
         raise ConvertError(f'definition count byte {old["items"]["def_count"]} matches no builder release '
-                           f'(expected one of { {CONTENT_TO_RELEASE[cv]: sorted(c) for cv, c in counts.items()} })')
+                           f'(expected one of { {CONTENT_TO_RELEASE.get(cv, cv): sorted(c) for cv, c in counts.items()} })')
     all_instances = list(it_instances(old))
     era_items = None
     reasons = []
@@ -782,14 +784,16 @@ def profile_sections(p, env, res, era):
     return out
 
 
-def _counts_by_era(env):
-    """{cv: {definition count the engine would load: pool}} per era from ITEM_own and the pre-item record count"""
+def _counts_by_era(env, native=None):
+    """{cv: {definition count the engine would load: pool}} per era from ITEM_own and the pre-item record count. A W2
+    stream's pool is the layout's (4096 records: the economy's 185 definitions all load), besides the retail ones."""
+    pools = ITEM_POOLS + ((native.enhancement_records,) if native is not None and native.w2 else ())
     out = {}
     for era in env.eras:
         own = era.table('ITEM_own')
         pre = era.table('ENHC_ranges')['trit'][1]
         out[era.cv] = {}
-        for pool in ITEM_POOLS:
+        for pool in pools:
             used, k = pre, 0
             for lst in own:
                 if used + len(lst) > pool:
@@ -1189,6 +1193,13 @@ class PositionTables:
                     special=self._native(self._get(self._trit, r['special'], 'special item'), 0, 127, 'special item') if r['special'] else 0xff, location=r['location'])
         for lst in ('prefixes', 'own', 'suffixes'):
             inst[lst] = [dict(record=self._get(self._enh, e['enhancement'], 'enhancement'), value=e['value']) for e in r[lst]]
+        if self.env.catalogue.attributes_of(r['definition']) & ITEM_OWN_REBUILT:
+            # loot step 1 (DESIGN 2.1): the definition's own bonuses were converted again in place; the instance
+            # takes the definition's current own list (interpolation 0.0f, bits 0: every economy record is single-valued)
+            own = self.b.item_own[inst['definition']]
+            if len(own) > OWN_SLOTS:
+                raise ConvertError(f'definition {inst["definition"]} has {len(own)} own records, the instance holds {OWN_SLOTS}')
+            inst['own'] = [dict(record=n, value=0) for n in own]            # value = the bits of 0.0f
         if r['name_b']:
             category = self.b.item_class[inst['definition']]
             hashes = (self.b.hash_tables() if self._hash_conversations else self.b.hash_tables(include_conversation_digest=False))['NAMB'].get(category or '', [])
@@ -1850,11 +1861,12 @@ def _legacy_pinned_states(record, numbered, occupied, legacy_import=False):
 
 def loaded_zone_metadata(new_bytes, env, *, native=L.RETAIL, registry=None):
     """Applied cached captures, with ordinals aligned to the reconstructed native map (of the layout `native`)."""
-    native, _ = reverse_slot(new_bytes, env, native=native, registry=registry)
+    layout = native
+    native, _ = reverse_slot(new_bytes, env, native=layout, registry=registry)
     applied = {oldsave.zone_string(native['zone_strings'], z['name_handle']) for z in native['zones']}
     f = read_file(new_bytes)
     records = f['sections']['ZONE']['data']['records']
-    pos = PositionTables(env)
+    pos = PositionTables(env, native=layout)       # the layout's definition budget (W2: 1024), not the retail 160
     from .conversations import zone_digest
     out = []
     for r in records:
