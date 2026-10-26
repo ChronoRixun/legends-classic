@@ -7,7 +7,9 @@ keys:
                           ForcedTeams / PostgameScript / WindowTitle / EndHeroUnlock / MainMenuItems / NewGamePlus /
                           ReviewStats / Xtract / XPCurve / GeometrySharingBlendIndices / CharacterLadderPaths /
                           ObjectiveDescriptions / BreakRule, [Limits]
-                          ActorSlots / ResourceNames / ItemEnhancements / FightStyles / EffectCurves, [Online] GameVersion /
+                          ActorSlots / ResourceNames / ItemEnhancements / FightStyles / EffectCurves (and, with
+                          --limits-wave3, StyleEvents / FightMoves / EffectTemplates / PrimitiveDefs / EffectVectors /
+                          PrimitivesPerEffect / ScriptPools / ParticleScratch), [Online] GameVersion /
                           ContentFingerprint / FastTransfer / ReceiveValidation, [Save] Format. They are
                           functions of the build's content (the menus it wrote, its report.json, its scripts), so the
                           builder (tools/xml1builder) writes them after a build, and tools/harness.py takes its
@@ -1267,8 +1269,11 @@ def check_release_dll(dll, keys: dict) -> None:
                 if key in keys.get(section, {}) and marker not in data]
     for (section, key), (stock, marker, name) in VALUE_MARKERS.items():
         value = keys.get(section, {}).get(key)
-        if value is not None and _int_or_zero(value) > stock and marker not in data:
-            missing.append(name)
+        if value is not None and _int_or_zero(value) > stock:
+            if key.encode('utf-16le') not in data:
+                missing.append(f'[{section}] {key}')
+            if marker not in data:
+                missing.append(name)
     if missing:
         raise FixTooOld(f'This build needs XML2 Fix {REQUIRED_XML2FIX} or later; the existing DLL does not recognize '
                         + ', '.join(missing), missing)

@@ -138,7 +138,8 @@ def test_the_whole_on_profile_against_a_beta8_dll_names_every_missing_rule():
         missing = FI.old_fix_keys(dll, keys)
         for key in (set(WAVE3) | set(LATE)):
             assert any(key in m and 'rule' in m for m in missing), key
-        dll.write_bytes(dll.read_bytes() + b''.join(FI.WAVE3_MARKERS.values()))
+        assert '[Limits] FightStyles' in missing and '[Limits] FightStyles (rule 35 revision 2)' in missing   # 64 > 32
+        dll.write_bytes(dll.read_bytes() + 'FightStyles'.encode('utf-16le') + b''.join(FI.WAVE3_MARKERS.values()))
         assert not [m for m in FI.old_fix_keys(dll, keys) if any(k in m for k in (set(WAVE3) | set(LATE)))]
 
 
@@ -467,7 +468,8 @@ def test_the_scope_upper_bound_counts_an_effect_loaded_by_two_owners_twice():
     shared_scope = c.effect_report()['test/hall']['max']['files'][0]
     scoped, keys = c.scoped_files('test/hall', party)
     assert scoped == shared_scope + 2                      # glow also loaded by alpha and beta under their own scopes
-    assert ('permanent', 'shared/glow') in keys and ('alpha', 'shared/glow') in keys
+    assert L3.effect_key('permanent', 'shared/glow') in keys and 'alpha:shared/glow' in keys and 'beta:shared/glow' in keys
+    assert L3.effect_key(L3.PACKAGE_SCOPE, 'a/b') == '0:a/b' and L3.effect_key(1, 'a/b') != L3.effect_key(2, 'a/b')
 
 
 def test_scripted_effect_loads_count_when_a_script_names_the_effect_literally():
@@ -527,11 +529,11 @@ def test_v_scripts_replaces_the_622_wording_with_retained_nodes_values_and_scrip
     # 585 retained nodes of 622 source lines is below 620: no 'lines lost' alarm, only the half-full warning
     big = {'scripts/test/hall.py': '\r\n'.join(['x = 1'] * 548 + ['if x == 1', 'else', 'endif'] * 12 + ['y = 2'] * 1) + '\r\n'}
     ck = run_check(L3.check_scripts, census(scripts=big, limits={}), VS.count_script)
-    assert not ck.errors and any('retained statement nodes' in w and 'above half' in w for w in ck.warnings)
+    assert not ck.errors and any('statement nodes' in w and 'above half' in w for w in ck.warnings)
     assert not any('622' in m or 'statements in the zone script' in m for m in ck.errors + ck.warnings)
     over = {'scripts/test/hall.py': '\r\n'.join(['x = 1'] * 625) + '\r\n'}
     ck = run_check(L3.check_scripts, census(scripts=over, limits={}), VS.count_script)
-    assert any('retained statement nodes' in e and '(> 620)' in e for e in ck.errors)
+    assert any('statement nodes' in e and '(> 620)' in e for e in ck.errors)
     ck = run_check(L3.check_scripts, census(scripts=over, limits={'ScriptPools': 'x1'}), VS.count_script)
     assert not ck.errors and ck.counts['statements_capacity'] == 4096
 
@@ -574,3 +576,43 @@ def test_the_wave3_checks_run_only_for_a_build_made_with_the_option():
     assert ck.status == 'skipped'
     assert [cid for cid, _, _ in L3.VALIDATORS] == ['V-MOVES', 'V-EVENTS', 'V-EFFECT-FILES', 'V-PRIMITIVES', 'V-VECTORS',
                                                     'V-CURVES', 'V-SCRIPTS']
+
+
+class FakeValidatorObject:
+    """The parts of validate.Validator the wave-3 hooks read (exists / tree / read / converted_zones / ctx.args)."""
+
+    def __init__(self, trees, mode, scripts=None):
+        self.rel = {(k if k.endswith('.chrb') else k + '.xmlb'): v for k, v in trees.items()}
+        self.scripts = scripts or {}
+        self.ctx = SimpleNamespace(args=SimpleNamespace(limits_wave3=mode))
+
+    def exists(self, rel):
+        return C.norm(rel) in {C.norm(k) for k in self.rel}
+
+    def tree(self, rel):
+        return {C.norm(k): v for k, v in self.rel.items()}.get(C.norm(rel))
+
+    def converted_zones(self):
+        return ['test/hall']
+
+    def read(self, rel):
+        return self.scripts[rel].encode('latin-1')
+
+
+def test_the_validator_hooks_run_every_check_through_a_validator_object():
+    import functools
+    scripts = {'scripts/test/hall.py': 'a = 1\r\nif a == 1\r\nelse\r\nendif\r\n'}
+    v = FakeValidatorObject(world(), 'on', scripts)
+    seen = {}
+    for cid, title, fn in L3.VALIDATORS:
+        ck = Check(cid, title)
+        functools.partial(fn, v)(ck)
+        assert ck.status != 'skipped' and not ck.errors, (cid, ck.errors)
+        seen[cid] = ck
+    assert seen['V-MOVES'].counts['witness_zone'] == 'test/hall' and seen['V-EVENTS'].counts['capacity'] == 4096
+    assert seen['V-EFFECT-FILES'].counts['max_files'] == 7 and seen['V-CURVES'].counts['effect_budget_binding']
+    assert seen['V-SCRIPTS'].counts['max_retained_nodes'] == 2 and seen['V-SCRIPTS'].counts['scripts_capacity'] == 120
+    off = FakeValidatorObject(world(), 'off', scripts)
+    ck = Check('V-MOVES', 'x')
+    functools.partial(L3.VALIDATORS[0][2], off)(ck)
+    assert ck.status == 'skipped' and not ck.counts

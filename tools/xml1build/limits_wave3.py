@@ -178,6 +178,14 @@ def _tag(el):
     return el.tag.lower() if isinstance(el.tag, str) else ''
 
 
+PACKAGE_SCOPE = 0         # the scope the model gives every package-driven effect load (see the module docstring)
+
+
+def effect_key(scope, name) -> str:
+    """the effect file table's key, `%i:%s` (0x5647f0): a definition is found again only with the same scope."""
+    return f'{scope}:{name}'
+
+
 def effect_name(fn):
     """a package / reference effect file name -> the key under effects/ (lower case, no 'effects/' prefix, no .xmlb)."""
     n = C.norm(fn or '')
@@ -533,11 +541,11 @@ class Census:
         hero_entries = {n: self.character_pkg(n, skin, off) for n, skin in heroes}
         # the scripts the zone loads: its package's scripts and the zone script (V7's zone residency set)
         world = self.tree('maps/' + z)
-        zs = ''
-        for el in (world.iter() if world is not None else ()):
-            if (el.get('zonescript') or '').strip():
-                zs = el.get('zonescript').strip()
-                break
+        node = C.find_world(world) if world is not None else None
+        zs = ((node.get('zonescript') if node is not None else '') or '').strip()
+        if not zs:
+            zs = next(((el.get('zonescript') or '').strip() for el in (world.iter() if world is not None else ())
+                       if (el.get('zonescript') or '').strip()), '')
         scripts = sorted({_script_ref(fn) for k, fn in ents if k == 'script' and fn} | ({_script_ref(zs)} if zs else set()))
         scripted = set()
         if self.read_text is not None:
@@ -659,16 +667,16 @@ class Census:
 
     def scoped_files(self, z, party):
         """The upper bound of the scope question: every owning package its own scope (permanent / zone / NPC / each hero),
-        so one effect loaded by two owners counts twice. Returns (files, set of (owner, name))."""
+        so one effect loaded by two owners counts twice. Returns (files, set of `scope:name` keys)."""
         zr = self.zone(z)
         own = zr['owners']
         keys = set()
         for owner, names in (('permanent', own['permanent']), ('zone', own['zone']), ('npc', own['npc']),
                              ('script', zr['scripted'])):
-            keys |= {(owner, n) for n in self.closure(names)}
+            keys |= {effect_key(owner, n) for n in self.closure(names)}
         for h in party:
-            keys |= {(h, n) for n in self.closure(own['heroes'].get(h, ()))}
-        keys = {k for k in keys if self.effect(k[1]).ok}
+            keys |= {effect_key(h, n) for n in self.closure(own['heroes'].get(h, ()))}
+        keys = {k for k in keys if self.effect(k.split(':', 1)[1]).ok}
         return len(keys), keys
 
     # ---------------------------------------------------------------- scripts
@@ -901,7 +909,7 @@ def check_scripts(c: Census, ck, count_script):
     ck.details['zones'] = rep
     ck.note(f'running contexts ({contexts_cap}) cannot be measured statically: the pool diagnostics (D) count them')
     for key, cap, what, hint in (
-            ('retained', nodes_cap, 'retained statement nodes',
+            ('retained', nodes_cap, 'statement nodes (retained, plus the compile-time temporary)',
              'a full pool skips every later line, control directives included (0x4d7e6e / 0x4d979c)'),
             ('values', values_cap, 'script values', 'an exhausted value pool crashes the compiler (0x4d89f1)'),
             ('scripts', scripts_cap, 'compiled scripts', 'the script object pool (0x4d86d1)')):
