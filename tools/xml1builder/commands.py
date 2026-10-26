@@ -71,6 +71,7 @@ class Job:
     jobs: int
     prepare_jobs: int
     main_menu_layout: str = 'classic'
+    save_layout: str = 'retail'
     disc: dict = field(default_factory=dict)
     ident: dict | None = None
     xml2_info: dict = field(default_factory=dict)
@@ -319,7 +320,8 @@ def cmd_build(a, output, cancel, pipeline_factory):
     prepare_jobs = max(1, a.jobs or PL.default_jobs())
     jobs = max(1, a.jobs or max(1, (os.cpu_count() or 2) // 2))
     job = Job(out=out_dir, xml2=xml2, cache=cache, iso=iso, movies=movies, jobs=jobs, prepare_jobs=prepare_jobs,
-              main_menu_layout=getattr(a, 'main_menu_layout', 'classic'))
+              main_menu_layout=getattr(a, 'main_menu_layout', 'classic'),
+              save_layout=getattr(a, 'save_layout', 'retail'))
     ctl = Ctl(output, cancel, job)
     pipeline = pipeline_factory()
     out_lock = cache_lock = None
@@ -600,6 +602,13 @@ def finish(a, output, job, ctl, pipeline, warn):
             missing = getattr(exc, 'missing', None)
             if not missing:
                 raise
+            if '[Limits] SaveLayout' in missing:
+                # not a warning: an older DLL ignores the key, so the build would run on the baseline save layout
+                # while it was built (and validated) for W2; nothing is written
+                raise BuilderError('E_XML2FIX_OLD', f'{exc}.', f'Put XML2 Fix {pipeline.required_xml2fix()[2:]} or later '
+                                   'into the folder, or build without --save-layout w2.',
+                                   {'missing': missing, 'count': len(missing), 'required': pipeline.required_xml2fix()},
+                                   stage='finish') from exc
             warn('W_XML2FIX_OLD', f'{exc}. The build is complete: put XML2 Fix {pipeline.required_xml2fix()[2:]} or '
                                   'later into the folder (the Ultimate Legends launcher does it after the build).',
                  {'missing': missing, 'count': len(missing), 'required': pipeline.required_xml2fix()}, stage='finish')

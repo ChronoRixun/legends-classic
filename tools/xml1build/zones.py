@@ -160,6 +160,15 @@ from .fix_ini import LIMITS as _FIX_LIMITS                   # noqa: E402 - the 
 ITEM_ENHANCEMENT_POOL = int(_FIX_LIMITS.get('ItemEnhancements', ITEM_ENHANCEMENT_POOL_STOCK))
 
 
+def item_enhancement_pool(ctx):
+    """the enhancement pool the build's ini asks the fix for: ITEM_ENHANCEMENT_POOL, or the W2 layout's 4096 with
+    --save-layout w2 (fix_ini.limits_for)"""
+    from . import fix_ini
+    from . import w2_limits
+    layout = w2_limits.W2_NAME if w2_limits.selected(ctx) else None
+    return int(fix_ini.limits_for(layout).get('ItemEnhancements', ITEM_ENHANCEMENT_POOL_STOCK))
+
+
 def fill_item_model(existing, x1):
     """Issues #96/#98: a same-name item XML2 already ships (the keycards) has no pickup model of its own -
     XML2 never places it in the world, while XML1's zones drop it as a world inventoryent whose model comes
@@ -2745,11 +2754,12 @@ class Zones:
             if name == 'items':
                 self.counts['items_model_filled'] = len(filled_models)
             if name == 'items':                     # SPEC 32.1: what the 375-record enhancement pool cuts off
-                lost = enhancement_pool_cut(C.iter_roots(trees[exts[0]])[0])
+                pool = item_enhancement_pool(ctx)
+                lost = enhancement_pool_cut(C.iter_roots(trees[exts[0]])[0], pool)
                 self.counts['items_beyond_enhancement_pool'] = len(lost)
                 if lost:
                     ctx.warn(f'Data/items: {len(lost)} items are never loaded by XMen2.exe - the enhancement pool '
-                             f'({ITEM_ENHANCEMENT_POOL}, 0x4804a6) overflows at {lost[0][0]} ({lost[0][1]} used before '
+                             f'({pool}, 0x4804a6) overflows at {lost[0][0]} ({lost[0][1]} used before '
                              f'it), and the load stops there: {[n for n, _ in lost]}')
             ctx.note(f'Data/{name}: {len(added_names)} XML1 entries added, {xml2_wins} same-name entries kept '
                      f'as XML2, {unnamed} unnamed XML1 children skipped'

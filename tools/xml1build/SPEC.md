@@ -7772,3 +7772,51 @@ the coordinator at integration. Synthetic tests cover script idempotence, exact 
 and both actors sharing one map. Focused owned-input contract validation is not a playable-package rebuild.
 The complete phase/boundary/lifecycle/multiplayer acceptance list is in the companion DLL's
 `docs/xml1-controllers.md`; no wave-three game or emulator launch is claimed.
+
+
+## 107. The W2 save layout (`--save-layout w2`, XML2 Fix `[Limits] SaveLayout=w2`; validator V67)
+
+Limits wave 2 (XML2 Fix `docs/limits-wave2.md`, "Step 8: DLL selection, admission and builder contract") raises the
+save-bound and engine limits in one transaction, selected by one key. Legends Classic carries it as an **opt-in builder
+option**, default off, because W2 is the 0.4.2 line and is in no candidate yet: a build made without the option writes no
+`SaveLayout` key and validates against the limits the older sections state, so its output and ini are unchanged.
+
+**The option.** `build_xml1.py --save-layout {retail,w2}` (also `xml1-builder build --save-layout ...`, which passes it
+on) records `build.save_layout` in `_build/report.json`; `fix_ini.build_save_layout(out)` reads it back (never the
+existing ini: rebuilding without the option must drop the owned key), `common.args_for_out` hands it to standalone
+checks, and it is a content option of the `zones` module (the talent precache budget follows the layout's pool;
+`plan_content_opts` re-runs `zones` when it changes). `tools/harness.py install` writes the same keys for a build made
+with it and refuses `--stock-limits` / `--stock-opening` with it.
+
+**The keys (`fix_ini`).** `limits_for('w2')` = `LIMITS` with `SaveLayout=w2` after `EntityCapacity=1` and
+`ItemEnhancements=4096` (the DLL accepts only 4096 beside W2 and refuses the build's default 512 at start-up).
+`port_keys` adds `[Save] Format=lc` as for every port build. `check_save_layout_keys` is the contract table, builder
+side: SaveLayout is written only as exactly `w2`, only with `[Save] Format=lc` and `EntityCapacity=1`, with
+`ItemEnhancements` absent or 4096; every other key set raises ValueError (no `[Save] Format=lc` = stock bytes, the DLL
+would ignore the key; EntityCapacity absent / 0 = "SaveLayout=w2 needs EntityCapacity=1"). A key set without SaveLayout
+is the configured baseline (RETAIL, or E10A2 with EntityCapacity alone) and always passes. `check_save_layout_dll`
+probes the companion DLL for the UTF-16 key name with its terminator, as `check_entity_capacity_dll` probes
+EntityCapacity (a message that merely starts with the key is not support), and `write_port_keys` raises FixTooOld for
+it even with `old_fix_ok`: the other keys of an older fix are a warning the launcher resolves right after the build,
+this one is not, because an older DLL ignores the key and the build would run on the baseline layout while it was
+validated for W2. `SaveLayout` is in `PORT_OWNED['Limits']`, so a build that stops asking for it drops it from the ini.
+
+**The data limits (`w2_limits`).** The numbers are read from `lcsave.layout.W2`; `RETAIL_LIMITS` keeps the released
+ones. The existing rows take them from `w2_limits.limits(ctx)`: the missions row of the validator and `scripts`
+(mission files 25 / 64, objectives 299 / 1024, per act 75 / 127), V44 `talent_budget` (registry 100 / 256 names, 9
+files in both, shared cap 99 / 199) with the reviewed-prop precache pruning, `characters` and the validator's shared
+talent cap, and the items stage's enhancement pool (512 / 4096, `zones.item_enhancement_pool`). W2 adds position rows
+(a hero's talent index < the multiplier 200, shared < 199; with the largest stats index 296 the saved id stays below
+65536) and V67 for data nothing checked before:
+
+| Row | Counted over | W2 limit |
+|---|---|---|
+| item definitions | distinct `<item>` names of Data/items | 1024 |
+| enhancement / attached records | every `<enhancement>` of Data/items (attached records are the same records) | 4096 |
+| placements | every `<inst>` of a zone's map, recursively (C2 counting rule, the DLL preflight's count) | 1024 per zone |
+| item instances / world slots | world-item placements (classname inventoryent or an inventoryitem) over the 8 heaviest zones | 1024 |
+| zone-string names / arena | distinct `<inst>` names (plus NUL) over the 8 zones with the most | 8191 / 0x1ffff |
+
+Item instances and world slots are runtime counters (`save layout` status line); the world-item rows bound them from the
+data, and the live peak per real save is gate C3 of the wave. Without the option V67 only notes that it checked nothing.
+Synthetic coverage is `tests/unit/test_w2_builder.py`. No game or emulator was launched for it.

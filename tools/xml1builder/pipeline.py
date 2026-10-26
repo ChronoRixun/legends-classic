@@ -198,6 +198,7 @@ class RealPipeline:
         import build_xml1
         argv = ['--out', str(job.out), '--base', str(job.xml2), '--jobs', str(job.jobs)]
         argv += ['--main-menu-layout', getattr(job, 'main_menu_layout', 'classic')]
+        argv += ['--save-layout', getattr(job, 'save_layout', 'retail')]
         if not job.movies:
             argv.append('--no-movies')
         args = build_xml1.parse_args(argv)

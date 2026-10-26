@@ -3,6 +3,24 @@
 The builder's releases, newest first. The version is `xml1-builder --version`; the content version is what a
 build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebuild.
 
+## v0.4.2 - limits wave 2 (unreleased; the coordinator assigns the identity at integration)
+
+- **Opt-in W2 save layout.** `build_xml1.py --save-layout w2` (and `xml1-builder build --save-layout w2`; default
+  `retail`, which writes nothing new and leaves every default build byte for byte as it was) configures and validates
+  a build for XML2 Fix's wave 2 native save layout. The ini gets the four keys together: `[Save] Format=lc`,
+  `[Limits] EntityCapacity=1`, `SaveLayout=w2` and `ItemEnhancements=4096` (never the default 512 beside SaveLayout).
+  Any other combination is refused before a byte is written: SaveLayout without Format=lc, without EntityCapacity=1, with
+  another ItemEnhancements value, or with any value but exactly `w2`; an empty `SaveLayout=` is never written. A
+  companion DLL that does not recognize the key is refused by name (`E_XML2FIX_OLD` in the builder CLI, which is an
+  error rather than the older-fix warning, because an older fix would silently run the baseline layout). A rebuild
+  without the option drops the key again. Needs XML2 Fix 1.9 with limits wave 2 step 8; it is in no candidate yet.
+- **W2 data limits (validator V67 and the existing rows).** With the option, the validator and the budgets use the
+  W2 descriptor's numbers and refuse data over them: 64 mission files, 1024 objectives (127 per act), 256 talent
+  registrations per pool (still 9 files), hero talent position < 200 and shared < 199, 1024 item definitions, 4096
+  enhancement and attached records (the items stage checks the 4096 pool), at most 1024 placements per zone, 1024
+  world-item placements over the 8 heaviest resident zones and 8191 zone-string names / 0x1ffff arena bytes over the
+  same. Without the option the old limits stay (25 / 299 / 75, 100 / 9 / 99). SPEC 107.
+
 ## v0.4.1 - content version assigned at release (needs XML2 Fix 1.9.0)
 
 The port's beta 8 (`0.4.1-beta.1` with XML2 Fix `1.9.0-beta.1`). **Nothing below has been played yet**: each item

@@ -189,6 +189,7 @@ from . import automaps as AM             # V20 (SPEC 26): XML1 automaps as .zam
 from . import text_trace as TT           # V66 (SPEC 105): every XML1 text string shipped, rewritten or owned elsewhere
 from . import skins as SK                # V21 (SPEC 25): skin blend weights / skeleton against the anim DB
 from . import talent_budget as TB        # V44 (SPEC 75): complete-roster TalentRegistry demand
+from . import w2_limits as WL            # V67 (limits wave 2): the data limits of --save-layout w2
 from . import style_budget as SB         # V23 (SPEC 43): the fighting / power style registry per zone
 from . import ladder_motion as LM       # V34 (SPEC 46): ladder paths only from the ladder top
 from . import weapons as W              # V5 (SPEC 57, issue #52): a gun-armed entry carries its gun's fighting style
@@ -977,6 +978,7 @@ class Validator:
                                ('V22', 'buoys', lambda ck: BY.validate(self, ck)),
                                ('V23', 'fight styles', lambda ck: SB.validate(self, ck)),
                                ('V44', 'talent registry demand', lambda ck: TB.validate(self, ck)),
+                               ('V67', 'W2 data limits', lambda ck: WL.check(self, ck)),
                                ('V24', 'conversation portraits', self.conversation_portraits),
                                ('V25', 'harm loop startup', self.harm_loop_startup),
                                ('V26', 'fall kill volumes', self.fall_kill_volumes),
@@ -2004,8 +2006,9 @@ class Validator:
                 ck.error(f'data/shared_talents{ext} missing or undecodable')
                 continue
             ck.set(f'shared_talents{ext}', len(t))
-            if len(t) > TALENT_CAP:
-                ck.error(f'data/shared_talents{ext}: {len(t)} talents > {TALENT_CAP} (ids 0..98, 0x4c05d0); extras dropped')
+            cap = WL.limits(self).shared_talents
+            if len(t) > cap:
+                ck.error(f'data/shared_talents{ext}: {len(t)} talents > {cap} (ids 0..{cap - 1}, 0x4c05d0); extras dropped')
         if talents.get('.xmlb') is not None and talents.get('.engb') is not None and \
                 {x.lower() for x in talents['.xmlb']} != {x.lower() for x in talents['.engb']}:
             ck.error('shared_talents XMLB and engb define different talents')
@@ -4006,10 +4009,11 @@ class Validator:
         if t is None:
             ck.error('Data/missions/missions.XMLB missing or undecodable (no objectives at all)')
             return
+        lim = WL.limits(self)           # XMen2.exe's own caps below; --save-layout w2 raises them (limits wave 2, E14)
         names = [m.get('name') or '' for m in t.iter('MISSION')]
         ck.set('mission_files', len(names))
-        if len(names) > MISSION_FILES_MAX:
-            ck.error(f'missions.XMLB lists {len(names)} mission files > {MISSION_FILES_MAX} (0x48908a); the rest never load')
+        if len(names) > lim.mission_files:
+            ck.error(f'missions.XMLB lists {len(names)} mission files > {lim.mission_files} (0x48908a); the rest never load')
         defined = collections.defaultdict(set)              # objective name -> acts
         per_act = collections.Counter()
         total = 0
@@ -4031,11 +4035,11 @@ class Validator:
                     defined[o.lower()].add(act)
         ck.set('objectives_total', total)
         ck.details['objectives_per_act'] = dict(sorted(per_act.items()))
-        if total > OBJECTIVES_MAX:
-            ck.error(f'{total} objectives in the listed mission files > {OBJECTIVES_MAX} (state bytes 0x72b118, 0x4885c0)')
+        if total > lim.objectives:
+            ck.error(f'{total} objectives in the listed mission files > {lim.objectives} (state bytes 0x72b118, 0x4885c0)')
         for act, n in sorted(per_act.items()):
-            if n > OBJECTIVES_PER_ACT:
-                ck.error(f'act {act}: {n} objectives > {OBJECTIVES_PER_ACT} loadable for the current act (0x4899e0)')
+            if n > lim.objectives_per_act:
+                ck.error(f'act {act}: {n} objectives > {lim.objectives_per_act} loadable for the current act (0x4899e0)')
         missing = {o: sorted(f) for o, f in self._obj_refs.items() if o not in defined}
         ck.set('objective_refs', len(self._obj_refs))
         ck.set('objective_refs_undefined', len(missing))

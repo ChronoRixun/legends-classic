@@ -88,6 +88,12 @@ def parse_args(argv=None):
     ap.add_argument('--rogue-decide', choices=('xml1', 'xml2'), default='xml1',
                     help="Rogue's power decision: XML1's ch_roguedecide (default since 0.4.1-beta.1; needs XML2 Fix "
                          "1.9.0-beta.1's rule 43) or xml2, the old D15 collapse (A/B builds)")
+    ap.add_argument('--save-layout', dest='save_layout', choices=('retail', 'w2'), default='retail',
+                    help="the save layout the build is validated and configured for: retail (default; no [Limits] "
+                         "SaveLayout key, the baseline) or w2 (limits wave 2, Legends Classic 0.4.2: the ini gets "
+                         "SaveLayout=w2 / ItemEnhancements=4096 with EntityCapacity=1 and [Save] Format=lc; the "
+                         "validator and the budgets use the W2 limits and refuse data over them; needs XML2 Fix 1.9 "
+                         "or newer)")
     ap.add_argument('--hero-bleed', dest='hero_bleed', choices=('on', 'off'), default='on',
                     help="Wolverine's bleed passive as an XML2 add_harming powerup (default) or dropped")
     ap.add_argument('--newgame', choices=('chooseteam', 'keepteam'), default='keepteam',
@@ -182,6 +188,8 @@ CONTENT_OPTS = {'harm_loop_startup': (tuple(C.MODULE_ORDER), 'workaround'),
                 'main_menu_layout': ('frontend', 'classic'),
                 'rogue_decide': ('heroes', 'xml1'), 'hero_roster': ('heroes', '21'), 'hero_icons': ('heroes', 'xml1'), 'hero_bleed': ('heroes', 'on'),
                 'newgame': ('scripts', 'keepteam'),
+                # limits wave 2: the talent precache budget (talent_budget.prune_zone_precache) follows the layout's pool
+                'save_layout': ('zones', 'retail'),
                 # SPEC 19: scripts emits the blocks; zones imports the dialogs / conversations rewrite_data_tree patches
                 'forced_teams': (('scripts', 'zones'), 'seat'),
                 # SPEC 21: scripts (intro, main_back_main, imageViewer literals), zones (menu/main_back, zoneinfo
@@ -434,6 +442,7 @@ def main(argv=None):
                     'start_zone': args.start_zone, 'tour': args.tour, 'no_movies': args.no_movies,
                     'blackbird': args.blackbird, 'npc_scaling': args.npc_scaling, 'tiles': args.tiles,
                     'rogue_decide': args.rogue_decide, 'hero_roster': args.hero_roster, 'hero_icons': args.hero_icons, 'hero_bleed': args.hero_bleed,
+                    'save_layout': args.save_layout,
                     'newgame': args.newgame, 'forced_teams': args.forced_teams, 'frontend': args.frontend,
                     'xp_curve': args.xp_curve, 'buoys': args.buoys, 'main_menu_layout': args.main_menu_layout,
                     'harm_loop_startup': getattr(args, 'harm_loop_startup', 'workaround'),

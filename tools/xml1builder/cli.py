@@ -60,6 +60,11 @@ def make_parser():
     p.add_argument('--main-menu-layout', choices=('classic', 'widescreen'), default='classic',
                    help='build: the classic main menu, centred by the game at every aspect '
                         '(widescreen: a retired name for classic)')
+    p.add_argument('--save-layout', dest='save_layout', choices=('retail', 'w2'), default='retail',
+                   help='build: the save layout the build is validated and configured for. retail (default) writes '
+                        'no [Limits] SaveLayout key (the baseline); w2 is the wave 2 layout (Legends Classic 0.4.2, '
+                        'XML2 Fix 1.9 or newer: [Limits] SaveLayout=w2 with ItemEnhancements=4096, EntityCapacity=1 '
+                        'and [Save] Format=lc) and refuses data over its limits')
     p.add_argument('--no-ini', dest='no_ini', action='store_true', help='do not merge the port\'s keys into '
                                                                          'xml2-fix.ini (they are in the stamp)')
     p.add_argument('--allow-unknown-exe', dest='allow_unknown_exe', action='store_true',

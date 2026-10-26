@@ -3,12 +3,17 @@
 NPC powers/immunities stay in shared_talents. Hero NPCs retain their own precache except
 explicitly reviewed noncombat props when the zone/possible party would overflow100/9.
 Unknown file names share the default ID100 interval; formatted paths have a63-byte limit.
+
+With --save-layout w2 (w2_limits) the registry holds 256 names per pool (still 9 files), the shared loader's cap
+is 199 and a hero's talent position must stay below the multiplier 200; `lim` carries the active limits (default:
+XMen2.exe's 100 / 9 / 99, the constants below).
 """
 import itertools
 from . import common as C
 from . import style_budget as SB
 from . import actor_budget as AB
 from . import talent_sets as TS
+from . import w2_limits as WL
 
 TALENTS = 100
 FILES = 9
@@ -48,11 +53,11 @@ def loader_problems(files, known_names):
     return out
 
 
-def prune_props(base, eligible, parties, counts):
+def prune_props(base, eligible, parties, counts, lim=None):
     """Remove only explicitly reviewed props, and only while the party budget overflows."""
     kept, dropped = set(base), {}
     total, _ = worst_party(kept, parties, counts)
-    if problems(total):
+    if problems(total, lim):
         for rel in sorted(set(eligible) & kept):
             kept.remove(rel)
             dropped[rel] = eligible[rel]
@@ -101,12 +106,13 @@ def demand(files, counts):
     return dict(talents=total, files=len(files))
 
 
-def problems(total):
+def problems(total, lim=None):
+    pool, files = (TALENTS, FILES) if lim is None else (lim.talent_pool, lim.talent_files)
     out = []
-    if total['talents'] > TALENTS:
-        out.append(f"{total['talents']} demanded unique talent names > {TALENTS}")
-    if total['files'] > FILES:
-        out.append(f"{total['files']} talent files > {FILES}")
+    if total['talents'] > pool:
+        out.append(f"{total['talents']} demanded unique talent names > {pool}")
+    if total['files'] > files:
+        out.append(f"{total['files']} talent files > {files}")
     return out
 
 
@@ -168,6 +174,7 @@ def prune_zone_precache(ctx, zone, root):
         return root
     from . import heroes as H
     files = package_talents([(e.tag, e.get('filename')) for e in root]) | {'data/shared_talents'}
+    lim = WL.limits(ctx)
     plan = H.hero_plan(ctx)
     parties = {n.lower(): {f'data/talents/{n.lower()}'} for n in plan['heroes']}
     parties, mission = mission_parties(ctx, zone, parties)
@@ -177,7 +184,7 @@ def prune_zone_precache(ctx, zone, root):
         counts[rel] = frozenset(e.get('name').lower() for e in tree.iter('talent'))
     eligible = {f'data/talents/{name}': reason for name, reason in roles.items()
                 if not mission or name not in parties}
-    kept, dropped = prune_props(files, eligible, parties, counts)
+    kept, dropped = prune_props(files, eligible, parties, counts, lim)
     dropped_styles = {f"data/powerstyles/{plan['style'][name]}" for name in roles
                       if f'data/talents/{name}' in dropped and name in plan['style']}
     for e in list(root):
@@ -193,8 +200,11 @@ def prune_zone_precache(ctx, zone, root):
 
 
 def validate(v, ck):
-    ck.set('talent_capacity', TALENTS)
-    ck.set('file_capacity', FILES)
+    lim = WL.limits(v)
+    ck.set('talent_capacity', lim.talent_pool)
+    ck.set('file_capacity', lim.talent_files)
+    if lim.talent_positions is not None:
+        ck.set('talent_positions', lim.talent_positions)
     counts = {}
 
     def count(files):
@@ -217,8 +227,8 @@ def validate(v, ck):
 
     shared = set(v.stats()['talents']['.engb'] or [])
     counts['data/shared_talents'] = frozenset(shared)
-    if len(shared) > SHARED_CAP:
-        ck.error(f'data/shared_talents: {len(shared)} talents > shared loader {SHARED_CAP} IDs')
+    if len(shared) > lim.shared_talents:
+        ck.error(f'data/shared_talents: {len(shared)} talents > shared loader {lim.shared_talents} IDs')
     permanent = {'data/shared_talents'}
     for rel in SB.PERMANENT_PKGS:
         permanent.update(entries(rel + '.pkgb'))
@@ -277,7 +287,7 @@ def validate(v, ck):
         roles = PROP_HERO_ROLES.get(zone, {})
         eligible = {f'data/talents/{name}': reason for name, reason in roles.items()
                     if not mission or name not in party_files}
-        expected, removed = prune_props(expected, eligible, party_files, counts)
+        expected, removed = prune_props(expected, eligible, party_files, counts, lim)
         for rel in sorted(npc_hero_files - expected):
             if rel in actual:
                 ck.error(f'{zone}: unnecessary prop file {rel} still precached despite budget overflow')
@@ -303,12 +313,17 @@ def validate(v, ck):
                 ck.error(f'{zone}: npcstat {name}: talent {ref} resolves nowhere in loaded shared/hero files')
         high = max(high, total['talents'])
         ck.count('zones_checked')
-        for issue in problems(total):
+        for issue in problems(total, lim):
             ck.error(f'{zone}: {issue}; party {", ".join(party)}; registry would refuse registration')
-        if total['talents'] == TALENTS or total['files'] == FILES:
+        if total['talents'] == lim.talent_pool or total['files'] == lim.talent_files:
             ck.warn(f'{zone}: TalentRegistry exactly full: {total}')
         rows[zone] = {'talents': total['talents'], 'files': total['files'], 'party': list(party),
                       'forced_mission': mission, 'dropped_prop_files': removed}
+    # W2: a hero talent's saved id is (stats index + 1) x M + position, so its position (its index in the hero's
+    # file) must stay below the multiplier, and a shared talent's below M - 1
+    for problem in WL.talent_position_problems(
+            lim, {f: len(names) for f, names in counts.items() if f.startswith('data/talents/')}, len(shared)):
+        ck.error(problem)
     ck.details['zones'] = rows
     ck.details['dropped_prop_files'] = drops
     ck.set('talents_demand_max', high)

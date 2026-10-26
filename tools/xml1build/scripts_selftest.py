@@ -44,12 +44,14 @@ if __package__ in (None, ''):
     from xml1build import scripts_lint as L                 # noqa: E402
     from xml1build import scripts_transform as TR           # noqa: E402
     from xml1build import ladder_motion as LM               # noqa: E402
+    from xml1build import w2_limits as WL                   # noqa: E402
 else:
     from . import common as C
     from . import scripts as S
     from . import scripts_lint as L
     from . import scripts_transform as TR
     from . import ladder_motion as LM
+    from . import w2_limits as WL
 
 WORLD_TABLES = ('data/common_ents.xml', 'data/item_ents.xml', 'data/items.eng', 'data/shared_nodes.eng')
 DATA_PREFIXES = ('maps/', 'conversations/', 'dialogs/', 'data/entities/')
@@ -299,8 +301,9 @@ def t6_missions(ctx, t, reg):
     listed = [e.get('name') for e in lst if e.tag.upper() == 'MISSION']
     if listed != [f'x1_act{i:02d}' for i in range(1, 10)]:
         t.fail(f'missions.XMLB lists {listed}')
-    if len(listed) > S.MAX_MISSION_FILES:
-        t.fail(f'{len(listed)} mission files > {S.MAX_MISSION_FILES}')
+    lim = WL.limits(ctx)
+    if len(listed) > lim.mission_files:
+        t.fail(f'{len(listed)} mission files > {lim.mission_files}')
     per_act, total, defined = collections.Counter(), 0, set()
     for m in listed:
         trees = {}
@@ -329,10 +332,10 @@ def t6_missions(ctx, t, reg):
             if a != b:
                 t.fail(f'{m}: XMLB and engb objective lists differ')
     for act, n in per_act.items():
-        if n > S.MAX_OBJECTIVES_PER_ACT:
-            t.fail(f'act {act}: {n} objectives > {S.MAX_OBJECTIVES_PER_ACT}')
-    if total > S.MAX_OBJECTIVES:
-        t.fail(f'{total} objectives > {S.MAX_OBJECTIVES}')
+        if n > lim.objectives_per_act:
+            t.fail(f'act {act}: {n} objectives > {lim.objectives_per_act}')
+    if total > lim.objectives:
+        t.fail(f'{total} objectives > {lim.objectives}')
     if ctx.out_exists('Data/missions/missions.engb'):
         t.fail('Data/missions/missions.engb exists and would shadow missions.XMLB')
     # objective() literals in installed scripts; the mission manager finds objectives by name with _stricmp
