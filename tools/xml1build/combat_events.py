@@ -224,15 +224,14 @@ UNREGISTERED_HANDLER_NOTES = {
     'ch_clingwalldecide': "wall cling (moveset_acrobat); XML2 has no wall cling (ch_wall_lunge is the lunge off a wall)",
     'ch_clingwallbackflip': "wall-cling backflip (moveset_acrobat); no wall cling in XML2",
     'ch_clingwallidle': "wall-cling idle; no wall cling in XML2",
-    'ch_air_grab_pickup': "flying carry (XML1 moveset_flying): XML2's moveset_flying has none; --anim-enums xml1 adds "
-                          "XML1's node (SPEC 107), which runs as %default% until the carry handler port registers it",
-    'ch_air_grab_pickup_idle': "flying carry; XML2 has none (--anim-enums xml1: XML1's nodes, handler not registered yet)",
-    'ch_air_grab_pickup_throw': "flying carry throw; XML2 has none (--anim-enums xml1: XML1's nodes, handler not "
-                                "registered yet)",
-    'ch_air_grab_victim': "flying-carry victim / ally nodes (XML1 shared_nodes airgrab*, appended by zones); "
-                          "reachable only from XML1's carry nodes (moveset_flying with --anim-enums xml1, SPEC 107)",
-    'ch_fly_guard_decide': "flying guard decide (XML1 moveset_flying): --anim-enums xml1 adds the node; the handler "
-                           "is not registered yet (carry handler port)",
+    'ch_air_grab_pickup': "flying carry pickup (XML1 moveset_flying, added with --anim-enums xml1, SPEC 107); "
+                          "XML2 Fix rule 45 revision 3 ([Game] Xml1GrabCarry=xml1) registers it through the shared handler lookup (0x4fd860)",
+    'ch_air_grab_pickup_idle': "flying carry idle / walk / run (XML1 moveset_flying); XML2 Fix rule 45 revision 3 ([Game] Xml1GrabCarry=xml1) registers it through the shared handler lookup (0x4fd860)",
+    'ch_air_grab_pickup_throw': "flying carry throw / smash (XML1 moveset_flying); XML2 Fix rule 45 revision 3 ([Game] Xml1GrabCarry=xml1) registers it through the shared handler lookup (0x4fd860)",
+    'ch_air_grab_victim': "flying-carry victim / ally nodes (XML1 shared_nodes airgrab*, appended by zones), reached "
+                          "from XML1's carry nodes; XML2 Fix rule 45 revision 3 ([Game] Xml1GrabCarry=xml1) registers it through the shared handler lookup (0x4fd860)",
+    'ch_fly_guard_decide': "flying guard decide (XML1 moveset_flying, entered by name from a hovering guard); "
+                           "XML2 Fix rule 45 revision 3 ([Game] Xml1GrabCarry=xml1) registers it through the shared handler lookup (0x4fd860)",
     'ch_stun': "XML1 shared_nodes stun; XML2's same-name node (no handler) wins",
     'ch_roguedecide': "Rogue's drain decide chain; heroes drops it (power slot keeps the registered drain chain)",
 }
