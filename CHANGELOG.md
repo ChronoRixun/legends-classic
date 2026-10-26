@@ -14,8 +14,7 @@ Legends Classic 0.4.0 is the first stable release since 0.2.5. It gathers the se
   launcher's Online panel - no port forwarding and no ini editing. Friends can drop in mid-campaign and come into play
   at the next level change, and during the first game's solo story parts (Wolverine's opening, Magma's mansion tour)
   the other players stay connected and watch. A guest dropping out of a game of three or four no longer ends it for
-  the others, slow players are no longer thrown out, and four-player starts no longer crash. Online runs at 60 frames
-  a second, and no longer drops to about 15 on a busy PC. Connections are encrypted, with a relay when a direct
+  the others, slow players are no longer thrown out, and four-player starts no longer crash. Online play no longer drops to about 15 frames a second on a busy PC (it runs at 30 by default; 60 where the PC holds it). Connections are encrypted, with a relay when a direct
   connection fails.
 - **Fewer crashes.** The team-combo popup crash is fixed, the game's model pools are four times bigger (effects,
   props and heads no longer go missing in big fights), and quitting no longer crashes now and then.
@@ -25,13 +24,13 @@ Legends Classic 0.4.0 is the first stable release since 0.2.5. It gathers the se
   as in the first game.
 - **Enemies fight like the first game.** Enemy combos stop when your hit makes them flinch. Every gun enemy (the MP5
   and laser soldiers, the officers, the flamethrower and lightning commanders, the police) uses the first game's
-  weapon brain: they shoot from range instead of walking up to punch, and hold their grenades at full energy. A gun
+  weapon brain: they shoot from range instead of walking up to punch, and throw grenades when their energy is full. A gun
   only lands a hit on the first game's half-second timer, as in X-Men Legends. Enemy powers come on time, and enemy
   power attacks are never blocked, as in the original.
 - **Walls only block you from the front** in the first game's levels, as in X-Men Legends, so enemies no longer get
   stuck on the ends of walls.
 - **"Alison" beside Magma's early lines**, as in the first game.
-- **Reviving a hero costs what it did in the first game:** 200 / 800 / 1,800 / 3,200 / 5,000 Tech Bits by team level band; beta 7 charged far more (XML2 Fix 1.8.0).
+- **Reviving a hero costs what it did in the first game:** 200 / 800 / 1,800 / 3,200 / 5,000 Tech Bits by team level band; earlier versions charged far more (XML2 Fix 1.8.0).
 - **Text fixes:** Magneto's codex biographies keep the first game's layout, and three level names the first game's
   own data had mixed up are right again.
 
@@ -47,13 +46,13 @@ the same game as 0.4.0-beta.7, but XML2 Fix 1.8.0 charges the first game's reviv
 so a PC still on XML2 Fix 1.8.0-beta.7 is refused at join, naming `10 Xtraction services/RevivalCost`, until it
 updates. 0.2.x and the older betas cannot join 0.4.0 games. Test mode must be off for online play.
 
-**Tested:** online was tested on one PC with two instances of the game (Tested online on one PC: two games played together for 21 minutes at 30 fps (fights with AI teammates, a co-op save, a player dropping out and rejoining by room code, two level changes) plus a 3-player drop test at 60 fps, with no desync; beta 6 and stable games refuse each other.). Internet play between
+**Tested:** online was tested on one PC with two instances of the game: two games played together for 21 minutes at 30 fps (fights with AI teammates, a co-op save, a player dropping out and rejoining by room code, two level changes) plus a 3-player drop test at 60 fps, with no desync; beta 6 and stable games refuse each other. Internet play between
 different PCs, and games of three or four players, have not been fully verified yet.
 
 **Known issues**
 
-- **Enemies attack more often** (issue #101): unarmed enemies (the Brotherhood in the HAARP tunnels) still attack about
-  1.5 times as often per minute as in the first game; the cause is not found yet.
+- **Enemy powers** (issue #101): enemies may still use their powers a little more often than in the first game; this is
+  still being measured (beta 7 measured attack and melee rates within range of the original).
 - **Gun enemies** (issue #101): at mid range the MP5 soldier still does more damage than in the original (about 1.6 to
   2.2 times: the original misses the first shot or two after each pause, the port doesn't yet). The flamethrower and
   lightning commanders have not been compared side by side with the original yet.
