@@ -477,7 +477,7 @@ def test_def_damage_scale_validator_check_follows_the_option():
     ok = run_check('resist', 'resist', 'resist')
     assert not ok.errors and ok.values['d8_resist_records'] == 2
     ok = run_check('noop', 'noop', None)
-    assert not ok.errors and ok.values['d8_resist_records'] == 0
+    assert not ok.errors and 'd8_resist_records' not in ok.values            # the default build's metadata is unchanged
     bad = run_check('resist', 'noop', 'resist')              # the option says resist but the table carries nothing
     assert any('expected one damage-resistance record' in e for e in bad.errors)
     bad = run_check('noop', 'resist', None)                  # records present although the build is noop

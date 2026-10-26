@@ -894,7 +894,8 @@ def _def_damage_scale(ctx, ck, plan, by_name, ledger):
             ck.error(f'{it.identity}: expected one damage-resistance record under resist, found {len(scoped)}')
         if not resist and recs:
             ck.error(f'{it.identity}: carries {len(recs)} records but its only bonus is the original no-op')
-    ck.set('d8_resist_records', found)
+    if resist:                      # a default (noop) build keeps its validate.json as it was
+        ck.set('d8_resist_records', found)
 
 
 def _plain_semantics(plan, by_name, ck):
