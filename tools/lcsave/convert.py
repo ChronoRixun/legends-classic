@@ -1191,11 +1191,16 @@ class PositionTables:
         inst = dict(definition=self.item(r['definition']), name_a=self._native(self._get(self._nama, r['name_a'], 'item name'), 0, 31, 'flat name') if r['name_a'] else 0xff,
                     name_b=self._native(self._get(self._namb, r['name_b'], 'item name'), 0, 3, 'category name') if r['name_b'] else 0xff,
                     special=self._native(self._get(self._trit, r['special'], 'special item'), 0, 127, 'special item') if r['special'] else 0xff, location=r['location'])
+        rebuilt = bool(self.env.catalogue.attributes_of(r['definition']) & ITEM_OWN_REBUILT)
         for lst in ('prefixes', 'own', 'suffixes'):
+            if lst == 'own' and rebuilt:
+                continue                  # the old list is replaced below; its records may no longer exist in the build
             inst[lst] = [dict(record=self._get(self._enh, e['enhancement'], 'enhancement'), value=e['value']) for e in r[lst]]
-        if self.env.catalogue.attributes_of(r['definition']) & ITEM_OWN_REBUILT:
+        if rebuilt:
             # loot step 1 (DESIGN 2.1): the definition's own bonuses were converted again in place; the instance
-            # takes the definition's current own list (interpolation 0.0f, bits 0: every economy record is single-valued)
+            # takes the definition's current own list (interpolation 0.0f, bits 0: every economy record is single-valued).
+            # The saved list is not resolved first: a list that SHRANK (an old third record, or the only record of an
+            # item that is now a no-op) names ids the new table no longer has, and resolving them would refuse the save.
             own = self.b.item_own[inst['definition']]
             if len(own) > OWN_SLOTS:
                 raise ConvertError(f'definition {inst["definition"]} has {len(own)} own records, the instance holds {OWN_SLOTS}')

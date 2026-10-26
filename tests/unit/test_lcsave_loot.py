@@ -116,6 +116,64 @@ def test_a_rebuilt_reward_instance_gets_the_rebuilt_own_list():
         assert [e['record'] for e in belt['own']] == [5]                                  # another definition: unchanged
 
 
+def shrunk_env(d, rebuilt=True):
+    """like loot_env, but the rebuilt definition's list SHRANK: one legacy record (glove_x e1), none in the new table
+    (the shape of the three Shiar rewards; Goddess Medallion and Phoenix Mantle lose their third record)"""
+    legacy_dir = make_build(os.path.join(d, 'legacy'), items=ITEMS)
+    loot_dir = make_build(os.path.join(d, 'loot'), items=ITEMS)
+    p = _items_path(loot_dir)
+    root = xmlb.decode(open(p, 'rb').read())
+    glove = next(e for e in root if e.tag == 'item' and e.get('name') == REBUILT)
+    for e in glove.findall('enhancement'):
+        glove.remove(e)
+    open(p, 'wb').write(xmlb.encode(root))
+    lb, nb = binds.Binds(legacy_dir), binds.Binds(loot_dir)
+    model = _era_model(lb, lb)
+    cat = CAT.Catalogue()
+    for cv in ('13', '5'):
+        cat.update(CAT.tables_from_hashes(legacy.Era(model, cv).tables), 13)
+    cat.extend(CAT.tables_from_hashes(nb.hash_tables(include_conversation_digest=False)), 14)
+    if rebuilt:
+        cat.set_attribute_bits('ITEM', keys.key_hash(REBUILT), CAT.ITEM_OWN_REBUILT)
+    ep = os.path.join(d, 'eras.json')
+    with open(ep, 'w') as f:
+        json.dump(model, f)
+    return convert.Environment(loot_dir, eras_path=ep, catalogue=cat), lb, nb
+
+
+def test_a_rebuilt_reward_whose_list_shrank_still_loads_with_the_current_list():
+    # An old instance names records the new item table no longer has (Goddess Medallion 3 -> 2, the Shiar items 1 -> 0).
+    # The migration replaces the list, so those ids must never be resolved: before this fix the load was refused with
+    # "enhancement: id ... is not in this build (parked / unknown)".
+    with tempfile.TemporaryDirectory() as d:
+        env, lb, nb = shrunk_env(d)
+        assert lb.item_own[1] == [6] and nb.item_own[1] == []
+        raw = oldsave.write_slot(make_old_save(def_count=len(lb.item)))
+        res = convert.convert_slot(raw, 'beta7.save', env, now=0)
+        assert res.refused is None, res.refused
+        model, _ = convert.reverse_slot(res.file_bytes, env)
+        glove = next(i for i in model['items']['carried'] if i['definition'] == 1)
+        assert glove['own'] == [] and [e['record'] for e in glove['suffixes']] == [2]       # affixes of the instance stay
+        belt = next(i for i in model['items']['carried'] if i['definition'] == 0)
+        assert [e['record'] for e in belt['own']] == [5]                                    # another definition: unchanged
+
+
+def test_the_shrunk_list_without_the_rebuilt_mark_is_still_refused():
+    # negative control: the guard is the catalogue attribute, not a general tolerance for unknown records
+    with tempfile.TemporaryDirectory() as d:
+        env, lb, nb = shrunk_env(d, rebuilt=False)
+        raw = oldsave.write_slot(make_old_save(def_count=len(lb.item)))
+        res = convert.convert_slot(raw, 'beta7.save', env, now=0)
+        if res.refused is not None:                     # the converter itself may already refuse an unknown record
+            assert 'enhancement' in res.refused or 'not in' in res.refused or 'parked' in res.refused
+            return
+        try:
+            convert.reverse_slot(res.file_bytes, env)
+            raise AssertionError('an unknown own record was accepted on a definition that is not rebuilt')
+        except convert.ConvertError as e:
+            assert 'parked / unknown' in str(e) or 'not in' in str(e)
+
+
 def test_definitions_over_160_and_records_over_512_round_trip_in_the_w2_layout():
     with tempfile.TemporaryDirectory() as d:
         env, lb, nb, _ = loot_env(d)
