@@ -763,6 +763,10 @@ def validate(v, ck):
                     ck.error('MAGNETOS_HELMET must carry the noaward flag')
                 if it and it.is_equipment and it.lname != 'magnetos_helmet' and r['flags'] & F_NOAWARD:
                     ck.error(f'{r["name"]}: noaward on an awardable definition')
+            identities = {it.identity.lower() for it in plan.equipment}
+            for r in rows:                      # shops, drops and bags only ever offer the economy's own equipment
+                if r['flags'] & F_EQUIPMENT and r['name'].lower() not in identities:
+                    ck.error(f'{SIDECAR_REL}: equipment row {r["name"]!r} is not one of the economy identities')
             noaward = [r['name'] for r in rows if r['flags'] & F_NOAWARD]
             ck.set('noaward', len(noaward))
             sellable = sum(1 for r in rows if r['flags'] & F_SELLABLE)
@@ -791,7 +795,8 @@ def validate(v, ck):
     # 4. bonuses: 168, none pending, single-valued records, own slots, records
     stat = collections.Counter()
     problems = 0
-    for d in convert_definitions(ctx, plan):
+    converted = convert_definitions(ctx, plan)
+    for d in converted:
         for b in d.conversion.bonuses:
             stat[b.status] += 1
             if b.status == IB.UNSUPPORTED:
@@ -803,6 +808,7 @@ def validate(v, ck):
     for k in (IB.EXACT, IB.APPROXIMATE, IB.SOURCE_NOOP, IB.ADAPTER, IB.UNSUPPORTED):
         ck.set('powerups_' + k, stat.get(k, 0))
     numbers, records = record_numbers(items_root)
+    _enhancement_payloads(ck, plan, by_name, converted)
     for it in plan.equipment:
         c = by_name.get(it.identity.lower())
         if c is None:
@@ -898,6 +904,36 @@ def _def_damage_scale(ctx, ck, plan, by_name, ledger):
         ck.set('d8_resist_records', found)
 
 
+def _enhancement_payloads(ck, plan, by_name, converted):
+    """every emitted enhancement record equals the one the converter produces from the source now (tag, attributes,
+    children, in order): the approximation ledger (_approximations) is regenerated from the same conversion, so a
+    record that drifted in Data/items (a bonus 10 written as 999) must not pass just because its index is right"""
+    wanted = {d.element.get('name', '').lower(): d.element.findall('enhancement') for d in converted}
+    checked = 0
+    for it in plan.equipment:
+        c = by_name.get(it.identity.lower())
+        want = wanted.get(it.identity.lower())
+        if c is None or want is None:
+            continue                                   # a missing definition is already an error
+        got = c.findall('enhancement')
+        if len(got) != len(want):
+            ck.error(f'{it.identity}: {len(got)} enhancement records emitted, the conversion gives {len(want)}')
+        for i, (g, w) in enumerate(zip(got, want)):
+            checked += 1
+            if fingerprint(g) != fingerprint(w):
+                ck.error(f'{it.identity}: enhancement record {i} differs from the conversion: emitted '
+                         f'[{_record_text(g)}], expected [{_record_text(w)}]')
+    ck.set('enhancement_payloads_checked', checked)
+
+
+def _record_text(enh):
+    """one record as `description | tag attr=value ...` for a message (every attribute, nested, in order)"""
+    parts = []
+    for e in enh.iter():
+        parts.append(e.tag + ''.join(f' {k}={v}' for k, v in e.attrib.items()))
+    return ' / '.join(parts)
+
+
 def _plain_semantics(plan, by_name, ck):
     for it in plan.items:
         if it.is_equipment:
@@ -940,6 +976,13 @@ def _references(v, ck, plan, by_name):
                 ok += 1
     for rel, ref in bad[:20]:
         ck.error(f'{rel}: inventoryitem {ref!r} names a legacy equipment; it must be {NAME_PREFIX}{ref.lower()}')
+    # every equipment reference, whatever it names, must be one of the economy's identities: a definition in Data/items
+    # of type equipment that is not an XML1 reward kept in the Danger Room or an appended lc_x1_ identity (an XML2-only
+    # equipment, a legacy one) is not part of the classic economy and has no row in the sidecar
+    stray = {}
+    for n, vals in v.scan.inv_items.items():
+        for ref in vals:
+            _stray_equipment(by_name, allowed, x1, ref, v.scan.files[n]['rel'], stray)
     dr = v.tree('data/dangerroom.engb') if v.entry('data/dangerroom.engb') else None
     seen = set()
     no_reward = []
@@ -952,11 +995,24 @@ def _references(v, ck, plan, by_name):
             seen.add(item.strip().lower())
             if item.strip().lower() not in keep:
                 ck.error(f'course {course.get("name")}: rewarditem {item!r} is not one of the kept rewards')
+        for r in rewards:                                   # a second reward item on a course is a reference too
+            _stray_equipment(by_name, allowed, x1, r.get('rewarditem'), f'Data/dangerroom.engb course {course.get("name")}', stray)
+    for (rel, low), c in sorted(stray.items())[:20]:
+        ck.error(f'{rel}: names {low!r}, an equipment definition that is not one of the economy identities')
     if seen != keep:
         ck.error(f'the Danger Room names {len(seen)} reward items, expected the {len(keep)} kept ones')
     ck.set('equipment_references', ok)
     ck.set('courses_without_reward_item', len(no_reward))
     ck.details['courses_without_reward_item'] = no_reward          # the PC generated-gear branch is suppressed for them
+
+
+def _stray_equipment(by_name, allowed, legacy, ref, where, found):
+    """records (where, name) -> definition in `found` when `ref` names an equipment definition outside `allowed`
+    (`legacy`: the XML1 names, which the legacy-name check reports with the identity to use instead)"""
+    low = (ref or '').strip().lower()
+    c = by_name.get(low)
+    if c is not None and (c.get('type') or '').strip().lower() == 'equipment' and low not in allowed and low not in legacy:
+        found[(where, low)] = c
 
 
 def _treasure_count(v):

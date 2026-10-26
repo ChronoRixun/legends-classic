@@ -626,3 +626,87 @@ def test_the_cli_refuses_the_economy_without_w2_and_over_an_older_fix():
             assert FI.read_ini(out / 'xml2-fix.ini')['Game']['Xml1Economy'] == '1'
     finally:
         B.StubPipeline.port_keys = saved
+
+
+# ---------------------------------------------------------------------------------------------------- V-LOOT: payloads, references
+def _emitted_table():
+    """(ctx, plan, by_name, converted): the invented table as Data/items would carry it, deep-copied from the converter"""
+    import copy
+    ctx = ctx_for()
+    plan = ctx.shared['loot_plan']
+    converted = L.convert_definitions(ctx, plan)
+    by_name = {d.element.get('name').lower(): copy.deepcopy(d.element) for d in converted}
+    return ctx, plan, by_name, converted
+
+
+def test_validator_compares_every_emitted_enhancement_payload_with_the_conversion():
+    ctx, plan, by_name, converted = _emitted_table()
+    ck = _check()
+    L._enhancement_payloads(ck, plan, by_name, converted)
+    assert not ck.errors and ck.counts['enhancement_payloads_checked'] == sum(d.records for d in converted) > 3
+    # a bonus 10 -> 999: identity and record index are right, the value is not
+    target = by_name['lc_x1_belt_b'].findall('enhancement')[1].find('powerup/affecter')
+    assert target.get('level') == '15'
+    target.set('level', '10')
+    target.set('level', '999')
+    ck = _check()
+    L._enhancement_payloads(ck, plan, by_name, converted)
+    assert len(ck.errors) == 1 and 'lc_x1_belt_b' in ck.errors[0] and 'level=999' in ck.errors[0] and 'level=15' in ck.errors[0]
+    target.set('level', '15')
+    # every other kind of drift: description text, a powerup attribute, a dropped / extra / reordered record
+    for mutate, fragment in (
+            (lambda t: t['lc_x1_ring_c'].findall('enhancement')[0].set('description', 'Movement speed x9'), 'record 0'),
+            (lambda t: t['lc_x1_ring_c'].findall('enhancement')[1].find('powerup').set('damagetype', 'dmg_ice'), 'record 1'),
+            (lambda t: t['lc_x1_glove_a'].remove(t['lc_x1_glove_a'].find('enhancement')), 'enhancement records emitted'),
+            (lambda t: ET.SubElement(t['lc_x1_glove_a'], 'enhancement', description='x'), 'enhancement records emitted'),
+            (lambda t: (t['lc_x1_belt_b'].remove(t['lc_x1_belt_b'].findall('enhancement')[0]),
+                        t['lc_x1_belt_b'].append(ET.fromstring('<enhancement description="Speed +2"><powerup life="-1">'
+                                                               '<affecter attribute="speed" level="2"/></powerup></enhancement>'))),
+             'record 0')):
+        _, _, bad, _ = _emitted_table()
+        mutate(bad)
+        ck = _check()
+        L._enhancement_payloads(ck, plan, bad, converted)
+        assert any(fragment in e for e in ck.errors), (fragment, ck.errors)
+
+
+def _reference_view(inv=None, rewards=('reward_d',), extra_items=()):
+    ctx, plan, by_name, _ = _emitted_table()
+    for e in extra_items:
+        by_name[e.get('name').lower()] = e
+    dr = ET.Element('dangerroom')
+    for i, r in enumerate(rewards):
+        course = ET.SubElement(dr, 'COURSE', name=f'c{i}')
+        ET.SubElement(course, 'REWARD', type='Titanium', rewarditem=r)
+    inv = dict(inv or {})
+    scan = SimpleNamespace(inv_items=inv, files={n: {'rel': n} for n in inv})
+    v = SimpleNamespace(ctx=ctx, scan=scan, tree=lambda rel: dr, entry=lambda rel: True)
+    return v, plan, by_name
+
+
+def test_validator_rejects_a_reference_to_equipment_outside_the_economy_identities():
+    gear = ET.Element('item', name='RETAIL_ONLY_GEAR', type='equipment', **{'class': 'belt'})   # an XML2-only definition
+    ok_inv = {'maps/a.xmlb': ['lc_x1_belt_b', 'REWARD_D', 'HEALTH_ITEM', 'MONEY1'], 'scripts/s.xmlb': ['lc_x1_ring_c']}
+    v, plan, by_name = _reference_view(ok_inv, extra_items=[gear])
+    ck = _check()
+    L._references(v, ck, plan, by_name)
+    assert not ck.errors and ck.counts['equipment_references'] == 3
+    # a map, a script and a reward each naming it
+    for inv, rewards, where in (({'maps/a.xmlb': ['RETAIL_ONLY_GEAR']}, ('reward_d',), 'maps/a.xmlb'),
+                                ({'scripts/s.xmlb': ['retail_only_gear']}, ('reward_d',), 'scripts/s.xmlb'),
+                                ({}, ('reward_d', 'retail_only_gear'), 'dangerroom')):
+        v, plan, by_name = _reference_view(inv, rewards, extra_items=[gear])
+        ck = _check()
+        L._references(v, ck, plan, by_name)
+        assert any('retail_only_gear' in e and 'not one of the economy identities' in e and where in e for e in ck.errors), \
+            (where, ck.errors)
+    # a legacy XML1 name is still reported once, with the identity to use
+    v, plan, by_name = _reference_view({'maps/a.xmlb': ['BELT_B']}, extra_items=[ET.Element('item', name='BELT_B', type='equipment')])
+    ck = _check()
+    L._references(v, ck, plan, by_name)
+    assert len([e for e in ck.errors if 'belt_b' in e.lower()]) == 1 and 'legacy equipment' in ck.errors[0]
+    # a non-equipment item that XML2 only defines is another check's business (V46), not this one's
+    v, plan, by_name = _reference_view({'maps/a.xmlb': ['RETAIL_KEY']}, extra_items=[ET.Element('item', name='RETAIL_KEY', type='item')])
+    ck = _check()
+    L._references(v, ck, plan, by_name)
+    assert not ck.errors
