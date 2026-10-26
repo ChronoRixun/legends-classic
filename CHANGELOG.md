@@ -27,6 +27,12 @@ the beta 8 test guide.
   buddy teleport, popups and their landing, the charge, Gambit's object charge) and, with Rogue's decide now the
   default (`--rogue-decide xml1`; `xml2` keeps the old collapse), the `power2` decide + internal `ability_drain`
   chains and `Xml1RogueDecide=xml1` (rule 43).
+- **Beta 8: saves keep the zones you already cleared.** Beta 8's heaviness tags (and the Magneto controller's
+  shield script on the asteroid) changed 65 map files without moving or renumbering anything in them, and the save
+  reader used to drop every saved zone record of a changed map (enemies, pickups, doors and one-time scenes came
+  back). The save-compatibility ledger now carries equivalence rows for those maps against stable 0.4.0, and the
+  reader (XML2 Fix 1.9.0) keeps such records exactly; every zone applies at least as many saved records as on 0.4.0
+  in the real-saves gate.
 - **Beta 8: damage rounds as in the first game.** Balance builds add `[Balance] ReceiveRounding=xml1` and
   `DamageCap=xml1` (rule 41).
 - **Beta 8: room for graphics mods.** `[Limits] IGBCache=1024` with `ResourceNames=2048` and `[Engine]

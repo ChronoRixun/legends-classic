@@ -6363,9 +6363,15 @@ rejects any changed placement SHA1. Optional `Data/lcsave/zone-prefix.lcm` now
 attests a previous and current whole-map hash after the builder compares complete
 resident-prefix definitions, placement-group attributes and instances exactly.
 The release ledger contains only hashes and original placement indices. Generate
-it with `python -m lcsave.zonecompat PREVIOUS_BUILD CURRENT_BUILD --ledger-out
-tools/lcsave/data/zone_prefixes.json`, against every supported old release; both
-`.engb` maps and `.xmlb`-only fallbacks participate. Savefiles retains recorded
+it with `python -m lcsave.zonecompat generate --previous STABLE_BUILD [--previous
+PREVIOUS_BETA_BUILD] CANDIDATE_BUILD --ledger-out tools/lcsave/data/zone_prefixes.json`
+(`plan` reports without writing the sidecar), against the stable release and, for
+later betas, the previous beta as well; both `.engb` maps and `.xmlb`-only fallbacks
+participate. Definition-only edits (`EQUIVALENT_ATTRIBUTES`, plus the zone-, definition-
+and value-bound owner-reviewed `REVIEWED_CHANGES`) produce full-length equivalence rows
+that the readers take as the exact-hash path, and re-target the previous build's
+prefix rows; details and the per-zone real-saves release gate are in
+`tools/lcsave/README.md`. Savefiles retains recorded
 attestations and emits packaged history in fresh builds. V39 under V39 checks
 applicable prefix digests against the built output.
 
