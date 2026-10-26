@@ -2,6 +2,7 @@
 rule of the V-MOVES / V-EVENTS / V-EFFECT-FILES / V-PRIMITIVES / V-VECTORS / V-CURVES / V-SCRIPTS checks, on invented
 styles, effects, packages and scripts built in code (no game content)."""
 import json
+import os
 import tempfile
 import xml.etree.ElementTree as ET
 from pathlib import Path
@@ -95,8 +96,20 @@ def test_rule_ids_and_markers_follow_the_rule_list():
     assert FI.WAVE3_RULES == {'FightStyles': 35, 'StyleEvents': 53, 'FightMoves': 54, 'EffectTemplates': 55,
                               'PrimitiveDefs': 56, 'EffectVectors': 57, 'PrimitivesPerEffect': 58, 'ScriptPools': 59,
                               'ParticleScratch': 60}
-    for key, marker in FI.WAVE3_MARKERS.items():
-        assert marker.startswith(key.encode() + b': rule ' + str(FI.WAVE3_RULES[key]).encode())
+    # The markers are the DLL's real install-line format strings (XML2 Fix 1.9.0, w3/integrated), no longer the
+    # "<Key>: rule N" placeholders: one line per native owner (the style manager and the effect pools each own two rows).
+    assert FI.WAVE3_MARKERS_ARE_PLACEHOLDERS is False
+    assert set(FI.WAVE3_MARKERS) == set(FI.WAVE3_RULES)
+    m = FI.WAVE3_MARKERS
+    assert m['FightStyles'] == m['StyleEvents'] and m['PrimitiveDefs'] == m['EffectVectors']
+    owners = {m['FightStyles'], m['FightMoves'], m['EffectTemplates'], m['PrimitiveDefs'], m['PrimitivesPerEffect'],
+              m['ScriptPools'], m['ParticleScratch']}
+    assert len(owners) == 7 and all(isinstance(x, bytes) and len(x) >= 20 for x in owners)
+    assert b'rule 59' in m['ScriptPools'] and b'rule 60' in m['ParticleScratch'] and b'FightMoves' in m['FightMoves']
+    dll = os.environ.get('LC_W3_DLL')  # optional: the w3/integrated DLL carries every marker
+    if dll:
+        data = Path(dll).read_bytes()
+        assert all(x in data for x in owners)
 
 
 def test_dll_gate_refuses_a_dll_without_each_rules_marker_by_name():
