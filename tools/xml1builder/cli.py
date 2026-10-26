@@ -64,6 +64,11 @@ def make_parser():
                    help="build: XML1's 23 animation enums - the flying carry's and Juggernaut's grab clips from your "
                         "disc, their mappings and XML1's carry nodes - and [Limits] AnimEnums=512 (needs an XML2 Fix "
                         "with the AnimEnums table). On by default since 0.4.1-beta.1 (the grab lifecycle needs it)")
+    p.add_argument('--limits-wave3', dest='limits_wave3', choices=('off', 'on', 'all'), default='off',
+                   help="build: limits wave 3 - [Limits] FightStyles=64, StyleEvents, FightMoves, EffectTemplates, "
+                        "PrimitiveDefs, EffectVectors and PrimitivesPerEffect at their raised values (needs an XML2 Fix "
+                        "with rules 35 revision 2 and 53-58; 'all' adds ScriptPools and ParticleScratch). Off by default "
+                        "until the XML2 Fix rows land; a build without it is unchanged")
     p.add_argument('--no-ini', dest='no_ini', action='store_true', help='do not merge the port\'s keys into '
                                                                          'xml2-fix.ini (they are in the stamp)')
     p.add_argument('--allow-unknown-exe', dest='allow_unknown_exe', action='store_true',

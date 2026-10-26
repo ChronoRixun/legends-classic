@@ -199,6 +199,8 @@ class RealPipeline:
         argv = ['--out', str(job.out), '--base', str(job.xml2), '--jobs', str(job.jobs)]
         argv += ['--main-menu-layout', getattr(job, 'main_menu_layout', 'classic')]
         argv += ['--anim-enums', getattr(job, 'anim_enums', None) or 'xml1']
+        if (getattr(job, 'limits_wave3', None) or 'off') != 'off':
+            argv += ['--limits-wave3', job.limits_wave3]
         if not job.movies:
             argv.append('--no-movies')
         args = build_xml1.parse_args(argv)
