@@ -62,7 +62,9 @@ the beta 8 test guide.
   visibility. Since candidate 080d also `TelekinesisRule=xml1` and `GuardDecideRule=xml1` (rule 46 bits 512 / 1024:
   Phoenix's telekinesis with XML1's targets, hold, damage and tk levels; the guard decide's pickups and ally throws and
   the acrobats' wall lunge), written only with `Xml1GrabCarry=xml1` (they need its grab lifecycle); the builder refuses a
-  DLL without the two keys (080c and older).
+  DLL without the two keys (080c and older). Since candidate 080e the builder also refuses a DLL whose telekinesis
+  still looks its sounds up through the Xbox slot (080d: crashed at the first hold) or whose flying carry re-enters
+  its own node every frame (080c / 080d: the carried hero never followed); the two install lines are the markers.
 - **Beta 8: room for the first game's sounds, animations and characters** (since candidate 080d). Builds with the
   XML1 animation enums also write `[Limits] CharSounds=127` (XML2 Fix rule 49: 127 character sound sets instead of 16),
   `MotionPool=22528` (rule 51: the animation motion pool 500 -> 22,528, each character bounded to 176 clips) and
