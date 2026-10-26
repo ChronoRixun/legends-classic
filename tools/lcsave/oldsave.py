@@ -18,8 +18,8 @@ CEIL_INSTANCES = 4096
 CEIL_ENH_PER_LIST = 64
 CEIL_EQUIPPED = 3            # the engine refuses a 4th (0x4b9a10); the loader does not bound it (fail closed here)
 CEIL_HERO_BLOCKS = 64
-CEIL_ZONE_RECORDS = 5        # the container holds 5 (old 1.13); the loader does not bound it
-CEIL_WORLD_SLOT = 150
+CEIL_ZONE_RECORDS = 5        # the container holds 5 (old 1.13; RETAIL / E10A2); the reader bounds by native.record_count
+CEIL_WORLD_SLOT = 150        # RETAIL / E10A2; the reader bounds by native.world_slots (W2 1024)
 
 
 class OldSaveError(ValueError):
@@ -64,8 +64,8 @@ class _Reader:
         return len(raw) == L.OLD_TAG and raw[0] == L.OLD_TAG_MARKER and raw[1:51].startswith(expect.encode())
 
 
-def _read_instance(r):
-    inst = r.struct(L.OLD_INSTANCE_HEAD)
+def _read_instance(r, native=L.RETAIL):
+    inst = r.struct(native.instance_head())
     for name in ('prefixes', 'own', 'suffixes'):
         n = r.u32()
         if n > CEIL_ENH_PER_LIST:
@@ -74,8 +74,10 @@ def _read_instance(r):
     return inst
 
 
-def _write_instance(inst):
-    out = bytearray(write_struct(inst, L.OLD_INSTANCE_HEAD))
+def _write_instance(inst, native=L.RETAIL):
+    if inst['definition'] > (0xffff if native.definition_index_bytes == 2 else 0xff):
+        raise OldSaveError(f'item definition index {inst["definition"]} does not fit the native layout {native.id}')
+    out = bytearray(write_struct(inst, native.instance_head()))
     for name in ('prefixes', 'own', 'suffixes'):
         out += struct.pack('<I', len(inst[name]))
         for e in inst[name]:
@@ -100,19 +102,19 @@ def _write_attributes(a):
     return bytes(out)
 
 
-def _read_equipment(r):
+def _read_equipment(r, native=L.RETAIL):
     n = r.u8()
     if n > CEIL_EQUIPPED:
         raise OldSaveError(f'equipped count {n} > {CEIL_EQUIPPED}')
-    eq = dict(equipped=[_read_instance(r) for _ in range(n)])
+    eq = dict(equipped=[_read_instance(r, native) for _ in range(n)])
     eq.update(r.struct(L.OLD_EQUIP_TAIL))
     return eq
 
 
-def _write_equipment(eq):
+def _write_equipment(eq, native=L.RETAIL):
     out = bytearray(struct.pack('<B', len(eq['equipped'])))
     for i in eq['equipped']:
-        out += _write_instance(i)
+        out += _write_instance(i, native)
     out += write_struct(eq, L.OLD_EQUIP_TAIL)
     return bytes(out)
 
@@ -145,17 +147,19 @@ def _write_powers(h):
     return bytes(out)
 
 
-def _read_snapshot(r):
-    s = r.struct(L.OLD_SNAPSHOT)
+def _read_snapshot(r, native=L.RETAIL):
+    s = r.struct(native.snapshot())
     s['seat_names'] = [s.pop(f'seat_name{i}') for i in range(4)]
     return s
 
 
-def _write_snapshot(s):
+def _write_snapshot(s, native=L.RETAIL):
     d = dict(s)
     for i in range(4):
         d[f'seat_name{i}'] = s['seat_names'][i]
-    return write_struct(d, L.OLD_SNAPSHOT)
+    if len(d['objectives']) != native.snapshot_objectives:
+        raise OldSaveError(f'snapshot of {len(d["objectives"])} objectives does not match the native layout {native.id}')
+    return write_struct(d, native.snapshot())
 
 
 def _read_zone_record(r, native):
@@ -165,7 +169,7 @@ def _read_zone_record(r, native):
     if r.p + native.record_size > len(r.b):
         raise OldSaveError(f'zone record needs {native.record_size} bytes at {r.p:#x}, payload ends at {len(r.b):#x}')
     z = {'name_handle': r.u32()}
-    z['states'] = [r.struct(L.OLD_STATE_RECORD) for _ in range(native.states)]
+    z['states'] = [r.struct(native.state_record()) for _ in range(native.states)]
     z.update(r.struct(native.zone_record_tail()))
     if r.p - start != native.record_size:
         raise OldSaveError('zone record size')
@@ -185,7 +189,7 @@ def _write_zone_record(z, native):
         raise OldSaveError(f'zone record does not match the native layout {native.id}')
     out = bytearray(struct.pack('<I', z['name_handle']))
     for s in z['states']:
-        out += write_struct(s, L.OLD_STATE_RECORD)
+        out += write_struct(s, native.state_record())
     out += write_struct(z, native.zone_record_tail())
     return bytes(out)
 
@@ -214,10 +218,10 @@ def zone_string(table, handle):
     if handle == 0:
         return ''
     slot = handle & 0xffffff
-    if slot >= L.OLD_ZONE_STRING_SLOTS:
+    if slot >= len(table['offsets']):
         raise OldSaveError(f'zone string handle {handle:#x}: slot beyond the table')
     off = table['offsets'][slot]
-    if off == 0 or off >= L.OLD_ZONE_ARENA:
+    if off == 0 or off >= len(table['arena']):
         raise OldSaveError(f'zone string handle {handle:#x}: slot {slot} is free or its offset {off:#x} is outside the arena')
     arena = table['arena']
     end = arena.find(b'\0', off)
@@ -240,27 +244,27 @@ def read_slot(buf, native=L.RETAIL):
     r = _Reader(buf, L.OLD_ENVELOPE)
     m['begin_tag'] = r.tag('[SAVEGAMEBEGIN')
     # ---- items (old 1.4)
-    it = r.struct(L.OLD_ITEM_HEAD)
+    it = r.struct(native.item_head())
     n1 = r.u32()
     if n1 > CEIL_INSTANCES:
         raise OldSaveError(f'carried item count {n1} > {CEIL_INSTANCES}')
-    it['carried'] = [_read_instance(r) for _ in range(n1)]
+    it['carried'] = [_read_instance(r, native) for _ in range(n1)]
     n2 = r.u32()
-    if n2 > CEIL_WORLD_SLOT:
-        raise OldSaveError(f'world item count {n2} > {CEIL_WORLD_SLOT}')
+    if n2 > native.world_slots:
+        raise OldSaveError(f'world item count {n2} > {native.world_slots}')
     it['world'] = []
     for _ in range(n2):
         slot = r.u32()
-        if slot >= CEIL_WORLD_SLOT:
-            raise OldSaveError(f'world item slot {slot} >= {CEIL_WORLD_SLOT}')
-        it['world'].append(dict(slot=slot, instance=_read_instance(r)))
+        if slot >= native.world_slots:
+            raise OldSaveError(f'world item slot {slot} >= {native.world_slots}')
+        it['world'].append(dict(slot=slot, instance=_read_instance(r, native)))
     m['items'] = it
     # ---- hero blocks (old 1.6): no count; until the next tag
     heroes = []
     while not r.peek_tag('[CHARACTERSUNLOCKED]'):
         if len(heroes) >= CEIL_HERO_BLOCKS:
             raise OldSaveError(f'no [CHARACTERSUNLOCKED] tag after {CEIL_HERO_BLOCKS} hero blocks')
-        h = {'attributes': _read_attributes(r), 'equipment': _read_equipment(r)}
+        h = {'attributes': _read_attributes(r), 'equipment': _read_equipment(r, native)}
         h.update(_read_powers(r))
         h.update(r.struct(L.OLD_COSTUME))
         heroes.append(h)
@@ -274,11 +278,11 @@ def read_slot(buf, native=L.RETAIL):
     m['unlocked'] = dict(entries=ul, count=uc)
     r.tag('[CHARACTERSRESTORE]')
     m['restore_flag'] = r.u8()
-    m['restore'] = [{'attributes': _read_attributes(r), 'equipment': _read_equipment(r)} for _ in range(L.OLD_RESTORE_RECORDS)]
+    m['restore'] = [{'attributes': _read_attributes(r), 'equipment': _read_equipment(r, native)} for _ in range(L.OLD_RESTORE_RECORDS)]
     # ---- game block (old 1.8)
     m['game'] = r.struct(L.OLD_GAME_BLOCK)
     # ---- side-mission stack (old 1.9)
-    m['side'] = dict(frames=[_read_snapshot(r) for _ in range(L.OLD_SIDE_FRAMES)])
+    m['side'] = dict(frames=[_read_snapshot(r, native) for _ in range(L.OLD_SIDE_FRAMES)])
     m['side'].update(r.struct(L.OLD_SIDE_TAIL))
     if m['side']['count'] > L.OLD_SIDE_FRAMES:
         raise OldSaveError(f'side-mission stack count {m["side"]["count"]} > {L.OLD_SIDE_FRAMES}')
@@ -303,14 +307,14 @@ def read_slot(buf, native=L.RETAIL):
     m['review'] = r.struct(L.OLD_REVIEW)
     # ---- map (old 1.12-1.14)
     r.tag('[MAP: ZONESTRINGS]')
-    m['zone_strings'] = r.struct(L.OLD_ZONE_STRINGS)
+    m['zone_strings'] = r.struct(native.zone_strings())
     r.tag('[MAP: ZONES]')
     nz = r.u32()
-    if nz > CEIL_ZONE_RECORDS or nz > native.record_count:
-        raise OldSaveError(f'zone record count {nz} > {CEIL_ZONE_RECORDS}')
+    if nz > native.record_count:
+        raise OldSaveError(f'zone record count {nz} > {native.record_count}')
     m['zones'] = [_read_zone_record(r, native) for _ in range(nz)]
     r.tag('[MAP: MISSION STATE]')
-    m['mission'] = _read_snapshot(r)
+    m['mission'] = _read_snapshot(r, native)
     # ---- profile, script variables, town centres (old 1.15-1.17)
     m['profile'], r.p = read_profile_block(buf, r.p)
     sv = {'zone': [r.struct(L.OLD_SCRIPT_VAR) for _ in range(L.OLD_SCRIPT_ZONE_VARS)],
@@ -366,24 +370,28 @@ def write_slot(m, native=L.RETAIL):
     out += struct.pack('<I', native.payload)
     out += m.get('begin_tag_raw') or _tag_bytes(m['begin_tag'])
     it = m['items']
-    out += write_struct(it, L.OLD_ITEM_HEAD)
+    if len(it['def_state']) != 2 * native.definitions:
+        raise OldSaveError(f'{len(it["def_state"]) // 2} definition state pairs do not match the native layout {native.id}')
+    if len(it['world']) > native.world_slots:
+        raise OldSaveError(f'world item count {len(it["world"])} > {native.world_slots}')
+    out += write_struct(it, native.item_head())
     out += struct.pack('<I', len(it['carried']))
     for i in it['carried']:
-        out += _write_instance(i)
+        out += _write_instance(i, native)
     out += struct.pack('<I', len(it['world']))
     for w in it['world']:
-        out += struct.pack('<I', w['slot']) + _write_instance(w['instance'])
+        out += struct.pack('<I', w['slot']) + _write_instance(w['instance'], native)
     for h in m['heroes']:
-        out += _write_attributes(h['attributes']) + _write_equipment(h['equipment']) + _write_powers(h)
+        out += _write_attributes(h['attributes']) + _write_equipment(h['equipment'], native) + _write_powers(h)
         out += write_struct(h, L.OLD_COSTUME)
     out += _tag_bytes('[CHARACTERSUNLOCKED]')
     out += struct.pack('<298h', *m['unlocked']['entries']) + struct.pack('<I', m['unlocked']['count'])
     out += _tag_bytes('[CHARACTERSRESTORE]') + struct.pack('<B', m['restore_flag'])
     for rr in m['restore']:
-        out += _write_attributes(rr['attributes']) + _write_equipment(rr['equipment'])
+        out += _write_attributes(rr['attributes']) + _write_equipment(rr['equipment'], native)
     out += write_struct(m['game'], L.OLD_GAME_BLOCK)
     for f in m['side']['frames']:
-        out += _write_snapshot(f)
+        out += _write_snapshot(f, native)
     out += write_struct(m['side'], L.OLD_SIDE_TAIL)
     out += _tag_bytes('[DANGERROOM: COURSES]')
     for c in m['danger_room']['courses']:
@@ -391,11 +399,14 @@ def write_slot(m, native=L.RETAIL):
     out += bytes(m['danger_room']['course_residue'])
     out += _tag_bytes('[DANGERROOM: GRADES]') + bytes(m['danger_room']['grades']) + _tag_bytes('[DANGERROOM: END]')
     out += write_struct(m['review'], L.OLD_REVIEW)
-    out += _tag_bytes('[MAP: ZONESTRINGS]') + write_struct(m['zone_strings'], L.OLD_ZONE_STRINGS)
+    zs = m['zone_strings']
+    if len(zs['offsets']) != native.zone_string_slots or len(zs['arena']) != native.zone_arena:
+        raise OldSaveError(f'zone string table does not match the native layout {native.id}')
+    out += _tag_bytes('[MAP: ZONESTRINGS]') + write_struct(zs, native.zone_strings())
     out += _tag_bytes('[MAP: ZONES]') + struct.pack('<I', len(m['zones']))
     for z in m['zones']:
         out += _write_zone_record(z, native)
-    out += _tag_bytes('[MAP: MISSION STATE]') + _write_snapshot(m['mission'])
+    out += _tag_bytes('[MAP: MISSION STATE]') + _write_snapshot(m['mission'], native)
     out += write_profile_block(m['profile'])
     for kind in ('zone', 'game'):
         for v in m['script_vars'][kind]:

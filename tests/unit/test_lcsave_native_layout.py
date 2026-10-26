@@ -188,17 +188,29 @@ def test_required_feature_marker_encode_decode_and_decisions():
         container.write_file(L.KIND_PROFILE, sec, dict(hdr, required_features=2)); assert False
     except container.ContainerError as e:
         assert 'not implemented by this writer' in str(e)
-    for bits in (2, 3, 0x80000000):
+    for bits in (4, 7, 0x80000000):
         try:
             container.read_file(_set_required_features(plain, bits)); assert False
         except container.ContainerError as e:
             assert str(e) == f'required feature bits {bits:#x} not implemented (needs a newer version)'
-    # the decisions of the two layouts
+    # bit 1 NATIVE_W2 (limits-wave2.md section 7): known by name, never without bit 0
+    try:
+        container.read_file(_set_required_features(plain, 2)); assert False
+    except container.ContainerError as e:
+        assert 'NATIVE_W2 without ENTITY_LAYOUT_CONTIGUOUS10' in str(e)
+    assert container.read_file(_set_required_features(plain, 3))['header']['required_features'] == 3
+    assert container.read_file(container.write_file(L.KIND_PROFILE, sec, dict(hdr, required_features=3)))['header']['required_features'] == 3
+    # the decisions of the three layouts
     assert container.feature_decision(0, L.RETAIL) == (True, '', False)
     assert container.feature_decision(1, L.RETAIL) == (False, container.DOWNGRADE_REFUSED, False)
     assert container.feature_decision(0, L.E10A2) == (True, '', True)
     assert container.feature_decision(1, L.E10A2) == (True, '', False)
-    assert container.feature_decision(2, L.E10A2)[0] is False and 'needs a newer version' in container.feature_decision(3, L.RETAIL)[1]
+    assert container.feature_decision(4, L.E10A2)[0] is False and 'needs a newer version' in container.feature_decision(4, L.RETAIL)[1]
+    assert container.feature_decision(3, L.RETAIL) == (False, container.DOWNGRADE_REFUSED, False)
+    assert container.feature_decision(3, L.E10A2) == (False, container.W2_REFUSED, False) and 'SaveLayout=w2' in container.W2_REFUSED
+    assert container.feature_decision(3, L.W2) == (True, '', False) and container.feature_decision(1, L.W2) == (True, '', False)
+    assert container.feature_decision(0, L.W2) == (True, '', True)
+    assert container.feature_decision(2, L.W2)[0] is False
     assert 'needs the entity-capacity build' in container.DOWNGRADE_REFUSED
 
 
@@ -274,12 +286,12 @@ def test_typed_migration_feature1_rewrite_and_refusals():
         retail_resave = convert.old_stream_to_new(oldsave.write_slot(plain), env, retained_file=saved.file_bytes, native=L.RETAIL)
         assert retail_resave.refused == 'retained file: ' + container.DOWNGRADE_REFUSED
         # (6) an unknown required bit refuses everywhere with the established message
-        unknown = _set_required_features(legacy, 2)
+        unknown = _set_required_features(legacy, 4)
         for native in (L.RETAIL, L.E10A2):
             try:
                 convert.reverse_slot(unknown, env, native=native, registry=reg); assert False
             except (convert.ConvertError, container.ContainerError) as e:
-                assert str(e) == 'required feature bits 0x2 not implemented (needs a newer version)'
+                assert str(e) == 'required feature bits 0x4 not implemented (needs a newer version)'
         # (7) the registry must verify against the scripts the build was made from
         (Path(root) / 'zone_q' / 'trap.py').write_bytes(b'# edited\n')
         ok, reason = T.verify_registry(reg_path, root)
