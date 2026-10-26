@@ -14,6 +14,7 @@ from pathlib import Path
 import builder_stub as B
 from xml1builder import cli, events, manifest as M
 from xml1build import exe_flags as EF
+from xml1build import fix_ini as FI
 
 
 class Stdin:
@@ -402,14 +403,16 @@ def test_rebuild_over_an_older_fix_warns_and_writes_the_ini():
             old_fix = [e for e in evs if e['ev'] == 'warning' and e['code'] == 'W_XML2FIX_OLD']
             assert len(old_fix) == 1 and old_fix[0]['stage'] == 'finish', old_fix
             w = old_fix[0]
-            assert w['detail']['missing'] == ['[Game] X1Leader'] and w['detail']['count'] == 1
+            # the stub build's own exe is large-address-aware (exe_flags, default on): the old fix lacks that guard too
+            assert w['detail']['missing'] == ['[Game] X1Leader', 'XMen2.exe large-address-aware (address space guard)']
+            assert w['detail']['count'] == 2
             assert w['detail']['required'].startswith('>=') and 'X1Leader' in w['msg'] and 'launcher' in w['msg']
             ini = (out / 'xml2-fix.ini').read_text()
             assert 'X1Leader=1' in ini and 'ScriptFunctions=1024' in ini
             assert (out / 'dinput.dll').read_bytes() == old
             assert last['result']['stamp']['requires']['xml2fix'] == w['detail']['required']
             # the new fix in place: no warning
-            (out / 'dinput.dll').write_bytes(old + 'X1Leader'.encode('utf-16le'))
+            (out / 'dinput.dll').write_bytes(old + 'X1Leader'.encode('utf-16le') + FI.ADDRESS_SPACE_MARKER)
             code, evs, _ = run(build_argv(xml2, iso, out, cache))
             assert code == 0 and not any(e.get('code') == 'W_XML2FIX_OLD' for e in evs)
     finally:

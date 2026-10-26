@@ -204,11 +204,17 @@ WALL_CLING = 'xml1'
 # The fix applies them to the whole installation, so they belong to an XML1 build's profile. One mask online.
 # xml2-fix 1.9.0-beta.1 shared handlers wave C (gameplay rule 46, docs/shared-handler-c-rules.md): the jump attack's and
 # the flying charge's damage from values.xmlb's L3 row, Colossus's charge, Beast's bounce and the fastball contact, the
-# idle/bored choice, the animation rate's scale and phase and Nightcrawler's teleport visibility behave as XML1's. Phoenix's
-# telekinesis and the guard decide are not in it yet. Whole-installation, so an XML1 build's profile; one mask online.
+# idle/bored choice, the animation rate's scale and phase and Nightcrawler's teleport visibility behave as XML1's.
+# Whole-installation, so an XML1 build's profile; one mask online. Phoenix's telekinesis and the guard decide are rule 46's
+# bits 512 / 1024 (TK_GUARD below), written only with Xml1GrabCarry.
 SHARED_HANDLERS_C = {'JumpAttackDamageRule': 'xml1', 'FlyChargeDamageRule': 'xml1', 'ColossusChargeRule': 'xml1',
                      'BeastBounceRule': 'xml1', 'FastballRule': 'xml1', 'IdleBoredRule': 'xml1', 'LocomotionScaleRule': 'xml1',
                      'AnimationPhaseRule': 'xml1', 'TeleportVisibilityRule': 'xml1'}
+# xml2-fix 1.9.0-beta.1 rule 46 bits 512 / 1024 (beta8/tk-guard, docs/tk-guard.md): Phoenix's telekinesis (entry / update /
+# input / cancel, XML1's candidate policy, damage and tk levels) and the guard decide (held use_button: allies, enemies and
+# objects; the acrobat's wall lunge) behave as XML1's. Both need rule 45's installed grab lifecycle (the fix refuses them
+# without it and closes online), so port_keys writes them only with Xml1GrabCarry=xml1; a rebuild without it drops them.
+TK_GUARD = {'TelekinesisRule': 'xml1', 'GuardDecideRule': 'xml1'}
 
 # xml2-fix 1.9.0-beta.1 [Limits] ActorPools (E4 stage 1, gameplay rule 44, docs/actor-pools.md): the path, shadow and
 # delayed-damage pools sized for 32 actors grow to 124. Written only with --actor-pools 124 until its live runs pass
@@ -417,7 +423,7 @@ _ZONE_PATH = re.compile(r'^[a-z0-9_.\-]+(/[a-z0-9_.\-]+)*$')
 PORT_OWNED = {'Game': ('NewGameTeam', 'ResetUnlocks', 'SaveFolder', 'ForcedTeams', 'PostgameScript', 'WindowTitle',
                         'EndHeroUnlock', 'MainMenuItems', 'DangerRoomGate', 'ClassicMainBackdrop', 'ClassicMainPanelBounds', 'NewGamePlus', 'ReviewStats', 'Xtract', 'XtractionShop', 'RevivalCost', 'XPCurve',
                        'GeometrySharingBlendIndices', 'CharacterLadderPaths', 'ObjectiveDescriptions',
-                       'BreakRule', 'LiftRule', 'Xml1GrabCarry', 'Xml1RogueDecide', 'Xml1WallCling', *SHARED_HANDLERS, *SHARED_HANDLERS_C, 'PlacementCrush', 'ObjectWorldImpact', 'DoubleHeal', 'DeathRule', 'NpcPowerRule', 'StunRule', 'DangerRoomParty', 'DangerRoomHealthBars', 'ResistanceDisplay', 'BoxHarmOrigin', 'HarmSingleChain', 'HarmLoopStartup', 'ConfirmationRelease',
+                       'BreakRule', 'LiftRule', 'Xml1GrabCarry', 'Xml1RogueDecide', 'Xml1WallCling', *SHARED_HANDLERS, *SHARED_HANDLERS_C, *TK_GUARD, 'PlacementCrush', 'ObjectWorldImpact', 'DoubleHeal', 'DeathRule', 'NpcPowerRule', 'StunRule', 'DangerRoomParty', 'DangerRoomHealthBars', 'ResistanceDisplay', 'BoxHarmOrigin', 'HarmSingleChain', 'HarmLoopStartup', 'ConfirmationRelease',
                        'OnlineConversations', 'PersonalItemPicture', 'ComboPopupGuard', 'ClassicHud', 'ClassicHudPilot', 'ClassicCodex', 'ClassicObjectives', 'NpcSemiAuto', 'ClassicSpeakers', 'WorldBackfaces',
                        'ExplosiveFirstHit', 'PackAmount', 'SoloMode', 'X1Leader', 'DeathSwitchClear', 'RankCosts', 'LevelSkillPoints', 'LevelStatPoints', 'Xml1Multipart',
                        'Xml1MasterMold', 'Xml1MoldStage', 'Xml1Turrets', 'Xml1LockOnEffects', 'Xml1LockOnAim', 'Xml1Bosses'),
@@ -888,6 +894,7 @@ def port_keys(out, *, save_folder=PLAY_SAVE_FOLDER, eighth=True) -> dict:
     # existing INI: rebuilding with the feature off must remove the owned key.
     if (build_record(out) or {}).get('grab_carry') == 'xml1':
         game['Xml1GrabCarry'] = 'xml1'
+        game.update(TK_GUARD)
     if (build_record(out) or {}).get('rogue_decide') == 'xml1':
         game['Xml1RogueDecide'] = 'xml1'
     turrets = build_turrets(out) if postgame else {}
@@ -1183,6 +1190,29 @@ RELEASE_MARKERS[('Limits', 'MotionPool')] = (MOTION_POOL_MARKER, '[Limits] Motio
 # .XML1_FLIGHT_UPKEEP) with no flight cost at all. Its install line is the byte marker (xml2-fix src/xml1_grab_carry.cpp).
 GRAB_CARRY_R3_MARKER = b'flying carry, fix7 and XML1 upkeep installed'
 RELEASE_MARKERS[('Game', 'Xml1GrabCarry')] = (GRAB_CARRY_R3_MARKER, '[Game] Xml1GrabCarry revision 3')
+# xml2-fix 1.9.0-beta.1 (beta 8 candidate 080d): rule 46's TelekinesisRule / GuardDecideRule (a DLL before them - 080c and
+# older - ignores both keys without a word and runs PC's telekinesis and guard decide).
+RELEASE_18_KEYS = {**RELEASE_18_KEYS, 'Game': RELEASE_18_KEYS['Game'] + tuple(TK_GUARD)}
+# E12 (SPEC 108): a build whose own XMen2.exe is large-address-aware needs the fix's address-space module (the 2 GB guard
+# block, and the two test readers that refused addresses above 0x7fffffff before it). Its start line is the marker; the
+# check reads the build's exe beside the DLL (no exe yet, or --laa off: nothing to check).
+ADDRESS_SPACE_MARKER = b'address space: laa %s; 2 GB guard %s'
+
+
+def check_address_space_dll(dll, keys: dict) -> None:
+    dll = Path(dll)
+    exe = dll.parent / 'XMen2.exe'
+    if not dll.is_file() or not exe.is_file():
+        return
+    from . import exe_flags
+    try:
+        if exe_flags.laa_state(exe.read_bytes()) != 'on':
+            return
+    except exe_flags.NotPE32:
+        return
+    if ADDRESS_SPACE_MARKER not in dll.read_bytes():
+        raise FixTooOld("The build's XMen2.exe is large-address-aware; the existing DLL has no address-space guard",
+                        ['XMen2.exe large-address-aware (address space guard)'])
 
 
 def check_release_dll(dll, keys: dict) -> None:
@@ -1223,7 +1253,8 @@ def old_fix_keys(dll, keys: dict) -> list:
     """every key of `keys` the existing companion DLL does not know ('[Section] Key'; [] without a DLL). Raises
     ValueError for a key set no DLL can run (EntityCapacity without Format=lc)."""
     missing = []
-    for check in (check_move_trigger_dll, check_entity_capacity_dll, check_release_dll, check_anim_enums_dll):
+    for check in (check_move_trigger_dll, check_entity_capacity_dll, check_release_dll, check_anim_enums_dll,
+                  check_address_space_dll):
         try:
             check(dll, keys)
         except FixTooOld as exc:

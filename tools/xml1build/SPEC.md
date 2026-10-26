@@ -7879,3 +7879,13 @@ flag word (and the checksum, if any). XML2 Fix logs `address space: laa on|off; 
 signed pointer compares in a D3DX8 MMX mip-filter loop that misbehave only for a buffer across that line), reports
 `memory laa ...` in the test pipe's `status`, and writes a `crash:` line with the flag and the address-space totals.
 The static risk check of every module the game loads and the live high-address test are in the E12 work notes.
+The DLL gate (`fix_ini.check_address_space_dll`): when `<out>/XMen2.exe` carries the flag, the companion DLL must carry
+the module's start line (`ADDRESS_SPACE_MARKER`); `--laa off` builds and builds without an exe yet check nothing.
+
+### Telekinesis and guard decide (rule 46 bits 512 / 1024, candidate 080d)
+
+`port_keys` writes `[Game] TelekinesisRule=xml1` and `GuardDecideRule=xml1` (`fix_ini.TK_GUARD`, xml2-fix
+docs/tk-guard.md) together with `Xml1GrabCarry=xml1` and only with it: the fix installs both only beside an installed
+rule 45 (the shared grab lifecycle and its pickup claim) and otherwise refuses them and closes online. A rebuild with
+`--grab-carry xml2` drops both keys (PORT_OWNED). Both are RELEASE_18_KEYS: a DLL without the key names (080c and
+older) is refused by name.

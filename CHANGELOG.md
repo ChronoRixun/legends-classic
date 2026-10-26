@@ -14,7 +14,8 @@ the beta 8 test guide.
   room for the raised engine limits and bigger assets. Your X-Men Legends II install is never changed. `--no-laa`
   (builder) / `--laa off` (build_xml1) keeps the install's exe byte for byte. The manifest now lists `XMen2.exe` as a
   built file; validator V1 accepts exactly the flag. Needs XML2 Fix 1.9.0's address-space lines to see it in the log.
-  Static risk check only so far; the live high-address test is queued.
+  Static risk check only so far; the live high-address test is queued. The builder refuses a DLL without the
+  address-space module for a build whose exe carries the flag (its `address space: laa` start line is the marker).
 
 - **Beta 8: the first game's bosses.** Builds write `[Game] Xml1Bosses` (XML2 Fix rule 40) listing every boss whose
   zone and spawn names the build carries: the colosseum dopples, Avalanche (both fights), Pyro, Mystique, Shadow
@@ -58,7 +59,10 @@ the beta 8 test guide.
 - **Beta 8: nine more shared moves.** Builds write the wave C keys = `xml1` (rule 46): the jump attack's and flying
   charge's damage (`values.xmlb`'s L3 row, which the conversion keeps), Colossus's charge, Beast's bounce, the
   fastball, idle/bored animations, animation speed and phase for scaled characters and Nightcrawler's teleport
-  visibility. Phoenix's telekinesis and the guard decide are not in it yet.
+  visibility. Since candidate 080d also `TelekinesisRule=xml1` and `GuardDecideRule=xml1` (rule 46 bits 512 / 1024:
+  Phoenix's telekinesis with XML1's targets, hold, damage and tk levels; the guard decide's pickups and ally throws and
+  the acrobats' wall lunge), written only with `Xml1GrabCarry=xml1` (they need its grab lifecycle); the builder refuses a
+  DLL without the two keys (080c and older).
 - **Beta 8, opt-in: actor pools.** `--actor-pools 124` writes `[Limits] ActorPools=124` (XML2 Fix rule 44: path,
   shadow and delayed-damage pools 32 -> 124). Off by default until its live runs pass.
 - **Beta 8: the HAARP officer's aura** plays the original's art (`physical_resistant_share`).
