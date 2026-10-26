@@ -7,7 +7,9 @@ keys:
                           ForcedTeams / PostgameScript / WindowTitle / EndHeroUnlock / MainMenuItems / NewGamePlus /
                           ReviewStats / Xtract / XPCurve / GeometrySharingBlendIndices / CharacterLadderPaths /
                           ObjectiveDescriptions / BreakRule, [Limits]
-                          ActorSlots / ResourceNames / ItemEnhancements / FightStyles / EffectCurves, [Online] GameVersion /
+                          ActorSlots / ResourceNames / ItemEnhancements / FightStyles / EffectCurves (and, with
+                          --limits-wave3, StyleEvents / FightMoves / EffectTemplates / PrimitiveDefs / EffectVectors /
+                          PrimitivesPerEffect / ScriptPools / ParticleScratch), [Online] GameVersion /
                           ContentFingerprint / FastTransfer / ReceiveValidation, [Save] Format. They are
                           functions of the build's content (the menus it wrote, its report.json, its scripts), so the
                           builder (tools/xml1builder) writes them after a build, and tools/harness.py takes its
@@ -143,6 +145,68 @@ BUILD_REPORT = ('_build', 'report.json')
 LIMITS = {'ActorSlots': '127', 'ResourceNames': '2048', 'ItemEnhancements': '512', 'FightStyles': '32',
           'EffectCurves': '3600', 'MoveTriggers': '64', 'EntityCapacity': '1', 'ScriptFunctions': '1024',
           'IGBCache': '1024'}
+
+# xml2-fix limits wave 3 (runtime-only; legends-classic tools/xml1build/limits_wave3.py, docs/limits-wave3.md): the style,
+# move, event, effect, primitive, vector and script tables raised with headroom for graphics / character mods. Written
+# ONLY with the builder option --limits-wave3 (default off; a build without it is byte-identical to one made before the
+# option existed, ini included). The seven rows below ship together; each needs the companion DLL's rule (below).
+#   FightStyles 32 -> 64      rule 35 revision 2  (the style registry's bitmaps grow to two dwords)
+#   StyleEvents 1064 -> 4096  rule 53             (the style event pool shares one allocation with the registry)
+#   FightMoves 332 -> 1024    rule 54             (+ the exhaustion guards)
+#   EffectTemplates 220 -> 512 rule 55            (effect file table + definition table)
+#   PrimitiveDefs 816 -> 2048 rule 56
+#   EffectVectors 710 -> 4096 rule 57
+#   PrimitivesPerEffect 10 -> 32 rule 58
+LIMITS_WAVE3 = {'FightStyles': '64', 'StyleEvents': '4096', 'FightMoves': '1024', 'EffectTemplates': '512',
+                'PrimitiveDefs': '2048', 'EffectVectors': '4096', 'PrimitivesPerEffect': '32'}
+# The two later rows (W3-8 script pools, W3-9 particle scratch) stay behind the second level of the option
+# (--limits-wave3 all); XML2 Fix 1.9.0 (w3/integrated) carries both.
+#   ScriptPools x1 (statements 4096 / values 8192 / compiled scripts 512 / running contexts 128)  rule 59
+#   ParticleScratch 40 (the clamp; 256 only if the pool diagnostics show counts above 40)           rule 60
+LIMITS_WAVE3_LATE = {'ScriptPools': 'x1', 'ParticleScratch': '40'}
+LIMITS_WAVE3_MODES = ('off', 'on', 'all')
+# gameplay-agreement rule ids (D:/Projects/agent-briefs/_rule-ids.md: 35 FightStyles, 53..60 assigned to wave 3)
+WAVE3_RULES = {'FightStyles': 35, 'StyleEvents': 53, 'FightMoves': 54, 'EffectTemplates': 55, 'PrimitiveDefs': 56,
+               'EffectVectors': 57, 'PrimitivesPerEffect': 58, 'ScriptPools': 59, 'ParticleScratch': 60}
+# The DLL's install line for each rule, the byte marker the builder's DLL gate requires (like CHAR_SOUNDS_MARKER): the
+# literal format string of each row's own install log line in XML2 Fix 1.9.0 (w3/integrated). The style manager (rules
+# 35 r2 + 53) and the effect pools (56 + 57) are one owner each with one install line, so they share it; the UTF-16 key
+# names (RELEASE_18_KEYS) still tell the rows apart. The key's name alone cannot certify a rule (an older DLL reads
+# FightStyles to 32).
+_STYLE_MANAGER_LINE = b'limits: style manager styles %d; events %d; size 0x%lX; %s: %s'
+_EFFECT_POOLS_LINE = b'limits: %s installed {%u,0,0,0}; %zu ledger operands; native lazy constructor and teardown retained'
+WAVE3_MARKERS = {
+    'FightStyles': _STYLE_MANAGER_LINE,
+    'StyleEvents': _STYLE_MANAGER_LINE,
+    'FightMoves': b'limits: FightMoves raised from 332 to %lu; descriptor published before MoveTriggers',
+    'EffectTemplates': b'EffectFiles: %s; capacity %u',
+    'PrimitiveDefs': _EFFECT_POOLS_LINE,
+    'EffectVectors': _EFFECT_POOLS_LINE,
+    'PrimitivesPerEffect': b'PrimitivesPerEffect: %s; capacity %u',
+    'ScriptPools': b'ScriptPools: rule 59 revision 1 installed {4096,0,0,0}; statements 4096, values 8192, compiled scripts 512',
+    'ParticleScratch': b'ParticleScratch: rule 60 revision 1 installed {40,0,0,0}; eleven operations, clamp only',
+}
+WAVE3_MARKERS_ARE_PLACEHOLDERS = False
+
+
+def wave3_limits(mode) -> dict:
+    """[Limits] keys of the --limits-wave3 level `mode` ('off' / None -> {}; 'on' -> the seven rows; 'all' -> + the late
+    rows)."""
+    mode = (mode or 'off').lower()
+    if mode == 'off':
+        return {}
+    if mode == 'on':
+        return dict(LIMITS_WAVE3)
+    if mode == 'all':
+        return {**LIMITS_WAVE3, **LIMITS_WAVE3_LATE}
+    raise ValueError(f'--limits-wave3 {mode!r}: choose from {LIMITS_WAVE3_MODES}')
+
+
+def limits_in_use(mode=None) -> dict:
+    """the [Limits] section a build asks the DLL for: LIMITS, with the wave-3 rows over it at level `mode`. The validators
+    read their capacities from this (a key a build does not write is the game's own value)."""
+    return {**LIMITS, **wave3_limits(mode)}
+
 
 # xml2-fix 1.3.1 [Game] GeometrySharingBlendIndices (SPEC 44, issue #11): XMen2.exe's geometry sharing reuses one
 # skinned mesh for another when positions and weights match although their packed blend indices differ; XML1's
@@ -428,7 +492,8 @@ PORT_OWNED = {'Game': ('NewGameTeam', 'ResetUnlocks', 'SaveFolder', 'ForcedTeams
                        'ExplosiveFirstHit', 'PackAmount', 'SoloMode', 'X1Leader', 'DeathSwitchClear', 'RankCosts', 'LevelSkillPoints', 'LevelStatPoints', 'Xml1Multipart',
                        'Xml1MasterMold', 'Xml1MoldStage', 'Xml1Turrets', 'Xml1LockOnEffects', 'Xml1LockOnAim', 'Xml1Bosses'),
               'Limits': ('ActorSlots', 'ResourceNames', 'ItemEnhancements', 'FightStyles', 'EffectCurves', 'MoveTriggers', 'EntityCapacity',
-                         'ScriptFunctions', 'IGBCache', 'ActorPools', 'AnimEnums', 'CharSounds', 'MotionPool', 'ResidentStats'),
+                         'ScriptFunctions', 'IGBCache', 'ActorPools', 'AnimEnums', 'CharSounds', 'MotionPool', 'ResidentStats',
+                         *(k for k in LIMITS_WAVE3 if k != 'FightStyles'), *LIMITS_WAVE3_LATE),
               'Online': ('GameVersion', 'ContentFingerprint', 'FastTransfer', 'ReceiveValidation', 'JoinInProgress', 'TickRate'),
               'Save': ('Format',),
               'Engine': ('ModelPools', 'ModelHandles'),
@@ -920,6 +985,9 @@ def port_keys(out, *, save_folder=PLAY_SAVE_FOLDER, eighth=True) -> dict:
         keys['Limits']['CharSounds'] = CHAR_SOUNDS
         keys['Limits']['MotionPool'] = MOTION_POOL
         keys['Limits']['ResidentStats'] = RESIDENT_STATS
+    # limits wave 3 (--limits-wave3): recorded option only, absent for the default OFF (so an OFF build's record and ini
+    # are the ones a build made before the option wrote); an OFF rebuild drops the keys and FightStyles is 32 again
+    keys['Limits'].update(wave3_limits((build_record(out) or {}).get('limits_wave3')))
     if world_backfaces:
         keys['WorldBackfaces'] = world_backfaces
     if turrets:
@@ -1215,6 +1283,26 @@ def check_address_space_dll(dll, keys: dict) -> None:
                         ['XMen2.exe large-address-aware (address space guard)'])
 
 
+# Limits wave 3: each row's key AND its rule's install line (WAVE3_MARKERS) are required of an existing DLL, by name. The
+# key names go through RELEASE_18_KEYS (the UTF-16 key string); the rules through the markers. FightStyles is the one key
+# an older DLL already reads, so its marker (rule 35 revision 2: the two-dword bitmaps) is required only above the
+# 32 the earlier DLLs raise it to.
+RELEASE_18_KEYS = {**RELEASE_18_KEYS, 'Limits': RELEASE_18_KEYS['Limits'] + tuple(
+    k for k in (*LIMITS_WAVE3, *LIMITS_WAVE3_LATE) if k != 'FightStyles')}
+for _key in (*LIMITS_WAVE3, *LIMITS_WAVE3_LATE):
+    if _key != 'FightStyles':
+        RELEASE_MARKERS[('Limits', _key)] = (WAVE3_MARKERS[_key], f'[Limits] {_key} (rule {WAVE3_RULES[_key]})')
+# (section, key) -> (highest value an earlier DLL reads, marker, name)
+VALUE_MARKERS = {('Limits', 'FightStyles'): (32, WAVE3_MARKERS['FightStyles'], '[Limits] FightStyles (rule 35 revision 2)')}
+
+
+def _int_or_zero(value) -> int:
+    try:
+        return int(str(value).strip())
+    except ValueError:
+        return 0
+
+
 def check_release_dll(dll, keys: dict) -> None:
     """An existing companion DLL must know every required key the build writes (as check_entity_capacity_dll does
     for 1.4's): an older fix would run the build with those rules silently off. Source-only builds may omit the DLL."""
@@ -1226,6 +1314,13 @@ def check_release_dll(dll, keys: dict) -> None:
                if key in keys.get(section, {}) and (key + ('\0' if key in EXACT_KEYS.get(section, ()) else '')).encode('utf-16le') not in data]
     missing += [name for (section, key), (marker, name) in RELEASE_MARKERS.items()
                 if key in keys.get(section, {}) and marker not in data]
+    for (section, key), (stock, marker, name) in VALUE_MARKERS.items():
+        value = keys.get(section, {}).get(key)
+        if value is not None and _int_or_zero(value) > stock:
+            if key.encode('utf-16le') not in data:
+                missing.append(f'[{section}] {key}')
+            if marker not in data:
+                missing.append(name)
     if missing:
         raise FixTooOld(f'This build needs XML2 Fix {REQUIRED_XML2FIX} or later; the existing DLL does not recognize '
                         + ', '.join(missing), missing)
@@ -1249,10 +1344,25 @@ def check_anim_enums_dll(dll, keys: dict) -> None:
                         f'from the builder\'s {len(AE.BUILTIN_ENUMS)} XML1 enums', ['[Limits] AnimEnums (AnimEnums table)'])
 
 
+def check_wave3_keys(keys: dict) -> None:
+    """The wave-3 rows depend on each other (DESIGN section 2): primitives per effect beyond 10 spill into a side table
+    sized from the effect-template count, so PrimitivesPerEffect needs EffectTemplates; a late row needs the seven. Raises
+    ValueError for a key set no DLL can run."""
+    limits = keys.get('Limits', {})
+    if 'PrimitivesPerEffect' in limits and 'EffectTemplates' not in limits:
+        raise ValueError('[Limits] PrimitivesPerEffect requires [Limits] EffectTemplates (its side table is indexed by '
+                         'the effect definition slot)')
+    late = [k for k in LIMITS_WAVE3_LATE if k in limits]
+    absent = [k for k in LIMITS_WAVE3 if k != 'FightStyles' and k not in limits]
+    if late and absent:
+        raise ValueError(f'[Limits] {", ".join(late)} is written only with the seven wave-3 rows; missing {absent}')
+
+
 def old_fix_keys(dll, keys: dict) -> list:
     """every key of `keys` the existing companion DLL does not know ('[Section] Key'; [] without a DLL). Raises
     ValueError for a key set no DLL can run (EntityCapacity without Format=lc)."""
     missing = []
+    check_wave3_keys(keys)
     for check in (check_move_trigger_dll, check_entity_capacity_dll, check_release_dll, check_anim_enums_dll,
                   check_address_space_dll):
         try:

@@ -73,6 +73,7 @@ class Job:
     main_menu_layout: str = 'classic'
     anim_enums: str = 'xml1'
     laa: str = 'on'
+    limits_wave3: str = 'off'
     disc: dict = field(default_factory=dict)
     ident: dict | None = None
     xml2_info: dict = field(default_factory=dict)
@@ -322,7 +323,8 @@ def cmd_build(a, output, cancel, pipeline_factory):
     jobs = max(1, a.jobs or max(1, (os.cpu_count() or 2) // 2))
     job = Job(out=out_dir, xml2=xml2, cache=cache, iso=iso, movies=movies, jobs=jobs, prepare_jobs=prepare_jobs,
               main_menu_layout=getattr(a, 'main_menu_layout', 'classic'),
-              anim_enums=getattr(a, 'anim_enums', None) or 'xml1', laa=getattr(a, 'laa', None) or 'on')
+              anim_enums=getattr(a, 'anim_enums', None) or 'xml1', laa=getattr(a, 'laa', None) or 'on',
+              limits_wave3=getattr(a, 'limits_wave3', None) or 'off')
     ctl = Ctl(output, cancel, job)
     pipeline = pipeline_factory()
     out_lock = cache_lock = None
