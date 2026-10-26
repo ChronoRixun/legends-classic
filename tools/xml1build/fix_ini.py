@@ -219,6 +219,9 @@ ACTOR_POOLS = '124'
 # 512 with XML1's 23 flying-carry / Juggernaut-grab enums at fixed IDs. Written with --anim-enums xml1 (the default
 # since 0.4.1-beta.1; the build then also carries their clips, mappings and carry nodes; anim_enums.py).
 ANIM_ENUMS = '512'
+# Rule 49: the sound cache needs headroom once AnimEnums removes the 16-type animation cap.
+CHAR_SOUNDS = '127'
+CHAR_SOUNDS_MARKER = b'CharSounds: rule 49 revision 1 installed {127,0,0,0}'
 
 SHARED_HANDLERS = {'SkatingRule': 'xml1', 'TeleportLandingRule': 'xml1', 'PopupRule': 'xml1', 'PopupLandRule': 'xml1',
                    'ChargeRule': 'xml1', 'NightcrawlerRule': 'xml1', 'GambitRule': 'xml1'}
@@ -415,7 +418,7 @@ PORT_OWNED = {'Game': ('NewGameTeam', 'ResetUnlocks', 'SaveFolder', 'ForcedTeams
                        'ExplosiveFirstHit', 'PackAmount', 'SoloMode', 'X1Leader', 'DeathSwitchClear', 'RankCosts', 'LevelSkillPoints', 'LevelStatPoints', 'Xml1Multipart',
                        'Xml1MasterMold', 'Xml1MoldStage', 'Xml1Turrets', 'Xml1LockOnEffects', 'Xml1LockOnAim', 'Xml1Bosses'),
               'Limits': ('ActorSlots', 'ResourceNames', 'ItemEnhancements', 'FightStyles', 'EffectCurves', 'MoveTriggers', 'EntityCapacity',
-                         'ScriptFunctions', 'IGBCache', 'ActorPools', 'AnimEnums'),
+                         'ScriptFunctions', 'IGBCache', 'ActorPools', 'AnimEnums', 'CharSounds'),
               'Online': ('GameVersion', 'ContentFingerprint', 'FastTransfer', 'ReceiveValidation', 'JoinInProgress', 'TickRate'),
               'Save': ('Format',),
               'Engine': ('ModelPools', 'ModelHandles'),
@@ -903,6 +906,7 @@ def port_keys(out, *, save_folder=PLAY_SAVE_FOLDER, eighth=True) -> dict:
         keys['Limits']['ActorPools'] = ACTOR_POOLS
     if (build_record(out) or {}).get('anim_enums') == 'xml1':     # recorded option only (OFF rebuild drops it)
         keys['Limits']['AnimEnums'] = ANIM_ENUMS
+        keys['Limits']['CharSounds'] = CHAR_SOUNDS
     if world_backfaces:
         keys['WorldBackfaces'] = world_backfaces
     if turrets:
@@ -1164,7 +1168,9 @@ RELEASE_18_KEYS = {**RELEASE_18_KEYS, 'Game': RELEASE_18_KEYS['Game'] + tuple(SH
 # the build's mappings name the DLL's XML1 enums, so the DLL must also carry its marked table (anim_enums.DLL_MARKER)
 # with exactly the builder's 23 names in ID order (check_anim_enums_dll); a DLL without it would leave the 23 mappings
 # unresolved (dropped by the shared_anims parser) and every carry / victim move on enum 0's animation.
-RELEASE_18_KEYS = {**RELEASE_18_KEYS, 'Limits': RELEASE_18_KEYS['Limits'] + ('AnimEnums',)}
+RELEASE_18_KEYS = {**RELEASE_18_KEYS, 'Limits': RELEASE_18_KEYS['Limits'] + ('AnimEnums', 'CharSounds')}
+# The CharSounds key alone cannot certify that the DLL registers the agreement rule.
+RELEASE_MARKERS[('Limits', 'CharSounds')] = (CHAR_SOUNDS_MARKER, '[Limits] CharSounds (rule 49)')
 # xml2-fix 1.9.0-beta.1 rule 45 revision 3 (beta8/carry 063f2e8: the flying carry, fix7 admission, XML1's strict flight
 # upkeep) keeps the key name of revision 2 (080b), whose DLL would run the build's XML1 `flying` node (anim_enums
 # .XML1_FLIGHT_UPKEEP) with no flight cost at all. Its install line is the byte marker (xml2-fix src/xml1_grab_carry.cpp).

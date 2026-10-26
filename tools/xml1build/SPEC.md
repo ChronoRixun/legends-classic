@@ -7824,3 +7824,10 @@ known enums, and `flying` must match `XML1_FLIGHT_UPKEEP` (XML1's: no `energyper
 other combination pays flight twice or never). The builder also requires rule 45 revision 3 wherever it writes
 `Xml1GrabCarry` (`fix_ini.GRAB_CARRY_R3_MARKER`, the DLL's install line; 080b's revision 2 DLL is refused by name).
 The IGB cache count (SPEC 13) and the actor-resource budget (SPEC 14) are unchanged: same single file.
+
+### Character sound cache (beta 8, rule 49)
+
+Every XML1 build writing `AnimEnums=512` also writes `[Limits] CharSounds=127`.
+The DLL atomically relocates the 16-record sound cache to 127 records, including its getter and teardown bounds.
+Absent or `16` keeps retail bytes; other values are refused. The builder requires the CharSounds key and the
+rule-49 install marker in an existing companion DLL. Rebuilding with animation enums off drops both keys.
