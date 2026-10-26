@@ -1057,23 +1057,41 @@ def test_join_in_progress_is_on_for_port_builds_and_needs_fix_18():
         FI.check_release_dll(dll, {'Online': {'ReceiveValidation': '1', 'JoinInProgress': '1'}})
 
 
-def test_release_identity_040_beta7_is_lc36_and_never_an_older_token():
-    """0.4.0-beta.7 (every gun NPC's weapon brain with the bullet trace gate in xml2-fix.ini, the "Alison" speaker
-    label in the conversations, the XML1 zone list for one-sided walls) changes the generated output, so it is content
-    27 / catalogue 7 / LC36: a token no earlier build carries (0.2.5 LC32, 0.3.0 and the 0.4.0 betas 1-4 LC33, beta 5
-    LC34, beta 6 LC35), so neither the stock lobby nor the rooms pair a beta 7 PC with an older build. Content 26 stays
-    LC35, 25 LC34 and 24 LC33 (append-only)."""
+def test_release_identity_041_beta1_is_lc37_and_never_an_older_token():
+    """0.4.1-beta.1 (the port's beta 8: the first game's bosses, moves and grabs, raised engine limits, the
+    large-address-aware exe, the save-compatibility ledger and the GRSO style names) changes the generated output, so it
+    is content 28 / catalogue 7 / LC37: a token no earlier build carries (0.2.5 LC32, 0.3.0 and the 0.4.0 betas 1-4
+    LC33, beta 5 LC34, beta 6 LC35, beta 7 and stable 0.4.0 LC36), so neither the stock lobby nor the rooms pair a beta 8
+    PC with an older build. Content 27 stays LC36 (beta 7's row, which stable 0.4.0 resolves to: a stable alias or a
+    second token for that content is refused), 26 LC35, 25 LC34 and 24 LC33 (append-only). The requirement paths: the
+    0.4.1 betas declare '>=1.9.0-beta.1', a stable 0.4.1 '>=1.9'."""
     from xml1build import release_identity as RI
     from xml1builder import CONTENT_VERSION, VERSION
-    assert (VERSION, CONTENT_VERSION) == ('0.4.0', 27) and RI.game_version() == 'LC36'
+    import release_metadata as RM
+    assert (VERSION, CONTENT_VERSION) == ('0.4.1', 28) and RI.game_version() == 'LC37'
+    assert RI.game_version(content_version=27, catalogue_revision=7) == 'LC36'
     assert RI.game_version(content_version=26, catalogue_revision=7) == 'LC35'
     assert RI.game_version(content_version=25, catalogue_revision=7) == 'LC34'
     assert RI.game_version(content_version=24, catalogue_revision=7) == 'LC33'
-    assert [r.token for r in RI.HISTORY].count('LC36') == 1 and RI.HISTORY[-1].token == 'LC36'
-    assert all(r.token != 'LC36' for r in RI.HISTORY[:-1])
+    assert [r.token for r in RI.HISTORY].count('LC37') == 1 and RI.HISTORY[-1].token == 'LC37'
+    assert all(r.token != 'LC37' for r in RI.HISTORY[:-1])
     row = RI.HISTORY[-1]
-    assert (row.release, row.content_version, row.catalogue_revision) == ('0.4.0-beta.7', 27, 7)
+    assert (row.release, row.content_version, row.catalogue_revision) == ('0.4.1-beta.1', 28, 7)
     assert len(row.bind_manifest) == 64 and row.bind_manifest != RI.HISTORY[-2].bind_manifest
+    rows = [r for r in RI.HISTORY if (r.content_version, r.catalogue_revision) == (27, 7)]
+    assert [(r.release, r.token) for r in rows] == [('0.4.0-beta.7', 'LC36')]
+    for extra in (RI.Identity('0.4.0-stable', 27, 7, 'LC38', rows[0].bind_manifest),
+                  RI.Identity('0.4.0-stable', 27, 7, 'LC36', rows[0].bind_manifest),
+                  RI.Identity('0.4.1-stable', 28, 7, 'LC38', row.bind_manifest)):
+        try:
+            RI.validate_history(RI.HISTORY + (extra,), previous=RI.HISTORY)
+        except ValueError:
+            continue
+        raise AssertionError(f'{extra} was accepted')
+    assert RM.release_version('v0.4.1-beta.1', VERSION) == '0.4.1-beta.1'
+    assert RM.metadata('v0.4.1-beta.1')['prerelease'] is True
+    assert FI.required_xml2fix('0.4.1-beta.1') == '>=1.9.0-beta.1' and FI.required_xml2fix('0.4.1') == '>=1.9'
+
 
 
 def test_private_candidate_requires_the_release_companion():

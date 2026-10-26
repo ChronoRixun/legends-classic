@@ -54,6 +54,10 @@ HISTORY = (
     # Issued at 0.4.0-beta.7: every gun NPC's weapon brain with the XML1 bullet trace gate (schema 4 rows, rule 16
     # revision 11), the "Alison" speaker label, one-sided level walls in the XML1 zones (rule 30 revision 2).
     Identity('0.4.0-beta.7', 27, 7, 'LC36', '22a8c77d592f9e436adb724d6be5a9fdff4f4108ddd89bc2ba4d6c513f403e72'),
+    # Issued at 0.4.1-beta.1 (the port's beta 8, XML2 Fix 1.9.0-beta.1): the first game's bosses, moves, grabs and
+    # damage rounding, the raised engine limits, the large-address-aware exe, the save-compatibility ledger rows and
+    # the GRSO style names. Stable 0.4.0 keeps beta 7's content 27 / LC36 (no row of its own).
+    Identity('0.4.1-beta.1', 28, 7, 'LC37', 'd48e541bae488d31a7003ae020f4712c8c6a8cfb6f34099c3bb892dee15ce5cf'),
 )
 
 
