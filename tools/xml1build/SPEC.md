@@ -7923,7 +7923,13 @@ gear / pack / money / Xtreme mix; PASS needs >= 3 runs a side and the pooled eve
 percent of the original (z scores; rows with < 20 events are flagged UNDERPOWERED). S6 line format (also in the module docstring):
 `run id=.. zone=.. enemy_minutes=..`, `roll t=.. cat=.. lead=.. [n=..]` per roller entry, `spawn t=.. def=.. amt=.. [n=..] [cls=..]`
 per spawn call. The port side is the DLL's own `roll cat= lead= G= bucket= def= amt= draws=` line (one per pickup; `def=-` for no
-drop), with or without the log timestamp. Tests: `tests/unit/test_loot_compare.py` (synthetic logs from an invented drop model).
+drop), with or without the log timestamp, and carries an explicit roll serial `n=<serial>` (the same on every pickup line of a
+roll): the comparator groups by it, exactly. Without `n=` (an older DLL) it falls back to a 20 ms window and prints WARNING lines
+for merged groups of more than 4 pickups, timestamp-less merges, reused serials and mixed logs (two rolls of three MONEY1 10 ms
+apart were once one six-pickup roll without a word). Tests: `tests/unit/test_loot_compare.py` (synthetic logs from an invented
+drop model). V-LOOT also compares every emitted enhancement record with the converter's (attributes, children, order; a bonus
+10 written as 999 fails) and requires every equipment reference (inventoryitem in any map or script, Danger Room rewards, sidecar
+equipment rows) to name an economy identity (an XML2-only equipment definition fails); tests in `tests/unit/test_loot.py`.
 
 **`tools/loot_seed_saves.py`, seeded saves.** Edits copies of one real LC campaign save (read only): every non-xpexempt hero to the
 seed's level and the first game's XP total for it (highest level 1 / 10 / 20 / 30 / 40 gives tier G1-G5; the ADJ seed holds one
