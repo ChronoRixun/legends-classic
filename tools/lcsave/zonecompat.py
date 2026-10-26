@@ -112,6 +112,69 @@ def attest(zone, previous, current):
                 fresh_aliases=sorted(fresh-ambiguous), ambiguous_aliases=sorted(ambiguous))
 
 
+# Definition attributes a saved zone record never depends on: the restore puts position, orientation, state flags
+# and the class payload on the entity of the same ordinal, and none of these attributes change numbering (classname,
+# smartent, monster_smartent, instantspawn, checkteam stay compared), the class or the payload's meaning.
+#   xml1heaviness: XML1's lift class 4/5, read only by XML2 Fix gameplay rule 38 (LiftRule=xml1) and the Blob
+#                  controller when a definition is parsed; the converted heaviness byte itself is unchanged.
+EQUIVALENT_ATTRIBUTES = frozenset({'xml1heaviness'})
+
+
+def _canonical_without(e, ignored):
+    return [e.tag, sorted((k, v) for k, v in e.attrib.items() if k not in ignored),
+            [_canonical_without(c, ignored) for c in e]]
+
+
+def attest_equivalent(zone, previous, current, ignored=EQUIVALENT_ATTRIBUTES):
+    """Return a full-length attestation (every numbered entity is prefix, no tail) when the two maps differ only in
+    `ignored` definition attributes: same framing, same placements in order (group attributes and instances exact),
+    same definition names, and every definition equal once the ignored attributes are removed. The saved record's
+    numbered ordinals, placement indices and smart/dynamic names then mean exactly what they meant on `previous`."""
+    old_root, new_root = xmlb.decode(previous), xmlb.decode(current)
+    old_num, old_problems = numbered_entities(old_root)
+    new_num, new_problems = numbered_entities(new_root)
+    if old_problems or new_problems or not new_num or old_num != new_num:
+        return None
+    def frame(root):
+        return [root.tag, sorted(root.attrib.items()), [_canonical(e) for e in root if e.tag not in ('entity', 'entinst')]]
+    if frame(old_root) != frame(new_root):
+        return None
+    def placed(root):
+        return [[sorted(g.attrib.items()), _canonical(i)] for g in root.iter('entinst') for i in g.iter('inst')]
+    if placed(old_root) != placed(new_root):
+        return None
+    def definitions(root):
+        out = {}
+        for e in root.iter('entity'):
+            if e.get('name') in out:
+                raise BindError('zone-prefix.lcm: duplicate entity definition')
+            out[e.get('name')] = _canonical_without(e, ignored)
+        return out
+    if definitions(old_root) != definitions(new_root):
+        return None
+    entries, placements = resident_prefix(new_root)
+    # The runtime recomputes the digest from the current opened map, so bind the row to the current prefix.
+    return dict(zone=zone_hash(zone), old=hashlib.sha1(previous).digest(), current=hashlib.sha1(current).digest(),
+                digest=prefix_digest(entries), placements=placements, fresh_aliases=[], ambiguous_aliases=[])
+
+
+def retarget(rows, zone, previous_sha1, current):
+    """Rows that end at `previous_sha1` re-targeted to the `current` map, which attest_equivalent proved equivalent
+    to the previous map: the numbered list, placements and names are unchanged, so each row's old placement indices
+    and aliases stay valid; only the current hash and the current-prefix digest change."""
+    out = []
+    root = xmlb.decode(current)
+    entries, _ = resident_prefix(root)
+    for r in rows:
+        if r['zone'] != zone_hash(zone) or r['current'] != previous_sha1:
+            continue
+        n = len(r['placements'])
+        if n > len(entries):
+            continue
+        out.append(dict(r, current=hashlib.sha1(current).digest(), digest=prefix_digest(entries[:n])))
+    return out
+
+
 def encode(rows):
     rows = sorted(rows, key=lambda r: (r['zone'], r['old'], r['current']))
     if len(rows) > LIMIT:
@@ -204,17 +267,23 @@ def validate_current(build):
             entries, _ = resident_prefix(xmlb.decode(Path(numbering['path']).read_bytes()))
             n = len(row['placements'])
             digest = prefix_digest(entries[:n])
-            if n >= len(entries) or digest != row['digest']:
+            if n > len(entries) or digest != row['digest']:
                 raise BindError('zone-prefix.lcm: current resident prefix differs from attestation')
             active += 1
     return active
+
+
+def equivalent(row, numbering):
+    """A matched row covering every numbered entity at its own placement: the maps are save-equivalent."""
+    return row['placements'] == [p for _, _, p in numbering['numbered']]
 
 
 def match(rows, zone, old_hash, numbering):
     """Current full-file SHA1 binds the builder's prefix comparison to actual opened bytes."""
     for r in rows:
         if r['zone'] == zone_hash(zone) and r['old'] == old_hash:
-            if r['current'].hex() == numbering['sha1'] and len(r['placements']) < len(numbering['numbered']):
+            # A full-length row (no tail) is an equivalence attestation (attest_equivalent).
+            if r['current'].hex() == numbering['sha1'] and len(r['placements']) <= len(numbering['numbered']):
                 # Check the digest against the same opened bytes as the numbering,
                 # not only the editable sidecar's CRC and whole-file hash claims.
                 raw = Path(numbering['path']).read_bytes()
@@ -229,10 +298,19 @@ def match(rows, zone, old_hash, numbering):
     return None
 
 
-def generate(previous, current):
+def plan(previous, current):
+    """-> (rows, accepted, rejected, retargeted) for the current build: its retained rows, append-only and equivalence
+    attestations against `previous`, and the previous build's rows re-targeted through an equivalence (a save made on
+    an older map that `previous` accepted through a prefix row keeps that acceptance on `current`). Writes nothing."""
     before, after = Binds(previous), Binds(current)
     rows = {(r['zone'], r['old'], r['current']): r for r in load(current)}
-    accepted, rejected = [], []
+    history = load(previous)
+    accepted, rejected, retargeted = [], [], []
+    def put(row):
+        key = (row['zone'], row['old'], row['current'])
+        if key in rows and rows[key] != row:
+            raise BindError('zone-prefix.lcm: conflicting historical attestation')
+        rows[key] = row
     for zone in sorted(set(after.zone_names) | set(after.all_zone_files())):
         old, new = before.zone_file(zone), after.zone_file(zone)
         if old is None or new is None: continue
@@ -240,24 +318,31 @@ def generate(previous, current):
         if old_raw == new_raw: continue
         try:
             row = attest(zone, old_raw, new_raw)
+            equivalent = None if row else attest_equivalent(zone, old_raw, new_raw)
         except BindError:
-            row = None  # one unmodelled zone must not abort unrelated attestations
-        if row is None:
+            row = equivalent = None  # one unmodelled zone must not abort unrelated attestations
+        if row is None and equivalent is None:
             rejected.append(zone)
-        else:
-            key = (row['zone'], row['old'], row['current'])
-            if key in rows and rows[key] != row:
-                raise BindError('zone-prefix.lcm: conflicting historical attestation')
-            rows[key] = row
-            accepted.append(zone)
+            continue
+        put(row or equivalent)
+        accepted.append(zone)
+        if equivalent:
+            for r in retarget(history, zone, hashlib.sha1(old_raw).digest(), new_raw):
+                if r['old'] != r['current']:
+                    put(r); retargeted.append(zone)
+    return list(rows.values()), accepted, rejected, retargeted
+
+
+def generate(previous, current):
+    rows, accepted, rejected, retargeted = plan(previous, current)
     destination = Path(current) / REL
     destination.parent.mkdir(parents=True, exist_ok=True)
-    raw = encode(list(rows.values()))
+    raw = encode(rows)
     decode(raw)
     temporary = destination.with_suffix('.tmp')
     temporary.write_bytes(raw)
     os.replace(temporary, destination)
-    return dict(accepted=accepted, rejected=rejected, entries=len(rows))
+    return dict(accepted=accepted, rejected=rejected, retargeted=len(retargeted), entries=len(rows))
 
 
 if __name__ == '__main__':

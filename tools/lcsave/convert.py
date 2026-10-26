@@ -1310,9 +1310,12 @@ class PositionTables:
             if r['capture_flags'] & 1:
                 notes.append(f'zone {zone!r}: incomplete capture: record not applied')
                 continue
-            from .zonecompat import match
+            from .zonecompat import match, equivalent
             prefix = match(self.b.zone_prefixes, zone, r['content_hash'], num)
-            if r['content_hash'] != bytes.fromhex(num['sha1']) and prefix is None:
+            same = r['content_hash'] == bytes.fromhex(num['sha1']) or (prefix is not None and equivalent(prefix, num))
+            if same:
+                prefix = None  # an equivalence row reads the record exactly as the exact-hash path does
+            if not same and prefix is None:
                 notes.append(f'zone {zone!r}: placement file changed since the record was made: record not applied')
                 continue
             mapped = {}
@@ -1779,8 +1782,10 @@ def loaded_zone_metadata(new_bytes, env, *, native=L.RETAIL, registry=None):
         if zone not in applied: continue
         numbering = env.binds.zone_numbering(zone)
         num = numbering['numbered']
-        from .zonecompat import match
+        from .zonecompat import match, equivalent
         prefix = match(env.binds.zone_prefixes, zone, r['content_hash'], numbering)
+        if prefix is not None and equivalent(prefix, numbering):
+            prefix = None  # equivalent maps: the capture describes the current map, as an exact-hash record does
         restored = next(z for z in native['zones'] if oldsave.zone_string(native['zone_strings'], z['name_handle']) == zone)
         entities = [dict(ordinal=k + 1, placement_index=num[k][2],
                         definition_name=oldsave.zone_string(native['zone_strings'], restored['states'][idx]['def_name']),

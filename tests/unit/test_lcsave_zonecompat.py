@@ -325,3 +325,81 @@ def test_native_fresh_tail_rejects_invalid_or_stale_provenance():
                 pass
             else:
                 assert False, mutation
+
+
+def _equivalence_case(folder, extra=None):
+    """The converted save's exact-hash record, then the map gains xml1heaviness (and `extra`) on numbered and smart
+    definitions; -> (env, saved, report, restored before the change)"""
+    env = _env(folder)
+    _, saved = _converted(env)
+    before, _ = convert.reverse_slot(saved, env)
+    previous = Path(folder) / 'previous'
+    shutil.copytree(env.binds.build, previous)
+    path = Path(env.binds.zone_file('zone/x/y'))
+    root = xmlb.decode(path.read_bytes())
+    for name in ('gate', 'lamp'):
+        next(e for e in root.iter('entity') if e.get('name') == name).set('xml1heaviness', '4')
+    if extra:
+        extra(root)
+    _xmlb(str(path), root)
+    report = Z.generate(previous, env.binds.build)
+    env.binds._zones.clear()
+    env.binds.zone_prefixes = Z.load(env.binds.build)
+    return env, saved, report, before
+
+
+def test_equivalent_definition_attribute_keeps_exact_record():
+    with tempfile.TemporaryDirectory() as folder:
+        env, saved, report, before = _equivalence_case(folder)
+        assert report['accepted'] == ['zone/x/y'] and not report['rejected']
+        row, = [r for r in Z.load(env.binds.build) if r['zone'] == Z.zone_hash('zone/x/y')]
+        assert len(row['placements']) == len(env.binds.zone_numbering('zone/x/y')['numbered'])
+        assert Z.validate_current(env.binds.build) == 1
+        restored, notes = convert.reverse_slot(saved, env)
+        assert not any('record not applied' in n for n in notes), notes
+        assert restored['zones'] == before['zones']
+        # Without the sidecar the same save keeps the old whole-file guard.
+        env.binds.zone_prefixes = []
+        restored, notes = convert.reverse_slot(saved, env)
+        assert not restored['zones'] and any('placement file changed' in n for n in notes)
+
+
+def test_equivalence_rejects_any_other_definition_change():
+    def health(root):
+        next(e for e in root.iter('entity') if e.get('name') == 'lamp').set('health', '99')
+    def moved(root):
+        next(e for e in root.iter('inst') if e.get('name') == 'gate01').set('origin', '1 2 3')
+    def numbering(root):
+        next(e for e in root.iter('entity') if e.get('name') == 'crate').set('smartent', 'false')
+    for extra in (health, moved, numbering):
+        with tempfile.TemporaryDirectory() as folder:
+            env, saved, report, _ = _equivalence_case(folder, extra)
+            if extra is numbering:
+                continue  # an append-only change: attest() decides; equivalence never sees it
+            assert report['rejected'] == ['zone/x/y'], extra.__name__
+            restored, notes = convert.reverse_slot(saved, env)
+            assert not restored['zones'] and any('record not applied' in n for n in notes)
+
+
+def test_equivalence_retargets_append_rows_of_the_previous_build():
+    with tempfile.TemporaryDirectory() as folder:
+        env, saved, report = fixture(folder)              # previous map -> appended map (prefix row)
+        appended = Path(folder) / 'appended'
+        shutil.copytree(env.binds.build, appended)
+        before, _ = convert.reverse_slot(saved, env)
+        path = Path(env.binds.zone_file('zone/x/y'))
+        root = xmlb.decode(path.read_bytes())
+        next(e for e in root.iter('entity') if e.get('name') == 'gate').set('xml1heaviness', '5')
+        _xmlb(str(path), root)
+        result = Z.generate(appended, env.binds.build)
+        assert result['accepted'] == ['zone/x/y'] and result['retargeted'] == 1
+        env.binds._zones.clear()
+        env.binds.zone_prefixes = Z.load(env.binds.build)
+        assert Z.validate_current(env.binds.build) == 2  # the equivalence row and the re-targeted row
+        restored, notes = convert.reverse_slot(saved, env)
+        assert any('prefix retained' in n for n in notes)
+        # Same restored entities; only the fresh-tail sentinel (state 0) names the current map.
+        strip = lambda z: dict(z, states=z['states'][1:])
+        assert [strip(z) for z in restored['zones']] == [strip(z) for z in before['zones']]
+        sentinel = oldsave.zone_string(restored['zone_strings'], restored['zones'][0]['states'][0]['def_name'])
+        assert sentinel.split('|')[3] == env.binds.zone_numbering('zone/x/y')['sha1']
