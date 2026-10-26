@@ -51,6 +51,8 @@ Checks (severity per SPEC 4.6: error = will not load or silently misbehaves; war
                 spawner / hero names, rewards, reward items as equipment, exams, loadDangerRoomCourse literals)
   V17 review (SPEC 21): review_paths (caps, textures, movies, imageViewer literals, loading screens), codex,
                 trivia, credits
+  V66 text coverage (SPEC 105, text_trace.validate): every XML1 text string is shipped, moved, rewritten by a named
+                rule, owned by XML2 by design or dropped for a stated reason; raw tabs / line breaks reach the port
   V18 combat events (SPEC 22, combat_events.v18): style triggers / events / handlers / affecters against XMen2.exe
   V19 npc values (SPEC 24, npc_values.v19): no style, entity-file or inline-map value code XMen2.exe reads as 0; the NPC energy talent and
                 every XML1-origin npcstat entry's rank (= its mind)
@@ -164,6 +166,7 @@ from pathlib import Path
 from . import common as C
 from . import lockon_effects as LE
 from . import resistance_hud as RH
+from . import classic_hud as HUD
 import xmlb                                   # noqa: E402  tools/xmlb.py
 from .lib import x1names                      # noqa: E402  the XML1 namespace (was research/characters)
 from .lib.x1names import is_fightstyle_name   # noqa: E402  fightstyle_* / x1_fightstyle_* (issue #52)
@@ -181,6 +184,7 @@ from . import combat_events as CE        # V18 (SPEC 22): style triggers / event
 from . import npc_values as NV           # V19 (SPEC 24): value codes XMen2.exe reads as 0, the NPC energy talent
 from . import buoys as BY
 from . import automaps as AM             # V20 (SPEC 26): XML1 automaps as .zam
+from . import text_trace as TT           # V66 (SPEC 105): every XML1 text string shipped, rewritten or owned elsewhere
 from . import skins as SK                # V21 (SPEC 25): skin blend weights / skeleton against the anim DB
 from . import talent_budget as TB        # V44 (SPEC 75): complete-roster TalentRegistry demand
 from . import style_budget as SB         # V23 (SPEC 43): the fighting / power style registry per zone
@@ -947,12 +951,25 @@ class Validator:
                                ('V14', 'forced teams', self.v14_forced_teams),
                                ('V15', 'front end', lambda ck: VF.v15_front_end(self, ck)),
                                ('V49', 'main appearance', lambda ck: VF.v_main_appearance(self, ck)),
+                               ('V-TBD', 'classic pause appearance', lambda ck: VF.v_classic_pause(self, ck)),
+                               ('V-TBD-loading', 'classic loading appearance', lambda ck: VF.v_classic_loading(self, ck)),
+                               ('V-TBD-options', 'classic Options appearance', lambda ck: VF.v_classic_options(self, ck)),
+                               ('V-TBD-dialogs', 'shared classic dialog appearance', lambda ck: VF.v_classic_dialogs(self, ck)),
+                               ('V-TBD-viewer', 'classic image viewer appearance', lambda ck: VF.v_classic_viewer(self, ck)),
+                               ('V-TBD-credits', 'classic credits appearance', lambda ck: VF.v_classic_credits(self, ck)),
+                               ('V-TBD-review', 'classic Review appearance', lambda ck: VF.v_classic_review(self, ck)),
+                               ('V-TBD-codex', 'classic Codex appearance', lambda ck: VF.v_classic_codex(self, ck)),
+                               ('V-TBD-shop', 'classic shop appearance', lambda ck: VF.v_classic_shop(self, ck)),
+                               ('V-TBD-danger', 'classic Danger Room appearance', lambda ck: VF.v_classic_danger(self, ck)),
+                               ('V-TBD-trivia', 'classic Trivia appearance', lambda ck: VF.v_classic_trivia(self, ck)),
+                                ('V-TBD-team', 'classic character screens', lambda ck: VF.v_classic_team(self, ck)),
                                ('V16', 'danger room', lambda ck: VF.v16_danger_room(self, ck)),
                                ('V17', 'review', lambda ck: VF.v17_review(self, ck)),
                                ('V18', 'combat events', lambda ck: CE.v18(self, ck)),
                                ('V19', 'npc values', lambda ck: NV.v19(self, ck)),
                                ('V60', 'resistance talents', lambda ck: NV.v_resist_talents(self, ck)),
                                ('V63', 'resistance HUD', lambda ck: RH.validate(self, ck)),
+                               ('V-TBD-hud', 'classic HUD assets', lambda ck: HUD.validate(self, ck)),
                                ('V20', 'automaps', lambda ck: AM.v20(self, ck)),
                                ('V21', 'skins', lambda ck: SK.validate(self, ck)),
                                ('V22', 'buoys', lambda ck: BY.validate(self, ck)),
@@ -963,6 +980,7 @@ class Validator:
                                ('V26', 'fall kill volumes', self.fall_kill_volumes),
                                ('V64', 'boss landing triggers', self.boss_landing_triggers),
                                ('V65', 'boss reinforcement approaches', self.boss_reinforcements),
+                               ('V66', 'text coverage', lambda ck: TT.validate(self, ck)),
                                ('V27', 'voice lines', self.voice_lines),
                                ('V28', 'dialog platforms', self.dialog_platforms),
                                ('V29', 'codex icons', lambda ck: VF.v_codex_icons(self, ck)),

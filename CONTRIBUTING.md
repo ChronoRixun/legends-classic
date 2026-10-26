@@ -48,7 +48,7 @@ reviewers look at every new entry.
 
 ## Code
 
-- Python 3.14, the standard library + numpy in the builder and the pipeline (see `requirements.txt`); anything else
+- Python 3.14, the standard library + numpy + Pillow in the builder and the pipeline (see `requirements.txt`); anything else
   only in developer tools.
 - Run `python tests/unit/run.py` before a pull request (no game data needed). Changes to the pipeline's output also
   need a build on your own PC and a note of what changed; bump `CONTENT_VERSION` in `tools/xml1builder/__init__.py`

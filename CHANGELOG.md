@@ -3,6 +3,222 @@
 The builder's releases, newest first. The version is `xml1-builder --version`; the content version is what a
 build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebuild.
 
+## v0.4.0 - content version 27 (needs XML2 Fix 1.8.0)
+
+Legends Classic 0.4.0 is the first stable release since 0.2.5. It gathers the seven 0.4.0 betas (0.3.0-beta.1 to
+0.4.0-beta.7) and needs XML2 Fix 1.8.0 and Ultimate Legends 0.4.0.
+
+**What's new since 0.2.5**
+
+- **Online co-op.** Host or join a game by code, or browse public games, from the game's own online menus and the
+  launcher's Online panel - no port forwarding and no ini editing. Friends can drop in mid-campaign and come into play
+  at the next level change, and during the first game's solo story parts (Wolverine's opening, Magma's mansion tour)
+  the other players stay connected and watch. A guest dropping out of a game of three or four no longer ends it for
+  the others, slow players are no longer thrown out, and four-player starts no longer crash. Online play no longer drops to about 15 frames a second on a busy PC (it runs at 30 by default; 60 where the PC holds it). Connections are encrypted, with a relay when a direct
+  connection fails.
+- **Fewer crashes.** The team-combo popup crash is fixed, the game's model pools are four times bigger (effects,
+  props and heads no longer go missing in big fights), and quitting no longer crashes now and then.
+- **The classic look.** The HUD, the pause menu, Options, Save/Load, the character room, Review, the Codex, the
+  Danger Room, the Forge, the healer, trivia, loading screens and credits wear the first game's art, converted from
+  your own disc. The white cones and gold rings in the character room are gone, and the Codex's Details and Back work
+  as in the first game.
+- **Enemies fight like the first game.** Enemy combos stop when your hit makes them flinch. Every gun enemy (the MP5
+  and laser soldiers, the officers, the flamethrower and lightning commanders, the police) uses the first game's
+  weapon brain: they shoot from range instead of walking up to punch, and throw grenades when their energy is full. A gun
+  only lands a hit on the first game's half-second timer, as in X-Men Legends. Enemy powers come on time, and enemy
+  power attacks are never blocked, as in the original.
+- **Walls only block you from the front** in the first game's levels, as in X-Men Legends, so enemies no longer get
+  stuck on the ends of walls.
+- **"Alison" beside Magma's early lines**, as in the first game.
+- **Reviving a hero costs what it did in the first game:** 200 / 800 / 1,800 / 3,200 / 5,000 Tech Bits by team level band; earlier versions charged far more (XML2 Fix 1.8.0).
+- **Text fixes:** Magneto's codex biographies keep the first game's layout, and three level names the first game's
+  own data had mixed up are right again.
+
+Your saves carry over; the save format is unchanged.
+
+**How to update.** In Ultimate Legends **0.4.0** (Stable channel), update both parts - **XML2 Fix to 1.8.0** and the
+**builder to 0.4.0** - then **Rebuild**, then **Play**. Coming from 0.2.5 the launcher offers the Rebuild itself. A
+beta 7 build is already the same game (content 27, `LC36`), so beta 7 testers only need to update both parts - XML2
+Fix 1.8.0 is what fixes the revival price.
+
+**Co-op needs the same version.** Everyone in a session needs XML2 Fix 1.8.0 and a 0.4.0 build. 0.4.0 makes exactly
+the same game as 0.4.0-beta.7, but XML2 Fix 1.8.0 charges the first game's revival price and beta 7's fix did not,
+so a PC still on XML2 Fix 1.8.0-beta.7 is refused at join, naming `10 Xtraction services/RevivalCost`, until it
+updates. 0.2.x and the older betas cannot join 0.4.0 games. Test mode must be off for online play.
+
+**Tested:** online was tested on one PC with two instances of the game: two games played together for 21 minutes at 30 fps (fights with AI teammates, a co-op save, a player dropping out and rejoining by room code, two level changes) plus a 3-player drop test at 60 fps, with no desync; beta 6 and stable games refuse each other. Internet play between
+different PCs, and games of three or four players, have not been fully verified yet.
+
+**Known issues**
+
+- **Enemy powers** (issue #101): enemies may still use their powers a little more often than in the first game; this is
+  still being measured (beta 7 measured attack and melee rates within range of the original).
+- **Gun enemies** (issue #101): at mid range the MP5 soldier still does more damage than in the original (about 1.6 to
+  2.2 times: the original misses the first shot or two after each pause, the port doesn't yet). The flamethrower and
+  lightning commanders have not been compared side by side with the original yet.
+- **Falls** (issue #22): 15 of the first game's fall kill zones (20 placements in 14 maps) stay switched off until
+  each one is proven safe for the AI teammates too.
+- **Cosmetic reports** (issue #54): for example ground textures that look speckled at some camera angles (seen on a
+  Steam Deck, not yet compared with Windows).
+- **Loot and the item shop** (issue #6) still use X-Men Legends II's systems.
+- **Solo story parts online** (issue #106): the other players now stay connected and watch; the issue stays open
+  until it has been played through in more sessions. Please report it if a player is dropped during a solo part.
+- **Button prompts** (XML2 Fix issue #8): after rebinding the controls, or with Steam Input, a prompt may show the
+  wrong button. Not reproduced on Windows so far.
+- **Host loss ends the session.** There is no host migration or automatic reconnection; a guest can join again by
+  code. A failed shared-campaign restore can require rehosting. LAG warnings may still show.
+- **Public games connect players directly,** so players can see each other's internet address. Use a private code
+  to play only with friends.
+- **Hazards:** fire, spike and electricity damage was checked in only a few rooms; tell us the room if one doesn't
+  hurt.
+- **The classic look** was checked on one PC at 4:3 and 16:9; report any screen whose text is cut off.
+
+See [Play online](docs/ONLINE.md) for steps, privacy and troubleshooting.
+
+### Beta by beta
+
+
+- **Beta 7: gun hits on the first game's timer.** The weapon rows now carry each gun's XML1 trace time and accuracy
+  (schema 4) and the converted bullets carry an inert marker, so XML2 Fix 1.8.0-beta.7 lands a bullet's hit only when
+  its trace timer has run out (the MP5's half second), as in X-Men Legends, while the shot sound and muzzle flash stay
+  on every shot. The builder refuses a beta 7 fix that cannot read schema 4 rows.
+
+- **Beta 7: every gun NPC gets the first game's weapon brain.** The characters stage now exports all 20 gun NPCs of
+  your XML1 data (schema 4 rows `actor|recoil|range|burst|leader|warmup|flags|tracetime|accuracy`, 8 melee-weapon exclusions): the
+  officer, the MP5 and laser/super-laser soldiers, the nullifier and knockback officers (warm-up before every shot),
+  the lightning and flamethrower commanders (continuous beam, warm-up once) and the police pistol (default-handler
+  primary). XML2 Fix 1.8.0-beta.7 runs them with the original input gate, the bullet line-of-sight drop and the
+  empty-query branches (gameplay rule 16 revision 11).
+
+- **Beta 7: enemy powers on time, power attacks never blocked.** With XML2 Fix 1.8.0-beta.7 the existing
+  `NpcPowerRule=xml1` is rule 16 **revision 11**: power re-checks and attack decisions that fell due while an enemy
+  was busy attacking are spent as in the first game (powers no longer fire seconds late), and an enemy's power attack
+  is never rolled for a block, as in X-Men Legends. A beta 7 PC and a beta 6 PC refuse each other in co-op
+  (`16 NpcPowerRule`).
+
+- **Beta 7: "Alison" beside Magma's early lines, as in the first game.** X-Men Legends showed "Alison" next to the
+  212 lines Magma speaks before she takes her codename (the Danger Room training, Emma Frost's introduction, ...); the
+  port showed "Magma". The builder now marks those lines (`speakerlabel`, SPEC 12.1) and writes
+  `[Game] ClassicSpeakers=1`; XML2 Fix shows the label while the portrait and the talking animation stay Magma's.
+
+- **Beta 7: one-sided level walls for movement, as in the first game.** Builds write `[Game] WorldBackfaces=xml1`
+  (XML2 Fix 1.8.0-beta.7, gameplay rule 30): movement no longer collides with the back faces of the level's walls,
+  which XML1 never tests, so actors stop wedging against walls seen from behind (the HAARP officer's positioning
+  stall). Only in the XML1 levels: the build writes the zones it converted as `[WorldBackfaces] ZoneCount / Z1..Zn`
+  (198 zones, the XML1 Danger Room arenas and the menu backdrop included; gameplay rule 30 revision 2), and the
+  X-Men Legends II maps an install still carries keep XML2's collision; no zone list (no zones stage output) = no key.
+  The builder refuses a DLL that does not read the list (`[WorldBackfaces] ZoneCount`).
+  It touches every character's movement there; a beta 7 PC and one without it (or with another zone list) refuse
+  each other (`30 WorldBackfaces`).
+- **Beta 7 review fixes.** V66 (text coverage) checks a Danger Room reward item's enhancement descriptions by running
+  the conversion (a converted item whose descriptions were lost is now reported; XML2's own items keep the item-table
+  policy); companion docs say beta 7 (RELEASING, BUILDING, research/npc-semi-auto.md revision 11, README's
+  NpcPowerRule row); the release checklist names the release-identity step; the speaker-label test uses invented
+  wording.
+
+- **Beta 7: text fixes from the full XML1 text trace.** Magneto's two codex biographies keep the tab the first game's
+  text has (the builder's XML reader had turned it into a space), and three zone labels XML1's own data misfiled are
+  repaired: mount reads "Mount Entrance", mount2 "Transport Conduit", muir_in2 "Muir Island". A new validator check
+  (V66, SPEC 105) accounts for every XML1 text string (shipped, moved, rewritten by a named rule, XML2's by design or
+  dropped with a reason). Codex and zoneinfo output change; saves are unaffected.
+
+- **Beta 7: needs XML2 Fix `>=1.8.0-beta.7`.** A beta 6 fix cannot read the new weapon-brain rows and does not know
+  `[Game] ClassicSpeakers`, so the builder refuses it by name.
+
+- **Beta 7: a new content identity.** The conversations, the powerstyles' bullet markers and `xml2-fix.ini` change, so
+  the content version rises to 27 and the lobby token to `LC36`: the launcher offers a Rebuild, and a beta 7 game and
+  a beta 6 or older game never join each other - everyone updates both parts and rebuilds. Saves carry over.
+
+- **Beta 6: enemy AI fidelity.** Every XML1 build now turns on the first game's weapon brain for
+  its semi-auto gunmen (`[Game] NpcSemiAuto=xml1` and the `[NpcSemiAuto]` rows, derived from your XML1 data during
+  the build): the HAARP officer fires one aimed shot about every 0.9 s, never bursts or melees at range, closes from
+  far away, and holds his grenade at full energy, as on the Xbox. With XML2 Fix 1.8.0-beta.6 the existing
+  `NpcPowerRule=xml1` also becomes gameplay rule 16 **revision 10** (enemy combos stop when a hit makes them react,
+  as in the first game). Needs XML2 Fix `>=1.8.0-beta.6`; a beta 5 fix is refused by name (`[Game] NpcSemiAuto`),
+  and a beta 6 PC and a beta 5 PC refuse each other in co-op (`16 NpcPowerRule`).
+
+- **Beta 6: no small-map frame.** The bigger bevel beta 5 drew around the small map was too large, so it is gone:
+  the HUD atlas no longer carries the frame (that region is transparent) and the companion XML2 Fix draws the
+  small map where the game itself puts it. Everything else of the classic HUD is unchanged.
+
+- **Beta 6: a new content identity.** The build's output changes (the HUD atlas and the new `xml2-fix.ini` keys), so
+  the content version rises to 26 and the lobby token to `LC35`: the launcher offers a Rebuild, and a beta 6 game and
+  a beta 5 or older game never join each other - everyone updates both parts and rebuilds. Saves carry over.
+
+- **Beta 5: the classic look.** The port's screens now wear the first game's own art, converted from your disc when
+  you build: the HUD (hero heads and bars, the power wheel, the target frame and a bigger small-map frame that keeps
+  fog and markers inside it), the pause menu, Objectives, Options and Controls, the Save/Load lists and the dialogs,
+  the character room (the Blackbird backdrop and classic frames around Stats, Skills, Gear and AI), Review, the Codex,
+  the Danger Room, the Forge, the healer, trivia, loading screens and credits. In the character room the pulsing white
+  cones and gold rings are gone; the selected hero stands on a bright blue podium and a selection mark follows the
+  keyboard and controller. In the Codex, Details opens the entry you are on, and Back from a biography returns to the
+  list with that entry still selected. Only the look changes: the port's controls, tabs, numbers, shops, gameplay and
+  saves stay the same (your saves carry over). Builds write XML2 Fix's `[Game] ClassicHud = xml1` and
+  `ClassicCodex = 1`, so beta and rc builders now require `>=1.8.0-beta.5` and the builder refuses an older DLL by
+  name. Because the build's output changes, the content version rises to 25 and the lobby token to `LC34`: the
+  launcher offers a Rebuild, and a beta 5 game and a beta 4 or older game never join each other - everyone updates
+  and rebuilds.
+
+- **Beta 3: online at 60 fps.** Builds now write XML2 Fix's `[Online] TickRate = 60`: online sessions run at 60
+  frames a second like single-player instead of the game's own 30 (the game keeps its speed; about 11 KB/s upload
+  per player instead of ~6). `TickRate = 30` in `xml2-fix.ini` is the fallback for a slow PC - then every player in
+  that session sets 30. The rate is gameplay-agreement rule 29, so a 60 and a 30 game refuse each other at join
+  naming `29 TickRate`, and a beta 2 game and a beta 3 game never join. Beta and rc builders now require
+  `>=1.8.0-beta.3`; the builder refuses an older DLL that does not know the key. Content and the lobby token (`LC33`)
+  are unchanged. XML2 Fix beta 3 also fixes an occasional crash on quit and the cleanup of beta 2's bigger model
+  pools on level changes and quits.
+- **Beta 2: no more team-combo crash, bigger model pools.** Builds now write XML2 Fix's `[Engine] ModelPools = x4`
+  (4096 models, 2048 IGB, 128 actors, 128 particle clouds ...) and `[Game] ComboPopupGuard = 1`: with the game's own
+  pools a heavy fight could fill one, effects and props went missing and a team-combo popup without a hero's head
+  crashed the game (beta 1, hosting alone in the Maintenance Garage). The pools are gameplay-agreement rule 28, so a
+  beta 1 game and a beta 2 game refuse each other at join, naming `28 ModelPools` on the beta 2 PC: everyone
+  rebuilds with builder 0.3.0-beta.2 and XML2 Fix 1.8.0-beta.2. Beta and rc builders now require
+  `>=1.8.0-beta.2`; the builder refuses an older DLL that does not know the two keys. Content and the lobby token
+  (`LC33`) are unchanged.
+- **Four-player start is fixed:** participants keep distinct peers when the game starts.
+- **Hero swaps survive level changes.** Solo-segment hand-back runs only during the segment and where it ends,
+  using the heroes held when the segment began (rule 26 revision 6).
+- **Slow players stay connected.** LAG warnings may still show, but the slow-player drop is disabled.
+- **Frozen guests:** a joiner frozen for 30 seconds is removed through the agreed cut frame; survivors keep playing.
+  A host drop or freeze still ends the joiners' session with "lost connection to the host".
+
+- **Host or join by code**, without port forwarding or ini editing. The code appears in the game's online menus
+  and host lobby; the launcher copies it when it first appears.
+- **Browse public games:** opt in to a public listing with a room name, or keep the room private and share its code.
+  The list shows the host, level, mode and player count. A matching build's row can join: room tokens are exactly
+  `GameVersion` (`LC33`), with no content fingerprint appended. The normal gameplay agreement still checks content
+  and rules when joining.
+- **Drop-in co-op is on by default.** Start alone, let friends join mid-campaign, then bring them into play at the
+  next level change. When the last guest leaves, the host keeps playing and can accept another.
+- **Solo story segments:** players without a hero stay connected as watchers and regain control when the party
+  widens. This covers Wolverine's opening and Magma's mansion tour (issue #106).
+- **An abrupt guest drop in a game of three or more no longer ends the survivors' session.** XML2 Fix's rule 25
+  revision 4 agrees a cut frame before removing the lost player. That player can join again by code and return at
+  the next level change. Losing the host still ends the session; there is no host migration.
+- **Clearer room messages:** `room_closed` means the game cannot take new players right now; `room_full` means
+  all four places are taken (launcher contract v1.5).
+- Encrypted connections with relay fallback, and online hardening. Public games connect players directly, so
+  players can see each other's internet address. Use a private code to play only with friends.
+- The broker allows at most two public rooms and two seats in other people's rooms per internet address.
+- Includes 0.2.5's bedroom picture window and per-hit hero stun fix. The save format is unchanged.
+
+Renumbered from 0.3.0 while in beta (the betas 0.3.0-beta.1..3 are this release's history);
+no stable 0.3.0 was published. Betas 1-4 were content 24 / `LC33`; beta 5 (the classic look) content 25 / `LC34`; beta 6
+(enemy AI fidelity) content 26 / `LC35`; beta 7 (every gunman's weapon brain, one-sided walls) is content 27 / `LC36`.
+
+<details><summary>Technical details</summary>
+
+- Builder 0.4.0, content 27, catalogue 7, game version `LC36` (the identity issued at 0.4.0-beta.7: the stable build
+  is the same output); requires XML2 Fix `>=1.8` (stable; each beta required its own fix beta, `>=1.8.0-beta.7` for
+  beta 7). The builder refuses a DLL that cannot read the schema 4 `[NpcSemiAuto]` rows, whatever its version.
+- `[Game] RevivalCost=xml1` (unchanged since 0.2.2) is X-Men Legends I's 200 x G^2, G = min(5, highest roster level /
+  10 + 1), from XML2 Fix 1.8.0 (gameplay rule 10 revision 3); 1.5.0 to 1.8.0-beta.7 charged 200 x level^2.
+- Builder defaults include `Broker`, `BrokerPin`, `JoinInProgress=1`, `FastTransfer=1` and `ReceiveValidation=1`.
+  Room starts imply GNS transport (rule 25 revision 4 / framing 3); drop-in uses rule 26 revision 6.
+- Conversation timing is the 0.2.4 fix (rule 27), retained here, rather than a new 0.4.0 feature.
+
+</details>
+
 ## v0.2.5 - content version 23 (needs XML2 Fix 1.7.1)
 
 Legends Classic 0.2.5 - content version 23, needs XML2 Fix 1.7.1. Rebuild in the
@@ -51,6 +267,7 @@ launcher, then Play. Both co-op players need the same build and fix.
   (Brotherhood, HAARP); only parts of it are fixed here.
 - **A double jump on slopes or the HAARP bridge** can land a hero outside the play area (issue #22); the remaining
   fall kill zones are still switched off until proven safe.
+  *Correction, 2026-10-23: this was not reproducible on 0.2.3 or later (18 jumps, all landing inside the play area).*
 - **Loot and the item shop** (issue #6) are not in this version.
 - **Cosmetic reports** from the first playthrough (issue #54) are still tracked.
 - **Hazards** (issue #104): 57 levels were fixed from an audit of the game's data, but only three rooms were played
@@ -132,6 +349,7 @@ the build). Your saves carry over.
   (Brotherhood, HAARP); only parts of it are fixed here.
 - **A double jump on slopes or the HAARP bridge** can land a hero outside the play area (issue #22); the remaining
   fall volumes are off.
+  *Correction, 2026-10-23: 18 double jumps on the 0.2.3 release did not reproduce it (see issue #22).*
 - **Attack and impact sounds that loop** in the Manhattan streets (issue #79) were not reproduced lately, but no fix
   is claimed.
 - **Loot and the item shop** (issue #6) are not in this version.
@@ -208,6 +426,9 @@ the build). Your saves carry over.
   by a punch-punch-slam; plain soldiers still are. A boss whose armour comes off takes full damage again but
   still isn't launched, as in the first game. XML2's "Resistant" line under enemy health bars goes with it (the
   first game had none).
+  *Correction, 2026-10-23: the first game does show resistance labels (for example "Physical Resistant"); 0.2.4
+  restored the text with its colors. The enemies were resistant the whole time (a Brotherhood Revolutionary takes
+  0.2 of physical damage); only the label was missing in 0.2.2 and 0.2.3.*
 - **Solo mode** (issue #5): the first game's solo boxes and bridges keep the rest of the party behind and regroup it
   afterwards, so followers no longer walk into the void at the gaps.
 
@@ -245,8 +466,13 @@ the build). Your saves carry over.
 
 - Professor X keeps his old seat in the rooms an existing save already visited (above).
 - The revival price is the first game's, steep at high levels (above).
+  *Correction, 2026-10-25: it was not the first game's price. X-Men Legends charges 200 x G^2 Tech Bits, G = min(5,
+  highest roster level / 10 + 1) (200 to 5,000); XML2 Fix 1.5.0 to 1.8.0-beta.7 charged 200 x level^2 (80,000 at
+  level 20). Fixed in XML2 Fix 1.8.0 with Legends Classic 0.4.0.*
 - 18 fall volumes are still off (#22): several sit in water or rooms followers can stray into, and need their own
   checks.
+  *Correction, 2026-10-23: 18 was a miscount. The 0.2.2 release left 17 zones (25 placements in 15 maps) off, and
+  0.2.3 switched two on, which leaves 15 (20 placements in 14 maps).*
 - In co-op, *Load Saved Campaign* can stop at "Sending game information..." (0.2.1 too). Start a new campaign in co-op
   for now.
 - Co-op was tested with two copies of the game on one PC; the two-PC pass, on one network and across the internet,

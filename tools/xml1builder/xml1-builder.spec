@@ -18,7 +18,7 @@ Hidden imports: every module of xml1build (the content modules are imported by n
 music check run in spawned worker processes) and xml1builder, build_xml1, xmlb - minus the self-tests and the
 developer-only tools."""
 import os
-import re
+import json
 import sys
 from pathlib import Path
 
@@ -37,6 +37,7 @@ KERNEL = os.environ.get('XML1_FREEZE_KERNEL', '')
 BUILD_INFO = GEN / 'build-info.json'
 if not BUILD_INFO.is_file():
     raise SystemExit(f'{BUILD_INFO} is missing: run tools/freeze_builder.py')
+VERSION = json.loads(BUILD_INFO.read_text(encoding='utf-8'))['version']
 
 # ------------------------------------------------------------------------------------------------ what goes in
 DATA_DIR = TOOLS / 'xml1builder' / 'data'
@@ -65,14 +66,15 @@ def _shipped(name):
 hiddenimports = sorted(set(collect_submodules('xml1build', filter=_shipped)
                            + collect_submodules('xml1builder', filter=_shipped)
                            + collect_submodules('lcsave', filter=_shipped)
-                           + ['build_xml1', 'xmlb']))
-excludes = ['tkinter', '_tkinter', 'numpy.f2py', 'numpy.tests', 'pytest', 'PIL', 'matplotlib', 'scipy', 'IPython',
+                           + ['build_xml1', 'xmlb', 'PIL.Image', 'PIL.PngImagePlugin']))   # Pillow: the classic look's PNGs
+excludes = ['tkinter', '_tkinter', 'numpy.f2py', 'numpy.tests', 'pytest', 'matplotlib', 'scipy', 'IPython',
+            'PIL.ImageTk', 'PIL._tkinter_finder', 'PIL.ImageQt',
             'xml1build.igb_budget', 'xml1build.schema_check', 'xml1build.regress_nyc1']
 
 
 # ------------------------------------------------------------------------------------------------ resources
 def _v4(v):
-    nums = [int(x) for x in re.findall(r'\d+', v)[:4]]
+    nums = [int(x) for x in v.split('-', 1)[0].split('.')]
     return tuple(nums + [0] * (4 - len(nums)))
 
 

@@ -5,7 +5,7 @@ data, so every command that builds or tests the port reads your disc image and y
 
 ## Set-up
 
-- **Python 3.14, 64-bit** (the version the release is frozen with and CI tests on) and the pinned numpy:
+- **Python 3.14, 64-bit** (the version the release is frozen with and CI tests on) and the pinned numpy and Pillow:
 
   ```
   python -m pip install -r requirements.txt
@@ -96,7 +96,8 @@ python tools/freeze_builder.py --smoke                 # -> dist/xml1-builder/, 
 one-folder mode (no UPX), runs the content guard over the bundled data, zips the result with the launcher's release
 manifest and, with `--smoke`, runs `tools/freeze_smoke.py` against it. CI does the same on every push
 (`.github/workflows/release.yml`); a `v*` tag that matches `VERSION` in `tools/xml1builder/__init__.py` publishes the
-release.
+release. Beta and rc tags match the numeric base and carry the suffix through the frozen
+builder and manifest; see [RELEASING.md](RELEASING.md).
 
 ## Where to read next
 
@@ -105,3 +106,20 @@ release.
 - `tools/xml1build/SPEC_heroes.md` - the hero conversion.
 - `research/release/BUILDER_DESIGN.md` - the builder, packaging, launcher integration and the publishing rules.
 - `research/` - the notes behind the decisions ([research/README.md](../research/README.md)).
+
+The frontend stage also builds the classic HUD atlas and models for both
+frontend modes and writes `[Game] ClassicHud=xml1` and `[Game] ClassicCodex=1`
+(0.4.0-beta.5, the classic look). They need XML2 Fix 1.8.0-beta.5 or later; the
+builder refuses an older DLL by name. See [the HUD contract](CLASSIC_HUD_PILOT.md)
+for the off switch and acceptance limits.
+
+The characters stage also derives the NPC weapon-brain contract from your XML1
+npcstat, weapons and powerstyles (`_build/semi_auto.json`), and every XML1 build
+writes `[Game] NpcSemiAuto=xml1` with its `[NpcSemiAuto]` rows (schema 4, every
+gun NPC since 0.4.0-beta.7; gameplay rule 16 revision 11; SPEC 95.4). They need
+XML2 Fix 1.8.0-beta.7 or later (beta 6 read only the officer's schema 2 row); the
+builder refuses an older DLL by name.
+
+Schema 4 requires the beta 7 bullet-trace follow-up DLL and a content rebuild
+(SPEC 95.5). Earlier beta 7 DLLs refuse these wider rows; a DLL swap alone into
+an old content build does not add the converted-bullet event markers.

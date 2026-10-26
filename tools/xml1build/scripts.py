@@ -115,6 +115,13 @@ NONCAMPAIGN_MISSION = re.compile(r'^(boss_|demo$)|test')
 # labelled the line with its string 503 "Alison", 0x61c88; the NPC Alison's lines then go to her own speaker entries,
 # scripts_transform.NPC_SPEAKER_CONVERSATIONS / SPEAKER_DISPLAY_NAMES, SPEC 18.1.)
 SPEAKER_TOKEN_ALIASES = {'%alison%': '%MAGMA%'}
+# default.xbe's label for the alias (string 503 "Alison", 0x61c88): the speaker key stays the alias target above (Magma's
+# portrait and talk animation), only the name shown beside the line differs. XMen2.exe takes label and key from one
+# token, so the aliased lines that stay %MAGMA% (the party Magma's; the NPC Alison's become her own speaker entries,
+# scripts_transform.NPC_SPEAKER_CONVERSATIONS) carry the label in SPEAKER_LABEL_ATTR, which XML2 Fix shows with
+# [Game] ClassicSpeakers=1 (an attribute XMen2.exe never reads: without the fix the line reads "Magma" as before).
+SPEAKER_TOKEN_LABELS = {'%alison%': 'Alison'}
+SPEAKER_LABEL_ATTR = 'speakerlabel'
 SPEAKER_ATTRS = ('text', 'textb')
 # T7 join_hero (research/heroes/roster.md 5; SPEC_heroes.md): XML1 addHero("cyclops") sites -> game flag bit;
 # the zone whose script guards the reload; the owning mission whose start clears the bit
@@ -1488,6 +1495,17 @@ def zone_package_extras(ctx, zone):
 _SPEAKER_TOKEN = re.compile(r'%[^%\s]+%')
 
 
+def speaker_alias_label(original, rewritten):
+    """SPEAKER_TOKEN_LABELS' label when `original` (XML1's text) starts with an aliased token that `rewritten` (the
+    port's) still resolves to the alias target, else None (Magma's own lines; the NPC Alison's renamed lines)."""
+    m = _SPEAKER_TOKEN.match(original or '')
+    if not m or m.group(0).lower() not in SPEAKER_TOKEN_LABELS:
+        return None
+    if not (rewritten or '').upper().startswith(SPEAKER_TOKEN_ALIASES[m.group(0).lower()].upper()):
+        return None
+    return SPEAKER_TOKEN_LABELS[m.group(0).lower()]
+
+
 def rewrite_speaker_tokens(text):
     """conversation text: XML1-only speaker aliases (SPEAKER_TOKEN_ALIASES, matched case-insensitively) -> the
     stats name token XMen2.exe resolves."""
@@ -1533,6 +1551,7 @@ def rewrite_data_tree(ctx, root, rel) -> int:
     inline_ends = _inline_end_refs(ctx)            # SPEC 19: data endSideMission -> generated end script (seat)
     x1_front = C.frontend_mode(ctx) == 'xml1'      # SPEC 21: imageViewer literals follow the review namespace
     for el in root.iter():
+        speaker_label = None
         for k, v in list(el.attrib.items()):
             if v is None or v == '':
                 continue
@@ -1549,6 +1568,8 @@ def rewrite_data_tree(ctx, root, rel) -> int:
                     new = T.rename_speaker_tokens(new, doubles)[0]
                 if npc_speakers:
                     new = T.rename_speaker_tokens(new, npc_speakers)[0]
+                if isinstance(el.tag, str) and el.tag.lower() == 'line':
+                    speaker_label = speaker_label or speaker_alias_label(v, new)
             if doubles and '(' in new and (_is_script_attr(kl) or kl in CONSOLE_ATTRS):
                 new = T.rename_npc_refs([new], doubles)[0][0]
             if 'mission' in new.lower():
@@ -1623,6 +1644,9 @@ def rewrite_data_tree(ctx, root, rel) -> int:
             if new != v:
                 el.set(k, new)
                 n += 1
+        if speaker_label and el.get(SPEAKER_LABEL_ATTR) != speaker_label:
+            el.set(SPEAKER_LABEL_ATTR, speaker_label)
+            n += 1
     return n
 
 

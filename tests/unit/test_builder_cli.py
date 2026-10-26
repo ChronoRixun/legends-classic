@@ -93,6 +93,24 @@ def test_version_and_usage():
     assert code == 2 and evs[-2]['code'] == 'E_USAGE'
 
 
+def test_beta_and_stable_stamps_declare_the_matching_fix_requirement():
+    from unittest.mock import patch
+    import xml1builder
+    from xml1builder import commands
+    for suffix, expected in [('', '>=1.8'), ('-beta.3', '>=1.8.0-beta.7'), ('-rc.1', '>=1.8.0-beta.7')]:
+        version = '0.4.0' + suffix
+        with tempfile.TemporaryDirectory() as td, patch.object(xml1builder, 'VERSION', version), \
+             patch.object(commands, 'VERSION', version):
+            xml2, iso, out, cache = setup(td)
+            code, evs, err = run(build_argv(xml2, iso, out, cache))
+            assert code == 0, err
+            stamp = evs[-1]['stamp']
+            assert stamp['builder']['version'] == version
+            assert stamp['requires']['xml2fix'] == expected
+            on_disk = json.loads((out / '_build/stamp.json').read_text())
+            assert on_disk['requires']['xml2fix'] == expected
+
+
 def test_build_verify_repair_clean():
     with tempfile.TemporaryDirectory() as td:
         xml2, iso, out, cache = setup(td)

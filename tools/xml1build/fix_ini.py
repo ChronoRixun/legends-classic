@@ -144,6 +144,17 @@ LIMITS = {'ActorSlots': '127', 'ResourceNames': '1024', 'ItemEnhancements': '512
 # set (stock XML2 is not known to need it), so every XML1 build asks for it.
 GEOMETRY_SHARING_BLEND_INDICES = '1'
 
+# xml2-fix 1.8.0-beta.2 [Engine] ModelPools (its docs/model-pools.md): every model the game shows takes a handle and
+# components from fixed pools (handles 692, IGB 400, actors 32, particle clouds 40, ...); a full pool silently refuses
+# the model - and the spawn that needs it (the beta 1 crash: a team-combo head the full IGB pool refused). x4 raises
+# them all (handles 4096, IGB 2048, actors 128, clouds 128). Online it is gameplay-agreement rule 28 (ModelPools): a
+# 1.8.0-beta.1 peer, which has no rule 28, and a beta.2 port build refuse each other at join by name.
+MODEL_POOLS = 'x4'
+# xml2-fix 1.8.0-beta.2 [Game] ComboPopupGuard: a team-combo popup that lacks a hero's head is hidden instead of
+# crashing (XMen2.exe+0x1a6848). On by default in the DLL; written so the builder's DLL check (check_release_dll)
+# refuses a 1.8.0-beta.1 DLL without it. Display only, no agreement rule.
+COMBO_POPUP_GUARD = '1'
+
 # xml2-fix 1.3.2 [Game] CharacterLadderPaths (SPEC 46, issue #32): the sewer and Arbiter ladder descents are driven by
 # two generated native motion paths (ladder_motion), but XMen2.exe never schedules the generic path evaluator for
 # characters. '1' makes the fix evaluate those two paths with the native movement timer; ordinary character
@@ -217,6 +228,18 @@ DEATH_RULE = 'xml1'
 # Off in xml2-fix unless set; a fix without the feature ignores the key. Written for every XML1 build.
 NPC_POWER_RULE = 'xml1'
 
+# xml2-fix [Game] NpcSemiAuto + [NpcSemiAuto] Count / W1..Wn (XML2 Fix 1.8.0-beta.6, schema 3 rows since 1.8.0-beta.7;
+# xml2-fix docs/npc-semi-auto.md; gameplay rule 16 revision 10): XML1's weapon brain for every gun NPC (the officer,
+# MP5 and laser soldiers, nullifier / knockback officers with their warm-up, lightning and flamethrower commanders,
+# the police pistol: one shot per recoil period or a continuous beam, no bursts or melee at range, the grenade held
+# at full energy). XMen2.exe registers no ch_weapon_semi_auto handler, so its converted gunmen burst-fire and melee.
+# The rows are the characters stage's source-derived contract (xml1build.semi_auto -> _build/semi_auto.json;
+# `actor|recoil|range|burst|leader|warmup|flags`, 20 rows from the owner's XML1 data); fidelity is the goal, so every
+# XML1 build with a contract writes them (like NpcPowerRule). No contract / no row = no keys (rule 16 stays
+# {1,1,0,0}, the stock PC gunmen).
+NPC_SEMI_AUTO = 'xml1'
+NPC_SEMI_AUTO_MAX_ROWS = 64          # the native bound (xml2-fix npc_semi_auto; semi_auto.contract refuses more)
+
 # XML1's stun flag lasts only while the accepted stun reaction owns it. The companion DLL's rule 18
 # drops rejected party-hero stuns and clears interrupted stuns; NPC reactions and accepted durations stay native.
 STUN_RULE = 'xml1'
@@ -235,7 +258,32 @@ FORCED_TEAMS_VALUES = ('1', '0', 'off')
 # v1.5: the 0.2.2 wave's [Game] keys - PlacementCrush, DoubleHeal, RankCosts, LevelSkillPoints, LevelStatPoints,
 # Xml1Multipart, X1Leader, SoloMode, DeathRule, DangerRoomGate, RevivalCost, Xml1Turrets, PackAmount, DeathSwitchClear - and
 # [Limits] ScriptFunctions; a 1.4 DLL silently ignores every one of them, so check_release_dll refuses it)
-REQUIRED_XML2FIX = '1.7.1'
+REQUIRED_XML2FIX = '1.8'
+# The companion fix's prerelease a beta/rc builder needs (launcher-facing requires.xml2fix only): 0.3.0-beta.2 writes
+# [Engine] ModelPools and [Game] ComboPopupGuard, first read by XML2 Fix 1.8.0-beta.2; 0.3.0-beta.3 writes [Online]
+# TickRate, first read by 1.8.0-beta.3; 0.4.0-beta.5 writes [Game] ClassicHud / ClassicCodex (the classic look), first
+# read by 1.8.0-beta.5; 0.4.0-beta.6 writes [Game] NpcSemiAuto / [NpcSemiAuto] (the officer's weapon brain, rule 16
+# revision 10), first read by 1.8.0-beta.6, so its requirement is '>=1.8.0-beta.6' (SemVer: beta.6, beta.N > 6, every
+# rc and the final 1.8.0 meet it; 1.8.0-beta.5 and older do not). 0.4.0-beta.7 writes schema 3 [NpcSemiAuto] rows (every
+# gun family) and [Game] ClassicSpeakers, first read by 1.8.0-beta.7 (a beta.6 DLL refuses the schema 3 rows: weapon
+# brain off, host/join closed), so its requirement is '>=1.8.0-beta.7'.
+REQUIRED_XML2FIX_PRERELEASE = 'beta.7'
+
+
+def required_xml2fix(builder_version: str) -> str:
+    """Launcher-facing requirement shared by the release manifest and generated build stamp.
+
+    Beta/rc builders accept the companion fix's prereleases from REQUIRED_XML2FIX_PRERELEASE on
+    as well as the final release. Keep the stable requirement's original spelling. DLL capability
+    checks below remain independent of this SemVer metadata: beta fixes have the same numeric
+    VERSIONINFO (check_release_dll tells them apart by the keys they read).
+    """
+    if builder_version == RI.PRIVATE_CANDIDATE.release or re.fullmatch(r'[0-9]+\.[0-9]+\.[0-9]+-(?:beta|rc)\.[0-9]+', builder_version):
+        parts = REQUIRED_XML2FIX.split('.')
+        base = '.'.join(parts + ['0'] * (3 - len(parts)))
+        return '>=' + base + '-' + (REQUIRED_XML2FIX_PRERELEASE or '0')
+    return '>=' + REQUIRED_XML2FIX
+
 
 # xml2-fix [Balance] (xml1build.balance; SPEC 69): the first game's combat numbers for a
 # balance build - one whose styles carry the power-attack marker (report.json build.balance 'xml1'). HeroStatScale
@@ -268,36 +316,87 @@ FAST_TRANSFER = '1'
 # interoperate. Written for every port build.
 RECEIVE_VALIDATION = '1'
 
+# [Online] JoinInProgress=1 (XML2 Fix 1.8, gameplay agreement rule 26): drop-in co-op - the host may start alone, a
+# player joins a running game and is brought in at the next level change, solo story segments keep the other players
+# watching, and the host keeps hosting when the last player leaves. Every co-op PC must have it (a peer without it is
+# refused by name). Written for every port build (0.4.0: drop-in on by default).
+JOIN_IN_PROGRESS = '1'
+
+# [Online] TickRate=60 (XML2 Fix 1.8.0-beta.3, gameplay agreement rule 29): online sessions run at 60 frames a second
+# like single-player instead of the game's own 30 (CClient::frame's online 1/30 s frame). Lockstep runs every PC's
+# frames together, so every co-op PC must have the same rate: a 60 and a 30 PC refuse each other at join by name.
+# '30' is the fallback for slow PCs (then everyone in that session sets 30). Written for every port build.
+TICK_RATE = '60'
+
 # [Game] OnlineConversations=lockstep (XML2 Fix 1.7, gameplay agreement rule 27 revision 1): online, a conversation line
 # that goes on by itself does so |timeDelay| s of game time after it was drawn on every PC, and a chosen reply's voice is
 # cut; single-player is unchanged. Absent = the 1.6.0 decision by this PC's voice end, which put co-op peers one random
 # draw apart and dropped the session.
 ONLINE_CONVERSATIONS = 'lockstep'
 
+# [Online] Broker / BrokerPin: the project broker the launcher's "Host online" / "Join by code" use (0.4.0, the
+# launcher <-> XML2 Fix contract: the BUILDER writes them as defaults, the launcher never writes or removes them).
+# THIS IS THE ONE PLACE TO SET THEM. The deployed project broker uses pinned self-signed TLS; empty = neither key is
+# written and neither is port-owned, so a tester's hand-set Broker/BrokerPin survives a rebuild. When deployed:
+# PROJECT_BROKER = '<public DNS name or IPv4>[:port]' (port 10020 when omitted) and, for the self-signed TLS option,
+# PROJECT_BROKER_PIN = the 64-hex SPKI SHA-256 from the deploy kit's secrets/broker/broker-spki-sha256.txt
+# (leave the pin empty with a publicly trusted certificate).
+PROJECT_BROKER = 'broker.aethyrion.org:10020'
+PROJECT_BROKER_PIN = 'ac569104f671775703f3e36a8109519f4e219fb1e8bc68aaa77793cfb3dbad09'
+
 # [Game] PersonalItemPicture=window (XML2 Fix 1.7.1): a bedroom item's picture is drawn as the first game's 256x128 picture
 # window over the menu panels (SPEC 56), so the builder ships the first game's 512x256 pictures as they are. Absent = the
 # engine stretches the picture over the whole screen (an oversized picture hiding the panels).
 PERSONAL_ITEM_PICTURE = 'window'
+
+# xml2-fix [Game] WorldBackfaces=xml1 + [WorldBackfaces] ZoneCount / Z1..Zn (XML2 Fix 1.8.0-beta.7, gameplay rule 30
+# revision 2; xml2-fix docs/world-backfaces.md): XML1's one-sided level collision for movement in the XML1 levels ONLY
+# (owner decision 2026-10-25). The list is the zones the zones stage converted (_build/zones_detail.json 'converted');
+# the XML2-origin maps an install still carries (tutorial, XML2 act1-5, briefings, Danger Room, versus) keep XML2's
+# two-sided collision. Without a list the key is not written at all (the DLL refuses the rule without one).
+WORLD_BACKFACES = 'xml1'
+WORLD_BACKFACES_MAX_ZONES = 512
+_ZONE_PATH = re.compile(r'^[a-z0-9_.\-]+(/[a-z0-9_.\-]+)*$')
 
 # every key the port may write (the builder drops the ones a build does not need); the launcher owns the rest
 PORT_OWNED = {'Game': ('NewGameTeam', 'ResetUnlocks', 'SaveFolder', 'ForcedTeams', 'PostgameScript', 'WindowTitle',
                         'EndHeroUnlock', 'MainMenuItems', 'DangerRoomGate', 'ClassicMainBackdrop', 'ClassicMainPanelBounds', 'NewGamePlus', 'ReviewStats', 'Xtract', 'XtractionShop', 'RevivalCost', 'XPCurve',
                        'GeometrySharingBlendIndices', 'CharacterLadderPaths', 'ObjectiveDescriptions',
                        'BreakRule', 'PlacementCrush', 'ObjectWorldImpact', 'DoubleHeal', 'DeathRule', 'NpcPowerRule', 'StunRule', 'DangerRoomParty', 'DangerRoomHealthBars', 'ResistanceDisplay', 'BoxHarmOrigin', 'HarmSingleChain', 'HarmLoopStartup', 'ConfirmationRelease',
-                       'OnlineConversations', 'PersonalItemPicture',
+                       'OnlineConversations', 'PersonalItemPicture', 'ComboPopupGuard', 'ClassicHud', 'ClassicHudPilot', 'ClassicCodex', 'NpcSemiAuto', 'ClassicSpeakers', 'WorldBackfaces',
                        'ExplosiveFirstHit', 'PackAmount', 'SoloMode', 'X1Leader', 'DeathSwitchClear', 'RankCosts', 'LevelSkillPoints', 'LevelStatPoints', 'Xml1Multipart',
                        'Xml1MasterMold', 'Xml1MoldStage', 'Xml1Turrets', 'Xml1LockOnEffects', 'Xml1LockOnAim'),
               'Limits': ('ActorSlots', 'ResourceNames', 'ItemEnhancements', 'FightStyles', 'EffectCurves', 'MoveTriggers', 'EntityCapacity',
                          'ScriptFunctions'),
-              'Online': ('GameVersion', 'ContentFingerprint', 'FastTransfer', 'ReceiveValidation'),
+              'Online': ('GameVersion', 'ContentFingerprint', 'FastTransfer', 'ReceiveValidation', 'JoinInProgress', 'TickRate'),
               'Save': ('Format',),
-              'Xml1Turrets': ('Count',) + tuple(f'T{i}' for i in range(1, 33))}
+              'Engine': ('ModelPools',),
+              'Xml1Turrets': ('Count',) + tuple(f'T{i}' for i in range(1, 33)),
+              'NpcSemiAuto': ('Count',) + tuple(f'W{i}' for i in range(1, NPC_SEMI_AUTO_MAX_ROWS + 1)),
+              'WorldBackfaces': ('ZoneCount',) + tuple(f'Z{i}' for i in range(1, WORLD_BACKFACES_MAX_ZONES + 1))}
+
+
+def broker_keys() -> dict:
+    """[Online] Broker / BrokerPin defaults: {} until PROJECT_BROKER is set (see above); the pin only with a broker."""
+    broker = PROJECT_BROKER.strip()
+    if not broker:
+        return {}
+    keys = {'Broker': broker}
+    pin = PROJECT_BROKER_PIN.strip().lower()
+    if pin:
+        if len(pin) != 64 or any(c not in '0123456789abcdef' for c in pin):
+            raise ValueError('PROJECT_BROKER_PIN must be 64 hexadecimal characters (the SPKI SHA-256)')
+        keys['BrokerPin'] = pin
+    return keys
 
 
 def port_owned() -> dict:
     """PORT_OWNED, and with the balance switch on (xml1build.balance) the [Balance] section too. With the switch
-    off the port does not own that section at all: nothing of it is written or dropped."""
+    off the port does not own that section at all: nothing of it is written or dropped. The broker keys are owned
+    only once the project broker is set (broker_keys)."""
     owned = dict(PORT_OWNED)
+    if broker_keys():
+        owned['Online'] = PORT_OWNED['Online'] + ('Broker', 'BrokerPin')
     if BAL.enabled():
         owned['Balance'] = tuple(BAL.BALANCE_KEYS) + BAL.TUNING_KEYS
     return owned
@@ -458,6 +557,39 @@ def build_turrets(out) -> dict:
     return {'Game': {'Xml1Turrets': '1'}, 'Xml1Turrets': section}
 
 
+def build_semi_auto(out) -> dict:
+    """{'Game': {'NpcPowerRule': 'xml1', 'NpcSemiAuto': 'xml1'}, 'NpcSemiAuto': {'Count': n, 'W1': ...}} from the
+    characters stage's weapon-brain contract (xml1build.semi_auto -> _build/semi_auto.json); {} without a valid one
+    with at least one row (the officers keep the stock PC weapon AI)."""
+    from . import semi_auto as SA
+    try:
+        data = json.loads(Path(out, '_build', SA.CONTRACT_FILE).read_text(encoding='utf-8'))
+        sections = SA.ini_sections(data)
+    except (OSError, ValueError, AttributeError, TypeError):
+        return {}
+    sections['Game']['NpcSemiAuto'] = NPC_SEMI_AUTO
+    return sections
+
+
+def build_world_backfaces(out) -> dict:
+    """{'ZoneCount': n, 'Z1': zone, ...}: the XML1 zones this build converted (sorted, lower case, '/' separated), the
+    zones xml2-fix's WorldBackfaces applies to; {} without a usable list (no zones stage output, an empty or oversized
+    list, or a path the DLL would refuse), and then the build writes no WorldBackfaces key."""
+    try:
+        data = json.loads(Path(out, '_build', 'zones_detail.json').read_text(encoding='utf-8'))
+    except (OSError, ValueError):
+        return {}
+    names = data.get('converted') if isinstance(data, dict) else None
+    if not isinstance(names, list):
+        return {}
+    zones = sorted({str(z).strip().replace('\\', '/').lower() for z in names if str(z).strip()})
+    if not zones or len(zones) > WORLD_BACKFACES_MAX_ZONES or not all(len(z) < 64 and '..' not in z and _ZONE_PATH.match(z) for z in zones):
+        return {}
+    section = {'ZoneCount': str(len(zones))}
+    section.update({f'Z{i}': z for i, z in enumerate(zones, 1)})
+    return section
+
+
 def game_keys(*, xml1_opening=True, save_folder=None, forced_teams='1', add_hero=False, join_hero=True, postgame=None,
               port_identity=False, main_menu_items=None, new_game_plus=None, review_stats=None, xtract=None,
               xp_curve=None) -> dict:
@@ -471,6 +603,14 @@ def game_keys(*, xml1_opening=True, save_folder=None, forced_teams='1', add_hero
         # Target subtitles must query the scoped damage modifiers used by the
         # converted original talents, rather than only the PC's resist_* rows.
         game['ResistanceDisplay'] = 'xml1'
+        game['ClassicHud'] = 'xml1'
+        game['ClassicCodex'] = '1'
+        # XML1's speaker labels: a line the builder gave speakerlabel (scripts.SPEAKER_TOKEN_LABELS, the party Magma's
+        # ex-%ALISON% lines) reads "Alison" with Magma's portrait and talk animation. Display only (an XML2 Fix that
+        # does not know the key ignores it and the line reads "Magma"); it is in RELEASE_18_KEYS as 1.8.0-beta.7's
+        # marker, because that DLL is also the first to read the schema 3 weapon-brain rows.
+        game['ClassicSpeakers'] = '1'
+        # [Game] WorldBackfaces (rule 30) is not a fixed key: port_keys writes it with the build's XML1 zone list.
         game['BoxHarmOrigin'] = 'xml1'
         game['HarmSingleChain'] = 'single'
         # Online, an auto-advancing conversation line goes on after the same game time on every PC (not when this PC's
@@ -479,6 +619,7 @@ def game_keys(*, xml1_opening=True, save_folder=None, forced_teams='1', add_hero
         game['OnlineConversations'] = ONLINE_CONVERSATIONS
         # The bedroom items' pictures are the first game's 512x256 art, drawn in its 256x128 window (SPEC 56).
         game['PersonalItemPicture'] = PERSONAL_ITEM_PICTURE
+        game['ComboPopupGuard'] = COMBO_POPUP_GUARD
         # XML1's opening: startFirstMission seats Wolverine alone, resetgame unlocks nobody (xml2-fix new_game.cpp;
         # the build's New Game hook uses loadMapKeepTeam - build_xml1.py --newgame keepteam, the default)
         game.update(NewGameTeam='wolverine', ResetUnlocks='0')
@@ -531,8 +672,8 @@ def game_keys(*, xml1_opening=True, save_folder=None, forced_teams='1', add_hero
     if xtract is not None:
         game['Xtract'] = xtract
         game['XtractionShop'] = '1'
-        # xml2-fix [Game] RevivalCost (issue #63): a fallen hero costs the first game's 200 * (highest roster level)^2
-        # (default.xbe 0xaf6b0 / 0x54cb0), not XMen2.exe's max(200, 2 * level^2); shared gameplay agreement rule 10
+        # xml2-fix [Game] RevivalCost (issue #63): the first game's 200 * G^2, G = min(5, highest roster level / 10 + 1)
+        # (default.xbe 0xaf6b0 / 0x54150), not XMen2.exe's max(200, 2 * level^2); agreement rule 10 (revision 3, 1.8.0)
         game['RevivalCost'] = 'xml1'
     if xp_curve:
         game['XPCurve'] = xp_curve
@@ -556,9 +697,11 @@ def online_keys(*, port_identity=False, balance=False, fingerprint=None) -> dict
     the save tables, the content fingerprint a co-op peer must share (SPEC-new-save 6)."""
     if not port_identity:
         return {}
-    keys = {'GameVersion': RI.game_version(), 'FastTransfer': FAST_TRANSFER, 'ReceiveValidation': RECEIVE_VALIDATION}
+    keys = {'GameVersion': RI.game_version(), 'FastTransfer': FAST_TRANSFER, 'ReceiveValidation': RECEIVE_VALIDATION,
+            'JoinInProgress': JOIN_IN_PROGRESS, 'TickRate': TICK_RATE}
     if fingerprint:
         keys['ContentFingerprint'] = fingerprint
+    keys.update(broker_keys())
     return keys
 
 
@@ -587,9 +730,22 @@ def port_keys(out, *, save_folder=PLAY_SAVE_FOLDER, eighth=True) -> dict:
         game.update(build_mold_controller(out))
         game.update(build_lockon_effects(out))
         game.update(turrets.get('Game', {}))
-    keys = {'Game': game, 'Limits': dict(LIMITS)}
+    semi_auto = build_semi_auto(out) if game.get('NpcPowerRule') == NPC_POWER_RULE else {}
+    game.update(semi_auto.get('Game', {}))
+    # XML1's one-sided level collision for movement (xml2-fix [Game] WorldBackfaces=xml1, gameplay rule 30 revision 2,
+    # 1.8.0-beta.7; G14): movement sweeps stop meeting the back faces of the level hull, as XML1's trace helper never
+    # asks for them - in the build's converted XML1 zones only ([WorldBackfaces] ZoneCount / Z1..Zn); no list = no key
+    # (never every zone). Heroes too: the release waits on a per-zone walk test.
+    world_backfaces = build_world_backfaces(out)
+    if world_backfaces:
+        game['WorldBackfaces'] = WORLD_BACKFACES
+    keys = {'Game': game, 'Limits': dict(LIMITS), 'Engine': {'ModelPools': MODEL_POOLS}}
+    if world_backfaces:
+        keys['WorldBackfaces'] = world_backfaces
     if turrets:
         keys['Xml1Turrets'] = turrets['Xml1Turrets']
+    if semi_auto:
+        keys['NpcSemiAuto'] = semi_auto['NpcSemiAuto']
     balance = build_balance(out)
     online = online_keys(port_identity=bool(postgame), balance=balance, fingerprint=content_fingerprint(out))
     if postgame and (Path(out) / 'Data/lcsave/catalogue.lcc').is_file():
@@ -777,11 +933,43 @@ RELEASE_15_KEYS = {'Game': ('PlacementCrush', 'DoubleHeal', 'RankCosts', 'LevelS
 RELEASE_16_KEYS = {**RELEASE_15_KEYS,
                    'Game': RELEASE_15_KEYS['Game'] + ('ObjectWorldImpact', 'StunRule', 'DangerRoomParty', 'DangerRoomHealthBars', 'BoxHarmOrigin', 'HarmSingleChain',
                                                      'Xml1LockOnEffects', 'Xml1LockOnAim', 'HarmLoopStartup'),
-                   'Online': ('FastTransfer', 'ReceiveValidation')}
+                   'Online': ('FastTransfer', 'ReceiveValidation', 'Broker', 'BrokerPin')}  # Broker/BrokerPin: 0.4.0, only when set
 
 # XML2 Fix 1.7 adds the display-only adapter and the online conversation rule (27), 1.7.1 the personal-item picture window; earlier keys retain their release
 # grouping.
 RELEASE_17_KEYS = {**RELEASE_16_KEYS, 'Game': RELEASE_16_KEYS['Game'] + ('ResistanceDisplay', 'OnlineConversations', 'PersonalItemPicture')}
+
+# XML2 Fix 1.8 (Legends Classic 0.4.0) adds online rooms (Broker / BrokerPin are read since then) and drop-in co-op.
+RELEASE_18_KEYS = {**RELEASE_17_KEYS, 'Online': RELEASE_17_KEYS['Online'] + ('JoinInProgress',)}
+# XML2 Fix 1.8.0-beta.2 (Legends Classic 0.3.0-beta.2): the bigger model pools (gameplay-agreement rule 28) and the
+# team-combo popup guard. A 1.8.0-beta.1 DLL knows neither, so the builder refuses it (its VERSIONINFO is the same
+# numeric 1.8.0.0; the key strings are what tells the two apart).
+RELEASE_18_KEYS = {**RELEASE_18_KEYS, 'Game': RELEASE_18_KEYS['Game'] + ('ComboPopupGuard',), 'Engine': ('ModelPools',)}
+# XML2 Fix 1.8.0-beta.3 (Legends Classic 0.3.0-beta.3): online at 60 frames a second (gameplay-agreement rule 29). A
+# beta.2 DLL does not read [Online] TickRate, so the builder refuses it.
+RELEASE_18_KEYS = {**RELEASE_18_KEYS, 'Online': RELEASE_18_KEYS['Online'] + ('TickRate',)}
+# XML2 Fix 1.8.0-beta.5 (Legends Classic 0.4.0-beta.5): the classic look's presentation-only adapters, [Game]
+# ClassicHud=xml1 (the HUD) and ClassicCodex=1 (Codex Details/Back). A beta.4 DLL reads neither, so the builder refuses
+# it. These two are matched with their UTF-16 terminator: earlier DLLs carry longer keys with the same start
+# (ClassicHudPilot, ClassicHudTrace), which must not pass for them.
+EXACT_KEYS = {'Game': ('ClassicHud', 'ClassicCodex')}
+RELEASE_18_KEYS = {**RELEASE_18_KEYS, 'Game': RELEASE_18_KEYS['Game'] + EXACT_KEYS['Game']}
+# XML2 Fix 1.8.0-beta.6 (Legends Classic 0.4.0-beta.6): the original weapon brain, [Game] NpcSemiAuto=xml1 with its
+# [NpcSemiAuto] rows (gameplay-agreement rule 16 revision 10). A beta.5 DLL reads neither and would run the officer's
+# stock burst/melee AI while its rule 16 record says revision 4, so the builder refuses it.
+RELEASE_18_KEYS = {**RELEASE_18_KEYS, 'Game': RELEASE_18_KEYS['Game'] + ('NpcSemiAuto',)}
+# XML2 Fix 1.8.0-beta.7 (Legends Classic 0.4.0-beta.7): [Game] ClassicSpeakers (XML1's "Alison" label) and the schema 3
+# weapon-brain rows. A beta.6 DLL ignores the label and refuses the rows (the gunmen keep the stock PC AI and the
+# requested rule 16 is unverified), so the builder refuses it, naming the key every build writes with the rows.
+RELEASE_18_KEYS = {**RELEASE_18_KEYS, 'Game': RELEASE_18_KEYS['Game'] + ('ClassicSpeakers', 'WorldBackfaces')}
+# Rule 30 revision 2 (XML1 levels only) reads [WorldBackfaces] ZoneCount / Z1..Zn. The first, unscoped beta 7 build (a
+# private candidate DLL) knows [Game] WorldBackfaces but not the list and would apply the rule to every zone, so the
+# builder also requires the list's key by name.
+RELEASE_18_KEYS = {**RELEASE_18_KEYS, 'WorldBackfaces': ('ZoneCount',)}
+# Byte markers for formats a key name cannot show. The schema 4 weapon rows (bullet trace time + accuracy) are read only
+# by a DLL whose rule 16 detail digest says "NSA4"; an earlier beta 7 DLL knows [Game] NpcSemiAuto but refuses the wider
+# rows and withdraws rule 16, so the builder refuses it, naming the rows.
+RELEASE_MARKERS = {('Game', 'NpcSemiAuto'): (b'NSA4', '[NpcSemiAuto] schema 4 rows')}
 
 
 def check_release_dll(dll, keys: dict) -> None:
@@ -791,8 +979,10 @@ def check_release_dll(dll, keys: dict) -> None:
     if not dll.is_file():
         return
     data = dll.read_bytes()
-    missing = [f'[{section}] {key}' for section, names in RELEASE_17_KEYS.items() for key in names
-               if key in keys.get(section, {}) and key.encode('utf-16le') not in data]
+    missing = [f'[{section}] {key}' for section, names in RELEASE_18_KEYS.items() for key in names
+               if key in keys.get(section, {}) and (key + ('\0' if key in EXACT_KEYS.get(section, ()) else '')).encode('utf-16le') not in data]
+    missing += [name for (section, key), (marker, name) in RELEASE_MARKERS.items()
+                if key in keys.get(section, {}) and marker not in data]
     if missing:
         raise FixTooOld(f'This build needs XML2 Fix {REQUIRED_XML2FIX} or later; the existing DLL does not recognize '
                         + ', '.join(missing), missing)

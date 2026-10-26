@@ -2,7 +2,7 @@
 
 Add a row when assigning a release; never edit, reorder or reuse an issued token.
 Final integration must assign its final CONTENT_VERSION/catalogue revision here.
-The candidate row identifies the 0.2.0b content envelope, not an unpublished final manifest.
+Private candidates use a separate namespace and never append release reservations.
 """
 from dataclasses import dataclass
 from xml1builder import CONTENT_VERSION, VERSION
@@ -21,6 +21,12 @@ class Identity:
 # A token reservation is an identity in the history; it cannot be assigned again.
 CURRENT_CATALOGUE_REVISION = 7
 
+# This private test envelope is deliberately outside the append-only release
+# history. Its exact generated files/fingerprint are checked by the package's
+# peer receipt. Release integration must assign an immutable official identity.
+# It applies only while VERSION is the candidate's (0.4.0e); a release builder never takes it.
+PRIVATE_CANDIDATE = Identity('0.4.0e', 33, 7, 'C04E')
+
 HISTORY = (
     Identity('port-before-LC', 0, 0, 'X1.0'),
     Identity('balance-experiment', 0, 0, 'X1.1'),
@@ -38,6 +44,16 @@ HISTORY = (
     Identity('0.2.3h', 21, 7, 'LC30', '1b87836ed197fe8b101325d8a8171c01f19c4691c2c5216da2741d61db41cafd'),
     Identity('0.2.4', 22, 7, 'LC31', 'd20e76286784f46971ccb903bc4813513607e62c9df2c07aaf327eaeeca9eebe'),
     Identity('0.2.5', 23, 7, 'LC32', '03b447adfb79a60a7ac84e52d7cb801a11b69a50c40e5e0c6fcb922db69017fe'),
+    # Issued as 0.3.0; renumbered 0.4.0 while in beta. The release label is history (append-only), the token LC33 is unchanged.
+    Identity('0.3.0', 24, 7, 'LC33', '240ef860ad0a8676bff9bcd9302ad40fe12993af0f27768d45e0e172e11d424a'),
+    # Issued at 0.4.0-beta.5: the classic look (classic HUD, menus and map assets, team-room selection cones/rings off).
+    Identity('0.4.0', 25, 7, 'LC34', '28230ad0107151f048560c0ef475322d658dee4644a0726ea9fc95c8e533b5d4'),
+    # Issued at 0.4.0-beta.6: enemy AI fidelity (rule 16 revision 10, the officer's weapon brain) and the classic HUD
+    # atlas without the small-map frame.
+    Identity('0.4.0-beta.6', 26, 7, 'LC35', '3f378bccc40eee3e2830b944ba69ee2c41b8cc721dcb02f7ed10666866958de5'),
+    # Issued at 0.4.0-beta.7: every gun NPC's weapon brain with the XML1 bullet trace gate (schema 4 rows, rule 16
+    # revision 11), the "Alison" speaker label, one-sided level walls in the XML1 zones (rule 30 revision 2).
+    Identity('0.4.0-beta.7', 27, 7, 'LC36', '22a8c77d592f9e436adb724d6be5a9fdff4f4108ddd89bc2ba4d6c513f403e72'),
 )
 
 
@@ -65,6 +81,11 @@ def game_version(*, content_version=None, catalogue_revision=None):
         catalogue_revision = CURRENT_CATALOGUE_REVISION
     matches = [r for r in HISTORY if r.content_version == cv and cv != 0 and
                (catalogue_revision is None or r.catalogue_revision == catalogue_revision)]
+    candidate = PRIVATE_CANDIDATE
+    if not matches and VERSION == candidate.release and cv == candidate.content_version and \
+            catalogue_revision == candidate.catalogue_revision:
+        validate_history(HISTORY + (candidate,))
+        return candidate.token
     if len(matches) != 1:
         raise ValueError(f'unassigned official release identity: content {cv}, catalogue {catalogue_revision}')
     return matches[0].token
@@ -79,8 +100,8 @@ def manifest(out):
     if cat['content_version'] != CONTENT_VERSION:
         raise ValueError('save catalogue content version differs from this builder')
     fingerprint = lcfiles.content_fingerprint(str(out))
-    issued = next(r for r in HISTORY if r.token == token)
-    if not issued.bind_manifest or fingerprint != issued.bind_manifest:
+    issued = next((r for r in HISTORY if r.token == token), None)
+    if issued is not None and (not issued.bind_manifest or fingerprint != issued.bind_manifest):
         raise ValueError('official release bind manifest differs from its immutable history; assign a new identity')
     files = sorted([Path(out) / 'Data/lcsave/catalogue.lcc', Path(out) / 'Data/lcsave/legacy.lcm'] +
                    list((Path(out) / 'Data').rglob('*.lcbind')))
@@ -88,5 +109,6 @@ def manifest(out):
     hashes = {p.relative_to(out).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest() for p in files}
     return dict(schema=1, builder_version=VERSION, content_version=cat['content_version'],
                 catalogue_revision=cat['revision'], game_version=token,
+                identity_kind='official' if issued is not None else 'private-candidate',
                 bind_manifest_algorithm='lcsave-bind-sha256-v1',
                 bind_manifest=fingerprint, files_sha256=hashes)

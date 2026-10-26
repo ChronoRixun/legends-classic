@@ -115,7 +115,8 @@ def fixture(schemas, objects, blocks=(), old=False):
     """Minimal original-format writer; all names, geometry and pixel blocks are invented."""
     types = {'i': ('igIntMetaField', 4), 'r': ('igObjectRefMetaField', 4),
              'b': ('igMemoryRefMetaField', 4), 's': ('igStringMetaField', 4),
-             'm': ('igMatrix44fMetaField', 64), 'v': ('igVec3fMetaField', 12), 'f': ('igFloatMetaField', 4)}
+             'm': ('igMatrix44fMetaField', 64), 'v': ('igVec3fMetaField', 12), 'f': ('igFloatMetaField', 4),
+             'q': ('igVec4fMetaField', 16)}
     specs = [('igObjectDirEntry', None, [(11, 'i')]), ('igMemoryDirEntry', None, [(7, 'i')])] + schemas
     names = {name: index for index, (name, _parent, _fields) in enumerate(specs)}
     keys = list(types)
@@ -133,7 +134,7 @@ def fixture(schemas, objects, blocks=(), old=False):
             value = values[slot]
             if key == 's':
                 raw = value.encode() + b'\0'; raw += b'\0' * (-len(raw) % 4); payload += u32(len(raw)) + raw
-            elif key in ('m', 'v', 'f'):
+            elif key in ('m', 'v', 'f', 'q'):
                 vector = value if key != 'f' else [value]
                 payload += struct.pack('<' + 'f' * len(vector), *vector)
             else: payload += u32(value)

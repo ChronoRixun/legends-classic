@@ -21,7 +21,8 @@ venv or CI. Steps:
      the launcher's tool_install::parse_manifest reads: version, content_version, zip, size, sha256, min_launcher,
      requires_xml2fix) and <dist>/SHA256SUMS.txt;
   5. --smoke: tools/freeze_smoke.py against the frozen folder (no game data).
---check-tag vX.Y.Z (CI on a tag): exit 1 unless the tag is v<VERSION>.
+--check-tag vX.Y.Z[-beta.N|-rc.N] (CI on a tag): require the numeric base to match VERSION.
+XML1_RELEASE_TAG (CI on a tag): use that full version in build-info, the frozen executable, zip and manifest.
 Defaults: --dist <repo>/dist, --work <repo>/build/freeze (both gitignored). No UPX, ever (BUILDER_DESIGN.md 3.3).
 The bootloader is the PyInstaller wheel's prebuilt one unless CI rebuilt it from source (the release workflow's
 `bootloader` input; design 3.3 step 1)."""
@@ -49,6 +50,7 @@ from xml1builder import CONTENT_VERSION, MIN_LAUNCHER, VERSION  # noqa: E402  (t
 from xml1builder import resources as R  # noqa: E402
 from xml1build import fix_ini  # noqa: E402
 from xml1build.lib import adpcm_c  # noqa: E402
+from release_metadata import release_version  # noqa: E402
 
 
 def zip_name(version=VERSION) -> str:
@@ -80,12 +82,12 @@ def check_kernel(path: Path) -> str:
     return adpcm_c.STATUS
 
 
-def build_info(kernel: Path | None) -> dict:
+def build_info(kernel: Path | None, version=VERSION) -> dict:
     import numpy
     import PyInstaller
     commit = git('rev-parse', 'HEAD')
     dirty = bool(git('status', '--porcelain', '--untracked-files=no'))
-    info = {'version': VERSION, 'content_version': CONTENT_VERSION, 'commit': commit[:12] or 'unknown',
+    info = {'version': version, 'content_version': CONTENT_VERSION, 'commit': commit[:12] or 'unknown',
             'commit_full': commit or 'unknown', 'dirty': dirty,
             'built': datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
             'python': sys.version.split()[0], 'numpy': numpy.__version__, 'pyinstaller': PyInstaller.__version__,
@@ -164,13 +166,13 @@ def make_zip(folder: Path, archive: Path):
     return len(files)
 
 
-def write_manifest(dist: Path, archive: Path, min_launcher: str) -> dict:
+def write_manifest(dist: Path, archive: Path, min_launcher: str, version=VERSION) -> dict:
     """xml1-builder.json - the fields and types ultimate-legends' tool_install::parse_manifest reads (branch
     xml1-entry): version (string), content_version (int), zip (a file name next to the manifest), size (uint64 > 0),
     sha256 (64 lower-case hex), min_launcher, requires_xml2fix (strings)."""
-    manifest = {'version': VERSION, 'content_version': CONTENT_VERSION, 'zip': archive.name,
+    manifest = {'version': version, 'content_version': CONTENT_VERSION, 'zip': archive.name,
                 'size': archive.stat().st_size, 'sha256': sha256_file(archive), 'min_launcher': min_launcher,
-                'requires_xml2fix': '>=' + fix_ini.REQUIRED_XML2FIX}
+                'requires_xml2fix': fix_ini.required_xml2fix(version)}
     (dist / 'xml1-builder.json').write_text(json.dumps(manifest, indent=1) + '\n', encoding='utf-8', newline='\n')
     return manifest
 
@@ -185,16 +187,22 @@ def main(argv=None) -> int:
     ap.add_argument('--min-launcher', dest='min_launcher', default=MIN_LAUNCHER,
                     help=f'the manifest\'s min_launcher (default {MIN_LAUNCHER})')
     ap.add_argument('--smoke', action='store_true', help='run tools/freeze_smoke.py on the result')
-    ap.add_argument('--check-tag', dest='check_tag', help='only check that this tag is v<VERSION>')
+    ap.add_argument('--check-tag', dest='check_tag', help='check v<VERSION> with an optional -beta.N or -rc.N suffix')
     a = ap.parse_args(argv)
 
     if a.check_tag is not None:
-        if a.check_tag != f'v{VERSION}':
-            print(f'tag {a.check_tag}, but the builder is version {VERSION}: update VERSION in '
-                  'tools/xml1builder/__init__.py (and CONTENT_VERSION when the output changes)')
+        try:
+            version = release_version(a.check_tag, VERSION)
+        except ValueError as exc:
+            print(exc)
             return 1
-        print(f'tag {a.check_tag} = builder {VERSION} (content {CONTENT_VERSION})')
+        print(f'tag {a.check_tag} = builder {version} (content {CONTENT_VERSION})')
         return 0
+    # CI sets this only for tags. Source VERSION remains the numeric release base.
+    try:
+        version = release_version(os.environ.get('XML1_RELEASE_TAG'), VERSION)
+    except ValueError as exc:
+        ap.error(str(exc))
     if os.name != 'nt':
         print('warning: the release is Windows x64 only (BUILDER_DESIGN.md 3.4); this freezes for this platform')
     t0 = time.time()
@@ -210,7 +218,7 @@ def main(argv=None) -> int:
             raise SystemExit(f'no sound kernel at {kernel}: run python tools/build_sound_kernel.py first '
                              '(or freeze with --no-kernel)')
         print('sound kernel:', check_kernel(kernel))
-    info = build_info(kernel)
+    info = build_info(kernel, version=version)
     (gen / 'build-info.json').write_text(json.dumps(info, indent=1) + '\n', encoding='utf-8', newline='\n')
     print('build-info:', json.dumps(info))
     for rel, (a_size, b_size) in package_research(gen / 'research').items():
@@ -228,9 +236,9 @@ def main(argv=None) -> int:
 
     for old in dist.glob(f'{APP}-*-win64.zip'):
         old.unlink()
-    archive = dist / zip_name()
+    archive = dist / zip_name(version)
     n = make_zip(folder, archive)
-    manifest = write_manifest(dist, archive, a.min_launcher)
+    manifest = write_manifest(dist, archive, a.min_launcher, version=version)
     (dist / 'SHA256SUMS.txt').write_text(
         f'{manifest["sha256"]}  {archive.name}\n{sha256_file(exe)}  {APP}/{EXE_NAME}\n', encoding='utf-8', newline='\n')
     print(f'zip: {archive} ({n} files, {manifest["size"] / 1e6:.1f} MB, sha256 {manifest["sha256"]})')

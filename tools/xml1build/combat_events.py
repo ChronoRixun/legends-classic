@@ -215,8 +215,9 @@ UNRESOLVED_ALLOWED = {
 UNREGISTERED_HANDLER_NOTES = {
     'ch_grab_attack': "Juggernaut's grab-and-pound (x1_ps_juggernaut grabattack); XML2 has no grab-attack handler "
                       "(ch_grab_hold / ch_grab_victim are the hold and the victim side)",
-    'ch_weapon_semi_auto': "GRSO / flamethrower soldiers' repeat fire (ps_grso, ps_flamethrower); XML2's gunmen fire "
-                           "through weapon_fire / projectile triggers with no weapon handler",
+    'ch_weapon_semi_auto': "XML1's entry arms shared weapon recoil (0xe14d0); the separate input gate (0x42f60) "
+                           "selects power_attack. Retail PC's fallback loses this timing; generic per-slot reuse "
+                           "is not equivalent. See research/npc-semi-auto.md for the opt-in compatibility candidate",
     'ch_grenade': "grenade lob (x1_ps_mystique, ps_shadowking_one); XML2 retail names the same unregistered handler "
                   "in its own moveset_grenade / moveset_stealth - the grenade flies by its trigger",
     'ch_clingwalldecide': "wall cling (moveset_acrobat); XML2 has no wall cling (ch_wall_lunge is the lunge off a wall)",

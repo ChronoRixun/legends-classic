@@ -22,6 +22,99 @@ def test_unassigned_release_refuses():
         assert False, 'an unassigned build must not reuse a lobby token'
 
 
+def _as_private_candidate():
+    """The private-candidate envelope applies only while the builder's own version and content are the candidate's;
+    a release builder never takes it. Run as that candidate build."""
+    from contextlib import ExitStack
+    from unittest.mock import patch
+    stack = ExitStack()
+    stack.enter_context(patch.object(RI, 'VERSION', RI.PRIVATE_CANDIDATE.release))
+    stack.enter_context(patch.object(RI, 'CONTENT_VERSION', RI.PRIVATE_CANDIDATE.content_version))
+    return stack
+
+
+def test_private_candidate_is_inert_in_a_release_builder():
+    assert RI.VERSION != RI.PRIVATE_CANDIDATE.release
+    assert RI.game_version() in {row.token for row in RI.HISTORY}
+
+
+def test_private_candidate_does_not_reserve_an_official_identity():
+    from unittest.mock import patch
+    candidate = RI.PRIVATE_CANDIDATE
+    assert candidate not in RI.HISTORY
+    with _as_private_candidate():
+        assert RI.game_version() == candidate.token
+    assert all(row.token != candidate.token for row in RI.HISTORY)
+    # A final-version build must refuse the private envelope rather than silently
+    # shipping the candidate's mutable identity as an official release.
+    with _as_private_candidate(), patch.object(RI, 'VERSION', '0.4.0'):
+        try:
+            RI.game_version()
+        except ValueError as exc:
+            assert 'unassigned' in str(exc)
+        else:
+            assert False, 'private identity leaked into the final release'
+
+
+def test_private_identity_rejects_historical_token_collision():
+    from unittest.mock import patch
+    candidate = RI.PRIVATE_CANDIDATE
+    collision = RI.Identity(candidate.release, candidate.content_version,
+                            candidate.catalogue_revision, 'LC33')
+    with _as_private_candidate(), patch.object(RI, 'PRIVATE_CANDIDATE', collision):
+        try:
+            RI.game_version()
+        except ValueError as exc:
+            assert 'already assigned' in str(exc)
+        else:
+            assert False, 'candidate collided with an issued token'
+
+
+def test_private_manifest_records_actual_fingerprint_without_reserving_it():
+    import tempfile
+    from pathlib import Path
+    from unittest.mock import patch
+    from lcsave import lcfiles
+    with tempfile.TemporaryDirectory() as td:
+        out = Path(td)
+        folder = out / 'Data/lcsave'
+        folder.mkdir(parents=True)
+        (folder / 'catalogue.lcc').write_bytes(b'synthetic catalogue')
+        (folder / 'legacy.lcm').write_bytes(b'synthetic legacy map')
+        cat = {'content_version': RI.PRIVATE_CANDIDATE.content_version,
+               'revision': RI.CURRENT_CATALOGUE_REVISION}
+        with _as_private_candidate(), patch.object(lcfiles, 'read_catalogue_lcc', return_value=cat), \
+             patch.object(lcfiles, 'content_fingerprint', return_value='a' * 64):
+            receipt = RI.manifest(out)
+        assert receipt['identity_kind'] == 'private-candidate'
+        assert receipt['bind_manifest'] == 'a' * 64
+        assert RI.PRIVATE_CANDIDATE not in RI.HISTORY
+
+
+def test_official_manifest_still_refuses_changed_content():
+    import tempfile
+    from pathlib import Path
+    from unittest.mock import patch
+    from lcsave import lcfiles
+    official = next(row for row in RI.HISTORY if row.token == 'LC33')
+    with tempfile.TemporaryDirectory() as td:
+        out = Path(td)
+        folder = out / 'Data/lcsave'
+        folder.mkdir(parents=True)
+        (folder / 'catalogue.lcc').write_bytes(b'synthetic catalogue')
+        cat = {'content_version': official.content_version,
+               'revision': official.catalogue_revision}
+        with patch.object(RI, 'CONTENT_VERSION', official.content_version), \
+             patch.object(lcfiles, 'read_catalogue_lcc', return_value=cat), \
+             patch.object(lcfiles, 'content_fingerprint', return_value='a' * 64):
+            try:
+                RI.manifest(out)
+            except ValueError as exc:
+                assert 'immutable history' in str(exc)
+            else:
+                assert False, 'private-candidate support weakened the official guard'
+
+
 def test_history_is_append_only():
     old = (RI.Identity('fictional-1', 901, 3, 'A901'),)
     later = old + (RI.Identity('fictional-2', 902, 4, 'A902'),)

@@ -244,6 +244,43 @@ def enhancement_pool_cut(top, pool=None):
 
 SOUNDFILE_MAX = 10                   # XMen2.exe 0x5920cb: strlen >= 10 aborts zone sound loading
 SAVENAME_MAX = 63                    # zoneinfo savename copied into a 0x40 buffer (0x4850d5)
+# SPEC 105: two slips in XML1's own data/zoneinfo.eng, repaired where the intended zone is certain. XML1's data names
+# a zone file that does not exist (a typo: the entry could never match a zone there), and one name is listed twice.
+# ZONEINFO_NAME_TYPOS: entry name -> the zone it was written for (the zone file's own name; its sibling Muir Island
+# zones carry the same savename). ZONEINFO_DUPLICATE_TARGETS: the first entry of a repeated name stays, the later
+# one belongs to this zone (mount's zone link to mount2 is described "Transport Conduit": the second entry is
+# mount2's). Both apply only to zones the build converts, and never over an entry the target already has.
+ZONEINFO_NAME_TYPOS = {'muir_is/muir2/mui_in2': 'muir_is/muir2/muir_in2'}
+ZONEINFO_DUPLICATE_TARGETS = {'mount/mount/mount': 'mount/mount/mount2'}
+
+
+def x1_zoneinfo_entries(root, converted=None):
+    """({zone id: attribute dict}, [notes]) of XML1's zoneinfo root. A repeated name keeps its first entry and hands
+    the later one to ZONEINFO_DUPLICATE_TARGETS (else it is reported and dropped); a name in ZONEINFO_NAME_TYPOS
+    moves to its zone when that zone is converted and has no entry (and the typo name is not itself a zone)."""
+    entries, notes = {}, []
+    spare = []
+    for e in root.iter():
+        if e.tag.lower() != 'zone' or not e.get('name'):
+            continue
+        name = C.norm(e.get('name'))
+        if name in entries:
+            spare.append((name, dict(e.attrib)))
+        else:
+            entries[name] = dict(e.attrib)
+    known = None if converted is None else set(converted)
+    for name, attrs in spare:
+        target = ZONEINFO_DUPLICATE_TARGETS.get(name)
+        if target and target not in entries and (known is None or target in known):
+            entries[target] = attrs
+            notes.append(f'zoneinfo {name}: listed twice; the first entry stays, the second belongs to {target}')
+        else:
+            notes.append(f'zoneinfo {name}: listed twice; the later entry is dropped (no target)')
+    for typo, zone in ZONEINFO_NAME_TYPOS.items():
+        if typo in entries and zone not in entries and (known is None or (zone in known and typo not in known)):
+            entries[zone] = entries.pop(typo)
+            notes.append(f'zoneinfo {typo}: no such zone file; the entry belongs to {zone}')
+    return entries, notes
 # zoneinfo attributes of XML2's Xtraction network (0x468130 registers extraction="true", 0x467f60 parses the rest);
 # stripped from every XML2 entry in XML1 mode (build_zoneinfo)
 XTRACTION_ATTRS = ('extraction', 'towncenter', 'mapx', 'mapy')
@@ -2361,9 +2398,10 @@ class Zones:
             root = None
             ctx.error('XML1 data/zoneinfo.eng not found')
         if root is not None:
-            for e in root.iter():
-                if e.tag.lower() == 'zone' and e.get('name'):
-                    x1[C.norm(e.get('name'))] = dict(e.attrib)
+            x1, zi_notes = x1_zoneinfo_entries(root, self.converted)
+            for n in zi_notes:
+                ctx.note(n)
+                self.counts['zoneinfo_x1_repaired'] += 1
         unknown = sorted(set(x1) - set(self.converted))
         if unknown:
             ctx.note(f'zoneinfo: {len(unknown)} XML1 zoneinfo names are not converted zones (not added): '

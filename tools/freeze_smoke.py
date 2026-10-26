@@ -38,6 +38,7 @@ import synth  # noqa: E402  (also puts tools/ on sys.path)
 import builder_stub  # noqa: E402
 from xml1builder import CONTENT_VERSION, SCHEMA, VERSION  # noqa: E402
 from xml1builder import resources as R  # noqa: E402
+from release_metadata import release_version  # noqa: E402
 
 FAILED = []
 
@@ -99,6 +100,8 @@ def main(argv=None) -> int:
     internal = folder / '_internal'
     info = json.loads(Path(a.info).read_text(encoding='utf-8')) if a.info else \
         json.loads((internal / 'xml1builder' / 'data' / 'build-info.json').read_text(encoding='utf-8'))
+    # CI pins the exact tag; a standalone smoke run validates the bundle's full identity against the source base.
+    version = release_version(os.environ.get('XML1_RELEASE_TAG') or 'v' + info['version'], VERSION)
 
     # ---- layout
     missing = [p for p in [exe, internal / 'xml1builder' / 'data' / 'build-info.json',
@@ -113,11 +116,15 @@ def main(argv=None) -> int:
         if not dll.is_file():
             missing.append(dll)
     check('layout', not missing, ', '.join(str(p) for p in missing))
+    # The classic look's frontend stage writes its PNGs through Pillow (requirements.txt); a bundle without its
+    # compiled core fails every build at the frontend stage (0.4.0-beta.5 RC: 'No module named PIL').
+    check('Pillow bundled', any((internal / 'PIL').glob('_imaging*.pyd')) or any((internal / 'PIL').glob('_imaging*.so')),
+          'PIL/_imaging is not in the bundle')
     graph = internal / 'research' / 'sweep' / 'graph.json'
     check('packaged tables', graph.is_file() and R.PACKAGED_MARK in json.loads(graph.read_text(encoding='utf-8')),
           'research/sweep/graph.json is not the packaged (text-free) copy')
     bundled = json.loads((internal / 'xml1builder' / 'data' / 'build-info.json').read_text(encoding='utf-8'))
-    check('build-info', bundled.get('commit') == info.get('commit') and bundled.get('version') == VERSION,
+    check('build-info', bundled.get('commit') == info.get('commit') and bundled.get('version') == version,
           f'{bundled.get("commit")} / {bundled.get("version")}')
 
     ok, detail = typed_registry_check(internal)
@@ -128,13 +135,13 @@ def main(argv=None) -> int:
 
     # ---- version
     p, dt = run(exe, '--version', env=env)
-    check(f'version text ({dt:.1f} s)', p.returncode == 0 and f'xml1-builder {VERSION} ' in p.stdout
+    check(f'version text ({dt:.1f} s)', p.returncode == 0 and f'xml1-builder {version} ' in p.stdout
           and str(info.get('commit')) in p.stdout, p.stdout + p.stderr)
     p, dt = run(exe, '--version', '--events', 'jsonl', env=env)
     try:
         evs = events(p.stdout)
         hello, result = evs[0], evs[-1]
-        ok = (p.returncode == 0 and hello['ev'] == 'hello' and hello['v'] == SCHEMA and hello['builder'] == VERSION
+        ok = (p.returncode == 0 and hello['ev'] == 'hello' and hello['v'] == SCHEMA and hello['builder'] == version
               and hello['content_version'] == CONTENT_VERSION and hello['commit'] == info.get('commit')
               and result['ev'] == 'result' and result['ok'] is True and result['exit'] == 0)
         check(f'version jsonl ({dt:.1f} s)', ok, p.stdout)

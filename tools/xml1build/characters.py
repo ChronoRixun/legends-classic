@@ -1943,6 +1943,12 @@ def run(ctx):
     b.detail['heroes_as_npc'] = heroes
     b.detail['keep_scan'] = {k: v[:5] for k, v in need.items()}
     ctx.write_meta('characters_detail.json', b.detail)
+    # The original weapon brain (xml2-fix [Game] NpcSemiAuto, gameplay-agreement rule 16 revision 10): the source
+    # recoil / range / burst / leader / warm-up / flags of every gun NPC (schema 3) -> _build/semi_auto.json for fix_ini.
+    from . import semi_auto
+    contract = semi_auto.build_contract(ctx, set(stats))
+    if contract is not None:
+        ctx.set_count('npc_weapon_brains', len(contract['records']))
 
 
 _ROSTER_FUNCS = {'unlockcharacter', 'ischaracterunlocked', 'setincampaign'}
