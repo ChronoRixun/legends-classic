@@ -15,10 +15,10 @@ build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebui
 - **Saved rooms stay cleared after updating.** Beta 8 changes 65 map files without moving anything in them; the save
   reader used to throw away every saved room of a changed map, so enemies, pickups and doors came back. Now they stay
   as you left them.
-- **Bigger engine limits** for the first game's content and for graphics mods: the model-file cache (200 -> 1024),
-  character sound sets (16 -> 127), the animation pool (500 -> 22,528) and resident character stats (31 -> 320), and
-  the build's own copy of `XMen2.exe` can use 4 GB of memory instead of 2 GB (your X-Men Legends II install is never
-  changed).
+- **Bigger engine limits** for the first game's content, and groundwork for heavier graphics mods: the model-file
+  cache (200 -> 1024), character sound sets (16 -> 127), the animation pool (500 -> 22,528) and resident character
+  stats (31 -> 320), and the build's own copy of `XMen2.exe` can use 4 GB of memory instead of 2 GB (your X-Men
+  Legends II install is never changed).
 - **The first game's bosses:** the colosseum dopples throw the fastball special and set off the arena's traps, and
   Avalanche, Pyro, Mystique, Shadow King, Magneto and Blob fight with their X-Men Legends brains again.
 - **Juggernaut grabs** you, holds you and hits, as in the first game.
@@ -52,7 +52,10 @@ real saves every room keeps at least what it keeps on 0.4.0. Play between separa
 **Known issues**
 
 - The flying carry, Phoenix's XML1 telekinesis and the XML1 Guard choice are off (above).
-- In some menus the game can hitch about once a second; it happens on 0.4.0 too and is being looked into.
+- With a controller connected the game can pause for a moment about once a second (easy to see on the Team
+  Management screen). It happens on 0.4.0 too; the cause is found (the game re-checking the controllers) and a fix
+  is on the way.
+- Blob fights now, but in rare runs he can still stand still.
 - Everything listed under 0.4.0's known issues below still applies (enemy power rate and the MP5 soldier's mid-range
   damage #101, falls #22, cosmetics #54, loot and shop #6, solo parts online #106, button prompts XML2 Fix #8).
 
