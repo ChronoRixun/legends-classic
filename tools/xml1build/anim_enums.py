@@ -61,8 +61,12 @@ MOVESET_FLYING_PRECEDENCE = {
                                  "without the other double-debits or never debits, so XML1's node only with the "
                                  "XML1 flight upkeep port (fix7) in the same build"),
 }
-# The XML1 flight upkeep port (fix7) is not part of any build yet: PC's `flying` stays.
-XML1_FLIGHT_UPKEEP = False
+# xml2-fix 1.9.0-beta.1 (rule 45 revision 3, beta8/carry 063f2e8) ports XML1's strict one-second flight upkeep and
+# filters only the `%flight_pwr` energypersecond expression at the native parser (0x4f74b2), so XML1's `flying` node
+# replaces PC's whenever --anim-enums xml1 is built (that DLL is required by the same gate: AnimEnums table + the
+# rule 45 revision 3 marker, fix_ini.RELEASE_MARKERS). PC's flymelee1/2 and painairfeetfirst keep %flight_pwr; the
+# DLL's filter clears it there too, so nothing is charged twice.
+XML1_FLIGHT_UPKEEP = True
 
 
 class AnimEnumError(ValueError):

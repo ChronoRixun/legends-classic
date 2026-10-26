@@ -58,9 +58,13 @@ def test_grab_carry_refuses_companion_without_requested_key_only():
     with tempfile.TemporaryDirectory() as td:
         dll = Path(td) / 'dinput.dll'
         dll.write_bytes(b'MZ' + 'Xml1RogueDecide'.encode('utf-16le'))
-        assert FI.old_fix_keys(dll, {'Game': {'Xml1GrabCarry': 'xml1'}}) == ['[Game] Xml1GrabCarry']
+        assert FI.old_fix_keys(dll, {'Game': {'Xml1GrabCarry': 'xml1'}}) == ['[Game] Xml1GrabCarry',
+                                                                           '[Game] Xml1GrabCarry revision 3']
         assert FI.old_fix_keys(dll, {'Game': {}}) == []
+        # 080b's DLL knows the key but runs revision 2 (no flying carry, no XML1 flight upkeep): refused by marker
         dll.write_bytes(b'MZ' + 'Xml1GrabCarry'.encode('utf-16le'))
+        assert FI.old_fix_keys(dll, {'Game': {'Xml1GrabCarry': 'xml1'}}) == ['[Game] Xml1GrabCarry revision 3']
+        dll.write_bytes(b'MZ' + 'Xml1GrabCarry'.encode('utf-16le') + FI.GRAB_CARRY_R3_MARKER)
         assert FI.old_fix_keys(dll, {'Game': {'Xml1GrabCarry': 'xml1'}}) == []
 
 
@@ -104,3 +108,24 @@ def test_shared_handlers_c_keys_written_and_required():
         assert FI.old_fix_keys(dll, {'Game': dict(FI.SHARED_HANDLERS_C)}) == [f'[Game] {k}' for k in FI.SHARED_HANDLERS_C]
         dll.write_bytes(b'MZ' + '\0'.join(FI.SHARED_HANDLERS_C).encode('utf-16le'))
         assert FI.old_fix_keys(dll, {'Game': dict(FI.SHARED_HANDLERS_C)}) == []
+
+
+def test_juggernaut_npc_records_get_the_grab_talent():
+    # 080b live + trace: XMen2.exe's ch_guard_decide (0x4ec3c6) grabs only with grab_scale_dmg > 0, whose only provider
+    # is the hidden shared talent `grab` (heroes.GRAB_TALENT, heroes.py issue #51); XML1 has no such gate, so the two
+    # Juggernauts that fight with x1_ps_juggernaut's grabstart carry the same reference.
+    import xml.etree.ElementTree as ET
+    from xml1build import characters as CH
+    from xml1build import heroes as H
+    assert CH.NPC_GRAB_TALENT == ('juggernautflashback', 'juggernautact3')
+    root = ET.fromstring('<npcstats>'
+                         '<stats name="JuggernautFlashback"><talent level="0" name="jug_punch"/></stats>'
+                         '<stats name="JuggernautAct3"><talent level="1" name="grab"/></stats>'
+                         '<stats name="JuggernautScripted"><talent level="1" name="might"/></stats>'
+                         '<stats name="Blob"/></npcstats>')
+    assert CH.add_npc_grab_talent(root) == ['JuggernautFlashback']
+    grab = {st.get('name'): [(t.get('name'), t.get('level')) for t in st.iter('talent') if t.get('name') == H.GRAB_TALENT]
+            for st in root.iter('stats')}
+    assert grab == {'JuggernautFlashback': [('grab', '1')], 'JuggernautAct3': [('grab', '1')],
+                    'JuggernautScripted': [], 'Blob': []}
+    assert CH.add_npc_grab_talent(root) == []                           # idempotent: never a second reference

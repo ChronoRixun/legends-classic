@@ -216,8 +216,8 @@ SHARED_HANDLERS_C = {'JumpAttackDamageRule': 'xml1', 'FlyChargeDamageRule': 'xml
 ACTOR_POOLS = '124'
 
 # xml2-fix [Limits] AnimEnums (gameplay rule 48, xml2-fix docs/anim-enums.md; SPEC 107): the animation enum table 210 ->
-# 512 with XML1's 23 flying-carry / Juggernaut-grab enums at fixed IDs. Written only with --anim-enums xml1 (the build
-# then also carries their clips, mappings and carry nodes; anim_enums.py) until its live runs pass.
+# 512 with XML1's 23 flying-carry / Juggernaut-grab enums at fixed IDs. Written with --anim-enums xml1 (the default
+# since 0.4.1-beta.1; the build then also carries their clips, mappings and carry nodes; anim_enums.py).
 ANIM_ENUMS = '512'
 
 SHARED_HANDLERS = {'SkatingRule': 'xml1', 'TeleportLandingRule': 'xml1', 'PopupRule': 'xml1', 'PopupLandRule': 'xml1',
@@ -1165,6 +1165,11 @@ RELEASE_18_KEYS = {**RELEASE_18_KEYS, 'Game': RELEASE_18_KEYS['Game'] + tuple(SH
 # with exactly the builder's 23 names in ID order (check_anim_enums_dll); a DLL without it would leave the 23 mappings
 # unresolved (dropped by the shared_anims parser) and every carry / victim move on enum 0's animation.
 RELEASE_18_KEYS = {**RELEASE_18_KEYS, 'Limits': RELEASE_18_KEYS['Limits'] + ('AnimEnums',)}
+# xml2-fix 1.9.0-beta.1 rule 45 revision 3 (beta8/carry 063f2e8: the flying carry, fix7 admission, XML1's strict flight
+# upkeep) keeps the key name of revision 2 (080b), whose DLL would run the build's XML1 `flying` node (anim_enums
+# .XML1_FLIGHT_UPKEEP) with no flight cost at all. Its install line is the byte marker (xml2-fix src/xml1_grab_carry.cpp).
+GRAB_CARRY_R3_MARKER = b'flying carry, fix7 and XML1 upkeep installed'
+RELEASE_MARKERS[('Game', 'Xml1GrabCarry')] = (GRAB_CARRY_R3_MARKER, '[Game] Xml1GrabCarry revision 3')
 
 
 def check_release_dll(dll, keys: dict) -> None:

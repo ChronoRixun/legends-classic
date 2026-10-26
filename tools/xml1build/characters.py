@@ -112,6 +112,26 @@ BOLTON_SLOTS = {'ebolton_clawright': 0, 'ebolton_clawleft': 1, 'ebolton_weapon':
 # startHide and healthMul are inert: the XBE's own parser (0x89500) never reads them either.
 MULTIPART_X1_ONLY = ('effectondeath', 'linktopower', 'starthide', 'healthmul', 'loopeffect', 'effectbone')
 MULTIPART_X1_INERT = ('starthide', 'healthmul')
+# Juggernaut's grab (080b live, GPT trace 2026-10-25): XML1's and XMen2.exe's class-4 sentinel attack handler both request
+# Guard (guarddecide -> grabstart), but XMen2.exe's ch_guard_decide (0x4ec3c6-0x4ec41a) only grabs when the actor's
+# grab_scale_dmg talentvalue is above 0 - XML1 (0xd99d0) has no such gate. The only provider is XML2's hidden shared
+# talent `grab` (heroes.GRAB_TALENT, which every converted hero already gets, issue #51); the NPC records of the two
+# Juggernauts that fight with x1_ps_juggernaut's grabstart get the same reference, so his grab reaches rule 45.
+NPC_GRAB_TALENT = ('juggernautflashback', 'juggernautact3')
+
+
+def add_npc_grab_talent(root) -> list:
+    """Append <talent name="grab" level="1"/> to the NPC_GRAB_TALENT stats entries of an npcstat root that do not
+    name it yet (in place); the names changed, in file order."""
+    from .heroes import GRAB_TALENT
+    done = []
+    for st in root.iter('stats'):
+        if (st.get('name') or '').lower() not in NPC_GRAB_TALENT:
+            continue
+        if not any((t.get('name') or '').lower() == GRAB_TALENT for t in st.iter('talent')):
+            ET.SubElement(st, 'talent', {'level': '1', 'name': GRAB_TALENT})
+            done.append(st.get('name'))
+    return done
 # XML1's powerup removal (a trigger with remove="true", default.xbe 0xd7668 -> 0x2b100(attribute, 1)) drops EVERY
 # powerup of the actor whose attribute matches, permanent ones included - and talents' activepowerups are such
 # powerups (0x7f8b0 -> 0x2aa90). So Juggernaut's armor_end / helmet_penalty (remove def_damage) also take away his
@@ -1808,6 +1828,11 @@ def run(ctx):
                 b.detail['x2_kept'].append(st.get('name'))
         for e, _ in new_entries:
             r.append(copy.deepcopy(e))
+        grabbed = add_npc_grab_talent(r)
+        if ext == 'engb':
+            ctx.note(f'npcstat: talent grab added to {grabbed} (ch_guard_decide 0x4ec3c6 '
+                     f'needs grab_scale_dmg > 0 for his grabstart)')
+            ctx.set_count('npc_grab_talent_added', len(grabbed))
         roots[ext] = r
     replaced = sorted(x2npc[n] for n in keep if n in new_names and n in x2npc)
     same_name = sorted(x2npc[n] for n in x2npc if n in new_names)

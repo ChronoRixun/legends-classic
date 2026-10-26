@@ -7781,8 +7781,10 @@ The complete phase/boundary/lifecycle/multiplayer acceptance list is in the comp
 XMen2.exe registers 210 animation enums (0x00..0xD1, every slot taken). XML1 needs 23 more: the flying carry's
 (`ea_flyingcarry_*`, Phoenix / Rogue / Storm and their victims) and Juggernaut's grab victim's (`ea_jug_grab_*_v`).
 The companion DLL raises the table to 512 and gives the 23 names the fixed IDs 0xD2..0xE8 (`anim_enums.BUILTIN_ENUMS`
-order; xml2-fix `docs/anim-enums.md`). Opt-in for now: `--anim-enums xml1` (build_xml1 and the builder CLI; content
-option owned by characters). Off: none of the files below is written and no key - every output byte as before.
+order; xml2-fix `docs/anim-enums.md`). `--anim-enums xml1` (build_xml1 and the builder CLI; content option owned by
+characters) is the default since 0.4.1-beta.1 (beta 8 candidate 080c): `--grab-carry xml1` needs it, because XML2 Fix
+1.9.0-beta.1's rule 45 revision 3 installs only with AnimEnums (build_xml1 refuses the pair otherwise). Off (with
+`--grab-carry xml2`): none of the files below is written and no key - every output byte as before.
 
 With `xml1`, characters' last step (`anim_enums.run`) writes:
 
@@ -7805,9 +7807,11 @@ With `xml1`, characters' last step (`anim_enums.run`) writes:
 3. `Data/fightstyles/moveset_flying.{XMLB,engb}` - XML2's file plus XML1's carry nodes (flyguarddecide,
    airgrabpickup, airpickupidle / walk / run / throw / smash, fastball) converted like every XML1 style (x1schema +
    the style patch), by `anim_enums.MOVESET_FLYING_PRECEDENCE`: every node of either file is listed with its winner
-   and reason, an unlisted node is an error. `flying` stays XML2's until the XML1 flight upkeep port is in the same
-   build (`XML1_FLIGHT_UPKEEP`, False). The carry handlers (`ch_air_grab_pickup*`, `ch_fly_guard_decide`) are not
-   registered by XMen2.exe: the nodes run as `%default%` until the carry handler port lands (V18 lists them).
+   and reason, an unlisted node is an error. `flying` is XML1's (`XML1_FLIGHT_UPKEEP`, True since 080c): XML1's node
+   has no `energypersecond`, the DLL's rule 45 revision 3 charges XML1's strict one-second flight upkeep and filters
+   the `%flight_pwr` expression XML2's flymelee1/2 and painairfeetfirst keep (0x4f74b2), so flight is paid once. The
+   carry handlers (`ch_air_grab_pickup*`, `ch_fly_guard_decide`, `ch_air_grab_victim`) are not registered by
+   XMen2.exe; rule 45 revision 3 registers them through the shared lookup (V18 lists them).
 4. `[Limits] AnimEnums=512` (`fix_ini.port_keys`, port-owned: an OFF rebuild removes it). The builder requires the
    DLL to know the key and to carry its marked table (`XML2FIX.ANIMENUMS.1`, u16 count, NUL-separated names) with
    exactly the builder's 23 names in ID order (`fix_ini.check_anim_enums_dll`); a source-only build has no DLL.
@@ -7816,4 +7820,7 @@ Validator (V7): with the key the known names are XMen2.exe's plus the 23 (compar
 when there is one; no DLL is a warning), nothing is deferred (`DEFERRED_ANIM_ENUMS` applies only without the key);
 every ANIMTABLE name must be a known enum, the count must fit (210 / 512), every built-in must be mapped to a clip
 in the output `common.IGB` (the two known-absent clips aside), and `moveset_flying` must hold the carry nodes with
-known enums. The IGB cache count (SPEC 13) and the actor-resource budget (SPEC 14) are unchanged: same single file.
+known enums, and `flying` must match `XML1_FLIGHT_UPKEEP` (XML1's: no `energypersecond`; else XML2's with it - the
+other combination pays flight twice or never). The builder also requires rule 45 revision 3 wherever it writes
+`Xml1GrabCarry` (`fix_ini.GRAB_CARRY_R3_MARKER`, the DLL's install line; 080b's revision 2 DLL is refused by name).
+The IGB cache count (SPEC 13) and the actor-resource budget (SPEC 14) are unchanged: same single file.

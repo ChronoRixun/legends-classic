@@ -3965,6 +3965,19 @@ class Validator:
         lost = [n for n in want if n not in moves]
         if lost:
             ck.error(f'Data/fightstyles/moveset_flying lacks XML1\'s carry nodes {lost}')
+        # anim_enums.XML1_FLIGHT_UPKEEP: XML1's `flying` (no energypersecond; xml2-fix rule 45 revision 3 charges the
+        # flight upkeep) or PC's (%flight_pwr per second) - the other one pays twice or never
+        fly = moves.get('flying')
+        eps = None if fly is None else next((v for k, v in fly.attrib.items() if k.lower() == 'energypersecond'), None)
+        if fly is None:
+            ck.error('Data/fightstyles/moveset_flying has no flying node')
+        elif AE.XML1_FLIGHT_UPKEEP and eps is not None:
+            ck.error(f'Data/fightstyles/moveset_flying: flying still has energypersecond={eps!r} with XML1\'s flight '
+                     f'upkeep (rule 45 revision 3 charges it): flight would be paid twice')
+        elif not AE.XML1_FLIGHT_UPKEEP and eps is None:
+            ck.error('Data/fightstyles/moveset_flying: flying has no energypersecond and no XML1 flight upkeep: '
+                     'flight would cost nothing')
+        ck.set('anim_enum_flying_xml1_upkeep', int(AE.XML1_FLIGHT_UPKEEP and fly is not None and eps is None))
         bad = sorted({(m.get('animenum') or '').strip().lower() for m in moves.values()} - set(known) - {''})
         if bad:
             ck.error(f'Data/fightstyles/moveset_flying names unknown animation enums {bad}')

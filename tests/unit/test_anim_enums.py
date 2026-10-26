@@ -223,14 +223,18 @@ def test_moveset_flying_precedence_table_is_total_and_applied():
     assert len(AE.MOVESET_FLYING_PRECEDENCE) == 18 and len(X1_ONLY) == 8 and len(PC_MOVES) == 10
     assert all(why for _side, why in AE.MOVESET_FLYING_PRECEDENCE.values())
     pc, x1 = _style(PC_MOVES), _style(PC_MOVES + X1_ONLY, 'xml1')
-    out, rep = AE.merge_moveset_flying(pc, x1)
+    out, rep = AE.merge_moveset_flying(pc, x1, xml1_flight_upkeep=False)
     assert [m.get('name') for m in out] == PC_MOVES + X1_ONLY
     assert [m.get('synth') for m in out] == ['pc'] * 10 + ['xml1'] * 8
     assert rep['added_xml1'] == X1_ONLY and rep['replaced_by_xml1'] == []
     up, rep = AE.merge_moveset_flying(pc, x1, xml1_flight_upkeep=True)
     assert rep['replaced_by_xml1'] == ['flying']
     assert [(m.get('name'), m.get('synth')) for m in up][PC_MOVES.index('flying')] == ('flying', 'xml1')
-    assert AE.XML1_FLIGHT_UPKEEP is False                                # no fix7 flight upkeep port yet
+    assert [m.get('name') for m in up] == PC_MOVES + X1_ONLY            # replaced in place, order kept
+    # beta 8: xml2-fix rule 45 revision 3 ports XML1's flight upkeep, so the build default replaces `flying`
+    assert AE.XML1_FLIGHT_UPKEEP is True
+    _, rep = AE.merge_moveset_flying(pc, x1)
+    assert rep['replaced_by_xml1'] == ['flying']
     raises(AE.AnimEnumError, lambda: AE.merge_moveset_flying(_style(PC_MOVES + ['synthnode']), x1))   # unlisted
     raises(AE.AnimEnumError, lambda: AE.merge_moveset_flying(_style(PC_MOVES + ['fastball']), x1))    # XML1-only on PC
     raises(AE.AnimEnumError, lambda: AE.merge_moveset_flying(_style(PC_MOVES[1:]), x1))               # PC node gone
@@ -241,10 +245,12 @@ def _dll_block(names):
     return AE.DLL_MARKER + struct.pack('<H', len(names)) + b''.join(n.encode() + b'\0' for n in names)
 
 
-def test_anim_enums_option_off_by_default_and_ini_written_only_when_recorded():
-    assert build_xml1.parse_args(['--out', '.']).anim_enums == 'off'
-    assert build_xml1.parse_args(['--out', '.', '--anim-enums', 'xml1']).anim_enums == 'xml1'
-    assert build_xml1.CONTENT_OPTS['anim_enums'] == ('characters', 'off')
+def test_anim_enums_option_on_by_default_and_ini_written_only_when_recorded():
+    # 0.4.1-beta.1 (beta 8 candidate 080c): on by default, with the grab lifecycle (rule 45 revision 3 needs it)
+    assert build_xml1.parse_args(['--out', '.']).anim_enums == 'xml1'
+    assert build_xml1.parse_args(['--out', '.', '--anim-enums', 'off', '--grab-carry', 'xml2']).anim_enums == 'off'
+    raises(SystemExit, lambda: build_xml1.parse_args(['--out', '.', '--anim-enums', 'off']))   # grab-carry xml1 needs it
+    assert build_xml1.CONTENT_OPTS['anim_enums'] == ('characters', 'xml1')
     assert 'AnimEnums' in FI.PORT_OWNED['Limits'] and 'AnimEnums' in FI.RELEASE_18_KEYS['Limits']
     assert FI.ANIM_ENUMS == AE.LIMIT_VALUE == '512'
     with tempfile.TemporaryDirectory() as td:

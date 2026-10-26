@@ -32,7 +32,16 @@ the beta 8 test guide.
 - **Beta 8: grabs as in the first game.** `--grab-carry xml1` is the default content option (`xml2` = the stock
   handlers for A/B builds) and builds write `[Game] Xml1GrabCarry=xml1` (rule 45): Juggernaut's grab-and-hit, the
   shared grab victim, pickup and thrown-landing recovery, the ally throw and the flying charge picking up whoever it
-  hits. The flying carry is not restored yet.
+  hits. Since candidate 080c also the flying carry (Phoenix, Rogue and Storm pick up, carry and throw or smash) and
+  XML1's flight upkeep (rule 45 revision 3: the builder requires that DLL by its install line).
+- **Beta 8: the first game's animation enums.** `--anim-enums xml1` is the default (the flying carry needs it;
+  `--grab-carry xml2` builds may turn it off): the 21 XML1 carry / Juggernaut-grab clips are transplanted from your
+  XML1 disc into `Actors/common.IGB`, `Data/shared_anims` gains their 23 mappings, `moveset_flying` gains XML1's carry
+  nodes and XML1's `flying` (no per-second cost: XML2 Fix charges XML1's upkeep), and `[Limits] AnimEnums=512`
+  (rule 48) is written; the DLL must carry the matching AnimEnums table (SPEC 107).
+- **Beta 8: Juggernaut grabs again.** His two fighting records (JuggernautFlashback, JuggernautAct3) carry the hidden
+  `grab` talent every hero has: XMen2.exe's guard decide grabs only with a positive `grab_scale_dmg` (0x4ec3c6), a
+  gate the first game does not have.
 - **Beta 8: nine more shared moves.** Builds write the wave C keys = `xml1` (rule 46): the jump attack's and flying
   charge's damage (`values.xmlb`'s L3 row, which the conversion keeps), Colossus's charge, Beast's bounce, the
   fastball, idle/bored animations, animation speed and phase for scaled characters and Nightcrawler's teleport

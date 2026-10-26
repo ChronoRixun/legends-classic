@@ -87,16 +87,17 @@ def parse_args(argv=None):
                     help="hero talent icons: XML1's 2x2 <hero>_all atlases (default) or XML2's generic talent_icons.png")
     ap.add_argument('--grab-carry', choices=('xml1', 'xml2'), default='xml1',
                     help="XML1's grab lifecycle: Juggernaut's grab, the shared grab/pickup/recovery handlers and the "
-                         "flying-charge collision (default since 0.4.1-beta.1; needs XML2 Fix 1.9.0-beta.1's rule 45; "
-                         "the flying carry is not restored yet) or xml2, the stock handlers (A/B builds)")
+                         "flying-charge collision, the flying carry and XML1's flight upkeep (default since 0.4.1-beta.1; needs "
+                         "XML2 Fix 1.9.0-beta.1's rule 45 revision 3 and --anim-enums xml1) or xml2, the stock "
+                         "handlers (A/B builds)")
     ap.add_argument('--actor-pools', dest='actor_pools', choices=('off', '124'), default='off',
                     help="E4 stage 1: write [Limits] ActorPools=124 (XML2 Fix rule 44: path, shadow and delayed-damage "
                          "pools 32 -> 124). Off by default until its live runs pass")
-    ap.add_argument('--anim-enums', dest='anim_enums', choices=('off', 'xml1'), default='off',
+    ap.add_argument('--anim-enums', dest='anim_enums', choices=('off', 'xml1'), default='xml1',
                     help="SPEC 107: XML1's 23 animation enums (flying carry, Juggernaut's grab victims): their 21 clips "
                          "transplanted into Actors/common.IGB from your XML1 disc, the mappings in Data/shared_anims, "
                          "XML1's carry nodes in moveset_flying and [Limits] AnimEnums=512 (needs the XML2 Fix with "
-                         "rule 48's AnimEnums table). Off by default until its live runs pass")
+                         "rule 48's AnimEnums table). Default since 0.4.1-beta.1 (beta 8); off only with --grab-carry xml2")
     ap.add_argument('--rogue-decide', choices=('xml1', 'xml2'), default='xml1',
                     help="Rogue's power decision: XML1's ch_roguedecide (default since 0.4.1-beta.1; needs XML2 Fix "
                          "1.9.0-beta.1's rule 43) or xml2, the old D15 collapse (A/B builds)")
@@ -161,6 +162,11 @@ def parse_args(argv=None):
             sel.append('heroes')              # heroes rewrites characters' npcstat / shared_talents / hero styles
             print('[build] --only characters implies heroes (it patches the characters output)')
         a.only = [m for m in C.MODULE_ORDER if m in sel]
+    # xml2-fix 1.9.0-beta.1's rule 45 revision 3 (the flying carry, fix7, XML1's flight upkeep) installs only with
+    # [Limits] AnimEnums installed: without it that DLL installs none of rule 45 (xml2-fix xml1_grab_carry.cpp)
+    if a.grab_carry == 'xml1' and a.anim_enums != 'xml1':
+        ap.error('--grab-carry xml1 needs --anim-enums xml1 (XML2 Fix 1.9.0-beta.1 rule 45 revision 3 requires '
+                 '[Limits] AnimEnums); use --grab-carry xml2 for an AnimEnums-off A/B build')
     if a.tour is not None and a.tour <= 0:
         ap.error('--tour needs a positive number of seconds')
     if a.start_zone:
@@ -192,7 +198,7 @@ HOOK_OWNER = 'testhooks'
 CONTENT_OPTS = {'harm_loop_startup': (tuple(C.MODULE_ORDER), 'workaround'),
                 'blackbird': ('scripts', 'menu'), 'npc_scaling': ('characters', 'off'), 'tiles': ('zones', 'used'),
                 'main_menu_layout': ('frontend', 'classic'),
-                'grab_carry': ('characters', 'xml1'), 'actor_pools': ('characters', 'off'), 'anim_enums': ('characters', 'off'), 'rogue_decide': ('heroes', 'xml1'), 'hero_roster': ('heroes', '21'), 'hero_icons': ('heroes', 'xml1'), 'hero_bleed': ('heroes', 'on'),
+                'grab_carry': ('characters', 'xml1'), 'actor_pools': ('characters', 'off'), 'anim_enums': ('characters', 'xml1'), 'rogue_decide': ('heroes', 'xml1'), 'hero_roster': ('heroes', '21'), 'hero_icons': ('heroes', 'xml1'), 'hero_bleed': ('heroes', 'on'),
                 'newgame': ('scripts', 'keepteam'),
                 # SPEC 19: scripts emits the blocks; zones imports the dialogs / conversations rewrite_data_tree patches
                 'forced_teams': (('scripts', 'zones'), 'seat'),
