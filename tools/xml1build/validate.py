@@ -2004,6 +2004,15 @@ class Validator:
                         ck.error(f'data/{fname}{ext}: stats entry without a name')
                     elif len(x) > NAME_MAX:
                         ck.error(f'data/{fname}{ext}: name {x!r} longer than {NAME_MAX} chars (strncpy 0x20)')
+            # V5 (beta 8): every stats string the engine copies into a fixed-width CStats field fits it. A longer
+            # value is cut silently (powerstyle: 31 characters, 0x43a690), so the engine requests a file that does
+            # not exist (GRSO Officer's x1_ps_grso_m_nullifier_incendiary -> ..._incendia) and the character loses
+            # the whole style. (name is checked above.)
+            for fname in ('herostat', 'npcstat'):
+                for el, attr, val, width in W.stats_string_overflows(v[fname]):
+                    ck.count('stats_strings_over_width')
+                    ck.error(f'data/{fname}{ext}: {el.get("name")!r} {attr}={val!r} is {len(val)} characters, '
+                             f'XMen2.exe keeps {width} (the engine would use {val[:width]!r})')
             both = {x.lower() for x in hero} & {x.lower() for x in npc}
             for b in sorted(both):
                 ck.error(f'{ext}: {b!r} is in herostat and npcstat (the npcstat entry is never registered)')
@@ -2176,6 +2185,9 @@ class Validator:
             stem = rel.rsplit('/', 1)[-1].rsplit('.', 1)[0].lower()
             if not stem.startswith('x1_'):
                 continue
+            if len(stem) > W.STYLE_NAME_MAX:
+                ck.error(f'{rel}: style name {stem!r} is {len(stem)} characters; XMen2.exe keeps {W.STYLE_NAME_MAX} '
+                         f'of a stats powerstyle, so a character could never load this file')
             p = self.idx.path(rel)
             if p is None:
                 continue
@@ -2206,6 +2218,9 @@ class Validator:
         for rel in self.idx.under('data/fightstyles/'):
             stem = rel.rsplit('/', 1)[-1].rsplit('.', 1)[0].lower()
             want = W.variant_grenade(stem, grenades) if stem.startswith('x1_') else ''
+            if stem.startswith('x1_') and len(stem) > W.STYLE_NAME_MAX:
+                ck.error(f'{rel}: style name {stem!r} is {len(stem)} characters; XMen2.exe keeps {W.STYLE_NAME_MAX} '
+                         f'of a stats moveset1 name')
             if not want:
                 continue
             tree = self.tree(rel)

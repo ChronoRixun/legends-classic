@@ -42,8 +42,12 @@ def test_tk_guard_dll_gate():
         dll = Path(td) / 'dinput.dll'
         keys = {'Game': dict(FI.TK_GUARD)}
         dll.write_bytes(b'MZ' + 'Xml1GrabCarry'.encode('utf-16le'))
-        assert FI.old_fix_keys(dll, keys) == ['[Game] TelekinesisRule', '[Game] GuardDecideRule']
+        assert FI.old_fix_keys(dll, keys) == ['[Game] TelekinesisRule', '[Game] GuardDecideRule',
+                                              '[Game] TelekinesisRule (PC audio slot 38)']
+        # 080d's DLL knows both keys but resolves the telekinesis sounds through slot 0x34: refused by marker
         dll.write_bytes(b'MZ' + '\0'.join(FI.TK_GUARD).encode('utf-16le'))
+        assert FI.old_fix_keys(dll, keys) == ['[Game] TelekinesisRule (PC audio slot 38)']
+        dll.write_bytes(b'MZ' + '\0'.join(FI.TK_GUARD).encode('utf-16le') + FI.TK_AUDIO_MARKER)
         assert FI.old_fix_keys(dll, keys) == []
 
 

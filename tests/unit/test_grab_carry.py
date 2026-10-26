@@ -59,12 +59,17 @@ def test_grab_carry_refuses_companion_without_requested_key_only():
         dll = Path(td) / 'dinput.dll'
         dll.write_bytes(b'MZ' + 'Xml1RogueDecide'.encode('utf-16le'))
         assert FI.old_fix_keys(dll, {'Game': {'Xml1GrabCarry': 'xml1'}}) == ['[Game] Xml1GrabCarry',
-                                                                           '[Game] Xml1GrabCarry revision 3']
+                                                                           '[Game] Xml1GrabCarry revision 3',
+                                                                           '[Game] Xml1GrabCarry (no carry self-chain)']
         assert FI.old_fix_keys(dll, {'Game': {}}) == []
         # 080b's DLL knows the key but runs revision 2 (no flying carry, no XML1 flight upkeep): refused by marker
         dll.write_bytes(b'MZ' + 'Xml1GrabCarry'.encode('utf-16le'))
-        assert FI.old_fix_keys(dll, {'Game': {'Xml1GrabCarry': 'xml1'}}) == ['[Game] Xml1GrabCarry revision 3']
+        assert FI.old_fix_keys(dll, {'Game': {'Xml1GrabCarry': 'xml1'}}) == ['[Game] Xml1GrabCarry revision 3',
+                                                                           '[Game] Xml1GrabCarry (no carry self-chain)']
+        # 080c / 080d's DLL runs revision 3 but re-enters the established carry node every frame: refused by marker
         dll.write_bytes(b'MZ' + 'Xml1GrabCarry'.encode('utf-16le') + FI.GRAB_CARRY_R3_MARKER)
+        assert FI.old_fix_keys(dll, {'Game': {'Xml1GrabCarry': 'xml1'}}) == ['[Game] Xml1GrabCarry (no carry self-chain)']
+        dll.write_bytes(b'MZ' + 'Xml1GrabCarry'.encode('utf-16le') + FI.GRAB_CARRY_R3_MARKER + FI.CARRY_CHAIN_MARKER)
         assert FI.old_fix_keys(dll, {'Game': {'Xml1GrabCarry': 'xml1'}}) == []
 
 

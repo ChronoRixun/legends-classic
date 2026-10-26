@@ -1261,6 +1261,16 @@ RELEASE_MARKERS[('Game', 'Xml1GrabCarry')] = (GRAB_CARRY_R3_MARKER, '[Game] Xml1
 # xml2-fix 1.9.0-beta.1 (beta 8 candidate 080d): rule 46's TelekinesisRule / GuardDecideRule (a DLL before them - 080c and
 # older - ignores both keys without a word and runs PC's telekinesis and guard decide).
 RELEASE_18_KEYS = {**RELEASE_18_KEYS, 'Game': RELEASE_18_KEYS['Game'] + tuple(TK_GUARD)}
+# xml2-fix 1.9.0-beta.1 (beta 8 candidate 080e, beta8/fix2 c0505c8): TelekinesisRule resolves Phoenix's power1a / power1b
+# through the PC sound manager's name lookup (slot 0x38); the 080d DLL called slot 0x34 (a PC bool query, ret 4) and
+# crashed at the first telekinesis hold. The same release keeps an established flying carry node instead of re-entering
+# it every frame (080d: the victim never followed). Neither changes a key or a rule revision, so the install lines
+# (xml2-fix src/shared_handlers_c.cpp, src/xml1_grab_carry.cpp) are the byte markers.
+TK_AUDIO_MARKER = b'telekinesis sounds resolve through PC audio slot 38'
+CARRY_CHAIN_MARKER = b'flying carry keeps its established node (no self-chain)'
+RELEASE_MARKERS[('Game', 'TelekinesisRule')] = (TK_AUDIO_MARKER, '[Game] TelekinesisRule (PC audio slot 38)')
+# a second marker for a key that already has one (Xml1GrabCarry: revision 3 above)
+EXTRA_MARKERS = [(('Game', 'Xml1GrabCarry'), CARRY_CHAIN_MARKER, '[Game] Xml1GrabCarry (no carry self-chain)')]
 # E12 (SPEC 108): a build whose own XMen2.exe is large-address-aware needs the fix's address-space module (the 2 GB guard
 # block, and the two test readers that refused addresses above 0x7fffffff before it). Its start line is the marker; the
 # check reads the build's exe beside the DLL (no exe yet, or --laa off: nothing to check).
@@ -1313,6 +1323,8 @@ def check_release_dll(dll, keys: dict) -> None:
     missing = [f'[{section}] {key}' for section, names in RELEASE_18_KEYS.items() for key in names
                if key in keys.get(section, {}) and (key + ('\0' if key in EXACT_KEYS.get(section, ()) else '')).encode('utf-16le') not in data]
     missing += [name for (section, key), (marker, name) in RELEASE_MARKERS.items()
+                if key in keys.get(section, {}) and marker not in data]
+    missing += [name for (section, key), marker, name in EXTRA_MARKERS
                 if key in keys.get(section, {}) and marker not in data]
     for (section, key), (stock, marker, name) in VALUE_MARKERS.items():
         value = keys.get(section, {}).get(key)
