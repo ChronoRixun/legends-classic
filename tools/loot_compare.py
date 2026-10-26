@@ -50,12 +50,19 @@ Several runs may share a file: each `run` header starts a new run.
 Port, the DLL's roll log (xml2-fix `x1_roll`, one line per pickup; `def=-` / `amt=0` is a roll that dropped nothing), as
 it appears in the fix log or in the test pipe's `economy rolls` (16 most recent lines, no timestamps):
 
-    [HH:MM:SS.mmm] roll cat=3 lead=0 G=1 bucket=3 def=<name> amt=1 draws=5
+    [HH:MM:SS.mmm] roll n=<serial> cat=3 lead=0 G=1 bucket=3 def=<name> amt=1 draws=5
 
-The port log has no roll serial: pickups of one roll are recognised as consecutive lines with the same cat, lead, G,
-bucket and draws, logged within 20 ms of each other, where a line with a non-money definition of a non-leader roll is
-always a roll of its own. Without timestamps (pipe output) money pickups of different rolls with equal headers cannot be
-told apart and are merged; that is counted as `ambiguous_merges` and reported. A `run ... enemy_minutes=` header line
+The port lines carry an explicit roll serial, `n=<serial>` (the DLL numbers every roll; every pickup line of a roll, and
+the single `def=-` line of a roll that dropped nothing, carries the same value). With it, grouping is exact: all lines with
+one `n` are one roll, whatever their timestamps and however close the next roll is, and pipe output (no timestamps) is
+exact too. A line without `n` (a log written by a DLL before the serial existed) falls back to the old time window:
+consecutive lines with the same cat, lead, G, bucket and draws, logged within 20 ms of each other, where a line with a
+non-money definition of a non-leader roll is always a roll of its own. That fallback cannot see where one roll ends and an
+equal one starts, so every group it forms that could be several rolls is reported as a WARNING (also in `warnings` in the
+JSON): pickups merged without timestamps; a merged group of more than 4 pickups (a roll spawns at most 4, so it is at least
+two rolls); a serial reused for a different header or after a gap of more than 1 s (a restarted counter); a run mixing
+lines with and without a serial. The counts of a run with warnings are lower bounds for rolls.
+A `run ... enemy_minutes=` header line
 (same as above) may precede a run in a port file too. Auto-detection: a `roll` line with `def=` is a port line, a
 `roll` line without it is an S6 roll header.
 """
@@ -72,6 +79,8 @@ CLASSES = ('gear', 'pack', 'money', 'xtreme', 'other')
 GATED_MIX = ('gear', 'pack', 'money', 'xtreme')
 UNDERPOWERED_EVENTS = 20
 SAME_ROLL_SECONDS = 0.020
+SERIAL_GAP_SECONDS = 1.0                 # one roll's pickups are logged together; a longer gap on one serial = a reused serial
+MAX_PICKUPS_PER_ROLL = 4                 # a money drop spawns 2-4, a leader up to 4
 
 PACKS = {'health_item', 'energy_item'}
 OTHER_NAMES = {'skirmish_king_pip', 'xp', 'skill', 'stat'}
@@ -115,6 +124,9 @@ class Roll:
     drops: list = field(default_factory=list)          # [(name, amount, class)]
     n: str | None = None
     ts_merged: bool = False                              # port: pickups merged without a time to tell rolls apart
+    window_merged: bool = False                          # port: grouped by the time window (no serial), more than one line
+    last_t: float | None = None                          # port, serial grouping: time of the roll's latest line
+    header: tuple | None = None                          # port, serial grouping: (cat, lead, G, bucket, draws)
 
 
 @dataclass
@@ -126,6 +138,9 @@ class Run:
     minutes: float | None = None
     minutes_source: str = ''
     ambiguous_merges: int = 0
+    warnings: list = field(default_factory=list)
+    serial_lines: int = 0
+    unserialed_lines: int = 0
     source: str = ''
 
     def finish(self, override=None):
@@ -159,13 +174,15 @@ def parse_lines(lines, side_hint=None, source=''):
     port_open = None                  # (header tuple, roll) of the port roll still collecting pickups
     last_s6_roll = None
     by_serial = {}
+    port_serial = {}                  # port roll serial -> its Roll
 
     def start(rid='', side='', zone='', minutes=None):
-        nonlocal cur, port_open, last_s6_roll, by_serial, day_offset, last_wall
+        nonlocal cur, port_open, last_s6_roll, by_serial, port_serial, day_offset, last_wall
         cur = Run(id=rid or f'{source or "run"}#{len(runs) + 1}', side=side, zone=zone, minutes=minutes, source=source)
         runs.append(cur)
         port_open = last_s6_roll = None
         by_serial = {}
+        port_serial = {}
         day_offset, last_wall = 0.0, None
         return cur
 
@@ -227,6 +244,25 @@ def parse_lines(lines, side_hint=None, source=''):
         amount = int(kv.get('amt', '0') or 0)
         lead = 1 if kv.get('lead') in ('1', 'true') else 0
         none = name in ('-', '')
+        serial = kv.get('n')
+        if serial is not None:                                  # explicit roll serial: exact grouping
+            cur.serial_lines += 1
+            r = port_serial.get(serial)
+            if r is not None and (r.header != header or (t is not None and r.last_t is not None
+                                                         and t - r.last_t > SERIAL_GAP_SECONDS)):
+                cur.warnings.append(f'{source}:{lineno}: roll serial n={serial} reused for another roll '
+                                    f'(different header or more than {SERIAL_GAP_SECONDS:g} s later): counted as a new roll')
+                r = None
+            if r is None:
+                r = Roll(t=t, cat=_cat(kv.get('cat')), lead=lead, n=serial, header=header)
+                cur.rolls.append(r)
+                port_serial[serial] = r
+            if not none:
+                r.drops.append((name, amount, kv.get('cls') or classify(name)))
+            r.last_t = t
+            port_open = None
+            continue
+        cur.unserialed_lines += 1
         merge = False
         if port_open is not None and not none:
             h0, r0, t0, last_t = port_open
@@ -236,6 +272,7 @@ def parse_lines(lines, side_hint=None, source=''):
             merge = h0 == header and near and more
         if merge:
             r0.drops.append((name, amount, kv.get('cls') or classify(name)))
+            r0.window_merged = True
             if t is None or last_t is None:
                 r0.ts_merged = True
             port_open = (h0, r0, t0, t)
@@ -247,6 +284,17 @@ def parse_lines(lines, side_hint=None, source=''):
         port_open = (header, r, t, t) if not none else None
     for run in runs:
         run.ambiguous_merges = sum(1 for r in run.rolls if r.ts_merged and len(r.drops) > 1)
+        if run.ambiguous_merges:
+            run.warnings.append(f'{run.source or run.id}: run {run.id!r}: {run.ambiguous_merges} roll(s) merged pickups '
+                                f'without timestamps or serials (equal rolls cannot be told apart)')
+        big = sum(1 for r in run.rolls if r.window_merged and len(r.drops) > MAX_PICKUPS_PER_ROLL)
+        if big:
+            run.warnings.append(f'{run.source or run.id}: run {run.id!r}: {big} time-window group(s) of more than '
+                                f'{MAX_PICKUPS_PER_ROLL} pickups (one roll spawns at most {MAX_PICKUPS_PER_ROLL}: several '
+                                f'rolls were merged; add n=<serial> to the roll log)')
+        if run.serial_lines and run.unserialed_lines:
+            run.warnings.append(f'{run.source or run.id}: run {run.id!r}: {run.serial_lines} line(s) with a roll serial '
+                                f'and {run.unserialed_lines} without (a log from two DLL builds?)')
     return runs
 
 
@@ -354,7 +402,7 @@ def run_compare(s6_runs, port_runs, tolerance=0.20, min_runs=3):
     for label, runs in (('original', s6_runs), ('port', port_runs)):
         for r in runs:
             m = run_metrics(r)
-            m.update(id=r.id, minutes_source=r.minutes_source, ambiguous_merges=r.ambiguous_merges, source=r.source)
+            m.update(id=r.id, minutes_source=r.minutes_source, ambiguous_merges=r.ambiguous_merges, warnings=list(r.warnings), source=r.source)
             out['runs'][label].append(m)
     out['pooled'] = {'original': pooled(s6_runs), 'port': pooled(port_runs)}
     problems = []
@@ -368,6 +416,11 @@ def run_compare(s6_runs, port_runs, tolerance=0.20, min_runs=3):
     amb = sum(r.ambiguous_merges for r in port_runs)
     if amb:
         out['notes'].append(f'{amb} port roll(s) merged pickups without timestamps (counts are lower bounds for rolls)')
+    out['warnings'] = [w for r in port_runs for w in r.warnings]
+    windowed = sum(1 for r in port_runs for x in r.rolls if x.window_merged)
+    if windowed:
+        out['warnings'].append(f'{windowed} port roll(s) were grouped by the 20 ms time window because their lines carry '
+                               f'no n=<serial>: back-to-back equal rolls may be merged')
     out['rows'] = compare_pooled(out['pooled']['port'], out['pooled']['original'], tolerance)
     per_run = []
     base = out['pooled']['original']
@@ -423,6 +476,8 @@ def render(res):
         L.append(f'  {r["id"][:40]:<42}{"ok" if r["pass"] else "FAIL: " + ", ".join(r["failing"])}')
     for n in res['notes']:
         L.append('note: ' + n)
+    for w in res.get('warnings', []):
+        L.append('WARNING: ' + w)
     for p in res['problems']:
         L.append('problem: ' + p)
     if res['underpowered']:

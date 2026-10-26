@@ -269,3 +269,79 @@ def test_cli_exit_codes_json_and_input_errors():
         mins = ','.join(str(make_run(30 + i, XML1)[-1][0] / 60.0) for i in (1, 2, 3))
         assert LC.main(['--s6', *s6, '--port', *pipe, '--minutes-port', mins]) == 0
         assert LC.main(['--s6', *s6, '--port', *pipe, '--minutes-port', '1,2']) == 2
+
+
+# ---------------------------------------------------------------------------------------------------- roll serial n=
+def _money_rolls_10ms(serial):
+    """the reviewer's reproduction: two rolls, each three MONEY1 pickups, the second 10 ms after the first"""
+    lines = []
+    for i, base in enumerate((100, 110)):
+        for _ in range(3):
+            n = f' n={i + 1}' if serial else ''
+            lines.append(f'[10:00:00.{base}] roll{n} cat=3 lead=0 G=1 bucket=0 def=MONEY1 amt=9 draws=3')
+    return lines
+
+
+def test_serial_keeps_back_to_back_money_rolls_apart():
+    run = LC.parse_lines(_money_rolls_10ms(True), 'port', 'unit')[0]
+    assert [len(r.drops) for r in run.rolls] == [3, 3]
+    assert run.warnings == [] and run.ambiguous_merges == 0
+    m = LC.run_metrics(run.finish(1.0))
+    assert m['rolls'] == 2 and m['events']['money'] == 2 and m['drops'] == 6
+
+
+def test_without_serial_the_same_log_is_warned_about_not_silently_merged():
+    run = LC.parse_lines(_money_rolls_10ms(False), 'port', 'unit')[0]
+    assert [len(r.drops) for r in run.rolls] == [6]                     # the window cannot tell them apart ...
+    assert any('more than 4 pickups' in w for w in run.warnings)         # ... and says so
+    res = LC.run_compare([run.finish(1.0)] * 3, [run] * 3)
+    assert any('more than 4 pickups' in w for w in res['warnings'])
+    assert any('no n=<serial>' in w for w in res['warnings'])
+    assert 'WARNING: ' in LC.render(res)
+
+
+def test_serial_groups_by_n_not_by_time_or_adjacency():
+    lines = ['[10:00:00.000] roll n=7 cat=3 lead=0 G=1 bucket=0 def=MONEY1 amt=9 draws=3',
+             '[10:00:00.001] roll n=8 cat=3 lead=0 G=1 bucket=0 def=MONEY1 amt=9 draws=3',   # interleaved
+             '[10:00:00.002] roll n=7 cat=3 lead=0 G=1 bucket=0 def=MONEY1 amt=9 draws=3',
+             '[10:00:00.003] roll n=9 cat=3 lead=0 G=1 bucket=3 def=- amt=0 draws=1',         # nothing
+             'roll n=10 cat=5 lead=1 G=1 bucket=2 def=lc_x1_a amt=1 draws=6',                  # pipe line: no timestamp
+             'roll n=10 cat=5 lead=1 G=1 bucket=2 def=HEALTH_ITEM amt=1 draws=6']
+    run = LC.parse_lines(lines, 'port', 'unit')[0]
+    assert [(r.n, len(r.drops)) for r in run.rolls] == [('7', 2), ('8', 1), ('9', 0), ('10', 2)]
+    assert run.warnings == [] and run.ambiguous_merges == 0
+
+
+def test_pipe_output_with_serials_is_exact_and_needs_no_warning():
+    lines = ['roll n=%d cat=3 lead=0 G=1 bucket=0 def=MONEY1 amt=9 draws=3' % (i // 3 + 1) for i in range(15)]
+    run = LC.parse_lines(lines, 'port', 'pipe')[0]
+    assert [len(r.drops) for r in run.rolls] == [3] * 5
+    assert run.ambiguous_merges == 0 and run.warnings == []
+
+
+def test_a_reused_serial_is_a_new_roll_and_warns():
+    lines = ['[10:00:00.000] roll n=1 cat=3 lead=0 G=1 bucket=0 def=MONEY1 amt=9 draws=3',
+             '[10:00:00.001] roll n=1 cat=3 lead=0 G=1 bucket=0 def=MONEY1 amt=9 draws=3',
+             '[10:05:00.000] roll n=1 cat=3 lead=0 G=1 bucket=0 def=MONEY1 amt=9 draws=3',   # restarted counter
+             '[10:05:00.001] roll n=1 cat=3 lead=0 G=1 bucket=0 def=MONEY1 amt=9 draws=3',
+             '[10:05:09.000] roll n=1 cat=4 lead=0 G=1 bucket=1 def=HEALTH_ITEM amt=1 draws=4']  # other header
+    run = LC.parse_lines(lines, 'port', 'unit')[0]
+    assert [len(r.drops) for r in run.rolls] == [2, 2, 1]
+    assert sum('reused' in w for w in run.warnings) == 2
+
+
+def test_mixed_serial_and_plain_lines_warn():
+    lines = ['[10:00:00.000] roll n=1 cat=3 lead=0 G=1 bucket=3 def=HEALTH_ITEM amt=1 draws=4',
+             '[10:00:02.000] roll cat=3 lead=0 G=1 bucket=3 def=HEALTH_ITEM amt=1 draws=4']
+    run = LC.parse_lines(lines, 'port', 'unit')[0]
+    assert len(run.rolls) == 2 and any('without' in w for w in run.warnings)
+
+
+def test_serial_results_match_the_window_results_on_unambiguous_logs():
+    plain = ['[10:00:01.000] roll cat=3 lead=0 G=1 bucket=3 def=HEALTH_ITEM amt=1 draws=4',
+             '[10:00:02.500] roll cat=3 lead=0 G=1 bucket=0 def=MONEY2 amt=12 draws=3',
+             '[10:00:02.501] roll cat=3 lead=0 G=1 bucket=0 def=MONEY2 amt=12 draws=3',
+             '[10:00:04.000] roll cat=3 lead=0 G=1 bucket=0 def=- amt=0 draws=1']
+    ser = [l.replace('roll ', f'roll n={n} ', 1) for l, n in zip(plain, (1, 2, 2, 3))]
+    a, b = (LC.parse_lines(x, 'port', 'u')[0].finish(1.0) for x in (plain, ser))
+    assert LC.run_metrics(a) == LC.run_metrics(b) and a.warnings == [] == b.warnings
