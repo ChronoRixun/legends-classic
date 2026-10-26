@@ -351,7 +351,7 @@ def test_port_keys_from_a_synthetic_build():
         assert FI.port_keys(out) == {'Game': {'NewGameTeam': 'wolverine', 'ResetUnlocks': '0',
                                               'SaveFolder': 'X-Men Legends', 'ForcedTeams': '1',
                                               'GeometrySharingBlendIndices': '1', 'CharacterLadderPaths': '1',
-                                              'ObjectiveDescriptions': '1', 'BreakRule': 'xml1', 'LiftRule': 'xml1', 'Xml1WallCling': 'xml1', **FI.SHARED_HANDLERS,
+                                              'ObjectiveDescriptions': '1', 'BreakRule': 'xml1', 'LiftRule': 'xml1', 'Xml1WallCling': 'xml1', **FI.SHARED_HANDLERS, **FI.SHARED_HANDLERS_C,
                                               'PlacementCrush': 'xml1', 'ObjectWorldImpact': 'xml1', 'DoubleHeal': '0', 'ExplosiveFirstHit': '1',
                                               'RankCosts': '1', 'LevelSkillPoints': 'xml1',
                                               'LevelStatPoints': 'xml1', 'Xml1Multipart': '1', 'DeathRule': 'xml1',

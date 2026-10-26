@@ -202,6 +202,19 @@ WALL_CLING = 'xml1'
 # moveset shares - ice/lava skating, Nightcrawler's teleport landing, the popup / air spin decision and landing, the
 # charge (Advanced Sentinel), Nightcrawler's buddy-teleport targets and Gambit's object charge - behave as XML1's.
 # The fix applies them to the whole installation, so they belong to an XML1 build's profile. One mask online.
+# xml2-fix 1.9.0-beta.1 shared handlers wave C (gameplay rule 46, docs/shared-handler-c-rules.md): the jump attack's and
+# the flying charge's damage from values.xmlb's L3 row, Colossus's charge, Beast's bounce and the fastball contact, the
+# idle/bored choice, the animation rate's scale and phase and Nightcrawler's teleport visibility behave as XML1's. Phoenix's
+# telekinesis and the guard decide are not in it yet. Whole-installation, so an XML1 build's profile; one mask online.
+SHARED_HANDLERS_C = {'JumpAttackDamageRule': 'xml1', 'FlyChargeDamageRule': 'xml1', 'ColossusChargeRule': 'xml1',
+                     'BeastBounceRule': 'xml1', 'FastballRule': 'xml1', 'IdleBoredRule': 'xml1', 'LocomotionScaleRule': 'xml1',
+                     'AnimationPhaseRule': 'xml1', 'TeleportVisibilityRule': 'xml1'}
+
+# xml2-fix 1.9.0-beta.1 [Limits] ActorPools (E4 stage 1, gameplay rule 44, docs/actor-pools.md): the path, shadow and
+# delayed-damage pools sized for 32 actors grow to 124. Written only with --actor-pools 124 until its live runs pass
+# (beta 8 leaves it off: no S1-L1..L5 run yet).
+ACTOR_POOLS = '124'
+
 SHARED_HANDLERS = {'SkatingRule': 'xml1', 'TeleportLandingRule': 'xml1', 'PopupRule': 'xml1', 'PopupLandRule': 'xml1',
                    'ChargeRule': 'xml1', 'NightcrawlerRule': 'xml1', 'GambitRule': 'xml1'}
 
@@ -392,12 +405,12 @@ _ZONE_PATH = re.compile(r'^[a-z0-9_.\-]+(/[a-z0-9_.\-]+)*$')
 PORT_OWNED = {'Game': ('NewGameTeam', 'ResetUnlocks', 'SaveFolder', 'ForcedTeams', 'PostgameScript', 'WindowTitle',
                         'EndHeroUnlock', 'MainMenuItems', 'DangerRoomGate', 'ClassicMainBackdrop', 'ClassicMainPanelBounds', 'NewGamePlus', 'ReviewStats', 'Xtract', 'XtractionShop', 'RevivalCost', 'XPCurve',
                        'GeometrySharingBlendIndices', 'CharacterLadderPaths', 'ObjectiveDescriptions',
-                       'BreakRule', 'LiftRule', 'Xml1GrabCarry', 'Xml1RogueDecide', 'Xml1WallCling', *SHARED_HANDLERS, 'PlacementCrush', 'ObjectWorldImpact', 'DoubleHeal', 'DeathRule', 'NpcPowerRule', 'StunRule', 'DangerRoomParty', 'DangerRoomHealthBars', 'ResistanceDisplay', 'BoxHarmOrigin', 'HarmSingleChain', 'HarmLoopStartup', 'ConfirmationRelease',
+                       'BreakRule', 'LiftRule', 'Xml1GrabCarry', 'Xml1RogueDecide', 'Xml1WallCling', *SHARED_HANDLERS, *SHARED_HANDLERS_C, 'PlacementCrush', 'ObjectWorldImpact', 'DoubleHeal', 'DeathRule', 'NpcPowerRule', 'StunRule', 'DangerRoomParty', 'DangerRoomHealthBars', 'ResistanceDisplay', 'BoxHarmOrigin', 'HarmSingleChain', 'HarmLoopStartup', 'ConfirmationRelease',
                        'OnlineConversations', 'PersonalItemPicture', 'ComboPopupGuard', 'ClassicHud', 'ClassicHudPilot', 'ClassicCodex', 'ClassicObjectives', 'NpcSemiAuto', 'ClassicSpeakers', 'WorldBackfaces',
                        'ExplosiveFirstHit', 'PackAmount', 'SoloMode', 'X1Leader', 'DeathSwitchClear', 'RankCosts', 'LevelSkillPoints', 'LevelStatPoints', 'Xml1Multipart',
                        'Xml1MasterMold', 'Xml1MoldStage', 'Xml1Turrets', 'Xml1LockOnEffects', 'Xml1LockOnAim', 'Xml1Bosses'),
               'Limits': ('ActorSlots', 'ResourceNames', 'ItemEnhancements', 'FightStyles', 'EffectCurves', 'MoveTriggers', 'EntityCapacity',
-                         'ScriptFunctions', 'IGBCache'),
+                         'ScriptFunctions', 'IGBCache', 'ActorPools'),
               'Online': ('GameVersion', 'ContentFingerprint', 'FastTransfer', 'ReceiveValidation', 'JoinInProgress', 'TickRate'),
               'Save': ('Format',),
               'Engine': ('ModelPools', 'ModelHandles'),
@@ -762,6 +775,7 @@ def game_keys(*, xml1_opening=True, save_folder=None, forced_teams='1', add_hero
         game['LiftRule'] = LIFT_RULE
         game['Xml1WallCling'] = WALL_CLING
         game.update(SHARED_HANDLERS)
+        game.update(SHARED_HANDLERS_C)
         game['PlacementCrush'] = PLACEMENT_CRUSH
         game['ObjectWorldImpact'] = OBJECT_WORLD_IMPACT
         game['DoubleHeal'] = DOUBLE_HEAL
@@ -880,6 +894,8 @@ def port_keys(out, *, save_folder=PLAY_SAVE_FOLDER, eighth=True) -> dict:
     if world_backfaces:
         game['WorldBackfaces'] = WORLD_BACKFACES
     keys = {'Game': game, 'Limits': dict(LIMITS), 'Engine': {'ModelPools': MODEL_POOLS, 'ModelHandles': MODEL_HANDLES}}
+    if (build_record(out) or {}).get('actor_pools') == ACTOR_POOLS:   # recorded option only (OFF rebuild drops it)
+        keys['Limits']['ActorPools'] = ACTOR_POOLS
     if world_backfaces:
         keys['WorldBackfaces'] = world_backfaces
     if turrets:
@@ -1133,6 +1149,10 @@ RELEASE_MARKERS[('Game', 'NpcPowerRule')] = (b'NPR14', '[Game] NpcPowerRule revi
 # Candidate rule 45 is opt-in. The key must exist in the companion DLL when
 # requested; a pre-candidate DLL would silently ignore the restored ground rule.
 RELEASE_18_KEYS = {**RELEASE_18_KEYS, 'Game': RELEASE_18_KEYS['Game'] + ('Xml1GrabCarry',)}
+# XML2 Fix 1.9.0-beta.1 (the port's beta 8 candidate 080b): the nine shared-handler wave C keys (rule 46) and, when
+# written (--actor-pools 124), [Limits] ActorPools (rule 44). A DLL before them ignores each without a word.
+RELEASE_18_KEYS = {**RELEASE_18_KEYS, 'Game': RELEASE_18_KEYS['Game'] + tuple(SHARED_HANDLERS_C),
+                   'Limits': RELEASE_18_KEYS['Limits'] + ('ActorPools',)}
 
 
 def check_release_dll(dll, keys: dict) -> None:

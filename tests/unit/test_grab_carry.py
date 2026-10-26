@@ -9,9 +9,10 @@ from xml1build import fix_ini as FI
 
 
 def test_grab_carry_option_and_ini_coupled_with_stale_key_removal():
-    assert build_xml1.parse_args(['--out', '.']).grab_carry == 'xml2'
-    assert build_xml1.parse_args(['--out', '.', '--grab-carry', 'xml1']).grab_carry == 'xml1'
-    assert build_xml1.CONTENT_OPTS['grab_carry'] == ('characters', 'xml2')
+    # 0.4.1-beta.1 (beta 8): XML1's grab lifecycle is the default, xml2 the stock handlers for A/B builds
+    assert build_xml1.parse_args(['--out', '.']).grab_carry == 'xml1'
+    assert build_xml1.parse_args(['--out', '.', '--grab-carry', 'xml2']).grab_carry == 'xml2'
+    assert build_xml1.CONTENT_OPTS['grab_carry'] == ('characters', 'xml1')
     with tempfile.TemporaryDirectory() as td:
         out = Path(td)
         meta = out / '_build'
@@ -30,7 +31,8 @@ def test_grab_carry_option_and_ini_coupled_with_stale_key_removal():
             merged = FI.merge_text('[Game]\nXml1GrabCarry=xml1\nKeepMe=7\n', keys, FI.dropped_keys(keys))
             assert ('Xml1GrabCarry=xml1' in merged) == (value == 'xml1')
             assert 'KeepMe=7' in merged
-            args = build_xml1.parse_args(['--out', td, '--grab-carry', 'xml2' if value == 'xml1' else 'xml1'])
+            # a record without the option counts as the default (xml1 since beta 8): toggling means xml2
+            args = build_xml1.parse_args(['--out', td, '--grab-carry', 'xml1' if value == 'xml2' else 'xml2'])
             assert 'characters' in build_xml1.plan_content_opts(out, args, [])
 
 
@@ -60,3 +62,45 @@ def test_grab_carry_refuses_companion_without_requested_key_only():
         assert FI.old_fix_keys(dll, {'Game': {}}) == []
         dll.write_bytes(b'MZ' + 'Xml1GrabCarry'.encode('utf-16le'))
         assert FI.old_fix_keys(dll, {'Game': {'Xml1GrabCarry': 'xml1'}}) == []
+
+
+def test_actor_pools_off_by_default_written_only_when_recorded():
+    # E4 stage 1 ([Limits] ActorPools=124, rule 44) stays off in beta 8 until its live runs pass.
+    assert build_xml1.parse_args(['--out', '.']).actor_pools == 'off'
+    assert build_xml1.CONTENT_OPTS['actor_pools'] == ('characters', 'off')
+    assert 'ActorPools' in FI.PORT_OWNED['Limits'] and 'ActorPools' in FI.RELEASE_18_KEYS['Limits']
+    with tempfile.TemporaryDirectory() as td:
+        out = Path(td)
+        (out / '_build').mkdir()
+        for value, written in (('124', True), ('off', False), (None, False)):
+            record = {'build': {key: default for key, (_, default) in build_xml1.CONTENT_OPTS.items()}}
+            if value:
+                record['build']['actor_pools'] = value
+            else:
+                record['build'].pop('actor_pools')
+            (out / '_build' / 'report.json').write_text(json.dumps(record), encoding='utf-8')
+            keys = FI.port_keys(out)
+            assert (keys['Limits'].get('ActorPools') == '124') == written
+            assert ('ActorPools' in FI.dropped_keys(keys).get('Limits', [])) == (not written)
+        dll = out / 'dinput.dll'
+        dll.write_bytes(b'MZ' + 'IGBCache'.encode('utf-16le'))
+        assert FI.old_fix_keys(dll, {'Limits': {'ActorPools': '124'}}) == ['[Limits] ActorPools']
+        assert FI.old_fix_keys(dll, {'Limits': {}}) == []
+        dll.write_bytes(b'MZ' + 'ActorPools'.encode('utf-16le'))
+        assert FI.old_fix_keys(dll, {'Limits': {'ActorPools': '124'}}) == []
+
+
+def test_shared_handlers_c_keys_written_and_required():
+    # rule 46: the nine wave C keys in every XML1 build, each refused by name on a DLL that lacks it
+    assert set(FI.SHARED_HANDLERS_C) == {'JumpAttackDamageRule', 'FlyChargeDamageRule', 'ColossusChargeRule', 'BeastBounceRule',
+                                         'FastballRule', 'IdleBoredRule', 'LocomotionScaleRule', 'AnimationPhaseRule',
+                                         'TeleportVisibilityRule'}
+    game = FI.game_keys()
+    assert all(game[k] == 'xml1' for k in FI.SHARED_HANDLERS_C)
+    assert all(k in FI.PORT_OWNED['Game'] and k in FI.RELEASE_18_KEYS['Game'] for k in FI.SHARED_HANDLERS_C)
+    with tempfile.TemporaryDirectory() as td:
+        dll = Path(td) / 'dinput.dll'
+        dll.write_bytes(b'MZ' + ''.join(FI.SHARED_HANDLERS).encode('utf-16le'))
+        assert FI.old_fix_keys(dll, {'Game': dict(FI.SHARED_HANDLERS_C)}) == [f'[Game] {k}' for k in FI.SHARED_HANDLERS_C]
+        dll.write_bytes(b'MZ' + '\0'.join(FI.SHARED_HANDLERS_C).encode('utf-16le'))
+        assert FI.old_fix_keys(dll, {'Game': dict(FI.SHARED_HANDLERS_C)}) == []

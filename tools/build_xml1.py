@@ -85,9 +85,13 @@ def parse_args(argv=None):
                          "Sunfire as pads and has no ProfXGladiator (A/B builds; SPEC_heroes.md)")
     ap.add_argument('--hero-icons', dest='hero_icons', choices=('xml1', 'generic'), default='xml1',
                     help="hero talent icons: XML1's 2x2 <hero>_all atlases (default) or XML2's generic talent_icons.png")
-    ap.add_argument('--grab-carry', choices=('xml1', 'xml2'), default='xml2',
-                    help="candidate grab/pickup/recovery and flying-charge collision (carry deferred); "
-                         "requires companion XML2 Fix rule 45 revision 2")
+    ap.add_argument('--grab-carry', choices=('xml1', 'xml2'), default='xml1',
+                    help="XML1's grab lifecycle: Juggernaut's grab, the shared grab/pickup/recovery handlers and the "
+                         "flying-charge collision (default since 0.4.1-beta.1; needs XML2 Fix 1.9.0-beta.1's rule 45; "
+                         "the flying carry is not restored yet) or xml2, the stock handlers (A/B builds)")
+    ap.add_argument('--actor-pools', dest='actor_pools', choices=('off', '124'), default='off',
+                    help="E4 stage 1: write [Limits] ActorPools=124 (XML2 Fix rule 44: path, shadow and delayed-damage "
+                         "pools 32 -> 124). Off by default until its live runs pass")
     ap.add_argument('--rogue-decide', choices=('xml1', 'xml2'), default='xml1',
                     help="Rogue's power decision: XML1's ch_roguedecide (default since 0.4.1-beta.1; needs XML2 Fix "
                          "1.9.0-beta.1's rule 43) or xml2, the old D15 collapse (A/B builds)")
@@ -183,7 +187,7 @@ HOOK_OWNER = 'testhooks'
 CONTENT_OPTS = {'harm_loop_startup': (tuple(C.MODULE_ORDER), 'workaround'),
                 'blackbird': ('scripts', 'menu'), 'npc_scaling': ('characters', 'off'), 'tiles': ('zones', 'used'),
                 'main_menu_layout': ('frontend', 'classic'),
-                'grab_carry': ('characters', 'xml2'), 'rogue_decide': ('heroes', 'xml1'), 'hero_roster': ('heroes', '21'), 'hero_icons': ('heroes', 'xml1'), 'hero_bleed': ('heroes', 'on'),
+                'grab_carry': ('characters', 'xml1'), 'actor_pools': ('characters', 'off'), 'rogue_decide': ('heroes', 'xml1'), 'hero_roster': ('heroes', '21'), 'hero_icons': ('heroes', 'xml1'), 'hero_bleed': ('heroes', 'on'),
                 'newgame': ('scripts', 'keepteam'),
                 # SPEC 19: scripts emits the blocks; zones imports the dialogs / conversations rewrite_data_tree patches
                 'forced_teams': (('scripts', 'zones'), 'seat'),
@@ -436,7 +440,7 @@ def main(argv=None):
                     'forced_rerun': list(forced) + list(opt_rerun),
                     'start_zone': args.start_zone, 'tour': args.tour, 'no_movies': args.no_movies,
                     'blackbird': args.blackbird, 'npc_scaling': args.npc_scaling, 'tiles': args.tiles,
-                    'grab_carry': args.grab_carry, 'rogue_decide': args.rogue_decide, 'hero_roster': args.hero_roster, 'hero_icons': args.hero_icons, 'hero_bleed': args.hero_bleed,
+                    'grab_carry': args.grab_carry, 'actor_pools': args.actor_pools, 'rogue_decide': args.rogue_decide, 'hero_roster': args.hero_roster, 'hero_icons': args.hero_icons, 'hero_bleed': args.hero_bleed,
                     'newgame': args.newgame, 'forced_teams': args.forced_teams, 'frontend': args.frontend,
                     'xp_curve': args.xp_curve, 'buoys': args.buoys, 'main_menu_layout': args.main_menu_layout,
                     'harm_loop_startup': getattr(args, 'harm_loop_startup', 'workaround'),
