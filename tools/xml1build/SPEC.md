@@ -7775,3 +7775,45 @@ the coordinator at integration. Synthetic tests cover script idempotence, exact 
 and both actors sharing one map. Focused owned-input contract validation is not a playable-package rebuild.
 The complete phase/boundary/lifecycle/multiplayer acceptance list is in the companion DLL's
 `docs/xml1-controllers.md`; no wave-three game or emulator launch is claimed.
+
+## 107. XML1 animation enums (`--anim-enums xml1`, XML2 Fix `[Limits] AnimEnums`, gameplay rule 48)
+
+XMen2.exe registers 210 animation enums (0x00..0xD1, every slot taken). XML1 needs 23 more: the flying carry's
+(`ea_flyingcarry_*`, Phoenix / Rogue / Storm and their victims) and Juggernaut's grab victim's (`ea_jug_grab_*_v`).
+The companion DLL raises the table to 512 and gives the 23 names the fixed IDs 0xD2..0xE8 (`anim_enums.BUILTIN_ENUMS`
+order; xml2-fix `docs/anim-enums.md`). Opt-in for now: `--anim-enums xml1` (build_xml1 and the builder CLI; content
+option owned by characters). Off: none of the files below is written and no key - every output byte as before.
+
+With `xml1`, characters' last step (`anim_enums.run`) writes:
+
+1. `Actors/common.IGB` - XML2's file plus the 21 XML1 clips (`igb_anim_merge.REQUIRED_CLIPS`), transplanted at build
+   time from the player's XML1 `actors/common.igb` (nothing of them is in the repository). The engine loads `common`
+   into anim DB slot 2 of every actor (0x41ff9d), so the clips reach victims too. Both files have byte-identical
+   meta-field tables and the same 39 meta objects by name (parent, fields, versions) but in a different ORDER, so meta
+   numbers are remapped by name; both skeletons `common_skel` have the same 35 bones. Each clip's closure (1,894
+   items for the 21: 1,733 objects, 161 memory blocks) is appended after XML2's items in source reference order, its
+   binding re-pointed at XML2's skeleton, the clips appended to the database's animation list in XML1's order
+   (126 -> 147). `IgbFile.appended` writes it; `igb_anim_merge.verify` re-reads it: every original item
+   byte-identical at its old reference number (the list's count / capacity and its data block's new references
+   aside), every transplanted item byte-identical to its source after mapping back, every clip present once.
+   `V_flyingcarry_enemy_pickup` and `V_flyingcarry_throwdown` are absent from XML1's own file: not invented; their
+   enums fall back to enum 0's animation through the cache build's default, as on XML1
+   (`igb_anim_merge.KNOWN_ABSENT_IN_XML1`).
+2. `Data/shared_anims.XMLB` - XML2's 209 mappings plus XML1's 23 for the built-in enums, values verbatim (the two
+   absent clips included): 232 <= 512. PC wins on a shared name (none today); XML1's `ea_mission1..20` are not added
+   (XML2's `ea_zone1..20` stay, section 18's rename).
+3. `Data/fightstyles/moveset_flying.{XMLB,engb}` - XML2's file plus XML1's carry nodes (flyguarddecide,
+   airgrabpickup, airpickupidle / walk / run / throw / smash, fastball) converted like every XML1 style (x1schema +
+   the style patch), by `anim_enums.MOVESET_FLYING_PRECEDENCE`: every node of either file is listed with its winner
+   and reason, an unlisted node is an error. `flying` stays XML2's until the XML1 flight upkeep port is in the same
+   build (`XML1_FLIGHT_UPKEEP`, False). The carry handlers (`ch_air_grab_pickup*`, `ch_fly_guard_decide`) are not
+   registered by XMen2.exe: the nodes run as `%default%` until the carry handler port lands (V18 lists them).
+4. `[Limits] AnimEnums=512` (`fix_ini.port_keys`, port-owned: an OFF rebuild removes it). The builder requires the
+   DLL to know the key and to carry its marked table (`XML2FIX.ANIMENUMS.1`, u16 count, NUL-separated names) with
+   exactly the builder's 23 names in ID order (`fix_ini.check_anim_enums_dll`); a source-only build has no DLL.
+
+Validator (V7): with the key the known names are XMen2.exe's plus the 23 (compared with `<out>\dinput.dll`'s table
+when there is one; no DLL is a warning), nothing is deferred (`DEFERRED_ANIM_ENUMS` applies only without the key);
+every ANIMTABLE name must be a known enum, the count must fit (210 / 512), every built-in must be mapped to a clip
+in the output `common.IGB` (the two known-absent clips aside), and `moveset_flying` must hold the carry nodes with
+known enums. The IGB cache count (SPEC 13) and the actor-resource budget (SPEC 14) are unchanged: same single file.

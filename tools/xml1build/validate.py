@@ -194,6 +194,8 @@ from . import ladder_motion as LM       # V34 (SPEC 46): ladder paths only from 
 from . import weapons as W              # V5 (SPEC 57, issue #52): a gun-armed entry carries its gun's fighting style
 from . import scripted_approaches as SA  # V47 (SPEC 78): authored scripted approach completion
 from . import characters as CH           # V54 (issue #15): the xml2-fix leader sidecar
+from . import anim_enums as AE           # V7 (SPEC 107): the XML1 enums of xml2-fix [Limits] AnimEnums
+from . import igb_anim_merge as IAM      # V7 (SPEC 107): the transplanted clips in Actors/common.IGB
 from . import save_positions as SP      # V31: identities a save keeps by position
 
 MAX_REPORTED = 50                             # per check and severity, into ctx.error / ctx.warn
@@ -244,7 +246,9 @@ SPEAKER_RE = re.compile(r'%[^%\s]+%')
 # animation enums: XMen2.exe resolves 'EA_*' names (playanim / FightMove animenum) against its own enum strings
 ANIM_ENUM_RE = re.compile(r'(?i)\bEA_[A-Z0-9_]+\b')
 # enums XML1 data uses that XMen2.exe lacks and that belong to the powers rework (shared_nodes / fightstyles:
-# flying carry and Juggernaut grab moves); reported as deferred warnings, not errors
+# flying carry and Juggernaut grab moves); reported as deferred warnings, not errors - only while the build does not
+# write [Limits] AnimEnums (SPEC 107): with it they are the DLL's 23 built-in enums (anim_enums.BUILTIN_ENUMS) and an
+# ea_flyingcarry_* / ea_jug_grab_* name outside that list is an error like any other unknown enum
 DEFERRED_ANIM_ENUMS = re.compile(r'(?i)^ea_(flyingcarry_|jug_grab_)')
 # zoneinfo attributes of XML2's Xtraction network (zones.XTRACTION_ATTRS; 0x468130 / 0x467f60)
 XTRACTION_ATTRS = ('extraction', 'towncenter', 'mapx', 'mapy')
@@ -3828,9 +3832,16 @@ class Validator:
         """every animation enum literal (EA_* string arguments in scripts, animenum values and EA_* literals in
         inline data code) is a whole ea_* string of XMen2.exe: XML1's EA_MISSIONn must have become EA_ZONEn
         (scripts_transform.rename_mission_anims). An enum default.xbe lacks too is inherited; the XML1-only
-        flying-carry / Juggernaut-grab enums of the added shared nodes are deferred to the powers rework."""
+        flying-carry / Juggernaut-grab enums of the added shared nodes are deferred to the powers rework - unless the
+        build writes [Limits] AnimEnums (--anim-enums xml1, SPEC 107): then the known names are XMen2.exe's plus the
+        builder's 23 built-in enums (checked against the DLL's table when <out> has the DLL), nothing is deferred,
+        and the ANIMTABLE / clip / carry-node checks of _v7_anim_table run."""
         exe = self.idx.path('xmen2.exe') or (self.ctx.base / 'XMen2.exe')
         x2 = self._enum_strings(exe)
+        native = set(x2)
+        anim_on = AE.mode(self.ctx) == 'xml1'
+        if anim_on:
+            x2 |= self._v7_anim_enum_names(ck)
         xbe = self.ctx.x1_xbox / 'default.xbe'
         x1 = self._enum_strings(xbe) if xbe.is_file() else set()
         found = collections.defaultdict(set)
@@ -3855,7 +3866,7 @@ class Validator:
             if re.fullmatch(r'ea_mission\d+', tl):
                 ck.error(f'animation enum {t} is XML1\'s (XMen2.exe has ea_zone1..20, no ea_mission*): '
                          f'{sorted(where)[:4]} (scripts_transform.rename_mission_anims)')
-            elif DEFERRED_ANIM_ENUMS.match(tl):
+            elif DEFERRED_ANIM_ENUMS.match(tl) and not anim_on:
                 deferred[t] = sorted(where)[:3]
             elif tl not in x1:
                 inherited[t] = sorted(where)[:3]
@@ -3868,6 +3879,91 @@ class Validator:
                     f'shared nodes / styles) are not XMen2.exe enums: deferred to the powers rework: {sorted(deferred)}')
         if inherited:
             ck.warn(f'{len(inherited)} animation enums are in neither exe (inherited XML1 defects): {inherited}')
+        self._v7_anim_table(ck, x2, native, anim_on)
+
+    def _v7_anim_enum_names(self, ck):
+        """the builder's built-in XML1 enum names (anim_enums.BUILTIN_ENUMS), which must equal the marked table of
+        <out>'s DLL when there is one (no DLL: a warning, the names are not checked against one). No sidecar names:
+        the build writes no Data/anim_enums.txt."""
+        dll = Path(self.ctx.out) / 'dinput.dll'
+        if dll.is_file():
+            got = AE.dll_builtin_names(dll.read_bytes())
+            if got is None:
+                ck.error('[Limits] AnimEnums is written but dinput.dll has no AnimEnums table (rule 48): the 23 XML1 '
+                         'enums stay unknown to the engine and their mappings are dropped')
+            elif tuple(got) != AE.BUILTIN_ENUMS:
+                ck.error(f'dinput.dll\'s AnimEnums table {list(got)} differs from the builder\'s '
+                         f'{list(AE.BUILTIN_ENUMS)}: the mappings would land on other IDs')
+            ck.set('anim_enums_dll_checked', 1)
+        else:
+            ck.warn('[Limits] AnimEnums is written but <out> has no dinput.dll: the 23 XML1 extension enum names were '
+                    'not checked against a DLL\'s AnimEnums table')
+            ck.set('anim_enums_dll_checked', 0)
+        return set(AE.BUILTIN_ENUMS)
+
+    def _v7_anim_table(self, ck, known, native, anim_on):
+        """Data/shared_anims (the ANIMTABLE the init parser 0x426680 reads into the id table): every ea_ name is a
+        known enum (0x426600 drops an unknown one without a word), the count fits the table (210 stock, 512 with
+        AnimEnums). With AnimEnums also: every built-in enum is mapped, every clip it names (but NO_ANIM) is in the
+        output Actors/common.IGB except the two XML1 lacks too (igb_anim_merge.KNOWN_ABSENT_IN_XML1: the enum falls
+        back to enum 0, as on XML1), and the merged moveset_flying has XML1's carry nodes, all with known enums."""
+        path = self.idx.path('data/shared_anims.xmlb') or self.ctx.base_index.path('data/shared_anims.xmlb')
+        if path is None:
+            ck.error('Data/shared_anims.XMLB is missing')
+            return
+        try:
+            entries = AE.table_entries(C.decode_xmlb(Path(path).read_bytes()))
+        except (ValueError, AE.AnimEnumError) as e:
+            ck.error(f'Data/shared_anims.XMLB: {e}')
+            return
+        cap = AE.CAPACITY if anim_on else AE.NATIVE_ENUMS
+        ck.set('anim_table_entries', len(entries))
+        if len(entries) > cap:
+            ck.error(f'Data/shared_anims: {len(entries)} ANIMTABLE entries > the table\'s {cap}: the parser stops there')
+        unknown = sorted(n for n in entries if n not in known)
+        if unknown:
+            ck.error(f'Data/shared_anims maps {len(unknown)} names that are no enum (dropped by 0x426600 without a '
+                     f'word): {unknown[:8]}')
+        if not anim_on:
+            return
+        missing = [n for n in AE.BUILTIN_ENUMS if n not in entries]
+        if missing:
+            ck.error(f'Data/shared_anims lacks the XML1 enum mappings {missing}')
+        igb = self.idx.path('actors/common.igb')
+        try:
+            clips = {n.lower() for n in IAM.clip_names(IAM.IgbFile(Path(igb).read_bytes()))} if igb else None
+        except IAM.IgbError as e:
+            ck.error(f'Actors/common.IGB: {e}')
+            return
+        if clips is None:
+            ck.error('Actors/common.IGB is missing')
+            return
+        absent_known, absent = {}, []
+        for n in AE.BUILTIN_ENUMS:
+            clip = (entries.get(n) or '').strip()
+            if not clip or clip.lower() == AE.NO_ANIM or clip.lower() in clips:
+                continue
+            if IAM.KNOWN_ABSENT_IN_XML1.get(clip.lower()) == n:
+                absent_known[n] = clip
+            else:
+                absent.append(f'{n}={clip}')
+        ck.set('anim_enum_clips_absent_in_xml1', len(absent_known))
+        ck.details['anim_enum_clips_absent_in_xml1'] = {
+            n: f'{c}: absent from XML1\'s common.igb; enum falls back to enum 0 as on XML1' for n, c in absent_known.items()}
+        if absent:
+            ck.error(f'{len(absent)} XML1 enum mappings name a clip Actors/common.IGB lacks: {absent}')
+        mv = self.idx.path('data/fightstyles/moveset_flying.xmlb')
+        root = C.decode_xmlb(Path(mv).read_bytes()) if mv else None
+        moves = {(m.get('name') or '').lower(): m for m in (root if root is not None else ()) if m.tag.lower() == 'fightmove'}
+        want = sorted(n for n, (side, _w) in AE.MOVESET_FLYING_PRECEDENCE.items() if side == AE.XML1)
+        lost = [n for n in want if n not in moves]
+        if lost:
+            ck.error(f'Data/fightstyles/moveset_flying lacks XML1\'s carry nodes {lost}')
+        bad = sorted({(m.get('animenum') or '').strip().lower() for m in moves.values()} - set(known) - {''})
+        if bad:
+            ck.error(f'Data/fightstyles/moveset_flying names unknown animation enums {bad}')
+        ck.set('anim_enum_extension_uses', sum(1 for m in moves.values()
+                                               if (m.get('animenum') or '').strip().lower() in set(known) - native))
 
     # ======================================================= npc-loop fix: LOOP_WAKE on NPCs XMen2.exe cannot wake
     # (scripts.spawner_unwakeable / scripts_transform.bound_unwakeable_loops; evidence in scripts_transform.py)

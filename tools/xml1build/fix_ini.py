@@ -215,6 +215,11 @@ SHARED_HANDLERS_C = {'JumpAttackDamageRule': 'xml1', 'FlyChargeDamageRule': 'xml
 # (beta 8 leaves it off: no S1-L1..L5 run yet).
 ACTOR_POOLS = '124'
 
+# xml2-fix [Limits] AnimEnums (gameplay rule 48, xml2-fix docs/anim-enums.md; SPEC 107): the animation enum table 210 ->
+# 512 with XML1's 23 flying-carry / Juggernaut-grab enums at fixed IDs. Written only with --anim-enums xml1 (the build
+# then also carries their clips, mappings and carry nodes; anim_enums.py) until its live runs pass.
+ANIM_ENUMS = '512'
+
 SHARED_HANDLERS = {'SkatingRule': 'xml1', 'TeleportLandingRule': 'xml1', 'PopupRule': 'xml1', 'PopupLandRule': 'xml1',
                    'ChargeRule': 'xml1', 'NightcrawlerRule': 'xml1', 'GambitRule': 'xml1'}
 
@@ -410,7 +415,7 @@ PORT_OWNED = {'Game': ('NewGameTeam', 'ResetUnlocks', 'SaveFolder', 'ForcedTeams
                        'ExplosiveFirstHit', 'PackAmount', 'SoloMode', 'X1Leader', 'DeathSwitchClear', 'RankCosts', 'LevelSkillPoints', 'LevelStatPoints', 'Xml1Multipart',
                        'Xml1MasterMold', 'Xml1MoldStage', 'Xml1Turrets', 'Xml1LockOnEffects', 'Xml1LockOnAim', 'Xml1Bosses'),
               'Limits': ('ActorSlots', 'ResourceNames', 'ItemEnhancements', 'FightStyles', 'EffectCurves', 'MoveTriggers', 'EntityCapacity',
-                         'ScriptFunctions', 'IGBCache', 'ActorPools'),
+                         'ScriptFunctions', 'IGBCache', 'ActorPools', 'AnimEnums'),
               'Online': ('GameVersion', 'ContentFingerprint', 'FastTransfer', 'ReceiveValidation', 'JoinInProgress', 'TickRate'),
               'Save': ('Format',),
               'Engine': ('ModelPools', 'ModelHandles'),
@@ -896,6 +901,8 @@ def port_keys(out, *, save_folder=PLAY_SAVE_FOLDER, eighth=True) -> dict:
     keys = {'Game': game, 'Limits': dict(LIMITS), 'Engine': {'ModelPools': MODEL_POOLS, 'ModelHandles': MODEL_HANDLES}}
     if (build_record(out) or {}).get('actor_pools') == ACTOR_POOLS:   # recorded option only (OFF rebuild drops it)
         keys['Limits']['ActorPools'] = ACTOR_POOLS
+    if (build_record(out) or {}).get('anim_enums') == 'xml1':     # recorded option only (OFF rebuild drops it)
+        keys['Limits']['AnimEnums'] = ANIM_ENUMS
     if world_backfaces:
         keys['WorldBackfaces'] = world_backfaces
     if turrets:
@@ -1153,6 +1160,11 @@ RELEASE_18_KEYS = {**RELEASE_18_KEYS, 'Game': RELEASE_18_KEYS['Game'] + ('Xml1Gr
 # written (--actor-pools 124), [Limits] ActorPools (rule 44). A DLL before them ignores each without a word.
 RELEASE_18_KEYS = {**RELEASE_18_KEYS, 'Game': RELEASE_18_KEYS['Game'] + tuple(SHARED_HANDLERS_C),
                    'Limits': RELEASE_18_KEYS['Limits'] + ('ActorPools',)}
+# xml2-fix rule 48 (beta8/anim-enums): [Limits] AnimEnums, when written (--anim-enums xml1). The key's name is not enough:
+# the build's mappings name the DLL's XML1 enums, so the DLL must also carry its marked table (anim_enums.DLL_MARKER)
+# with exactly the builder's 23 names in ID order (check_anim_enums_dll); a DLL without it would leave the 23 mappings
+# unresolved (dropped by the shared_anims parser) and every carry / victim move on enum 0's animation.
+RELEASE_18_KEYS = {**RELEASE_18_KEYS, 'Limits': RELEASE_18_KEYS['Limits'] + ('AnimEnums',)}
 
 
 def check_release_dll(dll, keys: dict) -> None:
@@ -1171,11 +1183,29 @@ def check_release_dll(dll, keys: dict) -> None:
                         + ', '.join(missing), missing)
 
 
+def check_anim_enums_dll(dll, keys: dict) -> None:
+    """[Limits] AnimEnums needs the companion DLL's AnimEnums table: the marker block and the builder's built-in names
+    (anim_enums.BUILTIN_ENUMS, IDs 0xD2..) in the same order. Source-only builds may omit the DLL."""
+    if 'AnimEnums' not in keys.get('Limits', {}):
+        return
+    dll = Path(dll)
+    if not dll.is_file():
+        return
+    from . import anim_enums as AE
+    names = AE.dll_builtin_names(dll.read_bytes())
+    if names is None:
+        raise FixTooOld('[Limits] AnimEnums needs the XML2 Fix with the AnimEnums table (rule 48); the existing DLL '
+                        'has none', ['[Limits] AnimEnums (AnimEnums table)'])
+    if tuple(names) != AE.BUILTIN_ENUMS:
+        raise FixTooOld(f'[Limits] AnimEnums: the AnimEnums table of the existing DLL ({len(names)} names) differs '
+                        f'from the builder\'s {len(AE.BUILTIN_ENUMS)} XML1 enums', ['[Limits] AnimEnums (AnimEnums table)'])
+
+
 def old_fix_keys(dll, keys: dict) -> list:
     """every key of `keys` the existing companion DLL does not know ('[Section] Key'; [] without a DLL). Raises
     ValueError for a key set no DLL can run (EntityCapacity without Format=lc)."""
     missing = []
-    for check in (check_move_trigger_dll, check_entity_capacity_dll, check_release_dll):
+    for check in (check_move_trigger_dll, check_entity_capacity_dll, check_release_dll, check_anim_enums_dll):
         try:
             check(dll, keys)
         except FixTooOld as exc:

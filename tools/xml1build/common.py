@@ -708,7 +708,7 @@ def args_for_out(out, base=None, **kw):
     forced_teams, no_movies, ...), so a standalone check sees the build as it was made. kw overrides."""
     b = build_options(out)
     keep = {k: b[k] for k in ('frontend', 'forced_teams', 'no_movies', 'newgame', 'blackbird', 'npc_scaling',
-                              'tiles', 'grab_carry', 'actor_pools', 'rogue_decide', 'hero_roster', 'hero_icons', 'hero_bleed', 'start_zone', 'tour', 'xp_curve',
+                              'tiles', 'grab_carry', 'actor_pools', 'anim_enums', 'rogue_decide', 'hero_roster', 'hero_icons', 'hero_bleed', 'start_zone', 'tour', 'xp_curve',
                               'buoys', 'main_menu_layout', 'harm_loop_startup')
             if k in b and b[k] is not None}
     if 'frontend' not in b and b:

@@ -1954,6 +1954,10 @@ def run(ctx):
     contract = semi_auto.build_contract(ctx, set(stats))
     if contract is not None:
         ctx.set_count('npc_weapon_brains', len(contract['records']))
+    # SPEC 107 (--anim-enums xml1, xml2-fix [Limits] AnimEnums): XML1's flying-carry / Juggernaut-grab clips in
+    # Actors/common.IGB, their 23 mappings in Data/shared_anims and XML1's carry nodes in moveset_flying; off = nothing
+    from . import anim_enums
+    anim_enums.run(ctx, b)
 
 
 _ROSTER_FUNCS = {'unlockcharacter', 'ischaracterunlocked', 'setincampaign'}

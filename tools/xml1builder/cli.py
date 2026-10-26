@@ -60,6 +60,10 @@ def make_parser():
     p.add_argument('--main-menu-layout', choices=('classic', 'widescreen'), default='classic',
                    help='build: the classic main menu, centred by the game at every aspect '
                         '(widescreen: a retired name for classic)')
+    p.add_argument('--anim-enums', dest='anim_enums', choices=('off', 'xml1'), default='off',
+                   help="build (candidates): XML1's 23 animation enums - the flying carry's and Juggernaut's grab "
+                        "clips from your disc, their mappings and XML1's carry nodes - and [Limits] AnimEnums=512 "
+                        "(needs an XML2 Fix with the AnimEnums table). Off by default")
     p.add_argument('--no-ini', dest='no_ini', action='store_true', help='do not merge the port\'s keys into '
                                                                          'xml2-fix.ini (they are in the stamp)')
     p.add_argument('--allow-unknown-exe', dest='allow_unknown_exe', action='store_true',
