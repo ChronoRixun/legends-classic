@@ -21,7 +21,7 @@ drop-event rate per enemy-minute AND each of the four mix shares (gear, pack, mo
 "other" class (king pips, keys, ...) is reported, never gated.
 
 Enemy-minute. The denominator is supplied, not guessed: a `run ... enemy_minutes=<float>` header in the log, or
---minutes-s6 / --minutes-port (one value per file, in file order, which override the header). If neither is given it is
+--minutes-s6 / --minutes-port (a comma list, one value per run in file order, which override the header). If neither is given it is
 derived as (time of the last roll - time of the first roll) / 60 from the `t=` field (S6) or the log timestamp (port) and
 the result is marked `derived`; a run with no times and no minutes is an input error. The recommended definition for both
 sides: the minutes of the zone timer between the run's first and last roll of the level segment being compared. The
