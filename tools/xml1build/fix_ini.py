@@ -222,6 +222,8 @@ ANIM_ENUMS = '512'
 # Rule 49: the sound cache needs headroom once AnimEnums removes the 16-type animation cap.
 CHAR_SOUNDS = '127'
 MOTION_POOL = '22528'
+RESIDENT_STATS = '320'
+RESIDENT_STATS_MARKER = b'ResidentStats: rule 50 revision 1 installed {320,22,320,1}'
 MOTION_POOL_MARKER = b'MotionPool: rule 51 revision 1 installed {22528,0,0,0}'
 CHAR_SOUNDS_MARKER = b'CharSounds: rule 49 revision 1 installed {127,0,0,0}'
 
@@ -420,7 +422,7 @@ PORT_OWNED = {'Game': ('NewGameTeam', 'ResetUnlocks', 'SaveFolder', 'ForcedTeams
                        'ExplosiveFirstHit', 'PackAmount', 'SoloMode', 'X1Leader', 'DeathSwitchClear', 'RankCosts', 'LevelSkillPoints', 'LevelStatPoints', 'Xml1Multipart',
                        'Xml1MasterMold', 'Xml1MoldStage', 'Xml1Turrets', 'Xml1LockOnEffects', 'Xml1LockOnAim', 'Xml1Bosses'),
               'Limits': ('ActorSlots', 'ResourceNames', 'ItemEnhancements', 'FightStyles', 'EffectCurves', 'MoveTriggers', 'EntityCapacity',
-                         'ScriptFunctions', 'IGBCache', 'ActorPools', 'AnimEnums', 'CharSounds', 'MotionPool'),
+                         'ScriptFunctions', 'IGBCache', 'ActorPools', 'AnimEnums', 'CharSounds', 'MotionPool', 'ResidentStats'),
               'Online': ('GameVersion', 'ContentFingerprint', 'FastTransfer', 'ReceiveValidation', 'JoinInProgress', 'TickRate'),
               'Save': ('Format',),
               'Engine': ('ModelPools', 'ModelHandles'),
@@ -910,6 +912,7 @@ def port_keys(out, *, save_folder=PLAY_SAVE_FOLDER, eighth=True) -> dict:
         keys['Limits']['AnimEnums'] = ANIM_ENUMS
         keys['Limits']['CharSounds'] = CHAR_SOUNDS
         keys['Limits']['MotionPool'] = MOTION_POOL
+        keys['Limits']['ResidentStats'] = RESIDENT_STATS
     if world_backfaces:
         keys['WorldBackfaces'] = world_backfaces
     if turrets:
@@ -1171,7 +1174,7 @@ RELEASE_18_KEYS = {**RELEASE_18_KEYS, 'Game': RELEASE_18_KEYS['Game'] + tuple(SH
 # the build's mappings name the DLL's XML1 enums, so the DLL must also carry its marked table (anim_enums.DLL_MARKER)
 # with exactly the builder's 23 names in ID order (check_anim_enums_dll); a DLL without it would leave the 23 mappings
 # unresolved (dropped by the shared_anims parser) and every carry / victim move on enum 0's animation.
-RELEASE_18_KEYS = {**RELEASE_18_KEYS, 'Limits': RELEASE_18_KEYS['Limits'] + ('AnimEnums', 'CharSounds', 'MotionPool')}
+RELEASE_18_KEYS = {**RELEASE_18_KEYS, 'Limits': RELEASE_18_KEYS['Limits'] + ('AnimEnums', 'CharSounds', 'MotionPool', 'ResidentStats')}
 # The CharSounds key alone cannot certify that the DLL registers the agreement rule.
 RELEASE_MARKERS[('Limits', 'CharSounds')] = (CHAR_SOUNDS_MARKER, '[Limits] CharSounds (rule 49)')
 RELEASE_MARKERS[('Limits', 'MotionPool')] = (MOTION_POOL_MARKER, '[Limits] MotionPool (rule 51)')
@@ -1246,3 +1249,5 @@ def write_port_keys(out, keys: dict | None = None, *, old_fix_ok: bool = False) 
         archive.write_text(json.dumps(identity, indent=2, sort_keys=True) + '\n', encoding='utf-8')
     merge_ini(Path(out) / 'xml2-fix.ini', keys, dropped_keys(keys))
     return keys
+
+RELEASE_MARKERS[('Limits', 'ResidentStats')] = (RESIDENT_STATS_MARKER, '[Limits] ResidentStats (rule 50)')

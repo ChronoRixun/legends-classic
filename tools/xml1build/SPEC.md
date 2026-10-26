@@ -7837,4 +7837,12 @@ rule-49 install marker in an existing companion DLL. Rebuilding with animation e
 XML1 builds writing `AnimEnums=512` and `CharSounds=127` also write `[Limits] MotionPool=22528`.
 The companion DLL raises the native pool and bounds each owner to 176 clip records, with guarded readers.
 The builder requires the MotionPool key plus its rule-51 registration marker. Rebuilding with animation enums
-off drops the key. This does not enable ResidentStats (R2) or change the release identity.
+off drops the key. It does not change the release identity.
+
+### Resident stats (rule 50)
+
+XML1 builds writing `AnimEnums=512`, `CharSounds=127` and `MotionPool=22528` also write `[Limits] ResidentStats=320`.
+The companion DLL raises the resident CStats pool (31 -> 320) and the NPC stats payload pool (11 -> 320) together,
+keeps the hero payload pool at 22 (the port has 21 heroes), and admits a character type only when its payload can be
+allocated (no null payload). Rule 50 values are {320,22,320,1}. The builder requires the ResidentStats key plus its
+rule-50 registration marker; rebuilding with animation enums off drops the key.
