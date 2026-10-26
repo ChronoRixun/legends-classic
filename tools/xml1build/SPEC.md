@@ -7894,3 +7894,46 @@ the Grab Bag pools against the source, 4 the 168 powerups (none pending), single
 7 text, 9 approximations both ways, 10 the PC treasure entities in converted maps (counted). Item 8 (a build without the
 option equals the base) is a build comparison, not a check: `tools/build_equiv.py` over two fresh builds. Synthetic
 coverage: `tests/unit/test_item_bonuses.py`, `test_loot.py`, `test_lcsave_loot.py`. No game or emulator was launched.
+
+
+## 109. Loot + Forge test tools: D8 option, the G8 comparator, the seeded saves (builder side; no game or emulator launched)
+
+Loot step T (`task-loot-impl-tests`), on `loot/builder` (SPEC 108). Three developer tools and one builder option; none of them
+changes a build made without the option, and none ships in a release.
+
+**D8, `--loot-def-damage-scale {noop,resist}`** (default `noop`; `build_xml1.py` only, with `--loot xml1`; a content option of
+`zones`, `plan_content_opts`; recorded in `report.json` / `loot.json` only when `resist`). Four items carry no working bonus in the
+first game: `def_damage_scale` is never registered by the original's parser (bonus table 0x44e8c8), and these four have no other
+bonus. `noop` (today's output, byte for byte) writes no record for them (`noop-original` rows). `resist` (owner decision D8, option
+b, prepared not decided) writes the authored multiplier as the PC scoped damage-resistance scale record the converter already uses
+for the source `def_damage` scale items: `<affecter attribute="def_damage_scope" level="<authored>" affect_type="scale"
+scope_damage="<authored>"/>`, description `Damage taken x<authored>`, as a `bonus-approx` row (family `defense (resist)`, reason
+names D8). Authored values (owned `items.eng`; aggregate): `MAGNETOS_HELMET` 0 (dmg_mental; a multiplier of 0 is full immunity;
+the item is never awarded), `SHIAR_MIND_GEM` 0.5 (dmg_mental), `SHIAR_BODY_SHIELD` 0.5 (dmg_physical), `SHIAR_ENERGY_ARMOR` 0.5
+(dmg_energy). The rule is "an item whose every bonus is `def_damage_scale`" (`item_bonuses.convert_equipment(...,
+def_damage_scale=)`): `VINDICATOR_GAUNTLETS` (XP plus `def_damage_scale` 0.8 on beam attacks) stays a no-op in both modes, and
+so does the item with another bonus in the unit tests. `resist` adds 4 records (536 to 540) and moves 4 rows from `noop-original`
+to `bonus-approx` (134 to 138 approximate, 6 to 2 no-ops). V-LOOT checks the four items both ways and that `loot.json` records the
+option. Note for the owner decision: the 0.4.1 converter (`frontend.translate_equipment`) writes `resist_<type> = 1 - value` for the
+three Shiar items, so beta 7 / 8 players have a working 0.5 resistance on them today and `noop` removes it.
+
+**`tools/loot_compare.py`, the G8 comparator.** Reads the original-game S6 log and the port's roll log and prints, per run and
+pooled, rolls, pickups, drop events (a roll's pickups of one class count once), events per enemy-minute, events per roll and the
+gear / pack / money / Xtreme mix; PASS needs >= 3 runs a side and the pooled event rate and each of the four shares within +/-20
+percent of the original (z scores; rows with < 20 events are flagged UNDERPOWERED). S6 line format (also in the module docstring):
+`run id=.. zone=.. enemy_minutes=..`, `roll t=.. cat=.. lead=.. [n=..]` per roller entry, `spawn t=.. def=.. amt=.. [n=..] [cls=..]`
+per spawn call. The port side is the DLL's own `roll cat= lead= G= bucket= def= amt= draws=` line (one per pickup; `def=-` for no
+drop), with or without the log timestamp. Tests: `tests/unit/test_loot_compare.py` (synthetic logs from an invented drop model).
+
+**`tools/loot_seed_saves.py`, seeded saves.** Edits copies of one real LC campaign save (read only): every non-xpexempt hero to the
+seed's level and the first game's XP total for it (highest level 1 / 10 / 20 / 30 / 40 gives tier G1-G5; the ADJ seed holds one
+hero below the rest), money for every Forge row, one carried legacy Danger Room reward with its old own list, the Healer and the
+Forge in the campaign; all other sections stay raw payload. Each seed is re-read, compared with the base and run through the
+reference W2 loader; `manifest.json` lists what each carries. It refuses game folders and `Documents\Activision`. Output is
+personal save data: never for Git. Tests: `tests/unit/test_loot_seed_saves.py` (invented build and save).
+
+**Fix found with the seeds.** `convert.Reverse.instance` resolved every saved record id before it replaced the own list of a
+rebuilt (`ITEM_OWN_REBUILT`) definition, so an old instance whose list shrank (Goddess Medallion and Phoenix Mantle 3 to 2
+records, the three Shiar items 1 to 0 under `noop`) named ids the new table no longer has and the save was refused ("parked /
+unknown"). The own list of a rebuilt definition is now skipped and set from the definition. Test (red before the fix):
+`test_lcsave_loot.test_a_rebuilt_reward_whose_list_shrank_still_loads_with_the_current_list`, with a negative control.

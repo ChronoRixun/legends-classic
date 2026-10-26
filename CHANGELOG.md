@@ -45,6 +45,15 @@ build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebui
   catalogue, so builds without it are unchanged. `convert.Reverse.instance` gives an instance of a rebuilt reward the
   definition's current own list. Two latent W2 fixes in `lcsave.convert` (definition budget of the layout in
   `loaded_zone_metadata`, the 4096-record pool in the definition-count check).
+- **D8 option `--loot-def-damage-scale {noop,resist}`** (default `noop`, which leaves every build byte for byte as it was; needs
+  `--loot xml1`). The four items whose only bonus is the original's unregistered `def_damage_scale` carry no record by default
+  (as in the first game). `resist` writes the authored multiplier as the PC scoped damage-resistance scale record, as
+  `bonus-approx` rows (SPEC 109). Prepared for the owner's decision; builder data only.
+- **A shrunk rebuilt reward loads from an old save.** `convert.Reverse.instance` no longer resolves the saved own records of a
+  rebuilt Danger Room reward before replacing them: Goddess Medallion and Phoenix Mantle (3 to 2 records) and the three
+  Shiar items (1 to 0) used to refuse the whole save as "parked / unknown".
+- **Developer tools:** `tools/loot_compare.py` (G8: the port's drop roller against the original's S6 log, +/-20 percent over
+  >= 3 runs) and `tools/loot_seed_saves.py` (seeded G1-G5 and level-adjustment saves from a real save). Neither ships.
 
 ## v0.4.1 - content version assigned at release (needs XML2 Fix 1.9.0)
 
