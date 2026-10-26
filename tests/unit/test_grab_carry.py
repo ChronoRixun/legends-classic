@@ -60,16 +60,23 @@ def test_grab_carry_refuses_companion_without_requested_key_only():
         dll.write_bytes(b'MZ' + 'Xml1RogueDecide'.encode('utf-16le'))
         assert FI.old_fix_keys(dll, {'Game': {'Xml1GrabCarry': 'xml1'}}) == ['[Game] Xml1GrabCarry',
                                                                            '[Game] Xml1GrabCarry revision 3',
-                                                                           '[Game] Xml1GrabCarry (no carry self-chain)']
+                                                                           '[Game] Xml1GrabCarry (no carry self-chain)',
+                                                                           '[Game] Xml1GrabCarry (thrown impact, animated bones)']
         assert FI.old_fix_keys(dll, {'Game': {}}) == []
         # 080b's DLL knows the key but runs revision 2 (no flying carry, no XML1 flight upkeep): refused by marker
         dll.write_bytes(b'MZ' + 'Xml1GrabCarry'.encode('utf-16le'))
         assert FI.old_fix_keys(dll, {'Game': {'Xml1GrabCarry': 'xml1'}}) == ['[Game] Xml1GrabCarry revision 3',
-                                                                           '[Game] Xml1GrabCarry (no carry self-chain)']
+                                                                           '[Game] Xml1GrabCarry (no carry self-chain)',
+                                                                           '[Game] Xml1GrabCarry (thrown impact, animated bones)']
         # 080c / 080d's DLL runs revision 3 but re-enters the established carry node every frame: refused by marker
         dll.write_bytes(b'MZ' + 'Xml1GrabCarry'.encode('utf-16le') + FI.GRAB_CARRY_R3_MARKER)
-        assert FI.old_fix_keys(dll, {'Game': {'Xml1GrabCarry': 'xml1'}}) == ['[Game] Xml1GrabCarry (no carry self-chain)']
+        assert FI.old_fix_keys(dll, {'Game': {'Xml1GrabCarry': 'xml1'}}) == ['[Game] Xml1GrabCarry (no carry self-chain)',
+                                                                           '[Game] Xml1GrabCarry (thrown impact, animated bones)']
+        # 080e / 080f's DLL: a thrown body's world impact never reaches its receiver, the carry pose reads synthetic bones
         dll.write_bytes(b'MZ' + 'Xml1GrabCarry'.encode('utf-16le') + FI.GRAB_CARRY_R3_MARKER + FI.CARRY_CHAIN_MARKER)
+        assert FI.old_fix_keys(dll, {'Game': {'Xml1GrabCarry': 'xml1'}}) == ['[Game] Xml1GrabCarry (thrown impact, animated bones)']
+        dll.write_bytes(b'MZ' + 'Xml1GrabCarry'.encode('utf-16le') + FI.GRAB_CARRY_R3_MARKER + FI.CARRY_CHAIN_MARKER
+                        + FI.THROWN_IMPACT_MARKER)
         assert FI.old_fix_keys(dll, {'Game': {'Xml1GrabCarry': 'xml1'}}) == []
 
 
@@ -110,8 +117,12 @@ def test_shared_handlers_c_keys_written_and_required():
     with tempfile.TemporaryDirectory() as td:
         dll = Path(td) / 'dinput.dll'
         dll.write_bytes(b'MZ' + ''.join(FI.SHARED_HANDLERS).encode('utf-16le'))
-        assert FI.old_fix_keys(dll, {'Game': dict(FI.SHARED_HANDLERS_C)}) == [f'[Game] {k}' for k in FI.SHARED_HANDLERS_C]
+        colossus = '[Game] ColossusChargeRule (caster talents)'
+        assert FI.old_fix_keys(dll, {'Game': dict(FI.SHARED_HANDLERS_C)}) == [f'[Game] {k}' for k in FI.SHARED_HANDLERS_C] + [colossus]
+        # 080f and older: the Colossus charge evaluates its talents on the struck soldier (no damage), refused by marker
         dll.write_bytes(b'MZ' + '\0'.join(FI.SHARED_HANDLERS_C).encode('utf-16le'))
+        assert FI.old_fix_keys(dll, {'Game': dict(FI.SHARED_HANDLERS_C)}) == [colossus]
+        dll.write_bytes(b'MZ' + '\0'.join(FI.SHARED_HANDLERS_C).encode('utf-16le') + FI.COLOSSUS_CASTER_MARKER)
         assert FI.old_fix_keys(dll, {'Game': dict(FI.SHARED_HANDLERS_C)}) == []
 
 

@@ -1203,6 +1203,20 @@ CARRY_CHAIN_MARKER = b'flying carry keeps its established node (no self-chain)'
 RELEASE_MARKERS[('Game', 'TelekinesisRule')] = (TK_AUDIO_MARKER, '[Game] TelekinesisRule (PC audio slot 38)')
 # a second marker for a key that already has one (Xml1GrabCarry: revision 3 above)
 EXTRA_MARKERS = [(('Game', 'Xml1GrabCarry'), CARRY_CHAIN_MARKER, '[Game] Xml1GrabCarry (no carry self-chain)')]
+# xml2-fix 1.9.0-beta.1 (beta 8 candidate 080g, beta8/fix3 6f7df24): a telekinesis throw released with no velocity
+# divided zero by zero (080e/080f); a tapped guard never left the guard decide (the policy ran in the entry slot); the
+# Colossus charge evaluated its damage / knockback / range on the struck soldier (no damage); a thrown body's world
+# impact never reached its receiver (PC gate 0x42C09E) and the carry pose read the synthetic bones (victim 30 units low).
+# No key or rule revision changes, so the install lines (xml2-fix src/shared_handlers_c.cpp, src/xml1_grab_carry.cpp)
+# are the byte markers.
+TK_STILL_MARKER = b"a still telekinesis throw keeps the victim's facing (no zero divide)"
+GUARD_TAP_MARKER = b'guard decide runs at input and exits after a tap'
+COLOSSUS_CASTER_MARKER = b'Colossus charge evaluates its talents on the caster'
+THROWN_IMPACT_MARKER = b'thrown bodies forward world impacts (42C09E); carry pose on animated bones'
+EXTRA_MARKERS += [(('Game', 'TelekinesisRule'), TK_STILL_MARKER, '[Game] TelekinesisRule (still throw)'),
+                  (('Game', 'GuardDecideRule'), GUARD_TAP_MARKER, '[Game] GuardDecideRule (tap exit)'),
+                  (('Game', 'ColossusChargeRule'), COLOSSUS_CASTER_MARKER, '[Game] ColossusChargeRule (caster talents)'),
+                  (('Game', 'Xml1GrabCarry'), THROWN_IMPACT_MARKER, '[Game] Xml1GrabCarry (thrown impact, animated bones)')]
 # E12 (SPEC 108): a build whose own XMen2.exe is large-address-aware needs the fix's address-space module (the 2 GB guard
 # block, and the two test readers that refused addresses above 0x7fffffff before it). Its start line is the marker; the
 # check reads the build's exe beside the DLL (no exe yet, or --laa off: nothing to check).

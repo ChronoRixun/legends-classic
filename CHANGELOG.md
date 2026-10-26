@@ -65,6 +65,9 @@ the beta 8 test guide.
   DLL without the two keys (080c and older). Since candidate 080e the builder also refuses a DLL whose telekinesis
   still looks its sounds up through the Xbox slot (080d: crashed at the first hold) or whose flying carry re-enters
   its own node every frame (080c / 080d: the carried hero never followed); the two install lines are the markers.
+  Since candidate 080g it also refuses a DLL whose still telekinesis throw divides by zero, whose tapped guard never
+  exits, whose Colossus charge reads its damage from the struck soldier (no damage) or whose thrown bodies skip the
+  world-impact damage and carry the victim on the synthetic bones (080f and older; XML2 Fix fix3's four install lines).
 - **Beta 8: room for the first game's sounds, animations and characters** (since candidate 080d). Builds with the
   XML1 animation enums also write `[Limits] CharSounds=127` (XML2 Fix rule 49: 127 character sound sets instead of 16),
   `MotionPool=22528` (rule 51: the animation motion pool 500 -> 22,528, each character bounded to 176 clips) and
