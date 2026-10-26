@@ -1121,8 +1121,8 @@ def test_the_unscoped_beta7_dll_is_refused_by_the_zone_list_key():
 
 
 def test_beta8_classic_objectives_key_refuses_a_beta7_dll():
-    # 0.4.0-beta.8 writes [Game] ClassicObjectives=1 (the PDA objective page lists visible objectives and opens on the
-    # current one, XML2 Fix 1.8.0-beta.8). A beta.7 DLL leaves holes and opens on slot 1, so it is refused by name.
+    # 0.4.1-beta.1 (beta 8) writes [Game] ClassicObjectives=1 (the PDA objective page lists visible objectives and opens on the
+    # current one, XML2 Fix 1.9.0-beta.1). A beta.7 DLL leaves holes and opens on slot 1, so it is refused by name.
     keys = {'Game': {'ClassicHud': 'xml1', 'ClassicObjectives': '1'}}
     assert 'ClassicObjectives' in FI.RELEASE_18_KEYS['Game'] and 'ClassicObjectives' in FI.PORT_OWNED['Game']
     assert FI.game_keys()['ClassicObjectives'] == '1'

@@ -1,9 +1,9 @@
-# Grab lifecycle and collision candidate (rule 45)
+# Grab lifecycle and collision (rule 45)
 
-`tools/build_xml1.py --grab-carry xml1` writes `[Game] Xml1GrabCarry=xml1` for
-the companion DLL's grab/pickup/recovery and flying-charge collision implementation
-(rule 45 revision 2, mask 7).
-The default `xml2` writes no key; rebuilding OFF removes a stale owned key.
+`tools/build_xml1.py --grab-carry xml1` - the default since 0.4.1-beta.1 (beta 8), like Rogue's decide - writes
+`[Game] Xml1GrabCarry=xml1` for the companion DLL's grab/pickup/recovery and flying-charge collision implementation
+(XML2 Fix 1.9.0-beta.1, rule 45 revision 2, mask 7).
+`--grab-carry xml2` (A/B builds) writes no key; rebuilding with it removes a stale owned key.
 An existing companion DLL lacking the key is refused. The content option is
 recorded in build metadata, restored by `args_for_out`, and invalidates the
 characters module when changed. No release/content identity is assigned here.

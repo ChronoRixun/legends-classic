@@ -5,8 +5,9 @@ build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebui
 
 ## v0.4.1 - content version assigned at release (needs XML2 Fix 1.9.0)
 
-The port's beta 8 (`0.4.1-beta.1` with XML2 Fix `1.9.0-beta.1`). **Nothing below has been played yet**: each item
-passed the unit tests and its native tests; the live checks are in the beta 8 test guide.
+The port's beta 8 (`0.4.1-beta.1` with XML2 Fix `1.9.0-beta.1`). **Nothing below except the objectives page has been played yet**: each item
+passed the unit tests and its native tests (the objectives page has also been checked live); the live checks are in
+the beta 8 test guide.
 
 - **Beta 8: the first game's bosses.** Builds write `[Game] Xml1Bosses` (XML2 Fix rule 40) listing every boss whose
   zone and spawn names the build carries: the colosseum dopples, Avalanche (both fights), Pyro, Mystique, Shadow
@@ -23,6 +24,21 @@ passed the unit tests and its native tests; the live checks are in the beta 8 te
   `DamageCap=xml1` (rule 41).
 - **Beta 8: room for graphics mods.** `[Limits] IGBCache=1024` with `ResourceNames=2048` and `[Engine]
   ModelHandles=8192` (rules 31-32). The conversion still keeps every package under the game's own 200 (V12).
+- **Beta 8: the objectives page as in the first game.** Builds write `[Game] ClassicObjectives=1` (XML2 Fix 1.9.0-beta.1:
+  the page lists the visible objectives with no gaps and opens on the current one), the pause layout puts each
+  selector on the picture the engine draws (36, 346 - 45n), lifts the bottom bar 14 units off the screen's edge
+  (prompts at z 33) and the objectives tables carry the act file's order. Checked live on 10-25 (1280x720 windowed,
+  2560x1440 borderless) beside X-Men Legends I in xemu.
+- **Beta 8: grabs as in the first game.** `--grab-carry xml1` is the default content option (`xml2` = the stock
+  handlers for A/B builds) and builds write `[Game] Xml1GrabCarry=xml1` (rule 45): Juggernaut's grab-and-hit, the
+  shared grab victim, pickup and thrown-landing recovery, the ally throw and the flying charge picking up whoever it
+  hits. The flying carry is not restored yet.
+- **Beta 8: nine more shared moves.** Builds write the wave C keys = `xml1` (rule 46): the jump attack's and flying
+  charge's damage (`values.xmlb`'s L3 row, which the conversion keeps), Colossus's charge, Beast's bounce, the
+  fastball, idle/bored animations, animation speed and phase for scaled characters and Nightcrawler's teleport
+  visibility. Phoenix's telekinesis and the guard decide are not in it yet.
+- **Beta 8, opt-in: actor pools.** `--actor-pools 124` writes `[Limits] ActorPools=124` (XML2 Fix rule 44: path,
+  shadow and delayed-damage pools 32 -> 124). Off by default until its live runs pass.
 - **Beta 8: the HAARP officer's aura** plays the original's art (`physical_resistant_share`).
 - **Beta 8: reviving a hero costs what it did in the first game:** 200 / 800 / 1,800 / 3,200 / 5,000 Tech Bits by
   team level band; beta 7 charged far more. The build's `[Game] RevivalCost=xml1` is unchanged; XML2 Fix
