@@ -214,7 +214,16 @@ SHARED_HANDLERS_C = {'JumpAttackDamageRule': 'xml1', 'FlyChargeDamageRule': 'xml
 # input / cancel, XML1's candidate policy, damage and tk levels) and the guard decide (held use_button: allies, enemies and
 # objects; the acrobat's wall lunge) behave as XML1's. Both need rule 45's installed grab lifecycle (the fix refuses them
 # without it and closes online), so port_keys writes them only with Xml1GrabCarry=xml1; a rebuild without it drops them.
-TK_GUARD = {'TelekinesisRule': 'xml1', 'GuardDecideRule': 'xml1'}
+# Beta 8 (080h, owner decision): the telekinesis is in progress (beta 9), so TelekinesisRule is written only with
+# --telekinesis xml1 (default off); GuardDecideRule stays with Xml1GrabCarry.
+TELEKINESIS = {'TelekinesisRule': 'xml1'}
+GUARD_DECIDE = {'GuardDecideRule': 'xml1'}
+TK_GUARD = {**TELEKINESIS, **GUARD_DECIDE}
+# xml2-fix 1.9.0-beta.1 [Game] Xml1FlyingCarry (beta 8 080h, docs/xml1-grab-carry.md): =0 keeps rule 45 revision 3
+# without the flying carry (its five handlers and the descent admission 0x433e6c; rule values {1,23,0,0}); Juggernaut's
+# grab, pickup/recovery, the charge collision, fix7 and XML1's flight upkeep stay. The flying carry is in progress
+# (beta 9): written as 0 with Xml1GrabCarry=xml1 unless --flying-carry xml1 (the key absent = the DLL's default, on).
+FLYING_CARRY_OFF = {'Xml1FlyingCarry': '0'}
 
 # xml2-fix 1.9.0-beta.1 [Limits] ActorPools (E4 stage 1, gameplay rule 44, docs/actor-pools.md): the path, shadow and
 # delayed-damage pools sized for 32 actors grow to 124. Written only with --actor-pools 124 until its live runs pass
@@ -423,7 +432,7 @@ _ZONE_PATH = re.compile(r'^[a-z0-9_.\-]+(/[a-z0-9_.\-]+)*$')
 PORT_OWNED = {'Game': ('NewGameTeam', 'ResetUnlocks', 'SaveFolder', 'ForcedTeams', 'PostgameScript', 'WindowTitle',
                         'EndHeroUnlock', 'MainMenuItems', 'DangerRoomGate', 'ClassicMainBackdrop', 'ClassicMainPanelBounds', 'NewGamePlus', 'ReviewStats', 'Xtract', 'XtractionShop', 'RevivalCost', 'XPCurve',
                        'GeometrySharingBlendIndices', 'CharacterLadderPaths', 'ObjectiveDescriptions',
-                       'BreakRule', 'LiftRule', 'Xml1GrabCarry', 'Xml1RogueDecide', 'Xml1WallCling', *SHARED_HANDLERS, *SHARED_HANDLERS_C, *TK_GUARD, 'PlacementCrush', 'ObjectWorldImpact', 'DoubleHeal', 'DeathRule', 'NpcPowerRule', 'StunRule', 'DangerRoomParty', 'DangerRoomHealthBars', 'ResistanceDisplay', 'BoxHarmOrigin', 'HarmSingleChain', 'HarmLoopStartup', 'ConfirmationRelease',
+                       'BreakRule', 'LiftRule', 'Xml1GrabCarry', 'Xml1FlyingCarry', 'Xml1RogueDecide', 'Xml1WallCling', *SHARED_HANDLERS, *SHARED_HANDLERS_C, *TK_GUARD, 'PlacementCrush', 'ObjectWorldImpact', 'DoubleHeal', 'DeathRule', 'NpcPowerRule', 'StunRule', 'DangerRoomParty', 'DangerRoomHealthBars', 'ResistanceDisplay', 'BoxHarmOrigin', 'HarmSingleChain', 'HarmLoopStartup', 'ConfirmationRelease',
                        'OnlineConversations', 'PersonalItemPicture', 'ComboPopupGuard', 'ClassicHud', 'ClassicHudPilot', 'ClassicCodex', 'ClassicObjectives', 'NpcSemiAuto', 'ClassicSpeakers', 'WorldBackfaces',
                        'ExplosiveFirstHit', 'PackAmount', 'SoloMode', 'X1Leader', 'DeathSwitchClear', 'RankCosts', 'LevelSkillPoints', 'LevelStatPoints', 'Xml1Multipart',
                        'Xml1MasterMold', 'Xml1MoldStage', 'Xml1Turrets', 'Xml1LockOnEffects', 'Xml1LockOnAim', 'Xml1Bosses'),
@@ -892,9 +901,14 @@ def port_keys(out, *, save_folder=PLAY_SAVE_FOLDER, eighth=True) -> dict:
     game.update(build_harm_loop_startup(out))
     # Same recorded content option that heroes uses. Never infer this from an
     # existing INI: rebuilding with the feature off must remove the owned key.
-    if (build_record(out) or {}).get('grab_carry') == 'xml1':
+    record = build_record(out) or {}
+    if record.get('grab_carry') == 'xml1':
         game['Xml1GrabCarry'] = 'xml1'
-        game.update(TK_GUARD)
+        game.update(GUARD_DECIDE)
+        if record.get('telekinesis') == 'xml1':
+            game.update(TELEKINESIS)
+        if record.get('flying_carry') != 'xml1':
+            game.update(FLYING_CARRY_OFF)
     if (build_record(out) or {}).get('rogue_decide') == 'xml1':
         game['Xml1RogueDecide'] = 'xml1'
     turrets = build_turrets(out) if postgame else {}
@@ -1213,6 +1227,11 @@ TK_STILL_MARKER = b"a still telekinesis throw keeps the victim's facing (no zero
 GUARD_TAP_MARKER = b'guard decide runs at input and exits after a tap'
 COLOSSUS_CASTER_MARKER = b'Colossus charge evaluates its talents on the caster'
 THROWN_IMPACT_MARKER = b'thrown bodies forward world impacts (42C09E); carry pose on animated bones'
+# xml2-fix 1.9.0-beta.1 (beta 8 candidate 080h): [Game] Xml1FlyingCarry=0. A DLL before it (080g and older) ignores the key
+# and installs the flying carry; the key's name and its install line are both required.
+FLYING_CARRY_OFF_MARKER = b'flying carry off (Xml1FlyingCarry=0): no carry handlers, PC flight descent'
+RELEASE_18_KEYS = {**RELEASE_18_KEYS, 'Game': RELEASE_18_KEYS['Game'] + tuple(FLYING_CARRY_OFF)}
+RELEASE_MARKERS[('Game', 'Xml1FlyingCarry')] = (FLYING_CARRY_OFF_MARKER, '[Game] Xml1FlyingCarry (flying carry off)')
 EXTRA_MARKERS += [(('Game', 'TelekinesisRule'), TK_STILL_MARKER, '[Game] TelekinesisRule (still throw)'),
                   (('Game', 'GuardDecideRule'), GUARD_TAP_MARKER, '[Game] GuardDecideRule (tap exit)'),
                   (('Game', 'ColossusChargeRule'), COLOSSUS_CASTER_MARKER, '[Game] ColossusChargeRule (caster talents)'),

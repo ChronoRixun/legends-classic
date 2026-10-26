@@ -1,14 +1,16 @@
-"""Rule 46 bits 512 / 1024 (TelekinesisRule, GuardDecideRule) and the LAA DLL gate. Synthetic metadata only."""
+"""Rule 46 bits 512 / 1024 (TelekinesisRule, GuardDecideRule), [Game] Xml1FlyingCarry and the LAA DLL gate. Synthetic
+metadata only."""
 import json
 import tempfile
 from pathlib import Path
 
 import build_xml1
+from xml1build import common as C
 from xml1build import exe_flags as EF
 from xml1build import fix_ini as FI
 
 
-def _record(out: Path, grab_carry):
+def _record(out: Path, grab_carry, **opts):
     meta = out / '_build'
     meta.mkdir(exist_ok=True)
     record = {'build': {key: default for key, (_, default) in build_xml1.CONTENT_OPTS.items()}}
@@ -16,25 +18,71 @@ def _record(out: Path, grab_carry):
         record['build']['grab_carry'] = grab_carry
     else:
         record['build'].pop('grab_carry')
+    for key, value in opts.items():
+        if value is None:
+            record['build'].pop(key)
+        else:
+            record['build'][key] = value
     (meta / 'report.json').write_text(json.dumps(record), encoding='utf-8')
 
 
 def test_tk_guard_written_only_with_grab_carry():
+    # beta 8 (080h): the telekinesis and the flying carry are off (beta 9); the guard decide stays with the grab
     assert FI.TK_GUARD == {'TelekinesisRule': 'xml1', 'GuardDecideRule': 'xml1'}
-    assert all(k in FI.PORT_OWNED['Game'] and k in FI.RELEASE_18_KEYS['Game'] for k in FI.TK_GUARD)
+    assert FI.TELEKINESIS == {'TelekinesisRule': 'xml1'} and FI.GUARD_DECIDE == {'GuardDecideRule': 'xml1'}
+    assert FI.FLYING_CARRY_OFF == {'Xml1FlyingCarry': '0'}
+    assert all(k in FI.PORT_OWNED['Game'] and k in FI.RELEASE_18_KEYS['Game'] for k in (*FI.TK_GUARD, 'Xml1FlyingCarry'))
+    args = build_xml1.parse_args(['--out', '.'])
+    assert args.telekinesis == 'off' and args.flying_carry == 'off'
+    assert build_xml1.CONTENT_OPTS['telekinesis'] == ((), 'off') and build_xml1.CONTENT_OPTS['flying_carry'] == ((), 'off')
+    for bad in (['--telekinesis', 'xml1'], ['--flying-carry', 'xml1']):
+        try:
+            build_xml1.parse_args(['--out', '.', '--grab-carry', 'xml2', *bad])
+        except SystemExit:
+            pass
+        else:
+            raise AssertionError(bad)
     with tempfile.TemporaryDirectory() as td:
         out = Path(td)
         for value in ('xml1', 'xml2', None):
-            _record(out, value)
-            keys = FI.port_keys(out)
-            for k in FI.TK_GUARD:
-                assert (keys['Game'].get(k) == 'xml1') == (value == 'xml1')
-                assert (k in FI.dropped_keys(keys).get('Game', [])) == (value != 'xml1')
-            merged = FI.merge_text('[Game]\nTelekinesisRule=xml1\nGuardDecideRule=xml1\nKeepMe=7\n', keys,
-                                   FI.dropped_keys(keys))
-            assert ('TelekinesisRule=xml1' in merged) == (value == 'xml1')
-            assert ('GuardDecideRule=xml1' in merged) == (value == 'xml1')
-            assert 'KeepMe=7' in merged
+            for tk in ('off', 'xml1', None):
+                for fc in ('off', 'xml1', None):
+                    _record(out, value, telekinesis=tk, flying_carry=fc)
+                    keys = FI.port_keys(out)
+                    game, dropped = keys['Game'], FI.dropped_keys(keys).get('Game', [])
+                    guard = value == 'xml1'
+                    telekinesis = guard and tk == 'xml1'
+                    carry_off = guard and fc != 'xml1'
+                    assert (game.get('GuardDecideRule') == 'xml1') == guard and ('GuardDecideRule' in dropped) == (not guard)
+                    assert (game.get('TelekinesisRule') == 'xml1') == telekinesis
+                    assert ('TelekinesisRule' in dropped) == (not telekinesis)
+                    assert (game.get('Xml1FlyingCarry') == '0') == carry_off and ('Xml1FlyingCarry' in dropped) == (not carry_off)
+                    merged = FI.merge_text('[Game]\nTelekinesisRule=xml1\nGuardDecideRule=xml1\nXml1FlyingCarry=0\nKeepMe=7\n',
+                                           keys, FI.dropped_keys(keys))
+                    assert ('TelekinesisRule=xml1' in merged) == telekinesis
+                    assert ('GuardDecideRule=xml1' in merged) == guard
+                    assert ('Xml1FlyingCarry=0' in merged) == carry_off
+                    assert 'KeepMe=7' in merged
+                    if value == 'xml1' and tk is None and fc is None:
+                        # the default profile: guard decide, no telekinesis, flying carry off
+                        assert getattr(C.args_for_out(out), 'telekinesis', 'off') == 'off'
+        # an ini-only option re-runs no module when toggled
+        _record(out, 'xml1', telekinesis='off', flying_carry='off')
+        args = build_xml1.parse_args(['--out', td, '--telekinesis', 'xml1', '--flying-carry', 'xml1'])
+        assert build_xml1.plan_content_opts(out, args, []) == []
+
+
+def test_flying_carry_dll_gate():
+    with tempfile.TemporaryDirectory() as td:
+        dll = Path(td) / 'dinput.dll'
+        keys = {'Game': dict(FI.FLYING_CARRY_OFF)}
+        # 080g's DLL: no Xml1FlyingCarry key, it would install the flying carry
+        dll.write_bytes(b'MZ' + 'Xml1GrabCarry'.encode('utf-16le'))
+        assert FI.old_fix_keys(dll, keys) == ['[Game] Xml1FlyingCarry', '[Game] Xml1FlyingCarry (flying carry off)']
+        dll.write_bytes(b'MZ' + 'Xml1FlyingCarry'.encode('utf-16le'))
+        assert FI.old_fix_keys(dll, keys) == ['[Game] Xml1FlyingCarry (flying carry off)']
+        dll.write_bytes(b'MZ' + 'Xml1FlyingCarry'.encode('utf-16le') + FI.FLYING_CARRY_OFF_MARKER)
+        assert FI.old_fix_keys(dll, keys) == []
 
 
 def test_tk_guard_dll_gate():
