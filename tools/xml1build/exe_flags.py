@@ -12,6 +12,7 @@ atomically; _check_out_safe keeps <out> away from the install).
 XML2 Fix logs the state at start ("limits: address space - LAA on|off ...") and the test pipe's status shows it."""
 from __future__ import annotations
 
+import hashlib
 import struct
 
 MODULE = 'exe_flags'
@@ -56,6 +57,22 @@ def pe_checksum(data: bytes, checksum_at: int) -> int:
         total = (total & 0xFFFF) + (total >> 16)
     total = (total & 0xFFFF) + (total >> 16)
     return (total + len(data)) & 0xFFFFFFFF
+
+
+def normalized(data: bytes) -> bytes:
+    """data with exactly the two harmless header fields normalized: the LAA bit cleared in the COFF characteristics
+    and the optional-header CheckSum zeroed (both located through the PE header). A 4 GB patcher and a rewritten
+    PE checksum are the only edits that leave a retail exe's identity unchanged; NotPE32 for anything else."""
+    h = header(data)
+    out = bytearray(data)
+    struct.pack_into('<H', out, h['characteristics_at'], h['characteristics'] & ~LAA & 0xFFFF)
+    struct.pack_into('<I', out, h['checksum_at'], 0)
+    return bytes(out)
+
+
+def normalized_sha256(data: bytes) -> str:
+    """sha256 of normalized(data): the retail exe's identity independent of the LAA flag and the PE checksum."""
+    return hashlib.sha256(normalized(data)).hexdigest()
 
 
 def laa_state(data: bytes) -> str:
