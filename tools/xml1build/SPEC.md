@@ -7831,3 +7831,10 @@ Every XML1 build writing `AnimEnums=512` also writes `[Limits] CharSounds=127`.
 The DLL atomically relocates the 16-record sound cache to 127 records, including its getter and teardown bounds.
 Absent or `16` keeps retail bytes; other values are refused. The builder requires the CharSounds key and the
 rule-49 install marker in an existing companion DLL. Rebuilding with animation enums off drops both keys.
+
+### Motion pool (rule 51)
+
+XML1 builds writing `AnimEnums=512` and `CharSounds=127` also write `[Limits] MotionPool=22528`.
+The companion DLL raises the native pool and bounds each owner to 176 clip records, with guarded readers.
+The builder requires the MotionPool key plus its rule-51 registration marker. Rebuilding with animation enums
+off drops the key. This does not enable ResidentStats (R2) or change the release identity.
