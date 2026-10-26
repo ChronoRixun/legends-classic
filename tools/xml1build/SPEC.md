@@ -7894,7 +7894,7 @@ older) is refused by name.
 
 Full text: `docs/LIMITS_WAVE3.md`. `--limits-wave3 {off,on,all}` (default off, `build_xml1.py` and `xml1-builder build`) writes
 `[Limits] FightStyles=64, StyleEvents=4096, FightMoves=1024, EffectTemplates=512, PrimitiveDefs=2048, EffectVectors=4096,
-PrimitivesPerEffect=32` (`all` adds `ScriptPools=x1`, `ParticleScratch=40`; rules 59-60 have no DLL row yet). The option is
+PrimitivesPerEffect=32, AttachedPowerups=256, VFNodes=256` (rules 61 / 62; `all` adds `ScriptPools=x1`, `ParticleScratch=40`; rules 59-60 have no DLL row yet). The option is
 recorded in `report.json` only when on; with it off the build, ini, report and validation are the ones written before the
 option existed. The builder requires each key plus its rule's install line in an existing DLL (`fix_ini.WAVE3_MARKERS`,
 placeholder wording until the DLL rows land) and refuses a DLL without them by name (`FightStyles` above 32 needs rule 35

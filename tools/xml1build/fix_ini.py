@@ -9,7 +9,8 @@ keys:
                           ObjectiveDescriptions / BreakRule, [Limits]
                           ActorSlots / ResourceNames / ItemEnhancements / FightStyles / EffectCurves (and, with
                           --limits-wave3, StyleEvents / FightMoves / EffectTemplates / PrimitiveDefs / EffectVectors /
-                          PrimitivesPerEffect / ScriptPools / ParticleScratch), [Online] GameVersion /
+                          PrimitivesPerEffect / AttachedPowerups / VFNodes / ScriptPools / ParticleScratch), [Online]
+                          GameVersion /
                           ContentFingerprint / FastTransfer / ReceiveValidation, [Save] Format. They are
                           functions of the build's content (the menus it wrote, its report.json, its scripts), so the
                           builder (tools/xml1builder) writes them after a build, and tools/harness.py takes its
@@ -149,7 +150,7 @@ LIMITS = {'ActorSlots': '127', 'ResourceNames': '2048', 'ItemEnhancements': '512
 # xml2-fix limits wave 3 (runtime-only; legends-classic tools/xml1build/limits_wave3.py, docs/limits-wave3.md): the style,
 # move, event, effect, primitive, vector and script tables raised with headroom for graphics / character mods. Written
 # ONLY with the builder option --limits-wave3 (default off; a build without it is byte-identical to one made before the
-# option existed, ini included). The seven rows below ship together; each needs the companion DLL's rule (below).
+# option existed, ini included). The nine rows below ship together; each needs the companion DLL's rule (below).
 #   FightStyles 32 -> 64      rule 35 revision 2  (the style registry's bitmaps grow to two dwords)
 #   StyleEvents 1064 -> 4096  rule 53             (the style event pool shares one allocation with the registry)
 #   FightMoves 332 -> 1024    rule 54             (+ the exhaustion guards)
@@ -157,24 +158,29 @@ LIMITS = {'ActorSlots': '127', 'ResourceNames': '2048', 'ItemEnhancements': '512
 #   PrimitiveDefs 816 -> 2048 rule 56
 #   EffectVectors 710 -> 4096 rule 57
 #   PrimitivesPerEffect 10 -> 32 rule 58
+#   AttachedPowerups 128 -> 256 rule 61          (W3-10; the DLL accepts only 256)
+#   VFNodes 192 -> 256         rule 62           (W3-11, the powers' virtual-function callback nodes; only 256)
 LIMITS_WAVE3 = {'FightStyles': '64', 'StyleEvents': '4096', 'FightMoves': '1024', 'EffectTemplates': '512',
-                'PrimitiveDefs': '2048', 'EffectVectors': '4096', 'PrimitivesPerEffect': '32'}
+                'PrimitiveDefs': '2048', 'EffectVectors': '4096', 'PrimitivesPerEffect': '32',
+                'AttachedPowerups': '256', 'VFNodes': '256'}
 # The two later rows (W3-8 script pools, W3-9 particle scratch) stay behind the second level of the option
 # (--limits-wave3 all); XML2 Fix 1.9.0 (w3/integrated) carries both.
 #   ScriptPools x1 (statements 4096 / values 8192 / compiled scripts 512 / running contexts 128)  rule 59
 #   ParticleScratch 40 (the clamp; 256 only if the pool diagnostics show counts above 40)           rule 60
 LIMITS_WAVE3_LATE = {'ScriptPools': 'x1', 'ParticleScratch': '40'}
 LIMITS_WAVE3_MODES = ('off', 'on', 'all')
-# gameplay-agreement rule ids (D:/Projects/agent-briefs/_rule-ids.md: 35 FightStyles, 53..60 assigned to wave 3)
+# gameplay-agreement rule ids (D:/Projects/agent-briefs/_rule-ids.md: 35 FightStyles, 53..62 assigned to wave 3)
 WAVE3_RULES = {'FightStyles': 35, 'StyleEvents': 53, 'FightMoves': 54, 'EffectTemplates': 55, 'PrimitiveDefs': 56,
-               'EffectVectors': 57, 'PrimitivesPerEffect': 58, 'ScriptPools': 59, 'ParticleScratch': 60}
+               'EffectVectors': 57, 'PrimitivesPerEffect': 58, 'ScriptPools': 59, 'ParticleScratch': 60,
+               'AttachedPowerups': 61, 'VFNodes': 62}
 # The DLL's install line for each rule, the byte marker the builder's DLL gate requires (like CHAR_SOUNDS_MARKER): the
 # literal format string of each row's own install log line in XML2 Fix 1.9.0 (w3/integrated). The style manager (rules
-# 35 r2 + 53) and the effect pools (56 + 57) are one owner each with one install line, so they share it; the UTF-16 key
-# names (RELEASE_18_KEYS) still tell the rows apart. The key's name alone cannot certify a rule (an older DLL reads
+# 35 r2 + 53), the effect pools (56 + 57) and the power pools (61 + 62, src/power_pools.cpp) are one owner each with one
+# install line, so they share it; the UTF-16 key names (RELEASE_18_KEYS) still tell the rows apart. The key's name alone cannot certify a rule (an older DLL reads
 # FightStyles to 32).
 _STYLE_MANAGER_LINE = b'limits: style manager styles %d; events %d; size 0x%lX; %s: %s'
 _EFFECT_POOLS_LINE = b'limits: %s installed {%u,0,0,0}; %zu ledger operands; native lazy constructor and teardown retained'
+_POWER_POOLS_LINE = b'limits: %s 256 (allocation 0x%X): %s; %s'
 WAVE3_MARKERS = {
     'FightStyles': _STYLE_MANAGER_LINE,
     'StyleEvents': _STYLE_MANAGER_LINE,
@@ -183,6 +189,8 @@ WAVE3_MARKERS = {
     'PrimitiveDefs': _EFFECT_POOLS_LINE,
     'EffectVectors': _EFFECT_POOLS_LINE,
     'PrimitivesPerEffect': b'PrimitivesPerEffect: %s; capacity %u',
+    'AttachedPowerups': _POWER_POOLS_LINE,
+    'VFNodes': _POWER_POOLS_LINE,
     'ScriptPools': b'ScriptPools: rule 59 revision 1 installed {4096,0,0,0}; statements 4096, values 8192, compiled scripts 512',
     'ParticleScratch': b'ParticleScratch: rule 60 revision 1 installed {40,0,0,0}; eleven operations, clamp only',
 }
@@ -190,7 +198,7 @@ WAVE3_MARKERS_ARE_PLACEHOLDERS = False
 
 
 def wave3_limits(mode) -> dict:
-    """[Limits] keys of the --limits-wave3 level `mode` ('off' / None -> {}; 'on' -> the seven rows; 'all' -> + the late
+    """[Limits] keys of the --limits-wave3 level `mode` ('off' / None -> {}; 'on' -> the nine rows; 'all' -> + the late
     rows)."""
     mode = (mode or 'off').lower()
     if mode == 'off':
@@ -1358,7 +1366,7 @@ def check_anim_enums_dll(dll, keys: dict) -> None:
 
 def check_wave3_keys(keys: dict) -> None:
     """The wave-3 rows depend on each other (DESIGN section 2): primitives per effect beyond 10 spill into a side table
-    sized from the effect-template count, so PrimitivesPerEffect needs EffectTemplates; a late row needs the seven. Raises
+    sized from the effect-template count, so PrimitivesPerEffect needs EffectTemplates; a late row needs the nine. Raises
     ValueError for a key set no DLL can run."""
     limits = keys.get('Limits', {})
     if 'PrimitivesPerEffect' in limits and 'EffectTemplates' not in limits:
@@ -1367,7 +1375,7 @@ def check_wave3_keys(keys: dict) -> None:
     late = [k for k in LIMITS_WAVE3_LATE if k in limits]
     absent = [k for k in LIMITS_WAVE3 if k != 'FightStyles' and k not in limits]
     if late and absent:
-        raise ValueError(f'[Limits] {", ".join(late)} is written only with the seven wave-3 rows; missing {absent}')
+        raise ValueError(f'[Limits] {", ".join(late)} is written only with the nine wave-3 rows; missing {absent}')
 
 
 def old_fix_keys(dll, keys: dict) -> list:

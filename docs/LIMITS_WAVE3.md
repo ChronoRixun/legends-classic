@@ -1,7 +1,8 @@
 # Limits wave 3: the builder side (`--limits-wave3`)
 
 XML2 Fix's wave 3 raises the engine tables a graphics or character mod fills first: fight styles, style events,
-FightMoves, effect files / definitions, primitive definitions, effect vectors, primitives per effect, and (later) the
+FightMoves, effect files / definitions, primitive definitions, effect vectors, primitives per effect, the attached
+powerups and the powers' callback nodes, and (later) the
 script pools and the particle scratch. This page is the builder's half: which `xml2-fix.ini` keys a build writes, how the
 build refuses a DLL that cannot honour them, and how the validator counts what a finished build asks of each table.
 
@@ -13,7 +14,7 @@ DLL rows are not written yet; the option stays off until they land.
 
 | | |
 |---|---|
-| `build_xml1.py --limits-wave3 {off,on,all}` | `off` (default): nothing. `on`: the seven rows below. `all`: also `ScriptPools` and `ParticleScratch`. |
+| `build_xml1.py --limits-wave3 {off,on,all}` | `off` (default): nothing. `on`: the nine rows below. `all`: also `ScriptPools` and `ParticleScratch`. |
 | `xml1-builder build --limits-wave3 {off,on,all}` | the same, passed through to the content build |
 | `_build/report.json` `build.limits_wave3` | recorded **only** when the option is on (so an off build's record is unchanged) |
 | not in `CONTENT_OPTS` | it changes the ini and the validation, not a content module, so the stamp's profile (and every existing build's state) is unchanged |
@@ -31,6 +32,8 @@ An off rebuild drops every wave-3 key again (`fix_ini.PORT_OWNED`) and `FightSty
 | `PrimitiveDefs` | 816 | 2,048 | 56 | `PrimitiveDefs: rule 56 ...` |
 | `EffectVectors` | 710 | 4,096 | 57 | `EffectVectors: rule 57 ...` |
 | `PrimitivesPerEffect` | 10 | 32 | 58 | `PrimitivesPerEffect: rule 58 ...` |
+| `AttachedPowerups` | 128 | 256 (the only value the DLL accepts) | 61 | `limits: %s 256 (allocation 0x%X): %s; %s` |
+| `VFNodes` | 192 | 256 (the only value the DLL accepts) | 62 | the same power-pools install line |
 | `ScriptPools` (`all`) | 620 / 1,556 / 120 / 30 | `x1` = 4,096 / 8,192 / 512 / 128 | 59 | `ScriptPools: rule 59 ... {4096,8192,512,128}` |
 | `ParticleScratch` (`all`) | 40 | 40 (the clamp) | 60 | `ParticleScratch: rule 60 ... {40,0,0,0}` |
 
@@ -41,10 +44,10 @@ An off rebuild drops every wave-3 key again (`fix_ini.PORT_OWNED`) and `FightSty
   reads `FightStyles` up to 32 and silently ignores the rest. The harness and `xml1-builder` use the same function.
 * **Markers.** `fix_ini.WAVE3_MARKERS` holds each row's real install-line format string from XML2 Fix 1.9.0
   (w3/integrated; `WAVE3_MARKERS_ARE_PLACEHOLDERS` is False). The style manager (35 r2 + 53) and the effect pools
-  (56 + 57) are one owner each and share their install line; the UTF-16 key names tell the rows apart. The rule ids come from the coordinator's
-  list (35 revision 2, 53-60).
+  (56 + 57) and the power pools (61 + 62) are one owner each and share their install line; the UTF-16 key names tell the rows apart. The rule ids come from the coordinator's
+  list (35 revision 2, 53-62).
 * **Dependencies.** `PrimitivesPerEffect` needs `EffectTemplates` (its side table is indexed by the definition slot); a late
-  row needs the seven (`fix_ini.check_wave3_keys`).
+  row needs the nine (`fix_ini.check_wave3_keys`).
 
 ## The checks
 

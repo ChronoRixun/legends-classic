@@ -26,7 +26,7 @@ def X(tag, attrs=None, *children):
 
 # --------------------------------------------------------------------------------------------- keys, gates, OFF
 WAVE3 = ('FightStyles', 'StyleEvents', 'FightMoves', 'EffectTemplates', 'PrimitiveDefs', 'EffectVectors',
-         'PrimitivesPerEffect')
+         'PrimitivesPerEffect', 'AttachedPowerups', 'VFNodes')
 LATE = ('ScriptPools', 'ParticleScratch')
 BEFORE = {'ActorSlots': '127', 'ResourceNames': '2048', 'ItemEnhancements': '512', 'FightStyles': '32',
           'EffectCurves': '3600', 'MoveTriggers': '64', 'EntityCapacity': '1', 'ScriptFunctions': '1024',
@@ -69,11 +69,12 @@ def test_off_writes_exactly_todays_limits_and_an_off_rebuild_drops_the_wave3_key
         assert 'StyleEvents' not in text and 'ScriptPools' not in text and 'FightStyles=32' in text and 'Keep=1' in text
 
 
-def test_on_writes_the_seven_rows_at_the_design_values_and_all_adds_the_late_ones():
+def test_on_writes_the_nine_rows_at_the_design_values_and_all_adds_the_late_ones():
     on, _ = port_keys_with({'limits_wave3': 'on'})
     assert {k: on['Limits'][k] for k in WAVE3} == {'FightStyles': '64', 'StyleEvents': '4096', 'FightMoves': '1024',
                                                    'EffectTemplates': '512', 'PrimitiveDefs': '2048',
-                                                   'EffectVectors': '4096', 'PrimitivesPerEffect': '32'}
+                                                   'EffectVectors': '4096', 'PrimitivesPerEffect': '32',
+                                                   'AttachedPowerups': '256', 'VFNodes': '256'}
     assert not set(on['Limits']) & set(LATE)
     assert on['Limits']['EffectCurves'] == '3600' and on['Limits']['MoveTriggers'] == '64'     # the curves stay
     alls, dropped = port_keys_with({'limits_wave3': 'all'})
@@ -95,16 +96,18 @@ def test_on_writes_the_seven_rows_at_the_design_values_and_all_adds_the_late_one
 def test_rule_ids_and_markers_follow_the_rule_list():
     assert FI.WAVE3_RULES == {'FightStyles': 35, 'StyleEvents': 53, 'FightMoves': 54, 'EffectTemplates': 55,
                               'PrimitiveDefs': 56, 'EffectVectors': 57, 'PrimitivesPerEffect': 58, 'ScriptPools': 59,
-                              'ParticleScratch': 60}
+                              'ParticleScratch': 60, 'AttachedPowerups': 61, 'VFNodes': 62}
     # The markers are the DLL's real install-line format strings (XML2 Fix 1.9.0, w3/integrated), no longer the
-    # "<Key>: rule N" placeholders: one line per native owner (the style manager and the effect pools each own two rows).
+    # "<Key>: rule N" placeholders: one line per native owner (the style manager, the effect pools and the power pools
+    # each own two rows).
     assert FI.WAVE3_MARKERS_ARE_PLACEHOLDERS is False
     assert set(FI.WAVE3_MARKERS) == set(FI.WAVE3_RULES)
     m = FI.WAVE3_MARKERS
     assert m['FightStyles'] == m['StyleEvents'] and m['PrimitiveDefs'] == m['EffectVectors']
+    assert m['AttachedPowerups'] == m['VFNodes'] == b'limits: %s 256 (allocation 0x%X): %s; %s'
     owners = {m['FightStyles'], m['FightMoves'], m['EffectTemplates'], m['PrimitiveDefs'], m['PrimitivesPerEffect'],
-              m['ScriptPools'], m['ParticleScratch']}
-    assert len(owners) == 7 and all(isinstance(x, bytes) and len(x) >= 20 for x in owners)
+              m['ScriptPools'], m['ParticleScratch'], m['AttachedPowerups']}
+    assert len(owners) == 8 and all(isinstance(x, bytes) and len(x) >= 20 for x in owners)
     assert b'rule 59' in m['ScriptPools'] and b'rule 60' in m['ParticleScratch'] and b'FightMoves' in m['FightMoves']
     dll = os.environ.get('LC_W3_DLL')  # optional: the w3/integrated DLL carries every marker
     if dll:

@@ -6,8 +6,8 @@ build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebui
 ## Unreleased - limits wave 3, builder side
 
 - **Limits wave 3 (off by default).** `--limits-wave3 {off,on,all}` writes `[Limits] FightStyles=64`, `StyleEvents=4096`,
-  `FightMoves=1024`, `EffectTemplates=512`, `PrimitiveDefs=2048`, `EffectVectors=4096` and `PrimitivesPerEffect=32`
-  (XML2 Fix rules 35 revision 2 and 53-58; `all` adds the later `ScriptPools` / `ParticleScratch`, rules 59-60). Each key is
+  `FightMoves=1024`, `EffectTemplates=512`, `PrimitiveDefs=2048`, `EffectVectors=4096`, `PrimitivesPerEffect=32`,
+  `AttachedPowerups=256` and `VFNodes=256` (XML2 Fix rules 35 revision 2, 53-58, 61 and 62; `all` adds the later `ScriptPools` / `ParticleScratch`, rules 59-60). Each key is
   port-owned and gated: an existing DLL without the key and its rule's install line is refused by name. Off, nothing
   changes: the build, its ini and its reports are byte-identical to before the option.
 - **Seven new validator checks, counted the way the loader counts.** V-MOVES, V-EVENTS, V-EFFECT-FILES, V-PRIMITIVES,
