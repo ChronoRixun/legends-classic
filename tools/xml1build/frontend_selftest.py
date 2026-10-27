@@ -745,6 +745,10 @@ def b_build(out):
             fail('B', f'{F.MENU_IGB_REL} differs from frontend.menu_igb')
         from . import pause_appearance as PA, validate_frontend as VF
         from .validate import Check, Validator
+        online_check = Check('V-online', 'online fixtures')
+        VF.v_online_menus(Validator(ctx), online_check)
+        for problem in online_check.errors:
+            fail('B_online', problem)
         original = ctx.x1_path('ui/menus/menu_pause.igb')
         native = ctx.base_index.path('UI/menus/x2m_pda.IGB')
         expected, report = PA.pause_scene(original.read_bytes(), native.read_bytes())
@@ -929,6 +933,17 @@ def b_compare(out, ref):
     INFO['compare expected new'] = sorted(set(only_a) & COMPARE_EXPECTED_NEW)
 
 
+def u_online():
+    from . import online_menus as O
+    for name in O.MENUS:
+        screen = O.layout(name)
+        for problem in O.tree_problems(O.menu_tree(screen), screen):
+            fail('U-online', name + ': ' + problem)
+    if F.PLAY_ONLINE_CMD != O.NATIVE_ENTRY:
+        fail('U-online', 'round 1 production route must remain native')
+    INFO['online fixture assets'] = 'four menus; native production entry retained; exact font/live gates OPEN'
+
+
 def main(argv=None):
     global SOURCE_OUT
     ap = argparse.ArgumentParser(description=__doc__.split('\n')[0])
@@ -937,7 +952,7 @@ def main(argv=None):
     a = ap.parse_args(argv)
     SOURCE_OUT = Path(a.out).resolve() if a.out else None
     x1 = ctx_for('xml1')
-    for name, fn in (('U1', lambda: u1_menu_igb(x1)), ('U2', lambda: u2_menu(x1)), ('U3', lambda: u3_dangerroom(x1)),
+    for name, fn in (('U-online', u_online), ('U1', lambda: u1_menu_igb(x1)), ('U2', lambda: u2_menu(x1)), ('U3', lambda: u3_dangerroom(x1)),
                      ('U4', lambda: u4_xp(x1)), ('U5', lambda: u5_equipment(x1)), ('U6', u6_namespace),
                      ('U7', lambda: u7_review(x1)), ('U8', lambda: u8_trivia(x1)), ('U9', lambda: u9_credits(x1)),
                      ('U10', lambda: u10_codex(x1)), ('U11', u11_scripts), ('U12', u12_sound_plan),

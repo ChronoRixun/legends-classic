@@ -285,3 +285,66 @@ existing invisible model. These retire the pulsing cones and helix rings while
 the flat blue podium still visibly follows native keyboard and virtual-pad
 selection. Private 4:3 and 16:9 checks confirmed that selection remains visible;
 the cleanup does not require a new runtime hook or a replacement roster flow.
+
+## Online presentation fixtures (round 1)
+
+`online_menus` authors original base-menu definitions, paired English halves,
+scenes, geometric background textures, focus models and packages for `lc_online`,
+`lc_host`, `lc_code` and `lc_browse`. The normal main-menu Play Online command
+remains `openmenu online`. These assets are a presentation fixture, not a live
+online feature or an installed runtime capability.
+
+The family adds eight colours and four named styles through `menu_theme.allocate`.
+On the current 63-colour/24-style baseline it produces 71/28, leaving four slots
+in each native table. The allocator checks this ceiling before any output write.
+The pause validator recognizes this reservation consumption only when the complete
+online family is present; unrelated native pause text, modes and actions retain
+their existing checks. The frontend validator also checks the exact online style
+bindings, paired definitions, reachable alias triples and package resource closure.
+
+The approved composition uses a 640x480 design canvas, mapped to the established
+512x384 native camera. Every text item and focus anchor has a matching hit bound.
+Code has 31 symbols plus Delete in a four-by-eight grid, eight display cells,
+Paste/Clear/Done, a connected four-way graph and a disabled incomplete Done.
+Browse has seven independent fields in each of seven visible rows; it does not
+try to fit seven columns into the native four-column LISTBOX. The fixture caps
+its cache at 50 records and bounds selection/window movement, including empty,
+full, mismatched, loading, stale and long-name records. Unconnected ping values
+remain `--` with neutral bars. Host preview follows visibility, campaign and
+drop-in settings, with **next area** wording.
+
+`Fixture.dispatch` is a pure, synthetic controller. Its finite intent manifest
+covers every authored action, code editing and validation, Back/Delete behavior,
+page movement, join refusals, inline errors and reentry. It never hosts a network
+session, reads the clipboard, changes a save, resolves a code or registers a DLL
+script. `_build/online_menus_detail.json` records item-to-intent bindings and the
+actual authored layouts. Existing native `openmenu` commands provide safe menu
+transitions; other fixture controls require the later authorized test adapter.
+The manifest is data, not executable console/script source. Device tokens remain
+native; custom shortcut consumption and the scoped Code Back bridge are later
+runtime work. An empty `usecmd` must not be mistaken for an installed action.
+
+Font probing records both active PC/HD maps and their indices. The current maps
+have seven entries each, mapping languages/English overrides to the four shared
+`medium`, `big`, `hud`, `digital` indices. Seven entries do not establish seven
+independent font slots or a proven maximum map capacity. Adding another English
+medium/big mapping would affect every user of that global index. No extra scoped
+index or per-menu font registration has been proven, so exact **Barlow Condensed
+remains an open font gate**. This adapter does not write font maps, metrics or
+atlases. A future scoped runtime font/atlas binding must preserve classic menus,
+HUD/digital, PC control glyphs and language fallbacks; global replacement is not
+an acceptable solution.
+
+Native definitions are ellipsized with the active retained native glyph advances
+before serialization, including each Browse field. Nominal offline Barlow previews
+cannot establish native glyph size, spacing, clipping, prompt expansion or rendering.
+The offline renderer uses the same authored rectangles and can accept separately
+provided OFL Barlow fonts; it is a layout aid, not a game screenshot. Report exact
+font fidelity and real-game visual/input evidence separately and keep those gates
+open until the coordinator's live step. Generated images have scoped internal names
+to avoid collisions with the owned containers used to encode them.
+
+Synthetic coverage lives in `tests/unit/test_online_menus.py`; the frontend
+self-test runs the synthetic menu contract without owned output and additionally
+runs `v_online_menus` with `--out`. The complete validator registers `V-online`.
+No gameplay rule or release identity is assigned by these fixtures.

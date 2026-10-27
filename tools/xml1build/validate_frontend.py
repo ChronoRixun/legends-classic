@@ -948,8 +948,10 @@ def v_classic_pause(v, ck):
         if root.findall('items'):
             ck.error('pause widgets must share one scene and text layer')
     colors, styles = v.tree('Data/colors.XMLB'), v.tree('Data/styles.XMLB')
-    if colors is None or styles is None or len(colors) > T.COLOR_LIMIT - T.COLOR_RESERVE or \
-            len(styles) > T.STYLE_LIMIT - T.STYLE_RESERVE:
+    from . import online_menus as O
+    color_reserve,style_reserve=O.reserved_budget(colors,styles)
+    if colors is None or styles is None or len(colors) > T.COLOR_LIMIT - color_reserve or \
+            len(styles) > T.STYLE_LIMIT - style_reserve:
         ck.error('classic menu tables consumed reserved native headroom')
     elif colors is not None and styles is not None:
         ids = {e.get('id') for e in colors}
@@ -1329,3 +1331,55 @@ def v_personal_items(v, ck):
                     problems += 1
         if not problems:
             ck.count('personal_items_ok')
+
+
+def v_online_menus(v, ck):
+    """Round-1 presentation assets, paired definitions and fixture command boundary."""
+    if C.frontend_mode(v.ctx) != 'xml1': return
+    from . import online_menus as O
+    import xml.etree.ElementTree as ET
+    colors=v.tree('Data/colors.XMLB')
+    try: ids=O.palette_ids(colors if colors is not None else ())
+    except ValueError as error:
+        ck.error(str(error)); return
+    for name in O.MENUS:
+        screen=O.bound_layout(O.layout(name),O.native_metrics(v.ctx))
+        expected=O.menu_tree(screen,ids)
+        data=v.read('UI/menus/'+name+'.IGB')
+        for suffix in ('.XMLB','.engb'):
+            root=v.tree('UI/menus/'+name+suffix)
+            if root is None:
+                ck.error(name+suffix+': missing online definition'); continue
+            for error in O.tree_problems(root,screen,ids): ck.error(name+': '+error)
+            if ET.tostring(root)!=ET.tostring(expected):
+                # Binary codec sorts attributes; compare semantic trees below.
+                def signature(e): return (e.tag,dict(e.attrib),[signature(c) for c in e])
+                if signature(root)!=signature(expected): ck.error(name+': authored tree differs')
+        if data is None: ck.error(name+': missing scene')
+        else:
+            for error in O.scene_problems(screen,data): ck.error(name+': '+error)
+        pkg=v.tree(F.MENU_PKG_DIR+'/'+name+'.PKGB')
+        if pkg is None: ck.error(name+': missing package')
+        else:
+            expected_entries={(e.tag,e.get('filename')) for e in O.package(expected)}
+            if {(e.tag,e.get('filename')) for e in pkg}!=expected_entries: ck.error(name+': package closure differs')
+            for kind,filename in expected_entries:
+                suffix='.IGB' if kind in ('model','texture') else '.XMLB'
+                if v.read(filename+suffix) is None: ck.error(name+': unresolved '+filename)
+    colors,styles=v.tree('Data/colors.XMLB'),v.tree('Data/styles.XMLB')
+    if colors is None or styles is None: ck.error('online tables missing')
+    else:
+        if len(colors)>71 or len(styles)>28: ck.error('online table overflow')
+        try:
+            _,expected_styles,_=O.theme(colors,styles)
+            by_name={e.get('name'):e for e in expected_styles}
+            for e in styles:
+                if e.get('name') in {'lc_o_'+r for r in O.STYLES} and e.attrib!=by_name[e.get('name')].attrib:
+                    ck.error('online style binding differs: '+e.get('name'))
+        except ValueError as error: ck.error(str(error))
+        for role in O.STYLES:
+            if len([e for e in styles if e.get('name')=='lc_o_'+role])!=1: ck.error('online style missing: '+role)
+    main=v.tree(F.MENU_REL+'.XMLB')
+    if main is None or not any(e.get('usecmd')==O.NATIVE_ENTRY for e in main.findall('item')):
+        ck.error('round 1 must preserve native main-menu Online entry')
+    ck.set('online_menus',len(O.MENUS))

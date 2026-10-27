@@ -1715,6 +1715,8 @@ def run(ctx):
     det['trivia_appearance'] = TA.write(ctx)
     from . import team_appearance as TEAM
     det['team_appearance'] = TEAM.write(ctx)
+    from . import online_menus as OM
+    det['online_menus'] = OM.write(ctx)
     data, irep = menu_igb(ctx)
     for p in irep['problems']:
         ctx.error(f'{MENU_IGB_REL}: {p}')
