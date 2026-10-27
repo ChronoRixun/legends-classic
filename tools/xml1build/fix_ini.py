@@ -1436,6 +1436,18 @@ EXTRA_MARKERS += [(('Game', 'TelekinesisRule'), TK_STILL_MARKER, '[Game] Telekin
                   (('Game', 'GuardDecideRule'), GUARD_TAP_MARKER, '[Game] GuardDecideRule (tap exit)'),
                   (('Game', 'ColossusChargeRule'), COLOSSUS_CASTER_MARKER, '[Game] ColossusChargeRule (caster talents)'),
                   (('Game', 'Xml1GrabCarry'), THROWN_IMPACT_MARKER, '[Game] Xml1GrabCarry (thrown impact, animated bones)')]
+# xml2-fix beta 9 (beta9/beta9-moves ab76926, candidate 082b): the guard decide resolves at its entry 0x693004 (a real
+# pad / keyboard press did nothing in beta 8), telekinesis throws are armed through native L2 (release gate 0x42E923) and
+# flying-carry throws through the victim_throw registration 0x692378 (beta 8: 0 damage). No key, rule revision or install
+# line changed, so the fix's own guard descriptions for those sites are the byte markers: a 1.9.0-beta.1 / beta.2 DLL
+# would install the moves with beta 8's defects. Only a build with the option on writes TelekinesisRule /
+# GuardDecideRule or leaves Xml1FlyingCarry out (beta 8's defaults keep all three off).
+TK_ARMING_MARKER = b'TK final selector chooses native L2 amount'
+GUARD_ENTRY_MARKER = b'entry-context chain resolver'
+CARRY_THROW_MARKER = b'victim_throw execute registration'
+EXTRA_MARKERS += [(('Game', 'TelekinesisRule'), TK_ARMING_MARKER, '[Game] TelekinesisRule (throw damage, beta 9)'),
+                  (('Game', 'GuardDecideRule'), GUARD_ENTRY_MARKER, '[Game] GuardDecideRule (decided at entry, beta 9)')]
+FLYING_CARRY_ON_NAME = '[Game] Xml1GrabCarry (flying carry on: throw damage, beta 9)'
 # E12 (SPEC 108): a build whose own XMen2.exe is large-address-aware needs the fix's address-space module (the 2 GB guard
 # block, and the two test readers that refused addresses above 0x7fffffff before it). Its start line is the marker; the
 # check reads the build's exe beside the DLL (no exe yet, or --laa off: nothing to check).
@@ -1491,6 +1503,9 @@ def check_release_dll(dll, keys: dict) -> None:
                 if key in keys.get(section, {}) and marker not in data]
     missing += [name for (section, key), marker, name in EXTRA_MARKERS
                 if key in keys.get(section, {}) and marker not in data]
+    game = keys.get('Game', {})
+    if 'Xml1GrabCarry' in game and 'Xml1FlyingCarry' not in game and CARRY_THROW_MARKER not in data:
+        missing.append(FLYING_CARRY_ON_NAME)         # --flying-carry xml1 (the key left out = the DLL's flying carry on)
     for (section, key), (stock, marker, name) in VALUE_MARKERS.items():
         value = keys.get(section, {}).get(key)
         if value is not None and _int_or_zero(value) > stock:

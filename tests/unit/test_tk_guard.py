@@ -98,19 +98,38 @@ def test_tk_guard_dll_gate():
         dll.write_bytes(b'MZ' + 'Xml1GrabCarry'.encode('utf-16le'))
         assert FI.old_fix_keys(dll, keys) == ['[Game] TelekinesisRule', '[Game] GuardDecideRule',
                                               '[Game] TelekinesisRule (PC audio slot 38)',
-                                              '[Game] TelekinesisRule (still throw)', '[Game] GuardDecideRule (tap exit)']
+                                              '[Game] TelekinesisRule (still throw)', '[Game] GuardDecideRule (tap exit)',
+                                              '[Game] TelekinesisRule (throw damage, beta 9)', '[Game] GuardDecideRule (decided at entry, beta 9)']
         # 080d's DLL knows both keys but resolves the telekinesis sounds through slot 0x34: refused by marker
         dll.write_bytes(b'MZ' + '\0'.join(FI.TK_GUARD).encode('utf-16le'))
         assert FI.old_fix_keys(dll, keys) == ['[Game] TelekinesisRule (PC audio slot 38)',
-                                              '[Game] TelekinesisRule (still throw)', '[Game] GuardDecideRule (tap exit)']
+                                              '[Game] TelekinesisRule (still throw)', '[Game] GuardDecideRule (tap exit)',
+                                              '[Game] TelekinesisRule (throw damage, beta 9)', '[Game] GuardDecideRule (decided at entry, beta 9)']
         # 080e / 080f's DLL: a still telekinesis throw divides zero by zero and a tapped guard never exits
         dll.write_bytes(b'MZ' + '\0'.join(FI.TK_GUARD).encode('utf-16le') + FI.TK_AUDIO_MARKER)
-        assert FI.old_fix_keys(dll, keys) == ['[Game] TelekinesisRule (still throw)', '[Game] GuardDecideRule (tap exit)']
+        assert FI.old_fix_keys(dll, keys) == ['[Game] TelekinesisRule (still throw)', '[Game] GuardDecideRule (tap exit)',
+                                              '[Game] TelekinesisRule (throw damage, beta 9)', '[Game] GuardDecideRule (decided at entry, beta 9)']
         dll.write_bytes(b'MZ' + '\0'.join(FI.TK_GUARD).encode('utf-16le') + FI.TK_AUDIO_MARKER + FI.TK_STILL_MARKER)
-        assert FI.old_fix_keys(dll, keys) == ['[Game] GuardDecideRule (tap exit)']
+        assert FI.old_fix_keys(dll, keys) == ['[Game] GuardDecideRule (tap exit)', '[Game] TelekinesisRule (throw damage, beta 9)', '[Game] GuardDecideRule (decided at entry, beta 9)']
         dll.write_bytes(b'MZ' + '\0'.join(FI.TK_GUARD).encode('utf-16le') + FI.TK_AUDIO_MARKER + FI.TK_STILL_MARKER
                         + FI.GUARD_TAP_MARKER)
+        # 1.9.0-beta.1 / beta.2 (beta 8): both keys and every beta 8 marker, but beta 9's guard entry and TK arming missing
+        assert FI.old_fix_keys(dll, keys) == ['[Game] TelekinesisRule (throw damage, beta 9)', '[Game] GuardDecideRule (decided at entry, beta 9)']
+        dll.write_bytes(b'MZ' + '\0'.join(FI.TK_GUARD).encode('utf-16le') + FI.TK_AUDIO_MARKER + FI.TK_STILL_MARKER
+                        + FI.GUARD_TAP_MARKER + FI.TK_ARMING_MARKER + FI.GUARD_ENTRY_MARKER)
         assert FI.old_fix_keys(dll, keys) == []
+
+
+def test_flying_carry_on_needs_beta9_dll():
+    # --flying-carry xml1 leaves Xml1FlyingCarry out (the DLL's flying carry on): beta 8's DLL installs it with 0-damage
+    # throws, so the beta 9 carry-throw registration marker is required; with the key written (=0, the default) it is not
+    with tempfile.TemporaryDirectory() as td:
+        dll = Path(td) / 'dinput.dll'
+        dll.write_bytes(b'MZ' + 'Xml1GrabCarry'.encode('utf-16le'))
+        assert FI.FLYING_CARRY_ON_NAME in FI.old_fix_keys(dll, {'Game': {'Xml1GrabCarry': 'xml1'}})
+        assert FI.FLYING_CARRY_ON_NAME not in FI.old_fix_keys(dll, {'Game': {'Xml1GrabCarry': 'xml1', **FI.FLYING_CARRY_OFF}})
+        dll.write_bytes(b'MZ' + 'Xml1GrabCarry'.encode('utf-16le') + FI.CARRY_THROW_MARKER)
+        assert FI.FLYING_CARRY_ON_NAME not in FI.old_fix_keys(dll, {'Game': {'Xml1GrabCarry': 'xml1'}})
 
 
 def _pe32(laa: bool) -> bytes:
