@@ -205,6 +205,9 @@ class RealPipeline:
         argv += ['--save-layout', getattr(job, 'save_layout', 'retail')]
         if getattr(job, 'loot', 'off') != 'off':
             argv += ['--loot', job.loot]
+        for opt, flag in (('telekinesis', '--telekinesis'), ('guard_decide', '--guard-decide'), ('flying_carry', '--flying-carry')):
+            if (getattr(job, opt, None) or 'off') != 'off':        # beta 9 moves (ini only); off = build_xml1's default
+                argv += [flag, getattr(job, opt)]
         if not job.movies:
             argv.append('--no-movies')
         args = build_xml1.parse_args(argv)

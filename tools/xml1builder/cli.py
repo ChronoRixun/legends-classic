@@ -81,6 +81,17 @@ def make_parser():
                    help='build: the first-game item economy (Legends Classic 0.4.2). off (default) builds exactly as '
                         'before; xml1 converts all 116 XML1 equipment with their bonuses, writes the economy sidecar and '
                         'the approximations files, and needs --save-layout w2 and XML2 Fix with the Xml1Economy key')
+    # beta 9 moves (candidate 082b): the three ini-only options build_xml1.py has had since beta 8, so a builder build
+    # can turn them on for a live round. Defaults stay off until a live round and the owner's hand test pass.
+    p.add_argument('--telekinesis', choices=('off', 'xml1'), default='off',
+                   help="build: Phoenix's XML1 telekinesis ([Game] TelekinesisRule=xml1, XML2 Fix rule 46 bit 512; "
+                        "needs the grab lifecycle). Off by default (in progress); the ini only")
+    p.add_argument('--guard-decide', dest='guard_decide', choices=('off', 'xml1'), default='off',
+                   help="build: XML1's guard decide ([Game] GuardDecideRule=xml1, XML2 Fix rule 46 bit 1024). Off by "
+                        "default (in progress); the ini only")
+    p.add_argument('--flying-carry', dest='flying_carry', choices=('off', 'xml1'), default='off',
+                   help="build: XML1's flying carry within rule 45: off writes [Game] Xml1FlyingCarry=0, xml1 leaves "
+                        "the key out (the DLL's default). Off by default (in progress); the ini only")
     p.add_argument('--no-ini', dest='no_ini', action='store_true', help='do not merge the port\'s keys into '
                                                                          'xml2-fix.ini (they are in the stamp)')
     p.add_argument('--allow-unknown-exe', dest='allow_unknown_exe', action='store_true',

@@ -76,6 +76,9 @@ class Job:
     limits_wave3: str = 'off'
     save_layout: str = 'retail'
     loot: str = 'off'
+    telekinesis: str = 'off'          # beta 9 moves: ini-only options (build_xml1 --telekinesis / --guard-decide / --flying-carry)
+    guard_decide: str = 'off'
+    flying_carry: str = 'off'
     disc: dict = field(default_factory=dict)
     ident: dict | None = None
     xml2_info: dict = field(default_factory=dict)
@@ -327,7 +330,9 @@ def cmd_build(a, output, cancel, pipeline_factory):
               main_menu_layout=getattr(a, 'main_menu_layout', 'classic'),
               anim_enums=getattr(a, 'anim_enums', None) or 'xml1', laa=getattr(a, 'laa', None) or 'on',
               limits_wave3=getattr(a, 'limits_wave3', None) or 'off',
-              save_layout=getattr(a, 'save_layout', 'retail'), loot=getattr(a, 'loot', 'off'))
+              save_layout=getattr(a, 'save_layout', 'retail'), loot=getattr(a, 'loot', 'off'),
+              telekinesis=getattr(a, 'telekinesis', None) or 'off', guard_decide=getattr(a, 'guard_decide', None) or 'off',
+              flying_carry=getattr(a, 'flying_carry', None) or 'off')
     from xml1build import loot as LOOT
     why = LOOT.refusal(job)
     if why:
