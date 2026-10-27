@@ -19,6 +19,9 @@ ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'
 PALETTE = ('0A1830','11284A','2A4A78','7FA6D9','EEF3FA','FFCB3D','54D68A','FF6F55')
 STYLES = {'title': ('big',37), 'row': ('medium',15), 'body': ('medium',12.5), 'label': ('medium',11)}
 COLUMNS = ((59,128),(188,67),(255,93),(348,58),(406,76),(482,78),(560,37))
+# Browse row cells kept as hit/focus targets. [4] status and [5] ping are drawn by the row scenes (no DATA cell, no
+# focus anchor): the scene anchor budget of one menu is 256 and every cell costs two.
+ROW_COLUMNS = (0, 1, 2, 3, 6)
 PROMPT_TOKENS = {'back':'$MENU_BACK','delete':'$MENU_BACK','paste':'$MENU_NEXT',
                  'refresh':'$MENU_NEXT','rejoin':'$MENU_NEXT','clear':'$MENU_OTHER',
                  'name':'$MENU_OTHER','change':'$MENU_OTHER','open':'$MENU_OK'}
@@ -901,7 +904,7 @@ def focus_picture(screen,item,rect):
 
 # These probes describe additive APIs, not release or gameplay identities. Each
 # must be present in ONE supplied DLL; separate menu/font DLLs cannot be stacked.
-DLL_PROBES = (b'lc-online-menus/1\n', b'lc-online-input/1', b'lc-online-lobby/1', b'lc-online-broker/1',
+DLL_PROBES = (b'lc-online-menus/1\n', b'lc-online-input/1', b'lc-online-lobby/1', b'lc-online-broker/2',
               b'lcOnlineIntent\0', 'Online\0'.encode('utf-16le'),
               'Menus\0'.encode('utf-16le'), 'LegendsClassicFonts\0'.encode('utf-16le'),
               b'ui/fonts/lc_fonts_pc.xmlb\0', b'ui/fonts/lc_fonts_hd.xmlb\0',
@@ -924,9 +927,31 @@ DATA_NAMES = {'local_name', 'self_name', 'last_name', 'last_code', 'last_time',
               'code_value', 'code_remaining', *(f'cell{i}' for i in range(8)),
               # Round 5: every field the broker bridge binds is DATA (normal interned text, no gamevar owner).
               'service', 'self_state', 'browse_hint', 'room_name', 'preview_name', 'room_code', 'details_name',
-              'details', 'broker_error', *(f'room_{r}_{c}' for r in range(7) for c in range(7))}
-BROKER_VARIANTS = ('lc_broker_auth', 'lc_broker_list', 'lc_broker_host', 'lc_broker_resolve', 'lc_broker_empty',
-                   'lc_broker_stale', 'lc_broker_error', 'lc_broker_room', 'lc_broker_cancel', 'lc_broker_offline_room')
+              'details', 'broker_error', 'list_count', 'list_age', *(f'room_{r}_{c}' for r in range(7) for c in ROW_COLUMNS)}
+# Round 5b: the DLL selects ONE lc_broker_err_<cause> scene per failure (and hides Retry where retrying cannot help),
+# one status / pip / build scene and a dim veil per Browse row, a count + age header and a connected-service scene.
+ERROR_CAUSES = ('code_not_found', 'room_full', 'version_mismatch', 'rate_limited', 'timeout', 'offline', 'refused', 'generic')
+RETRYABLE_CAUSES = ('rate_limited', 'timeout', 'offline', 'generic')
+# Localized copy per cause (09-errors wording, in the inline style round 5 chose: one line, names cause + next step).
+ERROR_COPY = {
+    'code_not_found': 'Code not found. Ask the host for the current code.',
+    'room_full': 'That game is full. Try another game or ask for a new code.',
+    'version_mismatch': 'Different game version. Everyone should use the same build.',
+    'rate_limited': 'Too many requests. Wait a few seconds, then retry.',
+    'timeout': 'The online service did not answer. Try again.',
+    'offline': "Can't reach the online service. LAN and IP play still work.",
+    'refused': 'The online service could not be verified. Check its settings.',
+    'generic': 'Online service request failed. Retry or go Back.',
+}
+# Causes each screen's own operations can reach (Hub/Host never resolve a code or list rooms).
+BROKER_CAUSES = {'lc_online': ('rate_limited', 'timeout', 'offline', 'refused', 'generic'),
+                 'lc_host': ('rate_limited', 'timeout', 'offline', 'refused', 'generic'),
+                 'lc_code': ERROR_CAUSES, 'lc_browse': ERROR_CAUSES}
+STATUS_KINDS = {'lobby': ('In lobby', 6), 'progress': ('In progress', 3), 'closed': ('Closed', 5), 'full': ('Full', 7)}
+BUILD_KINDS = {'same': ('SAME', 6), 'other': ('', 7), 'check': ('CHECK', 3)}
+BROKER_STATUS = ('lc_broker_auth', 'lc_broker_list', 'lc_broker_host', 'lc_broker_resolve', 'lc_broker_empty',
+                 'lc_broker_stale', 'lc_broker_room', 'lc_broker_cancel', 'lc_broker_offline_room')
+BROKER_VARIANTS = BROKER_STATUS + tuple('lc_broker_err_' + c for c in ERROR_CAUSES)
 # Localized copy of the DLL-selected status variants (docs/online-menus.md); one hideable node each per screen.
 BROKER_COPY = {
     'lc_broker_auth': 'Connecting to Online service...',
@@ -934,28 +959,38 @@ BROKER_COPY = {
     'lc_broker_host': 'Opening your room...',
     'lc_broker_resolve': 'Looking up room code...',
     'lc_broker_empty': 'No public games right now. Host a game or go Back.',
-    'lc_broker_stale': 'These games may be out of date. Refresh to try again.',
-    'lc_broker_error': 'Online service could not complete the request. Retry or go Back.',
+    'lc_broker_stale': 'Games may be out of date. Refresh to try again.',
     'lc_broker_cancel': 'Canceling or leaving...',
     'lc_broker_offline_room': 'Online service unavailable. Existing connections stay open; new players cannot join.',
 }
+# Browse shows it in the list header (one line beside the count), so it is shorter there.
+BROWSE_OFFLINE_COPY = 'Service unavailable. No new players can join.'
 BROKER_ROOM_COPY = {'lc_code': 'Room found. Editing the code leaves this room.',
                     'lc_host': 'Room open. Native lobby setup is the next step.',
                     'lc_browse': 'Room found. Native lobby setup is the next step.',
                     'lc_online': 'Room open. Native lobby setup is the next step.'}
+
+
+def broker_copy(name, key):
+    if key == 'lc_broker_room': return BROKER_ROOM_COPY[name]
+    if key == 'lc_broker_offline_room' and name == 'lc_browse': return BROWSE_OFFLINE_COPY
+    return BROKER_COPY[key]
+
+
 # Screens carrying each variant. The DLL hides/shows by name and tolerates absent nodes; each screen gets exactly
 # the states its own operations can reach (Hub never lists/hosts/resolves, only Retry/Cancel/Error).
 BROKER_SCREENS = {
-    'lc_online': ('lc_broker_auth', 'lc_broker_error', 'lc_broker_cancel'),
-    'lc_host': ('lc_broker_auth', 'lc_broker_host', 'lc_broker_error', 'lc_broker_room', 'lc_broker_cancel', 'lc_broker_offline_room'),
-    'lc_code': ('lc_broker_auth', 'lc_broker_resolve', 'lc_broker_error', 'lc_broker_room', 'lc_broker_cancel', 'lc_broker_offline_room'),
+    'lc_online': ('lc_broker_auth', 'lc_broker_cancel'),
+    'lc_host': ('lc_broker_auth', 'lc_broker_host', 'lc_broker_room', 'lc_broker_cancel', 'lc_broker_offline_room'),
+    'lc_code': ('lc_broker_auth', 'lc_broker_resolve', 'lc_broker_room', 'lc_broker_cancel', 'lc_broker_offline_room'),
     'lc_browse': ('lc_broker_auth', 'lc_broker_list', 'lc_broker_resolve', 'lc_broker_empty', 'lc_broker_stale',
-                  'lc_broker_error', 'lc_broker_room', 'lc_broker_cancel', 'lc_broker_offline_room'),
+                  'lc_broker_room', 'lc_broker_cancel', 'lc_broker_offline_room'),
 }
+BROKER_SCREENS = {k: v + tuple('lc_broker_err_' + c for c in BROKER_CAUSES[k]) for k, v in BROKER_SCREENS.items()}
 INTENTS = {'open:lc_host':2, 'open:lc_code':3, 'open:lc_browse':4, 'other':5,
            'back':6, 'unavailable':7, 'dismiss':8, 'name':9, 'paste':10, 'delete':11,
            'clear':12, 'done':13, 'rejoin':14, 'copy':16, 'leave-yes':17,
-           # Round 5 broker lifecycle (lc-online-broker/1). Rows 0..6 are 24..30, see intent_number.
+           # Round 5 broker lifecycle (lc-online-broker/2). Rows 0..6 are 24..30, see intent_number.
            'refresh':18, 'open-room':19, 'retry':20, 'visibility':21, 'page:-1':22, 'page:1':23, 'join':31}
 BROKER_ROW_FIRST, BROKER_ROW_LAST = 24, 30
 # Exact allowed screens of the round-5 intents (docs/online-menus.md table); anything else is a contract error.
@@ -1003,70 +1038,113 @@ def _variant(key, rect, parts, **kw):
     return _entry(key,'',rect,'body',4,variant=True,parts=parts,hidden=True,**kw)
 
 
-def _error_variant(name):
-    """lc_broker_error: warn rule, message and the Retry bar. The DLL hides/shows only this node.
+def _bar(rect, color=5, slant=5, alpha=None):
+    part = dict(kind='bar', rect=rect, color=color, slant=slant)
+    if alpha is not None: part['alpha'] = alpha
+    return part
 
-    `retry` (intent 20) is a separate empty-text hit/focus item over the bar, because the DLL only
-    enables/disables it; the bar's static text travels with this variant."""
-    copy_=BROKER_COPY['lc_broker_error']
-    if name=='lc_code':
-        rect=(81,387,478,34)
-        parts=[dict(kind='rect',rect=(0,0,478,2),color=7),dict(kind='diamond',rect=(18,13,7,6),color=7),
-               dict(text=copy_,rect=(30,9,350,18),style='body',color=7),
-               dict(kind='rect',rect=(408,8,62,18),color=5)]
-        retry=(489,395,62,18)
-    elif name=='lc_browse':
-        rect=(43,424,414,16)
-        parts=[dict(kind='rect',rect=(0,0,56,16),color=5),
-               dict(kind='diamond',rect=(64,5,7,6),color=7),dict(text=copy_,rect=(78,1,336,15),style='body',color=7)]
-        retry=(43,424,56,16)
+
+def _error_variant(name, cause):
+    """lc_broker_err_<cause>: warn rule, diamond, the cause's one-line copy and, only where retrying can help, the Retry bar.
+
+    The DLL shows exactly one cause scene and hides `retry` (a separate hit/focus item over the bar) for causes without a
+    bar, so a bar is never drawn for a button that is not there. The bar is a slanted amber shape like the native focus."""
+    retry_ok = cause in RETRYABLE_CAUSES
+    warn = 5 if cause == 'room_full' else 7
+    copy_ = ERROR_COPY[cause]
+    if name == 'lc_code':
+        rect = (81, 387, 478, 34)
+        parts = [dict(kind='rect', rect=(0, 0, 478, 2), color=warn), dict(kind='diamond', rect=(18, 13, 7, 6), color=warn),
+                 dict(text=copy_, rect=(30, 9, 350, 18), style='body', color=warn)]
+        if retry_ok: parts.append(_bar((408, 8, 62, 18)))
+        retry = (489, 395, 62, 18)
+    elif name == 'lc_browse':
+        rect = (43, 424, 414, 16)
+        if retry_ok:
+            parts = [_bar((0, 0, 56, 16)), dict(kind='diamond', rect=(64, 5, 7, 6), color=warn),
+                     dict(text=copy_, rect=(78, 1, 295, 15), style='body', color=warn)]
+        else:
+            parts = [dict(kind='diamond', rect=(2, 5, 7, 6), color=warn), dict(text=copy_, rect=(16, 1, 357, 15), style='body', color=warn)]
+        retry = (43, 424, 56, 16)
     else:
-        rect=(43,421,554,20)
-        parts=[dict(kind='panel',rect=(0,0,554,20),color=1),dict(kind='rect',rect=(0,0,3,20),color=7),
-               dict(kind='diamond',rect=(12,7,7,6),color=7),dict(text=copy_,rect=(26,3,370,15),style='body',color=7),
-               dict(kind='rect',rect=(484,2,62,16),color=5)]
-        retry=(527,423,62,16)
-    return _variant('lc_broker_error',rect,parts),retry
+        rect = (43, 421, 554, 20)
+        parts = [dict(kind='panel', rect=(0, 0, 554, 20), color=1), dict(kind='rect', rect=(0, 0, 3, 20), color=warn),
+                 dict(kind='diamond', rect=(12, 7, 7, 6), color=warn), dict(text=copy_, rect=(26, 3, 370, 15), style='body', color=warn)]
+        if retry_ok: parts.append(_bar((484, 2, 62, 16)))
+        retry = (527, 423, 62, 16)
+    return _variant('lc_broker_err_' + cause, rect, parts), retry
+
+
+def _row_scenes(items):
+    """Per-row status diamond+word, player pips + neutral ping bars, build badge and the dim veil for unjoinable rows.
+
+    Models are shared across the seven rows (identical relative art); each row only has its own anchor. They sit between
+    the focus fill and the text (plane -170 -> depth -130); the veil sits in front of the text (-200 -> -160)."""
+    for r in range(7):
+        y = 178 + 31 * r
+        for kind, (word, color) in STATUS_KINDS.items():
+            items.append(_variant(f'lc_row{r}_st_{kind}', (406, y + 7, 76, 20),
+                                  [dict(kind='diamond', rect=(1, 5, 7, 6), color=color),
+                                   dict(text=word, rect=(13, 2, 59, 18), style='body', color=color)],
+                                  model_name=f'row_st_{kind}', plane=-170))
+        for n in range(5):
+            parts = [_bar((bar * 5.5, 2, 3, 11), 4, .8) if bar < n else _bar((bar * 5.5, 2, 3, 11), 3, .8, .4) for bar in range(4)]
+            # No measured ping exists: four neutral bars, never a number or a colour that implies one.
+            parts += [dict(kind='rect', rect=(103 + bar * 3, 12 - bar * 3, 2, 3 + bar * 3), color=3, alpha=.35) for bar in range(4)]
+            parts.append(dict(text='--', rect=(121, 0, 24, 15), style='body', color=3))  # the ping value: none measured
+            items.append(_variant(f'lc_row{r}_pips_{n}', (374, y + 8, 150, 15), parts, model_name=f'row_pips_{n}', plane=-170))
+        for kind, (word, color) in BUILD_KINDS.items():
+            parts = [dict(kind='outline', rect=(0, 1, 35, 14), color=color)]
+            if word: parts.append(dict(text=word, rect=(8, 1, 27, 14), style='label', color=color))
+            items.append(_variant(f'lc_row{r}_build_{kind}', (552, y + 7, 35, 15), parts, model_name=f'row_build_{kind}', plane=-170))
+        items.append(_variant(f'lc_row{r}_dim', (44, y, 552, 29), [dict(kind='rect', rect=(0, 0, 552, 29), color=0, alpha=.55)],
+                              model_name='row_dim', plane=-200, picture_scale=.05))
 
 
 def broker_layout(name, screen):
-    """Round-5 broker bridge nodes (docs/online-menus.md): status/error variants, Retry, diagnostic, selection.
+    """Round-5b broker bridge nodes (docs/online-menus.md): status/error scenes, Retry, diagnostic, rows, header, service.
 
     Everything is authored from constants. No node executes remote text; `broker_error` is DATA only."""
     items=screen['items'];shapes=screen['shapes']
     by={e['name']:e for e in items}
-    if name!='lc_online':
+    # The connected-service scene: green diamond + localized word, selected by the DLL (it empties the plain text then).
+    if name=='lc_online':
+        items.append(_variant('lc_service_ok',(355,229,120,18),[dict(kind='diamond',rect=(0,3,7,6),color=6),
+                              dict(text='Connected',rect=(12,0,100,18),style='row',color=6)],model_name='service_ok'))
+    else:
         # 'Room connected' is the longest state the DLL binds; the static diamond implied a connected service.
         by['self_state'].update(rect=(529,46,67,13))
         shapes[:]=[q for q in shapes if not(q['kind']=='diamond' and q['rect']==(529,49,7,6))]
+        items.append(_variant('lc_service_ok',(529,46,67,13),[dict(kind='diamond',rect=(0,3,7,6),color=6),
+                              dict(text='Connected',rect=(9,0,58,13),style='label',color=6)],model_name='service_ok'))
     status={'lc_online':(48,424,420,16),'lc_host':(48,424,420,16),'lc_code':(111,397,370,18),'lc_browse':(108,425,346,14)}[name]
-    offline={'lc_online':(48,408,546,14),'lc_host':(48,408,546,14),'lc_code':(81,424,478,14),'lc_browse':(210,137,380,14)}[name]
+    offline={'lc_online':(48,408,546,14),'lc_host':(48,408,546,14),'lc_code':(81,424,478,14),'lc_browse':(196,137,258,14)}[name]
     colors={'lc_broker_empty':3,'lc_broker_stale':5,'lc_broker_room':6,'lc_broker_offline_room':7}
+    retry=None
     for key in BROKER_SCREENS[name]:
-        if key=='lc_broker_error':
-            variant,retry=_error_variant(name)
+        if key.startswith('lc_broker_err_'):
+            variant,retry=_error_variant(name,key[len('lc_broker_err_'):])
             items.append(variant)
-            # The bar is part of the error scene; its label is this item's own text so it stays in front of the
-            # focus bar and takes the native disabled/highlight colours. Dark on amber, invisible while disabled.
-            e=_entry('retry','RETRY',(retry[0]+13,retry[1]+(retry[3]-12)/2,retry[2]-14,12),'label',0,intent='retry')
-            e['enabled']=False;e['hit_rect']=retry;items.append(e)
-            diag={'lc_code':(385,399,98,14),'lc_browse':(486,137,100,14)}.get(name,(413,425,108,14))
-            items.append(_entry('broker_error','',diag,'label',7,data=True,align='right'))
             continue
-        value=BROKER_ROOM_COPY[name] if key=='lc_broker_room' else BROKER_COPY[key]
+        value=broker_copy(name,key)
         rect=offline if key=='lc_broker_offline_room' else status
         style='label' if key in ('lc_broker_offline_room','lc_broker_stale') else 'body'
         if key=='lc_broker_empty':
-            # Empty list: the table frame stays and carries the message (the DLL also binds the bottom detail line).
+            # Empty list: the table frame stays and carries the message (the DLL leaves the detail line empty then).
             rect=(59,187,400,18)
         if key=='lc_broker_stale' and name=='lc_browse':
-            # Stale rows and a failed refresh are reported together; the stale label owns the list header so it can
-            # never overlap the status-row error.
-            rect=(196,137,284,14)
+            # The stale label owns the list-header middle; the DLL never shows it beside the offline-room line.
+            rect=(196,137,258,14)
         items.append(_entry(key,value,rect,style,colors.get(key,3),hidden=True))
+    # One Retry hit/focus item per screen over the bar the retryable cause scenes draw; the DLL hides it for the others.
+    # Its label is the item's own text so it stays in front of the focus bar and takes the native highlight colours.
+    e=_entry('retry','RETRY',(retry[0]+13,retry[1]+(retry[3]-12)/2,retry[2]-14,12),'label',0,intent='retry')
+    e['enabled']=False;e['hidden']=True;e['hit_rect']=retry;items.append(e)
+    diag={'lc_code':(402,399,84,14),'lc_browse':(375,426,80,14)}.get(name,(413,425,108,14))
+    items.append(_entry('broker_error','',diag,'label',7,data=True,align='right'))
     if name=='lc_host':
         # Mutually exclusive localized visibility scenes: segment control + the preview badge. Private is the
-        # DLL default; the hit item below owns input (intent 21) and has no text of its own.
+        # DLL default (it also sets the pair itself when no service is live); the hit item below owns input (intent 21).
         for key in ('visibility','visibility_other','preview_visibility'):
             items.remove(by[key])
         shapes[:]=[q for q in shapes if q['rect'] not in ((148,167,65,23),(218,167,59,23),(533,168,46,14))]
@@ -1098,7 +1176,8 @@ def broker_layout(name, screen):
             if m:
                 # Every row exists from the start, with its own constant command, disabled until the DLL binds a room.
                 e['intent']='select:'+m.group(1);e['enabled']=False;e.pop('dim',None)  # native disabled style, not a baked dim
-                if m.group(2)=='6': e['color']=4
+                # [4] status word and the SAME/CHECK words belong to the row scenes; [6] holds only another build's token.
+                if m.group(2)=='6': e['color']=7
             if e['name']=='details_name': e['rect']=(43,405,85,20)
             if e['name']=='details': e['rect']=(128,405,469,20)
             if e['name']=='desctext1': e.update(name='prompt_join',enabled=False)
@@ -1106,8 +1185,17 @@ def broker_layout(name, screen):
             if e['name']=='desctext3': e['rect']=(200,455,58,18)
         items.append(_entry('desctext1','',(43,455,1,17)))
         items.append(_entry('desctext2','',(98,455,1,17)))
+        items[:]=[e for e in items if not re.fullmatch(r'room_[0-6]_[45]',e['name'])]
+        # List header: "PUBLIC GAMES" + DATA count ("- N") after it, DLL-ticked "Updated N s ago" at the right with the
+        # five-segment refresh bar (the 10 s idle refresh interval); the track is static, the fills are scenes.
         items.remove(by['age'])
-        shapes[:]=[q for q in shapes if q['rect'] not in ((546,139,40,4),(546,139,16,4))]
+        by['list_header']['rect']=(59,137,60,13)
+        items.append(_entry('list_count','',(121,137,60,14),'label',4,data=True))
+        items.append(_entry('list_age','',(456,137,84,14),'label',3,data=True,align='right'))
+        shapes[:]=[q for q in shapes if q['rect']!=(546,139,16,4)]
+        for k in range(5):
+            items.append(_variant(f'lc_age_fill{k+1}',(546+8*k,139,7,4),[dict(kind='rect',rect=(0,0,7,4),color=5)],model_name='age_fill'))
+        _row_scenes(items)
         for row in range(7):
             items.append(_variant(f'lc_row{row}_selected',(44,178+31*row,552,29),
                                   [dict(kind='panel',rect=(0,0,552,29),color=2,outline=5)]))
@@ -1129,9 +1217,9 @@ def runtime_layout(name,state=None):
         'room_name':'Room name pending','preview_name':'Room pending',
         'save':'No campaign selected','campaign':'SELECT CAMPAIGN',
         'preview_visibility':'PENDING','open_hint':'Creates your room',
-        'code_pending':'Share this code with friends','age':'Refreshes every 10 s',
+        'code_pending':'Share this code with friends','age':'',
         'list_header':'PUBLIC GAMES',
-        'details':'No public games right now'}
+        'details':''}
     for e in screen['items']:
         if e['name'] in replacements: e['text']=replacements[e['name']]
         if e['name'] in DATA_NAMES: e['data']=True
@@ -1178,7 +1266,8 @@ def runtime_layout(name,state=None):
             m=re.fullmatch(r'room_([0-6])_([0-6])',e['name'])
             if not m: continue
             r,c=int(m.group(1)),int(m.group(2))
-            e.update(left=f'room_{r}_{max(0,c-1)}',right=f'room_{r}_{min(6,c+1)}',
+            i=ROW_COLUMNS.index(c)
+            e.update(left=f'room_{r}_{ROW_COLUMNS[max(0,i-1)]}',right=f'room_{r}_{ROW_COLUMNS[min(len(ROW_COLUMNS)-1,i+1)]}',
                      up=f'room_{r-1}_{c}' if r else 'prompt_refresh',down=f'room_{r+1}_{c}' if r<6 else 'scroll')
     if name=='lc_code':
         keys={e['name']:e for e in screen['items'] if e['name'].startswith('key_')}
@@ -1233,17 +1322,17 @@ def broker_problems(root, screen):
         for attr,value in attrs.items():
             if e.get(attr)!=value: errors.append(f'broker node {key}: {attr}={e.get(attr)!r}, expected {value!r}')
         return e
+    need('retry',usecmd=command(20),enabled='false',hide='true',type='MENU_ITEM_TEXT')
+    e=need('broker_error',clamp='true')
+    if e is not None and any('gamevar' in k.lower() for k in e.attrib): errors.append('competing DATA owner: broker_error')
+    if 'lc_broker_error' in items: errors.append('the one-size error scene was replaced by per-cause scenes')
+    need('lc_service_ok',hide='true',type='MENU_ITEM_MODEL',neverfocus='true')
     for key in BROKER_SCREENS[name]:
-        if key=='lc_broker_error':
-            need(key,hide='true',type='MENU_ITEM_MODEL')
-            need('retry',usecmd=command(20),enabled='false',type='MENU_ITEM_TEXT')
-            e=need('broker_error',clamp='true')
-            if e is not None and any('gamevar' in k.lower() for k in e.attrib): errors.append('competing DATA owner: broker_error')
-            if 'hide' in (items.get('retry') or {}).attrib: errors.append('retry must stay visible (the DLL only enables it)')
+        if key.startswith('lc_broker_err_'):
+            need(key,hide='true',type='MENU_ITEM_MODEL',neverfocus='true')
             continue
         e=need(key,hide='true',type='MENU_ITEM_TEXT',neverfocus='true')
-        want=BROKER_ROOM_COPY[name] if key=='lc_broker_room' else BROKER_COPY[key]
-        if e is not None and _plain(e.get('text'))!=want: errors.append('broker copy differs: '+key)
+        if e is not None and _plain(e.get('text'))!=broker_copy(name,key): errors.append('broker copy differs: '+key)
     for key in BROKER_VARIANTS:
         if key not in BROKER_SCREENS[name] and key in items: errors.append('unexpected broker node: '+key)
     for key,e in items.items():
@@ -1260,11 +1349,19 @@ def broker_problems(root, screen):
     if name=='lc_browse':
         for r in range(7):
             for c in range(7):
+                if c not in ROW_COLUMNS:
+                    if f'room_{r}_{c}' in items: errors.append(f'room_{r}_{c} belongs to the row scenes')
+                    continue
                 e=need(f'room_{r}_{c}',usecmd=command(24+r),enabled='false',clamp='true')
                 if e is not None:
                     for d in ('left','right','up','down'):
                         if e.get(d) not in items: errors.append(f'open row graph: room_{r}_{c}')
             need(f'lc_row{r}_selected',hide='true',type='MENU_ITEM_MODEL')
+            scenes=[f'lc_row{r}_st_{k}' for k in STATUS_KINDS]+[f'lc_row{r}_pips_{n}' for n in range(5)]+\
+                [f'lc_row{r}_build_{k}' for k in BUILD_KINDS]+[f'lc_row{r}_dim']
+            for key in scenes: need(key,hide='true',type='MENU_ITEM_MODEL',neverfocus='true')
+        for k in range(1,6): need(f'lc_age_fill{k}',hide='true',type='MENU_ITEM_MODEL',neverfocus='true')
+        for key in ('list_count','list_age'): need(key,clamp='true')
         need('prompt_join',usecmd=command(31));need('prompt_refresh',usecmd=command(18))
         need('scroll',usecmd=command(23));need('scroll_up',usecmd=command(22))
         for key in ('details_name','details'): need(key,clamp='true')
@@ -1432,7 +1529,8 @@ def lobby_layout(role, *, members=1, ready=False, fixture=False, pending=False, 
 
 
 def variant_resource(screen,item):
-    return 'ui/models/lc_o_'+screen['name']+'_'+item['name']
+    # Identical relative art (the seven Browse rows' status/pip/build/dim scenes) shares one model across anchors.
+    return 'ui/models/lc_o_'+screen['name']+'_'+item.get('model_name',item['name'])
 
 
 def lobby_tree(original,screen,palette_ids=None):
@@ -1624,7 +1722,7 @@ def text_layer(items, *, size=(1440,1080), device='pad'):
 def variant_picture(item):
     """One transparent model contains all static children of a hidden scene."""
     from PIL import Image,ImageDraw
-    _,_,w,h=item['rect'];scale=2.25
+    _,_,w,h=item['rect'];scale=item.get('picture_scale',2.25)
     canvas=Image.new('RGBA',(max(1,round(w*scale)),max(1,round(h*scale))))
     pen=ImageDraw.Draw(canvas)
     for part in item.get('parts',[]):
@@ -1632,6 +1730,14 @@ def variant_picture(item):
         x,y,pw,ph=part['rect'];box=tuple(round(v*scale) for v in (x,y,x+pw,y+ph))
         color='#'+PALETTE[part['color']]
         if part['kind']=='outline':pen.rectangle(box,outline=color,width=2)
+        elif part['kind']=='bar':
+            # Parallelogram leaning right like the native focus bar (its top edge is shifted right by `slant` units).
+            l,t,r,b=box;k=round(part.get('slant',5)*scale)
+            if part.get('alpha') is not None: color=tuple(bytes.fromhex(PALETTE[part['color']]))+(round(255*part['alpha']),)
+            pen.polygon([(l+k,t),(r,t),(r-k,b),(l,b)],fill=color)
+        elif part.get('alpha') is not None and part['kind']=='rect':
+            l,t,r,b=box;rgb=tuple(bytes.fromhex(PALETTE[part['color']]))
+            pen.rectangle((l,t,r,b),fill=rgb+(round(255*part['alpha']),))
         elif part['kind']=='triangle':
             l,t,r,b=box
             points=((l,b),((l+r)//2,t),(r,b)) if part.get('direction')=='up' else ((l,t),((l+r)//2,b),(r,t))
