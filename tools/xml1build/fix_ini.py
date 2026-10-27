@@ -1448,6 +1448,18 @@ CARRY_THROW_MARKER = b'victim_throw execute registration'
 EXTRA_MARKERS += [(('Game', 'TelekinesisRule'), TK_ARMING_MARKER, '[Game] TelekinesisRule (throw damage, beta 9)'),
                   (('Game', 'GuardDecideRule'), GUARD_ENTRY_MARKER, '[Game] GuardDecideRule (decided at entry, beta 9)')]
 FLYING_CARRY_ON_NAME = '[Game] Xml1GrabCarry (flying carry on: throw damage, beta 9)'
+# xml2-fix 0.4.2 candidate 082c: W2's boot crash (651011f: two shared ring / ratl pool helpers had been widened in place,
+# MONEY1 never registered) and save crash (5420671: the restore map overran save_format's statics; the side-mission
+# and mission-state blocks streamed at the old size, so every W2 save was refused) changed no key, rule revision or
+# install line either. Their own guard descriptions are the markers: a SaveLayout=w2 build with an earlier W2 DLL
+# (082a / 082b) crashes at boot or on the first save. Moves round 2 (ac7a3d9: carry admission 0x433E6A, carry entry at
+# the hands, energy) is marked by its carry trace; without it the flying carry keeps 082b's live failures.
+W2_BOOT_MARKER = b'shared instance ring pop'
+W2_SAVE_MARKER = b'mission state stream size'
+W2_LAYOUT_MARKERS = ((W2_BOOT_MARKER, '[Limits] SaveLayout=w2 (boot: shared pool helpers stay retail, 082c)'),
+                     (W2_SAVE_MARKER, '[Limits] SaveLayout=w2 (saving: restore map and mission blocks at W2 size, 082c)'))
+CARRY_ROUND2_MARKER = b'carry trace hands selectors'
+FLYING_CARRY_R2_NAME = '[Game] Xml1GrabCarry (flying carry on: admission, hands, energy - moves round 2)'
 # E12 (SPEC 108): a build whose own XMen2.exe is large-address-aware needs the fix's address-space module (the 2 GB guard
 # block, and the two test readers that refused addresses above 0x7fffffff before it). Its start line is the marker; the
 # check reads the build's exe beside the DLL (no exe yet, or --laa off: nothing to check).
@@ -1506,6 +1518,10 @@ def check_release_dll(dll, keys: dict) -> None:
     game = keys.get('Game', {})
     if 'Xml1GrabCarry' in game and 'Xml1FlyingCarry' not in game and CARRY_THROW_MARKER not in data:
         missing.append(FLYING_CARRY_ON_NAME)         # --flying-carry xml1 (the key left out = the DLL's flying carry on)
+    if 'Xml1GrabCarry' in game and 'Xml1FlyingCarry' not in game and CARRY_ROUND2_MARKER not in data:
+        missing.append(FLYING_CARRY_R2_NAME)
+    if keys.get('Limits', {}).get('SaveLayout') == 'w2':
+        missing += [name for marker, name in W2_LAYOUT_MARKERS if marker not in data]
     for (section, key), (stock, marker, name) in VALUE_MARKERS.items():
         value = keys.get(section, {}).get(key)
         if value is not None and _int_or_zero(value) > stock:

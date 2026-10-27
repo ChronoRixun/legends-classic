@@ -18,7 +18,7 @@ from xml1build import w2_limits as WL
 from xml1build import zones as Z
 
 W2_KEY = 'SaveLayout'.encode('utf-16le')
-W2_DLL = b'MZ ' + 'EntityCapacity'.encode('utf-16le') + b'\x00\x00' + 'SaveLayout\0'.encode('utf-16le')
+W2_DLL = b'MZ ' + 'EntityCapacity'.encode('utf-16le') + b'\x00\x00' + 'SaveLayout\0'.encode('utf-16le') + b''.join(marker for marker, _name in FI.W2_LAYOUT_MARKERS)   # 082c: boot / save fixes
 
 
 def dll_knowing(keys, *, save_layout=True):
@@ -34,6 +34,8 @@ def dll_knowing(keys, *, save_layout=True):
     data += b''.join(marker for marker, _name in FI.RELEASE_MARKERS.values())
     data += b''.join(marker for _key, marker, _name in FI.EXTRA_MARKERS)
     data += b''.join(marker for _stock, marker, _name in FI.VALUE_MARKERS.values())
+    if save_layout:
+        data += b''.join(marker for marker, _name in FI.W2_LAYOUT_MARKERS)          # 082c: W2's boot / save fixes
     return data + b'NPR14 NSA4'
 
 
@@ -183,7 +185,8 @@ def test_a_dll_without_the_key_is_refused_and_the_cli_warning_path_does_not_writ
         dll.write_bytes(older)
         e = raises(FI.FixTooOld, lambda: FI.check_save_layout_dll(dll, keys), 'SaveLayout')
         assert e.missing == ['[Limits] SaveLayout'] and isinstance(e, ValueError)
-        assert FI.old_fix_keys(dll, keys) == ['[Limits] SaveLayout']
+        # (082c) a pre-W2 DLL also lacks W2's boot / save fix markers
+        assert FI.old_fix_keys(dll, keys) == ['[Limits] SaveLayout'] + [name for _marker, name in FI.W2_LAYOUT_MARKERS]
         # a message that merely starts with the key (not the key itself) is not support
         dll.write_bytes(older + 'SaveLayout=w2 needs'.encode('utf-16le'))
         raises(FI.FixTooOld, lambda: FI.check_save_layout_dll(dll, keys))
@@ -510,3 +513,24 @@ def test_the_item_enhancement_pool_follows_the_ini_the_build_asks_for():
     assert Z.item_enhancement_pool(SimpleNamespace(args=SimpleNamespace(save_layout='w2'))) == 4096
     root = _items(40, 100)                                                       # 4000 enhancements
     assert Z.enhancement_pool_cut(root, 4096) == [] and len(Z.enhancement_pool_cut(root)) > 0
+
+
+def test_a_w2_build_refuses_the_w2_dlls_that_crash_at_boot_or_on_save():
+    """082c: 082a / 082b's W2 DLLs know SaveLayout but crash (boot: shared pool helpers widened in place; first save:
+    the restore map overran the save statics). The fixes' own guard descriptions are required for SaveLayout=w2."""
+    keys = lc_keys()
+    current = dll_knowing(keys)
+    boot_only = current.replace(FI.W2_SAVE_MARKER, b'')                      # 651011f without 5420671 (a81e8f94)
+    neither = boot_only.replace(FI.W2_BOOT_MARKER, b'')                     # 082a / 082b (053581ca / 699bbc82)
+    assert FI.W2_BOOT_MARKER in boot_only and FI.W2_SAVE_MARKER not in boot_only and FI.W2_BOOT_MARKER not in neither
+    with tempfile.TemporaryDirectory() as td:
+        dll = Path(td) / 'dinput.dll'
+        dll.write_bytes(current)
+        assert FI.old_fix_keys(dll, keys) == []
+        dll.write_bytes(boot_only)
+        assert FI.old_fix_keys(dll, keys) == [FI.W2_LAYOUT_MARKERS[1][1]]
+        dll.write_bytes(neither)
+        assert FI.old_fix_keys(dll, keys) == [name for _marker, name in FI.W2_LAYOUT_MARKERS]
+        # without the option nothing more is asked of the DLL (a retail-layout build keeps the published DLLs)
+        retail = {sec: {k: v for k, v in names.items() if k != 'SaveLayout'} for sec, names in keys.items()}
+        assert FI.old_fix_keys(dll, retail) == []
