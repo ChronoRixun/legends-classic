@@ -11,7 +11,7 @@ import re
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field as dc_field
 
-from . import menu_theme as T, menu_conversion as M
+from . import menu_theme as T, menu_conversion as M, online_fonts as OF
 
 MENUS = ('lc_online', 'lc_host', 'lc_code', 'lc_browse')
 NATIVE_ENTRY = 'openmenu online'
@@ -22,6 +22,16 @@ COLUMNS = ((59,128),(188,67),(255,93),(348,58),(406,76),(482,78),(560,37))
 PROMPT_TOKENS = {'back':'$MENU_BACK','delete':'$MENU_BACK','paste':'$MENU_NEXT',
                  'refresh':'$MENU_NEXT','rejoin':'$MENU_NEXT','clear':'$MENU_OTHER',
                  'name':'$MENU_OTHER','change':'$MENU_OTHER','open':'$MENU_OK'}
+STYLE_ALIASES = {'compact_title':('title',OF.COMPACT_TITLE_SCALE),
+                 'code_cell':('row',OF.CODE_CELL_SCALE)}
+
+def font_binding(item):
+    role=item['style']
+    alias='code_cell' if role=='title' and item['name'].startswith('cell') else 'compact_title' if role=='title' and item['rect'][3]<30 else None
+    if alias:
+        source,scale=STYLE_ALIASES[alias]
+        return source,scale,'lc_o_'+alias
+    return role,OF.SCALES[role],'lc_o_'+role
 
 
 def field(text, limit):
@@ -122,12 +132,18 @@ def theme(colors, styles):
     for i,h in enumerate(PALETTE):
         rgb=[int(h[j:j+2],16)/255 for j in (0,2,4)]
         ET.SubElement(original,'color',value=' '.join(format(v,'.9g') for v in (*rgb,.92 if i==1 else 1)))
-    requests=[T.text_style('lc_o_'+name,font=font,normal=4 if name!='label' else 3,
+    requests=[T.text_style('lc_o_'+name,font='lc_'+name,normal=4 if name!='label' else 3,
                            focus=0,disabled=3,allow=True) for name,(font,_) in STYLES.items()]
+    for role,attrs in zip(STYLES,requests):attrs['textscale']=format(OF.SCALES[role],'.9g')
+    # The approved screen-name inset already used a 22-unit title in the
+    # reference preview. It shares the title slot, with its own style scale.
+    for alias,(role,scale) in STYLE_ALIASES.items():
+        attrs=T.text_style('lc_o_'+alias,font='lc_'+role,normal=4,focus=0,disabled=3)
+        attrs['textscale']=format(scale,'.9g');requests.append(attrs)
     # All eight entries are part of this family, including model/status colours.
     for attrs, pair in zip(requests,((4,3),(5,3),(6,7),(2,1))):
         attrs['color_highlight'],attrs['color_disabled']=pair
-    result=T.allocate(colors,styles,original,requests,color_reserve=4,style_reserve=4)
+    result=T.allocate(colors,styles,original,requests,color_reserve=4,style_reserve=2)
     if len(result[0])>T.COLOR_LIMIT or len(result[1])>T.STYLE_LIMIT:
         raise ValueError('online family exceeds native capacity')
     return result
@@ -146,6 +162,9 @@ def layout(name, state=None):
         x,y,w,h=rect; pad=4 if name=='lc_code' and key.startswith('key_') else 8 if name=='lc_code' and key in ('paste','clear','done') else 15
         text(key,value,x+pad,y+6,w-2*pad,h-9,'row',0 if primary else 4,intent,enabled)
         if name=='lc_code' and key.startswith('key_'): items[-1]['align']='center'
+        if name=='lc_code' and key=='done':
+            # Enter + Done needs three more units than the Start icon label.
+            items[-1]['rect']=(x+pad,y+6,w-pad-5,h-9)
     def panel(key,title,rect):
         shape('panel',rect,1); x,y,w,h=rect
         
@@ -213,7 +232,9 @@ def layout(name, state=None):
         text('visibility',s.visibility,159,171,61,18,'row',0,'visibility')
         text('visibility_other','PUBLIC' if s.visibility=='PRIVATE' else 'PRIVATE',229,173,58,15,'row',3)
         text('room_name',"Logan's game",148,209,173,19,'row',4,'room-name')
-        text('edit_room','$MENU_ACCEPT Edit',332,216,39,18,'body',4,'room-name')
+        # The keyboard's Enter cap is wider than A. Retain the approved left
+        # edge, using the remaining interval up to the settings-panel edge.
+        text('edit_room','$MENU_ACCEPT Edit',332,216,48,18,'body',4,'room-name')
         text('room_hint','Shown in Browse games when public',148,230,210,16,'body',3)
         text('campaign',s.campaign,164,258,204,20,'row',4,'campaign')
         text('save','Save 3 - Mansion - Level 12 - 10:42',164,278,200,16,'body',3)
@@ -239,7 +260,7 @@ def layout(name, state=None):
         text('room_code','-',494,260,10,22,'row',3)
         text('code_pending','Appears as soon as the room opens',415,289,175,16,'body',3)
         text('privacy1','Private: only people with your code can join.',398,336,199,16,'body',3)
-        text('privacy2','Public: listed in Browse games, where players',398,352,199,16,'body',3)
+        text('privacy2','Public: listed in Browse games, where players',398,352,200,16,'body',3)
         text('privacy3',"can see each other's internet address.",398,368,199,16,'body',3)
         screen['selection']=(44,248,334,45)
         screen['focus']='campaign'
@@ -295,7 +316,7 @@ def layout(name, state=None):
                 shape('diamond',(407,y+12,7,6),status_color,dim=disabled)
                 shape('outline',(552,y+8,35,14),6 if record['same'] else 7,dim=disabled)
                 for bar in range(4):
-                    shape('bar',(370+bar*4,y+10,2.5,11),4 if bar<record['players'] else 2,dim=disabled)
+                    shape('bar',(374+bar*4,y+10,2.5,11),4 if bar<record['players'] else 2,dim=disabled)
                     shape('rect',(483+bar*3,y+20-bar*3,2,3+bar*3),3,dim=True)
         r=s.rooms[s.selected] if s.rooms else None
         text('details_name',field(r['name'],24).upper() if r else '',43,405,85,20,'label',5)
@@ -376,6 +397,7 @@ def menu_tree(screen, palette_ids=None):
         if value and (not e['intent'] or e['color']!=4): value='~'+str(palette_ids[e['color']]).zfill(2)+value
         attrs=dict(name=e['name'],type='MENU_ITEM_TEXT',text=value,style='lc_o_'+e['style'],
                    textalignx={'center':'TEXT_ALIGN_CENTER_X','right':'TEXT_ALIGN_RIGHT'}.get(e.get('align'),'TEXT_ALIGN_LEFT'),textaligny='TEXT_ALIGN_TOP',neverfocus=str(not bool(e['intent'])).lower())
+        attrs['style']=font_binding(e)[2]
         if e['name']==screen['focus']: attrs['startactive']='true'
         if not e['enabled']: attrs.update(enabled='false')
         if e['intent']:
@@ -406,7 +428,7 @@ def tree_problems(root, screen, palette_ids=None):
         actual=items.get(e['name'])
         if actual is None: errors.append('missing binding'); continue
         expected=next(i for i in menu_tree(screen,palette_ids) if i.get('name')==e['name'])
-        if actual.get('text')!=expected.get('text') or actual.get('style')!='lc_o_'+e['style']: errors.append('text/style contract')
+        if actual.get('text')!=expected.get('text') or actual.get('style')!=expected.get('style'): errors.append('text/style contract')
         if e['intent'] and e['enabled']:
             for d in ('left','right','up','down'):
                 if actual.get(d)!=e[d]: errors.append('directional graph contract')
@@ -587,13 +609,13 @@ def font_probe(ctx):
           for name in ('fonts_pc','fonts_hd')}
     return dict(maps=maps,counts={name:len(rows) for name,rows in maps.items()},
                 indices=sorted({r['index'] for rows in maps.values() for r in rows}),
-                exact_font='BLOCKED in retail data: four fixed global slots; menu styles select medium or big only.',
+                exact_font='Scoped XML2 Fix capability: [Game] LegendsClassicFonts=1; four additional slots and per-style textscale.',
                 evidence={'map_loader':'0x5980f0; name table 0x6e4344; four-name loop 0x5981e6..0x59821a',
                           'metrics_loader':'0x596af0; slot stride 0x1c18; 256 glyphs',
                           'styles':'0x5d7cb0: big -> 1, every other font value -> 0 (medium)',
                           'item_renderer':'0x5c61d0: fixed scale 1 at 0x5c636e; scene transform is not a font scale'},
-                fallback='Retained classic medium for row/body/label, big for title. Neither is condensed/italic Barlow.',
-                preview='Separately supplied OFL Barlow is a reference layout only; no font files or maps are changed.')
+                fallback='Retail interprets unknown private style names as classic medium. The big style name retains slot one.',
+                preview='Private OFL Barlow native metrics/atlases; original maps and classic font pairs preserved.')
 
 
 def write(ctx):
@@ -613,7 +635,7 @@ def write(ctx):
     focus_source=ctx.x1_path('ui/hud/dialog.igb')
     if focus_source is None: raise ValueError('owned flat focus topology missing')
     focus_models={}
-    metrics=native_metrics(ctx)
+    metrics=OF.metrics()
     authored_layouts={}
     pending=[]
     for name in MENUS:
@@ -632,7 +654,10 @@ def write(ctx):
         problems+=scene_problems(screen,data)
         if problems: raise ValueError('; '.join(problems))
         pending.append((name,tree,data,texture(atlas.read_bytes(),render(screen,text=False,focus=False),name)))
+    font_details=OF.write(ctx,atlas.read_bytes())
     probe=font_probe(ctx)
+    probe['private_fonts']=font_details
+    probe['style_aliases']={name:{'font':'lc_'+role,'textscale':scale} for name,(role,scale) in STYLE_ALIASES.items()}
     ctx.write_xmlb('Data/colors',colors,source='frontend:bounded online palette')
     ctx.write_xmlb('Data/styles',styles,source='frontend:four scoped online styles')
     for resource,data in focus_models.items():
@@ -719,10 +744,10 @@ def palette_ids(colors):
 
 def reserved_budget(colors,styles):
     """Only the complete online family may consume its explicitly reserved slots."""
-    if colors is not None and styles is not None and {e.get('name') for e in styles}.issuperset({'lc_o_'+r for r in STYLES}):
+    if colors is not None and styles is not None and {e.get('name') for e in styles}.issuperset({'lc_o_'+r for r in STYLES}|{'lc_o_'+r for r in STYLE_ALIASES}):
         try: palette_ids(colors)
         except ValueError: pass
-        else: return (4,4)  # round-1 ceiling: 71 colours, 28 styles
+        else: return (4,2)  # scoped font family: 71 colours, 30 styles
     return (T.COLOR_RESERVE,T.STYLE_RESERVE)
 
 
@@ -765,14 +790,12 @@ def scene_problems(screen,data):
 
 
 def native_metrics(ctx):
-    """Use the retained active English maps, including their paired classic override."""
-    mapping=ctx.read_out_xmlb('UI/fonts/fonts_pc.XMLB')
+    """Use the private metric tables paired with our scoped font slots."""
     result={}
-    for index in ('medium','big'):
-        choices=[e for e in mapping if e.get('index')==index and 'eng' in e.get('language','eng').split(',')]
-        if not choices: raise ValueError('active native font map missing '+index)
-        root=ctx.read_out_xmlb('UI/fonts/'+choices[-1].get('data')+'.XMLB')
-        result[index]={int(e.get('num')):dict(e.attrib) for e in root}
+    for role in STYLES:
+        root=ctx.read_out_xmlb('UI/fonts/lc_online_'+role+'.XMLB')
+        if root is None: raise ValueError('missing private font metrics: '+role)
+        result['lc_'+role]={int(e.get('num')):dict(e.attrib) for e in root}
     return result
 
 
@@ -786,9 +809,11 @@ def bound_layout(screen,metrics):
     for item in result['items']:
         value=item['text']
         if not value or '$MENU_' in value: continue
-        glyphs=metrics[STYLES[item['style']][0]]
+        role,scale,_=font_binding(item);private='lc_'+role in metrics
+        glyphs=metrics['lc_'+role if private else STYLES[item['style']][0]]
+        if not private:scale=1
         def measure(text):
-            return sum(float(glyphs.get(ord(c),glyphs.get(63,{'horizadvance':'12'}))['horizadvance']) for c in text)
+            return sum(float(glyphs.get(ord(c),glyphs.get(63,{'horizadvance':'12'}))['horizadvance']) for c in text)*scale
         item['text']=fit_text(value,item['rect'][2]*.8,measure)
     return result
 

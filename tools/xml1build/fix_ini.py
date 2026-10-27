@@ -536,7 +536,7 @@ _ZONE_PATH = re.compile(r'^[a-z0-9_.\-]+(/[a-z0-9_.\-]+)*$')
 
 # every key the port may write (the builder drops the ones a build does not need); the launcher owns the rest
 PORT_OWNED = {'Game': ('NewGameTeam', 'ResetUnlocks', 'SaveFolder', 'ForcedTeams', 'PostgameScript', 'WindowTitle',
-                        'EndHeroUnlock', 'MainMenuItems', 'DangerRoomGate', 'ClassicMainBackdrop', 'ClassicMainPanelBounds', 'NewGamePlus', 'ReviewStats', 'Xtract', 'XtractionShop', 'RevivalCost', 'XPCurve',
+                        'EndHeroUnlock', 'MainMenuItems', 'DangerRoomGate', 'ClassicMainBackdrop', 'ClassicMainPanelBounds', 'LegendsClassicFonts', 'NewGamePlus', 'ReviewStats', 'Xtract', 'XtractionShop', 'RevivalCost', 'XPCurve',
                        'GeometrySharingBlendIndices', 'CharacterLadderPaths', 'ObjectiveDescriptions',
                        'BreakRule', 'LiftRule', 'Xml1GrabCarry', 'Xml1FlyingCarry', 'Xml1RogueDecide', 'Xml1Economy', 'Xml1WallCling', *SHARED_HANDLERS, *SHARED_HANDLERS_C, *TK_GUARD, 'PlacementCrush', 'ObjectWorldImpact', 'DoubleHeal', 'DeathRule', 'NpcPowerRule', 'StunRule', 'DangerRoomParty', 'DangerRoomHealthBars', 'ResistanceDisplay', 'BoxHarmOrigin', 'HarmSingleChain', 'HarmLoopStartup', 'ConfirmationRelease',
                        'OnlineConversations', 'PersonalItemPicture', 'ComboPopupGuard', 'ClassicHud', 'ClassicHudPilot', 'ClassicCodex', 'ClassicObjectives', 'NpcSemiAuto', 'ClassicSpeakers', 'WorldBackfaces',
@@ -1033,6 +1033,13 @@ def port_keys(out, *, save_folder=PLAY_SAVE_FOLDER, eighth=True) -> dict:
     # Same recorded content option that heroes uses. Never infer this from an
     # existing INI: rebuilding with the feature off must remove the owned key.
     record = build_record(out) or {}
+    # Opt in only for a complete generated private family. Old content builds
+    # still use their existing font tables and do not request the new DLL key.
+    if menu and all(Path(out,rel).is_file() for rel in
+        ['UI/fonts/lc_fonts_pc.XMLB','UI/fonts/lc_fonts_hd.XMLB']+
+        [f'{folder}/lc_online_{role}.{ext}' for role in ('title','row','body','label')
+         for folder,ext in (('UI/fonts','XMLB'),('Textures/fonts','IGB'))]):
+        game['LegendsClassicFonts'] = '1'
     if record.get('grab_carry') == 'xml1':
         game['Xml1GrabCarry'] = 'xml1'
         if record.get('guard_decide') == 'xml1':

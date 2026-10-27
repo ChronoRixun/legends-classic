@@ -338,25 +338,23 @@ every other font string selects slot zero (`medium`). The text-item reader at
 one (`0x5c636e`). A scaled scene anchor changes placement/bounds, not glyph
 scale. A new font filename, a fifth index name, `font="hud"`, a nominal point
 size or an italic flag in a style therefore cannot scope Barlow to these menus.
-Exact **Barlow Condensed is blocked in the retail data-only path**; a companion
-runtime font-binding/scale capability is required. The closest selectable
-fallback is retained classic `medium` for row/body/label and `big` for titles.
-These expanded, upright fonts do not match Barlow's silhouette or four sizes.
+Exact Barlow Condensed needs the companion runtime capability described in
+[SCOPED_ONLINE_FONTS.md](SCOPED_ONLINE_FONTS.md). Without it, unknown private
+style font names select readable classic medium; the existing big font retains
+its usual meaning. These fallback fonts do not match the approved four sizes.
 The original PC thin font is a closer condensed/italic title candidate, but it
 is the French/German mapping of the same medium slot, not a separately selectable
 English menu font. Selecting it through the map would replace unrelated menus.
-This adapter writes no font maps, metrics or atlases and does not replace the
-classic fonts. The probe metadata records the obstruction and addresses.
+The adapter now writes four private metric/atlas pairs and separate PC/HD map
+copies. It preserves original maps and classic font pairs byte for byte. The
+DLL redirects to the private copies only after the opt-in guarded transaction.
 
-Native definitions are ellipsized with the active retained native glyph advances
-before serialization, including each Browse field. Nominal offline Barlow previews
-cannot establish native glyph size, spacing, clipping, prompt expansion or rendering.
-The offline renderer uses the same authored rectangles and can accept separately
-provided OFL Barlow fonts; it is a layout aid, not a game screenshot. In particular,
-do not label Barlow-rendered text as a native-font result. Report exact
-font fidelity and real-game visual/input evidence separately and keep those gates
-open until the coordinator's live step. Generated images have scoped internal names
-to avoid collisions with the owned containers used to encode them.
+Native definitions use the emitted private metrics and actual style scale when
+fitting fields before serialization. A preview using only a TTF cannot establish
+native glyph size, spacing, clipping or prompt expansion. Offline native samples
+must read the emitted atlas pixels and metrics; they remain predictions of the
+engine, not game screenshots. Direct3D sampling and input still need the live
+step. Generated images have scoped internal names to avoid container collisions.
 
 The footer now uses all five native `desctext1..5` items and scene anchors, with
 matching root description attributes. Unused slots are empty. Their scoped
@@ -366,20 +364,19 @@ are retired under private names before new aliases are authored. The companion
 `$MENU_OTHER` and `$MENU_OK` according to the player's input device. Hub Change,
 Rejoin and Host Edit/Open also retain these tokens. The builder never replaces
 them with fixed `[A]` text. Its offline device fixture returns the companion's
-single coloured A/B/X/Y letters, bracketed Start, or keyboard key names. Round
-button artwork in a Barlow reference view is an explicit target-only option:
-the current companion returns coloured letters, not round icons. Exact round
-device glyphs therefore need companion support as well; static circles must
-not be baked behind device-following keyboard labels.
+single coloured A/B/X/Y letters, bracketed Start, or keyboard key names for the
+retail fallback. With the scoped font capability, the companion returns private
+atlas glyphs only while drawing a ready private-font item: round pad prompts or
+the actual bound keyboard keycaps. No fixed circles are baked into backgrounds.
 
 Hub hints now align at their approved right edge using the available interval;
 identity and breadcrumb fields use their full approved space. Host has native
 tokens, arrows, the secondary visibility outline, dashed code cells and the
 primary-action helper. Code has its active-cell cap, dashed empty cell and status
 diamond. Browse retains status colours under dimming and separates selected-room
-and campaign details. Font-dependent ellipses remain visible in the actual
-native-metric output. These geometry/description corrections do not close the
-font or real-game visual gates.
+and campaign details. Oversized untrusted fields still receive bounded ellipses;
+normal approved fixture fields fit at the four real sizes. The offline host and
+asset gates do not close the separate real-game visual gate.
 
 Synthetic coverage lives in `tests/unit/test_online_menus.py`; the frontend
 self-test runs the synthetic menu contract without owned output and additionally

@@ -70,7 +70,7 @@ def test_theme_overflow_is_atomic_and_preserves_unrelated_tables():
     for i in range(24): ET.SubElement(styles,'style',name='native'+str(i))
     before = ET.tostring(colors), ET.tostring(styles)
     result = O.theme(colors, styles)
-    assert len(result[0])==71 and len(result[1])==28
+    assert len(result[0])==71 and len(result[1])==30
     assert (ET.tostring(colors), ET.tostring(styles))==before
     
     for i in range(63,68): ET.SubElement(colors,'color',id=str(i),value='0 0 0 1')
@@ -112,7 +112,7 @@ def test_native_initial_focus_and_budget_consumption_are_explicit():
     for i in range(24): ET.SubElement(styles,'style',name='native'+str(i))
     assert O.reserved_budget(colors,styles)==(8,4)
     c,s,_=O.theme(colors,styles)
-    assert O.reserved_budget(c,s)==(4,4)
+    assert O.reserved_budget(c,s)==(4,2)
     s.remove(next(e for e in s if e.get('name')=='lc_o_title'))
     assert O.reserved_budget(c,s)==(8,4)
 

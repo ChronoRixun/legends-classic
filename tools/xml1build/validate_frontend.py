@@ -37,6 +37,7 @@ Check. Pure: never writes game files.
 from __future__ import annotations
 
 import collections
+import json
 import re
 from pathlib import Path
 
@@ -1334,7 +1335,7 @@ def v_personal_items(v, ck):
 
 
 def v_online_menus(v, ck):
-    """Round-1 presentation assets, paired definitions and fixture command boundary."""
+    """Scoped fonts, paired presentation resources and fixture command boundary."""
     if C.frontend_mode(v.ctx) != 'xml1': return
     from . import online_menus as O
     import xml.etree.ElementTree as ET
@@ -1342,6 +1343,20 @@ def v_online_menus(v, ck):
     try: ids=O.palette_ids(colors if colors is not None else ())
     except ValueError as error:
         ck.error(str(error)); return
+    from . import online_fonts as OF
+    for map_name,suffix in (('fonts_pc','pc'),('fonts_hd','hd')):
+        original=v.tree('UI/fonts/'+map_name+'.XMLB')
+        private=v.tree('UI/fonts/lc_fonts_'+suffix+'.XMLB')
+        expected=[] if original is None else [dict(e.attrib) for e in original]
+        expected += [dict(index='lc_'+r,data='lc_online_'+r,texture='lc_online_'+r) for r in OF.ROLES]
+        if private is None or [dict(e.attrib) for e in private]!=expected:ck.error('private font map differs: '+suffix)
+    for role in OF.ROLES:
+        table=v.tree('UI/fonts/lc_online_'+role+'.XMLB')
+        atlas=v.read('Textures/fonts/lc_online_'+role+'.IGB')
+        for problem in OF.resource_problems(table,atlas,role):ck.error(problem)
+    if v.read('licenses/BarlowCondensed-OFL.txt')!=(OF.SOURCE/'OFL.txt').read_bytes():ck.error('private font OFL license missing or changed')
+    manifest=(json.dumps(OF.verify_source(),indent=2)+'\n').encode()
+    if v.read('licenses/BarlowCondensed-source.json')!=manifest:ck.error('private font provenance missing or changed')
     for name in O.MENUS:
         screen=O.bound_layout(O.layout(name),O.native_metrics(v.ctx))
         expected=O.menu_tree(screen,ids)
@@ -1369,16 +1384,18 @@ def v_online_menus(v, ck):
     colors,styles=v.tree('Data/colors.XMLB'),v.tree('Data/styles.XMLB')
     if colors is None or styles is None: ck.error('online tables missing')
     else:
-        if len(colors)>71 or len(styles)>28: ck.error('online table overflow')
+        if len(colors)>71 or len(styles)>30: ck.error('online table overflow')
         try:
             _,expected_styles,_=O.theme(colors,styles)
             by_name={e.get('name'):e for e in expected_styles}
             for e in styles:
-                if e.get('name') in {'lc_o_'+r for r in O.STYLES} and e.attrib!=by_name[e.get('name')].attrib:
+                if e.get('name') in {'lc_o_'+r for r in O.STYLES}|{'lc_o_'+r for r in O.STYLE_ALIASES} and e.attrib!=by_name[e.get('name')].attrib:
                     ck.error('online style binding differs: '+e.get('name'))
         except ValueError as error: ck.error(str(error))
         for role in O.STYLES:
             if len([e for e in styles if e.get('name')=='lc_o_'+role])!=1: ck.error('online style missing: '+role)
+        for alias in O.STYLE_ALIASES:
+            if len([e for e in styles if e.get('name')=='lc_o_'+alias])!=1:ck.error('online alias style missing: '+alias)
     main=v.tree(F.MENU_REL+'.XMLB')
     if main is None or not any(e.get('usecmd')==O.NATIVE_ENTRY for e in main.findall('item')):
         ck.error('round 1 must preserve native main-menu Online entry')
