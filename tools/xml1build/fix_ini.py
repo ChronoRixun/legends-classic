@@ -1501,6 +1501,10 @@ def check_address_space_dll(dll, keys: dict) -> None:
 # 32 the earlier DLLs raise it to.
 RELEASE_18_KEYS = {**RELEASE_18_KEYS, 'Limits': RELEASE_18_KEYS['Limits'] + tuple(
     k for k in (*LIMITS_WAVE3, *LIMITS_WAVE3_LATE) if k != 'FightStyles')}
+# Optional player preference: even 0 needs a DLL that reads it; older DLLs leave routing on.
+# Keep the terminating NUL so LatePadsTrace cannot stand in for LatePads.
+RELEASE_18_KEYS = {**RELEASE_18_KEYS, 'Input': RELEASE_18_KEYS.get('Input', ()) + ('LatePads',)}
+EXACT_KEYS = {**EXACT_KEYS, 'Input': EXACT_KEYS.get('Input', ()) + ('LatePads',)}
 for _key in (*LIMITS_WAVE3, *LIMITS_WAVE3_LATE):
     if _key != 'FightStyles':
         RELEASE_MARKERS[('Limits', _key)] = (WAVE3_MARKERS[_key], f'[Limits] {_key} (rule {WAVE3_RULES[_key]})')
@@ -1604,7 +1608,21 @@ def write_port_keys(out, keys: dict | None = None, *, old_fix_ok: bool = False) 
     not need; the launcher's keys stay. Returns the keys written. An existing DLL that doesn't know every key raises
     FixTooOld (naming them all) unless `old_fix_ok` (the CLI's warning path: FixTooOld)."""
     keys = port_keys(out) if keys is None else keys
-    missing = old_fix_keys(Path(out) / 'dinput.dll', keys)
+    # Validate the optional player preference as it will survive this merge, including mixed-case INIs.
+    # It is not port-owned: neither emit a default nor drop a player's explicit 0 on a rebuild.
+    ini = Path(out) / 'xml2-fix.ini'
+    try:
+        text = _decode(ini.read_bytes())[0]
+    except FileNotFoundError:
+        text = ''
+    merged = parse_ini(merge_text(text, keys, dropped_keys(keys)))
+    validation_keys = {section: dict(values) for section, values in keys.items()}
+    for section, values in merged.items():
+        if section.lower() == 'input':
+            for key, value in values.items():
+                if key.lower() == 'latepads':
+                    validation_keys.setdefault('Input', {})['LatePads'] = value
+    missing = old_fix_keys(Path(out) / 'dinput.dll', validation_keys)
     if SAVE_LAYOUT_KEY in keys.get('Limits', {}) and f'[Limits] {SAVE_LAYOUT_KEY}' in missing:
         # the warning path (old_fix_ok) writes the other keys for an older fix the launcher replaces right after the
         # build; SaveLayout is not one of them: an older DLL ignores it and the build would run on the baseline

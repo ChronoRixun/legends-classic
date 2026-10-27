@@ -847,6 +847,65 @@ def test_receive_validation_defaults_on_and_requires_supported_companion():
         FI.check_release_dll(dll, keys)
 
 
+def test_latepads_optional_preference_requires_exact_dll_token():
+    """An unsupported explicit off is unsafe too: the old DLL leaves late-pad routing enabled."""
+    with tempfile.TemporaryDirectory() as td:
+        dll = Path(td) / 'dinput.dll'
+        for data, supported in ((b'MZ older companion', False),
+                                (b'MZ' + 'LatePadsTrace\0'.encode('utf-16le'), False),
+                                (b'MZ' + 'LatePads\0'.encode('utf-16le'), True)):
+            dll.write_bytes(data)
+            FI.check_release_dll(dll, {})
+            assert FI.old_fix_keys(dll, {'Input': {}}) == []
+            for value in ('0', '1', '', 'invalid'):
+                keys = {'Input': {'LatePads': value}}
+                assert FI.old_fix_keys(dll, keys) == ([] if supported else ['[Input] LatePads'])
+                try:
+                    FI.check_release_dll(dll, keys)
+                except FI.FixTooOld as exc:
+                    assert not supported and exc.missing == ['[Input] LatePads']
+                    assert '[Input] LatePads' in str(exc)
+                else:
+                    assert supported
+
+
+def test_latepads_rebuild_validates_and_preserves_player_preference():
+    with tempfile.TemporaryDirectory() as td:
+        out = Path(td)
+        dll, ini = out / 'dinput.dll', out / 'xml2-fix.ini'
+        keys = {'Game': {'NewGameTeam': 'wolverine'}}
+        assert all('LatePads' not in names for names in FI.PORT_OWNED.values())
+        assert all('LatePads' not in names for names in FI.dropped_keys(keys).values())
+        dll.write_bytes(b'MZ older companion')
+        FI.write_port_keys(out, keys)
+        assert 'LatePads' not in ini.read_text()
+        for section, key in (('Input', 'LatePads'), ('input', 'latepads')):
+            original = f'; player preference\n[{section}]\n{key}=0\nOther=keep\n'.encode('utf-16')
+            ini.write_bytes(original)
+            try:
+                FI.write_port_keys(out, keys)
+            except FI.FixTooOld as exc:
+                assert exc.missing == ['[Input] LatePads']
+            else:
+                raise AssertionError('rebuild ignored the retained LatePads preference')
+            assert ini.read_bytes() == original
+            FI.write_port_keys(out, keys, old_fix_ok=True)
+            assert FI.read_ini(ini)[section][key] == '0'
+            dll.write_bytes(b'MZ' + 'LatePads\0'.encode('utf-16le'))
+            FI.write_port_keys(out, keys)
+            assert FI.read_ini(ini)[section] == {key: '0', 'Other': 'keep'}
+            assert ini.read_bytes().startswith(original)
+            dll.write_bytes(b'MZ older companion')
+        # A supplied preference is checked as well as one retained from an existing file.
+        ini.write_bytes(b'')
+        try:
+            FI.write_port_keys(out, {'Input': {'LatePads': '0'}})
+        except FI.FixTooOld as exc:
+            assert exc.missing == ['[Input] LatePads']
+        else:
+            raise AssertionError('supplied LatePads=0 was accepted with an older DLL')
+
+
 def test_beta_fix_numeric_version_keeps_runtime_capability_checks():
     """Beta DLLs keep numeric VERSIONINFO; require their 1.8 keys, not a textual beta suffix (a DLL's key strings are
     NUL-terminated UTF-16, as the beta.5 keys are matched)."""
