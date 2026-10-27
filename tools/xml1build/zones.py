@@ -61,6 +61,7 @@ from . import automaps as AM              # section 26: XML1 automap textures ->
 from . import settle as SE                # issue #81: native floor sweeps for raised ordinary props
 from . import talent_sets as TS           # SPEC <number assigned at merge>: NPC-only talents in per-set files
 from . import npc_values as NV            # SPEC 29.2: inline entities use the same values as entity files
+from . import loot as LOOT               # SPEC 108: --loot xml1, the first game's item economy as data
 
 # ---------------------------------------------------------------------------------------------- constants
 PATCH_ZONE = 'zones.zone'            # import_x1_asset patch keys (deterministic patches -> cacheable imports)
@@ -158,6 +159,15 @@ XP_PICKUP_SCRIPT = "setXP('_ACTIVATOR_',{amount})"
 ITEM_ENHANCEMENT_POOL_STOCK = 375
 from .fix_ini import LIMITS as _FIX_LIMITS                   # noqa: E402 - the port's own [Limits] keys
 ITEM_ENHANCEMENT_POOL = int(_FIX_LIMITS.get('ItemEnhancements', ITEM_ENHANCEMENT_POOL_STOCK))
+
+
+def item_enhancement_pool(ctx):
+    """the enhancement pool the build's ini asks the fix for: ITEM_ENHANCEMENT_POOL, or the W2 layout's 4096 with
+    --save-layout w2 (fix_ini.limits_for)"""
+    from . import fix_ini
+    from . import w2_limits
+    layout = w2_limits.W2_NAME if w2_limits.selected(ctx) else None
+    return int(fix_ini.limits_for(layout).get('ItemEnhancements', ITEM_ENHANCEMENT_POOL_STOCK))
 
 
 def fill_item_model(existing, x1):
@@ -769,6 +779,8 @@ class Zones:
         self.xp_pickups = {}                                    # 'xp_300000' -> ('XP', 300000) (SPEC 23.1)
         self._x1_xp_items = None
         self.counts = collections.Counter()
+        self.loot_defs = []                                     # SPEC 108: the economy's definitions (loot.apply_items)
+        self.loot_legacy_fp = {}
         self.kept_files, self.written_x1 = set(), set()
         self.problems = collections.defaultdict(lambda: collections.defaultdict(set))   # kind -> item -> zones
         self.char_entries = collections.defaultdict(set)        # (kind, fn) -> packages listing it
@@ -1217,6 +1229,8 @@ class Zones:
             if self.ctx.base_exists('Data/items.XMLB'):
                 names |= {e.get('name').lower() for e in self.ctx.read_base_xmlb('Data/items.XMLB').iter()
                           if e.get('name')}
+            if LOOT.selected(self.ctx):
+                names |= {it.identity.lower() for it in LOOT.build_plan(self.ctx).new}
             self._item_names = names
         return self._item_names
 
@@ -1334,6 +1348,8 @@ class Zones:
         elif zone.lower() in ST.JOIN_DOUBLE_SPAWNERS and not join_hero_starts(root):
             self.problem('join_start_missing', 'no slot-2 playerstartent for the joined hero', zone)
         self.rewrite_xp_pickups(zone, root)                             # SPEC 23.1: XML1's XP pickup amounts
+        for old, new in LOOT.rewrite_references(self.ctx, root, zone):  # SPEC 108: XML1 equipment -> lc_x1_<name>
+            self.counts['loot_references_rewritten'] += 1
         renamed, missing = rename_npc_doubles(zone, root)                # section 18: the other same-name NPCs
         if renamed:
             self.counts['npc_doubles_renamed'] += renamed
@@ -2617,6 +2633,11 @@ class Zones:
         """XML1 items the converted content references by name (inventoryitem) that XML2 lacks, translated."""
         out, report = [], []
         dr_items = self.dr_reward_items()
+        if LOOT.selected(self.ctx):
+            # SPEC 108: the maps now name lc_x1_<name>, but the legacy definition of a rewritten name stays (the 88
+            # are kept in order and keys: a saved quantity must not change type under its identity)
+            for low in sorted(LOOT.build_plan(self.ctx, x1top).placed):
+                self.item_refs[low].add('loot: legacy definition kept (SPEC 108)')
         for c in x1top:
             nm = (c.get('name') or '').strip()
             if c.tag.lower() != 'item' or not nm or nm.lower() in have:
@@ -2624,7 +2645,12 @@ class Zones:
             if nm.lower() not in self.item_refs:
                 self.counts['items_x1_unreferenced_not_added'] += 1
                 continue
-            if nm.lower() in dr_items:
+            if nm.lower() in dr_items and LOOT.selected(self.ctx):
+                # SPEC 108: the reward is converted again from the source (no cost, unique, source class, every bonus);
+                # frontend.translate_equipment's fixed defaults are retired for it
+                el, note = LOOT.dr_reward_element(self.ctx, c)
+                self.counts['items_dr_equipment'] += 1
+            elif nm.lower() in dr_items:
                 # SPEC 21 B.4: a Danger Room challenge reward keeps its XML1 bonus as XML2 equipment
                 from . import frontend as FE
                 el, note = FE.translate_equipment(self.ctx, c)
@@ -2659,7 +2685,12 @@ class Zones:
                           f'{sorted(self.item_refs[low])[:3]})')
         # SPEC 32.1: the items without enhancements first (stable), so XMen2.exe's 375-record enhancement pool, which
         # XML2's own table nearly fills, cannot cut them off behind the XML1 equipment
-        out.sort(key=lambda el: item_enhancements(el) > 0)
+        if LOOT.selected(self.ctx):
+            # the rewards keep the position the legacy conversion gave them, whatever their record count
+            out.sort(key=lambda el: item_enhancements(el) > 0 or (el.get('name') or '').lower() in dr_items)
+            out, report = LOOT.apply_items(self, x1top, out, report)
+        else:
+            out.sort(key=lambda el: item_enhancements(el) > 0)
         return out, report
 
     def dr_reward_items(self):
@@ -2691,6 +2722,9 @@ class Zones:
             C.map_tree_refs(x1root)
             self.prov.rewrite_data_tree(ctx, x1root, x1rel)
             x1top = C.iter_roots(x1root)[0]
+            if name in ('common_ents', 'item_ents') and LOOT.selected(ctx):
+                for _old, _new in LOOT.rewrite_references(ctx, x1root, x1rel):       # SPEC 108
+                    self.counts['loot_references_rewritten'] += 1
             x1_by_name = {}
             if name == 'items':
                 # same-name items XML2 already ships keep XML2's entry below; the original XML1 entries stay
@@ -2742,14 +2776,17 @@ class Zones:
             else:
                 ctx.write_xmlb(f'Data/{name}', trees[exts[0]], tuple(exts), source=f'zones:{x1rel}')
             self.counts[f'{name}_added'] = len(added_names)
+            if name == 'items' and LOOT.selected(ctx):
+                LOOT.write_outputs(self, trees['.engb'] if '.engb' in trees else trees[exts[0]])      # SPEC 108
             if name == 'items':
                 self.counts['items_model_filled'] = len(filled_models)
             if name == 'items':                     # SPEC 32.1: what the 375-record enhancement pool cuts off
-                lost = enhancement_pool_cut(C.iter_roots(trees[exts[0]])[0])
+                pool = item_enhancement_pool(ctx)
+                lost = enhancement_pool_cut(C.iter_roots(trees[exts[0]])[0], pool)
                 self.counts['items_beyond_enhancement_pool'] = len(lost)
                 if lost:
                     ctx.warn(f'Data/items: {len(lost)} items are never loaded by XMen2.exe - the enhancement pool '
-                             f'({ITEM_ENHANCEMENT_POOL}, 0x4804a6) overflows at {lost[0][0]} ({lost[0][1]} used before '
+                             f'({pool}, 0x4804a6) overflows at {lost[0][0]} ({lost[0][1]} used before '
                              f'it), and the load stops there: {[n for n, _ in lost]}')
             ctx.note(f'Data/{name}: {len(added_names)} XML1 entries added, {xml2_wins} same-name entries kept '
                      f'as XML2, {unnamed} unnamed XML1 children skipped'

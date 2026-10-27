@@ -202,6 +202,9 @@ class RealPipeline:
         argv += ['--laa', getattr(job, 'laa', None) or 'on']
         if (getattr(job, 'limits_wave3', None) or 'off') != 'off':
             argv += ['--limits-wave3', job.limits_wave3]
+        argv += ['--save-layout', getattr(job, 'save_layout', 'retail')]
+        if getattr(job, 'loot', 'off') != 'off':
+            argv += ['--loot', job.loot]
         if not job.movies:
             argv.append('--no-movies')
         args = build_xml1.parse_args(argv)

@@ -15,7 +15,15 @@ cases.tsv rows: name<TAB>build<TAB>mode<TAB>sequence. Modes (the C++ harness doc
   refuse-noregistry input.lcsave (feature 0): the E10A2 loader without a registry refuses with expected.error
   refuse-stream     input.raw (a retail-size payload): the E10A2 saver refuses with expected.error
   registry-mismatch registry.txt + scripts/ (edited): verify refuses with expected.error
+  w2-reverse        (limits-wave2.md section 10 G1) input.lcsave (feature 0) + registry.txt + scripts/: the W2 loader's
+                    stream == expected.w2.old with expected.report; the W2 saver's rewrite (retained input, serial 17,
+                    sequence) == expected.w2.lcsave and carries bit 0 only (representable); loading it again on W2 gives
+                    the same stream; the E10A2 loader applies it to expected.e10a2.old (the pre-W2 build loads it)
+  w2-bit1           input.w2.old (a W2 stream with a state position of 0.5): the W2 saver's file == expected.bit1.lcsave
+                    with required bits 0 | 1; the E10A2 loader refuses it with expected.error; the W2 loader gives
+                    input.w2.old back
 """
+import copy
 import os
 import shutil
 import sys
@@ -79,12 +87,56 @@ def main(destination):
     _write(folder / 'expected.e10a2.old', e10a2)
     _write(folder / 'expected.report', (report_line(report) + '\n' + note + '\n' + report_line(report2) + '\n' + T.migration_note(report2) + '\n').encode())
     _write(folder / 'expected.feature1.lcsave', saved.file_bytes)
+    # ---- W2 (limits-wave2.md section 10 G1): both directions at W2, the representable rewrite and the bit-1 case
+    w2_report = {}
+    w2_model, _ = convert.reverse_slot(legacy, env, native=L.W2, registry=reg, report=w2_report)
+    w2_stream = oldsave.write_slot(w2_model, L.W2)
+    assert len(w2_stream) == L.W2.slot_size and w2_report == report
+    w2_captures = convert.loaded_zone_metadata(legacy, env, native=L.W2, registry=reg)
+    w2_saved = convert.old_stream_to_new(w2_stream, env, retained_file=legacy, zone_captures=w2_captures, require_capture_metadata=True,
+                                         campaign_serial=17, save_sequence=2, now=-11644473600, native=L.W2)
+    assert w2_saved.refused is None, w2_saved.refused
+    assert container.read_file(w2_saved.file_bytes)['header']['required_features'] == 1
+    assert convert.representable(w2_saved.file_bytes, env, L.E10A2) == ''
+    w2_again, _ = convert.reverse_slot(w2_saved.file_bytes, env, native=L.W2, registry=reg)
+    assert oldsave.write_slot(w2_again, L.W2) == w2_stream
+    w2_on_e10a2 = oldsave.write_slot(convert.reverse_slot(w2_saved.file_bytes, env, native=L.E10A2, registry=reg)[0], L.E10A2)
+    assert w2_on_e10a2 == e10a2
+    folder = case('typed_w2', 'w2-reverse', 2)
+    _write(folder / 'input.lcsave', legacy)
+    _write(folder / 'registry.txt', registry)
+    shutil.copytree(root, folder / 'scripts', dirs_exist_ok=True)
+    _write(folder / 'expected.w2.old', w2_stream)
+    _write(folder / 'expected.report', (report_line(w2_report) + '\n' + note + '\n').encode())
+    _write(folder / 'expected.w2.lcsave', w2_saved.file_bytes)
+    _write(folder / 'expected.e10a2.old', w2_on_e10a2)
+    half = copy.deepcopy(w2_model)
+    state = next(st for st in half['zones'][0]['states'] if st['def_name'])
+    state['position'][0] = 0.5
+    half_stream = oldsave.write_slot(half, L.W2)
+    bit1 = convert.old_stream_to_new(half_stream, env, retained_file=legacy, zone_captures=w2_captures, require_capture_metadata=True,
+                                     campaign_serial=17, save_sequence=2, now=-11644473600, native=L.W2)
+    assert bit1.refused is None, bit1.refused
+    assert container.read_file(bit1.file_bytes)['header']['required_features'] == 3
+    assert 'state position not representable' in convert.representable(bit1.file_bytes, env, L.E10A2)
+    try:
+        convert.reverse_slot(bit1.file_bytes, env, native=L.E10A2, registry=reg); assert False
+    except convert.ConvertError as e:
+        assert str(e) == container.W2_REFUSED
+    assert oldsave.write_slot(convert.reverse_slot(bit1.file_bytes, env, native=L.W2, registry=reg)[0], L.W2) == half_stream
+    folder = case('w2_bit1', 'w2-bit1', 2)
+    _write(folder / 'input.lcsave', legacy)
+    _write(folder / 'registry.txt', registry)
+    shutil.copytree(root, folder / 'scripts', dirs_exist_ok=True)
+    _write(folder / 'input.w2.old', half_stream)
+    _write(folder / 'expected.bit1.lcsave', bit1.file_bytes)
+    _write(folder / 'expected.error', container.W2_REFUSED.encode())
     folder = case('refuse_downgrade', 'refuse-downgrade')
     _write(folder / 'input.lcsave', saved.file_bytes)
     _write(folder / 'expected.error', container.DOWNGRADE_REFUSED.encode())
     folder = case('refuse_unknown', 'refuse-unknown')
-    _write(folder / 'input.lcsave', _set_required_features(legacy, 2))
-    _write(folder / 'expected.error', b'required feature bits 0x2 not implemented (needs a newer version)')
+    _write(folder / 'input.lcsave', _set_required_features(legacy, 4))
+    _write(folder / 'expected.error', b'required feature bits 0x4 not implemented (needs a newer version)')
     folder = case('refuse_noregistry', 'refuse-noregistry')
     _write(folder / 'input.lcsave', legacy)
     _write(folder / 'expected.error', T.NO_REGISTRY.encode())

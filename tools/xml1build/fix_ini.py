@@ -215,6 +215,38 @@ def limits_in_use(mode=None) -> dict:
     read their capacities from this (a key a build does not write is the game's own value)."""
     return {**LIMITS, **wave3_limits(mode)}
 
+# xml2-fix 1.9.0 (limits wave 2, its docs/limits-wave2.md "Step 8") [Limits] SaveLayout=w2: the W2 native save layout
+# (item definitions / instances / world slots / objectives 1024, enhancement and attached records 4096, 8 zone
+# records, talent pools 256 with multiplier 200, 8191 zone-string names). One key selects the whole layout and every
+# engine raise that goes with it; none of them is separately selectable. It is OPT-IN (builder option --save-layout w2,
+# build record 'save_layout'): W2 is Legends Classic 0.4.2 and is in no candidate yet, so a default build writes no
+# SaveLayout key and its ini is byte-identical to before. The DLL accepts the key only with [Save] Format=lc,
+# [Limits] EntityCapacity=1 and ItemEnhancements absent or 4096 (W2 owns 4096; any other value is refused at
+# start-up), so the builder writes the four keys together and refuses any key set that breaks the table
+# (check_save_layout_keys); a DLL that does not recognize the key is refused too (check_save_layout_dll), never
+# silently written to. An empty SaveLayout= is never written.
+SAVE_LAYOUT_KEY = 'SaveLayout'
+SAVE_LAYOUT_W2 = 'w2'
+SAVE_LAYOUT_RETAIL = 'retail'                 # the builder option's default: no key, the configured baseline
+SAVE_LAYOUTS = (SAVE_LAYOUT_RETAIL, SAVE_LAYOUT_W2)
+W2_ITEM_ENHANCEMENTS = '4096'                 # the W2 layout's item enhancement records (limits-wave2 section 2, E3)
+
+
+def limits_for(save_layout=None) -> dict:
+    """[Limits] a build needs: LIMITS, plus under save_layout 'w2' the pair SaveLayout=w2 / ItemEnhancements=4096
+    (EntityCapacity=1 is in LIMITS already; [Save] Format=lc is port_keys' / save_keys' job). Any other value
+    ('retail', None) is the baseline: LIMITS unchanged."""
+    limits = dict(LIMITS)
+    if save_layout is None or save_layout == SAVE_LAYOUT_RETAIL:
+        return limits
+    if save_layout != SAVE_LAYOUT_W2:
+        raise ValueError(f'unknown save layout {save_layout!r} (expected one of {", ".join(SAVE_LAYOUTS)})')
+    out = {}
+    for key, value in limits.items():
+        out[key] = W2_ITEM_ENHANCEMENTS if key == 'ItemEnhancements' else value
+        if key == 'EntityCapacity':
+            out[SAVE_LAYOUT_KEY] = SAVE_LAYOUT_W2
+    return out
 
 # xml2-fix 1.3.1 [Game] GeometrySharingBlendIndices (SPEC 44, issue #11): XMen2.exe's geometry sharing reuses one
 # skinned mesh for another when positions and weights match although their packed blend indices differ; XML1's
@@ -506,13 +538,13 @@ _ZONE_PATH = re.compile(r'^[a-z0-9_.\-]+(/[a-z0-9_.\-]+)*$')
 PORT_OWNED = {'Game': ('NewGameTeam', 'ResetUnlocks', 'SaveFolder', 'ForcedTeams', 'PostgameScript', 'WindowTitle',
                         'EndHeroUnlock', 'MainMenuItems', 'DangerRoomGate', 'ClassicMainBackdrop', 'ClassicMainPanelBounds', 'NewGamePlus', 'ReviewStats', 'Xtract', 'XtractionShop', 'RevivalCost', 'XPCurve',
                        'GeometrySharingBlendIndices', 'CharacterLadderPaths', 'ObjectiveDescriptions',
-                       'BreakRule', 'LiftRule', 'Xml1GrabCarry', 'Xml1FlyingCarry', 'Xml1RogueDecide', 'Xml1WallCling', *SHARED_HANDLERS, *SHARED_HANDLERS_C, *TK_GUARD, 'PlacementCrush', 'ObjectWorldImpact', 'DoubleHeal', 'DeathRule', 'NpcPowerRule', 'StunRule', 'DangerRoomParty', 'DangerRoomHealthBars', 'ResistanceDisplay', 'BoxHarmOrigin', 'HarmSingleChain', 'HarmLoopStartup', 'ConfirmationRelease',
+                       'BreakRule', 'LiftRule', 'Xml1GrabCarry', 'Xml1FlyingCarry', 'Xml1RogueDecide', 'Xml1Economy', 'Xml1WallCling', *SHARED_HANDLERS, *SHARED_HANDLERS_C, *TK_GUARD, 'PlacementCrush', 'ObjectWorldImpact', 'DoubleHeal', 'DeathRule', 'NpcPowerRule', 'StunRule', 'DangerRoomParty', 'DangerRoomHealthBars', 'ResistanceDisplay', 'BoxHarmOrigin', 'HarmSingleChain', 'HarmLoopStartup', 'ConfirmationRelease',
                        'OnlineConversations', 'PersonalItemPicture', 'ComboPopupGuard', 'ClassicHud', 'ClassicHudPilot', 'ClassicCodex', 'ClassicObjectives', 'NpcSemiAuto', 'ClassicSpeakers', 'WorldBackfaces',
                        'ExplosiveFirstHit', 'PackAmount', 'SoloMode', 'X1Leader', 'DeathSwitchClear', 'RankCosts', 'LevelSkillPoints', 'LevelStatPoints', 'Xml1Multipart',
                        'Xml1MasterMold', 'Xml1MoldStage', 'Xml1Turrets', 'Xml1LockOnEffects', 'Xml1LockOnAim', 'Xml1Bosses'),
               'Limits': ('ActorSlots', 'ResourceNames', 'ItemEnhancements', 'FightStyles', 'EffectCurves', 'MoveTriggers', 'EntityCapacity',
                          'ScriptFunctions', 'IGBCache', 'ActorPools', 'AnimEnums', 'CharSounds', 'MotionPool', 'ResidentStats',
-                         *(k for k in LIMITS_WAVE3 if k != 'FightStyles'), *LIMITS_WAVE3_LATE),
+                         *(k for k in LIMITS_WAVE3 if k != 'FightStyles'), *LIMITS_WAVE3_LATE, SAVE_LAYOUT_KEY),
               'Online': ('GameVersion', 'ContentFingerprint', 'FastTransfer', 'ReceiveValidation', 'JoinInProgress', 'TickRate'),
               'Save': ('Format',),
               'Engine': ('ModelPools', 'ModelHandles'),
@@ -959,6 +991,30 @@ def save_keys(*, port_identity=False) -> dict:
     return {'Format': SAVE_FORMAT} if port_identity else {}
 
 
+def build_save_layout(out):
+    """'w2' when <out> is a build made with --save-layout w2 (report.json build.save_layout), else None. Like the other
+    content options this is read off the build's own record, never inferred from an existing ini: rebuilding without
+    the option must drop the owned SaveLayout key."""
+    chosen = str((build_record(out) or {}).get('save_layout') or '').strip().lower()
+    return SAVE_LAYOUT_W2 if chosen == SAVE_LAYOUT_W2 else None
+
+
+# xml2-fix 1.9.x (loot + Forge, DESIGN 2.2.1 / 7; its rule 52): [Game] Xml1Economy=1 turns the first game's item economy
+# on (the sidecar Data/x1economy.txt the builder wrote with --loot xml1). OPT-IN like SaveLayout (builder option --loot
+# xml1, build record 'loot'); the DLL accepts it only with [Limits] SaveLayout=w2. A DLL that does not carry the UTF-16
+# key is refused (check_economy_dll), never silently written to: it would ignore the key and run the old economy
+# against data built for the new one. A build without the option drops the key.
+ECONOMY_KEY = 'Xml1Economy'
+ECONOMY_VALUE = '1'
+
+
+def build_loot(out):
+    """{'Xml1Economy': '1'} when <out> is a build made with --loot xml1 (report.json build.loot), else {}. Read off the
+    build's own record, never inferred from an existing ini: rebuilding without the option must drop the owned key."""
+    chosen = str((build_record(out) or {}).get('loot') or '').strip().lower()
+    return {ECONOMY_KEY: ECONOMY_VALUE} if chosen == 'xml1' else {}
+
+
 def build_harm_loop_startup(out):
     """Opt-in startup adapter; online remains blocked pending rule assignment."""
     return {'HarmLoopStartup': 'xml1'} if (build_record(out) or {}).get('harm_loop_startup') == 'xml1' else {}
@@ -987,6 +1043,7 @@ def port_keys(out, *, save_folder=PLAY_SAVE_FOLDER, eighth=True) -> dict:
             game.update(FLYING_CARRY_OFF)
     if (build_record(out) or {}).get('rogue_decide') == 'xml1':
         game['Xml1RogueDecide'] = 'xml1'
+    game.update(build_loot(out))
     turrets = build_turrets(out) if postgame else {}
     if postgame:
         game.update(build_mold_controller(out))
@@ -1002,7 +1059,8 @@ def port_keys(out, *, save_folder=PLAY_SAVE_FOLDER, eighth=True) -> dict:
     world_backfaces = build_world_backfaces(out)
     if world_backfaces:
         game['WorldBackfaces'] = WORLD_BACKFACES
-    keys = {'Game': game, 'Limits': dict(LIMITS), 'Engine': {'ModelPools': MODEL_POOLS, 'ModelHandles': MODEL_HANDLES}}
+    save_layout = build_save_layout(out)
+    keys = {'Game': game, 'Limits': limits_for(save_layout), 'Engine': {'ModelPools': MODEL_POOLS, 'ModelHandles': MODEL_HANDLES}}
     if (build_record(out) or {}).get('actor_pools') == ACTOR_POOLS:   # recorded option only (OFF rebuild drops it)
         keys['Limits']['ActorPools'] = ACTOR_POOLS
     if (build_record(out) or {}).get('anim_enums') == 'xml1':     # recorded option only (OFF rebuild drops it)
@@ -1030,6 +1088,8 @@ def port_keys(out, *, save_folder=PLAY_SAVE_FOLDER, eighth=True) -> dict:
         keys['Save'] = save
     if balance:
         keys['Balance'] = balance_keys(out)
+    check_save_layout_keys(keys)          # SaveLayout=w2 on a build without the LC save identity is refused here
+    check_economy_keys(keys)              # Xml1Economy without the W2 layout is refused here
     return keys
 
 
@@ -1182,6 +1242,67 @@ def check_move_trigger_dll(dll, keys: dict) -> None:
     if dll.is_file() and 'MoveTriggers'.encode('utf-16le') not in dll.read_bytes():
         raise FixTooOld('Full move triggers require the companion XML2 Fix DLL supporting [Limits] MoveTriggers; '
                         'the existing DLL does not recognize it', ['[Limits] MoveTriggers'])
+
+
+def check_save_layout_keys(keys: dict) -> None:
+    """[Limits] SaveLayout (limits-wave2 "Step 8" contract table): only the exact value w2, and only together with
+    [Save] Format=lc and [Limits] EntityCapacity=1 (the W2 tokens are contiguous), with ItemEnhancements absent or
+    4096 (the DLL refuses any other value at start-up and the build would not start). Raises ValueError for any other
+    key set; a key set without SaveLayout always passes (the configured baseline)."""
+    limits = keys.get('Limits', {})
+    if SAVE_LAYOUT_KEY not in limits:
+        return
+    value = limits[SAVE_LAYOUT_KEY]
+    if value != SAVE_LAYOUT_W2:
+        raise ValueError(f'[Limits] SaveLayout must be {SAVE_LAYOUT_W2} (got {value!r}); '
+                         'an empty or unknown value is never written')
+    if keys.get('Save', {}).get('Format') != SAVE_FORMAT:
+        raise ValueError('[Limits] SaveLayout=w2 requires [Save] Format=lc')
+    if limits.get('EntityCapacity') != '1':
+        raise ValueError('[Limits] SaveLayout=w2 requires [Limits] EntityCapacity=1 (the W2 tokens are contiguous)')
+    enhancements = limits.get('ItemEnhancements')
+    if enhancements is not None and enhancements != W2_ITEM_ENHANCEMENTS:
+        raise ValueError(f'[Limits] SaveLayout=w2 owns ItemEnhancements={W2_ITEM_ENHANCEMENTS}; '
+                         f'{enhancements!r} would be refused at start-up')
+
+
+def check_save_layout_dll(dll, keys: dict) -> None:
+    """[Limits] SaveLayout=w2 needs the companion DLL that reads it (XML2 Fix 1.9, limits wave 2 step 8): probed as
+    check_entity_capacity_dll probes EntityCapacity, as the UTF-16 key name with its terminator (a longer key or a
+    message that merely starts with it does not count). Also runs check_save_layout_keys. Source-only builds may omit
+    the DLL."""
+    check_save_layout_keys(keys)
+    if SAVE_LAYOUT_KEY not in keys.get('Limits', {}):
+        return
+    dll = Path(dll)
+    if dll.is_file() and (SAVE_LAYOUT_KEY + '\0').encode('utf-16le') not in dll.read_bytes():
+        raise FixTooOld('The W2 save layout requires the companion XML2 Fix DLL supporting [Limits] SaveLayout; '
+                        'the existing DLL does not recognize it', ['[Limits] SaveLayout'])
+
+
+def check_economy_keys(keys: dict) -> None:
+    """[Game] Xml1Economy (DESIGN 7): only the value 1, and only together with [Limits] SaveLayout=w2 (the DLL refuses
+    it otherwise: rule 52 needs rule 47). A key set without the key always passes."""
+    game = keys.get('Game', {})
+    if ECONOMY_KEY not in game:
+        return
+    if game[ECONOMY_KEY] != ECONOMY_VALUE:
+        raise ValueError(f'[Game] {ECONOMY_KEY} must be {ECONOMY_VALUE} (got {game[ECONOMY_KEY]!r})')
+    if keys.get('Limits', {}).get(SAVE_LAYOUT_KEY) != SAVE_LAYOUT_W2:
+        raise ValueError(f'[Game] {ECONOMY_KEY}=1 requires [Limits] {SAVE_LAYOUT_KEY}={SAVE_LAYOUT_W2}')
+
+
+def check_economy_dll(dll, keys: dict) -> None:
+    """[Game] Xml1Economy=1 needs the companion DLL that carries the key (loot step 3a): probed as the UTF-16 key name
+    with its terminator (check_save_layout_dll's probe). Also runs check_economy_keys. Source-only builds may omit the
+    DLL."""
+    check_economy_keys(keys)
+    if ECONOMY_KEY not in keys.get('Game', {}):
+        return
+    dll = Path(dll)
+    if dll.is_file() and (ECONOMY_KEY + '\0').encode('utf-16le') not in dll.read_bytes():
+        raise FixTooOld('The first-game item economy requires the companion XML2 Fix DLL supporting [Game] '
+                        f'{ECONOMY_KEY}; the existing DLL does not recognize it', [f'[Game] {ECONOMY_KEY}'])
 
 
 def check_entity_capacity_dll(dll, keys: dict) -> None:
@@ -1419,8 +1540,8 @@ def old_fix_keys(dll, keys: dict) -> list:
     ValueError for a key set no DLL can run (EntityCapacity without Format=lc)."""
     missing = []
     check_wave3_keys(keys)
-    for check in (check_move_trigger_dll, check_entity_capacity_dll, check_release_dll, check_anim_enums_dll,
-                  check_address_space_dll):
+    for check in (check_move_trigger_dll, check_entity_capacity_dll, check_save_layout_dll, check_economy_dll,
+                  check_release_dll, check_anim_enums_dll, check_address_space_dll):
         try:
             check(dll, keys)
         except FixTooOld as exc:
@@ -1434,6 +1555,17 @@ def write_port_keys(out, keys: dict | None = None, *, old_fix_ok: bool = False) 
     FixTooOld (naming them all) unless `old_fix_ok` (the CLI's warning path: FixTooOld)."""
     keys = port_keys(out) if keys is None else keys
     missing = old_fix_keys(Path(out) / 'dinput.dll', keys)
+    if SAVE_LAYOUT_KEY in keys.get('Limits', {}) and f'[Limits] {SAVE_LAYOUT_KEY}' in missing:
+        # the warning path (old_fix_ok) writes the other keys for an older fix the launcher replaces right after the
+        # build; SaveLayout is not one of them: an older DLL ignores it and the build would run on the baseline
+        # layout while its record says W2
+        raise FixTooOld('The W2 save layout requires the companion XML2 Fix DLL supporting [Limits] SaveLayout; '
+                        'the existing DLL does not recognize it, so the key is not written', [f'[Limits] {SAVE_LAYOUT_KEY}'])
+    if ECONOMY_KEY in keys.get('Game', {}) and f'[Game] {ECONOMY_KEY}' in missing:
+        # not a warning either: an older DLL ignores the key and would run XML2's economy against the XML1 item table
+        raise FixTooOld('The first-game item economy requires the companion XML2 Fix DLL supporting [Game] '
+                        f'{ECONOMY_KEY}; the existing DLL does not recognize it, so the key is not written',
+                        [f'[Game] {ECONOMY_KEY}'])
     if missing and not old_fix_ok:
         raise FixTooOld(f'This build needs XML2 Fix {REQUIRED_XML2FIX} or later; the existing DLL does not recognize '
                         + ', '.join(missing), missing)

@@ -4,7 +4,7 @@
   python -m lcsave dump     <file> [--build DIR] [--out dump.json]        old or new save -> canonical JSON
   python -m lcsave verify   <old.save> --build DIR [--out DIR]            convert, re-read, reverse check, report
   python -m lcsave eras     --reference DIR --era CV=DIR [...] [--out legacy_eras.json]      (developer)
-  python -m lcsave catalogue --build DIR [--previous catalogue.json] [--out catalogue.json]  (developer)
+  python -m lcsave catalogue --build DIR [--previous catalogue.json] [--out catalogue.json] [--append-only [--own-rebuilt-ledger loot.json]]  (developer)
   python -m lcsave corpus   <folder> --build DIR --out DIR                every *.save under folder (developer)
   python -m lcsave savefiles --build DIR [--check] [--content-version N]  write the build's save-format data
       files (catalogue.lcc, legacy.lcm, the .lcbind files; SPEC-new-save 3.4/5.3), or with --check verify that
@@ -57,7 +57,14 @@ def cmd_catalogue(a):
             for tag, hashes in catmod.tables_from_hashes(era.tables).items():
                 for h in hashes:
                     tables.setdefault(tag, []).append(h)
-    cat.update(tables, a.content_version)
+    if a.append_only:
+        cat.extend(tables, a.content_version)
+        if a.own_rebuilt_ledger:
+            from .keys import key_hash
+            for name in json.load(open(a.own_rebuilt_ledger, encoding='utf-8')).get('rebuilt', []):
+                cat.set_attribute_bits('ITEM', key_hash(name), catmod.ITEM_OWN_REBUILT)
+    else:
+        cat.update(tables, a.content_version)
     out = a.out or catmod.CATALOGUE_FILE
     cat.save(out)
     print('wrote', out, cat.counts())
@@ -162,7 +169,10 @@ def main(argv=None):
     s.add_argument('--content-version', type=int, default=13)
     s.add_argument('--era', action='append', default=[]); s.add_argument('--out'); s.set_defaults(fn=cmd_eras)
     s = sub.add_parser('catalogue'); s.add_argument('--build', required=True); s.add_argument('--previous')
-    s.add_argument('--eras'); s.add_argument('--content-version', type=int, default=13); s.add_argument('--out'); s.set_defaults(fn=cmd_catalogue)
+    s.add_argument('--eras'); s.add_argument('--content-version', type=int, default=13); s.add_argument('--out')
+    s.add_argument('--append-only', action='store_true', help='append the new keys of the build without the refusal update() makes when keys also left (loot economy)')
+    s.add_argument('--own-rebuilt-ledger', help='with --append-only: <build>/_build/loot.json; marks its rebuilt items own_rebuilt')
+    s.set_defaults(fn=cmd_catalogue)
     s = sub.add_parser('convert'); s.add_argument('old'); s.add_argument('out'); s.add_argument('--build', required=True)
     s.add_argument('--slot', type=int, default=0); s.add_argument('--report'); s.set_defaults(fn=cmd_convert)
     s = sub.add_parser('dump'); s.add_argument('file'); s.add_argument('--build'); s.add_argument('--out'); s.set_defaults(fn=cmd_dump)

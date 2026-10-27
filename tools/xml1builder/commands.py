@@ -74,6 +74,8 @@ class Job:
     anim_enums: str = 'xml1'
     laa: str = 'on'
     limits_wave3: str = 'off'
+    save_layout: str = 'retail'
+    loot: str = 'off'
     disc: dict = field(default_factory=dict)
     ident: dict | None = None
     xml2_info: dict = field(default_factory=dict)
@@ -324,7 +326,12 @@ def cmd_build(a, output, cancel, pipeline_factory):
     job = Job(out=out_dir, xml2=xml2, cache=cache, iso=iso, movies=movies, jobs=jobs, prepare_jobs=prepare_jobs,
               main_menu_layout=getattr(a, 'main_menu_layout', 'classic'),
               anim_enums=getattr(a, 'anim_enums', None) or 'xml1', laa=getattr(a, 'laa', None) or 'on',
-              limits_wave3=getattr(a, 'limits_wave3', None) or 'off')
+              limits_wave3=getattr(a, 'limits_wave3', None) or 'off',
+              save_layout=getattr(a, 'save_layout', 'retail'), loot=getattr(a, 'loot', 'off'))
+    from xml1build import loot as LOOT
+    why = LOOT.refusal(job)
+    if why:
+        raise BuilderError('E_USAGE', why + '.', 'Add --save-layout w2, or build without --loot xml1.', {})
     ctl = Ctl(output, cancel, job)
     pipeline = pipeline_factory()
     out_lock = cache_lock = None
@@ -605,6 +612,13 @@ def finish(a, output, job, ctl, pipeline, warn):
             missing = getattr(exc, 'missing', None)
             if not missing:
                 raise
+            if '[Limits] SaveLayout' in missing or '[Game] Xml1Economy' in missing:
+                # not a warning: an older DLL ignores the key, so the build would run on the baseline save layout (or
+                # XML2's economy) while it was built (and validated) for W2 / the first game's; nothing is written
+                raise BuilderError('E_XML2FIX_OLD', f'{exc}.', f'Put XML2 Fix {pipeline.required_xml2fix()[2:]} or later '
+                                   'into the folder, or build without --save-layout w2 / --loot xml1.',
+                                   {'missing': missing, 'count': len(missing), 'required': pipeline.required_xml2fix()},
+                                   stage='finish') from exc
             warn('W_XML2FIX_OLD', f'{exc}. The build is complete: put XML2 Fix {pipeline.required_xml2fix()[2:]} or '
                                   'later into the folder (the Ultimate Legends launcher does it after the build).',
                  {'missing': missing, 'count': len(missing), 'required': pipeline.required_xml2fix()}, stage='finish')

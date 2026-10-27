@@ -119,6 +119,30 @@ def parse_args(argv=None):
     ap.add_argument('--rogue-decide', choices=('xml1', 'xml2'), default='xml1',
                     help="Rogue's power decision: XML1's ch_roguedecide (default since 0.4.1-beta.1; needs XML2 Fix "
                          "1.9.0-beta.1's rule 43) or xml2, the old D15 collapse (A/B builds)")
+    ap.add_argument('--save-layout', dest='save_layout', choices=('retail', 'w2'), default='retail',
+                    help="the save layout the build is validated and configured for: retail (default; no [Limits] "
+                         "SaveLayout key, the baseline) or w2 (limits wave 2, Legends Classic 0.4.2: the ini gets "
+                         "SaveLayout=w2 / ItemEnhancements=4096 with EntityCapacity=1 and [Save] Format=lc; the "
+                         "validator and the budgets use the W2 limits and refuse data over them; needs XML2 Fix 1.9 "
+                         "or newer)")
+    ap.add_argument('--loot', choices=('off', 'xml1'), default='off',
+                    help="the first game's item economy (Legends Classic 0.4.2; default off): xml1 converts the 116 XML1 "
+                         "equipment (97 new lc_x1_<name> definitions, the 19 Danger Room rewards again in place, every "
+                         "bonus), rewrites the maps' references, writes Data/x1economy.txt, approximations.json / "
+                         "APPROXIMATIONS.md and [Game] Xml1Economy=1. Needs --save-layout w2 and XML2 Fix with the "
+                         "economy key")
+    ap.add_argument('--loot-construction', dest='loot_construction', choices=('zero-draw', 'one-roll'),
+                    default='zero-draw',
+                    help="with --loot xml1: which item construction the DLL ships (DESIGN 2.5): zero-draw (plan A, "
+                         "default) or the native one-roll fallback, which adds the construction-one-roll "
+                         "approximations row")
+    ap.add_argument('--loot-def-damage-scale', dest='loot_def_damage_scale', choices=('noop', 'resist'),
+                    default='noop',
+                    help="with --loot xml1 (owner decision D8, DESIGN 12): the four items whose only bonus is the "
+                         "original's unregistered def_damage_scale (SHIAR_MIND_GEM, SHIAR_BODY_SHIELD, "
+                         "SHIAR_ENERGY_ARMOR, MAGNETOS_HELMET) carry no working bonus in the first game. noop "
+                         "(default) keeps that exactly; resist writes the authored multiplier as a PC "
+                         "damage-resistance record (bonus-approx rows)")
     ap.add_argument('--hero-bleed', dest='hero_bleed', choices=('on', 'off'), default='on',
                     help="Wolverine's bleed passive as an XML2 add_harming powerup (default) or dropped")
     ap.add_argument('--newgame', choices=('chooseteam', 'keepteam'), default='keepteam',
@@ -195,6 +219,10 @@ def parse_args(argv=None):
                  '[Limits] AnimEnums); use --grab-carry xml2 for an AnimEnums-off A/B build')
     if a.tour is not None and a.tour <= 0:
         ap.error('--tour needs a positive number of seconds')
+    from xml1build import loot as LOOT
+    why = LOOT.refusal(a)
+    if why:
+        ap.error(why)
     if a.start_zone:
         a.start_zone = C.norm(a.start_zone).removeprefix('maps/')
     if a.main_menu_layout == 'widescreen':
@@ -228,6 +256,12 @@ CONTENT_OPTS = {'harm_loop_startup': (tuple(C.MODULE_ORDER), 'workaround'),
                 'telekinesis': ((), 'off'), 'guard_decide': ((), 'off'), 'flying_carry': ((), 'off'),
                 'grab_carry': ('characters', 'xml1'), 'actor_pools': ('characters', 'off'), 'anim_enums': ('characters', 'xml1'), 'rogue_decide': ('heroes', 'xml1'), 'hero_roster': ('heroes', '21'), 'hero_icons': ('heroes', 'xml1'), 'hero_bleed': ('heroes', 'on'),
                 'newgame': ('scripts', 'keepteam'),
+                # limits wave 2: the talent precache budget (talent_budget.prune_zone_precache) follows the layout's pool
+                'save_layout': ('zones', 'retail'),
+                # loot step 1: zones (the item table, map references, sidecar), frontend (the shop's Training tab)
+                'loot': (('zones', 'frontend'), 'off'),
+                'loot_construction': ('zones', 'zero-draw'),
+                'loot_def_damage_scale': ('zones', 'noop'),
                 # SPEC 19: scripts emits the blocks; zones imports the dialogs / conversations rewrite_data_tree patches
                 'forced_teams': (('scripts', 'zones'), 'seat'),
                 # SPEC 21: scripts (intro, main_back_main, imageViewer literals), zones (menu/main_back, zoneinfo
@@ -481,6 +515,7 @@ def main(argv=None):
                     'start_zone': args.start_zone, 'tour': args.tour, 'no_movies': args.no_movies,
                     'blackbird': args.blackbird, 'npc_scaling': args.npc_scaling, 'tiles': args.tiles,
                     'grab_carry': args.grab_carry, 'telekinesis': args.telekinesis, 'guard_decide': args.guard_decide, 'flying_carry': args.flying_carry, 'actor_pools': args.actor_pools, 'anim_enums': args.anim_enums, 'rogue_decide': args.rogue_decide, 'hero_roster': args.hero_roster, 'hero_icons': args.hero_icons, 'hero_bleed': args.hero_bleed,
+                    'save_layout': args.save_layout,
                     'newgame': args.newgame, 'forced_teams': args.forced_teams, 'frontend': args.frontend,
                     # limits wave 3: recorded only when on, so the default (off) build's report.json is unchanged
                     **({'limits_wave3': args.limits_wave3} if getattr(args, 'limits_wave3', 'off') != 'off' else {}),
@@ -491,6 +526,11 @@ def main(argv=None):
                     'start_party': args.start_party, 'start_skinset': args.start_skinset,
                     'files_registered': len(ctx.registry.entries), 'seconds': round(time.time() - t0, 1),
                     'shared_keys': sorted(ctx.shared)}
+    if args.loot != 'off':          # recorded only when asked for: a build without the option keeps its metadata as before
+        rep['build']['loot'] = args.loot
+        rep['build']['loot_construction'] = args.loot_construction
+        if getattr(args, 'loot_def_damage_scale', 'noop') != 'noop':      # D8: recorded only when asked for
+            rep['build']['loot_def_damage_scale'] = args.loot_def_damage_scale
     (out / '_build' / 'report.json').write_text(json.dumps(rep, indent=1, default=str), encoding='utf-8')
     ctx.report.print_summary()
     errors = ctx.report.error_total()
