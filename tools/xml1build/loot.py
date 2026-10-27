@@ -134,7 +134,8 @@ def construction_fallback(x) -> bool:
 
 def def_damage_resist(x) -> bool:
     """True when the build was asked for `--loot-def-damage-scale resist` (D8: the four dead `def_damage_scale` items get
-    their authored multiplier as a damage-resistance record). Default noop: the output is the original's, byte for byte."""
+    their authored multiplier as a damage-resistance record). build_xml1 makes resist the default of a --loot xml1 build
+    (Owen's D8); an args object without the option reads noop (the original's dead bonus, byte for byte)."""
     return str(getattr(_args(x), 'loot_def_damage_scale', 'noop') or 'noop').lower() == 'resist'
 
 

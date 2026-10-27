@@ -8038,11 +8038,12 @@ coverage: `tests/unit/test_item_bonuses.py`, `test_loot.py`, `test_lcsave_loot.p
 Loot step T (`task-loot-impl-tests`), on `loot/builder` (SPEC 108). Three developer tools and one builder option; none of them
 changes a build made without the option, and none ships in a release.
 
-**D8, `--loot-def-damage-scale {noop,resist}`** (default `noop`; `build_xml1.py` only, with `--loot xml1`; a content option of
+**D8, `--loot-def-damage-scale {noop,resist}`** (default `resist` with `--loot xml1` since the 0.4.2 integration, Owen's
+D8 decision 10-26; `noop` without `--loot xml1` or when asked for; `build_xml1.py` only, with `--loot xml1`; a content option of
 `zones`, `plan_content_opts`; recorded in `report.json` / `loot.json` only when `resist`). Four items carry no working bonus in the
 first game: `def_damage_scale` is never registered by the original's parser (bonus table 0x44e8c8), and these four have no other
 bonus. `noop` (today's output, byte for byte) writes no record for them (`noop-original` rows). `resist` (owner decision D8, option
-b, prepared not decided) writes the authored multiplier as the PC scoped damage-resistance scale record the converter already uses
+b, decided 10-26: the default) writes the authored multiplier as the PC scoped damage-resistance scale record the converter already uses
 for the source `def_damage` scale items: `<affecter attribute="def_damage_scope" level="<authored>" affect_type="scale"
 scope_damage="<authored>"/>`, description `Damage taken x<authored>`, as a `bonus-approx` row (family `defense (resist)`, reason
 names D8). Authored values (owned `items.eng`; aggregate): `MAGNETOS_HELMET` 0 (dmg_mental; a multiplier of 0 is full immunity;

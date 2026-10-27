@@ -133,6 +133,11 @@ def test_builder_options_default_off_and_the_cli_refuses_without_w2():
     assert build_xml1.CONTENT_OPTS['loot_def_damage_scale'] == ('zones', 'noop')
     a = build_xml1.parse_args(['--out', 'invented_output', '--save-layout', 'w2', '--loot', 'xml1'])
     assert a.loot == 'xml1'
+    # D8 (Owen 10-26): resist is the default of a --loot xml1 build; noop stays available explicitly
+    assert a.loot_def_damage_scale == 'resist' and L.def_damage_resist(a)
+    a = build_xml1.parse_args(['--out', 'invented_output', '--save-layout', 'w2', '--loot', 'xml1',
+                               '--loot-def-damage-scale', 'noop'])
+    assert a.loot_def_damage_scale == 'noop' and not L.def_damage_resist(a)
     try:
         build_xml1.parse_args(['--out', 'invented_output', '--loot', 'xml1'])
         raise AssertionError('--loot xml1 without W2 was accepted')

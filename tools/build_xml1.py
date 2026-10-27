@@ -137,12 +137,13 @@ def parse_args(argv=None):
                          "default) or the native one-roll fallback, which adds the construction-one-roll "
                          "approximations row")
     ap.add_argument('--loot-def-damage-scale', dest='loot_def_damage_scale', choices=('noop', 'resist'),
-                    default='noop',
+                    default=None,
                     help="with --loot xml1 (owner decision D8, DESIGN 12): the four items whose only bonus is the "
                          "original's unregistered def_damage_scale (SHIAR_MIND_GEM, SHIAR_BODY_SHIELD, "
-                         "SHIAR_ENERGY_ARMOR, MAGNETOS_HELMET) carry no working bonus in the first game. noop "
-                         "(default) keeps that exactly; resist writes the authored multiplier as a PC "
-                         "damage-resistance record (bonus-approx rows)")
+                         "SHIAR_ENERGY_ARMOR, MAGNETOS_HELMET) carry no working bonus in the first game. resist "
+                         "(the default with --loot xml1, Owen's D8) writes the authored multiplier as a PC "
+                         "damage-resistance record (bonus-approx rows); noop keeps the original's dead bonus exactly. "
+                         "Without --loot xml1 the option is noop")
     ap.add_argument('--hero-bleed', dest='hero_bleed', choices=('on', 'off'), default='on',
                     help="Wolverine's bleed passive as an XML2 add_harming powerup (default) or dropped")
     ap.add_argument('--newgame', choices=('chooseteam', 'keepteam'), default='keepteam',
@@ -192,6 +193,8 @@ def parse_args(argv=None):
     ap.add_argument('--cache', help='prepared mode: the prepare cache directory (created; kept between builds)')
     ap.add_argument('--iso', help='prepared mode: the XML1 Xbox disc image (Redump .iso or XISO; read-only)')
     a = ap.parse_args(argv)
+    if a.loot_def_damage_scale is None:     # D8 (Owen 10-26): resist is the default of a --loot xml1 build
+        a.loot_def_damage_scale = 'resist' if a.loot == 'xml1' else 'noop'
     if a.sources == 'prepared' and not a.cache:
         ap.error('--sources prepared needs --cache DIR')
     if a.sources != 'prepared' and (a.cache or a.iso):
