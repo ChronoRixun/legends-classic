@@ -99,24 +99,32 @@ def test_tk_guard_dll_gate():
         assert FI.old_fix_keys(dll, keys) == ['[Game] TelekinesisRule', '[Game] GuardDecideRule',
                                               '[Game] TelekinesisRule (PC audio slot 38)',
                                               '[Game] TelekinesisRule (still throw)', '[Game] GuardDecideRule (tap exit)',
-                                              '[Game] TelekinesisRule (throw damage, beta 9)', '[Game] GuardDecideRule (decided at entry, beta 9)']
+                                              '[Game] TelekinesisRule (throw damage, beta 9)', '[Game] GuardDecideRule (decided at entry, beta 9)',
+                                              '[Game] TelekinesisRule (082d: stunned-only ground grab, held telekinesis retry)', '[Game] GuardDecideRule (082d: stunned-only ground grab, held telekinesis retry)']
         # 080d's DLL knows both keys but resolves the telekinesis sounds through slot 0x34: refused by marker
         dll.write_bytes(b'MZ' + '\0'.join(FI.TK_GUARD).encode('utf-16le'))
         assert FI.old_fix_keys(dll, keys) == ['[Game] TelekinesisRule (PC audio slot 38)',
                                               '[Game] TelekinesisRule (still throw)', '[Game] GuardDecideRule (tap exit)',
-                                              '[Game] TelekinesisRule (throw damage, beta 9)', '[Game] GuardDecideRule (decided at entry, beta 9)']
+                                              '[Game] TelekinesisRule (throw damage, beta 9)', '[Game] GuardDecideRule (decided at entry, beta 9)',
+                                              '[Game] TelekinesisRule (082d: stunned-only ground grab, held telekinesis retry)', '[Game] GuardDecideRule (082d: stunned-only ground grab, held telekinesis retry)']
         # 080e / 080f's DLL: a still telekinesis throw divides zero by zero and a tapped guard never exits
         dll.write_bytes(b'MZ' + '\0'.join(FI.TK_GUARD).encode('utf-16le') + FI.TK_AUDIO_MARKER)
         assert FI.old_fix_keys(dll, keys) == ['[Game] TelekinesisRule (still throw)', '[Game] GuardDecideRule (tap exit)',
-                                              '[Game] TelekinesisRule (throw damage, beta 9)', '[Game] GuardDecideRule (decided at entry, beta 9)']
+                                              '[Game] TelekinesisRule (throw damage, beta 9)', '[Game] GuardDecideRule (decided at entry, beta 9)',
+                                              '[Game] TelekinesisRule (082d: stunned-only ground grab, held telekinesis retry)', '[Game] GuardDecideRule (082d: stunned-only ground grab, held telekinesis retry)']
         dll.write_bytes(b'MZ' + '\0'.join(FI.TK_GUARD).encode('utf-16le') + FI.TK_AUDIO_MARKER + FI.TK_STILL_MARKER)
-        assert FI.old_fix_keys(dll, keys) == ['[Game] GuardDecideRule (tap exit)', '[Game] TelekinesisRule (throw damage, beta 9)', '[Game] GuardDecideRule (decided at entry, beta 9)']
+        assert FI.old_fix_keys(dll, keys) == ['[Game] GuardDecideRule (tap exit)', '[Game] TelekinesisRule (throw damage, beta 9)', '[Game] GuardDecideRule (decided at entry, beta 9)',
+                                              '[Game] TelekinesisRule (082d: stunned-only ground grab, held telekinesis retry)', '[Game] GuardDecideRule (082d: stunned-only ground grab, held telekinesis retry)']
         dll.write_bytes(b'MZ' + '\0'.join(FI.TK_GUARD).encode('utf-16le') + FI.TK_AUDIO_MARKER + FI.TK_STILL_MARKER
                         + FI.GUARD_TAP_MARKER)
         # 1.9.0-beta.1 / beta.2 (beta 8): both keys and every beta 8 marker, but beta 9's guard entry and TK arming missing
-        assert FI.old_fix_keys(dll, keys) == ['[Game] TelekinesisRule (throw damage, beta 9)', '[Game] GuardDecideRule (decided at entry, beta 9)']
+        assert FI.old_fix_keys(dll, keys) == ['[Game] TelekinesisRule (throw damage, beta 9)', '[Game] GuardDecideRule (decided at entry, beta 9)',
+                                              '[Game] TelekinesisRule (082d: stunned-only ground grab, held telekinesis retry)', '[Game] GuardDecideRule (082d: stunned-only ground grab, held telekinesis retry)']
         dll.write_bytes(b'MZ' + '\0'.join(FI.TK_GUARD).encode('utf-16le') + FI.TK_AUDIO_MARKER + FI.TK_STILL_MARKER
                         + FI.GUARD_TAP_MARKER + FI.TK_ARMING_MARKER + FI.GUARD_ENTRY_MARKER)
+        # 082c (beta 9 round 2): the guard grabs untouched enemies and telekinesis tries its acquisition once
+        assert FI.old_fix_keys(dll, keys) == ['[Game] TelekinesisRule (082d: stunned-only ground grab, held telekinesis retry)', '[Game] GuardDecideRule (082d: stunned-only ground grab, held telekinesis retry)']
+        dll.write_bytes(dll.read_bytes() + FI.TK_GUARD_082D_MARKER)
         assert FI.old_fix_keys(dll, keys) == []
 
 

@@ -512,7 +512,10 @@ def test_economy_key_needs_w2_the_dll_and_is_dropped_by_a_rebuild_without_it():
         dll.write_bytes(b'MZ ' + 'Xml1Economy\0'.encode('utf-16le'))
         FI.check_economy_dll(dll, keys)
         FI.check_economy_dll(Path(td) / 'absent.dll', keys)                              # source-only builds
-        assert FI.old_fix_keys(dll, keys) == [] or 'Xml1Economy' not in ' '.join(FI.old_fix_keys(dll, keys))
+        # 082d: 082c's DLL knew the key but crashed opening the Forge / Healer (shop digest): its fix is required
+        assert FI.ECONOMY_DIGEST_NAME in FI.old_fix_keys(dll, keys)
+        dll.write_bytes(b'MZ ' + 'Xml1Economy\0'.encode('utf-16le') + FI.ECONOMY_DIGEST_MARKER)
+        assert 'Xml1Economy' not in ' '.join(FI.old_fix_keys(dll, keys))
         # a build record with the option writes the key; without it the key is not written (and a rebuild drops it)
         out = w2_build(Path(td) / 'b')
         assert FI.build_loot(out) == {}

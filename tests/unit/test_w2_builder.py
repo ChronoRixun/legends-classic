@@ -36,6 +36,7 @@ def dll_knowing(keys, *, save_layout=True):
     data += b''.join(marker for _stock, marker, _name in FI.VALUE_MARKERS.values())
     if save_layout:
         data += b''.join(marker for marker, _name in FI.W2_LAYOUT_MARKERS)          # 082c: W2's boot / save fixes
+    data += b''.join(FI.MARKERS_082D)                                               # 082d: digest / moves fixes
     return data + b'NPR14 NSA4'
 
 
