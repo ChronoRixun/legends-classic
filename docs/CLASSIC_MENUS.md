@@ -324,25 +324,62 @@ The manifest is data, not executable console/script source. Device tokens remain
 native; custom shortcut consumption and the scoped Code Back bridge are later
 runtime work. An empty `usecmd` must not be mistaken for an installed action.
 
-Font probing records both active PC/HD maps and their indices. The current maps
-have seven entries each, mapping languages/English overrides to the four shared
-`medium`, `big`, `hud`, `digital` indices. Seven entries do not establish seven
-independent font slots or a proven maximum map capacity. Adding another English
-medium/big mapping would affect every user of that global index. No extra scoped
-index or per-menu font registration has been proven, so exact **Barlow Condensed
-remains an open font gate**. This adapter does not write font maps, metrics or
-atlases. A future scoped runtime font/atlas binding must preserve classic menus,
-HUD/digital, PC control glyphs and language fallbacks; global replacement is not
-an acceptable solution.
+The retail font registration obstruction has now been traced statically. The
+PC/HD map loader at `0x5980f0` compares each row's index against the four names
+at `0x6e4344`: `medium`, `big`, `hud`, `digital`. The loop at
+`0x5981e6..0x59821a` checks exactly four names; an unknown name falls back to
+slot zero. Metrics load at `0x596af0` into fixed `0x1c18`-byte slots, each
+containing 256 glyphs. Seven map rows represent language mappings and English
+overrides, not seven independent fonts. Extra rows cannot allocate another slot.
+
+Menu styles are more restrictive: `0x5d7cb0` sets font slot one only for `big`;
+every other font string selects slot zero (`medium`). The text-item reader at
+`0x5c6c30` resolves that style, and its renderer at `0x5c61d0` passes fixed scale
+one (`0x5c636e`). A scaled scene anchor changes placement/bounds, not glyph
+scale. A new font filename, a fifth index name, `font="hud"`, a nominal point
+size or an italic flag in a style therefore cannot scope Barlow to these menus.
+Exact **Barlow Condensed is blocked in the retail data-only path**; a companion
+runtime font-binding/scale capability is required. The closest selectable
+fallback is retained classic `medium` for row/body/label and `big` for titles.
+These expanded, upright fonts do not match Barlow's silhouette or four sizes.
+The original PC thin font is a closer condensed/italic title candidate, but it
+is the French/German mapping of the same medium slot, not a separately selectable
+English menu font. Selecting it through the map would replace unrelated menus.
+This adapter writes no font maps, metrics or atlases and does not replace the
+classic fonts. The probe metadata records the obstruction and addresses.
 
 Native definitions are ellipsized with the active retained native glyph advances
 before serialization, including each Browse field. Nominal offline Barlow previews
 cannot establish native glyph size, spacing, clipping, prompt expansion or rendering.
 The offline renderer uses the same authored rectangles and can accept separately
-provided OFL Barlow fonts; it is a layout aid, not a game screenshot. Report exact
+provided OFL Barlow fonts; it is a layout aid, not a game screenshot. In particular,
+do not label Barlow-rendered text as a native-font result. Report exact
 font fidelity and real-game visual/input evidence separately and keep those gates
 open until the coordinator's live step. Generated images have scoped internal names
 to avoid collisions with the owned containers used to encode them.
+
+The footer now uses all five native `desctext1..5` items and scene anchors, with
+matching root description attributes. Unused slots are empty. Their scoped
+colour prefix survives CMenu's description refresh. Source description aliases
+are retired under private names before new aliases are authored. The companion
+`pad_prompts` hook expands `$MENU_ACCEPT`, `$MENU_BACK`, `$MENU_NEXT`,
+`$MENU_OTHER` and `$MENU_OK` according to the player's input device. Hub Change,
+Rejoin and Host Edit/Open also retain these tokens. The builder never replaces
+them with fixed `[A]` text. Its offline device fixture returns the companion's
+single coloured A/B/X/Y letters, bracketed Start, or keyboard key names. Round
+button artwork in a Barlow reference view is an explicit target-only option:
+the current companion returns coloured letters, not round icons. Exact round
+device glyphs therefore need companion support as well; static circles must
+not be baked behind device-following keyboard labels.
+
+Hub hints now align at their approved right edge using the available interval;
+identity and breadcrumb fields use their full approved space. Host has native
+tokens, arrows, the secondary visibility outline, dashed code cells and the
+primary-action helper. Code has its active-cell cap, dashed empty cell and status
+diamond. Browse retains status colours under dimming and separates selected-room
+and campaign details. Font-dependent ellipses remain visible in the actual
+native-metric output. These geometry/description corrections do not close the
+font or real-game visual gates.
 
 Synthetic coverage lives in `tests/unit/test_online_menus.py`; the frontend
 self-test runs the synthetic menu contract without owned output and additionally

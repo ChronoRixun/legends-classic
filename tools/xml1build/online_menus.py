@@ -19,6 +19,9 @@ ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'
 PALETTE = ('0A1830','11284A','2A4A78','7FA6D9','EEF3FA','FFCB3D','54D68A','FF6F55')
 STYLES = {'title': ('big',37), 'row': ('medium',15), 'body': ('medium',12.5), 'label': ('medium',11)}
 COLUMNS = ((59,128),(188,67),(255,93),(348,58),(406,76),(482,78),(560,37))
+PROMPT_TOKENS = {'back':'$MENU_BACK','delete':'$MENU_BACK','paste':'$MENU_NEXT',
+                 'refresh':'$MENU_NEXT','rejoin':'$MENU_NEXT','clear':'$MENU_OTHER',
+                 'name':'$MENU_OTHER','change':'$MENU_OTHER','open':'$MENU_OK'}
 
 
 def field(text, limit):
@@ -149,7 +152,7 @@ def layout(name, state=None):
         if title: shape('rect',(x,y,w,22),2)
         
         if key!='self_header': shape('notch',(x,y,11,11),5)
-        text(key,title,x+16,y+5,w-30,13,'label')
+        if title: text(key,title,x+16,y+7,w-30,13,'label')
     title,subtitle={'lc_online':('PLAY ONLINE','Play the campaign with up to four players'),
         'lc_host':('HOST A GAME','Friends join with your code; a public game is listed for anyone'),
         'lc_code':('JOIN BY CODE','Type the 8-character code your host sent you'),
@@ -157,10 +160,10 @@ def layout(name, state=None):
     text('brand','LEGENDS CLASSIC',104 if name!='lc_online' else 62,25,270,14,'label',3)
     if name!='lc_online': shape('bar',(43,24,55,16),5)
     else:
-        shape('bar',(32,24,3,13),5); shape('bar',(39,24,3,13),5)
+        shape('slash',(43,24,3,13),5); shape('slash',(50,24,3,13),5,dim=True)
     if name!='lc_online': text('online_tag','ONLINE',51,26,43,13,'label',0)
     text('title',title,43,45,520,43,'title')
-    shape('bar',(43,83,107,4),5)
+    shape('bar',(43,81 if name=='lc_online' else 83,107,4),5)
     text('subtitle',subtitle,43,95,554,20,'body',3)
     if name!='lc_online':
         panel('self_header','', (490,24,107,40))
@@ -177,24 +180,28 @@ def layout(name, state=None):
               ('other','OTHER WAYS TO PLAY','LAN, IP','other',True)]
         for i,(key,label,hint,intent,enabled) in enumerate(rows):
             button(key,label,(43,133+39*i,266,31),intent,enabled)
-            text(key+'_hint',hint,225,142+39*i,70,15,'label',3)
+            # Anchor the hints at the approved right edge. The earlier 70-unit
+            # left-aligned box discarded the unused space between label and hint.
+            text(key+'_hint',hint,181,142+39*i,113,15,'label',3)
+            items[-1].update(align='right',selected_with=key)
         panel('help_header','HOST A GAME',(43,334,266,74))
         shapes[:]=[q for q in shapes if q['rect']!=(43,334,266,22)]
-        next(e for e in items if e['name']=='help_header').update(color=5)
+        next(e for e in items if e['name']=='help_header').update(color=5,rect=(59,348,240,14))
         text('help','Open a private room and share its code with friends,',59,365,240,17)
         text('help2','or list it so anyone can join.',59,382,240,17)
         panel('you_header','YOU',(338,133,259,120))
         text('name_label','SCREEN NAME',354,166,220,13,'label',3)
         text('local_name','LOGAN',354,181,140,25,'title')
-        text('change_name','Change',550,185,44,18,'body',4,'name')
+        text('change_name','$MENU_OTHER Change',535,185,59,18,'body',4,'name')
         text('service_label','ONLINE SERVICE',354,214,220,13,'label',3)
         text('service','Connected',367,229,200,18,'row',6)
         shape('diamond',(355,232,7,6),6)
         panel('last_header','LAST GAME',(338,262,259,75))
         text('last_name','Weekend co-op',354,295,180,19,'row')
         text('last_code','Code K7QN-2X9M, 2 hours ago',354,314,220,15,'body',3)
-        text('rejoin','Rejoin',556,301,38,17,'body',4,'rejoin')
-        text('identity','Installed build: fixture (no release assigned)',385,406,212,15,'label',3)
+        text('rejoin','$MENU_NEXT Rejoin',539,301,55,17,'body',4,'rejoin')
+        text('identity','Installed build: fixture (no release assigned)',338,406,259,15,'label',3)
+        items[-1]['align']='right'
         screen['focus']='host'
     elif name=='lc_host':
         panel('settings_header','ROOM SETTINGS',(43,133,337,207))
@@ -202,15 +209,23 @@ def layout(name, state=None):
         for key,label,y in (('visibility','VISIBILITY',174),('room_name','ROOM NAME',221),('campaign','CAMPAIGN',267),('drop','DROP-IN',314)):
             text(key+'_label',label,59,y,88,15,'label',3)
         shape('rect',(148,167,65,23),4)
+        shape('outline',(218,167,59,23),3)
         text('visibility',s.visibility,159,171,61,18,'row',0,'visibility')
         text('visibility_other','PUBLIC' if s.visibility=='PRIVATE' else 'PRIVATE',229,173,58,15,'row',3)
-        text('room_name',"Logan's game",148,209,210,19,'row',4,'room-name')
+        text('room_name',"Logan's game",148,209,173,19,'row',4,'room-name')
+        text('edit_room','$MENU_ACCEPT Edit',332,216,39,18,'body',4,'room-name')
         text('room_hint','Shown in Browse games when public',148,230,210,16,'body',3)
         text('campaign',s.campaign,164,258,204,20,'row',4,'campaign')
         text('save','Save 3 - Mansion - Level 12 - 10:42',164,278,200,16,'body',3)
+        for y,color in ((266,5),(313,3)):
+            shape('triangle',(148,y,7,10),color,direction='left')
+            shape('triangle',(360,y,7,10),color,direction='right')
+        shape('slash',(31,248,4,45),5)
         text('drop_in','ON' if s.drop_in else 'OFF',164,305,198,18,'row',4,'drop-in')
         text('drop_hint','Friends join at the next area',164,324,210,15,'body',3)
-        button('open_room','OPEN THE ROOM',(43,380,337,31),'open-room',primary=True)
+        button('open_room','$MENU_OK OPEN THE ROOM',(43,380,337,31),'open-room',primary=True)
+        text('open_hint','Party lobby next',274,390,91,17,'label',2)
+        items[-1]['align']='right'
         panel('preview_header','YOUR ROOM',(398,133,199,178))
         text('preview_name',"Logan's game",415,167,120,21,'row')
         shape('outline',(533,168,46,14),3)
@@ -219,7 +234,9 @@ def layout(name, state=None):
         text('preview_drop','Drop-in at the next area' if s.drop_in else 'Drop-in off',415,210,175,17)
         text('preview_slots','Up to 4 players',415,226,175,17)
         text('room_code_label','ROOM CODE',415,247,175,14,'label',3)
-        text('room_code','---- - ----',415,265,175,20,'row',3)
+        for i in range(8):
+            shape('dashed',(415+i*19.5+(13 if i>=4 else 0),260,16,22),3)
+        text('room_code','-',494,260,10,22,'row',3)
         text('code_pending','Appears as soon as the room opens',415,289,175,16,'body',3)
         text('privacy1','Private: only people with your code can join.',398,336,199,16,'body',3)
         text('privacy2','Public: listed in Browse games, where players',398,352,199,16,'body',3)
@@ -229,23 +246,31 @@ def layout(name, state=None):
     elif name=='lc_code':
         for i in range(8):
             x=107+i*51.5+(20 if i>=4 else 0)
-            shape('cell',(x,130,45.5,54),1,outline=5 if i==len(s.code) else 3)
-            if i==len(s.code): shape('rect',(x,172,45.5,12),5)
+            shape('cell' if i<=len(s.code) else 'dashed',(x,130,45.5,54),1,outline=5 if i==len(s.code) else 3)
+            if i==len(s.code):
+                shape('rect',(x,130,45.5,2),5)
+                shape('rect',(x,172,45.5,12),5)
             text('cell'+str(i),s.code[i] if i<len(s.code) else '',x+1,139,43.5,39,'title')
             items[-1]['align']='center'
         text('dash','-',313,144,18,32,'title',3)
         for i,c in enumerate(ALPHABET+'<'):
             row,col=divmod(i,8)
-            button('key_'+str(i),c,(81+col*49.8,205+row*38.2,44.5,33), 'delete' if c=='<' else 'code:'+c)
+            button('key_'+str(i),'' if c=='<' else c,(81+col*49.8,205+row*38.2,44.5,33), 'delete' if c=='<' else 'code:'+c)
+            if c=='<': shape('backspace',(445.5,329.5,12,9),4)
         for i,(key,label,intent) in enumerate((('paste','$MENU_NEXT PASTE','paste'),('clear','$MENU_OTHER CLEAR','clear'),('done','$MENU_OK DONE','done'))):
             button(key,label,(483,205+i*51,76,46),intent, key!='done' or len(s.code)==8)
         text('alphabet_hint','Codes never contain zero, one, or the letters O, I and L. Keyboard: just type it, or paste with Ctrl+V.',119,366,440,16,'body',3)
         panel('code_status_header','',(81,387,478,34))
-        text('code_status',s.error or ('Code resolved (fixture only).' if len(s.code)==8 else str(8-len(s.code))+' more characters, then the code is looked up automatically.'),110,397,430,18)
+        if s.error: shape('rect',(81,387,478,2),7)
+        shape('diamond',(99,400,7,6),7 if s.error else 3)
+        count={1:'One',2:'Two',3:'Three',4:'Four',5:'Five',6:'Six',7:'Seven',8:'Eight'}.get(8-len(s.code),'')
+        text('code_status',s.error or ('Code resolved (fixture only).' if len(s.code)==8 else count+' more characters, then the code is looked up automatically.'),111,397,430,18,'body',7 if s.error else 4)
         screen['focus']='key_10'
     else:
         panel('list_header','PUBLIC GAMES - '+str(len(s.rooms)),(43,130,554,264))
-        text('age','Updated 4 s ago',471,137,100,14,'label',3)
+        text('age','Updated 4 s ago',471,137,69,14,'label',3)
+        shape('rect',(546,139,40,4),0)
+        shape('rect',(546,139,16,4),5)
         for i,label in enumerate(('ROOM','HOST','AREA','PLAYERS','STATUS','PING','BUILD')):
             x,w=COLUMNS[i]; text('column'+str(i),label,x,160,w,14,'label',3)
         for row in range(7):
@@ -257,12 +282,14 @@ def layout(name, state=None):
                 vals=(record['name'],record['host'],record['area'],str(record['players'])+'/4',record['status'],'--','SAME' if record['same'] else 'OTHER')
             else: disabled=True; vals=('','','','','','','')
             for col,(value,(x,w),cap) in enumerate(zip(vals,COLUMNS,(24,12,17,5,13,9,5))):
-                color=3 if disabled or col==5 else (6 if col==6 or (col==4 and record['status']=='In lobby') else 5 if col==4 and record['status']=='Loading' else 4)
+                status=record['status'] if record else ''
+                color=3 if col==5 else (6 if col==6 or (col==4 and status=='In lobby') else 5 if col==4 and status=='Loading' else 7 if col==4 and status=='Full' else 4)
                 if col==6 and record and not record['same']: color=7
                 tx=x+13 if col==5 else x+13 if col==4 else x
                 tw=w-17 if col in (4,5) else w-4
                 text('room_'+str(row)+'_'+str(col),field(value,cap),tx,y+7,tw,20,'row' if col in (0,1,2,3) else 'body',color,
                      'select:'+str(row) if record else '', record is not None)
+                items[-1]['dim']=disabled
             if record:
                 status_color=7 if record['status']=='Full' else 5 if record['status']=='Loading' else 6 if record['status']=='In lobby' else 3
                 shape('diamond',(407,y+12,7,6),status_color,dim=disabled)
@@ -271,7 +298,8 @@ def layout(name, state=None):
                     shape('bar',(370+bar*4,y+10,2.5,11),4 if bar<record['players'] else 2,dim=disabled)
                     shape('rect',(483+bar*3,y+20-bar*3,2,3+bar*3),3,dim=True)
         r=s.rooms[s.selected] if s.rooms else None
-        text('details',field(r['name'],24).upper()+'   New campaign - Normal - Drop-in at the next area - Same release token' if r else 'No public games right now. Host a game or go Back.',43,405,554,20,'body',5)
+        text('details_name',field(r['name'],24).upper() if r else '',43,405,85,20,'label',5)
+        text('details','New campaign - Act 1 - Normal - Drop-in at the next area - Same release token' if r else 'No public games right now. Host a game or go Back.',128 if r else 43,405,469 if r else 554,20,'body',4 if r else 3)
         text('scroll','Next page',540,425,57,14,'label',3,'page:1')
         text('scroll_up','Previous page',460,425,77,14,'label',3,'page:-1')
         screen['focus']='room_'+str(s.selected-s.offset)+'_0' if r else 'prompt_refresh'
@@ -281,11 +309,19 @@ def layout(name, state=None):
              'lc_host':[('select','Select','open-room'),('change','Change','campaign'),('open','Open the room','open-room'),('back','Back','back')],
              'lc_code':[('pick','Pick','done'),('delete','Delete','back'),('paste','Paste','paste'),('clear','Clear','clear')],
              'lc_browse':[('join','Join','join'),('refresh','Refresh','refresh'),('back','Back','back')]}[name]
+    positions={'lc_online':((43,59),(106,56),(164,92),(259,64)),
+               'lc_host':((43,59),(106,66),(175,97),(274,65)),
+               'lc_code':((43,50),(98,60),(162,58),(223,59)),
+               'lc_browse':((43,50),(98,68),(168,58))}[name]
     for i,(key,label,intent) in enumerate(prompts):
-        px,pw=(43+i*89,86)
-        if name=='lc_host': px,pw=((43,62),(106,64),(189,145),(350,65))[i]
-        text('prompt_'+key,({'back':'$MENU_BACK','delete':'$MENU_BACK','paste':'$MENU_NEXT','refresh':'$MENU_NEXT','rejoin':'$MENU_NEXT','clear':'$MENU_OTHER','name':'$MENU_OTHER','change':'$MENU_OTHER','open':'$MENU_OK'}.get(key,'$MENU_ACCEPT'))+' '+label,px,454,pw,17,'body',4,intent)
-    text('breadcrumb','Online > '+{'lc_online':'Online','lc_host':'Host a game','lc_code':'Join by code','lc_browse':'Browse games'}[name],492,455,105,15,'label',3)
+        px,pw=positions[i]
+        text('desctext'+str(i+1),PROMPT_TOKENS.get(key,'$MENU_ACCEPT')+' '+label,px,454,pw,17,'body',4,intent)
+        items[-1]['prompt_key']=key
+    # CMenu refreshes all five standard description slots on a focus change.
+    # Give even unused slots real anchors so refresh never targets a missing item.
+    for i in range(len(prompts),5): text('desctext'+str(i+1),'',43,454,1,17)
+    text('breadcrumb','Main menu > Online' if name=='lc_online' else 'Online > '+{'lc_host':'Host a game','lc_code':'Join by code','lc_browse':'Browse games'}[name],425,455,172,15,'label',3)
+    items[-1]['align']='right'
     if name!='lc_code':
         if s.error: shape('panel',(43,411,400,28),1)
         text('inline_error',field(s.error,90),48,415,390,20,'body',7,'dismiss' if s.error else '')
@@ -302,11 +338,13 @@ def layout(name, state=None):
         for key,idx in (('paste',7),('clear',15),('done',31)):
             next(e for e in items if e['name']==key)['left']='key_'+str(idx)
     if name=='lc_browse':
+        refresh=next(e['name'] for e in items if e.get('prompt_key')=='refresh')
+        if not s.rooms: screen['focus']=refresh
         rows={e['name']:e for e in items if e['name'].startswith('room_') and e['intent']}
         for key,e in rows.items():
             _,r,c=key.split('_'); r,c=int(r),int(c)
             e.update(left='room_'+str(r)+'_'+str(max(0,c-1)),right='room_'+str(r)+'_'+str(min(6,c+1)),
-                     up='room_'+str(r-1)+'_'+str(c) if r else 'prompt_refresh',
+                     up='room_'+str(r-1)+'_'+str(c) if r else refresh,
                      down='room_'+str(r+1)+'_'+str(c) if 'room_'+str(r+1)+'_'+str(c) in rows else 'scroll')
     return screen
 
@@ -328,11 +366,16 @@ def menu_tree(screen, palette_ids=None):
     palette_ids=palette_ids or {i:str(i) for i in range(8)}
     root=ET.Element('menu',igb=screen['name'],image='textures/menus/'+screen['name'],fullscreen='true',
                     updownonly='false',lighting='false')
+    descriptions={e['name']:e for e in screen['items'] if re.fullmatch(r'desctext[1-5]',e['name'])}
+    for name,e in descriptions.items():
+        # Refresh adds a native dim-colour prefix. A scoped prefix after it keeps
+        # the approved foreground while the token still follows the active device.
+        root.set(name,'~'+str(palette_ids[4]).zfill(2)+e['text'] if e['text'] else '')
     for e in screen['items']:
         value=e['text']
         if value and (not e['intent'] or e['color']!=4): value='~'+str(palette_ids[e['color']]).zfill(2)+value
         attrs=dict(name=e['name'],type='MENU_ITEM_TEXT',text=value,style='lc_o_'+e['style'],
-                   textalignx='TEXT_ALIGN_CENTER_X' if e.get('align')=='center' else 'TEXT_ALIGN_LEFT',textaligny='TEXT_ALIGN_TOP',neverfocus=str(not bool(e['intent'])).lower())
+                   textalignx={'center':'TEXT_ALIGN_CENTER_X','right':'TEXT_ALIGN_RIGHT'}.get(e.get('align'),'TEXT_ALIGN_LEFT'),textaligny='TEXT_ALIGN_TOP',neverfocus=str(not bool(e['intent'])).lower())
         if e['name']==screen['focus']: attrs['startactive']='true'
         if not e['enabled']: attrs.update(enabled='false')
         if e['intent']:
@@ -356,6 +399,9 @@ def menu_tree(screen, palette_ids=None):
 def tree_problems(root, screen, palette_ids=None):
     errors=layout_problems(screen); items={e.get('name'):e for e in root.findall('item')}
     if root.get('igb')!=screen['name'] or root.get('type'): errors.append('base menu contract')
+    expected_root=menu_tree(screen,palette_ids)
+    if any(root.get('desctext'+str(i))!=expected_root.get('desctext'+str(i)) for i in range(1,6)):
+        errors.append('native description contract')
     for e in screen['items']:
         actual=items.get(e['name'])
         if actual is None: errors.append('missing binding'); continue
@@ -375,7 +421,23 @@ def package(root):
     return pkg
 
 
-def render(screen, *, size=(1920,1080), fonts=None, text=True, focus=True):
+def preview_text(value, device='pad'):
+    """Synthetic device fixture, never a substitute for runtime token expansion.
+
+    pad_prompts returns single coloured face-button letters, not round icons.
+    Its Start and keyboard labels are bracketed names of the bound controls.
+    """
+    if device not in ('pad','keyboard'): raise ValueError('unknown preview device')
+    labels={'$MENU_ACCEPT':'A','$MENU_BACK':'B','$MENU_NEXT':'Y',
+            '$MENU_OTHER':'X','$MENU_OK':'[Start]'} if device=='pad' else {
+            '$MENU_ACCEPT':'[Enter]','$MENU_BACK':'[Esc]','$MENU_NEXT':'[Y]',
+            '$MENU_OTHER':'[X]','$MENU_OK':'[Enter]'}
+    for token,label in labels.items(): value=value.replace(token,label)
+    return value
+
+
+def render(screen, *, size=(1920,1080), fonts=None, text=True, focus=True,
+           device='pad', reference_icons=False):
     """Offline preview from the same rectangles/items used to author native assets.
 
     Nominal Barlow sizes when fonts are provided; no claim of game font rendering.
@@ -393,19 +455,45 @@ def render(screen, *, size=(1920,1080), fonts=None, text=True, focus=True):
         x,y,w,h=shape['rect']; coords=rect((x,y,x+w,y+h))
         color=tuple(bytes.fromhex(PALETTE[shape['color']]))+(int(255*(.45 if shape.get('dim') else .92 if shape['color']==1 else 1)),)
         overlay=Image.new('RGBA',picture.size); pen=ImageDraw.Draw(overlay)
+        edge=tuple(bytes.fromhex(PALETTE[shape.get('outline',3)]))+(int(255*(1 if shape.get('outline')==5 else .45)),)
         if shape['kind']=='bar':
             pen.polygon([rect((x+min(6,w*.2),y)),rect((x+w,y)),rect((x+w-min(6,w*.2),y+h)),rect((x,y+h))],fill=color)
+        elif shape['kind']=='slash':
+            pen.polygon([rect((x+2.5,y)),rect((x+w+2.5,y)),rect((x+w,y+h)),rect((x,y+h))],fill=color)
+        elif shape['kind']=='triangle':
+            pen.polygon([rect((x+w if shape.get('direction')=='left' else x,y)),rect((x if shape.get('direction')=='left' else x+w,y+h/2)),rect((x+w if shape.get('direction')=='left' else x,y+h))],fill=color)
+        elif shape['kind']=='backspace':
+            pen.line([rect((x+w,y)),rect((x+w,y+h)),rect((x+w*.3,y+h)),rect((x,y+h/2)),rect((x+w*.3,y)),rect((x+w,y))],fill=color,width=3)
+            for a,b in (((.5,.25),(.8,.75)),((.8,.25),(.5,.75))):
+                pen.line([rect((x+a[0]*w,y+a[1]*h)),rect((x+b[0]*w,y+b[1]*h))],fill=color,width=2)
         elif shape['kind']=='diamond':
             pen.polygon([rect((x+w/2,y)),rect((x+w,y+h/2)),rect((x+w/2,y+h)),rect((x,y+h/2))],fill=color)
         elif shape['kind']=='notch': pen.polygon([rect((x,y)),rect((x+w,y)),rect((x,y+h))],fill=color)
+        elif shape['kind']=='dashed':
+            for lo,hi in (((x,y),(x+w,y)),((x,y+h),(x+w,y+h)),((x,y),(x,y+h)),((x+w,y),(x+w,y+h))):
+                length=abs(hi[0]-lo[0])+abs(hi[1]-lo[1])
+                for offset in range(0,round(length),4):
+                    a=offset/length;b=min(offset+2.5,length)/length
+                    pen.line([rect(tuple(lo[k]+a*(hi[k]-lo[k]) for k in (0,1))),rect(tuple(lo[k]+b*(hi[k]-lo[k]) for k in (0,1)))],fill=edge,width=2)
         else:
-            pen.rectangle(coords,fill=None if shape['kind']=='outline' else color,outline='#'+PALETTE[shape.get('outline',shape['color'] if shape['kind']=='outline' else 3)] if shape['kind'] in ('panel','cell','outline') else None,width=2)
+            if shape['kind']=='outline': edge=tuple(bytes.fromhex(PALETTE[shape['color']]))+(int(255*(.45 if shape.get('dim') else 1)),)
+            pen.rectangle(coords,fill=None if shape['kind']=='outline' else color,outline=edge if shape['kind'] in ('panel','cell','outline') else None,width=2)
         picture.alpha_composite(overlay)
     # Original low-contrast diagonals and dots remain beneath screen panels.
-    draw.polygon([rect((300,480)),rect((512,0)),rect((640,0)),rect((432,480))],fill='#'+PALETTE[1])
+    draw.polygon([rect((295,480)),rect((503,0)),rect((640,0)),rect((433,480))],fill='#'+PALETTE[1])
+    watermark=Image.new('RGBA',picture.size); waterpen=ImageDraw.Draw(watermark)
+    # Original outlined lettering; no font, logo or game artwork in the texture.
+    outlines=[[(0,0),(32,0),(32,78),(0,78),(0,0)],[(42,78),(42,0),(74,78),(74,0)],
+              [(85,0),(85,78),(116,78)],[(128,0),(128,78)],
+              [(140,78),(140,0),(172,78),(172,0)],[(215,0),(183,0),(183,78),(215,78)],
+              [(183,39),(207,39)]]
+    for path in outlines:
+        waterpen.line([rect((330+u*1.6+(78-v)*.3,320+v*1.2)) for u,v in path],fill=tuple(bytes.fromhex(PALETTE[3]))+(23,),width=2,joint='curve')
+    if screen['name']=='lc_online': picture.alpha_composite(watermark)
     for y in range(4,202,8):
         for x in range(370,640,6):
-            draw.ellipse(rect((x,y,x+.8,y+.8)),fill=tuple(round(v*.35+b*.65) for v,b in zip(bytes.fromhex(PALETTE[2]),bytes.fromhex(PALETTE[1]))))
+            a=.55*max(0,1-y/210)*min(1,(x-350)/100)
+            draw.ellipse(rect((x,y,x+1.2,y+1.2)),fill=tuple(round(v*a+b*(1-a)) for v,b in zip(bytes.fromhex(PALETTE[2]),bytes.fromhex(PALETTE[1]))))
     for shape in screen['shapes']: paint(shape)
     selected=next((e for e in screen['items'] if e['name']==screen['focus']),None)
     if focus and selected and not screen.get('selection'):
@@ -430,19 +518,43 @@ def render(screen, *, size=(1920,1080), fonts=None, text=True, focus=True):
         key=(font_path,size_px)
         if key not in cache: cache[key]=ImageFont.truetype(font_path,size_px)
         font=cache[key]; x,y,w,h=e['rect']; value=e['text']
-        value=value.replace('$MENU_ACCEPT','[A]').replace('$MENU_BACK','[B]').replace('$MENU_NEXT','[Y]').replace('$MENU_OTHER','[X]').replace('$MENU_OK','[Start]')
+        value=preview_text(value,device)
         value=fit_text(value,w*scale,lambda value:draw.textlength(value,font=font))
         if e.get('align')=='center': x+=(w-draw.textlength(value,font=font)/scale)/2
+        if e.get('align')=='right': x+=w-draw.textlength(value,font=font)/scale
         color=e['color']
-        if focus and selected is e and not screen.get('selection'): color=0
+        if focus and selected and (selected is e or e.get('selected_with')==selected['name']) and not screen.get('selection'): color=0
         rgb=tuple(bytes.fromhex(PALETTE[color]))
-        if not e['enabled']: rgb=tuple(round(v*.45+bytes.fromhex(PALETTE[0])[i]*.55) for i,v in enumerate(rgb))
+        if not e['enabled'] or e.get('dim'): rgb=tuple(round(v*.45+bytes.fromhex(PALETTE[0])[i]*.55) for i,v in enumerate(rgb))
+        token=re.match(r'\$(MENU_[A-Z]+)',e['text'])
+        if reference_icons and device=='pad' and token:
+            glyph=preview_text(token.group(),device)
+            if glyph=='[Start]': glyph='\u2261'
+            diameter=18; cx=x+diameter/2;cy=y+7
+            button_color={'A':6,'B':7,'X':3,'Y':5}.get(glyph,3)
+            # The final preview is stretched 4:3 -> 16:9. Counter that stretch
+            # for a circular target icon; the engine does not yet supply it.
+            draw.ellipse(rect((cx-6.7,cy-8.9,cx+6.7,cy+8.9)),fill='#'+PALETTE[button_color])
+            glyph_width=draw.textlength(glyph,font=font)/scale
+            if glyph=='\u2261':
+                for dy in (-3,0,3):draw.line([rect((cx-3.8,cy+dy)),rect((cx+3.8,cy+dy))],fill='#'+PALETTE[0],width=2)
+            else:draw.text(rect((cx-glyph_width/2,y)),glyph,font=font,fill='#'+PALETTE[0])
+            value=e['text'][len(token.group()):].lstrip(); x+=diameter
+        elif device=='pad' and token:
+            glyph=preview_text(token.group(),device)
+            face={'A':6,'B':7,'X':3,'Y':5}.get(glyph)
+            if face is not None:
+                draw.text(rect((x,y)),glyph,font=font,fill='#'+PALETTE[face])
+                x+=draw.textlength(glyph+' ',font=font)/scale
+                value=e['text'][len(token.group()):].lstrip()
         draw.text(rect((x,y+4)) if style=='title' and h>=30 else rect((x,y)),value,font=font,fill=rgb,stroke_width=0,**({'anchor':'lt'} if style=='title' and h>=30 else {}))
     return picture.convert('RGB').resize(size)
 
 
 def scene_layout(screen):
     """Engine camera's native 512 x 384 coordinates and matching text hit bounds."""
+    # Alignment is applied by CText inside the full box. A centre anchor is retained
+    # for the code keys; right-aligned text uses the ordinary left box origin.
     layouts={e['name']:(((e['rect'][0]+(e['rect'][2]/2 if e.get('align')=='center' else 0))*.8,-150,(480-e['rect'][1])*.8),
                        ((-e['rect'][2]*.4 if e.get('align')=='center' else 0),-e['rect'][3]*.8,
                         e['rect'][2]*(.4 if e.get('align')=='center' else .8),0)) for e in screen['items']}
@@ -470,18 +582,23 @@ def texture(template, picture, namespace='lc_o_fixture'):
 
 
 def font_probe(ctx):
-    """Record the actual shared maps. No global replacement/registration is attempted."""
+    """Record active mappings and the retail builder-only registration obstruction."""
     maps={name:[dict(e.attrib) for e in ctx.read_out_xmlb('UI/fonts/'+name+'.XMLB')]
           for name in ('fonts_pc','fonts_hd')}
     return dict(maps=maps,counts={name:len(rows) for name,rows in maps.items()},
                 indices=sorted({r['index'] for rows in maps.values() for r in rows}),
-                exact_font='OPEN: four shared indices; scoped Barlow registration needs runtime support. Existing maps unchanged.',
-                preview='OFL Barlow may be supplied only to the offline renderer; native styles retain classic medium/big.')
+                exact_font='BLOCKED in retail data: four fixed global slots; menu styles select medium or big only.',
+                evidence={'map_loader':'0x5980f0; name table 0x6e4344; four-name loop 0x5981e6..0x59821a',
+                          'metrics_loader':'0x596af0; slot stride 0x1c18; 256 glyphs',
+                          'styles':'0x5d7cb0: big -> 1, every other font value -> 0 (medium)',
+                          'item_renderer':'0x5c61d0: fixed scale 1 at 0x5c636e; scene transform is not a font scale'},
+                fallback='Retained classic medium for row/body/label, big for title. Neither is condensed/italic Barlow.',
+                preview='Separately supplied OFL Barlow is a reference layout only; no font files or maps are changed.')
 
 
 def write(ctx):
     """Preflight the entire family before writing any palette, scene or menu."""
-    from . import frontend as F, menu_scene as S
+    from . import frontend as F
     colors,styles,ids=theme(ctx.read_out_xmlb('Data/colors.XMLB'),ctx.read_out_xmlb('Data/styles.XMLB'))
     original=ctx.x1_path(F.X1_MENU_IGB)
     if original is None: raise ValueError('online authoring needs the owned menu scene')
@@ -511,7 +628,7 @@ def write(ctx):
                 if resource not in focus_models:
                     picture=focus_picture(screen,e,rect) if outline else None
                     focus_models[resource]=focus_model(focus_source.read_bytes(),rect,outline,picture)
-        data=S.author_anchors(source,'button1',layouts)
+        data=author_scene(source,screen)
         problems+=scene_problems(screen,data)
         if problems: raise ValueError('; '.join(problems))
         pending.append((name,tree,data,texture(atlas.read_bytes(),render(screen,text=False,focus=False),name)))
@@ -531,6 +648,16 @@ def write(ctx):
             'intents':command_manifest()}
     ctx.write_meta('online_menus_detail.json',report)
     return report
+
+
+def author_scene(source,screen):
+    """Author description aliases without colliding with retired source objects."""
+    from . import menu_scene as S, igb_file as G
+    existing={o.get(2) for o in G.IgbFile(source).objects_of('igTransform')}
+    retired={'desctext'+str(i):'lc_o_source_desc'+str(i) for i in range(1,6)
+             if 'desctext'+str(i) in existing}
+    if retired: source,_=M.rename_aliases(source,retired)
+    return S.author_anchors(source,'button1',scene_layout(screen))
 
 
 def focus_resource(rect, outline=False, variant=''):

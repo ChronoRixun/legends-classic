@@ -264,7 +264,9 @@ def test_native_grid_labels_keep_every_symbol_with_wide_glyph_advances():
     state=O.Fixture(code='WWWWWWWW')
     screen=O.bound_layout(O.layout('lc_code',state),metrics)
     keys=[e['text'] for e in screen['items'] if e['name'].startswith('key_')]
-    assert ''.join(keys)==O.ALPHABET+'<'
+    assert ''.join(keys)==O.ALPHABET
+    assert next(e for e in screen['items'] if e['name']=='key_31')['intent']=='delete'
+    assert any(e['kind']=='backspace' for e in screen['shapes'])
     assert all(e['text']=='W' for e in screen['items'] if e['name'].startswith('cell'))
 
 
@@ -272,3 +274,68 @@ def test_all_authored_background_previews_render_without_font_inputs():
     for name in O.MENUS:
         picture=O.render(O.layout(name),size=(640,480),text=False)
         assert picture.size==(640,480)
+
+
+def test_native_description_refresh_preserves_tokens_and_has_all_five_bindings():
+    for name in O.MENUS:
+        screen=O.layout(name)
+        tree=O.menu_tree(screen)
+        items={e.get('name'):e for e in tree.findall('item')}
+        anchors=O.scene_layout(screen)
+        for i in range(1,6):
+            key='desctext'+str(i)
+            assert key in items and key in anchors and key in tree.attrib
+            value=items[key].get('text','')
+            if value:
+                assert '$MENU_' in value and '[' not in value
+                assert tree.get(key).startswith('~04$MENU_')
+        mutated=copy.deepcopy(tree); mutated.attrib.pop('desctext3')
+        assert 'native description contract' in O.tree_problems(mutated,screen)
+    state=O.Fixture(rooms=[])
+    screen=O.layout('lc_browse',state)
+    focus=next(e for e in screen['items'] if e['name']==screen['focus'])
+    assert focus['prompt_key']=='refresh' and not O.layout_problems(screen)
+
+
+def test_description_authoring_retires_source_alias_collision_without_losing_camera():
+    from xml1build import menu_scene as S
+    from xml1build.igb_file import IgbFile
+    position=((0,-150,0),(0,-12,80,0))
+    original=S.author_anchors(anchor_fixture(),'template',{'button1':position,'desctext1':position})
+    before=IgbFile(original)
+    screen=O.layout('lc_online')
+    result=O.author_scene(original,screen)
+    assert not O.scene_problems(screen,result)
+    after=IgbFile(result)
+    assert after.obj(14).get(2)==before.obj(14).get(2)=='synth_camera'
+    assert len([o for o in after.objects_of('igTransform') if o.get(2)=='desctext1'])==1
+    assert len([o for o in before.objects_of('igTransform') if o.get(2)=='desctext1'])==1
+
+
+def test_device_preview_follows_companion_labels_without_fabricating_icons():
+    assert O.preview_text('$MENU_ACCEPT Select')=='A Select'
+    assert O.preview_text('$MENU_OTHER Change name')=='X Change name'
+    assert O.preview_text('$MENU_ACCEPT Select','keyboard')=='[Enter] Select'
+    assert O.preview_text('$MENU_BACK Back','keyboard')=='[Esc] Back'
+    assert O.preview_text('$MENU_OK Open')=='[Start] Open'
+    raises(ValueError,lambda:O.preview_text('$MENU_OK','unknown'))
+
+
+def test_right_aligned_fields_keep_their_native_alignment_after_serialization():
+    screen=O.layout('lc_online')
+    tree=O.menu_tree(screen)
+    by_name={e.get('name'):e for e in tree}
+    for item in screen['items']:
+        if item.get('align')=='right':
+            assert by_name[item['name']].get('textalignx')=='TEXT_ALIGN_RIGHT'
+            position,bounds=O.scene_layout(screen)[item['name']]
+            assert abs(position[0]-item['rect'][0]*.8)<1e-6
+            assert bounds[0]==0 and abs(bounds[2]-item['rect'][2]*.8)<1e-6
+    # Long hints are clipped using the full interval ending at the approved edge.
+    item=next(e for e in screen['items'] if e['name']=='host_hint')
+    assert item['rect'][0]+item['rect'][2]==294
+    metrics={index:{i:{'horizadvance':'6'} for i in range(128)} for index in ('medium','big')}
+    bounded=O.bound_layout(screen,metrics)
+    value=next(e for e in bounded['items'] if e['name']=='host_hint')['text']
+    assert value.startswith('Private or ') and len(value)*6<=113*.8
+    assert len(value)>int(70*.8/6)
