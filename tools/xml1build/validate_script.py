@@ -141,6 +141,46 @@ class ScriptResult:
                 if c.name == func and len(c.args) > index and c.args[index].kind in ('str', 'num')]
 
 
+@dataclass
+class ScriptCount:
+    """What one script costs the engine's pools (limits wave 3, V-SCRIPTS): its compile-time counts."""
+    statements: int = 0           # non-blank, non-comment lines (the 622 of the old V7 warning counted these)
+    temporaries: int = 0          # else / endif: take a node and free it again (0x4da382 -> 0x4d78a0)
+    skipped: int = 0              # `def` and `__name__` lines: the engine skips them (0x4d9937)
+    literals: int = 0             # string + numeric literals (the value pool)
+    locals: set = field(default_factory=set)      # distinct assigned variable names
+
+    @property
+    def retained(self) -> int:
+        """statement nodes that stay in the pool: statements minus temporaries minus skipped lines."""
+        return self.statements - self.temporaries - self.skipped
+
+
+def count_script(text: str) -> ScriptCount:
+    """Count one script's pool demand from its text (no registration table needed): see ScriptCount."""
+    res = ScriptCount()
+    for raw in re.split(r'\r\n|\r|\n', text):
+        s = raw.strip(' \t')
+        if not s or s.startswith('#'):
+            continue
+        toks = tokenize(s)
+        if toks and toks[-1][0] == 'comment':
+            toks = toks[:-1]
+        if not toks:
+            continue
+        res.statements += 1
+        res.literals += sum(1 for t in toks if t[0] in ('str', 'num'))
+        first = toks[0]
+        word = first[1].lower() if first[0] == 'ident' else ''
+        if '__name__' in s or word == 'def':
+            res.skipped += 1
+        elif word in ('else', 'endif'):
+            res.temporaries += 1
+        elif len(toks) > 1 and first[0] == 'ident' and toks[1] == ('op', '=') and word not in KEYWORDS:
+            res.locals.add(first[1])
+    return res
+
+
 def tokenize(s):
     return [(m.lastgroup, m.group()) for m in TOKEN_RE.finditer(s) if m.lastgroup != 'ws']
 

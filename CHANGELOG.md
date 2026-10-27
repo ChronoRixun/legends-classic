@@ -3,6 +3,19 @@
 The builder's releases, newest first. The version is `xml1-builder --version`; the content version is what a
 build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebuild.
 
+## Unreleased - limits wave 3, builder side
+
+- **Limits wave 3 (off by default).** `--limits-wave3 {off,on,all}` writes `[Limits] FightStyles=64`, `StyleEvents=4096`,
+  `FightMoves=1024`, `EffectTemplates=512`, `PrimitiveDefs=2048`, `EffectVectors=4096`, `PrimitivesPerEffect=32`,
+  `AttachedPowerups=256` and `VFNodes=256` (XML2 Fix rules 35 revision 2, 53-58, 61 and 62; `all` adds the later `ScriptPools` / `ParticleScratch`, rules 59-60). Each key is
+  port-owned and gated: an existing DLL without the key and its rule's install line is refused by name. Off, nothing
+  changes: the build, its ini and its reports are byte-identical to before the option.
+- **Seven new validator checks, counted the way the loader counts.** V-MOVES, V-EVENTS, V-EFFECT-FILES, V-PRIMITIVES,
+  V-VECTORS, V-CURVES (with a combined effect budget naming the table that binds first) and V-SCRIPTS cover every
+  converted zone and allowed four-hero party, report the count, the capacity and a witness, fail above capacity and warn
+  at equality or above half. V-SCRIPTS counts retained statement nodes (else / endif are temporaries), so the old "622
+  statements > 620" warning is retired for builds made with the option. `docs/LIMITS_WAVE3.md`, SPEC 108.
+
 ## v0.4.1 - content version 28 (needs XML2 Fix 1.9.0)
 
 0.4.1-beta.1 is the port's beta 8, with XML2 Fix 1.9.0-beta.1 and Ultimate Legends 0.4.0 or later (Beta channel).

@@ -104,6 +104,13 @@ def parse_args(argv=None):
     ap.add_argument('--actor-pools', dest='actor_pools', choices=('off', '124'), default='off',
                     help="E4 stage 1: write [Limits] ActorPools=124 (XML2 Fix rule 44: path, shadow and delayed-damage "
                          "pools 32 -> 124). Off by default until its live runs pass")
+    ap.add_argument('--limits-wave3', dest='limits_wave3', choices=('off', 'on', 'all'), default='off',
+                    help="limits wave 3: write [Limits] FightStyles=64, StyleEvents=4096, FightMoves=1024, "
+                         "EffectTemplates=512, PrimitiveDefs=2048, EffectVectors=4096, PrimitivesPerEffect=32 (XML2 Fix "
+                         "rules 35 revision 2 and 53-58; the DLL gate refuses a DLL without them) and validate the build "
+                         "against them (V-MOVES, V-EVENTS, V-EFFECT-FILES, V-PRIMITIVES, V-VECTORS, V-CURVES, V-SCRIPTS); "
+                         "'all' also writes ScriptPools=x1 and ParticleScratch=40 (rules 59-60). Off by default until the "
+                         "DLL rows land: a build without it is byte-identical to one made before the option existed")
     ap.add_argument('--anim-enums', dest='anim_enums', choices=('off', 'xml1'), default='xml1',
                     help="SPEC 107: XML1's 23 animation enums (flying carry, Juggernaut's grab victims): their 21 clips "
                          "transplanted into Actors/common.IGB from your XML1 disc, the mappings in Data/shared_anims, "
@@ -475,6 +482,8 @@ def main(argv=None):
                     'blackbird': args.blackbird, 'npc_scaling': args.npc_scaling, 'tiles': args.tiles,
                     'grab_carry': args.grab_carry, 'telekinesis': args.telekinesis, 'guard_decide': args.guard_decide, 'flying_carry': args.flying_carry, 'actor_pools': args.actor_pools, 'anim_enums': args.anim_enums, 'rogue_decide': args.rogue_decide, 'hero_roster': args.hero_roster, 'hero_icons': args.hero_icons, 'hero_bleed': args.hero_bleed,
                     'newgame': args.newgame, 'forced_teams': args.forced_teams, 'frontend': args.frontend,
+                    # limits wave 3: recorded only when on, so the default (off) build's report.json is unchanged
+                    **({'limits_wave3': args.limits_wave3} if getattr(args, 'limits_wave3', 'off') != 'off' else {}),
                     'xp_curve': args.xp_curve, 'buoys': args.buoys, 'main_menu_layout': args.main_menu_layout, 'laa': args.laa,
                     'harm_loop_startup': getattr(args, 'harm_loop_startup', 'workaround'),
                     BAL.REPORT_KEY: BAL.REPORT_ON if BAL.enabled() else 'xml2',

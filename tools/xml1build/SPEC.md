@@ -7895,3 +7895,18 @@ Beta 8 candidates 080h / 080i: both are off by default and written only on reque
 nothing in Owen's 10-26 hand test while the test pipe's presses worked). Without `GuardDecideRule` Guard runs XML2's
 `ch_guard_decide`, which grabs and picks up through the `grab` talent characters adds (rule 46 installs without bit
 1024). Both options are ini only (CONTENT_OPTS with no module), so toggling one re-runs nothing.
+## 108. Limits wave 3 (`--limits-wave3`, XML2 Fix rules 35 revision 2 and 53-60; validators V-MOVES .. V-SCRIPTS)
+
+Full text: `docs/LIMITS_WAVE3.md`. `--limits-wave3 {off,on,all}` (default off, `build_xml1.py` and `xml1-builder build`) writes
+`[Limits] FightStyles=64, StyleEvents=4096, FightMoves=1024, EffectTemplates=512, PrimitiveDefs=2048, EffectVectors=4096,
+PrimitivesPerEffect=32, AttachedPowerups=256, VFNodes=256` (rules 61 / 62; `all` adds `ScriptPools=x1`, `ParticleScratch=40`; rules 59-60 have no DLL row yet). The option is
+recorded in `report.json` only when on; with it off the build, ini, report and validation are the ones written before the
+option existed. The builder requires each key plus its rule's install line in an existing DLL (`fix_ini.WAVE3_MARKERS`,
+placeholder wording until the DLL rows land) and refuses a DLL without them by name (`FightStyles` above 32 needs rule 35
+revision 2). An off rebuild drops the keys.
+
+With the option on the validator adds V-MOVES, V-EVENTS, V-EFFECT-FILES, V-PRIMITIVES, V-VECTORS, V-CURVES (with the
+combined effect budget) and V-SCRIPTS (`limits_wave3.py`), extends V23 (V-STYLES) with the raised capacity, a witness and
+the 50 % warning, and replaces V7's 620 / 1,556 / 120 pool warnings by V-SCRIPTS (retained nodes = statements minus
+else / endif). Each covers every converted zone and allowed four-hero party (without the two Professor X forms), reports
+count / capacity / witness, fails above capacity and warns at equality or above half.
