@@ -57,6 +57,8 @@ def make_parser():
                       help='delete this disc\'s cache after a successful build')
     p.add_argument('--link-base', dest='link_base', action='store_true', help='(not supported yet: files are copied)')
     p.add_argument('--jobs', type=int, help='worker processes for the sound stages (default: every CPU)')
+    p.add_argument('--online-menus', choices=('off','on'), default='off',
+                   help='build: opt in to online menus and scoped fonts with a matching companion DLL')
     p.add_argument('--main-menu-layout', choices=('classic', 'widescreen'), default='classic',
                    help='build: the classic main menu, centred by the game at every aspect '
                         '(widescreen: a retired name for classic)')

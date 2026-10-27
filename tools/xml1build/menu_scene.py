@@ -293,7 +293,7 @@ def attach(primary_data, artwork_data, *, anchors=(), keep_camera=False, merge_t
                          'native_references': len(gs[0].items), 'scene_infos': 1}
 
 
-def author_anchors(data, template_name, layouts):
+def author_anchors(data, template_name, layouts, *, preserve_existing=False):
     """Clone a checked native text-anchor subtree for an original flat menu.
 
     Keep schemas/camera, replace the root children with camera and named bindings.
@@ -366,7 +366,7 @@ def author_anchors(data, template_name, layouts):
             struct.pack_into('<I',record,4,len(record))
             additions.append(('object',entry,record))
     # Camera's own subtree stays reachable; artwork and old UI anchors are retired.
-    refs=[camera.ref]+anchor_refs
+    refs=(g.ref_list(children.get(4)) if preserve_existing else [camera.ref])+anchor_refs
     for slot in (2,3): struct.pack_into('<i',g.buf,children.fields[slot].offset,len(refs))
     result=g.appended(additions,{children.get(4):_u32(*refs)})
     from . import menu_conversion as M

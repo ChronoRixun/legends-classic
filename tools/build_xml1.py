@@ -174,6 +174,8 @@ def parse_args(argv=None):
                          "4 GB of address space on 64-bit Windows and Wine/Proton instead of 2 GB; one flag in the "
                          "exe's file header, the install's exe is never written) or the install's byte-identical "
                          "exe (off, A/B builds)")
+    ap.add_argument('--online-menus', choices=('off','on'), default='off',
+                    help='opt in to online menus and private fonts together; requires one matching companion DLL')
     ap.add_argument('--main-menu-layout', choices=('classic', 'widescreen'), default='classic',
                     help='main-menu composition: classic (the original, centred by the game at every aspect); '
                          'widescreen is a retired name for classic')
@@ -222,6 +224,8 @@ def parse_args(argv=None):
                  '[Limits] AnimEnums); use --grab-carry xml2 for an AnimEnums-off A/B build')
     if a.tour is not None and a.tour <= 0:
         ap.error('--tour needs a positive number of seconds')
+    if a.online_menus=='on' and a.frontend!='xml1':
+        ap.error('--online-menus on requires --frontend xml1')
     from xml1build import loot as LOOT
     why = LOOT.refusal(a)
     if why:
@@ -254,6 +258,7 @@ HOOK_OWNER = 'testhooks'
 # built with a different value is stale, so that module is re-run (plan_content_opts).
 CONTENT_OPTS = {'harm_loop_startup': (tuple(C.MODULE_ORDER), 'workaround'),
                 'blackbird': ('scripts', 'menu'), 'npc_scaling': ('characters', 'off'), 'tiles': ('zones', 'used'),
+                'online_menus': ('frontend', 'off'),
                 'main_menu_layout': ('frontend', 'classic'), 'laa': ('exe_flags', 'on'),
                 # ini only (fix_ini.port_keys): no module output depends on them
                 'telekinesis': ((), 'off'), 'guard_decide': ((), 'off'), 'flying_carry': ((), 'off'),
@@ -524,6 +529,7 @@ def main(argv=None):
                     **({'limits_wave3': args.limits_wave3} if getattr(args, 'limits_wave3', 'off') != 'off' else {}),
                     'xp_curve': args.xp_curve, 'buoys': args.buoys, 'main_menu_layout': args.main_menu_layout, 'laa': args.laa,
                     'harm_loop_startup': getattr(args, 'harm_loop_startup', 'workaround'),
+                    'online_menus': args.online_menus,
                     BAL.REPORT_KEY: BAL.REPORT_ON if BAL.enabled() else 'xml2',
                     'content_fingerprint': ctx.shared.get('content_fingerprint'),
                     'start_party': args.start_party, 'start_skinset': args.start_skinset,

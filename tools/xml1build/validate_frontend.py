@@ -1339,6 +1339,13 @@ def v_online_menus(v, ck):
     if C.frontend_mode(v.ctx) != 'xml1': return
     from . import online_menus as O
     import xml.etree.ElementTree as ET
+    if not O.enabled(v.ctx):
+        ck.set('online_menus',0)
+        return
+    for problem in O.output_problems(v.ctx.out):ck.error(problem)
+    from . import fix_ini as FI
+    try:FI.check_online_dll(v.ctx.out/'dinput.dll',{'Online':{'Menus':'1'},'Game':{'LegendsClassicFonts':'1'}})
+    except FI.FixTooOld as error:ck.error(str(error))
     colors=v.tree('Data/colors.XMLB')
     try: ids=O.palette_ids(colors if colors is not None else ())
     except ValueError as error:
@@ -1357,15 +1364,19 @@ def v_online_menus(v, ck):
     if v.read('licenses/BarlowCondensed-OFL.txt')!=(OF.SOURCE/'OFL.txt').read_bytes():ck.error('private font OFL license missing or changed')
     manifest=(json.dumps(OF.verify_source(),indent=2)+'\n').encode()
     if v.read('licenses/BarlowCondensed-source.json')!=manifest:ck.error('private font provenance missing or changed')
-    for name in O.MENUS:
-        screen=O.bound_layout(O.layout(name),O.native_metrics(v.ctx))
-        expected=O.menu_tree(screen,ids)
-        data=v.read('UI/menus/'+name+'.IGB')
+    for name in (*O.MENUS,*O.LOBBIES):
+        screen=O.bound_layout(O.runtime_layout(name) if name in O.MENUS else O.lobby_layout(name),O.native_metrics(v.ctx))
+        native=v.ctx.read_base_xmlb('UI/menus/'+name+'.engb') if name in O.LOBBIES else None
+        expected=O.menu_tree(screen,ids) if name in O.MENUS else O.lobby_tree(native,screen,ids)
+        data=v.read('UI/menus/'+expected.get('igb')+'.IGB')
         for suffix in ('.XMLB','.engb'):
             root=v.tree('UI/menus/'+name+suffix)
             if root is None:
                 ck.error(name+suffix+': missing online definition'); continue
-            for error in O.tree_problems(root,screen,ids): ck.error(name+': '+error)
+            problems=O.tree_problems(root,screen,ids) if name in O.MENUS else O.lobby_problems(root,native,screen)
+            for error in problems: ck.error(name+': '+error)
+            if name in O.MENUS:
+                for error in O.runtime_problems(root,screen,ids):ck.error(name+': '+error)
             if ET.tostring(root)!=ET.tostring(expected):
                 # Binary codec sorts attributes; compare semantic trees below.
                 def signature(e): return (e.tag,dict(e.attrib),[signature(c) for c in e])
@@ -1377,14 +1388,20 @@ def v_online_menus(v, ck):
         if pkg is None: ck.error(name+': missing package')
         else:
             expected_entries={(e.tag,e.get('filename')) for e in O.package(expected)}
-            if {(e.tag,e.get('filename')) for e in pkg}!=expected_entries: ck.error(name+': package closure differs')
+            actual_entries={(e.tag,e.get('filename')) for e in pkg}
+            if name in O.MENUS and actual_entries!=expected_entries:ck.error(name+': package closure differs')
+            if not actual_entries.issuperset(expected_entries):ck.error(name+': native package closure differs')
+            if name in O.LOBBIES:
+                inherited=v.ctx.read_base_xmlb(F.MENU_PKG_DIR+'/'+name+'.PKGB')
+                if inherited is not None and not actual_entries.issuperset({(e.tag,e.get('filename')) for e in inherited}):
+                    ck.error(name+': native dynamic precaches missing')
             for kind,filename in expected_entries:
                 suffix='.IGB' if kind in ('model','texture') else '.XMLB'
                 if v.read(filename+suffix) is None: ck.error(name+': unresolved '+filename)
     colors,styles=v.tree('Data/colors.XMLB'),v.tree('Data/styles.XMLB')
     if colors is None or styles is None: ck.error('online tables missing')
     else:
-        if len(colors)>71 or len(styles)>30: ck.error('online table overflow')
+        if len(colors)>71 or len(styles)>31: ck.error('online table overflow')
         try:
             _,expected_styles,_=O.theme(colors,styles)
             by_name={e.get('name'):e for e in expected_styles}
@@ -1398,5 +1415,12 @@ def v_online_menus(v, ck):
             if len([e for e in styles if e.get('name')=='lc_o_'+alias])!=1:ck.error('online alias style missing: '+alias)
     main=v.tree(F.MENU_REL+'.XMLB')
     if main is None or not any(e.get('usecmd')==O.NATIVE_ENTRY for e in main.findall('item')):
-        ck.error('round 1 must preserve native main-menu Online entry')
-    ck.set('online_menus',len(O.MENUS))
+        ck.error('must preserve native main-menu Online entry')
+    if main is not None:
+        hint=next((e for e in main if e.get('name')=='lc_online_continue'),None)
+        if hint is None or hint.get('hide')!='true' or '$MENU_ACCEPT' not in hint.get('text',''):
+            ck.error('localized main Accept hint missing')
+        scene=v.read(F.MENU_IGB_REL)
+        if scene is not None:
+            for error in O.M.placement_problems(scene,O.main_hint_layout()):ck.error(error)
+    ck.set('online_menus',len(O.MENUS)+len(O.LOBBIES))

@@ -71,6 +71,7 @@ class Job:
     jobs: int
     prepare_jobs: int
     main_menu_layout: str = 'classic'
+    online_menus: str = 'off'
     anim_enums: str = 'xml1'
     laa: str = 'on'
     limits_wave3: str = 'off'
@@ -328,6 +329,7 @@ def cmd_build(a, output, cancel, pipeline_factory):
     jobs = max(1, a.jobs or max(1, (os.cpu_count() or 2) // 2))
     job = Job(out=out_dir, xml2=xml2, cache=cache, iso=iso, movies=movies, jobs=jobs, prepare_jobs=prepare_jobs,
               main_menu_layout=getattr(a, 'main_menu_layout', 'classic'),
+              online_menus=getattr(a, 'online_menus', 'off'),
               anim_enums=getattr(a, 'anim_enums', None) or 'xml1', laa=getattr(a, 'laa', None) or 'on',
               limits_wave3=getattr(a, 'limits_wave3', None) or 'off',
               save_layout=getattr(a, 'save_layout', 'retail'), loot=getattr(a, 'loot', 'off'),
@@ -617,6 +619,11 @@ def finish(a, output, job, ctl, pipeline, warn):
             missing = getattr(exc, 'missing', None)
             if not missing:
                 raise
+            if '[Online] Menus' in missing:
+                raise BuilderError('E_XML2FIX_OLD', f'{exc}.',
+                                   'Use one companion DLL with the menu, input, lobby and scoped-font capabilities, '
+                                   'or build with --online-menus off.',
+                                   {'missing':missing,'count':len(missing)},stage='finish') from exc
             if '[Limits] SaveLayout' in missing or '[Game] Xml1Economy' in missing:
                 # not a warning: an older DLL ignores the key, so the build would run on the baseline save layout (or
                 # XML2's economy) while it was built (and validated) for W2 / the first game's; nothing is written

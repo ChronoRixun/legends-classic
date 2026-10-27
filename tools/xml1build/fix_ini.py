@@ -545,7 +545,7 @@ PORT_OWNED = {'Game': ('NewGameTeam', 'ResetUnlocks', 'SaveFolder', 'ForcedTeams
               'Limits': ('ActorSlots', 'ResourceNames', 'ItemEnhancements', 'FightStyles', 'EffectCurves', 'MoveTriggers', 'EntityCapacity',
                          'ScriptFunctions', 'IGBCache', 'ActorPools', 'AnimEnums', 'CharSounds', 'MotionPool', 'ResidentStats',
                          *(k for k in LIMITS_WAVE3 if k != 'FightStyles'), *LIMITS_WAVE3_LATE, SAVE_LAYOUT_KEY),
-              'Online': ('GameVersion', 'ContentFingerprint', 'FastTransfer', 'ReceiveValidation', 'JoinInProgress', 'TickRate'),
+              'Online': ('GameVersion', 'ContentFingerprint', 'FastTransfer', 'ReceiveValidation', 'JoinInProgress', 'TickRate', 'Menus'),
               'Save': ('Format',),
               'Engine': ('ModelPools', 'ModelHandles'),
               'Xml1Turrets': ('Count',) + tuple(f'T{i}' for i in range(1, 33)),
@@ -1035,7 +1035,7 @@ def port_keys(out, *, save_folder=PLAY_SAVE_FOLDER, eighth=True) -> dict:
     record = build_record(out) or {}
     # Opt in only for a complete generated private family. Old content builds
     # still use their existing font tables and do not request the new DLL key.
-    if menu and all(Path(out,rel).is_file() for rel in
+    if record.get('online_menus') == 'on' and menu and all(Path(out,rel).is_file() for rel in
         ['UI/fonts/lc_fonts_pc.XMLB','UI/fonts/lc_fonts_hd.XMLB']+
         [f'{folder}/lc_online_{role}.{ext}' for role in ('title','row','body','label')
          for folder,ext in (('UI/fonts','XMLB'),('Textures/fonts','IGB'))]):
@@ -1086,6 +1086,14 @@ def port_keys(out, *, save_folder=PLAY_SAVE_FOLDER, eighth=True) -> dict:
         keys['NpcSemiAuto'] = semi_auto['NpcSemiAuto']
     balance = build_balance(out)
     online = online_keys(port_identity=bool(postgame), balance=balance, fingerprint=content_fingerprint(out))
+    if record.get('online_menus') == 'on':
+        from . import online_menus as OM
+        problems=OM.output_problems(out)
+        if problems:
+            raise ValueError('Online menus are incomplete: '+'; '.join(problems))
+        if game.get('LegendsClassicFonts')!='1':
+            raise ValueError('Online menus require the complete private font family')
+        online['Menus']='1'
     if postgame and (Path(out) / 'Data/lcsave/catalogue.lcc').is_file():
         online['GameVersion'] = RI.manifest(out)['game_version']
     if online:
@@ -1557,13 +1565,30 @@ def check_wave3_keys(keys: dict) -> None:
         raise ValueError(f'[Limits] {", ".join(late)} is written only with the nine wave-3 rows; missing {absent}')
 
 
+def check_online_dll(dll, keys: dict) -> None:
+    """Combined opt-in requires one actual DLL and a sufficient script table.
+
+    Unlike old source-only options, missing DLLs cannot certify an online API.
+    A bytes argument supports synthetic capability-negative unit tests.
+    """
+    if keys.get('Online',{}).get('Menus')!='1':return
+    from . import online_menus as OM
+    data=dll if isinstance(dll,bytes) else Path(dll).read_bytes() if Path(dll).is_file() else b''
+    problems=OM.capability_problems(data)
+    if keys.get('Game',{}).get('LegendsClassicFonts')!='1':problems.append('LegendsClassicFonts must be enabled together')
+    try:capacity=int(keys.get('Limits',{}).get('ScriptFunctions','1024'))
+    except (TypeError,ValueError):capacity=0
+    if not 1024<=capacity<=4096:problems.append('ScriptFunctions must be 1024..4096')
+    if problems:raise FixTooOld('Online menu capability refused: '+'; '.join(problems),['[Online] Menus'])
+
+
 def old_fix_keys(dll, keys: dict) -> list:
     """every key of `keys` the existing companion DLL does not know ('[Section] Key'; [] without a DLL). Raises
     ValueError for a key set no DLL can run (EntityCapacity without Format=lc)."""
     missing = []
     check_wave3_keys(keys)
     for check in (check_move_trigger_dll, check_entity_capacity_dll, check_save_layout_dll, check_economy_dll,
-                  check_release_dll, check_anim_enums_dll, check_address_space_dll):
+                  check_release_dll, check_anim_enums_dll, check_address_space_dll, check_online_dll):
         try:
             check(dll, keys)
         except FixTooOld as exc:
@@ -1576,6 +1601,8 @@ def write_port_keys(out, keys: dict | None = None, *, old_fix_ok: bool = False) 
     not need; the launcher's keys stay. Returns the keys written. An existing DLL that doesn't know every key raises
     FixTooOld (naming them all) unless `old_fix_ok` (the CLI's warning path: FixTooOld)."""
     keys = port_keys(out) if keys is None else keys
+    # The warning/replacement path cannot certify an unregistered script API.
+    check_online_dll(Path(out)/'dinput.dll',keys)
     missing = old_fix_keys(Path(out) / 'dinput.dll', keys)
     if SAVE_LAYOUT_KEY in keys.get('Limits', {}) and f'[Limits] {SAVE_LAYOUT_KEY}' in missing:
         # the warning path (old_fix_ok) writes the other keys for an older fix the launcher replaces right after the

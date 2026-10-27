@@ -936,12 +936,22 @@ def b_compare(out, ref):
 def u_online():
     from . import online_menus as O
     for name in O.MENUS:
-        screen = O.layout(name)
-        for problem in O.tree_problems(O.menu_tree(screen), screen):
+        screen = O.runtime_layout(name)
+        for problem in O.runtime_problems(O.menu_tree(screen), screen):
             fail('U-online', name + ': ' + problem)
     if F.PLAY_ONLINE_CMD != O.NATIVE_ENTRY:
-        fail('U-online', 'round 1 production route must remain native')
-    INFO['online fixture assets'] = 'four menus; native production entry retained; exact font/live gates OPEN'
+        fail('U-online', 'production route must remain native')
+    ctx=ctx_for('xml1')
+    for role in O.LOBBIES:
+        native=ctx.read_base_xmlb('UI/menus/'+role+'.engb')
+        screen=O.lobby_layout(role)
+        tree=O.lobby_tree(native,screen)
+        for problem in O.lobby_problems(tree,native,screen):fail('U-online',role+': '+problem)
+        for count in (1,4):
+            for ready in (False,True):
+                for problem in O.layout_problems(O.lobby_layout(role,members=count,ready=ready,fixture=True)):
+                    fail('U-online',role+': '+problem)
+    INFO['online assets'] = 'exact input commands; native entry retained; live gates OPEN'
 
 
 def main(argv=None):

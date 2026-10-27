@@ -41,6 +41,35 @@ XML2 install, the disc image, the cache or this repository's `tools/` and `resea
 
 ## Tests
 
+`--online-menus off` is the default. `--online-menus on` opts into the custom
+online screens, native Host/Join skins and private Barlow fonts together. It
+requires `--frontend xml1` and one companion DLL carrying the exact menu, input,
+lobby and font capabilities; a release number or separate DLLs do not suffice.
+Place that DLL in the output folder before the frontend runs. A missing or
+incompatible DLL refuses the build, including the old-fix warning path.
+
+The installer writes `[Online] Menus=1` and `[Game] LegendsClassicFonts=1` only
+for a recorded enabled build with complete resources and the exact asset
+marker. Rebuilding with the option off restores the owned base's native lobby
+menus and removes the generated online resources and both owned INI keys.
+Play Online always retains the native `openmenu online` command as fallback.
+
+The custom Host/Browse actions remain previews and Code resolves an offline
+fixture. The native Host/Join classes retain their own actions, rosters and
+admission. No live room, RTT, build, campaign or hero data is invented. Copy and
+Code tool captions currently list both supported keyboard/pad shortcuts because
+the supplied DLL contract does not expose an authored device selector for those
+special actions. Guest Back state is shown in the right action bar; its footer
+X caption remains Ready / Unready. These presentation gaps and real-game input,
+clipping and rendering acceptance remain open; the option is experimental.
+The retained native LISTBOXes keep their original font styles: their row metric
+and render methods bypass the private CText scale hooks. New cards and status
+fields use Barlow. The temporary Kick picker therefore retains native lettering;
+its layered backdrop, arrows and actual selection/mouse bounds need live checks.
+Code cells use neutral frames because input API /1 publishes cell text but no
+cursor scene selector. Done and Start use native enabled text/focus rather than
+baking a disabled state into an immutable background.
+
 The classic main menu is XML1's composition, which the game centres at every aspect (4:3 to
 21:9) without any change to the file. `--main-menu-layout` keeps only `classic`; the 0.2.0j
 `widescreen` value, which pushed the menu right of centre, is accepted as a retired name for

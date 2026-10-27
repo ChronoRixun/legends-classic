@@ -49,6 +49,7 @@ def allocate(base_colors, base_styles, original_colors, requests, *,
                       for role in ('title','row','body','label'))
         private |= a.get('name')=='lc_o_compact_title' and a.get('font')=='lc_title'
         private |= a.get('name')=='lc_o_code_cell' and a.get('font')=='lc_row'
+        private |= a.get('name')=='lc_o_card_name' and a.get('font')=='lc_row'
         if not a.get('name') or (a.get('font') not in ('medium', 'big', 'hud', 'digital') and not private):
             raise ValueError('menu style needs a name and a native font index')
         if 'color' in a:
