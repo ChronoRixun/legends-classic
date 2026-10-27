@@ -36,7 +36,7 @@ def test_broker_intents_only_appear_on_their_allowed_screens_and_with_row_number
             m = re.fullmatch(r'runscript lcOnlineIntent\((\d+)\)', e.get('usecmd', ''))
             if m and 18 <= int(m.group(1)) <= 31: seen.setdefault(name, {})[key] = int(m.group(1))
     assert set(seen) == {'lc_host', 'lc_browse', 'lc_online', 'lc_code'}
-    assert seen['lc_host'] == {'open': 19, 'prompt_open': 19, 'visibility': 21, 'retry': 20}
+    assert seen['lc_host'] == {'open': 19, 'prompt_open': 19, 'campaign': 19, 'visibility': 21, 'retry': 20}
     assert seen['lc_online'] == {'retry': 20} and seen['lc_code'] == {'retry': 20}
     browse = seen['lc_browse']
     assert browse['prompt_refresh'] == 18 and browse['scroll_up'] == 22 and browse['scroll'] == 23 and browse['prompt_join'] == 31 and browse['retry'] == 20

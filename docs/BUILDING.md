@@ -44,7 +44,7 @@ XML2 install, the disc image, the cache or this repository's `tools/` and `resea
 `--online-menus off` is the default. `--online-menus on` opts into the custom
 online screens, native Host/Join skins and private Barlow fonts together. It
 requires `--frontend xml1` and one companion DLL carrying the exact menu, input,
-lobby, broker (`lc-online-broker/2`) and font capabilities; a release number or
+lobby, broker (`lc-online-broker/2`), native Host/admission (`lc-online-native/1`) and font capabilities; a release number or
 separate DLLs do not suffice.
 Place that DLL in the output folder before the frontend runs. A missing or
 incompatible DLL refuses the build, including the old-fix warning path.

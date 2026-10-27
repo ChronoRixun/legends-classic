@@ -904,7 +904,7 @@ def focus_picture(screen,item,rect):
 
 # These probes describe additive APIs, not release or gameplay identities. Each
 # must be present in ONE supplied DLL; separate menu/font DLLs cannot be stacked.
-DLL_PROBES = (b'lc-online-menus/1\n', b'lc-online-input/1', b'lc-online-lobby/1', b'lc-online-broker/2',
+DLL_PROBES = (b'lc-online-menus/1\n', b'lc-online-input/1', b'lc-online-lobby/1', b'lc-online-broker/2', b'lc-online-native/1',
               b'lcOnlineIntent\0', 'Online\0'.encode('utf-16le'),
               'Menus\0'.encode('utf-16le'), 'LegendsClassicFonts\0'.encode('utf-16le'),
               b'ui/fonts/lc_fonts_pc.xmlb\0', b'ui/fonts/lc_fonts_hd.xmlb\0',
@@ -922,12 +922,14 @@ NOTICE_TEXT = {
     'lc_notice_profile_save': 'Name changed. Profile save was refused.',
     'lc_notice_name_open': 'Name editor did not open. Please retry.',
     'lc_notice_recent_save': 'Could not remember this game on this PC. Your previous recent game is unchanged.',
+    # Round 6 (lc-online-native/1): native Host setup / room-only admission failed; the DLL has already cleaned up.
+    'lc_notice_admission': 'Game setup or admission failed. Go Back and try again.',
 }
 DATA_NAMES = {'local_name', 'self_name', 'last_name', 'last_code', 'last_time',
               'code_value', 'code_remaining', *(f'cell{i}' for i in range(8)),
               # Round 5: every field the broker bridge binds is DATA (normal interned text, no gamevar owner).
               'service', 'self_state', 'browse_hint', 'room_name', 'preview_name', 'room_code', 'details_name',
-              'details', 'broker_error', 'list_count', 'list_age', *(f'room_{r}_{c}' for r in range(7) for c in ROW_COLUMNS)}
+              'details', 'broker_error', 'list_count', 'list_age', 'lc_host_max_players', *(f'room_{r}_{c}' for r in range(7) for c in ROW_COLUMNS)}
 # Round 5b: the DLL selects ONE lc_broker_err_<cause> scene per failure (and hides Retry where retrying cannot help),
 # one status / pip / build scene and a dim veil per Browse row, a count + age header and a connected-service scene.
 ERROR_CAUSES = ('code_not_found', 'room_full', 'version_mismatch', 'rate_limited', 'timeout', 'offline', 'refused', 'generic')
@@ -949,8 +951,19 @@ BROKER_CAUSES = {'lc_online': ('rate_limited', 'timeout', 'offline', 'refused', 
                  'lc_code': ERROR_CAUSES, 'lc_browse': ERROR_CAUSES}
 STATUS_KINDS = {'lobby': ('In lobby', 6), 'progress': ('In progress', 3), 'closed': ('Closed', 5), 'full': ('Full', 7)}
 BUILD_KINDS = {'same': ('SAME', 6), 'other': ('', 7), 'check': ('CHECK', 3)}
+# Round 6 (lc-online-native/1): native Host setup and automatic room-only admission. One of these shows (never beside
+# lc_broker_room: the DLL selects exactly one) while the native steps run; every one is a hidden text node at the status anchor.
+NATIVE_COPY = {
+    'lc_native_tunnel': 'Connecting to the host...',
+    'lc_native_discovery': "Finding the host's game...",
+    'lc_native_admission': 'Requesting admission to the game...',
+    'lc_native_posting': 'Opening the game lobby...',
+}
+NATIVE_SCREENS = {'lc_online': (), 'lc_host': ('lc_native_posting',),
+                  'lc_code': ('lc_native_tunnel', 'lc_native_discovery', 'lc_native_admission'),
+                  'lc_browse': ('lc_native_tunnel', 'lc_native_discovery', 'lc_native_admission')}
 BROKER_STATUS = ('lc_broker_auth', 'lc_broker_list', 'lc_broker_host', 'lc_broker_resolve', 'lc_broker_empty',
-                 'lc_broker_stale', 'lc_broker_room', 'lc_broker_cancel', 'lc_broker_offline_room')
+                 'lc_broker_stale', 'lc_broker_room', 'lc_broker_cancel', 'lc_broker_offline_room', *NATIVE_COPY)
 BROKER_VARIANTS = BROKER_STATUS + tuple('lc_broker_err_' + c for c in ERROR_CAUSES)
 # Localized copy of the DLL-selected status variants (docs/online-menus.md); one hideable node each per screen.
 BROKER_COPY = {
@@ -962,6 +975,7 @@ BROKER_COPY = {
     'lc_broker_stale': 'Games may be out of date. Refresh to try again.',
     'lc_broker_cancel': 'Canceling or leaving...',
     'lc_broker_offline_room': 'Online service unavailable. Existing connections stay open; new players cannot join.',
+    **NATIVE_COPY,
 }
 # Browse shows it in the list header (one line beside the count), so it is shorter there.
 BROWSE_OFFLINE_COPY = 'Service unavailable. No new players can join.'
@@ -969,6 +983,20 @@ BROKER_ROOM_COPY = {'lc_code': 'Room found. Editing the code leaves this room.',
                     'lc_host': 'Room open. Native lobby setup is the next step.',
                     'lc_browse': 'Room found. Native lobby setup is the next step.',
                     'lc_online': 'Room open. Native lobby setup is the next step.'}
+
+
+# Host settings the DLL reads from the native Game Options (docs/online-menus.md, round 6): independent selectors; the
+# runtime shows `lc_host_settings_unknown` alone until native setup has produced them. The two-line scenes carry both
+# the word and its explanation (a node cannot wrap), so the DLL needs only the one name per state.
+HOST_SETTING_COPY = {'lc_host_new': 'NEW CAMPAIGN', 'lc_host_load': 'SAVED CAMPAIGN',
+                     'lc_host_campaign': 'Campaign', 'lc_host_danger_room': 'Danger Room',
+                     'lc_host_easy': 'Easy', 'lc_host_normal': 'Normal', 'lc_host_hard': 'Hard'}
+HOST_UNKNOWN = ('SET IN GAME OPTIONS', 'Choose them when you open the room')
+# The effective installed rule-26 policy, read-only: name -> (word, explanation).
+HOST_DROP_COPY = {'lc_host_drop_on': ('ON', 'Friends join at the next area'),
+                  'lc_host_drop_off': ('OFF', 'No joining once the game starts'),
+                  'lc_host_drop_unknown': ('--', 'This build does not report it')}
+HOST_FIXTURE_PROSE = ('save', 'drop_hint', 'preview_save', 'preview_drop', 'preview_slots')  # cleared by the DLL; replaced by the nodes above
 
 
 def broker_copy(name, key):
@@ -986,7 +1014,7 @@ BROKER_SCREENS = {
     'lc_browse': ('lc_broker_auth', 'lc_broker_list', 'lc_broker_resolve', 'lc_broker_empty', 'lc_broker_stale',
                   'lc_broker_room', 'lc_broker_cancel', 'lc_broker_offline_room'),
 }
-BROKER_SCREENS = {k: v + tuple('lc_broker_err_' + c for c in BROKER_CAUSES[k]) for k, v in BROKER_SCREENS.items()}
+BROKER_SCREENS = {k: v + NATIVE_SCREENS[k] + tuple('lc_broker_err_' + c for c in BROKER_CAUSES[k]) for k, v in BROKER_SCREENS.items()}
 INTENTS = {'open:lc_host':2, 'open:lc_code':3, 'open:lc_browse':4, 'other':5,
            'back':6, 'unavailable':7, 'dismiss':8, 'name':9, 'paste':10, 'delete':11,
            'clear':12, 'done':13, 'rejoin':14, 'copy':16, 'leave-yes':17,
@@ -1170,6 +1198,7 @@ def broker_layout(name, screen):
             if e['name']=='desctext1': e['intent']='unavailable'
             if e['name']=='desctext3': e.update(name='prompt_open',intent='open-room')
         items.append(_entry('desctext3','',(175,455,1,17)))
+        _native_host_nodes(screen,by)
     if name=='lc_browse':
         for e in items:
             m=re.fullmatch(r'room_([0-6])_([0-6])',e['name'])
@@ -1200,6 +1229,32 @@ def broker_layout(name, screen):
             items.append(_variant(f'lc_row{row}_selected',(44,178+31*row,552,29),
                                   [dict(kind='panel',rect=(0,0,552,29),color=2,outline=5)]))
         screen['focus']='prompt_refresh'
+
+
+def _native_host_nodes(screen,by):
+    """Round 6 Host setup: settings are chosen in the native Game Options (intent 19 opens them), read back by the DLL and
+    shown through hidden localized nodes at the approved anchors. The fixture prose the DLL clears is not authored."""
+    items=screen['items']
+    items[:]=[e for e in items if e['name'] not in HOST_FIXTURE_PROSE]
+    # The CAMPAIGN row is the second way into the native options (the Open button is the first); DROP-IN is read-only.
+    by['campaign'].update(text='',intent='open-room')
+    by['drop_in'].update(text='',intent='')
+    by['open_hint'].update(text='Game options next')
+    def node(key,text,rect,style,color,**kw): items.append(_entry(key,text,rect,style,color,hidden=True,**kw))
+    items.append(_variant('lc_host_settings_unknown',(164,258,204,36),
+        [dict(text=HOST_UNKNOWN[0],rect=(0,0,204,20),style='row',color=3),dict(text=HOST_UNKNOWN[1],rect=(0,20,204,16),style='body',color=3)],
+        plane=-170))  # the CAMPAIGN row is the focused one: the scene sits between the focus fill and the text, as the Browse row scenes do
+    node('lc_host_new',HOST_SETTING_COPY['lc_host_new'],(164,258,204,20),'row',4)
+    node('lc_host_load',HOST_SETTING_COPY['lc_host_load'],(164,258,204,20),'row',4)
+    node('lc_host_campaign',HOST_SETTING_COPY['lc_host_campaign'],(164,278,98,16),'body',3)
+    node('lc_host_danger_room',HOST_SETTING_COPY['lc_host_danger_room'],(164,278,98,16),'body',3)
+    for level in ('easy','normal','hard'): node('lc_host_'+level,HOST_SETTING_COPY['lc_host_'+level],(264,278,100,16),'body',3,align='right')
+    for key,(word,why) in HOST_DROP_COPY.items():
+        items.append(_variant(key,(164,305,210,34),
+            [dict(text=word,rect=(0,0,198,18),style='row',color=3 if key.endswith('unknown') else 4),dict(text=why,rect=(0,19,210,15),style='body',color=3)]))
+    # The player count: the DLL binds only the number (DATA); the label is static and sits at the old "Up to N players" line.
+    items.append(_entry('lc_host_players_label','MAX PLAYERS',(415,194,92,14),'label',3))
+    items.append(_entry('lc_host_max_players','',(512,191,60,18),'row',4,data=True))
 
 
 def runtime_layout(name,state=None):
@@ -1346,6 +1401,18 @@ def broker_problems(root, screen):
         need('lc_host_private',type='MENU_ITEM_MODEL');need('lc_host_public',type='MENU_ITEM_MODEL',hide='true')
         if (items.get('lc_host_private') or {}).get('hide')=='true': errors.append('private and public visibility scenes must start exclusive')
         if 'open_room' in items: errors.append('Open item must be named open')
+        e=need('campaign',usecmd=command(19),type='MENU_ITEM_TEXT')
+        if e is not None and e.get('text') not in ('',None): errors.append('campaign text belongs to the native setting nodes')
+        e=need('drop_in',type='MENU_ITEM_TEXT')
+        if e is not None and (e.get('usecmd') or e.get('text')): errors.append('drop-in row is read-only and its prose comes from the policy scenes')
+        for key in HOST_FIXTURE_PROSE:
+            if key in items: errors.append('fixture prose left in the Host asset: '+key)
+        for key in HOST_SETTING_COPY:
+            e=need(key,hide='true',type='MENU_ITEM_TEXT',neverfocus='true')
+            if e is not None and _plain(e.get('text'))!=HOST_SETTING_COPY[key]: errors.append('host setting copy differs: '+key)
+        for key in ('lc_host_settings_unknown',*HOST_DROP_COPY): need(key,hide='true',type='MENU_ITEM_MODEL',neverfocus='true')
+        e=need('lc_host_max_players',clamp='true',type='MENU_ITEM_TEXT')
+        if e is not None and any('gamevar' in k.lower() for k in e.attrib): errors.append('competing DATA owner: lc_host_max_players')
     if name=='lc_browse':
         for r in range(7):
             for c in range(7):
