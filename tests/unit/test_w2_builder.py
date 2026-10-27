@@ -29,6 +29,11 @@ def dll_knowing(keys, *, save_layout=True):
             if key == 'SaveLayout' and not save_layout:
                 continue
             data += (key + '\0').encode('utf-16le')
+    # every install-line marker the release gate may ask of a current DLL (beta 8's 080e..080h lines, wave 3's rows):
+    # this synthetic DLL stands for one that knows everything, so only SaveLayout / Xml1Economy decide the cases below
+    data += b''.join(marker for marker, _name in FI.RELEASE_MARKERS.values())
+    data += b''.join(marker for _key, marker, _name in FI.EXTRA_MARKERS)
+    data += b''.join(marker for _stock, marker, _name in FI.VALUE_MARKERS.values())
     return data + b'NPR14 NSA4'
 
 
@@ -136,7 +141,9 @@ def test_the_four_keys_are_written_together_and_a_rebuild_without_the_option_dro
         (out / '_build' / 'report.json').write_text(json.dumps({'build': {'save_layout': 'retail', 'forced_teams': 'seat'}}))
         plain = FI.port_keys(out)
         assert 'SaveLayout' not in plain['Limits'] and plain['Limits'] == FI.LIMITS
-        assert FI.dropped_keys(plain)['Limits'] == ['SaveLayout']
+        # SaveLayout is dropped (with beta 8's and wave 3's other port-owned [Limits] keys this record does not ask for)
+        dropped = FI.dropped_keys(plain)['Limits']
+        assert 'SaveLayout' in dropped and not set(dropped) & set(plain['Limits'])
         FI.write_port_keys(out, plain)
         ini = FI.read_ini(out / 'xml2-fix.ini')
         assert 'SaveLayout' not in ini['Limits'] and ini['Limits']['ItemEnhancements'] == '512'
