@@ -916,13 +916,13 @@ def test_beta_fix_numeric_version_keeps_runtime_capability_checks():
         for numeric in ('1.8.0', '1.8.0.0', '1.8.0.2'):
             resource = ('FileVersion\0' + numeric + '\0ProductVersion\0' + numeric + '\0').encode('utf-16le')
             markers = b''.join((key + '\0').encode('utf-16le') for names in FI.RELEASE_18_KEYS.values() for key in names)
-            dll.write_bytes(b'MZ synthetic beta fix\0' + resource + markers + b'NSA4' + b'NPR14' + FI.GRAB_CARRY_R3_MARKER + FI.CARRY_CHAIN_MARKER + FI.TK_AUDIO_MARKER + FI.TK_STILL_MARKER + FI.GUARD_TAP_MARKER + FI.TK_ARMING_MARKER + FI.GUARD_ENTRY_MARKER + FI.COLOSSUS_CASTER_MARKER + FI.THROWN_IMPACT_MARKER + FI.FLYING_CARRY_OFF_MARKER + FI.CHAR_SOUNDS_MARKER + FI.MOTION_POOL_MARKER + FI.RESIDENT_STATS_MARKER + b''.join(FI.WAVE3_MARKERS.values()) + b''.join(FI.MARKERS_082D))
+            dll.write_bytes(b'MZ synthetic beta fix\0' + resource + markers + b'NSA4' + b'NPR14' + FI.GRAB_CARRY_R3_MARKER + FI.CARRY_CHAIN_MARKER + FI.TK_AUDIO_MARKER + FI.TK_STILL_MARKER + FI.GUARD_TAP_MARKER + FI.TK_ARMING_MARKER + FI.GUARD_ENTRY_MARKER + FI.COLOSSUS_CASTER_MARKER + FI.THROWN_IMPACT_MARKER + FI.FLYING_CARRY_OFF_MARKER + FI.CHAR_SOUNDS_MARKER + FI.MOTION_POOL_MARKER + FI.RESIDENT_STATS_MARKER + b''.join(FI.WAVE3_MARKERS.values()) + b''.join(FI.MARKERS_082D) + b''.join(FI.MARKERS_082E))
             FI.check_release_dll(dll, keys)
         # 1.7.1 lacks the companion's 1.8 drop-in capability, even though it has older required keys.
         older = ('ProductVersion\0' + '1.7.1' + '\0').encode('utf-16le')
         markers = b''.join((key + '\0').encode('utf-16le') for names in FI.RELEASE_18_KEYS.values()
                            for key in names if key != 'JoinInProgress')
-        dll.write_bytes(b'MZ synthetic old fix\0' + older + markers + b'NSA4' + b'NPR14' + FI.GRAB_CARRY_R3_MARKER + FI.CARRY_CHAIN_MARKER + FI.TK_AUDIO_MARKER + FI.TK_STILL_MARKER + FI.GUARD_TAP_MARKER + FI.TK_ARMING_MARKER + FI.GUARD_ENTRY_MARKER + FI.COLOSSUS_CASTER_MARKER + FI.THROWN_IMPACT_MARKER + FI.FLYING_CARRY_OFF_MARKER + FI.CHAR_SOUNDS_MARKER + FI.MOTION_POOL_MARKER + FI.RESIDENT_STATS_MARKER + b''.join(FI.WAVE3_MARKERS.values()) + b''.join(FI.MARKERS_082D))
+        dll.write_bytes(b'MZ synthetic old fix\0' + older + markers + b'NSA4' + b'NPR14' + FI.GRAB_CARRY_R3_MARKER + FI.CARRY_CHAIN_MARKER + FI.TK_AUDIO_MARKER + FI.TK_STILL_MARKER + FI.GUARD_TAP_MARKER + FI.TK_ARMING_MARKER + FI.GUARD_ENTRY_MARKER + FI.COLOSSUS_CASTER_MARKER + FI.THROWN_IMPACT_MARKER + FI.FLYING_CARRY_OFF_MARKER + FI.CHAR_SOUNDS_MARKER + FI.MOTION_POOL_MARKER + FI.RESIDENT_STATS_MARKER + b''.join(FI.WAVE3_MARKERS.values()) + b''.join(FI.MARKERS_082D) + b''.join(FI.MARKERS_082E))
         try:
             FI.check_release_dll(dll, keys)
         except FI.FixTooOld as exc:

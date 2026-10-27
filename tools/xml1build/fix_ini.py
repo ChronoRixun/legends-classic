@@ -1473,6 +1473,16 @@ TK_GUARD_082D_MARKER = b'tk acquisition actor='
 CARRY_082D_MARKER = b'airpickupidleally'
 FLYING_CARRY_082D_NAME = '[Game] Xml1GrabCarry (flying carry on: descent, hand attach, L2 throw damage - 082d)'
 MARKERS_082D = (ECONOMY_DIGEST_MARKER, TK_GUARD_082D_MARKER, CARRY_082D_MARKER)
+# xml2-fix 0.4.2 candidate 082e (the 082d live round's moves fixes, a2af326; again no key, rule revision or install line
+# changed). The guard took only the reaction bit as "stunned", so an enemy under a timed stun was never picked up, and
+# telekinesis' victim callback could release a victim selected at the converted power1 start (one tk_guard_bridges
+# change, marked by its GuardTrace line); the flying pickup's clearance probe collided with the selected character
+# itself and suppressed the descent (marked by the carry's pre-pickup CarryTrace stage).
+TK_GUARD_082E_MARKER = b'guard eligibility actor='
+TK_GUARD_082E_NAME = '(082e: timed-stun guard pickup, TK ownership through power1)'
+CARRY_082E_MARKER = b'descent-not-character'
+FLYING_CARRY_082E_NAME = '[Game] Xml1GrabCarry (flying carry on: pickup clearance excludes the victim - 082e)'
+MARKERS_082E = (TK_GUARD_082E_MARKER, CARRY_082E_MARKER)
 # E12 (SPEC 108): a build whose own XMen2.exe is large-address-aware needs the fix's address-space module (the 2 GB guard
 # block, and the two test readers that refused addresses above 0x7fffffff before it). Its start line is the marker; the
 # check reads the build's exe beside the DLL (no exe yet, or --laa off: nothing to check).
@@ -1543,6 +1553,10 @@ def check_release_dll(dll, keys: dict) -> None:
         missing.append(FLYING_CARRY_082D_NAME)
     missing += [f'[Game] {key} (082d: stunned-only ground grab, held telekinesis retry)' for key in ('TelekinesisRule', 'GuardDecideRule')
                 if key in game and TK_GUARD_082D_MARKER not in data]
+    if 'Xml1GrabCarry' in game and 'Xml1FlyingCarry' not in game and CARRY_082E_MARKER not in data:
+        missing.append(FLYING_CARRY_082E_NAME)
+    missing += [f'[Game] {key} {TK_GUARD_082E_NAME}' for key in ('TelekinesisRule', 'GuardDecideRule')
+                if key in game and TK_GUARD_082E_MARKER not in data]
     if 'Xml1Economy' in game and ECONOMY_DIGEST_MARKER not in data:
         missing.append(ECONOMY_DIGEST_NAME)
     for (section, key), (stock, marker, name) in VALUE_MARKERS.items():
