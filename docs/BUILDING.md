@@ -44,7 +44,8 @@ XML2 install, the disc image, the cache or this repository's `tools/` and `resea
 `--online-menus off` is the default. `--online-menus on` opts into the custom
 online screens, native Host/Join skins and private Barlow fonts together. It
 requires `--frontend xml1` and one companion DLL carrying the exact menu, input,
-lobby and font capabilities; a release number or separate DLLs do not suffice.
+lobby, broker (`lc-online-broker/1`) and font capabilities; a release number or
+separate DLLs do not suffice.
 Place that DLL in the output folder before the frontend runs. A missing or
 incompatible DLL refuses the build, including the old-fix warning path.
 
@@ -54,8 +55,17 @@ marker. Rebuilding with the option off restores the owned base's native lobby
 menus and removes the generated online resources and both owned INI keys.
 Play Online always retains the native `openmenu online` command as fallback.
 
-The custom Host/Browse actions remain previews and Code resolves an offline
-fixture. The native Host/Join classes retain their own actions, rosters and
+Round 5 wires the custom screens to the DLL's broker bridge with constant
+commands only: `lcOnlineIntent` 18 Refresh, 19 Open room, 20 Retry, 21 Public/Private,
+22/23 page, 24..30 select Browse row 0..6 and 31 Join selected (resolve only), each
+valid only on its own screen (`online_menus.BROKER_SCOPE`, checked by the validator).
+Every Browse row cell exists from the start with its row command and starts disabled;
+the DLL binds text and enables rows. Hidden localized variants (`lc_broker_*`, the
+`lc_host_private`/`lc_host_public` scenes, `lc_rowN_selected`) are selected by the
+DLL; remote text only ever reaches DATA fields and `broker_error` is a diagnostic
+label, never a command. Room opening and joining create or resolve the broker room
+only: native campaign setup and admission into the native lobby are the next round.
+The native Host/Join classes retain their own actions, rosters and
 admission. No live room, RTT, build, campaign or hero data is invented. Copy and
 Code tool captions currently list both supported keyboard/pad shortcuts because
 the supplied DLL contract does not expose an authored device selector for those

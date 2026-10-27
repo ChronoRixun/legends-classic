@@ -113,7 +113,8 @@ class Fixture:
         elif intent=='drop-in': self.drop_in=not self.drop_in
         elif intent=='open-room': self.phase='host preview fixture'
         elif intent=='error': self.error="Can't reach the online service. Try again or use Other ways to play."
-        elif intent in ('dismiss','refresh'): self.error=''
+        elif intent in ('dismiss','refresh','retry'): self.error=''
+        elif intent=='unavailable': self.error='This action is unavailable in this preview.'
         elif intent=='rejoin': self.menu='lc_code'; self.code='K7QN2X9M'; self.phase='resolved fixture'
         elif intent=='name': self.phase='native name intent fixture'
         elif intent=='room-name': self.phase='room name intent fixture'
@@ -125,7 +126,7 @@ def command_manifest():
     return tuple(['open:'+m for m in MENUS]+['code:'+c for c in ALPHABET]+
                  ['select:'+str(i) for i in range(7)]+
                  ['delete','back','clear','paste','done','scroll:1','scroll:-1','page:1','page:-1','join','visibility',
-                  'campaign','drop-in','open-room','error','dismiss','refresh','rejoin','name','room-name','other','party'])
+                  'campaign','drop-in','open-room','error','dismiss','refresh','retry','unavailable','rejoin','name','room-name','other','party'])
 
 
 def theme(colors, styles):
@@ -794,6 +795,10 @@ def focus_spec(screen,item):
     x,y,w,h=item['rect']
     if item['name'] in ('lc_leave_yes','lc_leave_cancel','lc_lobby_dismiss'):
         return (0,-h*.8,w*.8,0),False
+    if item['name']=='retry' and item.get('hit_rect'):
+        # The Retry bar is part of the error scene: focus replaces exactly that bar, never the message beside it.
+        hx,hy,hw,hh=item['hit_rect']
+        return ((hx-x)*.8,-(hy+hh-y)*.8,(hx+hw-x)*.8,(y-hy)*.8),False
     if screen['name']=='lc_code' and item['name'].startswith('key_'):
         return (-w*.4-3.2,-(h+3)*.8,w*.4+3.2,4.8),False
     if screen['name']=='lc_host' and item['name']=='campaign':
@@ -896,7 +901,7 @@ def focus_picture(screen,item,rect):
 
 # These probes describe additive APIs, not release or gameplay identities. Each
 # must be present in ONE supplied DLL; separate menu/font DLLs cannot be stacked.
-DLL_PROBES = (b'lc-online-menus/1\n', b'lc-online-input/1', b'lc-online-lobby/1',
+DLL_PROBES = (b'lc-online-menus/1\n', b'lc-online-input/1', b'lc-online-lobby/1', b'lc-online-broker/1',
               b'lcOnlineIntent\0', 'Online\0'.encode('utf-16le'),
               'Menus\0'.encode('utf-16le'), 'LegendsClassicFonts\0'.encode('utf-16le'),
               b'ui/fonts/lc_fonts_pc.xmlb\0', b'ui/fonts/lc_fonts_hd.xmlb\0',
@@ -904,10 +909,10 @@ DLL_PROBES = (b'lc-online-menus/1\n', b'lc-online-input/1', b'lc-online-lobby/1'
 CAPABILITY = b'lc-online-menus/1\n'
 LOBBIES = ('host', 'join')
 NOTICE_TEXT = {
-    'lc_inline_error': 'This action is unavailable. No room was joined.',
+    'lc_inline_error': 'This action could not be completed. No room was joined.',
     'lc_notice_unavailable': 'Unavailable in this preview. Use Other ways to play.',
-    'lc_notice_resolving': 'Resolving offline fixture...',
-    'lc_notice_fixture': 'Offline fixture response. No room was joined.',
+    'lc_notice_resolving': 'Looking up room code...',
+    'lc_notice_fixture': 'Online service not connected. No room was joined.',
     'lc_notice_paste_invalid': 'Paste needs eight symbols. Do not use 0/O or 1/I/L.',
     'lc_notice_code_invalid': 'Use code symbols only. Do not use 0/O or 1/I/L.',
     'lc_notice_name_invalid': 'Use 1 to 31 printable characters for your screen name.',
@@ -916,10 +921,46 @@ NOTICE_TEXT = {
     'lc_notice_recent_save': 'Could not remember this game on this PC. Your previous recent game is unchanged.',
 }
 DATA_NAMES = {'local_name', 'self_name', 'last_name', 'last_code', 'last_time',
-              'code_value', 'code_remaining', *(f'cell{i}' for i in range(8))}
+              'code_value', 'code_remaining', *(f'cell{i}' for i in range(8)),
+              # Round 5: every field the broker bridge binds is DATA (normal interned text, no gamevar owner).
+              'service', 'self_state', 'browse_hint', 'room_name', 'preview_name', 'room_code', 'details_name',
+              'details', 'broker_error', *(f'room_{r}_{c}' for r in range(7) for c in range(7))}
+BROKER_VARIANTS = ('lc_broker_auth', 'lc_broker_list', 'lc_broker_host', 'lc_broker_resolve', 'lc_broker_empty',
+                   'lc_broker_stale', 'lc_broker_error', 'lc_broker_room', 'lc_broker_cancel', 'lc_broker_offline_room')
+# Localized copy of the DLL-selected status variants (docs/online-menus.md); one hideable node each per screen.
+BROKER_COPY = {
+    'lc_broker_auth': 'Connecting to Online service...',
+    'lc_broker_list': 'Finding public games...',
+    'lc_broker_host': 'Opening your room...',
+    'lc_broker_resolve': 'Looking up room code...',
+    'lc_broker_empty': 'No public games right now. Host a game or go Back.',
+    'lc_broker_stale': 'These games may be out of date. Refresh to try again.',
+    'lc_broker_error': 'Online service could not complete the request. Retry or go Back.',
+    'lc_broker_cancel': 'Canceling or leaving...',
+    'lc_broker_offline_room': 'Online service unavailable. Existing connections stay open; new players cannot join.',
+}
+BROKER_ROOM_COPY = {'lc_code': 'Room found. Editing the code leaves this room.',
+                    'lc_host': 'Room open. Native lobby setup is the next step.',
+                    'lc_browse': 'Room found. Native lobby setup is the next step.',
+                    'lc_online': 'Room open. Native lobby setup is the next step.'}
+# Screens carrying each variant. The DLL hides/shows by name and tolerates absent nodes; each screen gets exactly
+# the states its own operations can reach (Hub never lists/hosts/resolves, only Retry/Cancel/Error).
+BROKER_SCREENS = {
+    'lc_online': ('lc_broker_auth', 'lc_broker_error', 'lc_broker_cancel'),
+    'lc_host': ('lc_broker_auth', 'lc_broker_host', 'lc_broker_error', 'lc_broker_room', 'lc_broker_cancel', 'lc_broker_offline_room'),
+    'lc_code': ('lc_broker_auth', 'lc_broker_resolve', 'lc_broker_error', 'lc_broker_room', 'lc_broker_cancel', 'lc_broker_offline_room'),
+    'lc_browse': ('lc_broker_auth', 'lc_broker_list', 'lc_broker_resolve', 'lc_broker_empty', 'lc_broker_stale',
+                  'lc_broker_error', 'lc_broker_room', 'lc_broker_cancel', 'lc_broker_offline_room'),
+}
 INTENTS = {'open:lc_host':2, 'open:lc_code':3, 'open:lc_browse':4, 'other':5,
-           'back':6, 'dismiss':8, 'name':9, 'paste':10, 'delete':11,
-           'clear':12, 'done':13, 'rejoin':14, 'copy':16, 'leave-yes':17}
+           'back':6, 'unavailable':7, 'dismiss':8, 'name':9, 'paste':10, 'delete':11,
+           'clear':12, 'done':13, 'rejoin':14, 'copy':16, 'leave-yes':17,
+           # Round 5 broker lifecycle (lc-online-broker/1). Rows 0..6 are 24..30, see intent_number.
+           'refresh':18, 'open-room':19, 'retry':20, 'visibility':21, 'page:-1':22, 'page:1':23, 'join':31}
+BROKER_ROW_FIRST, BROKER_ROW_LAST = 24, 30
+# Exact allowed screens of the round-5 intents (docs/online-menus.md table); anything else is a contract error.
+BROKER_SCOPE = {18:('lc_browse',), 19:('lc_host',), 20:MENUS, 21:('lc_host',), 22:('lc_browse',), 23:('lc_browse',),
+                **{n:('lc_browse',) for n in range(24,31)}, 31:('lc_browse',)}
 
 
 def enabled(ctx):
@@ -931,7 +972,7 @@ def capability_problems(data):
 
 
 def command(number):
-    if type(number) is not int or number not in (*range(2,15),16,17,*range(32,63)):
+    if type(number) is not int or number not in (*range(2,15),16,17,*range(18,32),*range(32,63)):
         raise ValueError('not a public online intent')
     return f'runscript lcOnlineIntent({number})'
 
@@ -939,6 +980,8 @@ def command(number):
 def intent_number(intent):
     if intent.startswith('code:'):
         return 32+ALPHABET.index(intent[5:])
+    if intent.startswith('select:') and intent[7:] in tuple('0123456'):
+        return BROKER_ROW_FIRST+int(intent[7:])
     return INTENTS.get(intent, 7)
 
 
@@ -955,21 +998,140 @@ def _graph(screen):
                  left=focus[i-1]['name'],right=focus[(i+1)%len(focus)]['name'])
 
 
+def _variant(key, rect, parts, **kw):
+    """One individually hideable model scene (all static decoration travels with it)."""
+    return _entry(key,'',rect,'body',4,variant=True,parts=parts,hidden=True,**kw)
+
+
+def _error_variant(name):
+    """lc_broker_error: warn rule, message and the Retry bar. The DLL hides/shows only this node.
+
+    `retry` (intent 20) is a separate empty-text hit/focus item over the bar, because the DLL only
+    enables/disables it; the bar's static text travels with this variant."""
+    copy_=BROKER_COPY['lc_broker_error']
+    if name=='lc_code':
+        rect=(81,387,478,34)
+        parts=[dict(kind='rect',rect=(0,0,478,2),color=7),dict(kind='diamond',rect=(18,13,7,6),color=7),
+               dict(text=copy_,rect=(30,9,350,18),style='body',color=7),
+               dict(kind='rect',rect=(408,8,62,18),color=5)]
+        retry=(489,395,62,18)
+    elif name=='lc_browse':
+        rect=(43,424,414,16)
+        parts=[dict(kind='rect',rect=(0,0,56,16),color=5),
+               dict(kind='diamond',rect=(64,5,7,6),color=7),dict(text=copy_,rect=(78,1,336,15),style='body',color=7)]
+        retry=(43,424,56,16)
+    else:
+        rect=(43,421,554,20)
+        parts=[dict(kind='panel',rect=(0,0,554,20),color=1),dict(kind='rect',rect=(0,0,3,20),color=7),
+               dict(kind='diamond',rect=(12,7,7,6),color=7),dict(text=copy_,rect=(26,3,370,15),style='body',color=7),
+               dict(kind='rect',rect=(484,2,62,16),color=5)]
+        retry=(527,423,62,16)
+    return _variant('lc_broker_error',rect,parts),retry
+
+
+def broker_layout(name, screen):
+    """Round-5 broker bridge nodes (docs/online-menus.md): status/error variants, Retry, diagnostic, selection.
+
+    Everything is authored from constants. No node executes remote text; `broker_error` is DATA only."""
+    items=screen['items'];shapes=screen['shapes']
+    by={e['name']:e for e in items}
+    if name!='lc_online':
+        # 'Room connected' is the longest state the DLL binds; the static diamond implied a connected service.
+        by['self_state'].update(rect=(529,46,67,13))
+        shapes[:]=[q for q in shapes if not(q['kind']=='diamond' and q['rect']==(529,49,7,6))]
+    status={'lc_online':(48,424,420,16),'lc_host':(48,424,420,16),'lc_code':(111,397,370,18),'lc_browse':(108,425,346,14)}[name]
+    offline={'lc_online':(48,408,546,14),'lc_host':(48,408,546,14),'lc_code':(81,424,478,14),'lc_browse':(210,137,380,14)}[name]
+    colors={'lc_broker_empty':3,'lc_broker_stale':5,'lc_broker_room':6,'lc_broker_offline_room':7}
+    for key in BROKER_SCREENS[name]:
+        if key=='lc_broker_error':
+            variant,retry=_error_variant(name)
+            items.append(variant)
+            # The bar is part of the error scene; its label is this item's own text so it stays in front of the
+            # focus bar and takes the native disabled/highlight colours. Dark on amber, invisible while disabled.
+            e=_entry('retry','RETRY',(retry[0]+13,retry[1]+(retry[3]-12)/2,retry[2]-14,12),'label',0,intent='retry')
+            e['enabled']=False;e['hit_rect']=retry;items.append(e)
+            diag={'lc_code':(385,399,98,14),'lc_browse':(486,137,100,14)}.get(name,(413,425,108,14))
+            items.append(_entry('broker_error','',diag,'label',7,data=True,align='right'))
+            continue
+        value=BROKER_ROOM_COPY[name] if key=='lc_broker_room' else BROKER_COPY[key]
+        rect=offline if key=='lc_broker_offline_room' else status
+        style='label' if key in ('lc_broker_offline_room','lc_broker_stale') else 'body'
+        if key=='lc_broker_empty':
+            # Empty list: the table frame stays and carries the message (the DLL also binds the bottom detail line).
+            rect=(59,187,400,18)
+        if key=='lc_broker_stale' and name=='lc_browse':
+            # Stale rows and a failed refresh are reported together; the stale label owns the list header so it can
+            # never overlap the status-row error.
+            rect=(196,137,284,14)
+        items.append(_entry(key,value,rect,style,colors.get(key,3),hidden=True))
+    if name=='lc_host':
+        # Mutually exclusive localized visibility scenes: segment control + the preview badge. Private is the
+        # DLL default; the hit item below owns input (intent 21) and has no text of its own.
+        for key in ('visibility','visibility_other','preview_visibility'):
+            items.remove(by[key])
+        shapes[:]=[q for q in shapes if q['rect'] not in ((148,167,65,23),(218,167,59,23),(533,168,46,14))]
+        def scene(public):
+            on,off=((70,0,59,23),(0,0,65,23)) if public else ((0,0,65,23),(70,0,59,23))
+            labels=(('PUBLIC' if public else 'PRIVATE'),('PRIVATE' if public else 'PUBLIC'))
+            return [dict(kind='rect',rect=on,color=4),dict(kind='outline',rect=off,color=3),
+                    dict(text='PRIVATE',rect=(11,5,52,16),style='row',color=0 if not public else 3),
+                    dict(text='PUBLIC',rect=(81,5,52,16),style='row',color=0 if public else 3),
+                    dict(kind='outline',rect=(385,1,46,14),color=3),
+                    dict(text='PUBLIC' if public else 'PRIVATE',rect=(391,3,50,14),style='label',color=3)]
+        items.append(_variant('lc_host_private',(148,167,431,23),scene(False)));items[-1]['hidden']=False
+        items.append(_variant('lc_host_public',(148,167,431,23),scene(True)))
+        items.append(_entry('visibility','',(148,167,129,23),'row',4,intent='visibility'))
+        # Eight code cells of the round-1 fixture cannot show a DLL string; one DATA field inside one dashed frame can.
+        shapes[:]=[q for q in shapes if not(q['kind']=='dashed' and q['rect'][1]==260)]
+        shapes.append(dict(kind='dashed',rect=(415,264,175,24),color=3))
+        items.remove(by['room_code'])
+        items.append(_entry('room_code','---- ----',(421,265,163,22),'title',3,data=True,align='center',intent=''))
+        by['open_room'].update(name='open')
+        by['edit_room'].update(intent='room-name')
+        for e in items:
+            if e['name']=='desctext1': e['intent']='unavailable'
+            if e['name']=='desctext3': e.update(name='prompt_open',intent='open-room')
+        items.append(_entry('desctext3','',(175,455,1,17)))
+    if name=='lc_browse':
+        for e in items:
+            m=re.fullmatch(r'room_([0-6])_([0-6])',e['name'])
+            if m:
+                # Every row exists from the start, with its own constant command, disabled until the DLL binds a room.
+                e['intent']='select:'+m.group(1);e['enabled']=False;e.pop('dim',None)  # native disabled style, not a baked dim
+                if m.group(2)=='6': e['color']=4
+            if e['name']=='details_name': e['rect']=(43,405,85,20)
+            if e['name']=='details': e['rect']=(128,405,469,20)
+            if e['name']=='desctext1': e.update(name='prompt_join',enabled=False)
+            if e['name']=='desctext2': e.update(name='prompt_refresh',text='F5 / Y Refresh',rect=(98,455,95,18))
+            if e['name']=='desctext3': e['rect']=(200,455,58,18)
+        items.append(_entry('desctext1','',(43,455,1,17)))
+        items.append(_entry('desctext2','',(98,455,1,17)))
+        items.remove(by['age'])
+        shapes[:]=[q for q in shapes if q['rect'] not in ((546,139,40,4),(546,139,16,4))]
+        for row in range(7):
+            items.append(_variant(f'lc_row{row}_selected',(44,178+31*row,552,29),
+                                  [dict(kind='panel',rect=(0,0,552,29),color=2,outline=5)]))
+        screen['focus']='prompt_refresh'
+
+
 def runtime_layout(name,state=None):
     """Production starts with no invented service, room, name or recent record."""
     screen=layout(name,state or Fixture(code='',rooms=[]))
     screen.update(runtime=True,fixture_only=False)
+    # Short truthful fallbacks only: the DLL binds the live service/count/room values over these.
     replacements={'local_name':'Player','self_name':'Player','self_initial':'P',
-        'self_state':'Preview','service':'Offline preview',
-        'browse_hint':'Offline preview','last_name':'','last_code':'',
-        'identity':'Installed build: see launcher', 'code_state':'Offline preview',
-        'code_status':'Enter all eight symbols. Offline fixture only.', 'preview_save':'Campaign selection pending',
+        'self_state':'Not connected','service':'Not connected',
+        'browse_hint':'Browse public games','last_name':'','last_code':'',
+        'identity':'Installed build: see launcher', 'code_state':'Not connected',
+        'code_status':'Type or paste all eight symbols. The code is looked up automatically.',
+        'preview_save':'Campaign selection pending',
         'preview_drop':'Friends join at the next area',
         'room_name':'Room name pending','preview_name':'Room pending',
         'save':'No campaign selected','campaign':'SELECT CAMPAIGN',
-        'preview_visibility':'PENDING','open_hint':'Offline preview only',
-        'code_pending':'Room code pending','age':'Offline preview',
-        'details':'Offline preview. Public listings are not available yet.'}
+        'preview_visibility':'PENDING','open_hint':'Creates your room',
+        'code_pending':'Share this code with friends','age':'Refreshes every 10 s',
+        'list_header':'PUBLIC GAMES',
+        'details':'No public games right now'}
     for e in screen['items']:
         if e['name'] in replacements: e['text']=replacements[e['name']]
         if e['name'] in DATA_NAMES: e['data']=True
@@ -1003,12 +1165,21 @@ def runtime_layout(name,state=None):
         for e in screen['items']:
             if e['name']=='desctext3':e['rect']=(162,455,85,18)
             if e['name']=='desctext4':e['rect']=(252,455,116,18)
-        screen['items'].append(_entry('lc_code_complete','Complete code. Done retries the offline fixture.',(59,219,510,18),hidden=True))
+        screen['items'].append(_entry('lc_code_complete','Complete code. Done looks it up again.',(59,219,510,18),hidden=True))
         screen['items'].append(_entry('code_value','',(59,196,250,18),data=True,hidden=True))
         screen['items'].append(_entry('code_remaining','8',(570,219,20,18),data=True,hidden=True))
+    broker_layout(name,screen)
     # The old optional generic error anchor was not an input target. All
     # authored Back usecmds are routed by the scoped DLL handler, once.
     _graph(screen)
+    if name=='lc_browse':
+        # Row cells keep the closed grid (left/right in a row, up/down in a column) while disabled or rebound.
+        for e in screen['items']:
+            m=re.fullmatch(r'room_([0-6])_([0-6])',e['name'])
+            if not m: continue
+            r,c=int(m.group(1)),int(m.group(2))
+            e.update(left=f'room_{r}_{max(0,c-1)}',right=f'room_{r}_{min(6,c+1)}',
+                     up=f'room_{r-1}_{c}' if r else 'prompt_refresh',down=f'room_{r+1}_{c}' if r<6 else 'scroll')
     if name=='lc_code':
         keys={e['name']:e for e in screen['items'] if e['name'].startswith('key_')}
         for i in range(32):
@@ -1034,7 +1205,70 @@ def runtime_problems(root, screen, palette_ids=None):
             if actual.get(key)!=want.get(key):problems.append(want.get('name')+': '+key)
         if want.get('name') in DATA_NAMES and any('gamevar' in k.lower() for k in actual.attrib):
             problems.append('competing DATA owner: '+want.get('name'))
-    return problems
+    return problems+broker_problems(root,screen)
+
+
+def _plain(text):
+    return re.sub(r'^~\d\d','',text or '')
+
+
+def broker_problems(root, screen):
+    """Contract of the round-5 broker bridge (docs/online-menus.md): intents, scopes, nodes, bindings.
+
+    Checks the serialized tree, not only the layout, so a mutated resource is caught."""
+    name=screen['name'];errors=[]
+    items={e.get('name'):e for e in root.findall('item')}
+    allowed=set(range(2,15))|{16,17}|set(range(18,32))|set(range(32,63))
+    for key,e in items.items():
+        cmd=e.get('usecmd','')
+        m=re.fullmatch(r'runscript lcOnlineIntent\((\d+)\)',cmd)
+        if cmd and not m: errors.append('non-constant command: '+key)
+        if not m: continue
+        number=int(m.group(1))
+        if number not in allowed: errors.append('intent outside the public range: '+key)
+        if number in BROKER_SCOPE and name not in BROKER_SCOPE[number]: errors.append(f'intent {number} not allowed on {name}: {key}')
+    def need(key,**attrs):
+        e=items.get(key)
+        if e is None: errors.append('missing broker node: '+key);return None
+        for attr,value in attrs.items():
+            if e.get(attr)!=value: errors.append(f'broker node {key}: {attr}={e.get(attr)!r}, expected {value!r}')
+        return e
+    for key in BROKER_SCREENS[name]:
+        if key=='lc_broker_error':
+            need(key,hide='true',type='MENU_ITEM_MODEL')
+            need('retry',usecmd=command(20),enabled='false',type='MENU_ITEM_TEXT')
+            e=need('broker_error',clamp='true')
+            if e is not None and any('gamevar' in k.lower() for k in e.attrib): errors.append('competing DATA owner: broker_error')
+            if 'hide' in (items.get('retry') or {}).attrib: errors.append('retry must stay visible (the DLL only enables it)')
+            continue
+        e=need(key,hide='true',type='MENU_ITEM_TEXT',neverfocus='true')
+        want=BROKER_ROOM_COPY[name] if key=='lc_broker_room' else BROKER_COPY[key]
+        if e is not None and _plain(e.get('text'))!=want: errors.append('broker copy differs: '+key)
+    for key in BROKER_VARIANTS:
+        if key not in BROKER_SCREENS[name] and key in items: errors.append('unexpected broker node: '+key)
+    for key,e in items.items():
+        if 'fixture' in (e.get('text') or '').lower(): errors.append('fixture wording in production asset: '+key)
+    if name=='lc_online':
+        for key in ('service','browse_hint'): need(key,clamp='true')
+    if name in ('lc_host','lc_code','lc_browse'): need('self_state',clamp='true')
+    if name=='lc_host':
+        need('open',usecmd=command(19));need('prompt_open',usecmd=command(19));need('visibility',usecmd=command(21))
+        for key in ('room_name','preview_name','room_code'): need(key,clamp='true')
+        need('lc_host_private',type='MENU_ITEM_MODEL');need('lc_host_public',type='MENU_ITEM_MODEL',hide='true')
+        if (items.get('lc_host_private') or {}).get('hide')=='true': errors.append('private and public visibility scenes must start exclusive')
+        if 'open_room' in items: errors.append('Open item must be named open')
+    if name=='lc_browse':
+        for r in range(7):
+            for c in range(7):
+                e=need(f'room_{r}_{c}',usecmd=command(24+r),enabled='false',clamp='true')
+                if e is not None:
+                    for d in ('left','right','up','down'):
+                        if e.get(d) not in items: errors.append(f'open row graph: room_{r}_{c}')
+            need(f'lc_row{r}_selected',hide='true',type='MENU_ITEM_MODEL')
+        need('prompt_join',usecmd=command(31));need('prompt_refresh',usecmd=command(18))
+        need('scroll',usecmd=command(23));need('scroll_up',usecmd=command(22))
+        for key in ('details_name','details'): need(key,clamp='true')
+    return errors
 
 
 def lobby_layout(role, *, members=1, ready=False, fixture=False, pending=False, picker=False):
