@@ -365,7 +365,11 @@ are retired under private names before new aliases are authored. The companion
 Rejoin and Host Edit/Open also retain these tokens. The builder never replaces
 them with fixed `[A]` text. Its offline device fixture returns the companion's
 single coloured A/B/X/Y letters, bracketed Start, or keyboard key names for the
-retail fallback. With the scoped font capability, the companion returns private
+retail fallback. On a pad `$MENU_OTHER` (Change name, Clear) is drawn and pressed as X and
+`$MENU_NEXT` (Rejoin, Paste, Refresh) as Y, as in the designs: the
+game's own menu codes sit on the play layout (OTHER on Y, NEXT on RT), so the companion
+swaps them on the Hub, Host, Code, Browse and Party screens only (`PAD_TOKEN_BUTTONS`; xml2-fix
+`pad_menu_mask`); the native Host/Join lobbies keep the engine's own buttons (Ready / Kick / Copy on Y). With the scoped font capability, the companion returns private
 atlas glyphs only while drawing a ready private-font item: round pad prompts or
 the actual bound keyboard keycaps. No fixed circles are baked into backgrounds.
 

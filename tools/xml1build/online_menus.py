@@ -33,6 +33,13 @@ BROWSE_ROWS = 5
 PROMPT_TOKENS = {'back':'$MENU_BACK','delete':'$MENU_BACK','paste':'$MENU_NEXT',
                  'refresh':'$MENU_NEXT','rejoin':'$MENU_NEXT','clear':'$MENU_OTHER',
                  'name':'$MENU_OTHER','change':'$MENU_OTHER','open':'$MENU_OK'}
+# What a pad player sees and presses on the four co-op screens (the designs: X Change name / Clear, Y Rejoin / Paste / Refresh).
+# The game binds its menu codes to the play layout, so a pad's own MENU_OTHER is Y and MENU_NEXT is RT; the DLL reads X as OTHER
+# and Y as NEXT on these screens and draws the two tokens as those buttons (xml2-fix online_menus_rules.hpp pad_menu_mask /
+# pad_prompt_code, 060p live round failure 8). The tokens below therefore name the JOB, not the engine's button: Change name,
+# Clear are $MENU_OTHER, Rejoin, Paste and Refresh are $MENU_NEXT (the native lobbies keep the engine's own buttons).
+# Keyboard labels stay the engine's own ([Del] / [KP5]).
+PAD_TOKEN_BUTTONS = {'$MENU_OTHER':'X','$MENU_NEXT':'Y'}
 STYLE_ALIASES = {'compact_title':('title',OF.COMPACT_TITLE_SCALE),
                  'code_cell':('row',OF.CODE_CELL_SCALE),
                  'card_name':('row',18*.8/OF.BASE_SIZES['row'])}
@@ -478,8 +485,7 @@ def preview_text(value, device='pad'):
     Its Start and keyboard labels are bracketed names of the bound controls.
     """
     if device not in ('pad','keyboard'): raise ValueError('unknown preview device')
-    labels={'$MENU_ACCEPT':'A','$MENU_BACK':'B','$MENU_NEXT':'Y',
-            '$MENU_OTHER':'X','$MENU_OK':'[Start]'} if device=='pad' else {
+    labels={'$MENU_ACCEPT':'A','$MENU_BACK':'B','$MENU_OK':'[Start]',**PAD_TOKEN_BUTTONS} if device=='pad' else {
             '$MENU_ACCEPT':'[Enter]','$MENU_BACK':'[Esc]','$MENU_NEXT':'[Y]',
             '$MENU_OTHER':'[X]','$MENU_OK':'[Enter]'}
     for token,label in labels.items(): value=value.replace(token,label)
