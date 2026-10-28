@@ -343,7 +343,6 @@ def test_right_aligned_fields_keep_their_native_alignment_after_serialization():
     assert len(value)>int(70*.8/6)
 
 
-
 def test_every_authored_menu_scene_fits_the_engine_anchor_capacity():
     """060p: Browse authored 241 named anchors; XMen2.exe's playfield build (0x5882e0, walk 0x587f90, push 0x587e40)
     holds 175, so the 183rd overwrote the stack vector's count and the next push wrote to a wild address (0x587654).
@@ -377,3 +376,33 @@ def test_anchor_count_matches_the_engine_walk_on_the_060p_candidate_scenes():
     counts={n:O.anchor_count((menus/(n+'.IGB')).read_bytes()) for n in ('lc_browse','lc_lobby_host','lc_code','lc_online')}
     assert counts=={'lc_browse':241,'lc_lobby_host':153,'lc_code':132,'lc_online':67}, counts
     assert counts['lc_browse']>O.ENGINE_SCENE_ANCHORS>=max(v for k,v in counts.items() if k!='lc_browse')
+
+
+def test_every_screen_draws_its_art_as_scene_models_not_the_menu_sprite():
+    # Live 060p: the untyped lc_ menus are the base CMenu (vtable 0x69e41c), whose init (0x5af7b0) never
+    # reads `image`, so the sprite background never drew (black screen, text only); the typed lobbies
+    # drew it pinned to 512 x 384 and upside down. The art now travels as the first two scene models.
+    for name in O.MENUS:
+        tree=O.add_backdrop(O.menu_tree(O.runtime_layout(name)),name)
+        first=list(tree.findall('item'))[:2]
+        assert [e.get('name') for e in first]==list(O.BACKDROP_ITEMS)
+        assert all(e.get('type')=='MENU_ITEM_MODEL' and e.get('neverfocus')=='true' for e in first)
+        assert first[0].get('model')=='ui/models/lc_o_field' and first[1].get('model')==O.backdrop_resource(name)
+        assert tree.get('image')==''
+    layouts=O.backdrop_layouts()
+    assert set(layouts)==set(O.BACKDROP_ITEMS) and all(anchor==(0,-150,384) for anchor,_ in layouts.values())
+    l,b,r,t=O.BACKDROP_RECT;assert (l,b,r,t)==(0,-384,512,0)  # exactly the 640 x 480 composition
+    l,b,r,t=O.FIELD_RECT
+    # hor+ view: 384 tall, aspect*384 wide, centred on x=256 -> covers 16:9, 16:10, 21:9 and 32:9 (3.56:1)
+    for aspect in (4/3,16/10,16/9,21/9,32/9):
+        half=aspect*384/2;assert l<=256-half and r>=256+half and (b,t)==(-384,0)
+    assert O.FIELD_DEPTH>O.BACKDROP_DEPTH>40  # behind every focus bar (40) and scene, field deepest
+
+
+def test_backdrop_field_continues_the_composition_gradient():
+    art=O.render(O.runtime_layout('lc_online'),size=(1024,1024),text=False,focus=False)
+    field=O.field_picture()
+    # Left/right edges of the 4:3 art are bare gradient; the field must meet them row for row.
+    for y in (0,128,255):
+        edge=art.getpixel((0,y*4)); fill=field.getpixel((0,y))[:3]
+        assert max(abs(a-b) for a,b in zip(edge,fill))<=3
