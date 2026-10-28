@@ -530,3 +530,158 @@ def test_kicked_guest_notice_is_a_plain_hub_notice_within_the_anchor_budget():
     assert 'lc_notice_removed' not in {e['name'] for e in browse['items']}
     for name in O.MENUS:
         assert len(O.scene_layout(O.bound_layout(O.runtime_layout(name),F.metrics())))+len(O.backdrop_layouts())<=O.ENGINE_SCENE_ANCHORS, name
+
+
+# ---- 0.6 preview fix E2: the hit table is validated by the builder and compared with the built bars ---------------------------
+
+def _hit_screens():
+    return _built_screens()
+
+
+def test_hit_table_validator_names_every_reason_the_dll_parser_refuses():
+    good = O.hit_table(_hit_screens())
+    assert O.hit_table_problems(good) == []
+    header = b'lc-online-hits/1\n'
+    row = b'lc_online host 34.4 253.2 247.2 277.8\n'
+    cases = {
+        'bom': b'\xef\xbb\xbf' + header + row, 'crlf': header.replace(b'\n', b'\r\n') + row.replace(b'\n', b'\r\n'),
+        'header': b'lc-online-hits/2\n' + row, 'no rows': header, 'empty': b'', 'unterminated': header + row[:-1],
+        'long line': header + row[:-1] + b'7' * 300 + b'\n', 'duplicate': header + row + row, 'blank line': header + b'\n' + row,
+        'double space': header + b'lc_online  host 1 2 3 4\n', 'trailing space': header + b'lc_online host 1 2 3 4 \n',
+        'name dash': header + b'lc_online ho-st 1 2 3 4\n', 'name dot': header + b'lc_online ho.st 1 2 3 4\n',
+        'name long': header + b'lc_online ' + b'a' * 64 + b' 1 2 3 4\n',
+        'exponent': header + b'lc_online host 1e2 2 3 4\n', 'plus': header + b'lc_online host +1 2 3 4\n',
+        'comma': header + b'lc_online host 1,5 2 3 4\n',
+        'range': header + b'lc_online host 5000 2 6000 4\n', 'inverted x': header + b'lc_online host 3 2 3 4\n',
+        'inverted y': header + b'lc_online host 1 4 3 4\n',
+        'five fields': header + b'lc_online host 1 2 3\n', 'seven fields': header + b'lc_online host 1 2 3 4 5\n',
+        'non ascii': header + 'lc_online h\u00e9st 1 2 3 4\n'.encode('utf-8'),
+        'too many': header + b''.join(b'm i%d 1 2 3 4\n' % i for i in range(O.HITS_MAX_ENTRIES + 1)),
+        'too big': header + b'm i 1 2 3 4\n' * (O.HITS_MAX_FILE // 12 + 1),
+    }
+    for label, data in cases.items():
+        assert O.hit_table_problems(data), label
+    assert O.hit_table_problems(header + row) == []
+    assert O.hit_table_problems(header + row + b'host text_startgame 34.4 46.8 180 71.4\n') == []
+
+
+def test_hit_table_refuses_at_build_time_what_would_switch_the_hit_boxes_off():
+    """One bad name or rectangle makes the DLL refuse the whole table (every co-op screen goes back to the engine's dead
+    strips); the builder raises instead of writing it."""
+    screens = _hit_screens()
+    real = O.hit_rows
+    try:
+        for bad in ([('bad-name', 0, 0, 10, 10)], [('x', 5, 0, 5, 10)], [('x', 0, 10, 10, 10)], [('x', 0, 0, 1e9, 10)],
+                    [('x', 0, 0, 10, 10), ('x', 20, 0, 30, 10)]):
+            O.hit_rows = lambda screen, bad=bad: bad
+            raises(ValueError, lambda: O.hit_table(screens))
+    finally:
+        O.hit_rows = real
+    O.hit_table(screens)
+
+
+def test_hit_table_refuses_a_bar_that_reaches_the_kick_picker():
+    """The Kick picker is a focusable item the table does not list: a bar over it would let the engine hand it the click."""
+    screens = _hit_screens()
+    picker = O.hit_unlisted_boxes(screens['host'])
+    assert [p[0] for p in picker] == ['text_playername1']
+    _, l, b, r, t = picker[0]
+    for name, screen in screens.items():
+        for _, pl, pb, pr, pt in O.hit_unlisted_boxes(screen):
+            for item, bl, bb, br, bt in O.hit_rows(screen):
+                assert not (bl < pr and pl < br and bb < pt and pb < bt), (name, item)
+    real = O.hit_rows
+    try:
+        O.hit_rows = lambda screen: real(screen) + [('overlap', l + 10, b + 10, r - 10, t - 10)] if screen['name'] == 'host' else real(screen)
+        raises(ValueError, lambda: O.hit_table(screens))
+    finally:
+        O.hit_rows = real
+
+
+def _dll_parser():
+    import os
+    import pathlib
+    import pytest
+    exe = os.environ.get('XML2_FIX_HITS_PARSE_TEST')
+    if not exe or not pathlib.Path(exe).exists():
+        pytest.skip('set XML2_FIX_HITS_PARSE_TEST to xml2_online_hits_parse_test.exe (xml2-fix)')
+    return exe
+
+
+def test_builder_output_passes_the_dll_parser_and_verdicts_agree(tmp_path):
+    """The builder's real table goes through the DLL's own parser (online_menus_hits::parse, built as
+    xml2_online_hits_parse_test): accepted, every entry the builder's number; and a set of broken files get the same accept /
+    refuse verdict from the builder's validator and the DLL's parser."""
+    import subprocess
+    exe = _dll_parser()
+    data = O.hit_table(_hit_screens())
+
+    def run(blob, name):
+        path = tmp_path / name
+        path.write_bytes(blob)
+        done = subprocess.run([exe, str(path)], capture_output=True, text=True)
+        return done.returncode, done.stdout
+
+    code, out = run(data, 'builder.txt')
+    assert code == 0, out
+    entries = [l.split() for l in out.splitlines() if l.startswith('ENTRY ')]
+    rows = O.hit_table_rows(data)
+    assert len(entries) == sum(len(v) for v in rows.values())
+    for _, menu, item, *numbers in entries:
+        assert all(abs(float(a) - b) < 1e-3 for a, b in zip(numbers, rows[menu][item])), (menu, item)
+    header = b'lc-online-hits/1\n'
+    row = b'lc_online host 34.4 253.2 247.2 277.8\n'
+    variants = [data, header + row, b'\xef\xbb\xbf' + data, data.replace(b'\n', b'\r\n'), data + data.split(b'\n')[1] + b'\n',
+                header + row[:-1], header + b'\n' + row,
+                header + b'lc_online ho-st 1 2 3 4\n', header + b'lc_online host 1e2 2 3 4\n', header + b'lc_online host 3 2 3 4\n',
+                header + b'lc_online host 1 4 3 4\n',
+                header + b'lc_online host 4096 0 4097 1\n', header + b'lc_online host -4096 -4096 4096 4096\n',
+                header + b'lc_online host .5 -.5 5. 1\n',
+                header + row[:-1] + b'7' * 300 + b'\n', header + b'a' * 100 + b' host 1 2 3 4\n', header + b'a' * 64 + b' host 1 2 3 4\n',
+                header + b'a' * 63 + b' host 1 2 3 4\n',
+                header + b'lc_online  host 1 2 3 4\n', header + b'lc_online host 1 2 3 4 \n', header, b'',
+                header + b''.join(b'm i%d 1 2 3 4\n' % i for i in range(O.HITS_MAX_ENTRIES)),
+                header + b''.join(b'm i%d 1 2 3 4\n' % i for i in range(O.HITS_MAX_ENTRIES + 1))]
+    for n, blob in enumerate(variants):
+        code, out = run(blob, 'variant%d.txt' % n)
+        assert (code == 0) == (O.hit_table_problems(blob) == []), (n, code, out[:200], O.hit_table_problems(blob)[:3])
+
+
+def _built_output():
+    import os
+    import pathlib
+    import pytest
+    for candidate in (os.environ.get('XML1_BUILT_OUT'), r'D:\Projects\xml1-port\build\_candidate_060q'):
+        if candidate and (pathlib.Path(candidate) / 'UI/menus/lc_online.XMLB').exists():
+            return pathlib.Path(candidate)
+    pytest.skip('no built online-menus output (set XML1_BUILT_OUT)')
+
+
+def test_hit_table_matches_the_focus_bars_as_built():
+    """The table against the BUILT scenes (not focus_placement again): every item's focus model, read from the built output
+    (its vertices) and placed at its anchor's transform in the built scene IGB, is the table's row - left, bottom and top
+    exactly, the right edge exactly or by the model's lean (FOCUS_LEAN: a wide solid bar leans right as it rises, so its top
+    edge sits 4 view units right of the table's bottom-edge rectangle); and the table lists exactly the items that draw one."""
+    from xml1build import common as C
+    out = _built_output()
+    screens = _hit_screens()
+    data = O.hit_table(screens)
+
+    def model(resource):
+        path = out / (resource + '.IGB')
+        return path.read_bytes() if path.exists() else None
+
+    read = (lambda n: C.decode_xmlb((out / ('UI/menus/' + n + '.XMLB')).read_bytes()),
+            lambda igb: (out / ('UI/menus/' + igb + '.IGB')).read_bytes(), model)
+    assert O.hit_scene_problems(data, list(screens), *read) == []
+    # the check bites: a moved row, a row for an item with no bar, a missing row and a too-wide row are all named
+    lines = data.decode('ascii').split('\n')
+    moved = [l.replace('lc_online code 34.4 222 247.2 246.6', 'lc_online code 34.4 223 247.2 246.6') for l in lines]
+    assert moved != lines
+    assert any('lc_online: code' in p for p in O.hit_scene_problems('\n'.join(moved).encode('ascii'), list(screens), *read))
+    assert any('no focus model' in p for p in O.hit_scene_problems(data + b'lc_online ghost 1 2 3 4\n', list(screens), *read))
+    dropped = [l for l in lines if not l.startswith('lc_online browse ')]
+    assert any('draws a focus bar but the table has no row' in p for p in O.hit_scene_problems('\n'.join(dropped).encode('ascii'), list(screens), *read))
+    wide = [l.replace('lc_online code 34.4 222 247.2 246.6', 'lc_online code 34.4 222 255 246.6') for l in lines]
+    assert any('lc_online: code' in p for p in O.hit_scene_problems('\n'.join(wide).encode('ascii'), list(screens), *read))
+    assert O.hit_table_rows(data)['lc_online']['code'] == (34.4, 222.0, 247.2, 246.6) and O.FOCUS_LEAN == 4

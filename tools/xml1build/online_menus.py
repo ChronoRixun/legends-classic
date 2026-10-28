@@ -768,7 +768,12 @@ def write(ctx, *, preview=False):
                 for e in native_pkg:
                     if (e.tag,e.get('filename')) not in have:pkg.append(copy.deepcopy(e))
         ctx.write_xmlb(F.MENU_PKG_DIR+'/'+name,pkg,('.PKGB',),source='frontend:online resource closure')
-    ctx.write_bytes(HITS_FILE,hit_table(authored_layouts),source='frontend:mouse hit boxes = drawn focus bars')
+    hits=hit_table(authored_layouts)
+    built={name:(tree,data) for name,tree,data,_ in pending}
+    problems=hit_scene_problems(hits,list(built),lambda n:built[n][0],lambda igb:next((d for t,d in built.values() if t.get('igb')==igb),None),
+                                lambda resource:focus_models.get(resource))
+    if problems: raise ValueError('mouse hit table vs the built focus bars: '+'; '.join(problems))
+    ctx.write_bytes(HITS_FILE,hits,source='frontend:mouse hit boxes = drawn focus bars')
     if not preview:ctx.write_bytes('Data/lc_online_menus.cap',CAPABILITY,source='frontend:verified DLL menu capability')
     report={'menus':list(MENUS),'colors':len(colors),'styles':len(styles),'palette_ids':ids,'font_probe':probe,
             'fixture_only':True,'enabled':not preview,'production_entry':F.PLAY_ONLINE_CMD,'layouts':authored_layouts,
@@ -873,7 +878,7 @@ def focus_model(source, rect, outline=False, picture=None, depth=40, slant=None)
             if slot in o.fields: g.set_floats(o,slot,(1,1,1,1))
     for o in g.objects_of('igVertexArray1_1'):
         refs=g.ref_list(o.get(2)); vertices=g.block_floats(refs[0]); l,b,r,t=rect
-        lean=(0 if outline or r-l<50 else 4) if slant is None else slant
+        lean=(0 if outline or r-l<50 else FOCUS_LEAN) if slant is None else slant
         for i in range(0,len(vertices),3):
             vertices[i]+=lean*(vertices[i+2]-b)/(t-b)
             vertices[i+1]=depth  # relative to the anchor; 40 = behind text, in front of the backdrop
@@ -1101,6 +1106,18 @@ CAPABILITY = b'lc-online-menus/1\n'
 # (absolute view units, x right, y up: left bottom right top) and the DLL hit-tests our screens against it.
 HITS_CONTRACT = 'lc-online-hits/1'
 HITS_FILE = 'Data/lc_online_hits.txt'
+# The DLL parser's limits (online_menus_hits_rules.hpp parse / name_ok / number): ONE bad line makes it refuse the WHOLE table
+# and the mouse hit boxes of every co-op screen go off. The builder holds itself to the same rules (hit_table_problems) and
+# test_online_menus.py feeds its output through the DLL's own parser (xml2_online_hits_parse_test) and compares verdicts.
+HITS_MAX_ENTRIES = 1024
+HITS_MAX_LINE = 256
+HITS_MAX_FILE = 256 * 1024
+HITS_VIEW_LIMIT = 4096.0
+HITS_NAME = re.compile(r'[A-Za-z0-9_]{1,63}')
+HITS_NUMBER = re.compile(r'-?(?:[0-9]+\.?[0-9]*|\.[0-9]+)')
+# focus_model: a wide solid bar leans right as it rises (the top edge is FOCUS_LEAN view units to the right of the bottom
+# edge); the table lists the bottom-edge rectangle (see hit_scene_problems).
+FOCUS_LEAN = 4
 
 
 def hit_rows(screen):
@@ -1118,16 +1135,135 @@ def hit_rows(screen):
     return rows
 
 
+def hit_unlisted_boxes(screen):
+    """(item, left, bottom, right, top) in view units of the focusable items the table does not list: the Kick picker
+    LISTBOX (its rows answer through 0x5ba2b0 / 0x5c8da0)."""
+    boxes=[]
+    for e in screen['items']:
+        if e['intent']!='native-picker': continue
+        x,y,w,h=e['rect']
+        boxes.append((e['name'],x*.8,(480-y-h)*.8,(x+w)*.8,(480-y)*.8))
+    return boxes
+
+
+def _hit_number(v):
+    text=('%.4f' % v).rstrip('0').rstrip('.')
+    return '0' if text in ('-0','') else text
+
+
+def hit_table_problems(data):
+    """Every reason the DLL's parser (online_menus_hits::parse) would refuse these bytes; [] when it accepts them. Same
+    rules, written separately: LF only, no BOM, no blank line, single spaces, lines of at most HITS_MAX_LINE bytes, names
+    [A-Za-z0-9_]{1,63}, plain decimals within +/-4096, left < right and bottom < top, every (menu, item) once, at most
+    HITS_MAX_ENTRIES, a whole file of at most HITS_MAX_FILE bytes."""
+    if len(data)>HITS_MAX_FILE: return ['table larger than %d bytes'%HITS_MAX_FILE]
+    if data.startswith(b'\xef\xbb\xbf'): return ['byte order mark']
+    if not data: return ['empty file']
+    if not data.endswith(b'\n'): return ['last line not terminated']
+    lines=data[:-1].split(b'\n')
+    problems=[]
+    if lines[0]!=HITS_CONTRACT.encode('ascii'): problems.append('line 1: bad header')
+    seen=set()
+    for number,raw in enumerate(lines[1:],2):
+        if len(raw)>HITS_MAX_LINE: problems.append('line %d: line too long'%number); continue
+        if b'\r' in raw: problems.append('line %d: carriage return'%number); continue
+        try: line=raw.decode('ascii')
+        except UnicodeDecodeError: problems.append('line %d: not ASCII'%number); continue
+        fields=line.split(' ')
+        if len(fields)!=6 or '' in fields: problems.append('line %d: bad fields'%number); continue
+        menu,item,*numbers=fields
+        if not (HITS_NAME.fullmatch(menu) and HITS_NAME.fullmatch(item)): problems.append('line %d: bad name'%number); continue
+        try:
+            for token in numbers:
+                if len(token)>24 or not HITS_NUMBER.fullmatch(token): raise ValueError(token)
+            left,bottom,right,top=map(float,numbers)
+        except ValueError: problems.append('line %d: bad number'%number); continue
+        if any(abs(v)>HITS_VIEW_LIMIT for v in (left,bottom,right,top)): problems.append('line %d: number out of range'%number); continue
+        if not (left<right and bottom<top): problems.append('line %d: empty or inverted rectangle'%number); continue
+        if (menu,item) in seen: problems.append('line %d: duplicate entry'%number)
+        seen.add((menu,item))
+    if len(lines)-1>HITS_MAX_ENTRIES: problems.append('too many entries')
+    if len(lines)<2: problems.append('no entries')
+    return problems
+
+
 def hit_table(screens):
-    """The Data/lc_online_hits.txt bytes for {engine menu name: bound screen}."""
-    def number(v):
-        text=('%.4f' % v).rstrip('0').rstrip('.')
-        return '0' if text in ('-0','') else text
+    """The Data/lc_online_hits.txt bytes for {engine menu name: bound screen}. Raises ValueError for anything the DLL's
+    parser would refuse (that would switch the mouse hit boxes of every co-op screen off), and for a bar that reaches an
+    unlisted focusable item (the Kick picker): the engine could hand it the click."""
     lines=[HITS_CONTRACT]
+    problems=[]
     for name,screen in screens.items():
-        for item,*rect in hit_rows(screen):
-            lines.append(' '.join([name,item,*map(number,rect)]))
-    return ('\n'.join(lines)+'\n').encode('ascii')
+        rows=hit_rows(screen)
+        for item,*rect in rows:
+            lines.append(' '.join([name,item,*map(_hit_number,rect)]))
+        for item,pl,pb,pr,pt in hit_unlisted_boxes(screen):
+            for bar,l,b,r,t in rows:
+                if l<pr and pl<r and b<pt and pb<t:
+                    problems.append('%s: bar %s [%g %g %g %g] reaches the unlisted focusable item %s [%g %g %g %g]'%(name,bar,l,b,r,t,item,pl,pb,pr,pt))
+    data=('\n'.join(lines)+'\n').encode('ascii')
+    problems+=hit_table_problems(data)
+    if problems: raise ValueError('mouse hit table: '+'; '.join(problems))
+    return data
+
+
+def hit_table_rows(data):
+    """{menu: {item: (left, bottom, right, top)}} of an accepted table."""
+    problems=hit_table_problems(data)
+    if problems: raise ValueError('mouse hit table: '+'; '.join(problems))
+    rows={}
+    for line in data.decode('ascii').split('\n')[1:-1]:
+        menu,item,*numbers=line.split(' ')
+        rows.setdefault(menu,{})[item]=tuple(map(float,numbers))
+    return rows
+
+
+def _model_bar(model):
+    """(left, bottom, right, top) of a built focus model relative to its anchor: the bounds of its vertices."""
+    from . import igb_file as G
+    g=G.IgbFile(model); xs=[]; zs=[]
+    for o in g.objects_of('igVertexArray1_1'):
+        v=g.block_floats(g.ref_list(o.get(2))[0]); xs+=v[0::3]; zs+=v[2::3]
+    if not xs: raise ValueError('focus model has no vertices')
+    return min(xs),min(zs),max(xs),max(zs)
+
+
+def hit_scene_problems(data, names, read_tree, read_scene, read_model):
+    """Compare the table with the focus bars as BUILT: for every item of each built menu tree that has a focus model
+    (<onfocus type="focus" item=ANCHOR model=MODEL>), the bar is the model's own vertices placed at ANCHOR's transform in
+    the built scene IGB - nothing from focus_placement. The table row must have the bar's left, bottom and top and a right
+    edge between the bar's bottom-right corner and its leaning top-right corner (FOCUS_LEAN), and the table must list
+    exactly the items that have such a model (the Kick picker has none). Callables: read_tree(menu) -> XMLB root,
+    read_scene(igb name) -> bytes, read_model(resource) -> bytes or None."""
+    from . import igb_file as G
+    rows=hit_table_rows(data)
+    problems=[]
+    tol=0.06
+    for name in names:
+        tree=read_tree(name)
+        scene=read_scene(tree.get('igb'))
+        if scene is None: problems.append(name+': built scene missing'); continue
+        graph=G.IgbFile(scene)
+        positions={o.get(2):o.get(8)[12:15] for o in graph.objects if o.name=='igTransform'}
+        table=rows.get(name,{}); seen=set()
+        for item in tree.findall('item'):
+            for focus in item.findall('onfocus'):
+                if focus.get('type')!='focus': continue
+                key=item.get('name'); seen.add(key)
+                anchor=positions.get(focus.get('item')); model=read_model(focus.get('model'))
+                if anchor is None or model is None: problems.append('%s: %s: focus anchor or model missing in the built output'%(name,key)); continue
+                x0,z0,x1,z1=_model_bar(model)
+                bar=(anchor[0]+x0,anchor[2]+z0,anchor[0]+x1,anchor[2]+z1)
+                row=table.get(key)
+                if row is None: problems.append('%s: %s draws a focus bar but the table has no row'%(name,key)); continue
+                l,b,r,t=row
+                if abs(l-bar[0])>tol or abs(b-bar[1])>tol or abs(t-bar[3])>tol or not (bar[2]-FOCUS_LEAN-tol<=r<=bar[2]+tol):
+                    problems.append('%s: %s: table [%g %g %g %g] vs built bar [%g %g %g %g] (right edge may lean by %g)'%(name,key,l,b,r,t,*bar,FOCUS_LEAN))
+        for key in sorted(set(table)-seen): problems.append('%s: table row %s has no focus model in the built menu'%(name,key))
+    for name in sorted(set(rows)-set(names)): problems.append('table lists an unknown menu: '+name)
+    return problems
+
+
 LOBBIES = ('host', 'join')
 # Round 15 lobby inline copy. Error variants carry the cause (Copy vs Kick target); the toast's first line is the DATA name.
 LOBBY_ERROR_COPY = {'copy': 'Could not copy the code. Read it out instead.', 'target': 'Pick another player to kick. Not yourself.'}
