@@ -1352,35 +1352,27 @@ def _bar(rect, color=5, slant=5, alpha=None):
     return part
 
 
-def _error_variant(name, cause):
-    """lc_broker_err_<cause>: warn rule, diamond, the cause's one-line copy and, only where retrying can help, the Retry bar.
+# Where each screen's Retry control sits (the hit rectangle of the `retry` text item; it has no baked bar any more).
+RETRY_RECT = {'lc_code': (489, 395, 62, 18), 'lc_browse': (43, 424, 56, 16)}
+RETRY_DEFAULT = (527, 423, 62, 16)
 
-    The DLL shows exactly one cause scene and hides `retry` (a separate hit/focus item over the bar) for causes without a
-    bar, so a bar is never drawn for a button that is not there. The bar is a slanted amber shape like the native focus."""
-    retry_ok = cause in RETRYABLE_CAUSES
+
+def _error_node(name, cause):
+    """lc_broker_err_<cause>: ONE plain hidden text item with the cause's one-line copy (warn colour).
+
+    060q live: a hidden model scene (diamond + rule + panel + the copy as a baked texture part) never draws when the DLL
+    un-hides it - the model keeps the invisible stand-in the engine's loader gave a start-hidden MENU_ITEM_MODEL - so the
+    player saw only the diagnostic. Plain text items (the notices, the status lines) un-hide fine, so the copy is one."""
     warn = 5 if cause in AMBER_CAUSES else 7
     copy_ = ERROR_COPY[cause]
+    retry_ok = cause in RETRYABLE_CAUSES
     if name == 'lc_code':
-        rect = (81, 387, 478, 34)
-        parts = [dict(kind='rect', rect=(0, 0, 478, 2), color=warn), dict(kind='diamond', rect=(18, 13, 7, 6), color=warn),
-                 dict(text=copy_, rect=(30, 9, 350, 18), style='body', color=warn)]
-        if retry_ok: parts.append(_bar((408, 8, 62, 18)))
-        retry = (489, 395, 62, 18)
+        rect = (111, 396, 268, 18)
     elif name == 'lc_browse':
-        rect = (43, 424, 414, 16)
-        if retry_ok:
-            parts = [_bar((0, 0, 56, 16)), dict(kind='diamond', rect=(64, 5, 7, 6), color=warn),
-                     dict(text=copy_, rect=(78, 1, 295, 15), style='body', color=warn)]
-        else:
-            parts = [dict(kind='diamond', rect=(2, 5, 7, 6), color=warn), dict(text=copy_, rect=(16, 1, 357, 15), style='body', color=warn)]
-        retry = (43, 424, 56, 16)
+        rect = (121, 425, 247, 15) if retry_ok else (59, 425, 309, 15)
     else:
-        rect = (43, 421, 554, 20)
-        parts = [dict(kind='panel', rect=(0, 0, 554, 20), color=1), dict(kind='rect', rect=(0, 0, 3, 20), color=warn),
-                 dict(kind='diamond', rect=(12, 7, 7, 6), color=warn), dict(text=copy_, rect=(26, 3, 370, 15), style='body', color=warn)]
-        if retry_ok: parts.append(_bar((484, 2, 62, 16)))
-        retry = (527, 423, 62, 16)
-    return _variant('lc_broker_err_' + cause, rect, parts), retry
+        rect = (69, 424, 322, 16)
+    return _entry('lc_broker_err_' + cause, copy_, rect, 'body', warn, hidden=True), RETRY_RECT.get(name, RETRY_DEFAULT)
 
 
 def _row_scenes(items):
@@ -1429,11 +1421,11 @@ def broker_layout(name, screen):
     status={'lc_online':(48,424,420,16),'lc_host':(48,424,420,16),'lc_code':(111,397,370,18),'lc_browse':(108,425,346,14)}[name]
     offline={'lc_online':(48,408,546,14),'lc_host':(48,408,546,14),'lc_code':(81,424,478,14),'lc_browse':(196,137,258,14)}[name]
     colors={'lc_broker_empty':3,'lc_broker_stale':5,'lc_broker_room':6,'lc_broker_offline_room':7}
-    retry=None
+    retry=RETRY_RECT.get(name,RETRY_DEFAULT)
     for key in BROKER_SCREENS[name]:
         if key.startswith('lc_broker_err_'):
-            variant,retry=_error_variant(name,key[len('lc_broker_err_'):])
-            items.append(variant)
+            node,retry=_error_node(name,key[len('lc_broker_err_'):])
+            items.append(node)
             continue
         value=broker_copy(name,key)
         rect=offline if key=='lc_broker_offline_room' else status
@@ -1447,7 +1439,8 @@ def broker_layout(name, screen):
         items.append(_entry(key,value,rect,style,colors.get(key,3),hidden=True))
     # One Retry hit/focus item per screen over the bar the retryable cause scenes draw; the DLL hides it for the others.
     # Its label is the item's own text so it stays in front of the focus bar and takes the native highlight colours.
-    e=_entry('retry','RETRY',(retry[0]+13,retry[1]+(retry[3]-12)/2,retry[2]-14,12),'label',0,intent='retry')
+    # Default text colour: the item is drawn on the plain page (no baked bar behind it) and takes the native highlight on focus.
+    e=_entry('retry','RETRY',(retry[0]+13,retry[1]+(retry[3]-12)/2,retry[2]-14,12),'label',4,intent='retry')
     e['enabled']=False;e['hidden']=True;e['hit_rect']=retry;items.append(e)
     diag={'lc_code':(382,399,104,14),'lc_browse':(370,426,85,14)}.get(name,(393,425,128,14))
     items.append(_entry('broker_error','',diag,'label',7,data=True,align='right'))
@@ -1595,8 +1588,9 @@ def runtime_layout(name,state=None):
         if name=='lc_code' and e['intent'] in ('paste','clear'):
             # Native keyboard MENU_NEXT/OTHER labels are plain V/C by default;
             # here those keys type symbols. Never advertise them as tools.
-            e['text']=('PASTE' if e['name']=='paste' else 'Ctrl+V / Y Paste') if e['intent']=='paste' else (
-                'CLEAR' if e['name']=='clear' else 'Shift+Del / X Clear')
+            # The prompts are the keyboard form; the DLL rebinds desctext3 / desctext4 to "Y Paste" / "X Clear" while a pad is shown.
+            e['text']=('PASTE' if e['name']=='paste' else 'Ctrl+V Paste') if e['intent']=='paste' else (
+                'CLEAR' if e['name']=='clear' else 'Shift+Del Clear')
     for shape in screen['shapes']:
         if shape['kind']=='diamond' and shape['color']==6:shape['color']=3
         if name=='lc_code' and shape['rect'][1]==130 and shape['rect'][3]==54:
@@ -1697,7 +1691,8 @@ def broker_problems(root, screen):
     need('lc_service_ok',hide='true',type='MENU_ITEM_MODEL',neverfocus='true')
     for key in BROKER_SCREENS[name]:
         if key.startswith('lc_broker_err_'):
-            need(key,hide='true',type='MENU_ITEM_MODEL',neverfocus='true')
+            e=need(key,hide='true',type='MENU_ITEM_TEXT',neverfocus='true')
+            if e is not None and _plain(e.get('text'))!=ERROR_COPY[key[len('lc_broker_err_'):]]: errors.append('error copy differs: '+key)
             continue
         e=need(key,hide='true',type='MENU_ITEM_TEXT',neverfocus='true')
         if e is not None and _plain(e.get('text'))!=broker_copy(name,key): errors.append('broker copy differs: '+key)
@@ -1876,15 +1871,13 @@ def lobby_layout(role, *, members=1, ready=False, fixture=False, pending=False, 
         variant(key,value,(43,356,554,29),'row',7)
     # Round 15: a guest who left or was lost before the game started (named, six seconds, the party continues) and the
     # service-lost strip (healthy P2P continues; only new players cannot join). Both are inline: Host/Join stays open.
-    variant('lc_lobby_guest_left','',(43,356,554,33),'body',7,
-            parts=[dict(kind='panel',rect=(0,0,554,33),color=1),dict(kind='rect',rect=(0,0,3,33),color=7),
-                   dict(text=LOBBY_TOAST_COPY,rect=(12,17,530,14),style='body',color=3)])
-    text('lc_toast_name','',(55,358,300,14),'row',4,data=True)
-    items[-1]['plane']=-300
-    variant('lc_lobby_service_lost','',(43,427,554,22),'body',7,
-            parts=[dict(kind='panel',rect=(0,0,554,22),color=1),dict(kind='rect',rect=(0,0,3,22),color=7),
-                   dict(kind='diamond',rect=(12,8,7,6),color=7),
-                   dict(text=LOBBY_SERVICE_LOST_COPY,rect=(26,4,520,15),style='body',color=7)])
+    # 060q live: both were hidden model scenes (panel + baked copy) that never drew when un-hidden - the host saw only the
+    # bare name over the ready line - so each is plain text now (the kind the engine un-hides correctly): the departed
+    # guest's NAME (DLL data) with the copy on the line below it, and the service-lost line under the action bars. The DLL
+    # hides the ready summary while a toast shows (they share the row).
+    text('lc_lobby_guest_left',LOBBY_TOAST_COPY,(55,373,530,15),'body',3,hidden=True,plane=-300)
+    text('lc_toast_name','',(55,357,530,15),'row',5,data=True,plane=-300)
+    text('lc_lobby_service_lost',LOBBY_SERVICE_LOST_COPY,(69,431,520,15),'body',7,hidden=True,plane=-170)
     for key,label,rect,intent in (
         ('lc_leave_yes','Leave',(400,358,58,24),'leave-yes'),
         ('lc_leave_cancel','Cancel',(466,358,60,24),'dismiss'),
@@ -1939,7 +1932,6 @@ def lobby_layout(role, *, members=1, ready=False, fixture=False, pending=False, 
         if key in ('lc_code_copied','lc_leave_confirm','lc_lobby_error','lc_lobby_error_copy','lc_lobby_error_target'):
             value=e['text'];e.update(text='',plane=-280,parts=[dict(kind='panel',rect=(0,0,554,29),color=1),
                 child_text(value,(10,6,340 if key in ('lc_code_copied','lc_leave_confirm','lc_lobby_error') else 470,20),'row',e['color'])])
-        if key in ('lc_lobby_guest_left','lc_lobby_service_lost'): e['plane']=-280 if key=='lc_lobby_guest_left' else -170
     _graph(screen)
     # Only offline previews reflect a gate. Authored Start must be available for
     # the native activator/tick to own enabling, and must keep its original flags.

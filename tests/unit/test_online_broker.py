@@ -61,7 +61,9 @@ def test_status_and_error_variants_exist_hidden_with_exact_localized_copy():
         for key in O.BROKER_SCREENS[name]:
             assert items[key].get('hide') == 'true', (name, key)
             if key.startswith('lc_broker_err_'):
-                assert items[key].get('type') == 'MENU_ITEM_MODEL'
+                # 060q live: a hidden MENU_ITEM_MODEL never drew when un-hidden, so the cause copy is a plain text item
+                assert items[key].get('type') == 'MENU_ITEM_TEXT', (name, key)
+                assert re.sub(r'^~\d\d', '', items[key].get('text')) == O.ERROR_COPY[key[len('lc_broker_err_'):]]
                 continue
             assert re.sub(r'^~\d\d', '', items[key].get('text')) == O.broker_copy(name, key)
         assert not set(items) & (set(O.BROKER_VARIANTS) - set(O.BROKER_SCREENS[name]))
@@ -184,11 +186,13 @@ def test_variant_models_stay_inside_safe_bounds_and_do_not_overlap_unrelated_con
         assert not O.layout_problems(screen)
         raw = {e['name']: e for e in screen['items']}
         retry = raw['retry']['hit_rect']
+        diag = raw['broker_error']['rect']
         for cause in O.BROKER_CAUSES[name]:
-            variant = raw['lc_broker_err_' + cause]['rect']
-            if cause in O.RETRYABLE_CAUSES:
-                assert variant[0] <= retry[0] and retry[0] + retry[2] <= variant[0] + variant[2]
-                assert variant[1] <= retry[1] and retry[1] + retry[3] <= variant[1] + variant[3]
+            node = raw['lc_broker_err_' + cause]['rect']
+            # the cause copy never sits on the Retry control or the diagnostic that shares its row
+            if cause in O.RETRYABLE_CAUSES:  # the DLL hides Retry for every other cause, so only then does it share the row
+                assert node[0] + node[2] <= retry[0] or retry[0] + retry[2] <= node[0] or node[1] + node[3] <= retry[1] or retry[1] + retry[3] <= node[1], (name, cause)
+            assert node[0] + node[2] <= diag[0] + (14 if name == 'lc_code' else 0) or node[1] + node[3] <= diag[1] or diag[1] + diag[3] <= node[1], (name, cause)
     # the Browse retry/status band never reaches the page controls
     raw = {e['name']: e for e in O.runtime_layout('lc_browse')['items']}
     for cause in O.BROKER_CAUSES['lc_browse']:
@@ -239,14 +243,11 @@ def test_round_5b_cause_scenes_retry_bar_only_for_retryable_causes_and_exact_cop
             key = 'lc_broker_err_' + cause
             assert (key in items) == (cause in O.BROKER_CAUSES[name]), (name, key)
             if key not in items: continue
-            assert items[key].get('hide') == 'true' and items[key].get('type') == 'MENU_ITEM_MODEL'
-            texts = [p['text'] for p in raw[key]['parts'] if 'text' in p]
-            assert texts == [O.ERROR_COPY[cause]]
-            bars = [p for p in raw[key]['parts'] if p.get('kind') == 'bar']
-            assert bool(bars) == (cause in O.RETRYABLE_CAUSES), (name, cause)  # a bar is never drawn for a hidden button
-            if bars:
-                hit = raw['retry']['hit_rect']; x, y, _, _ = raw[key]['rect']; bx, by, bw, bh = bars[0]['rect']
-                assert (x + bx, y + by, bw, bh) == hit, (name, cause)  # the baked slanted bar IS the Retry rectangle
+            assert items[key].get('hide') == 'true' and items[key].get('type') == 'MENU_ITEM_TEXT'
+            assert not raw[key].get('parts') and raw[key]['text'] == O.ERROR_COPY[cause]  # one plain text item, no model scene
+            assert raw[key]['color'] == (5 if cause in O.AMBER_CAUSES else 7), (name, cause)
+            if cause in O.RETRYABLE_CAUSES:
+                assert raw['retry']['hit_rect'] == O.RETRY_RECT.get(name, O.RETRY_DEFAULT), name
     assert O.ERROR_COPY['code_not_found'].startswith('Code not found') and 'new code' in O.ERROR_COPY['room_full']
     assert 'same build' in O.ERROR_COPY['version_mismatch'] and 'LAN and IP' in O.ERROR_COPY['offline']
     assert O.ERROR_COPY['room_full'] != O.ERROR_COPY['generic'] and len(set(O.ERROR_COPY.values())) == len(O.ERROR_CAUSES)
@@ -304,13 +305,12 @@ def test_round_5b_every_cause_copy_fits_its_scene_text_box_without_ellipsis():
         screen = O.runtime_layout(name)
         for cause in O.BROKER_CAUSES[name]:
             scene = next(e for e in screen['items'] if e['name'] == 'lc_broker_err_' + cause)
-            part = next(p for p in scene['parts'] if 'text' in p)
-            w = sum(float(glyphs.get(ord(c), glyphs.get(63))['horizadvance']) for c in part['text']) * scale
-            assert w <= part['rect'][2] * .8, (name, cause, w)
+            w = sum(float(glyphs.get(ord(c), glyphs.get(63))['horizadvance']) for c in scene['text']) * scale
+            assert w <= scene['rect'][2] * .8, (name, cause, w)
             diag = next(e for e in screen['items'] if e['name'] == 'broker_error')['rect']
             sx, sy, _, _ = scene['rect']
             # the copy never reaches the right-aligned diagnostic field
-            assert sx + part['rect'][0] + w / .8 <= diag[0] + (4 if name == 'lc_code' else 0), (name, cause)
+            assert sx + w / .8 <= diag[0] + (4 if name == 'lc_code' else 0), (name, cause)
 
 
 def test_round_5b_scene_anchor_budget_and_ping_text_live_in_the_pip_scenes():

@@ -238,8 +238,8 @@ def test_supported_code_tool_instructions_are_not_ellipsized():
     screen=O.runtime_layout('lc_code')
     bounded=O.bound_layout(screen,F.metrics())
     instructions={e['name']:e['text'] for e in bounded['items']}
-    assert instructions['desctext3']=='Ctrl+V / Y Paste'
-    assert instructions['desctext4']=='Shift+Del / X Clear'
+    assert instructions['desctext3']=='Ctrl+V Paste'
+    assert instructions['desctext4']=='Shift+Del Clear'
 
 
 def test_code_background_does_not_freeze_edit_cursor_or_disabled_done():
