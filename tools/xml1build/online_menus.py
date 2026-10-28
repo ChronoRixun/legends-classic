@@ -27,6 +27,14 @@ ROW_COLUMNS = (0, 1, 2, 3, 6)
 # overwrites the vectors' bit masks and counts, and the next push writes to a wild address: the 060p Browse crash at
 # 0x587654 (241 anchors). Every authored menu scene is checked against this (scene_problems / anchor_count).
 ENGINE_SCENE_ANCHORS = 175
+# 060q (round 15 + fix A/B on one Browse page = 184 + 2 backdrop anchors): every focus bar of a screen listed here is
+# carried by ONE model item at the scene origin, its geometry authored at the owner's absolute position (the same bar,
+# pixel for pixel). Each focusable item sets the shared item's model on focus; there is no nofocus event for it, so the
+# result never depends on the order the engine fires a nofocus/focus pair (every focusable item of the screen owns a
+# focus model for it). Saves (focus anchors - 1) per screen.
+SHARED_FOCUS_SCREENS = ('lc_browse',)
+SHARED_FOCUS = 'lc_focus'
+SHARED_FOCUS_ORIGIN = (0, -150, 384)
 # Rows per Browse page (the DLL's online_menus_rules::browse_rows is the same number). Seven approved rows need 241
 # anchors; five fit (171) until the engine's per-scene anchor tables are raised. Row commands 24..30 stay reserved.
 BROWSE_ROWS = 5
@@ -442,12 +450,11 @@ def menu_tree(screen, palette_ids=None):
                 if d in e: attrs[d]=e[d]
         item=ET.SubElement(root,'item',attrs)
         if e['intent'] and (e['enabled'] or screen.get('runtime')):
-            target,owner=focus_target(screen,e)
-            rect,outline=focus_spec(screen,owner)
+            target,owner,rect,outline,_=focus_placement(screen,e)
             if root.find(f"item[@name='{target}']") is None:
                 ET.SubElement(root,'item',name=target,type='MENU_ITEM_MODEL',model='ui/models/model_hide',neverfocus='true',animate='true')
             ET.SubElement(item,'onfocus',item=target,type='focus',model=focus_resource(rect,outline,focus_variant(screen,owner)),loop='1')
-            ET.SubElement(item,'onfocus',item=target,type='nofocus',model='ui/models/model_hide')
+            if target!=SHARED_FOCUS: ET.SubElement(item,'onfocus',item=target,type='nofocus',model='ui/models/model_hide')
     return root
 
 
@@ -622,8 +629,25 @@ def scene_layout(screen):
     for e in screen['items']:
         if e['intent'] and (e['enabled'] or screen.get('runtime')):
             target,owner=focus_target(screen,e)
-            layouts[target]=layouts[owner['name']]
+            layouts[target]=(SHARED_FOCUS_ORIGIN,(0,-1,1,0)) if target==SHARED_FOCUS else layouts[owner['name']]
     return layouts
+
+
+def _anchor(item):
+    x,y,w,_=item['rect']
+    return ((x+(w/2 if item.get('align')=='center' else 0))*.8,item.get('plane',-150),(480-y)*.8)
+
+
+def focus_placement(screen,item):
+    """(target, owner, model rect, outline, owner-relative rect). On a SHARED_FOCUS_SCREENS screen the model rect is
+    the owner-relative focus rect moved into the shared origin's frame (same plane, the same bar on screen)."""
+    target,owner=focus_target(screen,item)
+    rect,outline=focus_spec(screen,owner)
+    if target!=SHARED_FOCUS: return target,owner,rect,outline,rect
+    (ax,ay,az),(sx,sy,sz)=_anchor(owner),SHARED_FOCUS_ORIGIN
+    if ay!=sy: raise ValueError(f"{screen['name']}: {owner['name']} focus plane {ay} differs from the shared focus plane {sy}")
+    l,b,r,t=rect;dx,dz=ax-sx,az-sz
+    return target,owner,(round(l+dx,4),round(b+dz,4),round(r+dx,4),round(t+dz,4)),outline,rect
 
 
 def texture(template, picture, namespace='lc_o_fixture'):
@@ -702,11 +726,10 @@ def write(ctx, *, preview=False):
                 rect=(0,-e['rect'][3]*.8,e['rect'][2]*.8,0)
                 focus_models[variant_resource(screen,e)]=focus_model(focus_source.read_bytes(),rect,True,variant_picture(e))
             if e['intent'] and (e['enabled'] or screen.get('runtime')):
-                _,owner=focus_target(screen,e)
-                rect,outline=focus_spec(screen,owner)
+                _,owner,rect,outline,relative=focus_placement(screen,e)
                 resource=focus_resource(rect,outline,focus_variant(screen,owner))
                 if resource not in focus_models:
-                    picture=focus_picture(screen,owner,rect) if outline else None
+                    picture=focus_picture(screen,owner,relative) if outline else None
                     focus_models[resource]=focus_model(focus_source.read_bytes(),rect,outline,picture)
         extra={e.get('name'):(((-1000,-150,-1000)),(0,-1,1,0)) for e in tree.findall('item')
                if e.get('name') not in layouts}
@@ -917,11 +940,12 @@ def focus_spec(screen,item):
 
 
 def focus_target(screen, item):
-    """(focus anchor item name, entry that sizes the focus model). The cells of one Browse row share room_<r>_focus."""
+    """(focus anchor item name, entry that sizes the focus model). The cells of one Browse row share one owner (cell 0)
+    and, on a SHARED_FOCUS_SCREENS screen, every focusable item shares the one SHARED_FOCUS model item."""
     m=re.fullmatch(r'room_(\d)_(\d)',item['name']) if screen['name']=='lc_browse' else None
-    if m:
-        owner=next((e for e in screen['items'] if e['name']=='room_'+m.group(1)+'_0'),item)
-        return 'room_'+m.group(1)+'_focus',owner
+    owner=next((e for e in screen['items'] if e['name']=='room_'+m.group(1)+'_0'),item) if m else item
+    if screen['name'] in SHARED_FOCUS_SCREENS: return SHARED_FOCUS,owner  # one model item for every bar (060q)
+    if m: return 'room_'+m.group(1)+'_focus',owner
     return item['name']+'_focus',item
 
 
@@ -1076,7 +1100,11 @@ HOST_LEFT_COPY = {'title': 'THE HOST LEFT',
 # Raised only on the Hub (name entry) or Join by code (paste / symbols / the offline fixture lookup); the DLL's
 # show_notice falls back to lc_inline_error on a screen without the node, so Browse does not spend anchors on them.
 BROWSE_UNREACHABLE_NOTICES = ('lc_notice_paste_invalid', 'lc_notice_code_invalid', 'lc_notice_name_invalid',
-                              'lc_notice_profile_save', 'lc_notice_name_open', 'lc_notice_resolving', 'lc_notice_fixture')
+                              'lc_notice_profile_save', 'lc_notice_name_open', 'lc_notice_resolving', 'lc_notice_fixture',
+                              # 060q: the clipboard is only read by Join by code's paste (code_input); unavailable comes
+                              # from intent::unavailable (no Browse item carries it) or the Code screen's offline lookup.
+                              # Every screen change clears the notice (tick_impl: destination -> error_visible=false).
+                              'lc_notice_clipboard', 'lc_notice_unavailable')
 NOTICE_TEXT = {
     'lc_inline_error': 'This action could not be completed. No room was joined.',
     'lc_notice_unavailable': 'Unavailable in this preview. Use Other ways to play.',
@@ -1638,6 +1666,9 @@ def broker_problems(root, screen):
         need('lc_hostleft_back',usecmd=command(8),enabled='false',hide='true',type='MENU_ITEM_TEXT')
     elif 'lc_hub_host_left' in items: errors.append('the host-left panel belongs to the Hub')
     for key in NOTICE_TEXT:
+        if name=='lc_browse' and key in BROWSE_UNREACHABLE_NOTICES:
+            if key in items: errors.append('unreachable notice authored on Browse: '+key)
+            continue
         if key.startswith('lc_notice_') and key not in items: errors.append('missing notice: '+key)
     need('lc_refusal_rules',clamp='true')
     if name in ('lc_host','lc_code','lc_browse'): need('self_state',clamp='true')

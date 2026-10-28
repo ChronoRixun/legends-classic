@@ -374,7 +374,12 @@ def test_every_authored_menu_scene_fits_the_engine_anchor_capacity():
         layouts=O.scene_layout(screen)
         assert len(layouts)<=O.ENGINE_SCENE_ANCHORS, (name, len(layouts))
         S.author_anchors(anchor_fixture(),'template',layouts)
-    assert len(O.scene_layout(O.runtime_layout('lc_browse')))<=O.ENGINE_SCENE_ANCHORS-4  # headroom
+    # 060q: round 15's notices / cause scenes and fix B's two backdrop models (also anchors, author_scene) on one page:
+    # Browse fits only because its focus bars share one model item; it keeps at least one anchor of headroom.
+    browse=len(O.scene_layout(O.runtime_layout('lc_browse')))+len(O.backdrop_layouts())
+    assert browse<=O.ENGINE_SCENE_ANCHORS-1, browse
+    for name in O.MENUS:
+        assert len(O.scene_layout(O.bound_layout(O.runtime_layout(name),F.metrics())))+len(O.backdrop_layouts())<=O.ENGINE_SCENE_ANCHORS, name
     # Seven Browse rows (the approved design) exceed it: authoring refuses the scene instead of shipping a crash.
     old=O.BROWSE_ROWS
     try:
@@ -426,3 +431,29 @@ def test_backdrop_field_continues_the_composition_gradient():
     for y in (0,128,255):
         edge=art.getpixel((0,y*4)); fill=field.getpixel((0,y))[:3]
         assert max(abs(a-b) for a,b in zip(edge,fill))<=3
+
+
+def test_browse_focus_bars_share_one_model_item_at_the_same_screen_position():
+    """060q: every Browse focus bar is one model item at the scene origin; each bar's geometry is its owner's own
+    focus rect moved by the owner's anchor, so it lands where the per-item anchor put it (pixel for pixel)."""
+    from xml1build import online_fonts as F
+    screen=O.bound_layout(O.runtime_layout('lc_browse'),F.metrics())
+    root=O.menu_tree(screen);layouts=O.scene_layout(screen)
+    assert layouts[O.SHARED_FOCUS][0]==O.SHARED_FOCUS_ORIGIN
+    assert [e.get('name') for e in root.findall('item')].count(O.SHARED_FOCUS)==1
+    assert [n for n in layouts if n.endswith('_focus')]==[O.SHARED_FOCUS]
+    sx,sy,sz=O.SHARED_FOCUS_ORIGIN;checked=0
+    for e in screen['items']:
+        if not (e['intent'] and (e['enabled'] or screen.get('runtime'))): continue
+        target,owner,rect,outline,relative=O.focus_placement(screen,e)
+        assert target==O.SHARED_FOCUS
+        ax,ay,az=O._anchor(owner);assert ay==sy
+        assert all(abs(m-(r+o))<1e-3 for m,r,o in zip(rect,relative,(ax-sx,az-sz,ax-sx,az-sz)))
+        item=next(i for i in root.findall('item') if i.get('name')==e['name'])
+        assert [(f.get('item'),f.get('type'),f.get('model')) for f in item.findall('onfocus')]==[(O.SHARED_FOCUS,'focus',O.focus_resource(rect,outline,O.focus_variant(screen,owner)))]
+        checked+=1
+    assert checked>=11
+    # the other screens keep their own per-item focus anchors and nofocus events
+    hub=O.menu_tree(O.bound_layout(O.runtime_layout('lc_online'),F.metrics()))
+    assert O.SHARED_FOCUS not in {i.get('name') for i in hub.findall('item')}
+    assert any(f.get('type')=='nofocus' for i in hub.findall('item') for f in i.findall('onfocus'))

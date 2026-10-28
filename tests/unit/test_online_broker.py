@@ -91,7 +91,8 @@ def test_retry_is_visible_disabled_and_diagnostic_error_is_data_only():
         assert diag.get('neverfocus') == 'true'
         # retry keeps closed focus links and its own focus resource even while disabled
         assert all(retry.get(d) in items for d in ('left', 'right', 'up', 'down'))
-        assert any(e.get('item') == 'retry_focus' for e in retry.findall('onfocus'))
+        focus = O.SHARED_FOCUS if name in O.SHARED_FOCUS_SCREENS else 'retry_focus'  # 060q: Browse shares one focus model item
+        assert any(e.get('item') == focus and e.get('type') == 'focus' for e in retry.findall('onfocus'))
         raw = next(e for e in screen['items'] if e['name'] == 'retry')
         hit = raw['hit_rect']
         assert hit[2] >= 56 and hit[3] >= 15 and not O.layout_problems(screen)
@@ -111,10 +112,10 @@ def test_browse_rows_exist_for_an_empty_list_with_row_commands_and_closed_grid()
             assert e.get('left') == f'room_{r}_{O.ROW_COLUMNS[max(0, ci - 1)]}' and e.get('right') == f'room_{r}_{O.ROW_COLUMNS[min(4, ci + 1)]}'
             assert e.get('up') == (f'room_{r - 1}_{c}' if r else 'prompt_refresh')
             assert e.get('down') == (f'room_{r + 1}_{c}' if r < O.BROWSE_ROWS - 1 else 'scroll')
-            # mouse/focus rectangle kept while disabled; the five cells of a row share one focus anchor (engine budget)
-            assert any(f.get('item') == f'room_{r}_focus' and f.get('type') == 'focus' for f in e.findall('onfocus'))
-            assert f'room_{r}_{c}_focus' not in items
-        assert items[f'room_{r}_focus'].get('type') == 'MENU_ITEM_MODEL'
+            # mouse/focus rectangle kept while disabled; every Browse focus bar is carried by the one shared model item
+            # (engine budget, 060q), set on focus and never cleared by a nofocus event (order independent)
+            assert [(f.get('item'), f.get('type')) for f in e.findall('onfocus')] == [(O.SHARED_FOCUS, 'focus')]
+            assert f'room_{r}_{c}_focus' not in items and f'room_{r}_focus' not in items
         models = {f.get('model') for c in O.ROW_COLUMNS for f in items[f'room_{r}_{c}'].findall('onfocus') if f.get('type') == 'focus'}
         assert len(models) == 1, models  # one row-wide focus bar, whichever cell has focus
     raw = {e['name']: e for e in screen['items']}

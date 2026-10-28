@@ -92,6 +92,9 @@ def test_native_failure_notices_cover_every_step_and_the_refusal_names_its_rules
     for name in O.MENUS:
         screen, root, items = tree(name)
         for key in want:
+            if name == 'lc_browse' and key in O.BROWSE_UNREACHABLE_NOTICES:
+                assert key not in items  # 060q: Browse never reads the clipboard; the DLL falls back to lc_inline_error
+                continue
             assert items[key].get('hide') == 'true' and items[key].get('type') == 'MENU_ITEM_TEXT', (name, key)
             assert O._plain(items[key].get('text')) == O.NOTICE_TEXT[key]
         rules = items['lc_refusal_rules']
