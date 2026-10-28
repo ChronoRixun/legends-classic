@@ -25,10 +25,17 @@ after the existing 24; 71 of 75 palette entries are occupied. Titles are sampled
 from a 96-pixel face and other roles from 64-pixel faces for sharper output.
 
 Round colored face buttons and outlined keyboard keycaps are private glyphs.
-Their metrics compensate for widescreen horizontal stretching so the circles
-are round at 16:9. The DLL's existing actual-binding/device selection chooses
+Text items draw glyphs in back-buffer pixels (the classic fonts are the same
+pixel size at 720p and 1080p) and are never stretched at 16:9. The face
+button cells keep their 3:4 width (they were sized for a stretch that does not
+happen; a square cell overflows the label atlas - open item). The style `textscale` is authored in 512 x 384 view
+units; XML2 Fix (`lc-fonts-screen/1`) multiplies it by the screen height / 384
+at draw time, so the family keeps its design size at every resolution (live
+060p: without that factor 15-unit rows were 8.6 px tall at 720p and 1080p). The DLL's existing actual-binding/device selection chooses
 glyphs during private text rendering; stored `$MENU_*` tokens remain unchanged.
-The 4:3 view intentionally inherits the engine's horizontal aspect behavior.
+The view itself is the engine's: 384 units tall and aspect x 384 wide, centred
+on the 512-wide composition, so 16:9 shows the composition at its true shape
+with the backdrop field filling the sides.
 
 Frontend validation checks private maps, all 256 ordered metric records, paired
 resources, style scales, and the shipped OFL license. The generated metric table

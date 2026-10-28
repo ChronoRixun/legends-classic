@@ -146,7 +146,10 @@ def theme(colors, styles):
         attrs=T.text_style('lc_o_'+alias,font='lc_'+role,normal=4,focus=0,disabled=3)
         attrs['textscale']=format(scale,'.9g');requests.append(attrs)
     # All eight entries are part of this family, including model/status colours.
-    for attrs, pair in zip(requests,((4,3),(5,3),(6,7),(2,1))):
+    # The engine blends a focused item between color_focus and color_highlight; the live round showed
+    # focused rows as the 50% mix of navy and amber on the amber bar. Rows keep a steady navy; amber stays
+    # allocated through the never-focused title style (the ~ text prefixes need all eight entries).
+    for attrs, pair in zip(requests,((5,3),(0,3),(6,7),(2,1))):
         attrs['color_highlight'],attrs['color_disabled']=pair
     result=T.allocate(colors,styles,original,requests,color_reserve=4,style_reserve=1)
     if len(result[0])>T.COLOR_LIMIT or len(result[1])>T.STYLE_LIMIT:
@@ -693,6 +696,8 @@ def write(ctx, *, preview=False):
         else:data=author_scene(source,screen)
         problems+=scene_problems(screen,data)
         if problems: raise ValueError('; '.join(problems))
+        focus_models.update(backdrop_models(focus_source.read_bytes(),screen))
+        add_backdrop(tree,screen['name'])
         pending.append((name,tree,data,texture(atlas.read_bytes(),render(screen,text=False,focus=False),name)))
     font_details=OF.write(ctx,atlas.read_bytes())
     probe=font_probe(ctx)
@@ -734,11 +739,58 @@ def party_rail(pda_halves):
     return rail
 
 
+# Live 060p: the four lc_ menus have no `type`, so the engine builds the base CMenu (vtable 0x69e41c,
+# init 0x5af7b0), which never reads the menu `image` (only the derived init 0x5bb990 sets the manager's
+# background sprite): black screen, text only. The lobby skins (HOST_MENU / JOIN_MENU) did get the sprite,
+# but pinned to the 512 x 384 rect (pillarbox at 16:9) and upside down (texture() keeps top-down rows).
+# Every screen now draws its art as two scene models instead, the path the Host segment pictures already
+# proved in game: a full-height field wide enough for 2.5:1 (the hor+ view is aspect*384 wide, centred on
+# 512) behind the 4:3 composition, both behind every focus bar (depth 40) and scene (planes -150/-170).
+BACKDROP_ITEMS = ('lc_o_field', 'lc_o_backdrop')
+BACKDROP_ANCHOR = (0, -150, 384)
+BACKDROP_RECT = (0, -384, 512, 0)
+FIELD_RECT = (-448, -384, 960, 0)
+BACKDROP_DEPTH, FIELD_DEPTH = 120, 140
+
+
+def backdrop_resource(name):
+    return 'ui/models/lc_o_backdrop_'+name
+
+
+def field_picture():
+    """The composition's own vertical gradient (render()), one column: the field matches its rows."""
+    from PIL import Image
+    top=bytes.fromhex(PALETTE[1]); bottom=bytes.fromhex(PALETTE[0])
+    column=Image.new('RGBA',(4,256))
+    for y in range(256):
+        a=(1-y/256)*.75
+        column.paste(tuple(round(a*t+(1-a)*b) for t,b in zip(top,bottom))+(255,),(0,y,4,y+1))
+    return column
+
+
+def backdrop_models(focus_source, screen):
+    art=render(screen,size=(1024,1024),text=False,focus=False).convert('RGBA')
+    return {backdrop_resource(screen['name']):focus_model(focus_source,BACKDROP_RECT,True,art,depth=BACKDROP_DEPTH,slant=0),
+            'ui/models/lc_o_field':focus_model(focus_source,FIELD_RECT,True,field_picture(),depth=FIELD_DEPTH,slant=0)}
+
+
+def add_backdrop(tree, name):
+    """First items of the tree (drawn first, deepest); the menu sprite is emptied (image="")."""
+    tree.set('image','')
+    for index,(item,model) in enumerate((('lc_o_field','ui/models/lc_o_field'),('lc_o_backdrop',backdrop_resource(name)))):
+        tree.insert(index,ET.Element('item',name=item,type='MENU_ITEM_MODEL',model=model,neverfocus='true'))
+    return tree
+
+
+def backdrop_layouts():
+    return {name:(BACKDROP_ANCHOR,(0,-1,1,0)) for name in BACKDROP_ITEMS}
+
+
 def author_scene(source,screen,extra=None):
     """Author description aliases without colliding with retired source objects."""
     from . import menu_scene as S, igb_file as G
     existing={o.get(2) for o in G.IgbFile(source).objects_of('igTransform')}
-    layouts={**(extra or {}),**scene_layout(screen)}
+    layouts={**backdrop_layouts(),**(extra or {}),**scene_layout(screen)}
     retired={name:'lc_o_source_'+name for name in layouts if name in existing and name!='button1'}
     if retired: source,_=M.rename_aliases(source,retired)
     return S.author_anchors(source,'button1',layouts)
@@ -749,15 +801,20 @@ def focus_resource(rect, outline=False, variant=''):
     return 'ui/models/lc_o_focus_'+('outline_' if outline else '')+'_'.join(str(round(v*10)) for v in rect)+variant
 
 
-def focus_model(source, rect, outline=False, picture=None):
-    """Fit owned flat topology to an original solid amber slanted focus bar."""
+def focus_model(source, rect, outline=False, picture=None, depth=40, slant=None):
+    """Fit owned flat topology to an original solid amber slanted focus bar.
+
+    Live 060p: the engine draws these unlit models from their texture and ignores the vertex colour
+    stream, so a solid bar's colour must be its 1x1 texel (it rendered white with an amber vertex colour).
+    """
     import struct
     from . import igb_file as G, menu_scene as S
     data,_=M.fit_flat_panel(source,rect,border=1,opaque=True)
     g=G.IgbFile(data); blocks={}
+    solid=bytes.fromhex(PALETTE[5])+b'\xff'
     for o in g.objects_of('igImage'):
         image=picture.convert('RGBA') if picture is not None else None
-        blob=image.tobytes() if image is not None else b'\xff'*4
+        blob=image.tobytes() if image is not None else solid
         width,height=image.size if image is not None else (1,1)
         for slot,value in {2:width,3:height,6:100,7:8,8:8,9:8,10:8,11:7,12:len(blob),19:width*4,20:0}.items():
             if slot in o.fields: struct.pack_into('<i',g.buf,o.fields[slot].offset,value)
@@ -767,9 +824,10 @@ def focus_model(source, rect, outline=False, picture=None):
             if slot in o.fields: g.set_floats(o,slot,(1,1,1,1))
     for o in g.objects_of('igVertexArray1_1'):
         refs=g.ref_list(o.get(2)); vertices=g.block_floats(refs[0]); l,b,r,t=rect
+        lean=(0 if outline or r-l<50 else 4) if slant is None else slant
         for i in range(0,len(vertices),3):
-            vertices[i]+=(0 if outline or r-l<50 else 4)*(vertices[i+2]-b)/(t-b)
-            vertices[i+1]=40  # relative to the anchor; behind text, in front of field
+            vertices[i]+=lean*(vertices[i+2]-b)/(t-b)
+            vertices[i+1]=depth  # relative to the anchor; 40 = behind text, in front of the backdrop
         g.set_block_floats(refs[0],vertices)
         if picture is not None:
             if len(refs)<=11 or refs[11] not in g.blocks: raise G.IgbError('focus image needs UV stream')
@@ -777,13 +835,13 @@ def focus_model(source, rect, outline=False, picture=None):
             for i in range(0,len(vertices),3): uv.extend(((vertices[i]-l)/(r-l),(t-vertices[i+2])/(t-b)))
             g.set_block_floats(refs[11],uv)
         if len(refs)>2 and refs[2] in g.blocks:
-            color=2 if outline and min(vertices[2::3])>b+.1 and max(vertices[2::3])<t-.1 else 5
-            blocks[refs[2]]=(b'\xff'*4 if picture is not None else bytes.fromhex(PALETTE[color]+'FF'))*o.get(3)
+            # White vertices: the texel (solid amber or the picture) is the colour on screen.
+            blocks[refs[2]]=b'\xff'*4*o.get(3)
     for o in g.objects_of('igAABox'):
         l,b,r,t=rect
-        g.set_floats(o,2,(l,40,b));g.set_floats(o,3,(r+4,40,t))
+        g.set_floats(o,2,(l,depth,b));g.set_floats(o,3,(r+4,depth,t))
     import hashlib
-    image_name='lc_o_focus_'+hashlib.sha256(picture.tobytes()).hexdigest()[:12] if picture is not None else 'lc_o_focus_white'
+    image_name='lc_o_focus_'+hashlib.sha256(picture.tobytes()).hexdigest()[:12] if picture is not None else 'lc_o_focus_amber'
     return namespace_images(S.static_model(g.rebuilt(blocks)),image_name)
 
 
@@ -932,7 +990,10 @@ DLL_PROBES = (b'lc-online-menus/1\n', b'lc-online-input/1', b'lc-online-lobby/1'
               b'lcOnlineIntent\0', 'Online\0'.encode('utf-16le'),
               'Menus\0'.encode('utf-16le'), 'LegendsClassicFonts\0'.encode('utf-16le'),
               b'ui/fonts/lc_fonts_pc.xmlb\0', b'ui/fonts/lc_fonts_hd.xmlb\0',
-              b'lc_title\0', b'lc_row\0', b'lc_body\0', b'lc_label\0')
+              b'lc_title\0', b'lc_row\0', b'lc_body\0', b'lc_label\0',
+              # Live 060p fixes: glyph scale per screen pixel (textscale is in 512 x 384 view units) and the
+              # Menus=1 + LegendsClassicFonts=0 fallback to the native Play Online menus.
+              b'lc-fonts-screen/1', b'LegendsClassicFonts is not active')
 CAPABILITY = b'lc-online-menus/1\n'
 LOBBIES = ('host', 'join')
 NOTICE_TEXT = {

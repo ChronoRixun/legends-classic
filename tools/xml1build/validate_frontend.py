@@ -1383,6 +1383,11 @@ def v_online_menus(v, ck):
         else: screen=O.bound_layout(O.runtime_layout(name) if name in O.MENUS else O.lobby_layout(name),O.native_metrics(v.ctx))
         native=v.ctx.read_base_xmlb('UI/menus/'+name+'.engb') if name in O.LOBBIES else None
         expected=O.menu_tree(screen,ids) if name in (*O.MENUS,O.PARTY_MENU) else O.lobby_tree(native,screen,ids)
+        # Live 060p: the art is drawn as the first two scene models (the menu sprite never drew on the base
+        # CMenu and was flipped/pillarboxed on the lobbies); both model files must ship.
+        O.add_backdrop(expected,screen['name'])
+        for model in ('ui/models/lc_o_field',O.backdrop_resource(screen['name'])):
+            if v.read(model+'.IGB') is None: ck.error(name+': backdrop model missing: '+model)
         data=v.read('UI/menus/'+expected.get('igb')+'.IGB')
         for suffix in ('.XMLB','.engb'):
             root=v.tree('UI/menus/'+name+suffix)
