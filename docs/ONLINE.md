@@ -113,3 +113,40 @@ These are the English Online-panel messages, including input checks, disabled co
 | The online game has ended. / The game was closed. | The run has finished. Start Host or Join again for another run. This message alone does not diagnose a crash. |
 
 When reporting a problem, include the exact message, the step that failed, everyone's game/fix versions, whether anyone used a hotspot, and each affected PC's `xml2-fix.log` and `online-status.json`. Copy them before the next launch. Review copies for private details before sharing; do not attach game files, saves, disc images or online identity keys.
+
+## In-game messages (Play Online menus)
+
+The in-game Play Online screens name the cause and the next step of every failure, one message at a time, on the screen
+you are on. Host and Join stay open; nothing here restarts the game. **Retry** appears only where trying the same thing
+again can help, and waits (with a countdown in the corner of the message) for the online service's request spacing.
+The small grey text beside a message is a redacted diagnostic (`join: room_full`): it never contains codes, addresses or
+service text, so it is safe to quote in a report.
+
+| Message | Cause | What to do |
+|---|---|---|
+| Code not found. Ask the host for the current code. | The service has no open room for that code. | Edit the code or ask the host; Back leaves the screen. |
+| That room closed. Ask the host for a new code. | The room closed before you got in. | Ask the host to host again; Edit the code. |
+| That game is full. Try another game or ask for a new code. | All four places are taken. | Browse another game. |
+| Not taking players right now. Try again soon. | The room exists but is loading or has drop-in off. | Retry (spaced by the service limit) or Browse. |
+| Different game version. Update to the same build. | The host's build differs; the grey line names both builds (`LC36 vs your LC37`). | Update together, then try again. |
+| Too many requests. Wait a few seconds, then retry. | The service limit; the grey line counts down. | Wait; Retry and Refresh stay off until it ends. |
+| The online service did not answer. Try again. | A timeout. | Retry. |
+| Can't reach the service. Retry; LAN and IP still work. | No connection to the service. A running game is not affected. | Retry, or use Other ways to play. |
+| The online service refused this game. Update the game. | The service rejected this build or its sign-in. | Update the game and launcher. |
+| Online service not verified. Check its setting or update. | The service's certificate is not the one this build trusts. | Update; check for connection interception. There is no bypass. |
+| TestMode is on, so online play is off. Turn it off. | `[TestMode]` blocks online play. | Turn TestMode off and restart through Host/Join. |
+| Online needs a complete install. Use Other ways to play. | A required install guard failed (rooms, save format, native lists). | Verify Files; or play by LAN/IP. |
+| The network link is busy. Try again in a moment. | The previous connection is still closing. | Retry. |
+| Room name must be 1-32 plain characters. Go Back. | The room name has characters the service does not accept. | Shorten it; no `;` or `"`. |
+| Online service request failed. Retry or go Back. | Anything else (the diagnostic names the operation). | Retry; report the diagnostic if it repeats. |
+| Could not find the host's game. Go Back and try again. | The host's game did not answer the lobby search. | Go Back and join again. |
+| The host's game refused you. Check build and settings. / Refused. Settings possibly differ: {rules} | The host's game refused admission. The rule names are possibly (they share summary buckets). | Match builds and settings, then join again. |
+| Took too long to connect. Go Back and try again. | A native step timed out. | Go Back and join again. |
+| Lost the online service during setup. Try again. | The service dropped while the lobby was being set up. | Try again. |
+| Game setup or admission failed. Go Back and try again. | Any other native setup step failed. | Go Back and try again. |
+| Could not read the clipboard. Type the code instead. / Paste needs eight symbols. | The clipboard was unreadable / holds no code. | Type the code; a valid typed code is never erased. |
+| {Name} left or lost connection. The party continues; they can rejoin with the code. | A guest left the lobby (six seconds, then it clears). | Nothing; the code still works. |
+| Online service lost. Players here stay connected; new players cannot join. | The service dropped while your room was open. | Keep playing; host again later for a new code. |
+| THE HOST LEFT: Host again to continue from a save on this PC. | You were a guest and your connection to the host ended. The 0.6 game ends; there is no takeover. | **Host again** opens Host setup (choose a new or saved campaign); **Back to Online** closes the panel. |
+
+Loading a different save in the middle of a session arrives in a later beta; until then, host again and choose the save in Host setup.
