@@ -43,7 +43,7 @@ def test_party_commands_are_the_exact_manifest_and_the_rail_uses_the_native_rout
     for key, route in NATIVE_RAIL.items():
         if key != 'lc_rail_quit':          # QUIT GAME is the Leave confirmation (66), not the unconfirmed native quit
             assert items[key].get('usecmd') == route, key
-    assert items['lc_rail_codex'].get('usecmd') == 'runscript codexMenu(0)'
+    assert items['lc_rail_codex'].get('usecmd') == 'openmenu codex'  # codexMenu refuses while a menu is open (0x5d5170)
     assert items['lc_rail_party'].get('usecmd') == '' and items['lc_rail_party'].get('neverfocus') == 'false'
     assert items['lc_rail_party'].get('startactive') == 'true'
     scripted = {k for k, e in items.items() if (e.get('usecmd') or '').startswith('runscript lcOnlineIntent(')}

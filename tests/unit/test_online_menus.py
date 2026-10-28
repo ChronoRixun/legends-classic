@@ -530,3 +530,110 @@ def test_kicked_guest_notice_is_a_plain_hub_notice_within_the_anchor_budget():
     assert 'lc_notice_removed' not in {e['name'] for e in browse['items']}
     for name in O.MENUS:
         assert len(O.scene_layout(O.bound_layout(O.runtime_layout(name),F.metrics())))+len(O.backdrop_layouts())<=O.ENGINE_SCENE_ANCHORS, name
+
+
+def test_hidden_authored_model_scenes_are_listed_for_the_dll():
+    """0.6 preview fix H (060q live failures 5 / 6): XMen2.exe drops the model name of a MENU_ITEM_MODEL authored `hide`
+    (0x5bc7a0 sets the bit before 0x5c5080 reads the model; hidden, 0x5c4c50 loads m_invis and releases the name), so the
+    DLL could never show a card frame, badge, READY / build scene, Leave panel or the PUBLIC pair. Every such item of the
+    built trees is listed with its own model; visible-authored models and text items are not."""
+    from xml1build import online_fonts as F, online_party as PT
+    trees={name:O.menu_tree(O.runtime_layout(name)) for name in O.MENUS}
+    trees[O.PARTY_MENU]=O.menu_tree(O.bound_layout(PT.party_layout('host'),F.metrics()))
+    data=O.model_table(trees)
+    assert data.startswith(b'lc-online-models/1\n') and data.endswith(b'\n') and b'\r' not in data
+    rows={tuple(l.split(' ')[:2]):l.split(' ')[2] for l in data.decode('ascii').splitlines()[1:]}
+    assert len(rows)==len(data.decode('ascii').splitlines())-1
+    host=trees['lc_host']
+    for key in ('lc_host_public','lc_host_settings_unknown','lc_host_drop_on','lc_host_drop_off','lc_host_drop_unknown'):
+        item=host.find(f"item[@name='{key}']")
+        assert item.get('type')=='MENU_ITEM_MODEL' and item.get('hide')=='true'
+        assert rows[('lc_host',key)]==item.get('model')
+    assert ('lc_host','lc_host_private') not in rows          # authored visible: the engine keeps its name
+    assert ('lc_host','lc_host_new') not in rows               # a text item: its setHidden is the bit only
+    for name,tree in trees.items():
+        for e in tree.findall('item'):
+            if e.get('type')=='MENU_ITEM_MODEL' and 'hide' in e.attrib: assert rows[(name,e.get('name'))]==e.get('model')
+    # Browse rows share one model per kind across anchors: each row's item still has its own line.
+    assert rows[('lc_browse','lc_row0_st_lobby')]==rows[('lc_browse','lc_row4_st_lobby')]
+    bad=ET.Element('menu');ET.SubElement(bad,'item',name='x y',type='MENU_ITEM_MODEL',model='ui/models/a',hide='true')
+    raises(ValueError,lambda:O.model_table({'lc_host':bad}))
+    raises(ValueError,lambda:O.model_table({'lc_host':ET.Element('menu')}))
+
+
+def test_hidden_model_table_is_written_checked_and_required_from_the_dll():
+    import inspect
+    assert O.MODELS_FILE=='Data/lc_online_models.txt' and b'lc-online-models/1' in O.DLL_PROBES
+    assert 'model_table(' in inspect.getsource(O.write) and 'MODELS_FILE' in inspect.getsource(O.write)
+    assert 'model_output_problems' in inspect.getsource(O.output_problems)
+
+
+def test_lobby_hidden_cards_and_confirm_are_model_scenes_the_table_must_cover():
+    """The 060q lobby: text variants (names, "Waiting for a player") showed, every model variant (card frames, HOST,
+    READY, ping bars, SAME BUILD, the Leave panel) did not - they are exactly the hidden-authored model items."""
+    screen=O.lobby_layout('host')
+    models={e['name'] for e in screen['items'] if e.get('variant') and e.get('parts') and e.get('hidden')}
+    for key in ('lc_p1_card','lc_p1_host','lc_p1_ready','lc_p1_not_ready','lc_p2_ms','lc_p1_same_build','lc_p2_empty',
+                'lc_leave_confirm','lc_lobby_service_lost','lc_lobby_guest_left','lc_code_copied'):
+        assert key in models, key
+
+
+def test_host_visibility_pair_draws_in_front_of_its_focus_bar():
+    screen=O.runtime_layout('lc_host')
+    by={e['name']:e for e in screen['items']}
+    assert by['lc_host_private']['plane']==by['lc_host_public']['plane']==-170
+    assert by['visibility'].get('plane',-150)==-150  # the focus bar's plane: -170 is nearer the camera
+
+
+def test_focus_models_draw_exactly_one_alpha_blended_layer():
+    """060q live: dialog.igb's three layers - an opaque 144-vertex frame (no blend state) and an additive 12-vertex inset
+    beside the alpha quad - drew the picture's transparent texels black (the black box behind "1 of N ready.", the outline
+    bar to the YOUR ROOM badge, the light frame round the 4:3 field) and a lighter inner rectangle on every amber bar."""
+    import pytest
+    from pathlib import Path
+    from PIL import Image
+    src=Path('D:/Projects/xml1-port/xml1_loose/ui/hud/dialog.igb')
+    if not src.is_file(): pytest.skip('owned dialog.igb not available on this machine')
+    source=src.read_bytes()
+    picture=Image.new('RGBA',(64,32));picture.paste((255,255,255,255),(0,0,8,8))
+    for rect,outline,pic in (((0,-13.6,56,0),True,picture),((0,-20,177,0),False,None),(O.BACKDROP_RECT,True,picture),
+                             (O.FIELD_RECT,True,O.field_picture())):
+        layers=O.panel_layers(O.focus_model(source,rect,outline,pic))
+        drawn=[l for l in layers if not l[3]]
+        assert len(layers)==3 and len(drawn)==1 and drawn[0][0]==4 and drawn[0][1] and drawn[0][2]==(4,5)
+        l,b,r,t=drawn[0][4]
+        lean=0 if outline or rect[2]-rect[0]<50 else 4
+        assert all(abs(u-v)<1e-4 for u,v in zip((l,b,t,r),(rect[0],rect[1],rect[3],rect[2]+lean))),(rect,drawn[0][4])
+    # the unpatched source really is three drawn layers: opaque, additive and alpha
+    from xml1build import igb_file as G, menu_conversion as M
+    raw=O._layer_walk(G.IgbFile(M.fit_flat_panel(source,(0,-13.6,56,0),border=1,opaque=True)[0]))
+    assert sorted((s,f) for _,s,f in raw)==sorted([(False,None),(True,(4,1)),(True,(4,5))])
+
+
+def test_footer_prompt_focus_bars_never_cover_a_neighbouring_prompt():
+    """060q live (failure 11): Browse's focused Refresh bar ran over "[Enter] Join" and "[Esc] Back" - the ordinary row's
+    12-unit bar ends on prompts 3-5 layout units apart. Every footer prompt's drawn bar stays clear of the next prompt's."""
+    for name,screen in _built_screens().items():
+        rows=[]
+        for e in screen['items']:
+            if not (e['intent'] and (e['enabled'] or screen.get('runtime'))) or e['rect'][1]<O.FOOTER_TOP: continue
+            _,owner,_,_,(l,b,r,t)=O.focus_placement(screen,e);ax,_,_=O._anchor(owner)
+            rows.append((ax+l,ax+r,e['name'],e['rect']))
+        rows.sort()
+        for (l1,r1,n1,box1),(l2,r2,n2,box2) in zip(rows,rows[1:]):
+            assert r1<l2,(name,n1,n2)
+            assert r1<box2[0]*.8 and l2>(box1[0]+box1[2])*.8,(name,n1,n2)   # never over the other prompt's text
+
+
+def test_party_field_paints_no_amber_action_under_a_focusable_item():
+    """060q live (failure 8): INVITE was painted amber in the static field (plus its focus tick), so the rail's focused PARTY
+    and INVITE showed two amber bars at once. Amber under an action comes only from its focus model now."""
+    from xml1build import online_party as PT
+    screen=PT.party_layout('host')
+    actions=[e.get('hit_rect') or e['rect'] for e in screen['items'] if e['intent']]
+    def meets(a,b): return a[0]<b[0]+b[2] and b[0]<a[0]+a[2] and a[1]<b[1]+b[3] and b[1]<a[1]+a[3]
+    for q in screen['shapes']:
+        if q['color']==5 and q['kind'] in ('bar','slash','rect'):
+            assert not any(meets(q['rect'],a) for a in actions),q
+    by={e['name']:e for e in screen['items']}
+    assert by['lc_party_invite']['color']==4 and by['lc_party_invite_hint']['color']==3

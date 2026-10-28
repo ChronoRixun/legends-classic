@@ -21,7 +21,9 @@ LINK_TEXT = 'Party'
 NATIVE_PLAYERS = 'label_option07'           # intercepted by the native PDA independently of usecmd
 # Native PDA rows whose exact usecmd the rail reuses (read from the native tree at build time, never copied by hand).
 RAIL_NATIVE = {'lc_rail_team': 'label_option02', 'lc_rail_options': 'label_option06', 'lc_rail_quit': 'label_option09'}
-CODEX_COMMAND = 'runscript codexMenu(0)'    # script function codexMenu(i): filter i, then the native codex menu
+# 060q live: 'runscript codexMenu(0)' did nothing here - codexMenu (0x49e250) runs only while NO menu is open (manager
+# vt+0x84 = 0x5d5170 refuses with a current menu; it is the world-trigger entry). From a menu the codex opens directly.
+CODEX_COMMAND = 'openmenu codex'
 RAIL = (('lc_rail_resume', 'RESUME', 103), ('lc_rail_team', 'TEAM', 132), ('lc_rail_party', 'PARTY', 160),
         ('lc_rail_codex', 'CODEX', 188), ('lc_rail_options', 'OPTIONS', 217), ('lc_rail_quit', 'QUIT GAME', 245))
 ROW_Y = (157, 195, 232, 270)                # card rows, 37 units high
@@ -153,10 +155,11 @@ def party_layout(role='host', *, native=None, members=4, fixture=False, notice='
     text('lc_party_recovery_1', RECOVERY[0], (221, 317, 359, 15), 'body', 3)
     text('lc_party_recovery_2', RECOVERY[1], (221, 333, 359, 15), 'body', 3)
     # ---- action bar. Invite copies the code; Propose load stays visibly unavailable (round 14); Leave confirms inline.
-    shape('slash', (208, 351, 5, 30), 5)
-    shape('bar', (221, 351, 142, 30), 5); shape('bar', (372, 351, 116, 30), 2); shape('bar', (497, 351, 83, 30), 2)
-    text('lc_party_invite', 'INVITE', (234, 358, 60, 16), 'row', 0, intent='party-invite', hit_rect=(221, 351, 142, 30))
-    text('lc_party_invite_hint', 'Copy code', (294, 361, 62, 13), 'body', 0, align='right')
+    # 060q live: the field painted INVITE amber with its focus tick, so with the rail's PARTY focused two amber bars showed.
+    # Every action is a steel bar in the field; amber comes only from the focus model of the focused item.
+    shape('bar', (221, 351, 142, 30), 2); shape('bar', (372, 351, 116, 30), 2); shape('bar', (497, 351, 83, 30), 2)
+    text('lc_party_invite', 'INVITE', (234, 358, 60, 16), 'row', 4, intent='party-invite', hit_rect=(221, 351, 142, 30))
+    text('lc_party_invite_hint', 'Copy code', (294, 361, 62, 13), 'body', 3, align='right')
     e = text('lc_party_propose', 'PROPOSE LOAD...', (384, 351, 98, 16), 'row', 4, intent='party-propose', hit_rect=(372, 351, 116, 30))
     e['enabled'] = False
     text('lc_party_leave', 'LEAVE', (509, 358, 60, 16), 'row', 4, intent='party-leave', hit_rect=(497, 351, 83, 30))
@@ -284,7 +287,7 @@ def party_problems(root, screen, native=None, palette_ids=None):
     cmds = {}
     for key, e in items.items():
         cmd = e.get('usecmd', '')
-        if 'openmenu' in cmd and cmd not in ('openmenu team',) and not (native and cmd in native.values()): errors.append('unexpected menu route: ' + key)
+        if 'openmenu' in cmd and cmd not in ('openmenu team', CODEX_COMMAND) and not (native and cmd in native.values()): errors.append('unexpected menu route: ' + key)
         if cmd and cmd.startswith('runscript lcOnlineIntent('): cmds[key] = int(cmd[len('runscript lcOnlineIntent('):-1])
     for key, number in COMMANDS.items():
         e = items.get(key)
