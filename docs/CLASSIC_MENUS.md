@@ -382,3 +382,43 @@ Synthetic coverage lives in `tests/unit/test_online_menus.py`; the frontend
 self-test runs the synthetic menu contract without owned output and additionally
 runs `v_online_menus` with `--out`. The complete validator registers `V-online`.
 No gameplay rule or release identity is assigned by these fixtures.
+
+## In-session Party and the pause rename (round 8, DLL probe `lc-online-party/1`)
+
+Authored only when the online menus are enabled for the build (`--online-menus on`) and the supplied DLL carries the
+probe string `lc-online-party/1` (an old DLL is refused like any missing probe). An OFF or old-DLL build keeps the native
+PDA Players row byte for byte.
+
+**Pause rename.** The native PDA intercepts the item named `label_option07` (the Players page) in its own code,
+independently of `usecmd`. `pause_appearance.pause_tree(..., party_link=True)` renames that one row to `lc_party_link`
+with `usecmd="openmenu lc_party"` and the literal text `Party`, in BOTH localization halves (`.XMLB` and `.engb`
+trees). The up/down links of its neighbours, the focus order and the scene alias table follow the new name; the scene
+nodes and focus models keep their native slot names (`option07`, `option07_focus`). `label_option07` appears nowhere
+in the converted halves. `native_text_problems` stays strict for every other item and attribute: the rename is allowed
+only through the explicit adapter contract `party_link_contract()` (exactly that item, exactly that text and route),
+and `party_link_problems` checks closure (neighbour links, type/mode unchanged, no leftover reference). Nothing is
+relaxed globally; `validate_frontend.v_classic_pause` applies the same contract when the online build is on.
+
+**`lc_party` (base CMenu, no type, no `menu_cancel`).** Files `UI/menus/lc_party.{XMLB,engb,IGB}` plus its package.
+Back is routed by the DLL: the builder authors no second Back command. Layout and states live in
+`tools/xml1build/online_party.py` and follow approved frame 06-party with the 0.6 copy variants (next area, no
+checkpoint recovery promise).
+
+- Rail (real focusable items): Resume (`runscript lcOnlineIntent(63)`), Team, Codex (`runscript codexMenu(0)`),
+  Options, Quit. Team, Options and Quit copy the `usecmd` of the native PDA rows (`label_option02`, `06`, `09`) at build
+  time from BOTH native halves (they must agree) and the validator asserts equality; the current page (Party) runs
+  nothing.
+- Commands (constants through the guarded dispatcher; reserved numbers 68 and 70, party numbers exist on this screen
+  only): 63 resume, 64 invite (copies the code), 65 propose load (the item is authored disabled: visibly unavailable
+  until the load rounds), 66 leave, 67 leave confirmed, 69 kick confirmed, 71..74 kick card 1..4, 8 cancel.
+- DATA text the DLL binds: `lc_room_name`, `lc_room_visibility`, `lc_room_code`, `lc_notice_name`,
+  `lc_notice_percent`, `lc_kick_name` and per card `lc_pN_name/slot/phase/ping/route`. Everything else the DLL shows or
+  hides is a separately named, hidden-by-default scene (card, host/you badges, hero text, ping scenes, build badges,
+  pending marker, selection, status tone, kick button, notice, feedback, the three confirmations).
+- Confirmations are inline scenes with their own buttons (never `openmenu`): host Leave says End for everyone.
+- Round-7 card fields on the pre-game lobby skins (`lc_pN_phase`, `_route`, `_to_host`, `_other_build`, `_pending`)
+  and the Browse column-5 DATA text `room_<row>_5` are authored under the same contract.
+
+Tests: `tests/unit/test_online_party.py` (card fields, Browse column 5) and `test_online_party_screen.py` (probe gate,
+command manifest, native routes, rename closure and its negative cases, role selection, kick/leave fixtures).
+No gameplay rule or release identity is assigned by these changes.

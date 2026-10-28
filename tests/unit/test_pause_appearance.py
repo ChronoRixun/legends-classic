@@ -62,9 +62,9 @@ def test_pause_focus_visits_all_native_roles_without_removed_portal_or_debug():
     assert len(rows[P.ROWS[0]].findall('onfocus')) == 2
 
 
-def validator_fixture():
+def validator_fixture(party=False):
     native = native_menu()
-    root = P.pause_tree(native)
+    root = P.pause_tree(native, party_link=party)
     matrix = [float(i in (0, 5, 10, 15)) for i in range(16)]
     matrix[12:15] = [256, 0, 192]
     node = [(2, 's'), (3, 'r'), (5, 'i')]
@@ -97,9 +97,9 @@ def validator_fixture():
     localized.find("item[@name='label_option09']").set('desctext2', '@SYNTH@FOCUS')
     localized.find("item[@name='players_help']").set('text', '@SYNTH@HELP')
     native_halves = {'UI/menus/pda.XMLB': localized, 'UI/menus/pda.engb': native}
-    trees = {rel: P.pause_tree(tree) for rel, tree in native_halves.items()}
+    trees = {rel: P.pause_tree(tree, party_link=party) for rel, tree in native_halves.items()}
     trees.update({'Data/colors.XMLB': colors, 'Data/styles.XMLB': styles})
-    ctx = SimpleNamespace(opt=lambda key: 'xml1' if key == 'frontend' else None,
+    ctx = SimpleNamespace(opt=lambda key, default=None: 'xml1' if key == 'frontend' else ('on' if party else 'off') if key == 'online_menus' else default,
                           read_base_xmlb=lambda rel: copy.deepcopy(native_halves[rel]))
     from test_menu_conversion import flat_panel
     from xml1build import menu_conversion as M

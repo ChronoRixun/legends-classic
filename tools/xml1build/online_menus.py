@@ -383,7 +383,8 @@ def layout_problems(screen):
         if x<0 or y<0 or w<=0 or h<=0 or x+w>640 or y+h>480: problems.append('unsafe bounds: '+e['name'])
         if e['intent']:
             if e['intent'] not in command_manifest() and not (screen.get('lobby') and e['intent'] in
-                ('copy','leave-yes','native-start','native-role','native-leave','native-picker')): problems.append('unknown intent')
+                ('copy','leave-yes','native-start','native-role','native-leave','native-picker')) and not (
+                screen.get('party') and (e['intent'] in PARTY_INTENTS or e['intent']=='current' or e['intent'].startswith('native:'))): problems.append('unknown intent')
             if e['enabled'] and any(e.get(d) not in names for d in ('left','right','up','down')): problems.append('open graph')
     if screen['focus'] not in names: problems.append('missing initial focus')
     return problems
@@ -393,7 +394,7 @@ def menu_tree(screen, palette_ids=None):
     palette_ids=palette_ids or {i:str(i) for i in range(8)}
     root=ET.Element('menu',igb=screen['name'],image='textures/menus/'+screen['name'],fullscreen='true',
                     updownonly='false',lighting='false')
-    if screen.get('runtime'): root.set('menu_cancel',command(6))
+    if screen.get('runtime') and not screen.get('party'): root.set('menu_cancel',command(6))
     descriptions={e['name']:e for e in screen['items'] if re.fullmatch(r'desctext[1-5]',e['name'])}
     for name,e in descriptions.items():
         # Refresh adds a native dim-colour prefix. A scoped prefix after it keeps
@@ -418,7 +419,7 @@ def menu_tree(screen, palette_ids=None):
             if e['intent'].startswith('open:'): attrs['usecmd']='openmenu '+e['intent'][5:]
             elif e['intent']=='other': attrs['usecmd']=NATIVE_ENTRY
             elif e['intent']=='back' and screen['name']!='lc_code': attrs['usecmd']='openmenu lc_online'
-            if screen.get('runtime'): attrs['usecmd']=command(intent_number(e['intent']))
+            if screen.get('runtime'): attrs['usecmd']=e['usecmd'] if 'usecmd' in e else command(intent_number(e['intent']))
             for d in ('left','right','up','down'):
                 if d in e: attrs[d]=e[d]
         item=ET.SubElement(root,'item',attrs)
@@ -663,11 +664,17 @@ def write(ctx, *, preview=False):
     authored_layouts={}
     pending=[]
     native_trees={name:ctx.read_base_xmlb('UI/menus/'+name+'.engb') for name in LOBBIES}
-    for name in (*MENUS,*LOBBIES):
-        screen=bound_layout(runtime_layout(name) if name in MENUS else lobby_layout(name),metrics)
+    from . import online_party as PT
+    rail=party_rail(F.pda_menu_trees(ctx))
+    for name in (*MENUS,*LOBBIES,PARTY_MENU):
+        if name in MENUS: screen=bound_layout(runtime_layout(name),metrics)
+        elif name in LOBBIES: screen=bound_layout(lobby_layout(name),metrics)
+        else: screen=bound_layout(PT.party_layout('host',native=rail),metrics)
         authored_layouts[name]=screen
-        tree=menu_tree(screen,ids) if name in MENUS else lobby_tree(native_trees[name],screen,ids)
-        problems=tree_problems(tree,screen,ids) if name in MENUS else lobby_problems(tree,native_trees[name],screen)
+        tree=menu_tree(screen,ids) if name in (*MENUS,PARTY_MENU) else lobby_tree(native_trees[name],screen,ids)
+        if name in MENUS: problems=tree_problems(tree,screen,ids)
+        elif name==PARTY_MENU: problems=PT.party_problems(tree,screen,rail,ids)
+        else: problems=lobby_problems(tree,native_trees[name],screen)
         layouts=scene_layout(screen)
         for e in screen['items']:
             if e.get('variant') and e.get('parts'):
@@ -715,6 +722,16 @@ def write(ctx, *, preview=False):
             'intents':command_manifest()}
     ctx.write_meta('online_menus_detail.json',report)
     return report
+
+
+def party_rail(pda_halves):
+    """The rail's native routes, read from BOTH native PDA localization halves (they must agree)."""
+    from . import online_party as PT
+    first,second=pda_halves[0],pda_halves[1]
+    if first is None or second is None: raise ValueError('native PDA menu halves are missing: the Party rail needs their routes')
+    rail=PT.native_rail_commands(first)
+    if PT.native_rail_commands(second)!=rail: raise ValueError('native PDA halves disagree on the Party rail routes')
+    return rail
 
 
 def author_scene(source,screen,extra=None):
@@ -794,10 +811,17 @@ def reserved_budget(colors,styles):
 
 
 
+FLAT_FOCUS = ('lc_leave_yes','lc_leave_cancel','lc_lobby_dismiss','lc_party_leave_yes','lc_party_kick_yes','lc_party_cancel')
+
+
 def focus_spec(screen,item):
     x,y,w,h=item['rect']
-    if item['name'] in ('lc_leave_yes','lc_leave_cancel','lc_lobby_dismiss'):
+    if item['name'] in FLAT_FOCUS:
         return (0,-h*.8,w*.8,0),False
+    if screen.get('party') and item.get('hit_rect'):
+        # Rail rows, action bars and kick buttons: the focus fill is exactly the drawn control.
+        hx,hy,hw,hh=item['hit_rect']
+        return ((hx-x)*.8,-(hy+hh-y)*.8,(hx+hw-x)*.8,(y-hy)*.8),False
     if item['name']=='retry' and item.get('hit_rect'):
         # The Retry bar is part of the error scene: focus replaces exactly that bar, never the message beside it.
         hx,hy,hw,hh=item['hit_rect']
@@ -904,7 +928,7 @@ def focus_picture(screen,item,rect):
 
 # These probes describe additive APIs, not release or gameplay identities. Each
 # must be present in ONE supplied DLL; separate menu/font DLLs cannot be stacked.
-DLL_PROBES = (b'lc-online-menus/1\n', b'lc-online-input/1', b'lc-online-lobby/1', b'lc-online-broker/2', b'lc-online-native/1',
+DLL_PROBES = (b'lc-online-menus/1\n', b'lc-online-input/1', b'lc-online-lobby/1', b'lc-online-broker/2', b'lc-online-native/1', b'lc-online-party/1',
               b'lcOnlineIntent\0', 'Online\0'.encode('utf-16le'),
               'Menus\0'.encode('utf-16le'), 'LegendsClassicFonts\0'.encode('utf-16le'),
               b'ui/fonts/lc_fonts_pc.xmlb\0', b'ui/fonts/lc_fonts_hd.xmlb\0',
@@ -929,7 +953,7 @@ DATA_NAMES = {'local_name', 'self_name', 'last_name', 'last_code', 'last_time',
               'code_value', 'code_remaining', *(f'cell{i}' for i in range(8)),
               # Round 5: every field the broker bridge binds is DATA (normal interned text, no gamevar owner).
               'service', 'self_state', 'browse_hint', 'room_name', 'preview_name', 'room_code', 'details_name',
-              'details', 'broker_error', 'list_count', 'list_age', 'lc_host_max_players', *(f'room_{r}_{c}' for r in range(7) for c in ROW_COLUMNS)}
+              'details', 'broker_error', 'list_count', 'list_age', 'lc_host_max_players', *(f'room_{r}_{c}' for r in range(7) for c in (*ROW_COLUMNS, 5))}
 # Round 5b: the DLL selects ONE lc_broker_err_<cause> scene per failure (and hides Retry where retrying cannot help),
 # one status / pip / build scene and a dim veil per Browse row, a count + age header and a connected-service scene.
 ERROR_CAUSES = ('code_not_found', 'room_full', 'version_mismatch', 'rate_limited', 'timeout', 'offline', 'refused', 'generic')
@@ -1034,8 +1058,16 @@ def capability_problems(data):
     return ['missing DLL probe: '+repr(token) for token in DLL_PROBES if token not in data]
 
 
+# Round 8 (lc-online-party/1): the in-session Party screen. 68 and 70 are reserved; 63..74 exist on lc_party only.
+PARTY_MENU = 'lc_party'
+PARTY_INTENTS = {'party-resume':63,'party-invite':64,'party-propose':65,'party-leave':66,'party-leave-yes':67,'party-kick-yes':69,
+                 **{f'party-kick:{n}':70+n for n in range(1,5)}}
+PARTY_INTENT_NUMBERS = tuple(sorted(PARTY_INTENTS.values()))
+PUBLIC_INTENTS = (*range(2,15),16,17,*range(18,32),*range(32,63),*PARTY_INTENT_NUMBERS)
+
+
 def command(number):
-    if type(number) is not int or number not in (*range(2,15),16,17,*range(18,32),*range(32,63)):
+    if type(number) is not int or number not in PUBLIC_INTENTS:
         raise ValueError('not a public online intent')
     return f'runscript lcOnlineIntent({number})'
 
@@ -1045,6 +1077,8 @@ def intent_number(intent):
         return 32+ALPHABET.index(intent[5:])
     if intent.startswith('select:') and intent[7:] in tuple('0123456'):
         return BROKER_ROW_FIRST+int(intent[7:])
+    if intent in PARTY_INTENTS or intent.startswith('party-kick:'):
+        return PARTY_INTENTS[intent]
     return INTENTS.get(intent, 7)
 
 
@@ -1226,6 +1260,9 @@ def broker_layout(name, screen):
             items.append(_variant(f'lc_age_fill{k+1}',(546+8*k,139,7,4),[dict(kind='rect',rect=(0,0,7,4),color=5)],model_name='age_fill'))
         _row_scenes(items)
         for row in range(7):
+            # Round 7: the measured RTT of the room this PC is in, over the neutral '--' of the row's ping scene (the DLL binds
+            # '' for every other row, which leaves the scene's dash alone). DATA only: no focus, no command.
+            items.append(_entry(f'room_{row}_5','',(495,178+31*row+8,40,15),'body',4,data=True))
             items.append(_variant(f'lc_row{row}_selected',(44,178+31*row,552,29),
                                   [dict(kind='panel',rect=(0,0,552,29),color=2,outline=5)]))
         screen['focus']='prompt_refresh'
@@ -1319,7 +1356,7 @@ def runtime_layout(name,state=None):
         # Row cells keep the closed grid (left/right in a row, up/down in a column) while disabled or rebound.
         for e in screen['items']:
             m=re.fullmatch(r'room_([0-6])_([0-6])',e['name'])
-            if not m: continue
+            if not m or int(m.group(2)) not in ROW_COLUMNS: continue
             r,c=int(m.group(1)),int(m.group(2))
             i=ROW_COLUMNS.index(c)
             e.update(left=f'room_{r}_{ROW_COLUMNS[max(0,i-1)]}',right=f'room_{r}_{ROW_COLUMNS[min(len(ROW_COLUMNS)-1,i+1)]}',
@@ -1362,7 +1399,7 @@ def broker_problems(root, screen):
     Checks the serialized tree, not only the layout, so a mutated resource is caught."""
     name=screen['name'];errors=[]
     items={e.get('name'):e for e in root.findall('item')}
-    allowed=set(range(2,15))|{16,17}|set(range(18,32))|set(range(32,63))
+    allowed=set(PUBLIC_INTENTS)
     for key,e in items.items():
         cmd=e.get('usecmd','')
         m=re.fullmatch(r'runscript lcOnlineIntent\((\d+)\)',cmd)
@@ -1371,6 +1408,7 @@ def broker_problems(root, screen):
         number=int(m.group(1))
         if number not in allowed: errors.append('intent outside the public range: '+key)
         if number in BROKER_SCOPE and name not in BROKER_SCOPE[number]: errors.append(f'intent {number} not allowed on {name}: {key}')
+        if number in PARTY_INTENT_NUMBERS and name!=PARTY_MENU: errors.append(f'party intent {number} outside {PARTY_MENU}: {key}')
     def need(key,**attrs):
         e=items.get(key)
         if e is None: errors.append('missing broker node: '+key);return None
@@ -1416,6 +1454,11 @@ def broker_problems(root, screen):
     if name=='lc_browse':
         for r in range(7):
             for c in range(7):
+                if c==5:
+                    # Round 7: DATA text only (the measured RTT of the joined room), never a cell with focus or a command.
+                    need(f'room_{r}_5',clamp='true',neverfocus='true',type='MENU_ITEM_TEXT')
+                    if items.get(f'room_{r}_5') is not None and items[f'room_{r}_5'].get('usecmd'): errors.append(f'room_{r}_5 is DATA only')
+                    continue
                 if c not in ROW_COLUMNS:
                     if f'room_{r}_{c}' in items: errors.append(f'room_{r}_{c} belongs to the row scenes')
                     continue
@@ -1498,6 +1541,13 @@ def lobby_layout(role, *, members=1, ready=False, fixture=False, pending=False, 
         variant(prefix+'measuring','Measuring',(x+10,y+104,112,16),'body',3,visible=fixture and occupied and n!=local and pending)
         variant(prefix+'same_build','SAME BUILD',(x+10,y+123,100,16),color=6,visible=fixture and occupied and not pending)
         variant(prefix+'checking_build','CHECKING BUILD...',(x+10,y+123,112,16),visible=fixture and occupied and pending)
+        # Round 7 (docs/online-party.md section 8): observed facts. Phase/route are DATA (empty = unknown); the badge, the
+        # "to host" label and the pending marker are individually hideable scenes the DLL selects.
+        variant(prefix+'other_build','OTHER BUILD',(x+10,y+123,100,16),color=7)
+        text(prefix+'phase','In lobby' if fixture and occupied else '',(x+10,y+139,112,12),'label',3,data=True)
+        text(prefix+'route','direct' if fixture and occupied and n!=local else '',(x+90,y+104,34,16),'label',3,data=True,align='right')
+        variant(prefix+'to_host','to host',(x+10,y+150,60,11),'label',3)
+        variant(prefix+'pending','',(x,y,132,165),visible=False,parts=[dict(kind='dashed',rect=(0,0,132,165),color=5)])
         variant(prefix+'empty','',(x,y,132,165),visible=fixture and not occupied,
                 parts=[dict(kind='outline',rect=(0,0,132,165),color=3)])
         variant(prefix+'empty_title','Waiting for a player',(x+9,y+98,116,20),'row',4,visible=fixture and not occupied)
@@ -1570,7 +1620,7 @@ def lobby_layout(role, *, members=1, ready=False, fixture=False, pending=False, 
                     dict(kind='diamond',rect=(11,89,7,6),color=color),
                     child_text('READY' if suffix=='ready' else 'NOT READY',(23,86,100,18),'row',color),
                     dict(kind='rect',rect=(0,161,132,4),color=6 if suffix=='ready' else 2)])
-            if suffix in ('host','same_build','checking_build'):
+            if suffix in ('host','same_build','checking_build','other_build'):
                 w,h=e['rect'][2:];value=e['text'];color=e['color']
                 e.update(text='',parts=[dict(kind='outline',rect=(0,0,w,h),color=color),
                     child_text(value,(5,1,w-8,h-1),'label',color)])
@@ -1578,6 +1628,8 @@ def lobby_layout(role, *, members=1, ready=False, fixture=False, pending=False, 
                 value=e['text'];positions=(26,104,96,16) if suffix!='ms' else (73,104,39,16)
                 e.update(text='',rect=(x,189,132,165),parts=[*neutral_bars(color=6 if suffix=='you' else 2),
                     child_text(value,positions,'body',3)])
+            if suffix=='to_host':
+                value=e['text'];e.update(text='',parts=[child_text(value,(0,0,60,11),'label',3)])
             if suffix=='empty':e['parts'][0]['kind']='dashed'
             if suffix=='empty_plus':
                 e.update(text='',rect=(x+10,224,112,55),parts=[child_text('P'+str(n),(48,0,30,18),'row',3),
@@ -1716,8 +1768,8 @@ def output_problems(out):
     out=Path(out);errors=[];index=FileIndex(out)
     marker=index.path('Data/lc_online_menus.cap')
     if marker is None or marker.read_bytes()!=CAPABILITY:errors.append('exact capability marker missing')
-    for name in (*MENUS,*LOBBIES):
-        scene=name if name in MENUS else 'lc_lobby_'+name
+    for name in (*MENUS,*LOBBIES,PARTY_MENU):
+        scene=name if name in (*MENUS,PARTY_MENU) else 'lc_lobby_'+name
         for rel in [f'UI/menus/{name}.XMLB',f'UI/menus/{name}.engb',f'UI/menus/{scene}.IGB',
                     f'Textures/menus/{scene}.IGB',f'Packages/generated/maps/package/menus/{name}.PKGB']:
             if index.path(rel) is None:errors.append('missing '+rel)
@@ -1851,7 +1903,7 @@ def render_native(screen, *, size=(1920,1080), device='pad', native_picker=None)
         (l,b,r,t),_=focus_spec(screen,selected);x,y,_,_=selected['rect']
         anchor=x+(selected['rect'][2]/2 if selected.get('align')=='center' else 0)
         left,top=anchor+l/.8,y-t/.8;width,height=(r-l)/.8,(t-b)/.8
-        if selected['name'] in ('lc_leave_yes','lc_leave_cancel','lc_lobby_dismiss'):
+        if selected['name'] in FLAT_FOCUS:
             from PIL import Image
             tile=Image.new('RGBA',(round(width*2.25),round(height*2.25)),'#'+PALETTE[5])
         else:
