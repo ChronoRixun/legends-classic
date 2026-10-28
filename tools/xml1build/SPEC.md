@@ -7895,3 +7895,189 @@ Beta 8 candidates 080h / 080i: both are off by default and written only on reque
 nothing in Owen's 10-26 hand test while the test pipe's presses worked). Without `GuardDecideRule` Guard runs XML2's
 `ch_guard_decide`, which grabs and picks up through the `grab` talent characters adds (rule 46 installs without bit
 1024). Both options are ini only (CONTENT_OPTS with no module), so toggling one re-runs nothing.
+## 108. Limits wave 3 (`--limits-wave3`, XML2 Fix rules 35 revision 2 and 53-60; validators V-MOVES .. V-SCRIPTS)
+
+Full text: `docs/LIMITS_WAVE3.md`. `--limits-wave3 {off,on,all}` (default off, `build_xml1.py` and `xml1-builder build`) writes
+`[Limits] FightStyles=64, StyleEvents=4096, FightMoves=1024, EffectTemplates=512, PrimitiveDefs=2048, EffectVectors=4096,
+PrimitivesPerEffect=32, AttachedPowerups=256, VFNodes=256` (rules 61 / 62; `all` adds `ScriptPools=x1`, `ParticleScratch=40`; rules 59-60 have no DLL row yet). The option is
+recorded in `report.json` only when on; with it off the build, ini, report and validation are the ones written before the
+option existed. The builder requires each key plus its rule's install line in an existing DLL (`fix_ini.WAVE3_MARKERS`,
+placeholder wording until the DLL rows land) and refuses a DLL without them by name (`FightStyles` above 32 needs rule 35
+revision 2). An off rebuild drops the keys.
+
+With the option on the validator adds V-MOVES, V-EVENTS, V-EFFECT-FILES, V-PRIMITIVES, V-VECTORS, V-CURVES (with the
+combined effect budget) and V-SCRIPTS (`limits_wave3.py`), extends V23 (V-STYLES) with the raised capacity, a witness and
+the 50 % warning, and replaces V7's 620 / 1,556 / 120 pool warnings by V-SCRIPTS (retained nodes = statements minus
+else / endif). Each covers every converted zone and allowed four-hero party (without the two Professor X forms), reports
+count / capacity / witness, fails above capacity and warns at equality or above half.
+
+## 107. The W2 save layout (`--save-layout w2`, XML2 Fix `[Limits] SaveLayout=w2`; validator V67)
+
+Limits wave 2 (XML2 Fix `docs/limits-wave2.md`, "Step 8: DLL selection, admission and builder contract") raises the
+save-bound and engine limits in one transaction, selected by one key. Legends Classic carries it as an **opt-in builder
+option**, default off, because W2 is the 0.4.2 line and is in no candidate yet: a build made without the option writes no
+`SaveLayout` key and validates against the limits the older sections state, so its output and ini are unchanged.
+
+**The option.** `build_xml1.py --save-layout {retail,w2}` (also `xml1-builder build --save-layout ...`, which passes it
+on) records `build.save_layout` in `_build/report.json`; `fix_ini.build_save_layout(out)` reads it back (never the
+existing ini: rebuilding without the option must drop the owned key), `common.args_for_out` hands it to standalone
+checks, and it is a content option of the `zones` module (the talent precache budget follows the layout's pool;
+`plan_content_opts` re-runs `zones` when it changes). `tools/harness.py install` writes the same keys for a build made
+with it and refuses `--stock-limits` / `--stock-opening` with it.
+
+**The keys (`fix_ini`).** `limits_for('w2')` = `LIMITS` with `SaveLayout=w2` after `EntityCapacity=1` and
+`ItemEnhancements=4096` (the DLL accepts only 4096 beside W2 and refuses the build's default 512 at start-up).
+`port_keys` adds `[Save] Format=lc` as for every port build. `check_save_layout_keys` is the contract table, builder
+side: SaveLayout is written only as exactly `w2`, only with `[Save] Format=lc` and `EntityCapacity=1`, with
+`ItemEnhancements` absent or 4096; every other key set raises ValueError (no `[Save] Format=lc` = stock bytes, the DLL
+would ignore the key; EntityCapacity absent / 0 = "SaveLayout=w2 needs EntityCapacity=1"). A key set without SaveLayout
+is the configured baseline (RETAIL, or E10A2 with EntityCapacity alone) and always passes. `check_save_layout_dll`
+probes the companion DLL for the UTF-16 key name with its terminator, as `check_entity_capacity_dll` probes
+EntityCapacity (a message that merely starts with the key is not support), and `write_port_keys` raises FixTooOld for
+it even with `old_fix_ok`: the other keys of an older fix are a warning the launcher resolves right after the build,
+this one is not, because an older DLL ignores the key and the build would run on the baseline layout while it was
+validated for W2. `SaveLayout` is in `PORT_OWNED['Limits']`, so a build that stops asking for it drops it from the ini.
+
+**The data limits (`w2_limits`).** The numbers are read from `lcsave.layout.W2`; `RETAIL_LIMITS` keeps the released
+ones. The existing rows take them from `w2_limits.limits(ctx)`: the missions row of the validator and `scripts`
+(mission files 25 / 64, objectives 299 / 1024, per act 75 / 127), V44 `talent_budget` (registry 100 / 256 names, 9
+files in both, shared cap 99 / 199) with the reviewed-prop precache pruning, `characters` and the validator's shared
+talent cap, and the items stage's enhancement pool (512 / 4096, `zones.item_enhancement_pool`). W2 adds position rows
+(a hero's talent index < the multiplier 200, shared < 199; with the largest stats index 296 the saved id stays below
+65536) and V67 for data nothing checked before:
+
+| Row | Counted over | W2 limit |
+|---|---|---|
+| item definitions | distinct `<item>` names of Data/items | 1024 |
+| enhancement / attached records | every `<enhancement>` of Data/items (attached records are the same records) | 4096 |
+| placements | every `<inst>` of a zone's map, recursively (C2 counting rule, the DLL preflight's count) | 1024 per zone |
+| item instances / world slots | world-item placements (classname inventoryent or an inventoryitem) over the 8 heaviest zones | 1024 |
+| zone-string names / arena | distinct `<inst>` names (plus NUL) over the 8 zones with the most | 8191 / 0x1ffff |
+
+Item instances and world slots are runtime counters (`save layout` status line); the world-item rows bound them from the
+data, and the live peak per real save is gate C3 of the wave. Without the option V67 only notes that it checked nothing.
+Synthetic coverage is `tests/unit/test_w2_builder.py`. No game or emulator was launched for it.
+
+
+## 108. The first game's item economy as data (`--loot xml1`, XML2 Fix `[Game] Xml1Economy=1`, gameplay rule 52; validator V-LOOT)
+
+Loot + Forge step 1 (design: the coordinator's `loot-forge-design` revision 2.2, sections 2.1-2.4, 6, 7, 8.1, 8.3). The
+builder converts the first game's whole equipment table and writes what XMen2.exe's item parser never reads; the roller,
+the prices, the Forge and the zero-draw construction are XML2 Fix's (steps 3a-8). It is an **opt-in builder option**,
+default off, in `build_xml1.py` and `xml1-builder build`: `--loot {off,xml1}` (and `--loot-construction
+{zero-draw,one-roll}`, which only selects the `construction-one-roll` approximation row when the DLL ships the native
+fallback). It is refused unless `--save-layout w2` is selected (185 definitions, records over 512; `loot.w2_selected` is
+the one helper that reads that option) and `--frontend xml1` (the Danger Room rewards). A build without it takes none of
+the paths below: its files, `report.json`, `validate.json` and ini are unchanged. `build.loot` / `build.loot_construction`
+are recorded only when asked for; both are content options of `zones` and `frontend` (`plan_content_opts`).
+
+**Identities (`loot.Plan`).** The 88 definitions of the legacy table (XML2's 64 + the 24 XML1 items a converted map names)
+stay byte-identical, in order and keys. The 19 Danger Room rewards are converted again **in place** (same name and
+position; no cost, unique, source class, every bonus, `own_rebuilt` in the catalogue). The other 97 XML1 equipment are
+appended after everything as `lc_x1_<lowercase name>` (including `lc_x1_exodus_cloak` beside XML2's own unique,
+`lc_x1_astral_stone` beside the legacy plain item, and `lc_x1_magnetos_helmet`, which no path awards). `frontend.
+translate_equipment` keeps converting the legacy list (its order is the ledger the in-place replacement follows) but its
+results for the rewards are replaced. Fields: `item_bonuses.convert_equipment` (class from the numeric source class, cost
+verbatim, quality prefix baked into `displayname` = XML1 strings 1006-1009 + one ASCII space, none for quality 0 and
+uniques, **no PC `quality` attribute**, `enemy_level` -1, the source description, the 21 descriptions missing today filled).
+
+**References.** `loot.rewrite_references` rewrites every `inventoryitem` of the converted maps and world tables that names
+an XML1 equipment to its identity (the only placement in the owned data is the astral stone's); the legacy definition of a
+rewritten name is kept alive in the item references (`item_refs`) so the 88 do not shrink. `rewarditem` keeps the 19 names.
+V-LOOT errors on a remaining reference to a legacy equipment name.
+
+**Bonuses (`item_bonuses`).** All 168 source powerups convert and every record is single-valued (the construction fixes
+the engine's draw, so min == max; a source range collapses to its mean, `atk_damage` keeps its minimum). 28 exact, 134
+approximate (104 as the staging converter had them, plus 21 probabilistic reflections at the expected value `chance x
+amount` with no per-hit gate, 7 `special`/damageaddattack as `class="add_attack"` with a flat `special` affecter - the form
+the shipped XML2 gear uses - and 2 DamageAddBleed as `class="add_harming" radiation="false"`), 6 original no-ops that write
+no record; 0 pending, 0 adapter rows (a PC mechanism exists for every family). Evidence and limits: `docs/ITEM_BONUSES.md`.
+
+**Sidecar `Data/x1economy.txt`** (`loot.sidecar_bytes`, never in Git): the DESIGN 2.2.1 format byte for byte - ASCII, LF,
+`x1economy 1` / `count N` / `sha256 <body digest>` then one line per definition `name group frequency flags cost vendor
+quality source` in PC definition-index order (116 equipment, HEALTH_ITEM / ENERGY_ITEM, XTREME_PIP, SKIRMISH_KING_PIP, the
+keys, SKILL / STAT, MONEY1-3). Flags: 0x1 unique, 0x2 grabbag, 0x4 rebuilt, 0x8 noaward (group -1, not a reward, not
+placed by a map: `MAGNETOS_HELMET`), 0x10 sellable (every equipment; non-equipment with source index above 15), 0x20 money,
+0x40 equipment. Packs carry no cost (the price is code). `loot.parse_sidecar` is the reference parser (every refusal the DLL
+makes).
+
+**Approximations** (`approximations.json` / `APPROXIMATIONS.md` in `_build/` and `Docs/`): one row per item per source bonus
+(`exact` | `bonus-approx` | `noop-original` | `adapter`, with the XML1 value, the port value, why, the family and the record
+number) plus the source-controlled behaviour rows (`loot.BEHAVIOUR_ROWS`: `grabbag-charge-once`, `g-per-roll`,
+`carry-gate-20`, `legacy-xml2-gear`, `dr-king-pip-branch`, `treasure-pc-cadence`, `level-adjust-no-regen`,
+`physical-spawn-rng`; `construction-one-roll` only with `--loot-construction one-roll`). V-LOOT checks them both ways and that
+the markdown equals the JSON.
+
+**INI.** `[Game] Xml1Economy=1` (`fix_ini.build_loot`, owned: a rebuild without the option drops it), only with
+`SaveLayout=w2`; `check_economy_dll` probes the DLL for the UTF-16 key (`write_port_keys` raises even with `old_fix_ok`:
+an older fix would run XML2's economy against the XML1 table). `tools/harness.py install` writes the key too.
+
+**Shop menu.** `shop_appearance` hides the Training controls (`shop_option03`, `shop_option03_focus`: `hide`/`enabled`
+only) under the option; the native two-tab behaviour is the DLL's.
+
+**Save catalogue.** `tools/lcsave/data/catalogue.json` is not edited: every entry is written to `catalogue.lcc`, so a
+build without the option would change. With the option `savefiles` numbers the build's new keys on a copy
+(`loot.derived_catalogue` = `Catalogue.extend`: append-only in table order, no refusal when old reward record keys left;
+`ITEM_OWN_REBUILT` set on the 19 rewards). `python -m lcsave catalogue --append-only [--own-rebuilt-ledger loot.json]`
+commits the same ids at release. `convert.Reverse.instance` is the Python reference of the loader migration: an instance of
+a definition with `own_rebuilt` gets the definition's current own list (interpolation bits 0). Two latent W2 problems
+fixed on the way (found by the 185-definition test): `loaded_zone_metadata` validated against the retail 160 definitions,
+and `_translate` matched the definition-count byte only against the retail 375 / 512 pools (a W2 stream's pool is 4096).
+
+**V-LOOT** (DESIGN 8.1, registered only with the option): 1 accounting of the 132 definitions and the legacy ledger, 2 the
+sidecar field for field, 3 the Forge catalog per tier (18 / 37 / 52 / 69 / 85), the drop pools per tier and bucket and
+the Grab Bag pools against the source, 4 the 168 powerups (none pending), single-valued records, own slots, 5 capacities
+(definitions, records, attached worst inventory below half of 4096, vendor stock 85 of the shop's 100 rows), 6 references,
+7 text, 9 approximations both ways, 10 the PC treasure entities in converted maps (counted). Item 8 (a build without the
+option equals the base) is a build comparison, not a check: `tools/build_equiv.py` over two fresh builds. Synthetic
+coverage: `tests/unit/test_item_bonuses.py`, `test_loot.py`, `test_lcsave_loot.py`. No game or emulator was launched.
+
+
+## 109. Loot + Forge test tools: D8 option, the G8 comparator, the seeded saves (builder side; no game or emulator launched)
+
+Loot step T (`task-loot-impl-tests`), on `loot/builder` (SPEC 108). Three developer tools and one builder option; none of them
+changes a build made without the option, and none ships in a release.
+
+**D8, `--loot-def-damage-scale {noop,resist}`** (default `resist` with `--loot xml1` since the 0.4.2 integration, Owen's
+D8 decision 10-26; `noop` without `--loot xml1` or when asked for; `build_xml1.py` only, with `--loot xml1`; a content option of
+`zones`, `plan_content_opts`; recorded in `report.json` / `loot.json` only when `resist`). Four items carry no working bonus in the
+first game: `def_damage_scale` is never registered by the original's parser (bonus table 0x44e8c8), and these four have no other
+bonus. `noop` (today's output, byte for byte) writes no record for them (`noop-original` rows). `resist` (owner decision D8, option
+b, decided 10-26: the default) writes the authored multiplier as the PC scoped damage-resistance scale record the converter already uses
+for the source `def_damage` scale items: `<affecter attribute="def_damage_scope" level="<authored>" affect_type="scale"
+scope_damage="<authored>"/>`, description `Damage taken x<authored>`, as a `bonus-approx` row (family `defense (resist)`, reason
+names D8). Authored values (owned `items.eng`; aggregate): `MAGNETOS_HELMET` 0 (dmg_mental; a multiplier of 0 is full immunity;
+the item is never awarded), `SHIAR_MIND_GEM` 0.5 (dmg_mental), `SHIAR_BODY_SHIELD` 0.5 (dmg_physical), `SHIAR_ENERGY_ARMOR` 0.5
+(dmg_energy). The rule is "an item whose every bonus is `def_damage_scale`" (`item_bonuses.convert_equipment(...,
+def_damage_scale=)`): `VINDICATOR_GAUNTLETS` (XP plus `def_damage_scale` 0.8 on beam attacks) stays a no-op in both modes, and
+so does the item with another bonus in the unit tests. `resist` adds 4 records (536 to 540) and moves 4 rows from `noop-original`
+to `bonus-approx` (134 to 138 approximate, 6 to 2 no-ops). V-LOOT checks the four items both ways and that `loot.json` records the
+option. Note for the owner decision: the 0.4.1 converter (`frontend.translate_equipment`) writes `resist_<type> = 1 - value` for the
+three Shiar items, so beta 7 / 8 players have a working 0.5 resistance on them today and `noop` removes it.
+
+**`tools/loot_compare.py`, the G8 comparator.** Reads the original-game S6 log and the port's roll log and prints, per run and
+pooled, rolls, pickups, drop events (a roll's pickups of one class count once), events per enemy-minute, events per roll and the
+gear / pack / money / Xtreme mix; PASS needs >= 3 runs a side and the pooled event rate and each of the four shares within +/-20
+percent of the original (z scores; rows with < 20 events are flagged UNDERPOWERED). S6 line format (also in the module docstring):
+`run id=.. zone=.. enemy_minutes=..`, `roll t=.. cat=.. lead=.. [n=..]` per roller entry, `spawn t=.. def=.. amt=.. [n=..] [cls=..]`
+per spawn call. The port side is the DLL's own `roll cat= lead= G= bucket= def= amt= draws=` line (one per pickup; `def=-` for no
+drop), with or without the log timestamp, and carries an explicit roll serial `n=<serial>` (the same on every pickup line of a
+roll): the comparator groups by it, exactly. Without `n=` (an older DLL) it falls back to a 20 ms window and prints WARNING lines
+for merged groups of more than 4 pickups, timestamp-less merges, reused serials and mixed logs (two rolls of three MONEY1 10 ms
+apart were once one six-pickup roll without a word). Tests: `tests/unit/test_loot_compare.py` (synthetic logs from an invented
+drop model). V-LOOT also compares every emitted enhancement record with the converter's (attributes, children, order; a bonus
+10 written as 999 fails) and requires every equipment reference (inventoryitem in any map or script, Danger Room rewards, sidecar
+equipment rows) to name an economy identity (an XML2-only equipment definition fails); tests in `tests/unit/test_loot.py`.
+
+**`tools/loot_seed_saves.py`, seeded saves.** Edits copies of one real LC campaign save (read only): every non-xpexempt hero to the
+seed's level and the first game's XP total for it (highest level 1 / 10 / 20 / 30 / 40 gives tier G1-G5; the ADJ seed holds one
+hero below the rest), money for every Forge row, one carried legacy Danger Room reward with its old own list, the Healer and the
+Forge in the campaign; all other sections stay raw payload. Each seed is re-read, compared with the base and run through the
+reference W2 loader; `manifest.json` lists what each carries. It refuses game folders and `Documents\Activision`. Output is
+personal save data: never for Git. Tests: `tests/unit/test_loot_seed_saves.py` (invented build and save).
+
+**Fix found with the seeds.** `convert.Reverse.instance` resolved every saved record id before it replaced the own list of a
+rebuilt (`ITEM_OWN_REBUILT`) definition, so an old instance whose list shrank (Goddess Medallion and Phoenix Mantle 3 to 2
+records, the three Shiar items 1 to 0 under `noop`) named ids the new table no longer has and the save was refused ("parked /
+unknown"). The own list of a rebuilt definition is now skipped and set from the definition. Test (red before the fix):
+`test_lcsave_loot.test_a_rebuilt_reward_whose_list_shrank_still_loads_with_the_current_list`, with a negative control.

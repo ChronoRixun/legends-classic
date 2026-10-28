@@ -31,14 +31,14 @@ Frozen (BUILDER_DESIGN.md 3.2; SPEC.md 27.13): xml1-builder.spec here, driven by
 check, packaged tables, PyInstaller one folder, content guard over the bundled data, the release zip and the
 launcher's xml1-builder.json) and tested by tools/freeze_smoke.py; CI: .github/workflows/release.yml.
 """
-VERSION = '0.4.1'                 # the builder release (semver; the launcher compares it with the release manifest)
+VERSION = '0.5.0'                 # the builder release (semver; the launcher compares it with the release manifest)
 # Frozen beta/rc builds report the full release identity recorded by freeze_builder.
 # Source runs keep the numeric base above; environment variables cannot change the runtime version.
 from . import resources as _resources
 if _resources.frozen():
     VERSION = _resources.load_json('build-info.json', {})['version']
 
-CONTENT_VERSION = 28              # bumped only when a build's output changes (a rebuild is offered to players)
+CONTENT_VERSION = 29              # bumped only when a build's output changes (a rebuild is offered to players)
 SCHEMA = 1                        # the event schema (the "v" of the hello event)
 MIN_LAUNCHER = '0.0.0'            # release manifest min_launcher: no minimum until the first launcher release with the
                                   # X-Men Legends entry is tagged (then that version; tools/freeze_builder.py)

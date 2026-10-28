@@ -200,6 +200,14 @@ class RealPipeline:
         argv += ['--main-menu-layout', getattr(job, 'main_menu_layout', 'classic')]
         argv += ['--anim-enums', getattr(job, 'anim_enums', None) or 'xml1']
         argv += ['--laa', getattr(job, 'laa', None) or 'on']
+        # every 0.4.2-line option explicitly (their defaults are on since 0.5.0-beta.1, so an 'off' must be passed)
+        argv += ['--limits-wave3', getattr(job, 'limits_wave3', None) or 'all']
+        argv += ['--save-layout', getattr(job, 'save_layout', None) or 'w2']
+        argv += ['--loot', getattr(job, 'loot', None) or 'xml1']
+        # beta 9 moves (ini only): telekinesis and the flying carry on, the guard decide off by default
+        for opt, flag, default in (('telekinesis', '--telekinesis', 'xml1'), ('guard_decide', '--guard-decide', 'off'),
+                                   ('flying_carry', '--flying-carry', 'xml1')):
+            argv += [flag, getattr(job, opt, None) or default]
         if not job.movies:
             argv.append('--no-movies')
         args = build_xml1.parse_args(argv)
@@ -412,7 +420,10 @@ class RealPipeline:
                         'seconds': round(time.time() - job.t0, 1), 'shared_keys': sorted(ctx.shared),
                         BAL.REPORT_KEY: BAL.REPORT_ON if BAL.enabled() else 'xml2',
                         'content_fingerprint': ctx.shared.get('content_fingerprint'),
-                        'sources': 'prepared', 'builder_mode': True}
+                        'sources': 'prepared', 'builder_mode': True,
+                        # limits wave 3: recorded only when on (as build_xml1.py does), so an OFF build's record is
+                        # unchanged - and fix_ini.port_keys writes the wave 3 [Limits] keys from this record
+                        **({'limits_wave3': a.limits_wave3} if (getattr(a, 'limits_wave3', None) or 'off') != 'off' else {})}
         rep['builder'] = builder
         p = Path(job.out) / '_build' / 'report.json'
         p.write_text(json.dumps(rep, indent=1, default=str), encoding='utf-8')

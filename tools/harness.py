@@ -74,7 +74,7 @@ def ini_text(mode, width, height, pipe, xml1_opening=True, save_folder=None, lim
              add_hero=False, postgame=None, main_menu_items=None, xp_curve=None, join_hero=True, pipe_name=None,
              online_server=None, log_network=False, new_game_plus=None, discord=None, port_identity=False,
              review_stats=None, xtract=None, balance=False, fingerprint=None, balance_keys=None, mold_controller=None,
-             turrets=None, lockon_effects=None, harm_loop_startup=None):
+             turrets=None, lockon_effects=None, harm_loop_startup=None, save_layout=None, loot=None):
     """a whole test xml2-fix.ini: the harness's own [Display] / [Test] / [Discord] / [Debug] test settings around the
     port's [Game] / [Limits] / [Online] keys (fix_ini)."""
     lines = [MARKER, '[Display]', f'Mode={mode}', f'Width={width}', f'Height={height}', 'Topmost=0',
@@ -102,13 +102,17 @@ def ini_text(mode, width, height, pipe, xml1_opening=True, save_folder=None, lim
         game.update((turrets or {}).get('Game', {}))
     if xml1_opening:
         game.update(harm_loop_startup or {})
+        game.update(loot or {})                 # --loot xml1: [Game] Xml1Economy=1 (fix_ini.build_loot)
     if game:
         lines += ['[Game]'] + [f'{k}={v}' for k, v in game.items()] + ['']
     if xml1_opening and port_identity and (turrets or {}).get('Xml1Turrets'):
         # the first game's scan turrets (xml1build.turrets): every placement's authored scanner and weapon values
         lines += ['[Xml1Turrets]'] + [f'{k}={v}' for k, v in turrets['Xml1Turrets'].items()] + ['']
+    if save_layout and not (limits and port_identity):
+        # SaveLayout=w2 needs the port's [Limits] (EntityCapacity=1) and the LC save identity ([Save] Format=lc)
+        raise ValueError('a W2 save layout needs [Limits] and the port identity (not --stock-limits / --stock-opening)')
     if limits:
-        lines += ['[Limits]'] + [f'{k}={v}' for k, v in FI.LIMITS.items()] + ['']
+        lines += ['[Limits]'] + [f'{k}={v}' for k, v in FI.limits_for(save_layout).items()] + ['']
         # the bigger model pools every shipped build has (fix_ini.MODEL_POOLS; xml2-fix 1.8.0-beta.2, rule 28)
         lines += ['[Engine]', f'ModelPools={FI.MODEL_POOLS}', f'ModelHandles={FI.MODEL_HANDLES}', '']
     if balance:
@@ -137,8 +141,23 @@ def install(a):
             sys.exit(str(exc))
     harm_loop_startup = {} if a.stock_opening else FI.build_harm_loop_startup(out)
     FI.check_release_dll(dll, {'Game': harm_loop_startup})
-    shutil.copy2(dll, os.path.join(out, 'dinput.dll'))
     postgame = None if a.stock_opening else FI.build_postgame(out)   # an XML1 build: the campaign ends with XML1's
+    save_layout = FI.build_save_layout(out)    # a build made with --save-layout w2: SaveLayout=w2 / ItemEnhancements=4096
+    if save_layout:
+        try:
+            if a.stock_limits or not postgame:
+                raise ValueError('a --save-layout w2 build needs the builder [Limits] and the LC save identity '
+                                 '(not --stock-limits / --stock-opening, and an XML1 build)')
+            FI.check_save_layout_dll(dll, {'Limits': FI.limits_for(save_layout), 'Save': FI.save_keys(port_identity=True)})
+        except ValueError as exc:
+            sys.exit(str(exc))
+    loot = {} if a.stock_opening else FI.build_loot(out)      # a build made with --loot xml1: [Game] Xml1Economy=1
+    if loot:
+        try:
+            FI.check_economy_dll(dll, {'Game': loot, 'Limits': FI.limits_for(save_layout)})
+        except ValueError as exc:
+            sys.exit(str(exc))
+    shutil.copy2(dll, os.path.join(out, 'dinput.dll'))
     # the XML1 front end's main menu: the mouse and Quit through xml2-fix (Play Online's mouse slot with a DLL for it)
     main_menu_items = build_menu_items(out, dll_has(dll, MAIN_MENU_8TH_MARKER))
     new_game_plus = NEW_GAME_PLUS if main_menu_items else None   # ... and its New Game: no New Game+ choice (XML1)
@@ -156,7 +175,7 @@ def install(a):
                          bool(postgame),        # an XML1 build: the port's title, ending and online version
                          review_stats, xtract, FI.build_balance(out), FI.content_fingerprint(out), FI.balance_keys(out),
                          FI.build_mold_controller(out), FI.build_turrets(out),
-                         FI.build_lockon_effects(out) if postgame else {}, harm_loop_startup))
+                         FI.build_lockon_effects(out) if postgame else {}, harm_loop_startup, save_layout, loot))
     if a.add_hero and a.forced_teams != '1':
         print('note: AddHero only acts with ForcedTeams=1 (xml2fixFeature("addhero") reports 0 otherwise)')
     print(f'harness installed in {out}: dinput.dll from {dll}; Mode={a.mode} {a.width}x{a.height} '

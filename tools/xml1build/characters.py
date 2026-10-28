@@ -53,6 +53,7 @@ from . import danger_room_actors as DR
 from . import npc_values as NV       # SPEC 24: XML1 value codes in the styles, the NPC energy pool
 from . import weapons as W           # SPEC 29: XML1 weapon definitions as style triggers (variant styles)
 from . import melee_weapons as MW    # SPEC 69.5: balance-only melee weapon metadata
+from . import w2_limits as WL        # --save-layout w2: the shared loader's cap follows the layout
 from . import scripts_transform as ST
 from .lib import x1names as N   # the XML1 namespace (was research/characters/x1names.py)
 
@@ -2244,11 +2245,12 @@ def _check_caps(ctx, roots, hero_roots, b):
             {s.get('name').lower() for s in roots['engb'].iter('stats')}:
         ctx.error('npcstat XMLB and engb list different names')
     tl = [len(list(r.iter('talent'))) for r in b.talent_roots]
+    talent_cap = WL.limits(ctx).shared_talents          # TALENT_CAP (99) unless --save-layout w2
     for ext, n in zip(('XMLB', 'engb'), tl):
-        if n > TALENT_CAP:
-            ctx.error(f'shared_talents.{ext}: {n} talents > {TALENT_CAP} (ids 0..98, XMen2.exe 0x4c05d0)')
+        if n > talent_cap:
+            ctx.error(f'shared_talents.{ext}: {n} talents > {talent_cap} (ids 0..{talent_cap - 1}, XMen2.exe 0x4c05d0)')
     ctx.log(f'stats names {len(set(s.get("name").lower() for s in hero_roots["engb"].iter("stats")) | set(s.get("name").lower() for s in roots["engb"].iter("stats")))}/{STATS_CAP}, '
-            f'shared talents {tl[1]}/{TALENT_CAP}')
+            f'shared talents {tl[1]}/{talent_cap}')
 
 
 def _basic_attacks(ctx):

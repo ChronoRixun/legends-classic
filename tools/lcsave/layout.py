@@ -204,7 +204,8 @@ OLD_SCRIPT_VAR = (('name', 'cstr', 12), ('value_be', 'bytes', 4))      # value: 
 # wrapper 0x200078, no origin trailer). The zone string table (0x800 slots, 0x3800 arena) and the fog (0x34c)
 # are the same in both (layouts.json changes neither).
 FEATURE_ENTITY_LAYOUT_CONTIGUOUS10 = 1        # header required_features bit 0: typed entity ids are ten-bit tokens
-KNOWN_REQUIRED_FEATURES = FEATURE_ENTITY_LAYOUT_CONTIGUOUS10   # every required bit this code implements
+FEATURE_NATIVE_W2 = 2                         # bit 1 NATIVE_W2: a W2 file a pre-W2 build cannot apply (limits-wave2.md section 7)
+KNOWN_REQUIRED_FEATURES = FEATURE_ENTITY_LAYOUT_CONTIGUOUS10 | FEATURE_NATIVE_W2   # every required bit this code implements
 TYPED_GENERATION_MAX = 0x3fff                 # the largest generation the runtime mints (float32-exact tokens)
 TRANSFER_CHUNK = 200                          # the largest chunk of a 47/48 campaign transfer
 NATIVE_MANAGER_RECORDS = 5                    # zone records the save manager caches
@@ -221,15 +222,38 @@ class NativeLayout:
                  'fog', 'conversation', 'time_stamp', 'flag', 'record_size', 'records_offset', 'manager_count',
                  'mission', 'manager_flag', 'manager_time', 'manager_size', 'payload', 'usable_end',
                  'origin_trailer_bytes', 'wrapper', 'envelope', 'slot_size', 'zone_string_slots', 'zone_arena',
-                 'fog_bytes', 'transfer_chunk', 'transfer_chunks', '_frozen')
+                 'fog_bytes', 'transfer_chunk', 'transfer_chunks',
+                 # W2 (limits-wave2.md 3.1): the stream structures' widths and the engine tables they index
+                 'state_record_size', 'float_positions', 'world_slot_bytes', 'definitions', 'definition_index_bytes',
+                 'def_count_bytes', 'enhancement_records', 'attached_enhancements', 'instances', 'world_slots', 'objectives',
+                 'objectives_per_act', 'objective_files', 'snapshot_objectives', 'snapshot_size', 'side_block',
+                 'talent_multiplier', 'talent_pool', 'zone_strings_size', 'item_head_size', 'instance_fixed',
+                 'loader_placements', '_frozen')
 
-    def __init__(self, id, *, feature_bits, index_bits, states, ordinals, dynamic, smart, payload):
+    def __init__(self, id, *, feature_bits, index_bits, states, ordinals, dynamic, smart, payload,
+                 record_count=NATIVE_MANAGER_RECORDS, state_record_size=NATIVE_STATE_BYTES, float_positions=False,
+                 zone_string_slots=OLD_ZONE_STRING_SLOTS, zone_arena=OLD_ZONE_ARENA, definitions=OLD_DEF_STATE_PAIRS,
+                 definition_index_bytes=1, def_count_bytes=1, enhancement_records=512, attached_enhancements=375,
+                 instances=256, world_slots=150, world_slot_bytes=1, objectives=300, objectives_per_act=75,
+                 objective_files=25, snapshot_objectives=300, snapshot_size=NATIVE_MISSION_BYTES, talent_multiplier=100,
+                 talent_pool=100, loader_placements=1024):
         s = object.__setattr__
         s(self, 'id', id); s(self, 'feature_bits', feature_bits); s(self, 'index_bits', index_bits)
         s(self, 'states', states); s(self, 'ordinals', ordinals); s(self, 'dynamic', dynamic); s(self, 'smart', smart)
-        s(self, 'record_count', NATIVE_MANAGER_RECORDS)
+        s(self, 'record_count', record_count)
+        for k, v in (('state_record_size', state_record_size), ('float_positions', float_positions), ('world_slot_bytes', world_slot_bytes),
+                     ('definitions', definitions), ('definition_index_bytes', definition_index_bytes), ('def_count_bytes', def_count_bytes),
+                     ('enhancement_records', enhancement_records), ('attached_enhancements', attached_enhancements),
+                     ('instances', instances), ('world_slots', world_slots), ('objectives', objectives),
+                     ('objectives_per_act', objectives_per_act), ('objective_files', objective_files),
+                     ('snapshot_objectives', snapshot_objectives), ('snapshot_size', snapshot_size), ('side_block', 2 * snapshot_size + 8),
+                     ('talent_multiplier', talent_multiplier), ('talent_pool', talent_pool),
+                     ('zone_strings_size', 8 + 4 * zone_string_slots + zone_arena),
+                     ('item_head_size', def_count_bytes + 2 * definitions + 12 + 24), ('instance_fixed', definition_index_bytes + 4),
+                     ('loader_placements', loader_placements)):
+            s(self, k, v)
         # zone record: u32 name handle, the state records, then the tail (OLD_ZONE_RECORD_TAIL's field order)
-        p = 4 + states * NATIVE_STATE_BYTES + 4           # pad word after the states
+        p = 4 + states * state_record_size + 4            # pad word after the states
         s(self, 'state_count', p); p += 4
         s(self, 'ordinals_offset', p); p += 2 * ordinals + 4
         s(self, 'dynamic_offset', p); p += 2 * dynamic + 4
@@ -243,9 +267,9 @@ class NativeLayout:
         s(self, 'record_size', p)
         # the manager: the records, a pad word, the record count, the mission snapshot, flag, time
         s(self, 'records_offset', 0)
-        m = NATIVE_MANAGER_RECORDS * p + 4
+        m = record_count * p + 4
         s(self, 'manager_count', m); m += 4
-        s(self, 'mission', m); m += NATIVE_MISSION_BYTES
+        s(self, 'mission', m); m += snapshot_size
         s(self, 'manager_flag', m); m += 4
         s(self, 'manager_time', m); m += 4
         s(self, 'manager_size', m)
@@ -253,7 +277,7 @@ class NativeLayout:
         s(self, 'payload', payload); s(self, 'usable_end', payload); s(self, 'origin_trailer_bytes', 0)
         s(self, 'wrapper', payload + NATIVE_WRAPPER_SLACK)
         s(self, 'envelope', OLD_ENVELOPE); s(self, 'slot_size', OLD_ENVELOPE + payload)
-        s(self, 'zone_string_slots', OLD_ZONE_STRING_SLOTS); s(self, 'zone_arena', OLD_ZONE_ARENA)
+        s(self, 'zone_string_slots', zone_string_slots); s(self, 'zone_arena', zone_arena)
         s(self, 'fog_bytes', OLD_FOG_BYTES)
         s(self, 'transfer_chunk', TRANSFER_CHUNK); s(self, 'transfer_chunks', (payload + TRANSFER_CHUNK - 1) // TRANSFER_CHUNK)
         s(self, '_frozen', True)
@@ -278,6 +302,43 @@ class NativeLayout:
             ('conversation', 'u32', 5), ('time_stamp', 'f32', 1), ('flag', 'u8', 1), ('pad_55dd', 'u8', 3),
         )
 
+    @property
+    def w2(self):
+        """the W2 layout's writer may set bit 1 (NATIVE_W2) and its reader applies it"""
+        return bool(self.feature_bits & FEATURE_NATIVE_W2)
+
+    def talent_id(self, owner_plus1, position):
+        """the engine talent id of a talent-file position: owner_plus1 = stats index + 1 (0 for a shared talent)"""
+        return owner_plus1 * self.talent_multiplier + position
+
+    def item_head(self):
+        """OLD_ITEM_HEAD of this layout (W2 section 3.2: u16 count, 1024 pairs)"""
+        return (('def_count', 'u16' if self.def_count_bytes == 2 else 'u8', 1), ('def_state', 'u8', self.definitions * 2),
+                ('tech_bits', 'u32', 1), ('health_items', 'u32', 1), ('energy_items', 'u32', 1), ('key_counts', 'u32', 6))
+
+    def instance_head(self):
+        """OLD_INSTANCE_HEAD of this layout (W2 section 3.3: u16 definition)"""
+        return (('definition', 'u16' if self.definition_index_bytes == 2 else 'u8', 1),) + OLD_INSTANCE_HEAD[1:]
+
+    def snapshot(self):
+        """OLD_SNAPSHOT of this layout (W2 section 3.4: 1024 objective bytes, 3 pad bytes)"""
+        if self.snapshot_objectives == 300:
+            return OLD_SNAPSHOT
+        head = OLD_SNAPSHOT[:OLD_SNAPSHOT.index(('objectives', 'u8', 300))]
+        return head + (('objectives', 'u8', self.snapshot_objectives), ('pad_525', 'u8', 3), ('anchor_pos', 'f32', 3),
+                       ('anchor_orient', 'f32', 3))
+
+    def state_record(self):
+        """OLD_STATE_RECORD of this layout (W2 section 3.5: u16 world-item slot at +0x12, 3 x f32 at +0x14)"""
+        if not self.float_positions:
+            return OLD_STATE_RECORD
+        return OLD_STATE_RECORD[:-1] + (('world_slot', 'u16', 1), ('position', 'f32', 3))
+
+    def zone_strings(self):
+        """OLD_ZONE_STRINGS of this layout (W2: 0x2000 slots, 0x20000 arena)"""
+        return (('generation', 'u32', 1), ('offsets', 'u32', self.zone_string_slots), ('used', 'u32', 1),
+                ('arena', 'bytes', self.zone_arena))
+
     def chunk_bounds(self, index):
         """(offset, length) of transfer chunk `index` of the payload; the last chunk is short. ValueError outside."""
         if not 0 <= index < self.transfer_chunks:
@@ -296,11 +357,41 @@ RETAIL = NativeLayout('RETAIL', feature_bits=0, index_bits=8, states=OLD_ZONE_ST
                       dynamic=OLD_ZONE_DYNAMIC, smart=OLD_ZONE_SMART, payload=OLD_PAYLOAD)
 E10A2 = NativeLayout('E10A2', feature_bits=FEATURE_ENTITY_LAYOUT_CONTIGUOUS10, index_bits=10, states=4096, ordinals=1024,
                      dynamic=1024, smart=1024, payload=0x200000)
-NATIVE_LAYOUTS = {RETAIL.id: RETAIL, E10A2.id: E10A2}
+# W2 (limits-wave2.md section 3, frozen): 8 records of 4096 / 4096 / 2048 / 2048 with 0x20-byte state records (f32
+# positions, a u16 world-item slot), u16 definition index / count with 1024 pairs, 0x540 snapshots, 8192-slot /
+# 0x20000-byte zone strings, hero-talent multiplier 200, the pools of section 2
+W2 = NativeLayout('W2', feature_bits=FEATURE_ENTITY_LAYOUT_CONTIGUOUS10 | FEATURE_NATIVE_W2, index_bits=10, states=4096,
+                  ordinals=4096, dynamic=2048, smart=2048, payload=0x200000, record_count=8, state_record_size=0x20,
+                  float_positions=True, zone_string_slots=0x2000, zone_arena=0x20000, definitions=1024,
+                  definition_index_bytes=2, def_count_bytes=2, enhancement_records=4096, attached_enhancements=4096,
+                  instances=1024, world_slots=1024, world_slot_bytes=2, objectives=1024, objectives_per_act=127,
+                  objective_files=64, snapshot_objectives=1024, snapshot_size=0x540, talent_multiplier=200, talent_pool=256)
+NATIVE_LAYOUTS = {RETAIL.id: RETAIL, E10A2.id: E10A2, W2.id: W2}
+WORLD_SLOT_NONE = 0xffff                      # a W2 state record's slot field when it owns no world item
+
+
+def talent_code(owner_plus1, position):
+    """a talent of the build's tables: (stats index + 1, position); 0 = a shared talent. The engine id is the layout's
+    (owner + 1) x M + position (talent_engine_id)."""
+    return owner_plus1 << 16 | position
+
+
+def talent_engine_id(code, native):
+    """the engine talent id of a talent code on `native`; ValueError when the position does not fit the layout's id
+    space (position < M; a shared position < M - 1, the shared cap M - 1)"""
+    owner, position = code >> 16, code & 0xffff
+    m = native.talent_multiplier
+    if position >= (m - 1 if owner == 0 else m):
+        what = 'shared talent position' if owner == 0 else 'talent position'
+        raise ValueError(f'{what} {position} does not fit the native layout {native.id} (talent multiplier {m})')
+    tid = native.talent_id(owner, position)
+    if tid > 0xffff:
+        raise ValueError(f'talent id {tid} does not fit the saved u16')
+    return tid
 
 
 def native_layout(name):
-    """the descriptor by id ('RETAIL', 'E10A2'); KeyError otherwise"""
+    """the descriptor by id ('RETAIL', 'E10A2', 'W2'); KeyError otherwise"""
     return NATIVE_LAYOUTS[name]
 
 
@@ -386,3 +477,12 @@ assert E10A2.transfer_chunks == 10486 and E10A2.chunk_bounds(10485) == (10485 * 
 assert migrate_typed_field(0x101) == 0x401 and migrate_typed_field(0x401) == 0x1001 and migrate_typed_field(0x400001) == 0
 assert migrate_typed_field(0) == 0 and migrate_typed_field(0x80000000) == 0 and migrate_typed_field(0x3fff01) == 0xfffc01
 assert validate_typed_field(0x501) == 0x501 and validate_typed_field(0x1000001) == 0 and validate_typed_field(0xffffff) == 0xffffff
+# W2 against the design's numbers (limits-wave2.md 3.6 - 3.8)
+assert (W2.state_count, W2.ordinals_offset, W2.dynamic_offset, W2.dynamic_count, W2.smart_offset, W2.smart_count, W2.fog,
+        W2.conversation, W2.time_stamp, W2.flag, W2.record_size) == (
+    0x20008, 0x2000c, 0x22010, 0x23014, 0x23018, 0x2401c, 0x24020, 0x2436c, 0x24380, 0x24384, 0x24388)
+assert (W2.manager_count, W2.mission, W2.manager_flag, W2.manager_time, W2.manager_size) == (0x121c44, 0x121c48, 0x122188, 0x12218c, 0x122190)
+assert W2.side_block == 0xa88 and W2.zone_strings_size == 0x28008 and W2.item_head_size == 0x826 and W2.instance_fixed == 6
+assert size_of(W2.snapshot()) == 0x540 and size_of(W2.state_record()) == 0x20 and size_of(W2.item_head()) == 0x826
+assert size_of(RETAIL.item_head()) == 0x165 and RETAIL.snapshot() == OLD_SNAPSHOT and size_of(W2.zone_strings()) == 0x28008
+assert 101 <= W2.talent_multiplier <= 219 and 298 * W2.talent_multiplier - 1 <= 0xffff

@@ -398,7 +398,7 @@ def test_port_keys_from_a_synthetic_build():
 
 def test_beta2_keys_refuse_a_beta1_dll_and_require_the_beta2_fix():
     # 0.3.0-beta.2 writes [Engine] ModelPools and [Game] ComboPopupGuard, which XML2 Fix 1.8.0-beta.1 does not read
-    # (same numeric VERSIONINFO 1.8.0.0): the DLL check names both; beta/rc builders require '>=1.9.0-beta.1' (beta 8).
+    # (same numeric VERSIONINFO 1.8.0.0): the DLL check names both; beta/rc builders require '>=1.10.0-beta.1' (0.5.0).
     keys = {'Game': {'ComboPopupGuard': '1'}, 'Engine': {'ModelPools': 'x4'}}
     with tempfile.TemporaryDirectory() as td:
         dll = Path(td) / 'dinput.dll'
@@ -406,8 +406,8 @@ def test_beta2_keys_refuse_a_beta1_dll_and_require_the_beta2_fix():
         assert FI.old_fix_keys(dll, keys) == ['[Game] ComboPopupGuard', '[Engine] ModelPools']
         dll.write_bytes(b'MZ' + 'ComboPopupGuard'.encode('utf-16le') + 'ModelPools'.encode('utf-16le'))
         assert FI.old_fix_keys(dll, keys) == []
-    assert FI.required_xml2fix('0.3.0-beta.3') == FI.required_xml2fix('0.4.0-rc.1') == '>=1.9.0-beta.1'
-    assert FI.required_xml2fix('0.4.0') == '>=1.9'
+    assert FI.required_xml2fix('0.3.0-beta.3') == FI.required_xml2fix('0.4.0-rc.1') == '>=1.10.0-beta.1'
+    assert FI.required_xml2fix('0.4.0') == '>=1.10'
 
 
 def test_beta3_tick_rate_is_written_port_owned_and_refuses_a_beta2_dll():
@@ -437,7 +437,7 @@ def test_beta5_classic_keys_refuse_a_beta4_dll_and_require_the_beta5_fix():
         assert FI.old_fix_keys(dll, keys) == ['[Game] ClassicHud', '[Game] ClassicCodex']
         dll.write_bytes(b'MZ' + ''.join(('ClassicHud\0', 'ClassicCodex\0')).encode('utf-16le'))
         assert FI.old_fix_keys(dll, keys) == []
-    assert FI.required_xml2fix('0.4.0') == '>=1.9'
+    assert FI.required_xml2fix('0.4.0') == '>=1.10'
 
 
 def test_beta6_weapon_brain_keys_refuse_a_beta5_dll_and_require_the_beta6_fix():
@@ -454,7 +454,7 @@ def test_beta6_weapon_brain_keys_refuse_a_beta5_dll_and_require_the_beta6_fix():
         assert FI.old_fix_keys(dll, keys) == ['[Game] NpcSemiAuto', '[NpcSemiAuto] schema 4 rows', '[Game] NpcPowerRule revision 14']
         dll.write_bytes(b'MZ' + ''.join(('ClassicHud\0', 'NpcPowerRule', 'NpcSemiAuto', 'Count')).encode('utf-16le') + b'NSA4' + b'NPR14')
         assert FI.old_fix_keys(dll, keys) == []
-    assert FI.required_xml2fix('0.4.0') == '>=1.9'
+    assert FI.required_xml2fix('0.4.0') == '>=1.10'
 
 
 def test_beta7_keys_refuse_a_beta6_dll_and_require_the_beta7_fix():
@@ -475,8 +475,8 @@ def test_beta7_keys_refuse_a_beta6_dll_and_require_the_beta7_fix():
         assert FI.old_fix_keys(dll, keys) == ['[Game] NpcPowerRule revision 14']   # beta 7 (rule 16 revision 11)
         dll.write_bytes(dll.read_bytes() + b'NPR14')
         assert FI.old_fix_keys(dll, keys) == []
-    assert FI.REQUIRED_XML2FIX_PRERELEASE == 'beta.1'   # 0.4.1-beta.1 (beta 8) requires XML2 Fix 1.9.0-beta.1
-    assert FI.required_xml2fix('0.4.1-beta.1') == '>=1.9.0-beta.1' and FI.required_xml2fix('0.4.1') == '>=1.9'
+    assert FI.REQUIRED_XML2FIX_PRERELEASE == 'beta.1'   # 0.5.0-beta.1 requires XML2 Fix 1.10.0-beta.1
+    assert FI.required_xml2fix('0.5.0-beta.1') == '>=1.10.0-beta.1' and FI.required_xml2fix('0.5.0') == '>=1.10'
 
 
 def test_harness_installs_write_the_shipped_limits_by_default():
@@ -823,7 +823,7 @@ def test_port_builds_ask_for_the_lc_save_format():
     assert FI.save_keys(port_identity=True) == {'Format': 'lc'}
     assert FI.save_keys(port_identity=False) == {}
     assert FI.PORT_OWNED['Save'] == ('Format',) and 'ContentFingerprint' in FI.PORT_OWNED['Online']
-    assert FI.REQUIRED_XML2FIX == '1.9'
+    assert FI.REQUIRED_XML2FIX == '1.10'
 
 
 def test_receive_validation_defaults_on_and_requires_supported_companion():
@@ -847,6 +847,152 @@ def test_receive_validation_defaults_on_and_requires_supported_companion():
         FI.check_release_dll(dll, keys)
 
 
+def test_latepads_optional_preference_requires_exact_dll_token():
+    """An unsupported explicit off is unsafe too: the old DLL leaves late-pad routing enabled."""
+    with tempfile.TemporaryDirectory() as td:
+        dll = Path(td) / 'dinput.dll'
+        for data, supported in ((b'MZ older companion', False),
+                                (b'MZ' + 'LatePadsTrace\0'.encode('utf-16le'), False),
+                                (b'MZ' + 'LatePads\0'.encode('utf-16le'), True)):
+            dll.write_bytes(data)
+            FI.check_release_dll(dll, {})
+            assert FI.old_fix_keys(dll, {'Input': {}}) == []
+            for value in ('0', '1', '', 'invalid'):
+                keys = {'Input': {'LatePads': value}}
+                assert FI.old_fix_keys(dll, keys) == ([] if supported else ['[Input] LatePads'])
+                try:
+                    FI.check_release_dll(dll, keys)
+                except FI.FixTooOld as exc:
+                    assert not supported and exc.missing == ['[Input] LatePads']
+                    assert '[Input] LatePads' in str(exc)
+                else:
+                    assert supported
+
+
+def test_latepads_rebuild_validates_and_preserves_player_preference():
+    with tempfile.TemporaryDirectory() as td:
+        out = Path(td)
+        dll, ini = out / 'dinput.dll', out / 'xml2-fix.ini'
+        keys = {'Game': {'NewGameTeam': 'wolverine'}}
+        assert all('LatePads' not in names for names in FI.PORT_OWNED.values())
+        assert all('LatePads' not in names for names in FI.dropped_keys(keys).values())
+        dll.write_bytes(b'MZ older companion')
+        FI.write_port_keys(out, keys)
+        assert 'LatePads' not in ini.read_text()
+        for section, key in (('Input', 'LatePads'), ('input', 'latepads')):
+            original = f'; player preference\n[{section}]\n{key}=0\nOther=keep\n'.encode('utf-16')
+            ini.write_bytes(original)
+            try:
+                FI.write_port_keys(out, keys)
+            except FI.FixTooOld as exc:
+                assert exc.missing == ['[Input] LatePads']
+            else:
+                raise AssertionError('rebuild ignored the retained LatePads preference')
+            assert ini.read_bytes() == original
+            FI.write_port_keys(out, keys, old_fix_ok=True)
+            assert FI.read_ini(ini)[section][key] == '0'
+            dll.write_bytes(b'MZ' + 'LatePads\0'.encode('utf-16le'))
+            FI.write_port_keys(out, keys)
+            assert FI.read_ini(ini)[section] == {key: '0', 'Other': 'keep'}
+            assert ini.read_bytes().startswith(original)
+            dll.write_bytes(b'MZ older companion')
+        # A supplied preference is checked as well as one retained from an existing file.
+        ini.write_bytes(b'')
+        try:
+            FI.write_port_keys(out, {'Input': {'LatePads': '0'}})
+        except FI.FixTooOld as exc:
+            assert exc.missing == ['[Input] LatePads']
+        else:
+            raise AssertionError('supplied LatePads=0 was accepted with an older DLL')
+
+
+def test_actors_optional_preference_requires_exact_key_and_stage2_marker():
+    """[Limits] Actors=96 needs the 739cc0f core: the NUL-terminated UTF-16 key and its telemetry name."""
+    with tempfile.TemporaryDirectory() as td:
+        dll = Path(td) / 'dinput.dll'
+        name = '[Limits] Actors (rule 44 revision 2, E4 stage 2 core)'
+        for data, missing in ((b'MZ older companion', ['[Limits] Actors', name]),
+                              (b'MZ' + 'ActorsTrace\0'.encode('utf-16le') + FI.ACTORS_MARKER, ['[Limits] Actors']),
+                              (b'MZ' + 'Actors\0'.encode('utf-16le'), [name]),          # fe3f621-like: never shipped
+                              (b'MZ' + 'Actors\0'.encode('utf-16le') + FI.ACTORS_MARKER, [])):
+            dll.write_bytes(data)
+            FI.check_release_dll(dll, {})
+            try:
+                FI.check_release_dll(dll, {'Limits': {'Actors': '96'}})
+            except FI.FixTooOld as exc:
+                assert exc.missing == missing, (data, exc.missing)
+            else:
+                assert missing == []
+    assert all('Actors' not in names for names in FI.PORT_OWNED.values())
+
+
+def test_actors_value_and_prerequisites_are_validated():
+    full = {k: v for k, v in FI.ACTORS_PREREQUISITES}
+    FI.check_actors_keys({})
+    FI.check_actors_keys({'Limits': dict(full)})                      # absent: nothing to check
+    FI.check_actors_keys({'Limits': {**full, 'Actors': '96'}})
+    for limits, needle in (({**full, 'Actors': '64'}, "must be 96 (got '64')"),
+                           ({**{k: v for k, v in full.items() if k != 'ActorPools'}, 'Actors': '96'}, '[Limits] ActorPools=124'),
+                           ({**full, 'MotionPool': '500', 'Actors': '96'}, '[Limits] MotionPool=22528')):
+        try:
+            FI.check_actors_keys({'Limits': limits})
+        except ValueError as exc:
+            assert needle in str(exc), str(exc)
+        else:
+            raise AssertionError(limits)
+
+
+def test_actors_rebuild_keeps_preference_and_its_actorpools():
+    """A rebuild keeps a player's Actors=96 and the ActorPools=124 it needs (port-owned: dropped otherwise), refuses
+    the rebuild with an older DLL or without the prerequisites, and never writes Actors itself. The port keys are a
+    0.4.2-style build's: every prerequisite but ActorPools."""
+    with tempfile.TemporaryDirectory() as td:
+        out = Path(td)
+        dll, ini = out / 'dinput.dll', out / 'xml2-fix.ini'
+        keys = {'Game': {'NewGameTeam': 'wolverine'}, 'Save': {'Format': 'lc'},
+                'Limits': {k: v for k, v in FI.ACTORS_PREREQUISITES if k != 'ActorPools'}}
+        dll.write_bytes(b'MZ older companion')
+        FI.write_port_keys(out, keys, old_fix_ok=True)
+        assert 'actors' not in {k.lower() for k in FI.read_ini(ini)['Limits']}
+        assert 'ActorPools' in FI.dropped_keys(keys).get('Limits', ())
+        supported = b'MZ' + 'Actors\0'.encode('utf-16le') + FI.ACTORS_MARKER
+        for section, key in (('Limits', 'Actors'), ('limits', 'actors')):
+            original = f'[{section}]\nActorPools=124\n{key}=96\n'.encode('utf-16')
+            ini.write_bytes(original)
+            dll.write_bytes(b'MZ older companion')
+            try:
+                FI.write_port_keys(out, keys)
+            except FI.FixTooOld as exc:
+                assert '[Limits] Actors' in exc.missing and '[Limits] Actors (rule 44 revision 2, E4 stage 2 core)' in exc.missing
+            else:
+                raise AssertionError('rebuild ignored the retained Actors preference')
+            assert ini.read_bytes() == original
+            dll.write_bytes(supported)
+            try:
+                FI.write_port_keys(out, keys)
+            except FI.FixTooOld as exc:      # the synthetic DLL lacks the other rows' markers, never Actors'
+                assert not [m for m in exc.missing if 'Actors' in m], exc.missing
+            FI.write_port_keys(out, keys, old_fix_ok=True)
+            got = {k.lower(): v for k, v in FI.read_ini(ini)[section].items()}
+            assert got['actors'] == '96' and got['actorpools'] == '124' and got['animenums'] == '512', got
+        # without the preference the port still drops a stray ActorPools
+        ini.write_bytes(b'[Limits]\r\nActorPools=124\r\n')
+        FI.write_port_keys(out, keys, old_fix_ok=True)
+        assert 'actorpools' not in {k.lower() for k in FI.read_ini(ini).get('Limits', {})}
+        # Actors without ActorPools, or not 96: refused (ValueError) before anything is written
+        for text in ('[Limits]\nActors=96\n', '[Limits]\nActorPools=124\nActors=95\n', '[Limits]\nActorPools=1\nActors=96\n'):
+            ini.write_bytes(text.encode('latin-1'))
+            try:
+                FI.write_port_keys(out, keys, old_fix_ok=True)
+            except FI.FixTooOld:
+                raise AssertionError(text)
+            except ValueError as exc:
+                assert '[Limits] Actors' in str(exc)
+            else:
+                raise AssertionError(text)
+            assert ini.read_bytes() == text.encode('latin-1')
+
+
 def test_beta_fix_numeric_version_keeps_runtime_capability_checks():
     """Beta DLLs keep numeric VERSIONINFO; require their 1.8 keys, not a textual beta suffix (a DLL's key strings are
     NUL-terminated UTF-16, as the beta.5 keys are matched)."""
@@ -857,20 +1003,20 @@ def test_beta_fix_numeric_version_keeps_runtime_capability_checks():
         for numeric in ('1.8.0', '1.8.0.0', '1.8.0.2'):
             resource = ('FileVersion\0' + numeric + '\0ProductVersion\0' + numeric + '\0').encode('utf-16le')
             markers = b''.join((key + '\0').encode('utf-16le') for names in FI.RELEASE_18_KEYS.values() for key in names)
-            dll.write_bytes(b'MZ synthetic beta fix\0' + resource + markers + b'NSA4' + b'NPR14' + FI.GRAB_CARRY_R3_MARKER + FI.CARRY_CHAIN_MARKER + FI.TK_AUDIO_MARKER + FI.TK_STILL_MARKER + FI.GUARD_TAP_MARKER + FI.COLOSSUS_CASTER_MARKER + FI.THROWN_IMPACT_MARKER + FI.FLYING_CARRY_OFF_MARKER + FI.CHAR_SOUNDS_MARKER + FI.MOTION_POOL_MARKER + FI.RESIDENT_STATS_MARKER)
+            dll.write_bytes(b'MZ synthetic beta fix\0' + resource + markers + b'NSA4' + b'NPR14' + FI.GRAB_CARRY_R3_MARKER + FI.CARRY_CHAIN_MARKER + FI.TK_AUDIO_MARKER + FI.TK_STILL_MARKER + FI.GUARD_TAP_MARKER + FI.TK_ARMING_MARKER + FI.GUARD_ENTRY_MARKER + FI.COLOSSUS_CASTER_MARKER + FI.THROWN_IMPACT_MARKER + FI.FLYING_CARRY_OFF_MARKER + FI.CHAR_SOUNDS_MARKER + FI.MOTION_POOL_MARKER + FI.RESIDENT_STATS_MARKER + b''.join(FI.WAVE3_MARKERS.values()) + b''.join(FI.MARKERS_082D) + b''.join(FI.MARKERS_082E) + FI.ACTORS_MARKER)
             FI.check_release_dll(dll, keys)
         # 1.7.1 lacks the companion's 1.8 drop-in capability, even though it has older required keys.
         older = ('ProductVersion\0' + '1.7.1' + '\0').encode('utf-16le')
         markers = b''.join((key + '\0').encode('utf-16le') for names in FI.RELEASE_18_KEYS.values()
                            for key in names if key != 'JoinInProgress')
-        dll.write_bytes(b'MZ synthetic old fix\0' + older + markers + b'NSA4' + b'NPR14' + FI.GRAB_CARRY_R3_MARKER + FI.CARRY_CHAIN_MARKER + FI.TK_AUDIO_MARKER + FI.TK_STILL_MARKER + FI.GUARD_TAP_MARKER + FI.COLOSSUS_CASTER_MARKER + FI.THROWN_IMPACT_MARKER + FI.FLYING_CARRY_OFF_MARKER + FI.CHAR_SOUNDS_MARKER + FI.MOTION_POOL_MARKER + FI.RESIDENT_STATS_MARKER)
+        dll.write_bytes(b'MZ synthetic old fix\0' + older + markers + b'NSA4' + b'NPR14' + FI.GRAB_CARRY_R3_MARKER + FI.CARRY_CHAIN_MARKER + FI.TK_AUDIO_MARKER + FI.TK_STILL_MARKER + FI.GUARD_TAP_MARKER + FI.TK_ARMING_MARKER + FI.GUARD_ENTRY_MARKER + FI.COLOSSUS_CASTER_MARKER + FI.THROWN_IMPACT_MARKER + FI.FLYING_CARRY_OFF_MARKER + FI.CHAR_SOUNDS_MARKER + FI.MOTION_POOL_MARKER + FI.RESIDENT_STATS_MARKER + b''.join(FI.WAVE3_MARKERS.values()) + b''.join(FI.MARKERS_082D) + b''.join(FI.MARKERS_082E) + FI.ACTORS_MARKER)
         try:
             FI.check_release_dll(dll, keys)
         except FI.FixTooOld as exc:
             assert exc.missing == ['[Online] JoinInProgress']
         else:
             raise AssertionError('1.7.1 without the 1.8 drop-in capability was accepted')
-    assert FI.REQUIRED_XML2FIX == '1.9'  # stable constant and runtime diagnostics stay unchanged
+    assert FI.REQUIRED_XML2FIX == '1.10'  # stable constant and runtime diagnostics stay unchanged
 
 
 def test_a_dll_without_the_15_keys_is_refused(tmp_path=None):
@@ -1044,7 +1190,7 @@ def test_join_in_progress_is_on_for_port_builds_and_needs_fix_18():
     assert FI.online_keys(port_identity=True)['JoinInProgress'] == '1' and FI.JOIN_IN_PROGRESS == '1'
     assert FI.online_keys(port_identity=False) == {}
     assert 'JoinInProgress' in FI.PORT_OWNED['Online'] and 'JoinInProgress' in FI.RELEASE_18_KEYS['Online']
-    assert FI.REQUIRED_XML2FIX == '1.9'
+    assert FI.REQUIRED_XML2FIX == '1.10'
     with tempfile.TemporaryDirectory() as d:
         dll = Path(d) / 'dinput.dll'
         dll.write_bytes(b'MZ' + 'ReceiveValidation'.encode('utf-16le'))
@@ -1057,45 +1203,53 @@ def test_join_in_progress_is_on_for_port_builds_and_needs_fix_18():
         FI.check_release_dll(dll, {'Online': {'ReceiveValidation': '1', 'JoinInProgress': '1'}})
 
 
-def test_release_identity_041_beta1_is_lc37_and_never_an_older_token():
-    """0.4.1-beta.1 (the port's beta 8: the first game's bosses, moves and grabs, raised engine limits, the
-    large-address-aware exe, the save-compatibility ledger and the GRSO style names) changes the generated output, so it
-    is content 28 / catalogue 7 / LC37: a token no earlier build carries (0.2.5 LC32, 0.3.0 and the 0.4.0 betas 1-4
-    LC33, beta 5 LC34, beta 6 LC35, beta 7 and stable 0.4.0 LC36), so neither the stock lobby nor the rooms pair a beta 8
-    PC with an older build. Content 27 stays LC36 (beta 7's row, which stable 0.4.0 resolves to: a stable alias or a
-    second token for that content is refused), 26 LC35, 25 LC34 and 24 LC33 (append-only). The requirement paths: the
-    0.4.1 betas declare '>=1.9.0-beta.1', a stable 0.4.1 '>=1.9'."""
+def test_release_identity_050_beta1_is_lc38_and_never_an_older_token():
+    """0.5.0-beta.1 (the 0.4.2 line released as 0.5: the W2 save layout, the first game's item economy, limits wave 3,
+    Phoenix's telekinesis, the guard decide and the flying carry, all on by default) changes the generated output and
+    the save catalogue (--loot xml1: revision 7 -> 8), so it is content 29 / catalogue 8 / LC38: a token no earlier build
+    carries (0.2.5 LC32, 0.3.0 and the 0.4.0 betas 1-4 LC33, beta 5 LC34, beta 6 LC35, beta 7 and stable 0.4.0 LC36,
+    beta 8 LC37), so neither the stock lobby nor the rooms pair a 0.5 PC with an older build. Content 28 stays LC37
+    (beta 8's row, catalogue 7), 27 LC36, 26 LC35, 25 LC34 and 24 LC33 (append-only). The requirement paths: the
+    0.5.0 betas declare '>=1.10.0-beta.1', a stable 0.5.0 '>=1.10'."""
     from xml1build import release_identity as RI
     from xml1builder import CONTENT_VERSION, VERSION
     import release_metadata as RM
-    assert (VERSION, CONTENT_VERSION) == ('0.4.1', 28) and RI.game_version() == 'LC37'
+    assert (VERSION, CONTENT_VERSION, RI.CURRENT_CATALOGUE_REVISION) == ('0.5.0', 29, 8) and RI.game_version() == 'LC38'
+    assert RI.game_version(content_version=28, catalogue_revision=7) == 'LC37'
     assert RI.game_version(content_version=27, catalogue_revision=7) == 'LC36'
     assert RI.game_version(content_version=26, catalogue_revision=7) == 'LC35'
     assert RI.game_version(content_version=25, catalogue_revision=7) == 'LC34'
     assert RI.game_version(content_version=24, catalogue_revision=7) == 'LC33'
-    assert [r.token for r in RI.HISTORY].count('LC37') == 1 and RI.HISTORY[-1].token == 'LC37'
-    assert all(r.token != 'LC37' for r in RI.HISTORY[:-1])
-    row = RI.HISTORY[-1]
-    assert (row.release, row.content_version, row.catalogue_revision) == ('0.4.1-beta.1', 28, 7)
-    assert len(row.bind_manifest) == 64 and row.bind_manifest != RI.HISTORY[-2].bind_manifest
-    rows = [r for r in RI.HISTORY if (r.content_version, r.catalogue_revision) == (27, 7)]
-    assert [(r.release, r.token) for r in rows] == [('0.4.0-beta.7', 'LC36')]
-    for extra in (RI.Identity('0.4.0-stable', 27, 7, 'LC38', rows[0].bind_manifest),
-                  RI.Identity('0.4.0-stable', 27, 7, 'LC36', rows[0].bind_manifest),
-                  RI.Identity('0.4.1-stable', 28, 7, 'LC38', row.bind_manifest)):
+    for unassigned in ((29, 7), (28, 8)):
+        try:
+            RI.game_version(content_version=unassigned[0], catalogue_revision=unassigned[1])
+        except ValueError:
+            continue
+        raise AssertionError(f'{unassigned} resolved to a token')
+    assert [r.token for r in RI.HISTORY].count('LC38') == 1 and RI.HISTORY[-1].token == 'LC38'
+    assert all(r.token != 'LC38' for r in RI.HISTORY[:-1])
+    row, beta8 = RI.HISTORY[-1], RI.HISTORY[-2]
+    assert (row.release, row.content_version, row.catalogue_revision) == ('0.5.0-beta.1', 29, 8)
+    assert (beta8.release, beta8.content_version, beta8.catalogue_revision, beta8.token) == ('0.4.1-beta.1', 28, 7, 'LC37')
+    assert beta8.bind_manifest == 'd48e541bae488d31a7003ae020f4712c8c6a8cfb6f34099c3bb892dee15ce5cf'
+    assert len(row.bind_manifest) == 64 and row.bind_manifest != beta8.bind_manifest
+    for extra in (RI.Identity('0.4.1-stable', 28, 7, 'LC39', beta8.bind_manifest),
+                  RI.Identity('0.4.1-stable', 28, 7, 'LC37', beta8.bind_manifest),
+                  RI.Identity('0.5.0-stable', 29, 8, 'LC39', row.bind_manifest),
+                  RI.Identity('0.5.0-stable', 29, 8, 'LC38', row.bind_manifest)):
         try:
             RI.validate_history(RI.HISTORY + (extra,), previous=RI.HISTORY)
         except ValueError:
             continue
         raise AssertionError(f'{extra} was accepted')
-    assert RM.release_version('v0.4.1-beta.1', VERSION) == '0.4.1-beta.1'
-    assert RM.metadata('v0.4.1-beta.1')['prerelease'] is True
-    assert FI.required_xml2fix('0.4.1-beta.1') == '>=1.9.0-beta.1' and FI.required_xml2fix('0.4.1') == '>=1.9'
+    assert RM.release_version('v0.5.0-beta.1', VERSION) == '0.5.0-beta.1'
+    assert RM.metadata('v0.5.0-beta.1')['prerelease'] is True
+    assert FI.required_xml2fix('0.5.0-beta.1') == '>=1.10.0-beta.1' and FI.required_xml2fix('0.5.0') == '>=1.10'
 
 
 
 def test_private_candidate_requires_the_release_companion():
-    assert FI.required_xml2fix(FI.RI.PRIVATE_CANDIDATE.release) == '>=1.9.0-beta.1'
+    assert FI.required_xml2fix(FI.RI.PRIVATE_CANDIDATE.release) == '>=1.10.0-beta.1'
 
 
 def test_world_backfaces_is_written_for_the_converted_xml1_zones_only():

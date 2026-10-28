@@ -55,6 +55,7 @@ from . import start_fixes as SF
 from . import scripts_transform as T
 from . import ladder_motion as LM
 from . import fix_ini as FI
+from . import w2_limits as WL        # --save-layout w2: the mission caps follow the layout
 
 # ----------------------------------------------------------------------------------------------- constants
 RESEARCH_OUT = 'scripts/out'                      # under ctx.research
@@ -85,7 +86,7 @@ MISSION_DIR = 'Data/missions'
 
 # XML2 mission system hard caps (scripts VERIFICATION): 25 listed mission files (0x48908a), 299 objectives
 # in total (0x4885c0), 75 objectives loaded for the current act (0x4899e0).
-MAX_MISSION_FILES, MAX_OBJECTIVES, MAX_OBJECTIVES_PER_ACT = 25, 299, 75
+MAX_MISSION_FILES, MAX_OBJECTIVES, MAX_OBJECTIVES_PER_ACT = 25, 299, 75      # --save-layout w2: w2_limits
 # XML2 game store: 100 names < 12 chars (0x4d7130); XMen2.exe itself uses 4 (pushes before 0x4a1670).
 ENGINE_GAME_FLAGS = ('danv', 'r_d_disc', 'r_imarmor', 'r_t_station')
 MAX_GAME_FLAG_NAMES, MAX_FLAG_NAME_LEN = 100 - len(ENGINE_GAME_FLAGS), 11
@@ -2305,8 +2306,9 @@ def _install_missions(ctx, det):
     listed = [e.get('name') for e in lst if e.tag.upper() == 'MISSION'] if lst is not None else []
     if not listed:
         ctx.error('Data/missions/missions.XMLB lists no missions')
-    if len(listed) > MAX_MISSION_FILES:
-        ctx.error(f'missions.XMLB lists {len(listed)} missions (> {MAX_MISSION_FILES}, 0x48908a)')
+    lim = WL.limits(ctx)
+    if len(listed) > lim.mission_files:
+        ctx.error(f'missions.XMLB lists {len(listed)} missions (> {lim.mission_files}, 0x48908a)')
     if ctx.base_exists('Data/missions/missions.engb'):
         ctx.error('the base install has Data/missions/missions.engb, which would shadow missions.XMLB')
     per_act, total, obj_names = collections.Counter(), 0, set()
@@ -2323,10 +2325,10 @@ def _install_missions(ctx, det):
         total += len(objs)
         obj_names |= {(e.get('name') or '').lower() for e in objs}
     for act, n in per_act.items():
-        if n > MAX_OBJECTIVES_PER_ACT:
-            ctx.error(f'act {act}: {n} objectives (> {MAX_OBJECTIVES_PER_ACT}, 0x4899e0)')
-    if total > MAX_OBJECTIVES:
-        ctx.error(f'{total} objectives in total (> {MAX_OBJECTIVES}, 0x4885c0)')
+        if n > lim.objectives_per_act:
+            ctx.error(f'act {act}: {n} objectives (> {lim.objectives_per_act}, 0x4899e0)')
+    if total > lim.objectives:
+        ctx.error(f'{total} objectives in total (> {lim.objectives}, 0x4885c0)')
     base_missions = [C.split_ext(a)[0].rpartition('/')[2] for a in ctx.base_index.under('data/missions/')
                      if a.lower().endswith('.xmlb') and C.norm(a) != 'data/missions/missions.xmlb']
     ctx.note(f'Data/missions/missions.XMLB replaced: lists {listed} ({total} objectives, per act '

@@ -61,23 +61,45 @@ def test_grab_carry_refuses_companion_without_requested_key_only():
         assert FI.old_fix_keys(dll, {'Game': {'Xml1GrabCarry': 'xml1'}}) == ['[Game] Xml1GrabCarry',
                                                                            '[Game] Xml1GrabCarry revision 3',
                                                                            '[Game] Xml1GrabCarry (no carry self-chain)',
-                                                                           '[Game] Xml1GrabCarry (thrown impact, animated bones)']
+                                                                           '[Game] Xml1GrabCarry (thrown impact, animated bones)',
+                                                                           FI.FLYING_CARRY_ON_NAME, FI.FLYING_CARRY_R2_NAME, FI.FLYING_CARRY_082D_NAME, FI.FLYING_CARRY_082E_NAME]
         assert FI.old_fix_keys(dll, {'Game': {}}) == []
         # 080b's DLL knows the key but runs revision 2 (no flying carry, no XML1 flight upkeep): refused by marker
         dll.write_bytes(b'MZ' + 'Xml1GrabCarry'.encode('utf-16le'))
         assert FI.old_fix_keys(dll, {'Game': {'Xml1GrabCarry': 'xml1'}}) == ['[Game] Xml1GrabCarry revision 3',
                                                                            '[Game] Xml1GrabCarry (no carry self-chain)',
-                                                                           '[Game] Xml1GrabCarry (thrown impact, animated bones)']
+                                                                           '[Game] Xml1GrabCarry (thrown impact, animated bones)',
+                                                                           FI.FLYING_CARRY_ON_NAME, FI.FLYING_CARRY_R2_NAME, FI.FLYING_CARRY_082D_NAME, FI.FLYING_CARRY_082E_NAME]
         # 080c / 080d's DLL runs revision 3 but re-enters the established carry node every frame: refused by marker
         dll.write_bytes(b'MZ' + 'Xml1GrabCarry'.encode('utf-16le') + FI.GRAB_CARRY_R3_MARKER)
         assert FI.old_fix_keys(dll, {'Game': {'Xml1GrabCarry': 'xml1'}}) == ['[Game] Xml1GrabCarry (no carry self-chain)',
-                                                                           '[Game] Xml1GrabCarry (thrown impact, animated bones)']
+                                                                           '[Game] Xml1GrabCarry (thrown impact, animated bones)',
+                                                                           FI.FLYING_CARRY_ON_NAME, FI.FLYING_CARRY_R2_NAME, FI.FLYING_CARRY_082D_NAME, FI.FLYING_CARRY_082E_NAME]
         # 080e / 080f's DLL: a thrown body's world impact never reaches its receiver, the carry pose reads synthetic bones
         dll.write_bytes(b'MZ' + 'Xml1GrabCarry'.encode('utf-16le') + FI.GRAB_CARRY_R3_MARKER + FI.CARRY_CHAIN_MARKER)
-        assert FI.old_fix_keys(dll, {'Game': {'Xml1GrabCarry': 'xml1'}}) == ['[Game] Xml1GrabCarry (thrown impact, animated bones)']
+        assert FI.old_fix_keys(dll, {'Game': {'Xml1GrabCarry': 'xml1'}}) == ['[Game] Xml1GrabCarry (thrown impact, animated bones)',
+                                                                           FI.FLYING_CARRY_ON_NAME, FI.FLYING_CARRY_R2_NAME, FI.FLYING_CARRY_082D_NAME, FI.FLYING_CARRY_082E_NAME]
         dll.write_bytes(b'MZ' + 'Xml1GrabCarry'.encode('utf-16le') + FI.GRAB_CARRY_R3_MARKER + FI.CARRY_CHAIN_MARKER
                         + FI.THROWN_IMPACT_MARKER)
+        # beta 8 (1.9.0-beta.1 / beta.2): the flying carry on (no Xml1FlyingCarry key) still throws with 0 damage
+        assert FI.old_fix_keys(dll, {'Game': {'Xml1GrabCarry': 'xml1'}}) == [FI.FLYING_CARRY_ON_NAME, FI.FLYING_CARRY_R2_NAME, FI.FLYING_CARRY_082D_NAME, FI.FLYING_CARRY_082E_NAME]
+        dll.write_bytes(b'MZ' + 'Xml1GrabCarry'.encode('utf-16le') + FI.GRAB_CARRY_R3_MARKER + FI.CARRY_CHAIN_MARKER
+                        + FI.THROWN_IMPACT_MARKER + FI.CARRY_THROW_MARKER)
+        # 082b (beta 9 round 1): throw damage, but the guard shortcut skips carry admission and the entry pose is off
+        assert FI.old_fix_keys(dll, {'Game': {'Xml1GrabCarry': 'xml1'}}) == [FI.FLYING_CARRY_R2_NAME, FI.FLYING_CARRY_082D_NAME, FI.FLYING_CARRY_082E_NAME]
+        dll.write_bytes(b'MZ' + 'Xml1GrabCarry'.encode('utf-16le') + FI.GRAB_CARRY_R3_MARKER + FI.CARRY_CHAIN_MARKER
+                        + FI.THROWN_IMPACT_MARKER + FI.CARRY_THROW_MARKER + FI.CARRY_ROUND2_MARKER)
+        # 082c (round 2): hovers over the target, attaches an ally by its feet, throws with DMG3 instead of L2
+        assert FI.old_fix_keys(dll, {'Game': {'Xml1GrabCarry': 'xml1'}}) == [FI.FLYING_CARRY_082D_NAME, FI.FLYING_CARRY_082E_NAME]
+        dll.write_bytes(dll.read_bytes() + FI.CARRY_082D_MARKER)
+        # 082d (round 3 live): the pickup's clearance probe collides with the selected character, so she never descends
+        assert FI.old_fix_keys(dll, {'Game': {'Xml1GrabCarry': 'xml1'}}) == [FI.FLYING_CARRY_082E_NAME]
+        dll.write_bytes(dll.read_bytes() + FI.CARRY_082E_MARKER)
         assert FI.old_fix_keys(dll, {'Game': {'Xml1GrabCarry': 'xml1'}}) == []
+        # beta 8's shipped flying carry off (Xml1FlyingCarry=0) asks for neither beta 9 marker
+        dll.write_bytes(b'MZ' + 'Xml1GrabCarry'.encode('utf-16le') + FI.GRAB_CARRY_R3_MARKER + FI.CARRY_CHAIN_MARKER
+                        + FI.THROWN_IMPACT_MARKER + 'Xml1FlyingCarry'.encode('utf-16le') + FI.FLYING_CARRY_OFF_MARKER)
+        assert FI.old_fix_keys(dll, {'Game': {'Xml1GrabCarry': 'xml1', **FI.FLYING_CARRY_OFF}}) == []
 
 
 def test_actor_pools_off_by_default_written_only_when_recorded():

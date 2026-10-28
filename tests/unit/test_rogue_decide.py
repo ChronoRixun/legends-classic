@@ -99,6 +99,7 @@ def test_rogue_decide_option_and_ini_are_coupled_and_off_drops_stale_key():
             merged = FI.merge_text('[Game]\nXml1RogueDecide=xml1\nKeepMe=7\n', keys, FI.dropped_keys(keys))
             assert ('Xml1RogueDecide=xml1' in merged) == (value == 'xml1')
             assert 'KeepMe=7' in merged
-            args = build_xml1.parse_args(['--out', td, '--rogue-decide', 'xml2' if value in ('xml1', None) else 'xml1'])
+            args = build_xml1.parse_args(['--out', td, '--save-layout', 'retail',      # the record's (CONTENT_OPTS) layout
+                                          '--rogue-decide', 'xml2' if value in ('xml1', None) else 'xml1'])
             assert 'heroes' in build_xml1.plan_content_opts(out, args, [])
             assert build_xml1.plan_content_opts(out, args, ['heroes']) == []

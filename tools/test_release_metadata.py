@@ -73,7 +73,7 @@ class ReleaseTests(unittest.TestCase):
             self.assertEqual(set(manifest), {'version', 'content_version', 'zip', 'size', 'sha256',
                                              'min_launcher', 'requires_xml2fix'})
             self.assertEqual(manifest['version'], version)
-            self.assertEqual(manifest['requires_xml2fix'], '>=1.9.0-beta.1')
+            self.assertEqual(manifest['requires_xml2fix'], '>=1.10.0-beta.1')
             self.assertEqual(manifest['zip'], f'xml1-builder-{version}-win64.zip')
             self.assertEqual(json.loads((dist / 'xml1-builder.json').read_text())['version'], version)
 
@@ -128,7 +128,7 @@ class ReleaseTests(unittest.TestCase):
                 manifest = json.loads((dist / 'xml1-builder.json').read_text())
                 self.assertEqual(info['version'], version)
                 self.assertEqual(manifest['version'], version)
-                self.assertEqual(manifest['requires_xml2fix'], '>=1.9.0-beta.1' if suffix else '>=1.9')
+                self.assertEqual(manifest['requires_xml2fix'], '>=1.10.0-beta.1' if suffix else '>=1.10')
                 self.assertEqual(manifest['zip'], f'xml1-builder-{version}-win64.zip')
                 self.assertTrue((dist / manifest['zip']).is_file())
                 self.assertIn(manifest['zip'], (dist / 'SHA256SUMS.txt').read_text())

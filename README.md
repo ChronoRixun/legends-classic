@@ -17,9 +17,10 @@ makes no network connections.
 > watchers), the classic look and enemies that fight like the first game. Update Ultimate Legends to **0.4.0
 > first**, then **Rebuild**, then **Play**. All online players need matching builds. Online was tested on one PC
 > with two instances; see [Known limitations](#known-limitations).
-> **Beta: 0.4.1-beta.1** (the port's beta 8, with XML2 Fix 1.9.0-beta.1, the launcher's Beta channel): the first
-> game's bosses, moves and grabs, bigger engine limits and 4 GB of memory, saved rooms kept after updating, Colossus's
-> charge and the GRSO guns and grenades; see the [CHANGELOG](CHANGELOG.md). Beta 8 and 0.4.0 games refuse each other.
+> **Beta: 0.5.0-beta.1** (with XML2 Fix 1.10.0-beta.1, the launcher's Beta channel): the first game's items, Forge,
+> Healer, Grab Bag and drops, a bigger save format, Phoenix's telekinesis, the flying carry,
+> controllers connected after startup and more engine headroom; see the [CHANGELOG](CHANGELOG.md). 0.5 games refuse
+> beta 8 and 0.4.0 games, and beta 8 / 0.4.0 cannot load a save written by 0.5 (back up `SaveLC` first).
 > Known bugs and what is next: [Status](#status), [CHANGELOG](CHANGELOG.md) and [Roadmap](#roadmap).
 > Help and bug reports: the [community Discord](https://discord.gg/tFxwHtZv8k).
 
@@ -316,6 +317,7 @@ the game.
 
 | Builder | Content version | Needs xml2-fix | Notes |
 |---|---|---|---|
+| 0.5.0-beta.1 | 29 | 1.10.0-beta.1 | the 0.4.2 line as defaults: the W2 save layout (`[Limits] SaveLayout=w2`, rule 47; catalogue revision 8), the first game's economy (`[Game] Xml1Economy=1`, rule 52), limits wave 3 (rules 35 revision 2, 53-62), Phoenix's telekinesis (`TelekinesisRule`, rule 46; the guard decide `GuardDecideRule` stays off: Guard is XML2's Block / Grab) and the flying carry (rule 45 without `Xml1FlyingCarry=0`); `LC38` |
 | 0.4.1-beta.1 | 28 | 1.9.0-beta.1 | beta 8: the first game's bosses (`[Game] Xml1Bosses`, rule 40), moves (rules 38, 39, 42, 43, 46), Juggernaut's grab (`Xml1GrabCarry=xml1` with `Xml1FlyingCarry=0`, rule 45 revision 3), damage rounding (rule 41), raised limits (IGB cache, model handles, character sounds, motion pool, resident stats, animation enums) and the large-address-aware exe, the save-compatibility ledger rows, the GRSO style names, the classic objectives page; telekinesis, the XML1 guard decide and the flying carry off (next beta); catalogue 7 / LC37; refuses 1.8.0 |
 | 0.4.0 | 27 | 1.8.0 | online codes, public browser, drop-in ON, solo watchers; the classic look (`[Game] ClassicHud=xml1`, `ClassicCodex=1`, beta 5: needs 1.8.0-beta.5); the officer's weapon brain and rule 16 revision 10 (`[Game] NpcSemiAuto=xml1`, beta 6: needs 1.8.0-beta.6), no small-map frame; every gun NPC's weapon brain with the XML1 bullet trace timer (schema 4 rows), rule 16 revision 11, one-sided walls in the XML1 zones (`[Game] WorldBackfaces=xml1`, rule 30) and the "Alison" label (`[Game] ClassicSpeakers=1`, beta 7: needs 1.8.0-beta.7); the first game's revival price (XML2 Fix 1.8.0, rule 10 revision 3); catalogue 7 / LC36 (beta 6: content 26 / LC35; beta 5: content 25 / LC34; betas 1-4: content 24 / LC33); launcher 0.4.0 for Online; matching peers required |
 | 0.2.5 | 23 | 1.7.1 | the bedroom items' pictures in the first game's picture window (`[Game] PersonalItemPicture=window`, #54); heroes re-stunned by every stun hit (`[Game] StunRule=xml1`, rule 18 revision 3, #101); catalogue 7 / LC32; both PCs need this pair |

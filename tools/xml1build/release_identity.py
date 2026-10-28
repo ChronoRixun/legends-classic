@@ -19,13 +19,14 @@ class Identity:
 
 # Historical lobby tokens stay reserved even though these pre-LC builds had no catalogue.
 # A token reservation is an identity in the history; it cannot be assigned again.
-CURRENT_CATALOGUE_REVISION = 7
+CURRENT_CATALOGUE_REVISION = 8   # 0.5.0-beta.1: --loot xml1 (the default) extends the save catalogue (loot.derived_catalogue 7 -> 8)
 
 # This private test envelope is deliberately outside the append-only release
 # history. Its exact generated files/fingerprint are checked by the package's
 # peer receipt. Release integration must assign an immutable official identity.
-# It applies only while VERSION is the candidate's (0.4.0e); a release builder never takes it.
-PRIVATE_CANDIDATE = Identity('0.4.0e', 33, 7, 'C04E')
+# It applies only while VERSION is the candidate's (0.4.0e); a release builder never takes it. Its catalogue revision
+# follows CURRENT_CATALOGUE_REVISION (8 since 0.5.0-beta.1).
+PRIVATE_CANDIDATE = Identity('0.4.0e', 33, 8, 'C04E')
 
 HISTORY = (
     Identity('port-before-LC', 0, 0, 'X1.0'),
@@ -58,6 +59,10 @@ HISTORY = (
     # damage rounding, the raised engine limits, the large-address-aware exe, the save-compatibility ledger rows and
     # the GRSO style names. Stable 0.4.0 keeps beta 7's content 27 / LC36 (no row of its own).
     Identity('0.4.1-beta.1', 28, 7, 'LC37', 'd48e541bae488d31a7003ae020f4712c8c6a8cfb6f34099c3bb892dee15ce5cf'),
+    # Issued at 0.5.0-beta.1 (the 0.4.2 line released as 0.5, XML2 Fix 1.10.0-beta.1): the W2 save layout, the first
+    # game's item economy (catalogue revision 8), limits wave 3, Phoenix's telekinesis, the guard decide and the flying
+    # carry. Beta 8's content 28 keeps LC37.
+    Identity('0.5.0-beta.1', 29, 8, 'LC38', '3db3423eedfcc46344219b7766b30f39bde8687be8fe51a180050c79733a170d'),
 )
 
 
