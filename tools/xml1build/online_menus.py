@@ -768,6 +768,7 @@ def write(ctx, *, preview=False):
                 for e in native_pkg:
                     if (e.tag,e.get('filename')) not in have:pkg.append(copy.deepcopy(e))
         ctx.write_xmlb(F.MENU_PKG_DIR+'/'+name,pkg,('.PKGB',),source='frontend:online resource closure')
+    ctx.write_bytes(HITS_FILE,hit_table(authored_layouts),source='frontend:mouse hit boxes = drawn focus bars')
     if not preview:ctx.write_bytes('Data/lc_online_menus.cap',CAPABILITY,source='frontend:verified DLL menu capability')
     report={'menus':list(MENUS),'colors':len(colors),'styles':len(styles),'palette_ids':ids,'font_probe':probe,
             'fixture_only':True,'enabled':not preview,'production_entry':F.PLAY_ONLINE_CMD,'layouts':authored_layouts,
@@ -1090,8 +1091,43 @@ DLL_PROBES = (b'lc-online-menus/1\n', b'lc-online-input/1', b'lc-online-lobby/1'
               b'lc_title\0', b'lc_row\0', b'lc_body\0', b'lc_label\0',
               # Live 060p fixes: glyph scale per screen pixel (textscale is in 512 x 384 view units) and the
               # Menus=1 + LegendsClassicFonts=0 fallback to the native Play Online menus.
-              b'lc-fonts-screen/1', b'LegendsClassicFonts is not active')
+              b'lc-fonts-screen/1', b'LegendsClassicFonts is not active',
+              # 0.6 preview fix E: the mouse hit boxes are the drawn focus bars (Data/lc_online_hits.txt, hit_table).
+              b'lc-online-hits/1')
 CAPABILITY = b'lc-online-menus/1\n'
+# Mouse hit boxes (xml2-fix online_menus_hits_rules.hpp). XMen2.exe hit-tests an item with the box its text is laid out in
+# (0x5bc530 -> 0x5bc1b0); every focus bar here is larger than that box (an ordinary row: 12 units left and right, 5 above,
+# 2 below), so the bar's top and both ends were dead (live 060p item 7). The builder lists each focusable item's drawn bar
+# (absolute view units, x right, y up: left bottom right top) and the DLL hit-tests our screens against it.
+HITS_CONTRACT = 'lc-online-hits/1'
+HITS_FILE = 'Data/lc_online_hits.txt'
+
+
+def hit_rows(screen):
+    """(item, left, bottom, right, top) for every item that draws a focus bar (menu_tree's condition), in item order:
+    the bar each focus model draws (focus_placement's owner-relative rect at the owner's anchor). The cells of a Browse
+    row share their row's bar, so the whole row is clickable; the first cell listed wins (they share the row's intent)."""
+    rows=[]
+    for e in screen['items']:
+        if not (e['intent'] and (e['enabled'] or screen.get('runtime'))): continue
+        # The native LISTBOX (Kick picker) hit-tests its own rows (0x5ba2b0); one bar for the whole list would pick row 1.
+        if e['intent']=='native-picker': continue
+        _,owner,_,_,(l,b,r,t)=focus_placement(screen,e)
+        ax,_,az=_anchor(owner)
+        rows.append((e['name'],round(ax+l,4),round(az+b,4),round(ax+r,4),round(az+t,4)))
+    return rows
+
+
+def hit_table(screens):
+    """The Data/lc_online_hits.txt bytes for {engine menu name: bound screen}."""
+    def number(v):
+        text=('%.4f' % v).rstrip('0').rstrip('.')
+        return '0' if text in ('-0','') else text
+    lines=[HITS_CONTRACT]
+    for name,screen in screens.items():
+        for item,*rect in hit_rows(screen):
+            lines.append(' '.join([name,item,*map(number,rect)]))
+    return ('\n'.join(lines)+'\n').encode('ascii')
 LOBBIES = ('host', 'join')
 # Round 15 lobby inline copy. Error variants carry the cause (Copy vs Kick target); the toast's first line is the DATA name.
 LOBBY_ERROR_COPY = {'copy': 'Could not copy the code. Read it out instead.', 'target': 'Pick another player to kick. Not yourself.'}
@@ -1110,7 +1146,9 @@ BROWSE_UNREACHABLE_NOTICES = ('lc_notice_paste_invalid', 'lc_notice_code_invalid
                               # 060q: the clipboard is only read by Join by code's paste (code_input); unavailable comes
                               # from intent::unavailable (no Browse item carries it) or the Code screen's offline lookup.
                               # Every screen change clears the notice (tick_impl: destination -> error_visible=false).
-                              'lc_notice_clipboard', 'lc_notice_unavailable')
+                              'lc_notice_clipboard', 'lc_notice_unavailable',
+                              # 0.6 preview fix E: shown only on the Hub, when the host's native Kick removed this guest.
+                              'lc_notice_removed')
 NOTICE_TEXT = {
     'lc_inline_error': 'This action could not be completed. No room was joined.',
     'lc_notice_unavailable': 'Unavailable in this preview. Use Other ways to play.',
@@ -1131,6 +1169,9 @@ NOTICE_TEXT = {
     'lc_notice_service_lost': 'Lost the online service during setup. Try again.',
     'lc_notice_timeout': 'Took too long to connect. Go Back and try again.',
     'lc_notice_clipboard': 'Could not open the clipboard. Type the code instead.',
+    # 0.6 preview fix E: a guest the host removed (its native Kick: removal notice 0x2b, reason 0x10ce, flag 1) sees this on the
+    # Hub instead of the host-left panel (xml2-fix online_menus_rules kicked_by_host).
+    'lc_notice_removed': 'The host removed you from the game.',
 }
 DATA_NAMES = {'local_name', 'self_name', 'last_name', 'last_code', 'last_time',
               'code_value', 'code_remaining', *(f'cell{i}' for i in range(8)),

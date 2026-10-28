@@ -468,3 +468,65 @@ def test_browse_focus_bars_share_one_model_item_at_the_same_screen_position():
     hub=O.menu_tree(O.bound_layout(O.runtime_layout('lc_online'),F.metrics()))
     assert O.SHARED_FOCUS not in {i.get('name') for i in hub.findall('item')}
     assert any(f.get('type')=='nofocus' for i in hub.findall('item') for f in i.findall('onfocus'))
+
+
+def _built_screens():
+    from xml1build import online_fonts as F, online_party as PT
+    screens={name:O.bound_layout(O.runtime_layout(name),F.metrics()) for name in O.MENUS}
+    screens.update({name:O.bound_layout(O.lobby_layout(name),F.metrics()) for name in O.LOBBIES})
+    screens[O.PARTY_MENU]=O.bound_layout(PT.party_layout('host'),F.metrics())
+    return screens
+
+
+def test_mouse_hit_table_lists_every_drawn_focus_bar():
+    """0.6 preview fix E (live 060p item 7): the engine hit-tests the box an item's text is laid out in (0x5bc530 ->
+    0x5bc1b0), every focus bar is larger (an ordinary row: 12 units left/right, 5 above, 2 below), so the bar's top and
+    both ends were dead. The builder lists each drawn bar (absolute view units) for the DLL's scoped hit test."""
+    screens=_built_screens()
+    data=O.hit_table(screens)
+    assert data.startswith(b'lc-online-hits/1\n') and data.endswith(b'\n') and b'\r' not in data
+    lines=data.decode('ascii').splitlines()[1:]
+    rows={(l.split()[0],l.split()[1]):tuple(map(float,l.split()[2:])) for l in lines}
+    assert len(rows)==len(lines)  # one bar per item and screen
+    for name,screen in screens.items():
+        drawn=[e for e in screen['items'] if e['intent'] and (e['enabled'] or screen.get('runtime'))]
+        for e in drawn:
+            if e['intent']=='native-picker':
+                assert (name,e['name']) not in rows  # the Kick picker LISTBOX hit-tests its own rows
+                continue
+            L,B,R,T=rows[(name,e['name'])]
+            assert L<R and B<T
+            # the bar is the focus model's geometry (focus_placement) at the owner's anchor - the same numbers the
+            # model file is fitted to, independent of the shared-focus origin
+            _,owner,rect,_,(l,b,r,t)=O.focus_placement(screen,e)
+            ax,_,az=O._anchor(owner)
+            assert all(abs(u-v)<1e-3 for u,v in zip((L,B,R,T),(ax+l,az+b,ax+r,az+t))),(name,e['name'])
+    # An ordinary row (Hub Join by code at (58,178,236,22)): the text box padded 12 / 5 / 12 / 2 view units.
+    assert rows[('lc_online','code')]==(34.4,222.0,247.2,246.6)
+    # The live 060p measurement at 1280x720 (16:9: view 682.7 wide, left -85.3; 1.875 px per unit): bar x 225-630 drawn,
+    # clickable only from x 249 (the text box): the table's left edge is the drawn one.
+    assert abs((34.4+85.3333)*1.875-224.5)<1
+    # Browse rows: every cell of a row carries the whole row's bar
+    assert rows[('lc_browse','room_0_0')]==rows[('lc_browse','room_0_6')]
+
+
+def test_mouse_hit_table_is_written_with_the_menus_and_required_from_the_dll():
+    assert O.HITS_FILE=='Data/lc_online_hits.txt' and b'lc-online-hits/1' in O.DLL_PROBES
+    import inspect
+    source=inspect.getsource(O.write)
+    assert 'hit_table(authored_layouts)' in source and 'HITS_FILE' in source
+
+
+def test_kicked_guest_notice_is_a_plain_hub_notice_within_the_anchor_budget():
+    """0.6 preview fix E: a guest the host removed (native Kick) sees 'The host removed you from the game.' on the Hub,
+    not the host-left panel. One hidden notice node (no new scene); Browse never raises it, so it spends no anchor there."""
+    from xml1build import online_fonts as F
+    assert O.NOTICE_TEXT['lc_notice_removed']=='The host removed you from the game.'
+    assert 'lc_notice_removed' in O.BROWSE_UNREACHABLE_NOTICES
+    hub=O.bound_layout(O.runtime_layout('lc_online'),F.metrics())
+    node=next(e for e in hub['items'] if e['name']=='lc_notice_removed')
+    assert node.get('hidden') and not node['intent'] and node['color']==7
+    browse=O.bound_layout(O.runtime_layout('lc_browse'),F.metrics())
+    assert 'lc_notice_removed' not in {e['name'] for e in browse['items']}
+    for name in O.MENUS:
+        assert len(O.scene_layout(O.bound_layout(O.runtime_layout(name),F.metrics())))+len(O.backdrop_layouts())<=O.ENGINE_SCENE_ANCHORS, name
