@@ -1515,6 +1515,35 @@ RELEASE_18_KEYS = {**RELEASE_18_KEYS, 'Limits': RELEASE_18_KEYS['Limits'] + tupl
 # Keep the terminating NUL so LatePadsTrace cannot stand in for LatePads.
 RELEASE_18_KEYS = {**RELEASE_18_KEYS, 'Input': RELEASE_18_KEYS.get('Input', ()) + ('LatePads',)}
 EXACT_KEYS = {**EXACT_KEYS, 'Input': EXACT_KEYS.get('Input', ()) + ('LatePads',)}
+# xml2-fix 739cc0f (E4 stage 2 core, its docs/e4-core.md) [Limits] Actors=96: live actors / controllers / teams 32 -> 96,
+# gameplay rule 44 revision 2, save feature 0x4 (a campaign written with it on cannot be loaded by a DLL without it).
+# An opt-in tester / player preference like LatePads: the builder never writes it and it is not port-owned, so a
+# rebuild keeps it, and a rebuild must not leave it without the prerequisites the DLL requires in the same startup
+# transaction (otherwise Stage 2 refuses at start). The UTF-16 key (with its NUL: no longer key can stand in) and the
+# conservative-marking core's telemetry name (fe3f621 never shipped; 739cc0f added stale_fold_retirements) are both
+# required of the DLL.
+ACTORS_KEY = 'Actors'
+ACTORS_VALUE = '96'
+ACTORS_PREREQUISITES = (('EntityCapacity', '1'), ('ActorPools', ACTOR_POOLS), ('AnimEnums', ANIM_ENUMS),
+                        ('CharSounds', CHAR_SOUNDS), ('ResidentStats', RESIDENT_STATS), ('MotionPool', MOTION_POOL))
+ACTORS_MARKER = b'stale_fold_retirements'
+RELEASE_18_KEYS = {**RELEASE_18_KEYS, 'Limits': RELEASE_18_KEYS['Limits'] + (ACTORS_KEY,)}
+EXACT_KEYS = {**EXACT_KEYS, 'Limits': EXACT_KEYS.get('Limits', ()) + (ACTORS_KEY,)}
+
+
+def check_actors_keys(keys: dict) -> None:
+    """[Limits] Actors (when present): only 96, and only with its six prerequisites at their exact values in the same
+    ini (the DLL refuses Stage 2 otherwise and plays with 32 actors). ValueError names every problem."""
+    limits = keys.get('Limits', {})
+    if ACTORS_KEY not in limits:
+        return
+    value = str(limits[ACTORS_KEY]).strip()
+    if value != ACTORS_VALUE:
+        raise ValueError(f'[Limits] {ACTORS_KEY} must be {ACTORS_VALUE} (got {value!r}); remove the key to keep 32 actors')
+    bad = [f'[Limits] {k}={v}' for k, v in ACTORS_PREREQUISITES if str(limits.get(k, '')).strip() != v]
+    if bad:
+        raise ValueError(f'[Limits] {ACTORS_KEY}={ACTORS_VALUE} needs ' + ', '.join(bad) + ' in the same xml2-fix.ini '
+                         '(add them, or remove Actors to keep 32 actors)')
 for _key in (*LIMITS_WAVE3, *LIMITS_WAVE3_LATE):
     if _key != 'FightStyles':
         RELEASE_MARKERS[('Limits', _key)] = (WAVE3_MARKERS[_key], f'[Limits] {_key} (rule {WAVE3_RULES[_key]})')
@@ -1629,13 +1658,28 @@ def write_port_keys(out, keys: dict | None = None, *, old_fix_ok: bool = False) 
         text = _decode(ini.read_bytes())[0]
     except FileNotFoundError:
         text = ''
-    merged = parse_ini(merge_text(text, keys, dropped_keys(keys)))
+    drop = dropped_keys(keys)
+    actors = any(section.lower() == 'limits' and any(k.lower() == ACTORS_KEY.lower() for k in values)
+                 for section, values in parse_ini(text).items())
+    if actors:
+        # the Actors preference brings the one prerequisite a build may not write (ActorPools: --actor-pools); a
+        # player who set both keeps both. The others are checked, not kept (they come with the build's options).
+        drop = {section: [k for k in names if not (section == 'Limits' and k == 'ActorPools')]
+                for section, names in drop.items()}
+    merged = parse_ini(merge_text(text, keys, drop))
     validation_keys = {section: dict(values) for section, values in keys.items()}
     for section, values in merged.items():
         if section.lower() == 'input':
             for key, value in values.items():
                 if key.lower() == 'latepads':
                     validation_keys.setdefault('Input', {})['LatePads'] = value
+        if section.lower() == 'limits' and actors:
+            # the prerequisites as the rebuilt ini will carry them (the port's own keys or the player's); the DLL
+            # check needs only Actors (a DLL that has it reads all six)
+            canonical = {k.lower(): k for k in (ACTORS_KEY, *(name for name, _ in ACTORS_PREREQUISITES))}
+            check_actors_keys({'Limits': {canonical[k.lower()]: v for k, v in values.items() if k.lower() in canonical}})
+            validation_keys.setdefault('Limits', {})[ACTORS_KEY] = next(
+                v for k, v in values.items() if k.lower() == ACTORS_KEY.lower())
     missing = old_fix_keys(Path(out) / 'dinput.dll', validation_keys)
     if SAVE_LAYOUT_KEY in keys.get('Limits', {}) and f'[Limits] {SAVE_LAYOUT_KEY}' in missing:
         # the warning path (old_fix_ok) writes the other keys for an older fix the launcher replaces right after the
@@ -1658,7 +1702,8 @@ def write_port_keys(out, keys: dict | None = None, *, old_fix_ok: bool = False) 
         archive = Path(out) / '_build' / 'lc-release-identity.json'
         archive.parent.mkdir(parents=True, exist_ok=True)
         archive.write_text(json.dumps(identity, indent=2, sort_keys=True) + '\n', encoding='utf-8')
-    merge_ini(Path(out) / 'xml2-fix.ini', keys, dropped_keys(keys))
+    merge_ini(Path(out) / 'xml2-fix.ini', keys, drop)
     return keys
 
 RELEASE_MARKERS[('Limits', 'ResidentStats')] = (RESIDENT_STATS_MARKER, '[Limits] ResidentStats (rule 50)')
+RELEASE_MARKERS[('Limits', ACTORS_KEY)] = (ACTORS_MARKER, f'[Limits] {ACTORS_KEY} (rule 44 revision 2, E4 stage 2 core)')

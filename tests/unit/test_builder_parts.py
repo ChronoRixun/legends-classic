@@ -906,6 +906,93 @@ def test_latepads_rebuild_validates_and_preserves_player_preference():
             raise AssertionError('supplied LatePads=0 was accepted with an older DLL')
 
 
+def test_actors_optional_preference_requires_exact_key_and_stage2_marker():
+    """[Limits] Actors=96 needs the 739cc0f core: the NUL-terminated UTF-16 key and its telemetry name."""
+    with tempfile.TemporaryDirectory() as td:
+        dll = Path(td) / 'dinput.dll'
+        name = '[Limits] Actors (rule 44 revision 2, E4 stage 2 core)'
+        for data, missing in ((b'MZ older companion', ['[Limits] Actors', name]),
+                              (b'MZ' + 'ActorsTrace\0'.encode('utf-16le') + FI.ACTORS_MARKER, ['[Limits] Actors']),
+                              (b'MZ' + 'Actors\0'.encode('utf-16le'), [name]),          # fe3f621-like: never shipped
+                              (b'MZ' + 'Actors\0'.encode('utf-16le') + FI.ACTORS_MARKER, [])):
+            dll.write_bytes(data)
+            FI.check_release_dll(dll, {})
+            try:
+                FI.check_release_dll(dll, {'Limits': {'Actors': '96'}})
+            except FI.FixTooOld as exc:
+                assert exc.missing == missing, (data, exc.missing)
+            else:
+                assert missing == []
+    assert all('Actors' not in names for names in FI.PORT_OWNED.values())
+
+
+def test_actors_value_and_prerequisites_are_validated():
+    full = {k: v for k, v in FI.ACTORS_PREREQUISITES}
+    FI.check_actors_keys({})
+    FI.check_actors_keys({'Limits': dict(full)})                      # absent: nothing to check
+    FI.check_actors_keys({'Limits': {**full, 'Actors': '96'}})
+    for limits, needle in (({**full, 'Actors': '64'}, "must be 96 (got '64')"),
+                           ({**{k: v for k, v in full.items() if k != 'ActorPools'}, 'Actors': '96'}, '[Limits] ActorPools=124'),
+                           ({**full, 'MotionPool': '500', 'Actors': '96'}, '[Limits] MotionPool=22528')):
+        try:
+            FI.check_actors_keys({'Limits': limits})
+        except ValueError as exc:
+            assert needle in str(exc), str(exc)
+        else:
+            raise AssertionError(limits)
+
+
+def test_actors_rebuild_keeps_preference_and_its_actorpools():
+    """A rebuild keeps a player's Actors=96 and the ActorPools=124 it needs (port-owned: dropped otherwise), refuses
+    the rebuild with an older DLL or without the prerequisites, and never writes Actors itself. The port keys are a
+    0.4.2-style build's: every prerequisite but ActorPools."""
+    with tempfile.TemporaryDirectory() as td:
+        out = Path(td)
+        dll, ini = out / 'dinput.dll', out / 'xml2-fix.ini'
+        keys = {'Game': {'NewGameTeam': 'wolverine'}, 'Save': {'Format': 'lc'},
+                'Limits': {k: v for k, v in FI.ACTORS_PREREQUISITES if k != 'ActorPools'}}
+        dll.write_bytes(b'MZ older companion')
+        FI.write_port_keys(out, keys, old_fix_ok=True)
+        assert 'actors' not in {k.lower() for k in FI.read_ini(ini)['Limits']}
+        assert 'ActorPools' in FI.dropped_keys(keys).get('Limits', ())
+        supported = b'MZ' + 'Actors\0'.encode('utf-16le') + FI.ACTORS_MARKER
+        for section, key in (('Limits', 'Actors'), ('limits', 'actors')):
+            original = f'[{section}]\nActorPools=124\n{key}=96\n'.encode('utf-16')
+            ini.write_bytes(original)
+            dll.write_bytes(b'MZ older companion')
+            try:
+                FI.write_port_keys(out, keys)
+            except FI.FixTooOld as exc:
+                assert '[Limits] Actors' in exc.missing and '[Limits] Actors (rule 44 revision 2, E4 stage 2 core)' in exc.missing
+            else:
+                raise AssertionError('rebuild ignored the retained Actors preference')
+            assert ini.read_bytes() == original
+            dll.write_bytes(supported)
+            try:
+                FI.write_port_keys(out, keys)
+            except FI.FixTooOld as exc:      # the synthetic DLL lacks the other rows' markers, never Actors'
+                assert not [m for m in exc.missing if 'Actors' in m], exc.missing
+            FI.write_port_keys(out, keys, old_fix_ok=True)
+            got = {k.lower(): v for k, v in FI.read_ini(ini)[section].items()}
+            assert got['actors'] == '96' and got['actorpools'] == '124' and got['animenums'] == '512', got
+        # without the preference the port still drops a stray ActorPools
+        ini.write_bytes(b'[Limits]\r\nActorPools=124\r\n')
+        FI.write_port_keys(out, keys, old_fix_ok=True)
+        assert 'actorpools' not in {k.lower() for k in FI.read_ini(ini).get('Limits', {})}
+        # Actors without ActorPools, or not 96: refused (ValueError) before anything is written
+        for text in ('[Limits]\nActors=96\n', '[Limits]\nActorPools=124\nActors=95\n', '[Limits]\nActorPools=1\nActors=96\n'):
+            ini.write_bytes(text.encode('latin-1'))
+            try:
+                FI.write_port_keys(out, keys, old_fix_ok=True)
+            except FI.FixTooOld:
+                raise AssertionError(text)
+            except ValueError as exc:
+                assert '[Limits] Actors' in str(exc)
+            else:
+                raise AssertionError(text)
+            assert ini.read_bytes() == text.encode('latin-1')
+
+
 def test_beta_fix_numeric_version_keeps_runtime_capability_checks():
     """Beta DLLs keep numeric VERSIONINFO; require their 1.8 keys, not a textual beta suffix (a DLL's key strings are
     NUL-terminated UTF-16, as the beta.5 keys are matched)."""
@@ -916,13 +1003,13 @@ def test_beta_fix_numeric_version_keeps_runtime_capability_checks():
         for numeric in ('1.8.0', '1.8.0.0', '1.8.0.2'):
             resource = ('FileVersion\0' + numeric + '\0ProductVersion\0' + numeric + '\0').encode('utf-16le')
             markers = b''.join((key + '\0').encode('utf-16le') for names in FI.RELEASE_18_KEYS.values() for key in names)
-            dll.write_bytes(b'MZ synthetic beta fix\0' + resource + markers + b'NSA4' + b'NPR14' + FI.GRAB_CARRY_R3_MARKER + FI.CARRY_CHAIN_MARKER + FI.TK_AUDIO_MARKER + FI.TK_STILL_MARKER + FI.GUARD_TAP_MARKER + FI.TK_ARMING_MARKER + FI.GUARD_ENTRY_MARKER + FI.COLOSSUS_CASTER_MARKER + FI.THROWN_IMPACT_MARKER + FI.FLYING_CARRY_OFF_MARKER + FI.CHAR_SOUNDS_MARKER + FI.MOTION_POOL_MARKER + FI.RESIDENT_STATS_MARKER + b''.join(FI.WAVE3_MARKERS.values()) + b''.join(FI.MARKERS_082D) + b''.join(FI.MARKERS_082E))
+            dll.write_bytes(b'MZ synthetic beta fix\0' + resource + markers + b'NSA4' + b'NPR14' + FI.GRAB_CARRY_R3_MARKER + FI.CARRY_CHAIN_MARKER + FI.TK_AUDIO_MARKER + FI.TK_STILL_MARKER + FI.GUARD_TAP_MARKER + FI.TK_ARMING_MARKER + FI.GUARD_ENTRY_MARKER + FI.COLOSSUS_CASTER_MARKER + FI.THROWN_IMPACT_MARKER + FI.FLYING_CARRY_OFF_MARKER + FI.CHAR_SOUNDS_MARKER + FI.MOTION_POOL_MARKER + FI.RESIDENT_STATS_MARKER + b''.join(FI.WAVE3_MARKERS.values()) + b''.join(FI.MARKERS_082D) + b''.join(FI.MARKERS_082E) + FI.ACTORS_MARKER)
             FI.check_release_dll(dll, keys)
         # 1.7.1 lacks the companion's 1.8 drop-in capability, even though it has older required keys.
         older = ('ProductVersion\0' + '1.7.1' + '\0').encode('utf-16le')
         markers = b''.join((key + '\0').encode('utf-16le') for names in FI.RELEASE_18_KEYS.values()
                            for key in names if key != 'JoinInProgress')
-        dll.write_bytes(b'MZ synthetic old fix\0' + older + markers + b'NSA4' + b'NPR14' + FI.GRAB_CARRY_R3_MARKER + FI.CARRY_CHAIN_MARKER + FI.TK_AUDIO_MARKER + FI.TK_STILL_MARKER + FI.GUARD_TAP_MARKER + FI.TK_ARMING_MARKER + FI.GUARD_ENTRY_MARKER + FI.COLOSSUS_CASTER_MARKER + FI.THROWN_IMPACT_MARKER + FI.FLYING_CARRY_OFF_MARKER + FI.CHAR_SOUNDS_MARKER + FI.MOTION_POOL_MARKER + FI.RESIDENT_STATS_MARKER + b''.join(FI.WAVE3_MARKERS.values()) + b''.join(FI.MARKERS_082D) + b''.join(FI.MARKERS_082E))
+        dll.write_bytes(b'MZ synthetic old fix\0' + older + markers + b'NSA4' + b'NPR14' + FI.GRAB_CARRY_R3_MARKER + FI.CARRY_CHAIN_MARKER + FI.TK_AUDIO_MARKER + FI.TK_STILL_MARKER + FI.GUARD_TAP_MARKER + FI.TK_ARMING_MARKER + FI.GUARD_ENTRY_MARKER + FI.COLOSSUS_CASTER_MARKER + FI.THROWN_IMPACT_MARKER + FI.FLYING_CARRY_OFF_MARKER + FI.CHAR_SOUNDS_MARKER + FI.MOTION_POOL_MARKER + FI.RESIDENT_STATS_MARKER + b''.join(FI.WAVE3_MARKERS.values()) + b''.join(FI.MARKERS_082D) + b''.join(FI.MARKERS_082E) + FI.ACTORS_MARKER)
         try:
             FI.check_release_dll(dll, keys)
         except FI.FixTooOld as exc:
