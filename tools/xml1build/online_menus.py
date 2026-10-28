@@ -928,19 +928,29 @@ def focus_picture(screen,item,rect):
 
 # These probes describe additive APIs, not release or gameplay identities. Each
 # must be present in ONE supplied DLL; separate menu/font DLLs cannot be stacked.
-DLL_PROBES = (b'lc-online-menus/1\n', b'lc-online-input/1', b'lc-online-lobby/1', b'lc-online-broker/2', b'lc-online-native/1', b'lc-online-party/1',
+DLL_PROBES = (b'lc-online-menus/1\n', b'lc-online-input/1', b'lc-online-lobby/1', b'lc-online-broker/2', b'lc-online-native/1', b'lc-online-party/1', b'lc-online-errors/1',
               b'lcOnlineIntent\0', 'Online\0'.encode('utf-16le'),
               'Menus\0'.encode('utf-16le'), 'LegendsClassicFonts\0'.encode('utf-16le'),
               b'ui/fonts/lc_fonts_pc.xmlb\0', b'ui/fonts/lc_fonts_hd.xmlb\0',
               b'lc_title\0', b'lc_row\0', b'lc_body\0', b'lc_label\0')
 CAPABILITY = b'lc-online-menus/1\n'
 LOBBIES = ('host', 'join')
+# Round 15 lobby inline copy. Error variants carry the cause (Copy vs Kick target); the toast's first line is the DATA name.
+LOBBY_ERROR_COPY = {'copy': 'Could not copy the code. Read it out instead.', 'target': 'Pick another player to kick. Not yourself.'}
+LOBBY_TOAST_COPY = 'left or lost connection. The party continues; they can rejoin with the code.'
+LOBBY_SERVICE_LOST_COPY = 'Online service lost. Players here stay connected; new players cannot join.'
+# The 0.6 host-left panel on the Hub (07-host-left with only the INGAME-DESIGN section 5 variants): body, capsule, buttons.
+HOST_LEFT_COPY = {'title': 'THE HOST LEFT',
+                  'body1': 'The host disconnected. Host again to continue',
+                  'body2': 'from a save on this PC.',
+                  'capsule': 'LOCAL SAVE', 'capsule_line': 'Choose a saved campaign when you host again',
+                  'again': 'HOST AGAIN', 'back': 'BACK TO ONLINE'}
 NOTICE_TEXT = {
     'lc_inline_error': 'This action could not be completed. No room was joined.',
     'lc_notice_unavailable': 'Unavailable in this preview. Use Other ways to play.',
     'lc_notice_resolving': 'Looking up room code...',
     'lc_notice_fixture': 'Online service not connected. No room was joined.',
-    'lc_notice_paste_invalid': 'Paste needs eight symbols. Do not use 0/O or 1/I/L.',
+    'lc_notice_paste_invalid': 'No code on the clipboard. Copy the 8-symbol code first.',
     'lc_notice_code_invalid': 'Use code symbols only. Do not use 0/O or 1/I/L.',
     'lc_notice_name_invalid': 'Use 1 to 31 printable characters for your screen name.',
     'lc_notice_profile_save': 'Name changed. Profile save was refused.',
@@ -948,31 +958,60 @@ NOTICE_TEXT = {
     'lc_notice_recent_save': 'Could not remember this game on this PC. Your previous recent game is unchanged.',
     # Round 6 (lc-online-native/1): native Host setup / room-only admission failed; the DLL has already cleaned up.
     'lc_notice_admission': 'Game setup or admission failed. Go Back and try again.',
+    # Round 15 (lc-online-errors/1): native step failures name the step; clipboard names its own cause.
+    'lc_notice_discovery': "Could not find the host's game. Go Back and try again.",
+    'lc_notice_refused': "The host's game refused you. Check build and settings.",
+    'lc_notice_refusal_rules': 'Refused. Settings possibly differ:',
+    'lc_notice_service_lost': 'Lost the online service during setup. Try again.',
+    'lc_notice_timeout': 'Took too long to connect. Go Back and try again.',
+    'lc_notice_clipboard': 'Could not open the clipboard. Type the code instead.',
 }
 DATA_NAMES = {'local_name', 'self_name', 'last_name', 'last_code', 'last_time',
               'code_value', 'code_remaining', *(f'cell{i}' for i in range(8)),
               # Round 5: every field the broker bridge binds is DATA (normal interned text, no gamevar owner).
               'service', 'self_state', 'browse_hint', 'room_name', 'preview_name', 'room_code', 'details_name',
-              'details', 'broker_error', 'list_count', 'list_age', 'lc_host_max_players', *(f'room_{r}_{c}' for r in range(7) for c in (*ROW_COLUMNS, 5))}
+              'details', 'broker_error', 'list_count', 'list_age', 'lc_host_max_players', 'lc_refusal_rules', 'lc_toast_name', *(f'room_{r}_{c}' for r in range(7) for c in (*ROW_COLUMNS, 5))}
 # Round 5b: the DLL selects ONE lc_broker_err_<cause> scene per failure (and hides Retry where retrying cannot help),
 # one status / pip / build scene and a dim veil per Browse row, a count + age header and a connected-service scene.
-ERROR_CAUSES = ('code_not_found', 'room_full', 'version_mismatch', 'rate_limited', 'timeout', 'offline', 'refused', 'generic')
-RETRYABLE_CAUSES = ('rate_limited', 'timeout', 'offline', 'generic')
+# Round 15 completes the table (INGAME-DESIGN 3.3): the first eight keep their broker/2 meaning; the DLL's
+# online_menus_rules::error_cause_key / cause_table are the other half of this contract (tests pin both).
+ERROR_CAUSES = ('code_not_found', 'room_full', 'version_mismatch', 'rate_limited', 'timeout', 'offline', 'refused', 'generic',
+                'pin_mismatch', 'code_expired', 'room_closed', 'test_mode', 'unsupported', 'busy', 'invalid_name')
+RETRYABLE_CAUSES = ('rate_limited', 'timeout', 'offline', 'generic', 'room_closed')
+# What each cause tells the player to do next (the DLL's next_action; Retry is the only one that is a control).
+NEXT_ACTION = {'code_not_found': 'edit_code', 'room_full': 'browse', 'version_mismatch': 'back', 'rate_limited': 'retry',
+               'timeout': 'retry', 'offline': 'retry', 'refused': 'back', 'generic': 'retry', 'pin_mismatch': 'back',
+               'code_expired': 'edit_code', 'room_closed': 'retry', 'test_mode': 'back', 'unsupported': 'other_ways',
+               'busy': 'wait', 'invalid_name': 'back'}
+# One word each action's copy must contain, so a cause can never name the wrong next step.
+NEXT_WORD = {'retry': ('retry', 'try again'), 'edit_code': ('code',), 'browse': ('another game', 'browse'),
+             'back': ('back', 'update', 'check', 'turn it off', 'turn off'), 'other_ways': ('other ways',), 'wait': ('wait',)}
 # Localized copy per cause (09-errors wording, in the inline style round 5 chose: one line, names cause + next step).
 ERROR_COPY = {
     'code_not_found': 'Code not found. Ask the host for the current code.',
     'room_full': 'That game is full. Try another game or ask for a new code.',
-    'version_mismatch': 'Different game version. Everyone should use the same build.',
+    'version_mismatch': 'Different game version. Update to the same build.',
     'rate_limited': 'Too many requests. Wait a few seconds, then retry.',
     'timeout': 'The online service did not answer. Try again.',
-    'offline': "Can't reach the online service. LAN and IP play still work.",
-    'refused': 'The online service could not be verified. Check its settings.',
+    'offline': "Can't reach the service. Retry; LAN and IP still work.",
+    'refused': 'The online service refused this game. Update the game.',
     'generic': 'Online service request failed. Retry or go Back.',
+    'pin_mismatch': 'Online service not verified. Check its setting or update.',
+    'code_expired': 'That room closed. Ask the host for a new code.',
+    'room_closed': 'Not taking players right now. Try again soon.',
+    'test_mode': 'TestMode is on, so online play is off. Turn it off.',
+    'unsupported': 'Online needs a complete install. Use Other ways to play.',
+    'busy': 'The network link is busy. Wait a moment, then repeat.',
+    'invalid_name': 'Room name must be 1-32 plain characters. Go Back.',
 }
+# Failures that are transient limits or waits read amber; the rest are red (09-errors: Full is amber, the rest red).
+AMBER_CAUSES = ('room_full', 'room_closed', 'rate_limited', 'busy')
 # Causes each screen's own operations can reach (Hub/Host never resolve a code or list rooms).
-BROKER_CAUSES = {'lc_online': ('rate_limited', 'timeout', 'offline', 'refused', 'generic'),
-                 'lc_host': ('rate_limited', 'timeout', 'offline', 'refused', 'generic'),
-                 'lc_code': ERROR_CAUSES, 'lc_browse': ERROR_CAUSES}
+_HUB_CAUSES = ('rate_limited', 'timeout', 'offline', 'refused', 'generic', 'pin_mismatch', 'test_mode', 'unsupported', 'busy')
+BROKER_CAUSES = {'lc_online': _HUB_CAUSES,
+                 'lc_host': _HUB_CAUSES + ('invalid_name',),
+                 'lc_code': tuple(c for c in ERROR_CAUSES if c != 'invalid_name'),
+                 'lc_browse': tuple(c for c in ERROR_CAUSES if c != 'invalid_name')}
 STATUS_KINDS = {'lobby': ('In lobby', 6), 'progress': ('In progress', 3), 'closed': ('Closed', 5), 'full': ('Full', 7)}
 BUILD_KINDS = {'same': ('SAME', 6), 'other': ('', 7), 'check': ('CHECK', 3)}
 # Round 6 (lc-online-native/1): native Host setup and automatic room-only admission. One of these shows (never beside
@@ -1112,7 +1151,7 @@ def _error_variant(name, cause):
     The DLL shows exactly one cause scene and hides `retry` (a separate hit/focus item over the bar) for causes without a
     bar, so a bar is never drawn for a button that is not there. The bar is a slanted amber shape like the native focus."""
     retry_ok = cause in RETRYABLE_CAUSES
-    warn = 5 if cause == 'room_full' else 7
+    warn = 5 if cause in AMBER_CAUSES else 7
     copy_ = ERROR_COPY[cause]
     if name == 'lc_code':
         rect = (81, 387, 478, 34)
@@ -1171,6 +1210,7 @@ def broker_layout(name, screen):
     by={e['name']:e for e in items}
     # The connected-service scene: green diamond + localized word, selected by the DLL (it empties the plain text then).
     if name=='lc_online':
+        _host_left_nodes(items)
         items.append(_variant('lc_service_ok',(355,229,120,18),[dict(kind='diamond',rect=(0,3,7,6),color=6),
                               dict(text='Connected',rect=(12,0,100,18),style='row',color=6)],model_name='service_ok'))
     else:
@@ -1202,7 +1242,7 @@ def broker_layout(name, screen):
     # Its label is the item's own text so it stays in front of the focus bar and takes the native highlight colours.
     e=_entry('retry','RETRY',(retry[0]+13,retry[1]+(retry[3]-12)/2,retry[2]-14,12),'label',0,intent='retry')
     e['enabled']=False;e['hidden']=True;e['hit_rect']=retry;items.append(e)
-    diag={'lc_code':(402,399,84,14),'lc_browse':(375,426,80,14)}.get(name,(413,425,108,14))
+    diag={'lc_code':(382,399,104,14),'lc_browse':(370,426,85,14)}.get(name,(393,425,128,14))
     items.append(_entry('broker_error','',diag,'label',7,data=True,align='right'))
     if name=='lc_host':
         # Mutually exclusive localized visibility scenes: segment control + the preview badge. Private is the
@@ -1266,6 +1306,31 @@ def broker_layout(name, screen):
             items.append(_variant(f'lc_row{row}_selected',(44,178+31*row,552,29),
                                   [dict(kind='panel',rect=(0,0,552,29),color=2,outline=5)]))
         screen['focus']='prompt_refresh'
+
+
+def _host_left_nodes(items):
+    """The 0.6 07-host-left panel as a modal Hub scene: red header and rule, the section-5 body, a local-save capsule that
+    claims no save, Host again (the Host intent) and Back to Online (dismiss). Never advertises takeover or recovery."""
+    c=HOST_LEFT_COPY
+    x,y,w,h=96,118,448,214
+    # The veil is its own low-resolution scene (alpha only); the card keeps full resolution.
+    items.append(_variant('lc_hub_host_left_veil',(0,0,640,480),[dict(kind='rect',rect=(0,0,640,480),color=0,alpha=.88)],
+                          model_name='host_left_veil',plane=-200,picture_scale=.05))
+    parts=[dict(kind='rect',rect=(0,0,w,h),color=0),dict(kind='rect',rect=(0,0,w,h),color=1),dict(kind='outline',rect=(0,0,w,h),color=2),dict(kind='rect',rect=(0,0,w,3),color=7),
+           dict(kind='diamond',rect=(18,22,14,12),color=7),
+           dict(text=c['title'],rect=(44,14,380,36),style='title',color=4),
+           dict(text=c['body1'],rect=(20,60,408,18),style='body',color=4),
+           dict(text=c['body2'],rect=(20,78,408,18),style='body',color=4),
+           dict(kind='rect',rect=(20,106,408,52),color=0,alpha=.45),dict(kind='outline',rect=(20,106,408,52),color=2),
+           dict(kind='rect',rect=(20,106,3,52),color=5),
+           dict(text=c['capsule'],rect=(34,112,380,13),style='label',color=3),
+           dict(text=c['capsule_line'],rect=(34,130,380,18),style='row',color=4),
+           _bar((20,172,168,31)),_bar((200,172,168,31),2)]
+    items.append(_variant('lc_hub_host_left',(x,y,w,h),parts,model_name='host_left',plane=-280))
+    for key,label,rect,intent,color in (('lc_hostleft_again',c['again'],(x+20,y+172,168,31),'open:lc_host',0),
+                                         ('lc_hostleft_back',c['back'],(x+200,y+172,168,31),'dismiss',4)):
+        e=_entry(key,label,(rect[0]+15,rect[1]+6,rect[2]-25,rect[3]-9),'row',color,intent=intent)
+        e['enabled']=False;e['hidden']=True;e['hit_rect']=rect;e['plane']=-300;items.append(e)
 
 
 def _native_host_nodes(screen,by):
@@ -1339,6 +1404,8 @@ def runtime_layout(name,state=None):
     for key,value in NOTICE_TEXT.items():
         if key not in present:
             screen['items'].append(_entry(key,value,(111,397,430,18) if name=='lc_code' else (48,431,546,18),color=7,hidden=True))
+    # The rule names a settings refusal gave (DATA, allowlisted, <= 44 characters) follow their static lead-in.
+    screen['items'].append(_entry('lc_refusal_rules','',(300,397,242,18) if name=='lc_code' else (237,431,357,18),'body',7,data=True))
     if name=='lc_online':
         screen['items'].append(_entry('lc_recent_empty','No recent game on this PC.',(354,295,225,18),hidden=True))
     if name=='lc_code':
@@ -1432,6 +1499,14 @@ def broker_problems(root, screen):
         if 'fixture' in (e.get('text') or '').lower(): errors.append('fixture wording in production asset: '+key)
     if name=='lc_online':
         for key in ('service','browse_hint'): need(key,clamp='true')
+        need('lc_hub_host_left',hide='true',type='MENU_ITEM_MODEL',neverfocus='true')
+        need('lc_hub_host_left_veil',hide='true',type='MENU_ITEM_MODEL',neverfocus='true')
+        need('lc_hostleft_again',usecmd=command(2),enabled='false',hide='true',type='MENU_ITEM_TEXT')
+        need('lc_hostleft_back',usecmd=command(8),enabled='false',hide='true',type='MENU_ITEM_TEXT')
+    elif 'lc_hub_host_left' in items: errors.append('the host-left panel belongs to the Hub')
+    for key in NOTICE_TEXT:
+        if key.startswith('lc_notice_') and key not in items: errors.append('missing notice: '+key)
+    need('lc_refusal_rules',clamp='true')
     if name in ('lc_host','lc_code','lc_browse'): need('self_state',clamp='true')
     if name=='lc_host':
         need('open',usecmd=command(19));need('prompt_open',usecmd=command(19));need('visibility',usecmd=command(21))
@@ -1585,8 +1660,20 @@ def lobby_layout(role, *, members=1, ready=False, fixture=False, pending=False, 
     text('text_playername1','',(54,224,530,120),'body',intent='native-picker',hidden=not picker)
     items[-1]['plane']=-300
     text('text_readycheck1','',(599,224,20,120),'body',hidden=True)
-    for key,value in (('lc_leave_confirm','Leave this game?'),('lc_lobby_error','This action could not be completed.')):
+    for key,value in (('lc_leave_confirm','Leave this game?'),('lc_lobby_error','This action could not be completed.'),
+                      ('lc_lobby_error_copy',LOBBY_ERROR_COPY['copy']),('lc_lobby_error_target',LOBBY_ERROR_COPY['target'])):
         variant(key,value,(43,356,554,29),'row',7)
+    # Round 15: a guest who left or was lost before the game started (named, six seconds, the party continues) and the
+    # service-lost strip (healthy P2P continues; only new players cannot join). Both are inline: Host/Join stays open.
+    variant('lc_lobby_guest_left','',(43,356,554,33),'body',7,
+            parts=[dict(kind='panel',rect=(0,0,554,33),color=1),dict(kind='rect',rect=(0,0,3,33),color=7),
+                   dict(text=LOBBY_TOAST_COPY,rect=(12,17,530,14),style='body',color=3)])
+    text('lc_toast_name','',(55,358,300,14),'row',4,data=True)
+    items[-1]['plane']=-300
+    variant('lc_lobby_service_lost','',(43,427,554,22),'body',7,
+            parts=[dict(kind='panel',rect=(0,0,554,22),color=1),dict(kind='rect',rect=(0,0,3,22),color=7),
+                   dict(kind='diamond',rect=(12,8,7,6),color=7),
+                   dict(text=LOBBY_SERVICE_LOST_COPY,rect=(26,4,520,15),style='body',color=7)])
     for key,label,rect,intent in (
         ('lc_leave_yes','Leave',(400,358,58,24),'leave-yes'),
         ('lc_leave_cancel','Cancel',(466,358,60,24),'dismiss'),
@@ -1638,9 +1725,10 @@ def lobby_layout(role, *, members=1, ready=False, fixture=False, pending=False, 
             value=e['text'];w,h=e['rect'][2:]
             e.update(text='',parts=[dict(kind='diamond',rect=(0,4,7,5),color=e['color']),
                 child_text(value,(10,0,w-10,h),'label',e['color'])])
-        if key in ('lc_code_copied','lc_leave_confirm','lc_lobby_error'):
+        if key in ('lc_code_copied','lc_leave_confirm','lc_lobby_error','lc_lobby_error_copy','lc_lobby_error_target'):
             value=e['text'];e.update(text='',plane=-280,parts=[dict(kind='panel',rect=(0,0,554,29),color=1),
-                child_text(value,(10,6,340,20),'row',e['color'])])
+                child_text(value,(10,6,340 if key in ('lc_code_copied','lc_leave_confirm','lc_lobby_error') else 470,20),'row',e['color'])])
+        if key in ('lc_lobby_guest_left','lc_lobby_service_lost'): e['plane']=-280 if key=='lc_lobby_guest_left' else -170
     _graph(screen)
     # Only offline previews reflect a gate. Authored Start must be available for
     # the native activator/tick to own enabling, and must keep its original flags.

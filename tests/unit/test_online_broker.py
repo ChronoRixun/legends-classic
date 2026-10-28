@@ -183,7 +183,7 @@ def test_variant_models_stay_inside_safe_bounds_and_do_not_overlap_unrelated_con
                 assert variant[1] <= retry[1] and retry[1] + retry[3] <= variant[1] + variant[3]
     # the Browse retry/status band never reaches the page controls
     raw = {e['name']: e for e in O.runtime_layout('lc_browse')['items']}
-    for cause in O.ERROR_CAUSES:
+    for cause in O.BROKER_CAUSES['lc_browse']:
         band = raw['lc_broker_err_' + cause]['rect']
         assert band[0] + band[2] <= raw['scroll_up']['rect'][0], cause
     for key in ('lc_broker_cancel', 'lc_broker_empty', 'lc_broker_room'):
@@ -220,8 +220,9 @@ def test_native_play_online_fallback_and_off_are_unchanged_by_round_5():
 
 
 def test_round_5b_cause_scenes_retry_bar_only_for_retryable_causes_and_exact_copy():
-    assert set(O.ERROR_CAUSES) == {'code_not_found', 'room_full', 'version_mismatch', 'rate_limited', 'timeout', 'offline', 'refused', 'generic'}
-    assert set(O.RETRYABLE_CAUSES) == {'rate_limited', 'timeout', 'offline', 'generic'}  # same set the DLL's cause_retryable() allows
+    assert set(O.ERROR_CAUSES) == {'code_not_found', 'room_full', 'version_mismatch', 'rate_limited', 'timeout', 'offline', 'refused', 'generic',
+                                   'pin_mismatch', 'code_expired', 'room_closed', 'test_mode', 'unsupported', 'busy', 'invalid_name'}
+    assert set(O.RETRYABLE_CAUSES) == {'rate_limited', 'timeout', 'offline', 'generic', 'room_closed'}  # same set the DLL's cause_retryable() allows
     for name in O.MENUS:
         screen, root, items = tree(name)
         raw = {e['name']: e for e in screen['items']}
