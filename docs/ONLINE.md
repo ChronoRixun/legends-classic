@@ -130,7 +130,7 @@ service text, so it is safe to quote in a report.
 | Not taking players right now. Try again soon. | The room exists but is loading or has drop-in off. | Retry (spaced by the service limit) or Browse. |
 | Different game version. Update to the same build. | The host's build differs; the grey line names both builds (`LC36 vs your LC37`). | Update together, then try again. |
 | Too many requests. Wait a few seconds, then retry. | The service limit; the grey line counts down. | Wait; Retry and Refresh stay off until it ends. |
-| The online service did not answer. Try again. | A timeout. | Retry. |
+| The online service did not answer. Try again. | A timeout, or Host > Open while the service never answered (nothing was lost: no room existed yet). | Retry. |
 | Can't reach the service. Retry; LAN and IP still work. | No connection to the service. A running game is not affected. | Retry, or use Other ways to play. |
 | The online service refused this game. Update the game. | The service rejected this build or its sign-in. | Update the game and launcher. |
 | Online service not verified. Check its setting or update. | The service's certificate is not the one this build trusts. | Update; check for connection interception. There is no bypass. |

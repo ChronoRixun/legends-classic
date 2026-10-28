@@ -178,8 +178,16 @@ def theme(colors, styles):
     # The engine blends a focused item between color_focus and color_highlight; the live round showed
     # focused rows as the 50% mix of navy and amber on the amber bar. Rows keep a steady navy; amber stays
     # allocated through the never-focused title style (the ~ text prefixes need all eight entries).
-    for attrs, pair in zip(requests,((5,3),(0,3),(6,7),(2,1))):
+    # 0.6 preview fix L (060r live failure 7, "pale text on amber"): the body and label styles used to carry green / blue as their
+    # highlight, which is what a FOCUSED body / label item blends toward - Cancel, F5 / Y Refresh and the other body prompts read green,
+    # Next page and the other labels read pale on the amber bar. Every style a focus bar can sit under now blends navy -> navy
+    # (highlight = focus = 0). Green and blue stay allocated through the two never-focused alias styles (the screen-name inset and
+    # the lobby card name), which no focus bar ever reaches.
+    for attrs, pair in zip(requests,((5,3),(0,3),(0,7),(0,1))):
         attrs['color_highlight'],attrs['color_disabled']=pair
+    keep_alive={'lc_o_compact_title':6,'lc_o_card_name':2}
+    for attrs in requests:
+        if attrs['name'] in keep_alive: attrs['color_highlight']=keep_alive[attrs['name']]
     result=T.allocate(colors,styles,original,requests,color_reserve=4,style_reserve=1)
     if len(result[0])>T.COLOR_LIMIT or len(result[1])>T.STYLE_LIMIT:
         raise ValueError('online family exceeds native capacity')
@@ -436,6 +444,11 @@ def layout_problems(screen):
     return problems
 
 
+# Colours a focusable text item may rest in without an inline prefix (the style's color_nofocus; label's is 3, and RETRY / Copy
+# code have always rested white on a label).
+FOCUS_REST_COLORS = {'label': (3, 4)}
+
+
 def menu_tree(screen, palette_ids=None):
     palette_ids=palette_ids or {i:str(i) for i in range(8)}
     root=ET.Element('menu',igb=screen['name'],image='textures/menus/'+screen['name'],fullscreen='true',
@@ -448,7 +461,9 @@ def menu_tree(screen, palette_ids=None):
         root.set(name,'~'+str(palette_ids[4]).zfill(2)+e['text'] if e['text'] else '')
     for e in screen['items']:
         value=e['text']
-        if value and (not e['intent'] or e['color']!=4): value='~'+str(palette_ids[e['color']]).zfill(2)+value
+        # A focusable item's inline ~NN colour wins over the style's focus colour (060r live: Next page / Previous page were
+        # pale blue on their own amber bar). The style's own resting colour needs no prefix: white for row / body, pale blue (3) for label.
+        if value and (not e['intent'] or e['color'] not in FOCUS_REST_COLORS.get(e['style'],(4,))): value='~'+str(palette_ids[e['color']]).zfill(2)+value
         attrs=dict(name=e['name'],type='MENU_ITEM_TEXT',text=value,style='lc_o_'+e['style'],
                    textalignx={'center':'TEXT_ALIGN_CENTER_X','right':'TEXT_ALIGN_RIGHT'}.get(e.get('align'),'TEXT_ALIGN_LEFT'),textaligny='TEXT_ALIGN_TOP',neverfocus=str(not bool(e['intent'])).lower())
         attrs['style']=font_binding(e)[2]
@@ -1370,7 +1385,9 @@ BROWSE_UNREACHABLE_NOTICES = ('lc_notice_paste_invalid', 'lc_notice_code_invalid
                               # Every screen change clears the notice (tick_impl: destination -> error_visible=false).
                               'lc_notice_clipboard', 'lc_notice_unavailable',
                               # 0.6 preview fix E: shown only on the Hub, when the host's native Kick removed this guest.
-                              'lc_notice_removed')
+                              'lc_notice_removed',
+                              # 0.6 preview fix L: the Host screen's native setup found the service not answering (before any room existed).
+                              'lc_notice_service_silent')
 NOTICE_TEXT = {
     'lc_inline_error': 'This action could not be completed. No room was joined.',
     'lc_notice_unavailable': 'Unavailable in this preview. Use Other ways to play.',
@@ -1394,7 +1411,13 @@ NOTICE_TEXT = {
     # 0.6 preview fix E: a guest the host removed (its native Kick: removal notice 0x2b, reason 0x10ce, flag 1) sees this on the
     # Hub instead of the host-left panel (xml2-fix online_menus_rules kicked_by_host).
     'lc_notice_removed': 'The host removed you from the game.',
+    # 0.6 preview fix L (060r live failure 5): Host > OPEN with the service down said the service was LOST during setup. Nothing was
+    # lost - the service never answered before a room existed - so that case reads the same as the other no-answer messages.
+    'lc_notice_service_silent': 'The online service did not answer. Try again.',
 }
+# 060r live (Join by code header): 'Room connected' did not fit the 67-unit badge field and was clipped to 'Room connecte'.
+# The DLL binds this word while a room is committed (online_menus.cpp room_badge_text); the unit test measures it against the field.
+ROOM_BADGE_TEXT = 'In a room'
 DATA_NAMES = {'local_name', 'self_name', 'last_name', 'last_code', 'last_time',
               'code_value', 'code_remaining', *(f'cell{i}' for i in range(8)),
               # Round 5: every field the broker bridge binds is DATA (normal interned text, no gamevar owner).
@@ -1635,7 +1658,7 @@ def broker_layout(name, screen):
         items.append(_variant('lc_service_ok',(355,229,120,18),[dict(kind='diamond',rect=(0,3,7,6),color=6),
                               dict(text='Connected',rect=(12,0,100,18),style='row',color=6)],model_name='service_ok'))
     else:
-        # 'Room connected' is the longest state the DLL binds; the static diamond implied a connected service.
+        # The longest state the DLL binds is ROOM_BADGE_TEXT; the static diamond implied a connected service.
         by['self_state'].update(rect=(529,46,67,13))
         shapes[:]=[q for q in shapes if not(q['kind']=='diamond' and q['rect']==(529,49,7,6))]
         items.append(_variant('lc_service_ok',(529,46,67,13),[dict(kind='diamond',rect=(0,3,7,6),color=6),
@@ -1671,11 +1694,14 @@ def broker_layout(name, screen):
         # DLL default (it also sets the pair itself when no service is live); the hit item below owns input (intent 21).
         for key in ('visibility','visibility_other','preview_visibility'):
             items.remove(by[key])
-        shapes[:]=[q for q in shapes if q['rect'] not in ((148,167,65,23),(218,167,59,23),(533,168,46,14))]
+        shapes[:]=[q for q in shapes if q['rect'] not in ((148,167,65,23),(218,167,59,23),(533,168,46,14))
+                   and not(q['kind']=='slash' and q['rect']==(31,248,4,45))]  # the CAMPAIGN-only marker: one scene per row now (_native_host_nodes)
         def scene(public):
             on,off=((70,0,59,23),(0,0,65,23)) if public else ((0,0,65,23),(70,0,59,23))
             labels=(('PUBLIC' if public else 'PRIVATE'),('PRIVATE' if public else 'PUBLIC'))
-            return [dict(kind='rect',rect=on,color=4),dict(kind='outline',rect=off,color=3),
+            # 060r live: the unselected chip's pale text sat directly on the amber VISIBILITY bar. It is a navy chip now (fill + the
+            # same pale outline and text), so it reads on the amber bar and on the dark panel alike; the selected chip stays white / navy.
+            return [dict(kind='rect',rect=on,color=4),dict(kind='rect',rect=off,color=0),dict(kind='outline',rect=off,color=3),
                     dict(text='PRIVATE',rect=(11,5,52,16),style='row',color=0 if not public else 3),
                     dict(text='PUBLIC',rect=(81,5,52,16),style='row',color=0 if public else 3),
                     dict(kind='outline',rect=(385,1,46,14),color=3),
@@ -1757,6 +1783,11 @@ def _host_left_nodes(items):
         e['enabled']=False;e['hidden']=True;e['hit_rect']=rect;e['plane']=-300;items.append(e)
 
 
+# The focusable settings rows' side-marker positions (top y, layout units): visibility, room name, campaign (the fixture's baked slash).
+# DROP-IN is read-only (no intent): it is never focused and has no marker.
+HOST_MARKER_ROWS = {'visibility': 155, 'room_name': 202, 'campaign': 248}
+
+
 def _native_host_nodes(screen,by):
     """Round 6 Host setup: settings are chosen in the native Game Options (intent 19 opens them), read back by the DLL and
     shown through hidden localized nodes at the approved anchors. The fixture prose the DLL clears is not authored."""
@@ -1778,6 +1809,11 @@ def _native_host_nodes(screen,by):
     for key,(word,why) in HOST_DROP_COPY.items():
         items.append(_variant(key,(164,305,210,34),
             [dict(text=word,rect=(0,0,198,18),style='row',color=3 if key.endswith('unknown') else 4),dict(text=why,rect=(0,19,210,15),style='body',color=3)]))
+    # 060r live (failure 7): the amber side marker was baked beside CAMPAIGN and stayed there while the focus bar sat on another row.
+    # It is one hidden scene per settings row now (the same slash the fixture bakes: 4 wide, 45 tall, leaning right); the DLL shows the
+    # focused row's (online_menus.cpp host_marker_follow) and none while focus is on the Open bar or a prompt.
+    for key,y in HOST_MARKER_ROWS.items():
+        items.append(_variant('lc_host_marker_'+key,(31,y,7,45),[_bar((0,0,6.5,45),5,2.5)]))
     # The player count: the DLL binds only the number (DATA); the label is static and sits at the old "Up to N players" line.
     items.append(_entry('lc_host_players_label','MAX PLAYERS',(415,194,92,14),'label',3))
     items.append(_entry('lc_host_max_players','',(512,191,60,18),'row',4,data=True))
@@ -1953,7 +1989,7 @@ def broker_problems(root, screen):
         for key in HOST_SETTING_COPY:
             e=need(key,hide='true',type='MENU_ITEM_TEXT',neverfocus='true')
             if e is not None and _plain(e.get('text'))!=HOST_SETTING_COPY[key]: errors.append('host setting copy differs: '+key)
-        for key in ('lc_host_settings_unknown',*HOST_DROP_COPY): need(key,hide='true',type='MENU_ITEM_MODEL',neverfocus='true')
+        for key in ('lc_host_settings_unknown',*HOST_DROP_COPY,*('lc_host_marker_'+k for k in HOST_MARKER_ROWS)): need(key,hide='true',type='MENU_ITEM_MODEL',neverfocus='true')
         e=need('lc_host_max_players',clamp='true',type='MENU_ITEM_TEXT')
         if e is not None and any('gamevar' in k.lower() for k in e.attrib): errors.append('competing DATA owner: lc_host_max_players')
     if name=='lc_browse':
@@ -2012,10 +2048,11 @@ def lobby_layout(role, *, members=1, ready=False, fixture=False, pending=False, 
         variant('lc_self_'+key,label,(540,47,53,13),color=color,
                 visible=fixture and key==('hosting' if role=='host' else 'ready' if ready else 'joined'))
     shape('panel',(43,109,554,69),1);shape('notch',(43,109,11,11),5)
-    text('lc_room_name','Room details pending',(61,127,245,22),'title')
+    text('lc_room_name','Online game',(61,127,245,22),'title')  # the DLL names the room (broker name, else the host's game) from the first tick
     shape('outline',(315,128,75,16),3)
     text('lc_room_visibility','PENDING',(320,130,65,14),'label',3)
-    text('lc_campaign_summary','Campaign pending. Friends join at the next area.',(61,153,375,18),color=3)
+    # 060r live: no "pending" copy for a guest or a LAN host - the campaign is the host's choice; the host's own DLL line names it.
+    text('lc_campaign_summary','Campaign chosen in Game options. Friends join at the next area.' if role=='host' else 'Campaign set by the host. Friends join at the next area.',(61,153,375,18),color=3)
     text('lc_code_label','ROOM CODE',(487,118,95,14),'label',3,align='right')
     text('lc_room_code','K7QN-2X9M' if fixture else '---- ----',(452,132,130,23),'title',5,data=True,align='right')
     text('lc_copy_code','Copy code',(486,159,96,16),'label',intent='copy')
