@@ -136,7 +136,7 @@ service text, so it is safe to quote in a report.
 | Online service not verified. Check its setting or update. | The service's certificate is not the one this build trusts. | Update; check for connection interception. There is no bypass. |
 | TestMode is on, so online play is off. Turn it off. | `[TestMode]` blocks online play. | Turn TestMode off and restart through Host/Join. |
 | Online needs a complete install. Use Other ways to play. | A required install guard failed (rooms, save format, native lists). | Verify Files; or play by LAN/IP. |
-| The network link is busy. Try again in a moment. | The previous connection is still closing. | Retry. |
+| The network link is busy. Wait a moment, then repeat. | The previous connection is still closing. | Wait a moment, then press the screen's own button again (Done, Open the room, Refresh); there is no Retry button for this one. |
 | Room name must be 1-32 plain characters. Go Back. | The room name has characters the service does not accept. | Shorten it; no `;` or `"`. |
 | Online service request failed. Retry or go Back. | Anything else (the diagnostic names the operation). | Retry; report the diagnostic if it repeats. |
 | Could not find the host's game. Go Back and try again. | The host's game did not answer the lobby search. | Go Back and join again. |
@@ -144,9 +144,7 @@ service text, so it is safe to quote in a report.
 | Took too long to connect. Go Back and try again. | A native step timed out. | Go Back and join again. |
 | Lost the online service during setup. Try again. | The service dropped while the lobby was being set up. | Try again. |
 | Game setup or admission failed. Go Back and try again. | Any other native setup step failed. | Go Back and try again. |
-| Could not read the clipboard. Type the code instead. / Paste needs eight symbols. | The clipboard was unreadable / holds no code. | Type the code; a valid typed code is never erased. |
+| Could not open the clipboard. Type the code instead. / No code on the clipboard. Copy the 8-symbol code first. | The clipboard could not be opened / holds no text or no code (an empty clipboard or an image reads as "no code"). | Type the code; a valid typed code is never erased. |
 | {Name} left or lost connection. The party continues; they can rejoin with the code. | A guest left the lobby (six seconds, then it clears). | Nothing; the code still works. |
 | Online service lost. Players here stay connected; new players cannot join. | The service dropped while your room was open. | Keep playing; host again later for a new code. |
-| THE HOST LEFT: Host again to continue from a save on this PC. | You were a guest and your connection to the host ended. The 0.6 game ends; there is no takeover. | **Host again** opens Host setup (choose a new or saved campaign); **Back to Online** closes the panel. |
-
-Loading a different save in the middle of a session arrives in a later beta; until then, host again and choose the save in Host setup.
+| THE HOST LEFT: Host again to continue from a save on this PC. | You were a guest and your connection to the host ended. The 0.6 game ends; there is no takeover. | **Host again** opens Host setup (choose a new or saved campaign); **Back to Online** closes the panel. It shows only when the game's connection to the host ended (a lost or crashed host, or the 10 s watchdog); other ways a session can end (a normal host quit, removal by the host) are not claimed as host loss and show only the game's own message. |

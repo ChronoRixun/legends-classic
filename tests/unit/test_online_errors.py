@@ -14,8 +14,8 @@ def tree(name):
 # (test/online_menus_errors.inl). Changing either side alone fails one of the two suites.
 DLL_CAUSES = ('code_not_found', 'room_full', 'version_mismatch', 'rate_limited', 'timeout', 'offline', 'refused', 'generic',
               'pin_mismatch', 'code_expired', 'room_closed', 'test_mode', 'unsupported', 'busy', 'invalid_name')
-DLL_NEXT = ('edit_code', 'browse', 'back', 'retry', 'retry', 'retry', 'back', 'retry', 'back', 'edit_code', 'retry', 'back', 'other_ways', 'retry', 'back')
-DLL_RETRY = ('rate_limited', 'timeout', 'offline', 'generic', 'room_closed', 'busy')
+DLL_NEXT = ('edit_code', 'browse', 'back', 'retry', 'retry', 'retry', 'back', 'retry', 'back', 'edit_code', 'retry', 'back', 'other_ways', 'wait', 'back')
+DLL_RETRY = ('rate_limited', 'timeout', 'offline', 'generic', 'room_closed')
 
 
 def test_errors_probe_is_required_and_the_contract_mirrors_the_dll_table():
@@ -29,6 +29,7 @@ def test_errors_probe_is_required_and_the_contract_mirrors_the_dll_table():
     assert O.ERROR_CAUSES == DLL_CAUSES
     assert tuple(O.NEXT_ACTION[c] for c in O.ERROR_CAUSES) == DLL_NEXT
     assert set(O.RETRYABLE_CAUSES) == set(DLL_RETRY) and all(O.NEXT_ACTION[c] == 'retry' for c in O.RETRYABLE_CAUSES)
+    assert 'busy' not in O.RETRYABLE_CAUSES  # the refused phase has no Retry (online_room::retry() refuses it)
     assert set(O.ERROR_COPY) == set(O.ERROR_CAUSES) == set(O.NEXT_ACTION)
 
 

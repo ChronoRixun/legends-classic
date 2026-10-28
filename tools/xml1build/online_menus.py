@@ -926,7 +926,7 @@ NOTICE_TEXT = {
     'lc_notice_unavailable': 'Unavailable in this preview. Use Other ways to play.',
     'lc_notice_resolving': 'Looking up room code...',
     'lc_notice_fixture': 'Online service not connected. No room was joined.',
-    'lc_notice_paste_invalid': 'Paste needs eight symbols. Do not use 0/O or 1/I/L.',
+    'lc_notice_paste_invalid': 'No code on the clipboard. Copy the 8-symbol code first.',
     'lc_notice_code_invalid': 'Use code symbols only. Do not use 0/O or 1/I/L.',
     'lc_notice_name_invalid': 'Use 1 to 31 printable characters for your screen name.',
     'lc_notice_profile_save': 'Name changed. Profile save was refused.',
@@ -940,7 +940,7 @@ NOTICE_TEXT = {
     'lc_notice_refusal_rules': 'Refused. Settings possibly differ:',
     'lc_notice_service_lost': 'Lost the online service during setup. Try again.',
     'lc_notice_timeout': 'Took too long to connect. Go Back and try again.',
-    'lc_notice_clipboard': 'Could not read the clipboard. Type the code instead.',
+    'lc_notice_clipboard': 'Could not open the clipboard. Type the code instead.',
 }
 DATA_NAMES = {'local_name', 'self_name', 'last_name', 'last_code', 'last_time',
               'code_value', 'code_remaining', *(f'cell{i}' for i in range(8)),
@@ -953,15 +953,15 @@ DATA_NAMES = {'local_name', 'self_name', 'last_name', 'last_code', 'last_time',
 # online_menus_rules::error_cause_key / cause_table are the other half of this contract (tests pin both).
 ERROR_CAUSES = ('code_not_found', 'room_full', 'version_mismatch', 'rate_limited', 'timeout', 'offline', 'refused', 'generic',
                 'pin_mismatch', 'code_expired', 'room_closed', 'test_mode', 'unsupported', 'busy', 'invalid_name')
-RETRYABLE_CAUSES = ('rate_limited', 'timeout', 'offline', 'generic', 'room_closed', 'busy')
+RETRYABLE_CAUSES = ('rate_limited', 'timeout', 'offline', 'generic', 'room_closed')
 # What each cause tells the player to do next (the DLL's next_action; Retry is the only one that is a control).
 NEXT_ACTION = {'code_not_found': 'edit_code', 'room_full': 'browse', 'version_mismatch': 'back', 'rate_limited': 'retry',
                'timeout': 'retry', 'offline': 'retry', 'refused': 'back', 'generic': 'retry', 'pin_mismatch': 'back',
                'code_expired': 'edit_code', 'room_closed': 'retry', 'test_mode': 'back', 'unsupported': 'other_ways',
-               'busy': 'retry', 'invalid_name': 'back'}
+               'busy': 'wait', 'invalid_name': 'back'}
 # One word each action's copy must contain, so a cause can never name the wrong next step.
 NEXT_WORD = {'retry': ('retry', 'try again'), 'edit_code': ('code',), 'browse': ('another game', 'browse'),
-             'back': ('back', 'update', 'check', 'turn it off', 'turn off'), 'other_ways': ('other ways',)}
+             'back': ('back', 'update', 'check', 'turn it off', 'turn off'), 'other_ways': ('other ways',), 'wait': ('wait',)}
 # Localized copy per cause (09-errors wording, in the inline style round 5 chose: one line, names cause + next step).
 ERROR_COPY = {
     'code_not_found': 'Code not found. Ask the host for the current code.',
@@ -977,7 +977,7 @@ ERROR_COPY = {
     'room_closed': 'Not taking players right now. Try again soon.',
     'test_mode': 'TestMode is on, so online play is off. Turn it off.',
     'unsupported': 'Online needs a complete install. Use Other ways to play.',
-    'busy': 'The network link is busy. Try again in a moment.',
+    'busy': 'The network link is busy. Wait a moment, then repeat.',
     'invalid_name': 'Room name must be 1-32 plain characters. Go Back.',
 }
 # Failures that are transient limits or waits read amber; the rest are red (09-errors: Full is amber, the rest red).
