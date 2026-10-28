@@ -302,8 +302,9 @@ def author_anchors(data, template_name, layouts, *, preserve_existing=False):
     """
     import math
     g = G.IgbFile(data)
-    if not layouts or len(layouts)>256 or any(not n or not n.isascii() or len(n)>128 for n in layouts):
-        raise G.IgbError('invalid authored anchor set')
+    # 175: XMen2.exe's per-menu-scene anchor capacity (playfield build 0x5882e0; online_menus.ENGINE_SCENE_ANCHORS).
+    if not layouts or len(layouts)>175 or any(not n or not n.isascii() or len(n)>128 for n in layouts):
+        raise G.IgbError('invalid authored anchor set (more than the engine 175 scene anchors?)')
     sources=[o for o in g.objects_of('igTransform') if o.get(2)==template_name]
     infos=g.objects_of('igSceneInfo')
     if len(sources)!=1 or len(infos)!=1:

@@ -19,9 +19,17 @@ ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'
 PALETTE = ('0A1830','11284A','2A4A78','7FA6D9','EEF3FA','FFCB3D','54D68A','FF6F55')
 STYLES = {'title': ('big',37), 'row': ('medium',15), 'body': ('medium',12.5), 'label': ('medium',11)}
 COLUMNS = ((59,128),(188,67),(255,93),(348,58),(406,76),(482,78),(560,37))
-# Browse row cells kept as hit/focus targets. [4] status and [5] ping are drawn by the row scenes (no DATA cell, no
-# focus anchor): the scene anchor budget of one menu is 256 and every cell costs two.
+# Browse row cells kept as hit/focus targets. [4] status and [5] ping are drawn by the row scenes (no DATA cell).
+# The five cells of a row share ONE focus anchor (room_<r>_focus): their focus bar is the whole row anyway.
 ROW_COLUMNS = (0, 1, 2, 3, 6)
+# XMen2.exe keeps at most 175 named anchors per menu scene (playfield build 0x5882e0: two inline 175-entry vectors
+# with their count at +0x2d4, plus the 175-entry name table whose add 0x588120 checks 0xaf). The 176th anchor
+# overwrites the vectors' bit masks and counts, and the next push writes to a wild address: the 060p Browse crash at
+# 0x587654 (241 anchors). Every authored menu scene is checked against this (scene_problems / anchor_count).
+ENGINE_SCENE_ANCHORS = 175
+# Rows per Browse page (the DLL's online_menus_rules::browse_rows is the same number). Seven approved rows need 241
+# anchors; five fit (171) until the engine's per-scene anchor tables are raised. Row commands 24..30 stay reserved.
+BROWSE_ROWS = 5
 PROMPT_TOKENS = {'back':'$MENU_BACK','delete':'$MENU_BACK','paste':'$MENU_NEXT',
                  'refresh':'$MENU_NEXT','rejoin':'$MENU_NEXT','clear':'$MENU_OTHER',
                  'name':'$MENU_OTHER','change':'$MENU_OTHER','open':'$MENU_OK'}
@@ -76,9 +84,9 @@ class Fixture:
     def rebound(self):
         self.rooms=self.rooms[:50]
         self.selected = max(0,min(self.selected,len(self.rooms)-1))
-        self.offset = max(0,min(self.offset,max(0,len(self.rooms)-7)))
+        self.offset = max(0,min(self.offset,max(0,len(self.rooms)-BROWSE_ROWS)))
         if self.selected < self.offset: self.offset=self.selected
-        if self.selected >= self.offset+7: self.offset=self.selected-6
+        if self.selected >= self.offset+BROWSE_ROWS: self.offset=self.selected-(BROWSE_ROWS-1)
 
     def dispatch(self, intent, payload=None):
         """Deterministic H-level transitions. Never calls a native/network service."""
@@ -102,7 +110,7 @@ class Fixture:
         elif intent.startswith('scroll:'): self.selected+=int(intent[7:]); self.rebound()
         elif intent.startswith('page:'):
             row=self.selected-self.offset
-            self.offset=max(0,min(self.offset+7*int(intent[5:]),max(0,len(self.rooms)-7)))
+            self.offset=max(0,min(self.offset+BROWSE_ROWS*int(intent[5:]),max(0,len(self.rooms)-BROWSE_ROWS)))
             self.selected=self.offset+row; self.rebound()
         elif intent.startswith('select:'): self.selected=self.offset+int(intent[7:]); self.rebound()
         elif intent=='join':
@@ -299,7 +307,7 @@ def layout(name, state=None):
         shape('rect',(546,139,16,4),5)
         for i,label in enumerate(('ROOM','HOST','AREA','PLAYERS','STATUS','PING','BUILD')):
             x,w=COLUMNS[i]; text('column'+str(i),label,x,160,w,14,'label',3)
-        for row in range(7):
+        for row in range(BROWSE_ROWS):
             y=178+31*row; idx=s.offset+row
             record=s.rooms[idx] if idx<len(s.rooms) else None
             shape('rect',(44,y+29,552,1),3,dim=True)
@@ -424,10 +432,11 @@ def menu_tree(screen, palette_ids=None):
                 if d in e: attrs[d]=e[d]
         item=ET.SubElement(root,'item',attrs)
         if e['intent'] and (e['enabled'] or screen.get('runtime')):
-            rect,outline=focus_spec(screen,e)
-            target=e['name']+'_focus'
-            ET.SubElement(root,'item',name=target,type='MENU_ITEM_MODEL',model='ui/models/model_hide',neverfocus='true',animate='true')
-            ET.SubElement(item,'onfocus',item=target,type='focus',model=focus_resource(rect,outline,focus_variant(screen,e)),loop='1')
+            target,owner=focus_target(screen,e)
+            rect,outline=focus_spec(screen,owner)
+            if root.find(f"item[@name='{target}']") is None:
+                ET.SubElement(root,'item',name=target,type='MENU_ITEM_MODEL',model='ui/models/model_hide',neverfocus='true',animate='true')
+            ET.SubElement(item,'onfocus',item=target,type='focus',model=focus_resource(rect,outline,focus_variant(screen,owner)),loop='1')
             ET.SubElement(item,'onfocus',item=target,type='nofocus',model='ui/models/model_hide')
     return root
 
@@ -601,7 +610,10 @@ def scene_layout(screen):
         if e.get('hit_rect'):
             x,y,_,_=e['rect'];hx,hy,hw,hh=e['hit_rect']
             layouts[e['name']]=(layouts[e['name']][0],((hx-x)*.8,-(hy+hh-y)*.8,(hx+hw-x)*.8,(y-hy)*.8))
-        if e['intent'] and (e['enabled'] or screen.get('runtime')): layouts[e['name']+'_focus']=layouts[e['name']]
+    for e in screen['items']:
+        if e['intent'] and (e['enabled'] or screen.get('runtime')):
+            target,owner=focus_target(screen,e)
+            layouts[target]=layouts[owner['name']]
     return layouts
 
 
@@ -681,10 +693,11 @@ def write(ctx, *, preview=False):
                 rect=(0,-e['rect'][3]*.8,e['rect'][2]*.8,0)
                 focus_models[variant_resource(screen,e)]=focus_model(focus_source.read_bytes(),rect,True,variant_picture(e))
             if e['intent'] and (e['enabled'] or screen.get('runtime')):
-                rect,outline=focus_spec(screen,e)
-                resource=focus_resource(rect,outline,focus_variant(screen,e))
+                _,owner=focus_target(screen,e)
+                rect,outline=focus_spec(screen,owner)
+                resource=focus_resource(rect,outline,focus_variant(screen,owner))
                 if resource not in focus_models:
-                    picture=focus_picture(screen,e,rect) if outline else None
+                    picture=focus_picture(screen,owner,rect) if outline else None
                     focus_models[resource]=focus_model(focus_source.read_bytes(),rect,outline,picture)
         extra={e.get('name'):(((-1000,-150,-1000)),(0,-1,1,0)) for e in tree.findall('item')
                if e.get('name') not in layouts}
@@ -839,6 +852,51 @@ def focus_spec(screen,item):
     return (-12,-h*.8-2,w*.8+12,5),False
 
 
+def focus_target(screen, item):
+    """(focus anchor item name, entry that sizes the focus model). The cells of one Browse row share room_<r>_focus."""
+    m=re.fullmatch(r'room_(\d)_(\d)',item['name']) if screen['name']=='lc_browse' else None
+    if m:
+        owner=next((e for e in screen['items'] if e['name']=='room_'+m.group(1)+'_0'),item)
+        return 'room_'+m.group(1)+'_focus',owner
+    return item['name']+'_focus',item
+
+
+def anchor_count(data):
+    """Anchors the engine's playfield build (0x5882e0 -> walk 0x587f90) collects from an authored menu scene.
+
+    The walk starts at the scene root, recurses into every group's children and adds each igUserInfo node carrying
+    an ItemName property; ENGINE_SCENE_ANCHORS is the engine's capacity for them."""
+    from . import igb_file as G
+    g=G.IgbFile(data)
+    def children(o):
+        r=o.get(7)
+        if not isinstance(r,int) or r<0: return []
+        n=g.obj(r)
+        if n is None or n.name!='igNodeList': return []
+        b=n.get(4)
+        return [g.obj(x) for x in g.ref_list(b)] if isinstance(b,int) and b>=0 else []
+    def named(o):
+        seen=set();stack=[f.value for f in o.fields.values() if f.type in ('igObjectRefMetaField','igMemoryRefMetaField')]
+        while stack:
+            r=stack.pop()
+            if not isinstance(r,int) or r<0 or r in seen: continue
+            seen.add(r);x=g.obj(r)
+            if x is None:
+                if r in g.blocks: stack.extend(g.ref_list(r))
+                continue
+            if x.name=='igStringKey' and x.get(2)=='ItemName': return True
+            if x.name in ('igPropertyList','igProperty','igNameValue'):
+                stack.extend(f.value for f in x.fields.values() if f.type in ('igObjectRefMetaField','igMemoryRefMetaField'))
+        return False
+    count=0;stack=[(g.obj(g.objects_of('igSceneInfo')[0].get(5)),0)]
+    while stack:
+        o,depth=stack.pop()
+        if o is None or depth>64: continue
+        if o.name=='igHashedUserInfo' and named(o): count+=1
+        stack.extend((c,depth+1) for c in children(o))
+    return count
+
+
 def fit_text(text, width, measure):
     """Ellipsize within one field using the chosen renderer's width measurement."""
     if width<=0: raise ValueError('text field must have positive width')
@@ -861,6 +919,9 @@ def scene_problems(screen,data):
         if len(aliases)!=3 or {o.name for o in aliases}!={'igTransform','igHashedUserInfo','igStringValue'}:
             errors.append('incomplete scene alias: '+name)
         if name not in reachable: errors.append('unreachable scene binding: '+name)
+    anchors=anchor_count(data)
+    if anchors>ENGINE_SCENE_ANCHORS:
+        errors.append(f"{screen['name']}: {anchors} scene anchors, the engine holds {ENGINE_SCENE_ANCHORS} (0x5882e0)")
     return errors
 
 
@@ -935,6 +996,10 @@ DLL_PROBES = (b'lc-online-menus/1\n', b'lc-online-input/1', b'lc-online-lobby/1'
               b'lc_title\0', b'lc_row\0', b'lc_body\0', b'lc_label\0')
 CAPABILITY = b'lc-online-menus/1\n'
 LOBBIES = ('host', 'join')
+# Raised only on the Hub (name entry) or Join by code (paste / symbols / the offline fixture lookup); the DLL's
+# show_notice falls back to lc_inline_error on a screen without the node, so Browse does not spend anchors on them.
+BROWSE_UNREACHABLE_NOTICES = ('lc_notice_paste_invalid', 'lc_notice_code_invalid', 'lc_notice_name_invalid',
+                              'lc_notice_profile_save', 'lc_notice_name_open', 'lc_notice_resolving', 'lc_notice_fixture')
 NOTICE_TEXT = {
     'lc_inline_error': 'This action could not be completed. No room was joined.',
     'lc_notice_unavailable': 'Unavailable in this preview. Use Other ways to play.',
@@ -953,7 +1018,7 @@ DATA_NAMES = {'local_name', 'self_name', 'last_name', 'last_code', 'last_time',
               'code_value', 'code_remaining', *(f'cell{i}' for i in range(8)),
               # Round 5: every field the broker bridge binds is DATA (normal interned text, no gamevar owner).
               'service', 'self_state', 'browse_hint', 'room_name', 'preview_name', 'room_code', 'details_name',
-              'details', 'broker_error', 'list_count', 'list_age', 'lc_host_max_players', *(f'room_{r}_{c}' for r in range(7) for c in (*ROW_COLUMNS, 5))}
+              'details', 'broker_error', 'list_count', 'list_age', 'lc_host_max_players', *(f'room_{r}_{c}' for r in range(BROWSE_ROWS) for c in (*ROW_COLUMNS, 5))}
 # Round 5b: the DLL selects ONE lc_broker_err_<cause> scene per failure (and hides Retry where retrying cannot help),
 # one status / pip / build scene and a dim veil per Browse row, a count + age header and a connected-service scene.
 ERROR_CAUSES = ('code_not_found', 'room_full', 'version_mismatch', 'rate_limited', 'timeout', 'offline', 'refused', 'generic')
@@ -1142,7 +1207,7 @@ def _row_scenes(items):
 
     Models are shared across the seven rows (identical relative art); each row only has its own anchor. They sit between
     the focus fill and the text (plane -170 -> depth -130); the veil sits in front of the text (-200 -> -160)."""
-    for r in range(7):
+    for r in range(BROWSE_ROWS):
         y = 178 + 31 * r
         for kind, (word, color) in STATUS_KINDS.items():
             items.append(_variant(f'lc_row{r}_st_{kind}', (406, y + 7, 76, 20),
@@ -1259,7 +1324,7 @@ def broker_layout(name, screen):
         for k in range(5):
             items.append(_variant(f'lc_age_fill{k+1}',(546+8*k,139,7,4),[dict(kind='rect',rect=(0,0,7,4),color=5)],model_name='age_fill'))
         _row_scenes(items)
-        for row in range(7):
+        for row in range(BROWSE_ROWS):
             # Round 7: the measured RTT of the room this PC is in, over the neutral '--' of the row's ping scene (the DLL binds
             # '' for every other row, which leaves the scene's dash alone). DATA only: no focus, no command.
             items.append(_entry(f'room_{row}_5','',(495,178+31*row+8,40,15),'body',4,data=True))
@@ -1337,6 +1402,7 @@ def runtime_layout(name,state=None):
             s['rect'][1] in (130,172) and s['rect'][2]==45.5)]
     present={e['name'] for e in screen['items']}
     for key,value in NOTICE_TEXT.items():
+        if name=='lc_browse' and key in BROWSE_UNREACHABLE_NOTICES: continue
         if key not in present:
             screen['items'].append(_entry(key,value,(111,397,430,18) if name=='lc_code' else (48,431,546,18),color=7,hidden=True))
     if name=='lc_online':
@@ -1360,7 +1426,7 @@ def runtime_layout(name,state=None):
             r,c=int(m.group(1)),int(m.group(2))
             i=ROW_COLUMNS.index(c)
             e.update(left=f'room_{r}_{ROW_COLUMNS[max(0,i-1)]}',right=f'room_{r}_{ROW_COLUMNS[min(len(ROW_COLUMNS)-1,i+1)]}',
-                     up=f'room_{r-1}_{c}' if r else 'prompt_refresh',down=f'room_{r+1}_{c}' if r<6 else 'scroll')
+                     up=f'room_{r-1}_{c}' if r else 'prompt_refresh',down=f'room_{r+1}_{c}' if r<BROWSE_ROWS-1 else 'scroll')
     if name=='lc_code':
         keys={e['name']:e for e in screen['items'] if e['name'].startswith('key_')}
         for i in range(32):
@@ -1452,7 +1518,7 @@ def broker_problems(root, screen):
         e=need('lc_host_max_players',clamp='true',type='MENU_ITEM_TEXT')
         if e is not None and any('gamevar' in k.lower() for k in e.attrib): errors.append('competing DATA owner: lc_host_max_players')
     if name=='lc_browse':
-        for r in range(7):
+        for r in range(BROWSE_ROWS):
             for c in range(7):
                 if c==5:
                     # Round 7: DATA text only (the measured RTT of the joined room), never a cell with focus or a command.
@@ -1773,6 +1839,14 @@ def output_problems(out):
         for rel in [f'UI/menus/{name}.XMLB',f'UI/menus/{name}.engb',f'UI/menus/{scene}.IGB',
                     f'Textures/menus/{scene}.IGB',f'Packages/generated/maps/package/menus/{name}.PKGB']:
             if index.path(rel) is None:errors.append('missing '+rel)
+        igb=index.path(f'UI/menus/{scene}.IGB')
+        if igb is not None:
+            # The engine's per-scene anchor capacity (0x5882e0): over it the playfield build corrupts memory (060p).
+            try:
+                anchors=anchor_count(igb.read_bytes())
+                if anchors>ENGINE_SCENE_ANCHORS:errors.append(f'{scene}: {anchors} scene anchors, the engine holds {ENGINE_SCENE_ANCHORS}')
+            except Exception as error:
+                errors.append(scene+': unreadable scene ('+type(error).__name__+')')
         pkg=index.path(f'Packages/generated/maps/package/menus/{name}.PKGB')
         if pkg is not None:
             try:

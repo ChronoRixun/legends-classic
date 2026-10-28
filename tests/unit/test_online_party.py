@@ -82,7 +82,7 @@ def test_browse_rows_author_the_measured_ping_text_over_the_neutral_dash_cell():
     root = O.menu_tree(screen)
     items = {e.get('name'): e for e in root.findall('item')}
     raw = {e['name']: e for e in screen['items']}
-    for r in range(7):
+    for r in range(O.BROWSE_ROWS):
         e = items[f'room_{r}_5']
         assert e.get('type') == 'MENU_ITEM_TEXT' and e.get('clamp') == 'true' and e.get('neverfocus') == 'true'
         assert not e.get('usecmd') and e.get('text') in ('', None), r
@@ -91,7 +91,7 @@ def test_browse_rows_author_the_measured_ping_text_over_the_neutral_dash_cell():
         assert x == 495 and y == 178 + 31 * r + 8 and x + w <= 552, r
     assert not O.runtime_problems(root, screen)
     # the status and build words stay row scenes, never cells
-    for r in range(7):
+    for r in range(O.BROWSE_ROWS):
         for c in (4,):
             assert f'room_{r}_{c}' not in items
     bad = copy.deepcopy(root)

@@ -57,8 +57,11 @@ Play Online always retains the native `openmenu online` command as fallback.
 
 Round 5 wires the custom screens to the DLL's broker bridge with constant
 commands only: `lcOnlineIntent` 18 Refresh, 19 Open room, 20 Retry, 21 Public/Private,
-22/23 page, 24..30 select Browse row 0..6 and 31 Join selected (resolve only), each
+22/23 page, 24..30 select Browse row 0..6 (a page authors `online_menus.BROWSE_ROWS` = 5 rows, so 24..28 are
+used) and 31 Join selected (resolve only), each
 valid only on its own screen (`online_menus.BROKER_SCOPE`, checked by the validator).
+Every authored menu scene stays within XMen2.exe's 175 named anchors per scene (`ENGINE_SCENE_ANCHORS`; the
+playfield build `0x5882e0` corrupts memory past it - the 060p Browse crash); the builder and `output_problems` refuse more.
 Every Browse row cell exists from the start with its row command and starts disabled;
 the DLL binds text and enables rows. Hidden localized variants (`lc_broker_*`, the
 `lc_host_private`/`lc_host_public` scenes, `lc_rowN_selected`) are selected by the
