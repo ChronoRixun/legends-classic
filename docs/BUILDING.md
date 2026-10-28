@@ -67,7 +67,7 @@ because their focus bars share one model item per plane (`SHARED_FOCUS_SCREENS`:
 -300, at the scene origin): each focusable item sets it to its own bar on focus (authored at the owner's absolute
 position) and hides it on nofocus; XMen2.exe's setFocus (0x5aaf80) loses the old item before the new one gains. The
 clipboard / unavailable notices Browse can never raise are not authored there (the DLL falls back to `lc_inline_error`).
-Predicted scene anchors (backdrop included): Browse 174, Host lobby 174, Join lobby 170, Party 159, the rest <= 147.
+Predicted scene anchors (backdrop included): Browse 214, Host lobby 174, Join lobby 170, Party 159, the rest <= 147.
 Every Browse row cell exists from the start with its row command and starts disabled;
 the DLL binds text and enables rows. Hidden localized variants (`lc_broker_*`, the
 `lc_host_private`/`lc_host_public` scenes, `lc_rowN_selected`) are selected by the
