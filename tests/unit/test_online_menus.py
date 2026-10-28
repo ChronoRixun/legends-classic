@@ -322,6 +322,26 @@ def test_device_preview_follows_companion_labels_without_fabricating_icons():
     raises(ValueError,lambda:O.preview_text('$MENU_OK','unknown'))
 
 
+def test_pad_prompt_tokens_name_the_job_the_dll_binds_to_x_and_y():
+    # 060p live round failure 8: the screens' prompts and the DLL's pad buttons must agree. $MENU_OTHER jobs are X in the
+    # designs, $MENU_NEXT jobs are Y; the pad_prompts hook draws them as the pad's X / Y on these screens only.
+    assert O.PAD_TOKEN_BUTTONS=={'$MENU_OTHER':'X','$MENU_NEXT':'Y'}
+    other_jobs=('change','name','clear','kick','ready')
+    next_jobs=('rejoin','paste','refresh','copy')
+    found={'$MENU_OTHER':set(),'$MENU_NEXT':set()}
+    for key,token in O.PROMPT_TOKENS.items():
+        if token in found: found[token].add(key)
+    assert found['$MENU_OTHER']=={'clear','name','change'} and found['$MENU_NEXT']=={'paste','refresh','rejoin'}
+    for name in O.MENUS:
+        for item in O.layout(name)['items']:
+            text=item.get('text') or ''
+            for token,jobs in (('$MENU_OTHER',other_jobs),('$MENU_NEXT',next_jobs)):
+                if token in text:
+                    assert any(job in text.lower() for job in jobs),(name,item['name'],text)
+    assert O.preview_text('$MENU_NEXT Rejoin')=='Y Rejoin' and O.preview_text('$MENU_OTHER Clear')=='X Clear'
+    assert O.preview_text('$MENU_NEXT Rejoin','keyboard')=='[Y] Rejoin'
+
+
 def test_right_aligned_fields_keep_their_native_alignment_after_serialization():
     screen=O.layout('lc_online')
     tree=O.menu_tree(screen)
