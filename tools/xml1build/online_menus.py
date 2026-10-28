@@ -783,7 +783,6 @@ def write(ctx, *, preview=False):
                     if (e.tag,e.get('filename')) not in have:pkg.append(copy.deepcopy(e))
         ctx.write_xmlb(F.MENU_PKG_DIR+'/'+name,pkg,('.PKGB',),source='frontend:online resource closure')
     ctx.write_bytes(HITS_FILE,hit_table(authored_layouts),source='frontend:mouse hit boxes = drawn focus bars')
-    ctx.write_bytes(MODELS_FILE,model_table({name:tree for name,tree,_,_ in pending}),source='frontend:hidden-authored model scenes')
     if not preview:ctx.write_bytes('Data/lc_online_menus.cap',CAPABILITY,source='frontend:verified DLL menu capability')
     report={'menus':list(MENUS),'colors':len(colors),'styles':len(styles),'palette_ids':ids,'font_probe':probe,
             'fixture_only':True,'enabled':not preview,'production_entry':F.PLAY_ONLINE_CMD,'layouts':authored_layouts,
@@ -1180,9 +1179,7 @@ DLL_PROBES = (b'lc-online-menus/1\n', b'lc-online-input/1', b'lc-online-lobby/1'
               # Menus=1 + LegendsClassicFonts=0 fallback to the native Play Online menus.
               b'lc-fonts-screen/1', b'LegendsClassicFonts is not active',
               # 0.6 preview fix E: the mouse hit boxes are the drawn focus bars (Data/lc_online_hits.txt, hit_table).
-              b'lc-online-hits/1',
-              # 0.6 preview fix H: hidden-authored model scenes are loaded on first show (Data/lc_online_models.txt).
-              b'lc-online-models/1')
+              b'lc-online-hits/1')
 CAPABILITY = b'lc-online-menus/1\n'
 # Mouse hit boxes (xml2-fix online_menus_hits_rules.hpp). XMen2.exe hit-tests an item with the box its text is laid out in
 # (0x5bc530 -> 0x5bc1b0); every focus bar here is larger than that box (an ordinary row: 12 units left and right, 5 above,
@@ -1190,33 +1187,6 @@ CAPABILITY = b'lc-online-menus/1\n'
 # (absolute view units, x right, y up: left bottom right top) and the DLL hit-tests our screens against it.
 HITS_CONTRACT = 'lc-online-hits/1'
 HITS_FILE = 'Data/lc_online_hits.txt'
-
-
-# Hidden-authored model scenes (xml2-fix online_menus_models_rules.hpp; 060q live failures 5 / 6). XMen2.exe drops the model
-# name of a MENU_ITEM_MODEL whose XMLB carries `hide` (0x5bc7a0 sets the hidden bit before 0x5c5080 reads the model; while
-# hidden 0x5c4c50 loads m_invis and releases the name), so such a scene never appears when the DLL shows it. The builder
-# lists every one with its model (`menu item model`) and the DLL loads the model through the item on its first show.
-MODELS_CONTRACT = 'lc-online-models/1'
-MODELS_FILE = 'Data/lc_online_models.txt'
-
-
-def hidden_models(name, tree):
-    """(item, model) for every MENU_ITEM_MODEL of a built tree that the engine reads hidden (any `hide` value)."""
-    return [(e.get('name'),e.get('model')) for e in tree.findall('item')
-            if e.get('type')=='MENU_ITEM_MODEL' and 'hide' in e.attrib and e.get('model')]
-
-
-def model_table(trees):
-    """Data/lc_online_models.txt from the built trees: {menu name (the engine's menu +0xc): tree}."""
-    lines=[MODELS_CONTRACT]
-    for name,tree in trees.items():
-        for item,model in hidden_models(name,tree):
-            if not re.fullmatch(r'[A-Za-z0-9_]{1,63}',item) or not re.fullmatch(r'ui/models/[A-Za-z0-9_/]{1,117}',model):
-                raise ValueError('hidden model scene not listable: '+name+'.'+str(item))
-            lines.append(f'{name} {item} {model}')
-    if len(lines)==1: raise ValueError('no hidden model scenes')
-    if len(lines)-1>2048: raise ValueError('too many hidden model scenes')
-    return ('\n'.join(lines)+'\n').encode('ascii')
 
 
 def hit_rows(screen):
@@ -2218,11 +2188,10 @@ def output_problems(out):
 
 
 def model_output_problems(out, index=None):
-    """060q live (fix H): every LC model draws exactly one alpha-blended layer, and every hidden-authored model scene of the
-    built trees is listed in Data/lc_online_models.txt with its own model (else the engine can never show it)."""
+    """060q live (fix H): every LC model draws exactly one alpha-blended layer (dialog.igb's opaque frame and additive inset
+    drew black boxes, outline bars and lighter inner rectangles)."""
     from pathlib import Path
-    from .common import decode_xmlb,FileIndex
-    out=Path(out);index=index or FileIndex(out);errors=[]
+    out=Path(out);errors=[]
     for path in sorted(p for p in (out/'UI'/'models').glob('*') if p.name.lower().startswith('lc_o_') and p.suffix.lower()=='.igb'):
         try:
             layers=panel_layers(path.read_bytes())
@@ -2231,23 +2200,6 @@ def model_output_problems(out, index=None):
                 errors.append(path.name+': model must draw one alpha-blended layer, draws '+repr([(l[0],l[1],l[2]) for l in drawn]))
         except Exception as error:
             errors.append(path.name+': unreadable model ('+type(error).__name__+')')
-    table=index.path(MODELS_FILE)
-    if table is None:
-        errors.append('missing '+MODELS_FILE);return errors
-    lines=table.read_bytes().decode('ascii','replace').split('\n')
-    if not lines or lines[0]!=MODELS_CONTRACT or lines[-1]!='': errors.append(MODELS_FILE+': bad contract or termination');return errors
-    listed={tuple(l.split(' ')[:2]):l.split(' ')[2] for l in lines[1:-1] if len(l.split(' '))==3}
-    if len(listed)!=len(lines)-2: errors.append(MODELS_FILE+': malformed or duplicate lines')
-    for name in (*MENUS,*LOBBIES,PARTY_MENU):
-        xmlb=index.path(f'UI/menus/{name}.XMLB')
-        if xmlb is None: continue
-        try:
-            tree=decode_xmlb(xmlb.read_bytes())
-        except Exception as error:
-            errors.append(name+': unreadable menu ('+type(error).__name__+')');continue
-        for item,model in hidden_models(name,tree):
-            if listed.get((name,item))!=model: errors.append(f'{name}.{item}: hidden-authored model scene not listed with its model')
-            elif index.path(model+'.IGB') is None: errors.append(f'{name}.{item}: listed model {model} missing')
     return errors
 
 

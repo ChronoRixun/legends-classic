@@ -532,52 +532,6 @@ def test_kicked_guest_notice_is_a_plain_hub_notice_within_the_anchor_budget():
         assert len(O.scene_layout(O.bound_layout(O.runtime_layout(name),F.metrics())))+len(O.backdrop_layouts())<=O.ENGINE_SCENE_ANCHORS, name
 
 
-def test_hidden_authored_model_scenes_are_listed_for_the_dll():
-    """0.6 preview fix H (060q live failures 5 / 6): XMen2.exe drops the model name of a MENU_ITEM_MODEL authored `hide`
-    (0x5bc7a0 sets the bit before 0x5c5080 reads the model; hidden, 0x5c4c50 loads m_invis and releases the name), so the
-    DLL could never show a card frame, badge, READY / build scene, Leave panel or the PUBLIC pair. Every such item of the
-    built trees is listed with its own model; visible-authored models and text items are not."""
-    from xml1build import online_fonts as F, online_party as PT
-    trees={name:O.menu_tree(O.runtime_layout(name)) for name in O.MENUS}
-    trees[O.PARTY_MENU]=O.menu_tree(O.bound_layout(PT.party_layout('host'),F.metrics()))
-    data=O.model_table(trees)
-    assert data.startswith(b'lc-online-models/1\n') and data.endswith(b'\n') and b'\r' not in data
-    rows={tuple(l.split(' ')[:2]):l.split(' ')[2] for l in data.decode('ascii').splitlines()[1:]}
-    assert len(rows)==len(data.decode('ascii').splitlines())-1
-    host=trees['lc_host']
-    for key in ('lc_host_public','lc_host_settings_unknown','lc_host_drop_on','lc_host_drop_off','lc_host_drop_unknown'):
-        item=host.find(f"item[@name='{key}']")
-        assert item.get('type')=='MENU_ITEM_MODEL' and item.get('hide')=='true'
-        assert rows[('lc_host',key)]==item.get('model')
-    assert ('lc_host','lc_host_private') not in rows          # authored visible: the engine keeps its name
-    assert ('lc_host','lc_host_new') not in rows               # a text item: its setHidden is the bit only
-    for name,tree in trees.items():
-        for e in tree.findall('item'):
-            if e.get('type')=='MENU_ITEM_MODEL' and 'hide' in e.attrib: assert rows[(name,e.get('name'))]==e.get('model')
-    # Browse rows share one model per kind across anchors: each row's item still has its own line.
-    assert rows[('lc_browse','lc_row0_st_lobby')]==rows[('lc_browse','lc_row4_st_lobby')]
-    bad=ET.Element('menu');ET.SubElement(bad,'item',name='x y',type='MENU_ITEM_MODEL',model='ui/models/a',hide='true')
-    raises(ValueError,lambda:O.model_table({'lc_host':bad}))
-    raises(ValueError,lambda:O.model_table({'lc_host':ET.Element('menu')}))
-
-
-def test_hidden_model_table_is_written_checked_and_required_from_the_dll():
-    import inspect
-    assert O.MODELS_FILE=='Data/lc_online_models.txt' and b'lc-online-models/1' in O.DLL_PROBES
-    assert 'model_table(' in inspect.getsource(O.write) and 'MODELS_FILE' in inspect.getsource(O.write)
-    assert 'model_output_problems' in inspect.getsource(O.output_problems)
-
-
-def test_lobby_hidden_cards_and_confirm_are_model_scenes_the_table_must_cover():
-    """The 060q lobby: text variants (names, "Waiting for a player") showed, every model variant (card frames, HOST,
-    READY, ping bars, SAME BUILD, the Leave panel) did not - they are exactly the hidden-authored model items."""
-    screen=O.lobby_layout('host')
-    models={e['name'] for e in screen['items'] if e.get('variant') and e.get('parts') and e.get('hidden')}
-    for key in ('lc_p1_card','lc_p1_host','lc_p1_ready','lc_p1_not_ready','lc_p2_ms','lc_p1_same_build','lc_p2_empty',
-                'lc_leave_confirm','lc_lobby_service_lost','lc_lobby_guest_left','lc_code_copied'):
-        assert key in models, key
-
-
 def test_host_visibility_pair_draws_in_front_of_its_focus_bar():
     screen=O.runtime_layout('lc_host')
     by={e['name']:e for e in screen['items']}
@@ -637,3 +591,57 @@ def test_party_field_paints_no_amber_action_under_a_focusable_item():
             assert not any(meets(q['rect'],a) for a in actions),q
     by={e['name']:e for e in screen['items']}
     assert by['lc_party_invite']['color']==4 and by['lc_party_invite_hint']['color']==3
+
+
+def _panel_graph(layers):
+    """A synthetic flat panel in the owned dialog.igb's shape (all numbers invented): igSceneInfo -> root igAttrSet -> one
+    igAttrSet per layer (optional blend state / function) -> igGeometry -> igGeometryAttr1_5 -> igVertexArray1_1.
+    layers = [(vertex count, blend enabled or None, (src, dst) or None)]."""
+    import struct
+    from test_main_appearance import fixture
+    lst = [(2, 'i'), (3, 'i'), (4, 'b')]
+    schemas = [('igDataList', None, []), ('igNodeList', 'igDataList', lst), ('igAttrList', 'igDataList', lst),
+               ('igSceneInfo', None, [(5, 'r')]), ('igAttrSet', None, [(7, 'r'), (8, 'r')]), ('igGeometry', None, [(7, 'r'), (8, 'r')]),
+               ('igBlendStateAttr', None, [(4, 'i')]), ('igBlendFunctionAttr', None, [(4, 'i'), (5, 'i')]),
+               ('igGeometryAttr1_5', None, [(4, 'r')]), ('igVertexArray1_1', None, [(2, 'b'), (3, 'i')])]
+    objects, blocks = [], []
+    def obj(name, values): objects.append((name, values)); return len(objects) - 1
+    pending = []   # (object index, slot, block index) patched after the object count is known
+    def block(data): blocks.append(data); return len(blocks) - 1
+    def data_list(name, refs):
+        b = block(struct.pack('<' + 'i' * len(refs), *refs)); i = obj(name, {2: len(refs), 3: len(refs), 4: 0}); pending.append((i, 4, b)); return i
+    children = []
+    for n, state, func in layers:
+        pos = block(struct.pack('<' + 'f' * (3 * n), *[float(k) for k in range(3 * n)]))
+        comp = block(b'')   # replaced below: the component ref list (positions first)
+        va = obj('igVertexArray1_1', {2: 0, 3: n}); pending.append((va, 2, comp)); blocks[comp] = ('comp', pos)
+        ga = obj('igGeometryAttr1_5', {4: va})
+        geo = obj('igGeometry', {7: data_list('igNodeList', []), 8: data_list('igAttrList', [ga])})
+        attrs = []
+        if state is not None: attrs.append(obj('igBlendStateAttr', {4: int(state)}))
+        if func is not None: attrs.append(obj('igBlendFunctionAttr', {4: func[0], 5: func[1]}))
+        children.append(obj('igAttrSet', {7: data_list('igNodeList', [geo]), 8: data_list('igAttrList', attrs)}))
+    root = obj('igAttrSet', {7: data_list('igNodeList', children), 8: data_list('igAttrList', [])})
+    obj('igSceneInfo', {5: root})
+    base = len(objects)
+    blocks = [struct.pack('<i', base + b[1]) if isinstance(b, tuple) else b for b in blocks]
+    for i, slot, b in pending: objects[i][1][slot] = base + b
+    return fixture(schemas, objects, tuple(blocks))
+
+
+def test_blended_layer_keeps_the_alpha_quad_and_refuses_any_other_panel():
+    """Fix H: the dialog.igb shape (opaque 144-vertex frame, additive 12-vertex inset, one SRC_ALPHA / INV_SRC_ALPHA quad) gives
+    the quad; a panel with no such quad, two of them, or an alpha layer that is not a quad is refused, never guessed."""
+    from xml1build import igb_file as G
+    dialog = [(144, None, None), (12, True, (4, 1)), (4, True, (4, 5))]
+    g = G.IgbFile(_panel_graph(dialog))
+    keep = O.blended_layer(g)
+    assert g.obj(keep).get(3) == 4
+    walk = O._layer_walk(g)
+    assert sorted((s, f) for _, s, f in walk) == sorted([(False, None), (True, (4, 1)), (True, (4, 5))])
+    assert [l[0] for l in O.panel_layers(_panel_graph(dialog))] == [144, 12, 4]
+    for bad in ([(144, None, None), (12, True, (4, 1))],                     # no alpha quad
+                [(4, True, (4, 5)), (4, True, (4, 5))],                       # two alpha quads
+                [(144, None, None), (12, True, (4, 5))],                      # the alpha layer is not a quad
+                [(4, False, (4, 5))]):                                        # blend state off
+        raises(G.IgbError, lambda bad=bad: O.blended_layer(G.IgbFile(_panel_graph(bad))))
