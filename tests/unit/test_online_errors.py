@@ -64,9 +64,8 @@ def test_each_screen_authors_exactly_the_causes_it_can_reach_with_a_retry_bar_on
             key = 'lc_broker_err_' + cause
             assert (key in items) == (cause in O.BROKER_CAUSES[name]), (name, cause)
             if key not in items: continue
-            assert items[key].get('hide') == 'true' and items[key].get('type') == 'MENU_ITEM_MODEL'
-            bars = [p for p in raw[key]['parts'] if p.get('kind') == 'bar']
-            assert bool(bars) == (cause in O.RETRYABLE_CAUSES), (name, cause)
+            assert items[key].get('hide') == 'true' and items[key].get('type') == 'MENU_ITEM_TEXT', (name, cause)
+            assert not raw[key].get('parts'), (name, cause)  # never a model scene (060q: those never drew when un-hidden)
         assert not O.broker_problems(root, screen), O.broker_problems(root, screen)
     # reachability: the Host screen alone can say a room name is invalid; Browse/Code resolve (and so see every code failure)
     assert 'invalid_name' in O.BROKER_CAUSES['lc_host'] and 'invalid_name' not in O.BROKER_CAUSES['lc_code']
@@ -80,9 +79,7 @@ def test_amber_for_waits_and_limits_red_for_failures():
     for name in O.MENUS:
         raw = {e['name']: e for e in O.runtime_layout(name)['items']}
         for cause in O.BROKER_CAUSES[name]:
-            parts = raw['lc_broker_err_' + cause]['parts']
-            diamond = next(p for p in parts if p.get('kind') == 'diamond')
-            assert diamond['color'] == (5 if cause in O.AMBER_CAUSES else 7), (name, cause)
+            assert raw['lc_broker_err_' + cause]['color'] == (5 if cause in O.AMBER_CAUSES else 7), (name, cause)
 
 
 def test_native_failure_notices_cover_every_step_and_the_refusal_names_its_rules():
@@ -113,9 +110,13 @@ def test_lobby_inline_scenes_never_close_the_lobby_and_carry_their_cause():
     for role in O.LOBBIES:
         screen = O.lobby_layout(role)
         items = {e['name']: e for e in screen['items']}
-        for key in ('lc_lobby_error', 'lc_lobby_error_copy', 'lc_lobby_error_target', 'lc_lobby_guest_left', 'lc_lobby_service_lost'):
+        for key in ('lc_lobby_error', 'lc_lobby_error_copy', 'lc_lobby_error_target'):
             e = items[key]
             assert e.get('hidden') and e.get('parts') and e['parts'][0]['kind'] == 'panel', key
+        # 060q live: the departed-guest and service-lost lines were hidden model scenes that never drew - plain text now
+        for key, copy in (('lc_lobby_guest_left', O.LOBBY_TOAST_COPY), ('lc_lobby_service_lost', O.LOBBY_SERVICE_LOST_COPY)):
+            e = items[key]
+            assert e.get('hidden') and not e.get('parts') and e['text'] == copy, key
         toast = items['lc_toast_name']
         assert toast['data'] and not toast.get('hidden') and toast['text'] == ''
         assert items['lc_lobby_error_copy']['text'] == '' and any(p.get('text') == O.LOBBY_ERROR_COPY['copy'] for p in items['lc_lobby_error_copy']['parts'])
@@ -167,3 +168,22 @@ def test_round15_renders_are_real_frames_not_blank():
     assert shown.size == (1920, 1080) and ImageChops.difference(base, shown).getbbox() is not None
     box = ImageChops.difference(base, shown).getbbox()
     assert box[0] >= 0 and box[2] <= 1920 and box[3] - box[1] > 300  # the modal covers the Hub, within the frame
+
+
+def test_retry_is_a_plain_light_label_on_every_screen_and_every_message_is_a_plain_text_item():
+    # 060q live: RETRY was authored dark (colour 0) for a baked amber bar that never drew, so on Browse it was invisible; the
+    # per-cause scenes were hidden MENU_ITEM_MODELs that never drew when un-hidden, so only the diagnostic showed.
+    for name in O.MENUS:
+        screen, root, items = tree(name)
+        raw = {e['name']: e for e in screen['items']}
+        assert raw['retry']['color'] == 4 and raw['retry']['intent'] == 'retry' and raw['retry'].get('hit_rect'), name
+        assert items['retry'].get('type') == 'MENU_ITEM_TEXT' and not O._plain(items['retry'].get('text')).startswith('~')
+        for cause in O.BROKER_CAUSES[name]:
+            node = items['lc_broker_err_' + cause]
+            assert node.get('type') == 'MENU_ITEM_TEXT' and O._plain(node.get('text')) == O.ERROR_COPY[cause], (name, cause)
+    # the same for the two lobby lines of this round (service lost, departed guest)
+    for role in O.LOBBIES:
+        screen = O.lobby_layout(role)
+        for key in ('lc_lobby_service_lost', 'lc_lobby_guest_left'):
+            e = next(e for e in screen['items'] if e['name'] == key)
+            assert not e.get('parts') and e['text'], (role, key)
