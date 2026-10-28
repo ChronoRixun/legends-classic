@@ -179,7 +179,8 @@ def test_runtime_buttons_keep_focus_resources_before_the_dll_enables_them():
         assert item.get('enabled')=='false'
         focus=item.find('onfocus')
         assert focus is not None and focus.get('model').startswith('ui/models/lc_o_focus_')
-        assert key+'_focus' in O.scene_layout(screen)
+        assert focus.get('item') in O.scene_layout(screen)
+        assert focus.get('item')==(O.focus_target(screen,next(e for e in screen['items'] if e['name']==key))[0])  # lobbies: one per plane (060q)
 
 
 def test_baked_start_bar_does_not_freeze_an_invented_solo_gate():

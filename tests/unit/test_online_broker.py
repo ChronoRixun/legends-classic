@@ -113,8 +113,8 @@ def test_browse_rows_exist_for_an_empty_list_with_row_commands_and_closed_grid()
             assert e.get('up') == (f'room_{r - 1}_{c}' if r else 'prompt_refresh')
             assert e.get('down') == (f'room_{r + 1}_{c}' if r < O.BROWSE_ROWS - 1 else 'scroll')
             # mouse/focus rectangle kept while disabled; every Browse focus bar is carried by the one shared model item
-            # (engine budget, 060q), set on focus and never cleared by a nofocus event (order independent)
-            assert [(f.get('item'), f.get('type')) for f in e.findall('onfocus')] == [(O.SHARED_FOCUS, 'focus')]
+            # (engine budget, 060q): set on focus, hidden on nofocus (setFocus 0x5aaf80 loses the old item first)
+            assert [(f.get('item'), f.get('type')) for f in e.findall('onfocus')] == [(O.SHARED_FOCUS, 'focus'), (O.SHARED_FOCUS, 'nofocus')]
             assert f'room_{r}_{c}_focus' not in items and f'room_{r}_focus' not in items
         models = {f.get('model') for c in O.ROW_COLUMNS for f in items[f'room_{r}_{c}'].findall('onfocus') if f.get('type') == 'focus'}
         assert len(models) == 1, models  # one row-wide focus bar, whichever cell has focus

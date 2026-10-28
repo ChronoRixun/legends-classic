@@ -435,7 +435,8 @@ def test_backdrop_field_continues_the_composition_gradient():
 
 def test_browse_focus_bars_share_one_model_item_at_the_same_screen_position():
     """060q: every Browse focus bar is one model item at the scene origin; each bar's geometry is its owner's own
-    focus rect moved by the owner's anchor, so it lands where the per-item anchor put it (pixel for pixel)."""
+    focus rect moved by the owner's anchor, so it lands where the per-item anchor put it (pixel for pixel). The lobbies
+    share one item per plane."""
     from xml1build import online_fonts as F
     screen=O.bound_layout(O.runtime_layout('lc_browse'),F.metrics())
     root=O.menu_tree(screen);layouts=O.scene_layout(screen)
@@ -450,9 +451,19 @@ def test_browse_focus_bars_share_one_model_item_at_the_same_screen_position():
         ax,ay,az=O._anchor(owner);assert ay==sy
         assert all(abs(m-(r+o))<1e-3 for m,r,o in zip(rect,relative,(ax-sx,az-sz,ax-sx,az-sz)))
         item=next(i for i in root.findall('item') if i.get('name')==e['name'])
-        assert [(f.get('item'),f.get('type'),f.get('model')) for f in item.findall('onfocus')]==[(O.SHARED_FOCUS,'focus',O.focus_resource(rect,outline,O.focus_variant(screen,owner)))]
+        assert [(f.get('item'),f.get('type'),f.get('model')) for f in item.findall('onfocus')]==[(O.SHARED_FOCUS,'focus',O.focus_resource(rect,outline,O.focus_variant(screen,owner))),(O.SHARED_FOCUS,'nofocus','ui/models/model_hide')]
         checked+=1
     assert checked>=11
+    # the lobbies share one focus item per plane (-150 actions, -300 player list / Leave confirm)
+    for role in O.LOBBIES:
+        lob=O.bound_layout(O.lobby_layout(role),F.metrics());lay=O.scene_layout(lob)
+        assert sorted(n for n in lay if n.endswith('_focus') or n.startswith(O.SHARED_FOCUS))==[O.SHARED_FOCUS,O.SHARED_FOCUS+'_300'],role
+        assert lay[O.SHARED_FOCUS+'_300'][0]==(0,-300,384)
+        tree=O.menu_tree(lob)
+        for name in ('lc_leave_yes','lc_leave_cancel','lc_lobby_dismiss','text_leaveroom','lc_copy_code'):
+            item=next(i for i in tree.findall('item') if i.get('name')==name)
+            plane=next(e for e in lob['items'] if e['name']==name).get('plane',-150)
+            assert {f.get('item') for f in item.findall('onfocus')}=={O.shared_focus(plane)[0]},(role,name)
     # the other screens keep their own per-item focus anchors and nofocus events
     hub=O.menu_tree(O.bound_layout(O.runtime_layout('lc_online'),F.metrics()))
     assert O.SHARED_FOCUS not in {i.get('name') for i in hub.findall('item')}
