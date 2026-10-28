@@ -88,6 +88,45 @@ def test_native_lobby_retains_actions_lists_callbacks_and_mutation_guards():
             assert O.lobby_problems(bad,original,screen)
 
 
+def test_lobby_prompts_are_not_tied_to_the_native_help_animation():
+    """060r live (fix K): the lobby prompts kept the native desctext items' animtext_scene="help" (the native help bar's
+    fade-in, which the authored scene does not carry), so not one lobby prompt was drawn - no X Kick player / X Ready / Copy.
+    Every LC-laid native item drops it (as the codex, options and pause reskins do); the Copy prompt is the keyboard form
+    (the DLL rebinds it to "Y Copy code" for a pad)."""
+    for role in ('host', 'join'):
+        original = native(role)
+        for e in original:
+            if e.get('name').startswith('desctext'): e.set('animtext_scene', 'help')
+            if e.get('name') == 'data_name': e.set('animtext_scene', 'name')
+        screen = O.lobby_layout(role)
+        laid = {e['name'] for e in screen['items']}
+        tree = O.lobby_tree(original, screen)
+        assert not O.lobby_problems(tree, original, screen)
+        items = {e.get('name'): e for e in tree.findall('item')}
+        for i in range(1, 6):
+            assert items['desctext%d' % i].get('animtext_scene') is None, role
+        assert all(items[n].get('animtext_scene') is None for n in laid if n in items)
+        assert items['data_name'].get('animtext_scene') == 'name'  # a native item LC does not lay out keeps its own
+        assert items['desctext3'].get('text', '').endswith('Ctrl+C Copy code')
+        assert items['desctext2'].get('text', '').endswith('$MENU_OTHER Kick player' if role == 'host' else '$MENU_OTHER Ready / Unready')
+
+
+def test_built_lobby_prompts_are_not_tied_to_the_native_help_animation():
+    """The same on the BUILT lobbies (XML1_BUILT_OUT): 060r's host.XMLB / join.XMLB fail this (desctext1..5 animtext_scene="help")."""
+    import os
+    import pathlib
+    import pytest
+    from xml1build import common as C
+    out = os.environ.get('XML1_BUILT_OUT')
+    if not out or not (pathlib.Path(out) / 'UI/menus/host.XMLB').exists():
+        pytest.skip('no built output (set XML1_BUILT_OUT)')
+    for role in ('host', 'join'):
+        tree = C.decode_xmlb((pathlib.Path(out) / ('UI/menus/%s.XMLB' % role)).read_bytes())
+        items = {e.get('name'): e for e in tree.findall('item')}
+        for i in range(1, 6):
+            assert items['desctext%d' % i].get('animtext_scene') is None, (role, i)
+
+
 def test_combined_option_off_and_capacity_are_not_inferred_from_files():
     from types import SimpleNamespace
     from xml1build import script_functions as SF
