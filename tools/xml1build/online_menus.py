@@ -172,9 +172,9 @@ def layout(name, state=None):
             items[-1]['rect']=(x+pad,y+6,w-pad-5,h-9)
     def panel(key,title,rect):
         shape('panel',rect,1); x,y,w,h=rect
-        
+
         if title: shape('rect',(x,y,w,22),2)
-        
+
         if key!='self_header': shape('notch',(x,y,11,11),5)
         if title: text(key,title,x+16,y+7,w-30,13,'label')
     title,subtitle={'lc_online':('PLAY ONLINE','Play the campaign with up to four players'),

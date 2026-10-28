@@ -72,7 +72,7 @@ def test_theme_overflow_is_atomic_and_preserves_unrelated_tables():
     result = O.theme(colors, styles)
     assert len(result[0])==71 and len(result[1])==31
     assert (ET.tostring(colors), ET.tostring(styles))==before
-    
+
     for i in range(63,68): ET.SubElement(colors,'color',id=str(i),value='0 0 0 1')
     raises(ValueError, lambda: O.theme(colors,styles))
     assert len(colors)==68 and len(styles)==24
