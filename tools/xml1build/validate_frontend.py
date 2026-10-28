@@ -1444,4 +1444,15 @@ def v_online_menus(v, ck):
         scene=v.read(F.MENU_IGB_REL)
         if scene is not None:
             for error in O.M.placement_problems(scene,O.main_hint_layout()):ck.error(error)
+    # 0.6 preview fix E2: the mouse hit table must be one the DLL's parser accepts (one bad line switches every co-op screen's
+    # hit boxes off) and must equal the focus bars as built (model vertices at the scene anchors).
+    hits=v.read(O.HITS_FILE)
+    if hits is None: ck.error('mouse hit table missing: '+O.HITS_FILE)
+    else:
+        problems=O.hit_table_problems(hits)
+        for error in problems: ck.error(O.HITS_FILE+': '+error)
+        if not problems:
+            menus=[n for n in (*O.MENUS,*O.LOBBIES,O.PARTY_MENU) if v.tree('UI/menus/'+n+'.XMLB') is not None]
+            for error in O.hit_scene_problems(hits,menus,lambda n:v.tree('UI/menus/'+n+'.XMLB'),lambda igb:v.read('UI/menus/'+igb+'.IGB'),
+                                              lambda resource:v.read(resource+'.IGB')):ck.error(O.HITS_FILE+': '+error)
     ck.set('online_menus',len(O.MENUS)+len(O.LOBBIES)+1)
