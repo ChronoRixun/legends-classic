@@ -36,12 +36,13 @@ def test_party_commands_are_the_exact_manifest_and_the_rail_uses_the_native_rout
     assert not PT.party_problems(root, screen, NATIVE_RAIL), PT.party_problems(root, screen, NATIVE_RAIL)
     items = {e.get('name'): e for e in root.findall('item')}
     expected = {'lc_rail_resume': 63, 'lc_party_invite': 64, 'lc_party_propose': 65, 'lc_party_leave': 66, 'lc_party_leave_yes': 67,
-                'lc_party_kick_yes': 69, 'lc_party_cancel': 8, 'lc_p1_kick': 71, 'lc_p2_kick': 72, 'lc_p3_kick': 73, 'lc_p4_kick': 74}
+                'lc_rail_quit': 66, 'lc_party_cancel': 8, 'lc_p1_kick': 71, 'lc_p2_kick': 72, 'lc_p3_kick': 73, 'lc_p4_kick': 74}
     assert PT.COMMANDS == expected
     for key, number in expected.items():
         assert items[key].get('usecmd') == O.command(number), key
     for key, route in NATIVE_RAIL.items():
-        assert items[key].get('usecmd') == route, key
+        if key != 'lc_rail_quit':          # QUIT GAME is the Leave confirmation (66), not the unconfirmed native quit
+            assert items[key].get('usecmd') == route, key
     assert items['lc_rail_codex'].get('usecmd') == 'runscript codexMenu(0)'
     assert items['lc_rail_party'].get('usecmd') == '' and items['lc_rail_party'].get('neverfocus') == 'false'
     assert items['lc_rail_party'].get('startactive') == 'true'
@@ -299,3 +300,25 @@ def test_party_validator_uses_the_builds_palette_ids():
     root = O.menu_tree(screen, ids)
     assert not PT.party_problems(root, screen, NATIVE_RAIL, ids), PT.party_problems(root, screen, NATIVE_RAIL, ids)
     assert PT.party_problems(root, screen, NATIVE_RAIL)           # default ids disagree with this tree
+
+
+def test_every_confirmation_is_completable_by_pad_and_keyboard_and_quit_goes_through_leave():
+    """Review A/C: Yes must be reachable from the focused Cancel for the Leave AND the Kick confirmation (one shared Yes), and
+    the rail's QUIT GAME is the Leave confirmation so a host never skips 'End for everyone'."""
+    for role, confirm in (('host', 'lc_party_confirm_leave_host'), ('guest', 'lc_party_confirm_leave_guest'), ('host', 'lc_party_confirm_kick')):
+        screen, root = party(role)
+        items = {e.get('name'): e for e in root.findall('item')}
+        assert 'lc_party_kick_yes' not in items
+        yes, cancel = items['lc_party_leave_yes'], items['lc_party_cancel']
+        assert cancel.get('left') == 'lc_party_leave_yes' and yes.get('right') == 'lc_party_cancel', (role, confirm)
+        assert yes.get('left') == 'lc_party_leave_yes' and cancel.get('right') == 'lc_party_cancel'      # the panel is closed on itself
+        assert yes.get('usecmd') == O.command(67) and cancel.get('usecmd') == O.command(8)
+        shown = PT.party_layout(role, native=PT.native_rail_commands(pda_with_routes()), fixture=True, confirm=confirm)
+        by = {e['name']: e for e in shown['items']}
+        assert not by['lc_party_leave_yes']['hidden'] and by['lc_party_leave_yes']['enabled'], confirm
+        assert not by['lc_party_cancel']['hidden'] and by['lc_party_cancel']['enabled'], confirm
+    assert items['lc_rail_quit'].get('usecmd') == O.command(66)
+    f = PT.PartyFixture('host')
+    f.dispatch('party-kick:2'); assert f.confirm == 'lc_party_confirm_kick'
+    f.dispatch('party-leave-yes')                                       # the shared Yes completes a Kick
+    assert [d[0] for d in f.departures] == [2] and not f.confirm

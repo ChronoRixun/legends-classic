@@ -42,10 +42,10 @@ CARD_SCENES = ('card', 'empty', 'empty_title', 'empty_help', 'empty_plus', 'host
 HIDDEN_BY_DEFAULT = (*(f'lc_p{n}_{k}' for n in range(1, 5) for k in (*CARD_SCENES, 'name', 'slot', 'ping', 'kick')),
                      'lc_party_waiting', 'lc_party_receiving', 'lc_party_copied', 'lc_party_copy_failed', *CONFIRMS,
                      'lc_party_propose_soon', 'lc_party_propose_host_only', 'lc_notice_name', 'lc_notice_percent', 'lc_kick_name',
-                     'lc_party_leave_yes', 'lc_party_kick_yes', 'lc_party_cancel')
+                     'lc_party_leave_yes', 'lc_party_cancel')
 # Commands the screen may carry: constant integers through the guarded dispatcher, plus the native routes below.
 COMMANDS = {'lc_rail_resume': 63, 'lc_party_invite': 64, 'lc_party_propose': 65, 'lc_party_leave': 66, 'lc_party_leave_yes': 67,
-            'lc_party_kick_yes': 69, 'lc_party_cancel': 8, **{f'lc_p{n}_kick': 70 + n for n in range(1, 5)}}
+            'lc_rail_quit': 66, 'lc_party_cancel': 8, **{f'lc_p{n}_kick': 70 + n for n in range(1, 5)}}
 
 
 def native_rail_commands(native):
@@ -88,8 +88,11 @@ def party_layout(role='host', *, native=None, members=4, fixture=False, notice='
     for key, word, cy in RAIL:
         cmd = native.get(key)
         e = text(key, word, (54, cy - 9, 118, 18), 'row', 4 if key == 'lc_rail_party' else 3, hit_rect=(43, cy - 13, 133, 26),
-                 intent={'lc_rail_resume': 'party-resume', 'lc_rail_party': 'current'}.get(key, 'native:' + key))
+                 intent={'lc_rail_resume': 'party-resume', 'lc_rail_party': 'current', 'lc_rail_quit': 'party-leave'}.get(key, 'native:' + key))
         if key == 'lc_rail_codex': e['usecmd'] = CODEX_COMMAND
+        # QUIT GAME is the Leave confirmation (intent 66): the native mainmenuexit has no confirmation of its own, so a host
+        # would skip 'End for everyone'. The DLL runs the native quit after the confirmation (and at once outside a session).
+        elif key == 'lc_rail_quit': e['usecmd'] = O.command(66)
         elif key in native: e['usecmd'] = native[key]
         elif key == 'lc_rail_party': e['usecmd'] = ''
     # ---- right panel: header, invite code, notice, four rows, recovery text
@@ -169,10 +172,11 @@ def party_layout(role='host', *, native=None, members=4, fixture=False, notice='
         scene(key, (221, 314, 359, 35), parts, visible=fixture and confirm == key, plane=-280)
     text('lc_kick_name', 'Kitty' if fixture and confirm == 'lc_party_confirm_kick' else '', (231, 331, 215, 13), 'body', 3, data=True, plane=-300,
          hidden=not (fixture and confirm == 'lc_party_confirm_kick'))
+    # ONE shared Yes (intent 67): the DLL resolves it from the confirmation that is open (Leave -> native quit, Kick -> the
+    # agreed removal), so Cancel's left link always reaches it by pad and keyboard whichever confirmation is shown.
     for key, word, rect, intent in (('lc_party_leave_yes', 'Confirm', (452, 321, 58, 22), 'party-leave-yes'),
-                                    ('lc_party_kick_yes', 'Remove', (452, 321, 58, 22), 'party-kick-yes'),
                                     ('lc_party_cancel', 'Cancel', (518, 321, 58, 22), 'dismiss')):
-        on = fixture and bool(confirm) and (key == 'lc_party_cancel' or (key == 'lc_party_kick_yes') == (confirm == 'lc_party_confirm_kick'))
+        on = fixture and bool(confirm)
         e = text(key, word, rect, 'body', 4, intent=intent, hidden=not on, plane=-300)
         e['enabled'] = on          # authored disabled; a fixture shows what the DLL enables with the panel
     # ---- footer: the standard five description slots, then the breadcrumb
@@ -198,8 +202,7 @@ def _graph(screen):
     link('lc_party_leave', up='lc_p4_kick', left='lc_party_propose')
     for n in range(1, 5):
         link(f'lc_p{n}_kick', up=f'lc_p{n - 1}_kick' if n > 1 else None, down=f'lc_p{n + 1}_kick' if n < 4 else 'lc_party_invite', left='lc_rail_party')
-    for key, other in (('lc_party_leave_yes', 'lc_party_cancel'), ('lc_party_kick_yes', 'lc_party_cancel')):
-        link(key, right=other)
+    link('lc_party_leave_yes', right='lc_party_cancel')
     link('lc_party_cancel', left='lc_party_leave_yes')
 
 
@@ -257,6 +260,7 @@ class PartyFixture:
         elif intent == 'party-invite': self.copies += 1
         elif intent == 'party-propose': pass                              # unavailable until round 14: never acts
         elif intent == 'party-leave': self.confirm = 'lc_party_confirm_leave_host' if self.role == 'host' else 'lc_party_confirm_leave_guest'
+        elif intent == 'party-leave-yes' and self.confirm == 'lc_party_confirm_kick': self.dispatch('party-kick-yes')   # the shared Yes
         elif intent == 'party-leave-yes' and self.confirm.startswith('lc_party_confirm_leave'):
             self.departures.append(('end' if self.role == 'host' else 'leave', self.generation)); self.confirm = ''
         elif intent.startswith('party-kick:'):
@@ -296,7 +300,9 @@ def party_problems(root, screen, native=None, palette_ids=None):
         e = items.get(key)
         if e is None: errors.append('missing DATA node: ' + key)
         elif e.get('clamp') != 'true' or any('gamevar' in k.lower() for k in e.attrib): errors.append('DATA binding: ' + key)
+    if items.get('lc_rail_quit') is not None and items['lc_rail_quit'].get('usecmd') != O.command(66): errors.append('rail Quit must be the Leave confirmation (66)')
     for key, cmd in (native or {}).items():
+        if key == 'lc_rail_quit': continue
         if items.get(key) is None or items[key].get('usecmd') != cmd: errors.append(f'rail {key} is not the native route {cmd!r}')
     if items.get('lc_rail_codex') is not None and items['lc_rail_codex'].get('usecmd') != CODEX_COMMAND: errors.append('rail Codex route')
     if items.get('lc_rail_party') is not None and items['lc_rail_party'].get('usecmd'): errors.append('the current page runs nothing')

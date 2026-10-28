@@ -405,12 +405,14 @@ Back is routed by the DLL: the builder authors no second Back command. Layout an
 checkpoint recovery promise).
 
 - Rail (real focusable items): Resume (`runscript lcOnlineIntent(63)`), Team, Codex (`runscript codexMenu(0)`),
-  Options, Quit. Team, Options and Quit copy the `usecmd` of the native PDA rows (`label_option02`, `06`, `09`) at build
-  time from BOTH native halves (they must agree) and the validator asserts equality; the current page (Party) runs
-  nothing.
+  Options, Quit. Team and Options copy the `usecmd` of the native PDA rows (`label_option02`, `06`) at build
+  time from BOTH native halves (they must agree) and the validator asserts equality (the native Quit row must still exist);
+  QUIT GAME is the Leave confirmation (`runscript lcOnlineIntent(66)`) because the native `mainmenuexit` has no confirmation
+  of its own; the current page (Party) runs nothing.
 - Commands (constants through the guarded dispatcher; reserved numbers 68 and 70, party numbers exist on this screen
   only): 63 resume, 64 invite (copies the code), 65 propose load (the item is authored disabled: visibly unavailable
-  until the load rounds), 66 leave, 67 leave confirmed, 69 kick confirmed, 71..74 kick card 1..4, 8 cancel.
+  until the load rounds), 66 leave (also the rail's Quit), 67 the one shared Yes of whichever confirmation is open (leave or kick; 69 stays accepted
+  by the DLL but has no item), 71..74 kick card 1..4, 8 cancel.
 - DATA text the DLL binds: `lc_room_name`, `lc_room_visibility`, `lc_room_code`, `lc_notice_name`,
   `lc_notice_percent`, `lc_kick_name` and per card `lc_pN_name/slot/phase/ping/route`. Everything else the DLL shows or
   hides is a separately named, hidden-by-default scene (card, host/you badges, hero text, ping scenes, build badges,

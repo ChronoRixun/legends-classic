@@ -811,7 +811,7 @@ def reserved_budget(colors,styles):
 
 
 
-FLAT_FOCUS = ('lc_leave_yes','lc_leave_cancel','lc_lobby_dismiss','lc_party_leave_yes','lc_party_kick_yes','lc_party_cancel')
+FLAT_FOCUS = ('lc_leave_yes','lc_leave_cancel','lc_lobby_dismiss','lc_party_leave_yes','lc_party_cancel')
 
 
 def focus_spec(screen,item):
