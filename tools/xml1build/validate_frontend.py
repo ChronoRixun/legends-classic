@@ -886,6 +886,7 @@ def v_classic_pause(v, ck):
     if C.frontend_mode(v.ctx) != 'xml1':
         return
     from . import menu_conversion as M, menu_theme as T, pause_appearance as P
+    party = P.party_link_enabled(v.ctx)
     for rel in (P.OBJECTIVES_ICON, P.OBJECTIVES_FOCUS, 'UI/models/m_pda_icon_screen'):
         frame = v.read(rel + '.IGB')
         if frame is None:
@@ -933,18 +934,25 @@ def v_classic_pause(v, ck):
         if root.get('igb') != P.SCENE:
             ck.error('pause does not bind the combined classic/native scene')
         try:
-            for problem in M.widget_problems(root, scene, focus_names=P.ROWS, optional_anchors=P.OPTIONAL_ANCHORS):
+            for problem in M.widget_problems(root, scene, focus_names=P.rows(party), optional_anchors=P.OPTIONAL_ANCHORS):
                 ck.error('classic pause: ' + problem)
         except (ValueError, TypeError) as error:
             ck.error('classic pause scene is unreadable: ' + str(error))
         if native is not None:
-            for problem in P.native_text_problems(native, root):
+            renamed = P.party_link_contract() if party else {}
+            for problem in P.native_text_problems(native, root, renamed or None):
                 ck.error(f'classic pause {ext}: {problem}')
+            if party:
+                for problem in P.party_link_problems(native, root):
+                    ck.error(f'classic pause {ext}: {problem}')
             actual_items = {e.get('name'): e for e in root.iter('item')}
             for item in native.findall('item'):
                 name = item.get('name')
-                actual = actual_items.get(name)
-                if actual is None or any(actual.get(k) != item.get(k) for k in ('type', 'mode', 'usecmd')):
+                target = renamed.get(name, (name, {}))[0]
+                actual = actual_items.get(target)
+                # The renamed Players row carries the Party route (checked by party_link_problems), not the native usecmd.
+                keys = ('type', 'mode') if name in renamed else ('type', 'mode', 'usecmd')
+                if actual is None or any(actual.get(k) != item.get(k) for k in keys):
                     ck.error(f'classic pause lost a native service contract: {name}')
         if root.findall('items'):
             ck.error('pause widgets must share one scene and text layer')
@@ -1364,16 +1372,24 @@ def v_online_menus(v, ck):
     if v.read('licenses/BarlowCondensed-OFL.txt')!=(OF.SOURCE/'OFL.txt').read_bytes():ck.error('private font OFL license missing or changed')
     manifest=(json.dumps(OF.verify_source(),indent=2)+'\n').encode()
     if v.read('licenses/BarlowCondensed-source.json')!=manifest:ck.error('private font provenance missing or changed')
-    for name in (*O.MENUS,*O.LOBBIES):
-        screen=O.bound_layout(O.runtime_layout(name) if name in O.MENUS else O.lobby_layout(name),O.native_metrics(v.ctx))
+    from . import online_party as PT
+    try: rail=O.party_rail(F.pda_menu_trees(v.ctx)[:2])
+    except ValueError as error:
+        ck.error(str(error)); rail=None
+    for name in (*O.MENUS,*O.LOBBIES,O.PARTY_MENU):
+        party=name==O.PARTY_MENU
+        if party and rail is None: continue
+        if party: screen=O.bound_layout(PT.party_layout('host',native=rail),O.native_metrics(v.ctx))
+        else: screen=O.bound_layout(O.runtime_layout(name) if name in O.MENUS else O.lobby_layout(name),O.native_metrics(v.ctx))
         native=v.ctx.read_base_xmlb('UI/menus/'+name+'.engb') if name in O.LOBBIES else None
-        expected=O.menu_tree(screen,ids) if name in O.MENUS else O.lobby_tree(native,screen,ids)
+        expected=O.menu_tree(screen,ids) if name in (*O.MENUS,O.PARTY_MENU) else O.lobby_tree(native,screen,ids)
         data=v.read('UI/menus/'+expected.get('igb')+'.IGB')
         for suffix in ('.XMLB','.engb'):
             root=v.tree('UI/menus/'+name+suffix)
             if root is None:
                 ck.error(name+suffix+': missing online definition'); continue
-            problems=O.tree_problems(root,screen,ids) if name in O.MENUS else O.lobby_problems(root,native,screen)
+            if party: problems=PT.party_problems(root,screen,rail,ids)
+            else: problems=O.tree_problems(root,screen,ids) if name in O.MENUS else O.lobby_problems(root,native,screen)
             for error in problems: ck.error(name+': '+error)
             if name in O.MENUS:
                 for error in O.runtime_problems(root,screen,ids):ck.error(name+': '+error)
@@ -1389,7 +1405,7 @@ def v_online_menus(v, ck):
         else:
             expected_entries={(e.tag,e.get('filename')) for e in O.package(expected)}
             actual_entries={(e.tag,e.get('filename')) for e in pkg}
-            if name in O.MENUS and actual_entries!=expected_entries:ck.error(name+': package closure differs')
+            if name in (*O.MENUS,O.PARTY_MENU) and actual_entries!=expected_entries:ck.error(name+': package closure differs')
             if not actual_entries.issuperset(expected_entries):ck.error(name+': native package closure differs')
             if name in O.LOBBIES:
                 inherited=v.ctx.read_base_xmlb(F.MENU_PKG_DIR+'/'+name+'.PKGB')
@@ -1423,4 +1439,4 @@ def v_online_menus(v, ck):
         scene=v.read(F.MENU_IGB_REL)
         if scene is not None:
             for error in O.M.placement_problems(scene,O.main_hint_layout()):ck.error(error)
-    ck.set('online_menus',len(O.MENUS)+len(O.LOBBIES))
+    ck.set('online_menus',len(O.MENUS)+len(O.LOBBIES)+1)

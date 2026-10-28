@@ -751,7 +751,7 @@ def b_build(out):
             fail('B_online', problem)
         original = ctx.x1_path('ui/menus/menu_pause.igb')
         native = ctx.base_index.path('UI/menus/x2m_pda.IGB')
-        expected, report = PA.pause_scene(original.read_bytes(), native.read_bytes())
+        expected, report = PA.pause_scene(original.read_bytes(), native.read_bytes(), party_link=PA.party_link_enabled(ctx))
         actual = ctx.out_index.path(f'UI/menus/{PA.SCENE}.IGB')
         if actual is None or actual.read_bytes() != expected:
             fail('B_pause', 'pause scene differs from deterministic native/art attachment')
@@ -951,6 +951,23 @@ def u_online():
             for ready in (False,True):
                 for problem in O.layout_problems(O.lobby_layout(role,members=count,ready=ready,fixture=True)):
                     fail('U-online',role+': '+problem)
+    from . import online_party as PT, pause_appearance as PA
+    pda = ctx.read_base_xmlb(F.PDA_MENU_REL + '.engb')
+    rail = O.party_rail((pda, ctx.read_base_xmlb(F.PDA_MENU_REL + '.XMLB')))
+    for role in ('host', 'guest'):
+        screen = PT.party_layout(role, native=rail)
+        for problem in PT.party_problems(O.menu_tree(screen), screen, rail):
+            fail('U-online', 'lc_party ' + role + ': ' + problem)
+        for problem in O.layout_problems(PT.party_layout(role, native=rail, fixture=True, notice='lc_party_waiting', confirm='lc_party_confirm_leave_host')):
+            fail('U-online', 'lc_party ' + role + ': ' + problem)
+    # The Players row rename: both native halves, explicit contract, strict everywhere else.
+    for rel in (F.PDA_MENU_REL + '.XMLB', F.PDA_MENU_REL + '.engb'):
+        native, root = ctx.read_base_xmlb(rel), None
+        root = PA.pause_tree(native, party_link=True)
+        for problem in PA.party_link_problems(native, root) + PA.native_text_problems(native, root, PA.party_link_contract()):
+            fail('U-online', 'pause rename ' + rel + ': ' + problem)
+        if not PA.native_text_problems(native, root):
+            fail('U-online', 'pause rename ' + rel + ': strict native text check did not see the rename')
     INFO['online assets'] = 'exact input commands; native entry retained; live gates OPEN'
 
 

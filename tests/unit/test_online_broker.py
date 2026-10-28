@@ -20,7 +20,7 @@ def test_broker_probe_is_required_and_intents_18_to_31_are_exact_constants():
     raises(FI.FixTooOld, lambda: FI.check_online_dll(data.replace(b'lc-online-broker/2', b'x'), keys))
     for number in range(18, 32):
         assert O.command(number) == f'runscript lcOnlineIntent({number})'
-    for number in (0, 1, 15, 63, 64):
+    for number in (0, 1, 15, 68, 70, 75, 76):  # 63..74 (except the reserved 68, 70) are the round-8 party intents
         raises(ValueError, lambda n=number: O.command(n))
     # the exact table of the DLL document
     assert [O.intent_number(i) for i in ('refresh', 'open-room', 'retry', 'visibility', 'page:-1', 'page:1', 'join')] == [18, 19, 20, 21, 22, 23, 31]
@@ -99,7 +99,8 @@ def test_retry_is_visible_disabled_and_diagnostic_error_is_data_only():
 def test_browse_rows_exist_for_an_empty_list_with_row_commands_and_closed_grid():
     screen, root, items = tree('lc_browse')
     for r in range(7):
-        assert not [c for c in (4, 5) if f'room_{r}_{c}' in items]  # status / ping belong to the row scenes
+        assert 'room_%d_4' % r not in items  # the status word belongs to the row scenes
+        assert items['room_%d_5' % r].get('neverfocus') == 'true' and not items['room_%d_5' % r].get('usecmd')  # round 7: measured RTT, DATA only
         for ci, c in enumerate(O.ROW_COLUMNS):
             e = items[f'room_{r}_{c}']
             assert e.get('usecmd') == O.command(24 + r) and e.get('enabled') == 'false' and e.get('clamp') == 'true'
