@@ -1,7 +1,10 @@
 """Builder attestations for append-only resident numbering; no save-container changes.
 
-Generate after content conversion, against each supported previous release build:
-    python -m lcsave.zonecompat PREVIOUS_BUILD CURRENT_BUILD
+Generate after content conversion, against the stable release build and (for a later beta) the previous beta:
+    python -m lcsave.zonecompat plan     --previous STABLE [--previous PREVIOUS_BETA] CURRENT_BUILD
+    python -m lcsave.zonecompat generate --previous STABLE [--previous PREVIOUS_BETA] CURRENT_BUILD \
+        --ledger-out tools/lcsave/data/zone_prefixes.json
+(`PREVIOUS_BUILD CURRENT_BUILD` alone is `generate` with one previous build; tools/lcsave/README.md.)
 Only hashes and placement indices enter the sidecar. Never infer compatibility
 from names in a save: those do not authenticate old definitions or positions.
 """
@@ -112,6 +115,109 @@ def attest(zone, previous, current):
                 fresh_aliases=sorted(fresh-ambiguous), ambiguous_aliases=sorted(ambiguous))
 
 
+# Definition attributes a saved zone record never depends on: the restore puts position, orientation, state flags
+# and the class payload on the entity of the same ordinal, and none of these attributes change numbering (classname,
+# smartent, monster_smartent, instantspawn, checkteam stay compared), the class or the payload's meaning.
+#   xml1heaviness: XML1's lift class 4/5, read only by XML2 Fix gameplay rule 38 (LiftRule=xml1) and the Blob
+#                  controller when a definition is parsed; the converted heaviness byte itself is unchanged.
+EQUIVALENT_ATTRIBUTES = frozenset({'xml1heaviness'})
+
+
+# Owner-reviewed definition-attribute edits a saved record does not depend on either, each bound to ONE zone, ONE
+# definition and ONE attribute, and to the SHA-256 of that attribute's exact previous and current values (hashes only:
+# no game text enters the repository). The same attribute changed anywhere else, or to any other value, still rejects.
+#   astroid_m/visit1/asteroid2_1 shieldup actscript (beta 8, Magneto controller 9449620 / SPEC 106.2, reviewed and
+#       allowed by the owner 2026-10-26): boss_phases removes SPEC 36's inserted invulnerability suffix from the action
+#       entity's script when the Magneto controller (rule 40) owns that protection. shieldup keeps its ordinal,
+#       placement, class and flags; its saved state means the same on both maps.
+REVIEWED_CHANGES = frozenset({
+    ('astroid_m/visit1/asteroid2_1', 'shieldup', 'actscript',
+     '4aa338bd54cc744977583faddc92883121c2909fd8b88b7d974b80baa97fe36d',
+     '0eb3e283e0714b83d87c6ec8fca5b1836b3c4a1347d4407e7d55a2f8189bb3f4'),
+})
+
+
+def value_sha256(value):
+    """The reviewed-change hash of one attribute value (latin-1, as XMLB stores it)."""
+    return hashlib.sha256(value.encode('latin-1')).hexdigest()
+
+
+def _canonical_without(e, ignored, top=frozenset()):
+    """_canonical without the `ignored` attributes (at every depth) and the `top` attributes (on `e` itself only)."""
+    return [e.tag, sorted((k, v) for k, v in e.attrib.items() if k not in ignored and k not in top),
+            [_canonical_without(c, ignored) for c in e]]
+
+
+def _reviewed(zone, name, old, new, reviewed):
+    """Attributes of definition `name` whose previous -> current values in `zone` are an owner-reviewed edit."""
+    out = set()
+    for z, definition, attribute, before, after in reviewed:
+        if z != zone or definition != name: continue
+        a, b = old.get(attribute), new.get(attribute)
+        if a is not None and b is not None and value_sha256(a) == before and value_sha256(b) == after:
+            out.add(attribute)
+    return out
+
+
+def attest_equivalent(zone, previous, current, ignored=EQUIVALENT_ATTRIBUTES, reviewed=None):
+    """Return a full-length attestation (every numbered entity is prefix, no tail) when the two maps differ only in
+    `ignored` definition attributes and in `reviewed` edits of this zone: same framing, same placements in order (group
+    attributes and instances exact), same definition names, and every definition equal once the ignored attributes
+    (and its reviewed edits) are removed. The saved record's numbered ordinals, placement indices and smart/dynamic
+    names then mean exactly what they meant on `previous`. `reviewed` defaults to REVIEWED_CHANGES."""
+    zone = zone.lower()
+    reviewed = REVIEWED_CHANGES if reviewed is None else reviewed
+    old_root, new_root = xmlb.decode(previous), xmlb.decode(current)
+    old_num, old_problems = numbered_entities(old_root)
+    new_num, new_problems = numbered_entities(new_root)
+    if old_problems or new_problems or not new_num or old_num != new_num:
+        return None
+    def frame(root):
+        return [root.tag, sorted(root.attrib.items()), [_canonical(e) for e in root if e.tag not in ('entity', 'entinst')]]
+    if frame(old_root) != frame(new_root):
+        return None
+    def placed(root):
+        return [[sorted(g.attrib.items()), _canonical(i)] for g in root.iter('entinst') for i in g.iter('inst')]
+    if placed(old_root) != placed(new_root):
+        return None
+    def elements(root):
+        out = {}
+        for e in root.iter('entity'):
+            if e.get('name') in out:
+                raise BindError('zone-prefix.lcm: duplicate entity definition')
+            out[e.get('name')] = e
+        return out
+    old_defs, new_defs = elements(old_root), elements(new_root)
+    if set(old_defs) != set(new_defs):
+        return None
+    for name, old in old_defs.items():
+        new = new_defs[name]
+        top = frozenset(_reviewed(zone, name, old, new, reviewed))
+        if _canonical_without(old, ignored, top) != _canonical_without(new, ignored, top):
+            return None
+    entries, placements = resident_prefix(new_root)
+    # The runtime recomputes the digest from the current opened map, so bind the row to the current prefix.
+    return dict(zone=zone_hash(zone), old=hashlib.sha1(previous).digest(), current=hashlib.sha1(current).digest(),
+                digest=prefix_digest(entries), placements=placements, fresh_aliases=[], ambiguous_aliases=[])
+
+
+def retarget(rows, zone, previous_sha1, current):
+    """Rows that end at `previous_sha1` re-targeted to the `current` map, which attest_equivalent proved equivalent
+    to the previous map: the numbered list, placements and names are unchanged, so each row's old placement indices
+    and aliases stay valid; only the current hash and the current-prefix digest change."""
+    out = []
+    root = xmlb.decode(current)
+    entries, _ = resident_prefix(root)
+    for r in rows:
+        if r['zone'] != zone_hash(zone) or r['current'] != previous_sha1:
+            continue
+        n = len(r['placements'])
+        if n > len(entries):
+            continue
+        out.append(dict(r, current=hashlib.sha1(current).digest(), digest=prefix_digest(entries[:n])))
+    return out
+
+
 def encode(rows):
     rows = sorted(rows, key=lambda r: (r['zone'], r['old'], r['current']))
     if len(rows) > LIMIT:
@@ -204,17 +310,23 @@ def validate_current(build):
             entries, _ = resident_prefix(xmlb.decode(Path(numbering['path']).read_bytes()))
             n = len(row['placements'])
             digest = prefix_digest(entries[:n])
-            if n >= len(entries) or digest != row['digest']:
+            if n > len(entries) or digest != row['digest']:
                 raise BindError('zone-prefix.lcm: current resident prefix differs from attestation')
             active += 1
     return active
+
+
+def equivalent(row, numbering):
+    """A matched row covering every numbered entity at its own placement: the maps are save-equivalent."""
+    return row['placements'] == [p for _, _, p in numbering['numbered']]
 
 
 def match(rows, zone, old_hash, numbering):
     """Current full-file SHA1 binds the builder's prefix comparison to actual opened bytes."""
     for r in rows:
         if r['zone'] == zone_hash(zone) and r['old'] == old_hash:
-            if r['current'].hex() == numbering['sha1'] and len(r['placements']) < len(numbering['numbered']):
+            # A full-length row (no tail) is an equivalence attestation (attest_equivalent).
+            if r['current'].hex() == numbering['sha1'] and len(r['placements']) <= len(numbering['numbered']):
                 # Check the digest against the same opened bytes as the numbering,
                 # not only the editable sidecar's CRC and whole-file hash claims.
                 raw = Path(numbering['path']).read_bytes()
@@ -229,46 +341,114 @@ def match(rows, zone, old_hash, numbering):
     return None
 
 
-def generate(previous, current):
-    before, after = Binds(previous), Binds(current)
+def plan(previous, current):
+    """-> (rows, accepted, rejected, retargeted) for the current build: its retained rows, append-only and equivalence
+    attestations against `previous`, and the previous build's rows re-targeted through an equivalence (a save made on
+    an older map that `previous` accepted through a prefix row keeps that acceptance on `current`). Writes nothing."""
+    return plan_all([previous], current)[:4]
+
+
+def plan_all(previous_builds, current):
+    """plan() against several previous builds (the stable release AND the previous beta, say) into one row set.
+    -> (rows, accepted, rejected, retargeted, per_build): accepted/rejected are the union over the builds, retargeted
+    lists every re-targeted row's zone, per_build maps each previous build to its own (accepted, rejected,
+    retargeted). A zone one build rejects can still be accepted against another. Writes nothing."""
+    after = Binds(current)
     rows = {(r['zone'], r['old'], r['current']): r for r in load(current)}
-    accepted, rejected = [], []
-    for zone in sorted(set(after.zone_names) | set(after.all_zone_files())):
-        old, new = before.zone_file(zone), after.zone_file(zone)
-        if old is None or new is None: continue
-        old_raw, new_raw = Path(old).read_bytes(), Path(new).read_bytes()
-        if old_raw == new_raw: continue
-        try:
-            row = attest(zone, old_raw, new_raw)
-        except BindError:
-            row = None  # one unmodelled zone must not abort unrelated attestations
-        if row is None:
-            rejected.append(zone)
-        else:
-            key = (row['zone'], row['old'], row['current'])
-            if key in rows and rows[key] != row:
-                raise BindError('zone-prefix.lcm: conflicting historical attestation')
-            rows[key] = row
+    def put(row):
+        key = (row['zone'], row['old'], row['current'])
+        if key in rows and rows[key] != row:
+            raise BindError('zone-prefix.lcm: conflicting historical attestation')
+        rows[key] = row
+    per_build = {}
+    for previous in previous_builds:
+        before = Binds(previous)
+        history = load(previous)
+        accepted, rejected, retargeted = [], [], []
+        for zone in sorted(set(after.zone_names) | set(after.all_zone_files())):
+            old, new = before.zone_file(zone), after.zone_file(zone)
+            if old is None or new is None: continue
+            old_raw, new_raw = Path(old).read_bytes(), Path(new).read_bytes()
+            if old_raw == new_raw: continue
+            try:
+                row = attest(zone, old_raw, new_raw)
+                equivalent = None if row else attest_equivalent(zone, old_raw, new_raw)
+            except BindError:
+                row = equivalent = None  # one unmodelled zone must not abort unrelated attestations
+            if row is None and equivalent is None:
+                rejected.append(zone)
+                continue
+            put(row or equivalent)
             accepted.append(zone)
+            if equivalent:
+                for r in retarget(history, zone, hashlib.sha1(old_raw).digest(), new_raw):
+                    if r['old'] != r['current']:
+                        put(r); retargeted.append(zone)
+        per_build[str(previous)] = (accepted, rejected, retargeted)
+    accepted = sorted({z for a, _, _ in per_build.values() for z in a})
+    rejected = sorted({z for _, r, _ in per_build.values() for z in r} - set(accepted))
+    retargeted = [z for _, _, t in per_build.values() for z in t]
+    return list(rows.values()), accepted, rejected, retargeted, per_build
+
+
+def _report(rows, accepted, rejected, retargeted, per_build):
+    return dict(accepted=accepted, rejected=rejected, retargeted=len(retargeted), entries=len(rows),
+                per_build={k: dict(accepted=len(a), rejected=r, retargeted=len(t)) for k, (a, r, t) in per_build.items()})
+
+
+def generate(previous, current, *more):
+    """Write CURRENT's sidecar from plan_all([previous, *more], current); -> the report dict."""
+    rows, accepted, rejected, retargeted, per_build = plan_all([previous, *more], current)
     destination = Path(current) / REL
     destination.parent.mkdir(parents=True, exist_ok=True)
-    raw = encode(list(rows.values()))
+    raw = encode(rows)
     decode(raw)
     temporary = destination.with_suffix('.tmp')
     temporary.write_bytes(raw)
     os.replace(temporary, destination)
-    return dict(accepted=accepted, rejected=rejected, entries=len(rows))
+    return _report(rows, accepted, rejected, retargeted, per_build)
+
+
+def ledger_json(rows):
+    """The release ledger text (tools/lcsave/data/zone_prefixes.json): hashes and placement indices only, sorted as
+    the sidecar is."""
+    rows = sorted(rows, key=lambda r: (r['zone'], r['old'], r['current']))
+    return json.dumps([{k: (v.hex() if isinstance(v, bytes) else [[a.hex(), b.hex()] for a, b in v]
+                            if k.endswith('_aliases') else v) for k, v in r.items()} for r in rows], indent=2) + '\n'
+
+
+def main(argv=None):
+    """python -m lcsave.zonecompat plan|generate --previous BUILD [--previous BUILD ...] CURRENT [--ledger-out FILE];
+    the original form `python -m lcsave.zonecompat PREVIOUS CURRENT [--ledger-out FILE]` is `generate`.
+    plan writes nothing but the optional ledger; generate also writes CURRENT's Data/lcsave/zone-prefix.lcm."""
+    import argparse
+    argv = list(sys.argv[1:] if argv is None else argv)
+    parser = argparse.ArgumentParser(prog='python -m lcsave.zonecompat', description=__doc__,
+                                     formatter_class=argparse.RawDescriptionHelpFormatter)
+    if argv and argv[0] in ('plan', 'generate'):
+        mode = argv.pop(0)
+        parser.add_argument('--previous', action='append', required=True,
+                            help='a previous release build (repeat it: the stable release AND the previous beta)')
+        parser.add_argument('current')
+    else:
+        mode = 'generate'
+        parser.add_argument('previous_build', metavar='previous'); parser.add_argument('current')
+    parser.add_argument('--ledger-out', help='write the verified hash-only release ledger')
+    args = parser.parse_args(argv)
+    previous = getattr(args, 'previous', None) or [args.previous_build]
+    if mode == 'plan':
+        result = plan_all(previous, args.current)
+        rows = result[0]
+        decode(encode(rows))  # the row set must fit and round-trip the sidecar format
+        report = _report(*result)
+    else:
+        report = generate(previous[0], args.current, *previous[1:])
+        rows = load(args.current)
+    print(json.dumps(report, indent=2))
+    if args.ledger_out:
+        Path(args.ledger_out).write_text(ledger_json(rows), encoding='utf-8', newline='\n')
+    return 0
 
 
 if __name__ == '__main__':
-    import argparse
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('previous'); parser.add_argument('current')
-    parser.add_argument('--ledger-out', help='write the verified hash-only release ledger')
-    args = parser.parse_args()
-    print(json.dumps(generate(args.previous, args.current), indent=2))
-    if args.ledger_out:
-        rows = load(args.current)
-        Path(args.ledger_out).write_text(json.dumps([{k: (v.hex() if isinstance(v,bytes) else [[a.hex(),b.hex()] for a,b in v]
-            if k.endswith('_aliases') else v) for k,v in r.items()}
-            for r in rows], indent=2)+'\n', encoding='utf-8')
+    sys.exit(main())

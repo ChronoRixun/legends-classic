@@ -21,6 +21,7 @@ from . import actor_budget as AB
 from . import common as C
 from . import fix_ini as FI
 
+WAVE3_EXCLUDED_HEROES = ('profxastral', 'profxgladiator')   # the two special Professor X forms are never a party member
 STOCK_STYLES = 19         # 0x4ffb8a: cmp [manager+0x1a4], 0x13
 PARTY_SIZE = 4
 PERMANENT_PKGS = AB.PERMANENT_PKGS
@@ -96,8 +97,12 @@ def _chr_names(v, zone):
 
 
 def validate(v, ck):
-    """V23 fight styles (validate.Validator v, Check ck)."""
-    cap = capacity()
+    """V23 fight styles (validate.Validator v, Check ck). With --limits-wave3 (limits wave 3, V-STYLES) the capacity is the
+    raised [Limits] FightStyles, the two special Professor X forms are not party members, a witness zone and party is
+    reported and a registry above half full is a warning (the 2x rule)."""
+    mode = str(getattr(getattr(getattr(v, 'ctx', None), 'args', None), 'limits_wave3', None) or 'off').lower()
+    wave3 = mode != 'off'
+    cap = capacity(FI.limits_in_use(mode)) if wave3 else capacity()
     ck.set('capacity', cap)
     ck.set('stock_capacity', STOCK_STYLES)
     permanent = []
@@ -107,6 +112,9 @@ def validate(v, ck):
                 permanent.append(s)
     ck.set('permanent_styles', len(permanent))
     heroes = _heroes(v)
+    if wave3:
+        heroes = [(n, skin) for n, skin in heroes if n not in WAVE3_EXCLUDED_HEROES]
+        ck.set('limits_wave3', mode)
     ck.set('heroes', len(heroes))
 
     def hero_styles(nc):
@@ -151,3 +159,11 @@ def validate(v, ck):
     ck.set('max_styles', worst[0])
     ck.set('max_zone', worst[1])
     ck.details['zones'] = per_zone
+    if wave3 and worst[1] is not None:
+        party = per_zone[worst[1]]['party']
+        ck.set('witness_zone', worst[1])
+        ck.set('witness_party', ', '.join(party))
+        ck.details['witness'] = {'zone': worst[1], 'party': list(party), 'styles': worst[0], 'capacity': cap}
+        if worst[0] < cap and worst[0] * 2 > cap:
+            ck.warn(f'{worst[1]}: {worst[0]} distinct fighting / power styles with the party {", ".join(party)}: above '
+                    f'half of the registry ({cap} entries)')

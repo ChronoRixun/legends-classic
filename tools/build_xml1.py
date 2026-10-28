@@ -85,6 +85,67 @@ def parse_args(argv=None):
                          "Sunfire as pads and has no ProfXGladiator (A/B builds; SPEC_heroes.md)")
     ap.add_argument('--hero-icons', dest='hero_icons', choices=('xml1', 'generic'), default='xml1',
                     help="hero talent icons: XML1's 2x2 <hero>_all atlases (default) or XML2's generic talent_icons.png")
+    ap.add_argument('--grab-carry', choices=('xml1', 'xml2'), default='xml1',
+                    help="XML1's grab lifecycle: Juggernaut's grab, the shared grab/pickup/recovery handlers and the "
+                         "flying-charge collision, the flying carry and XML1's flight upkeep (default since 0.4.1-beta.1; needs "
+                         "XML2 Fix 1.9.0-beta.1's rule 45 revision 3 and --anim-enums xml1) or xml2, the stock "
+                         "handlers (A/B builds)")
+    ap.add_argument('--telekinesis', choices=('off', 'xml1'), default=None,
+                    help="Phoenix's XML1 telekinesis ([Game] TelekinesisRule=xml1, XML2 Fix rule 46 bit 512; needs "
+                         "--grab-carry xml1). On by default since 0.5.0-beta.1 (off in beta 8; off with --grab-carry xml2); the ini only")
+    ap.add_argument('--guard-decide', dest='guard_decide', choices=('off', 'xml1'), default=None,
+                    help="XML1's guard decide ([Game] GuardDecideRule=xml1, XML2 Fix rule 46 bit 1024: held Guard's "
+                         "pickups, ally throws and the acrobats' wall lunge; needs --grab-carry xml1). Off by default "
+                         "(beta 8 and 0.5.0-beta.1: on a real pad it refused the grabs XML2's Guard makes; Guard is "
+                         "XML2's Block / Grab); the ini only")
+    ap.add_argument('--flying-carry', dest='flying_carry', choices=('off', 'xml1'), default=None,
+                    help="XML1's flying carry within rule 45 (needs --grab-carry xml1): off writes [Game] "
+                         "Xml1FlyingCarry=0 (Juggernaut's grab, fix7 and XML1's flight upkeep stay); xml1 leaves the key "
+                         "out (the DLL's default). On by default since 0.5.0-beta.1 (off in beta 8); the ini only")
+    ap.add_argument('--actor-pools', dest='actor_pools', choices=('off', '124'), default='off',
+                    help="E4 stage 1: write [Limits] ActorPools=124 (XML2 Fix rule 44: path, shadow and delayed-damage "
+                         "pools 32 -> 124). Off by default until its live runs pass")
+    ap.add_argument('--limits-wave3', dest='limits_wave3', choices=('off', 'on', 'all'), default='all',
+                    help="limits wave 3: write [Limits] FightStyles=64, StyleEvents=4096, FightMoves=1024, "
+                         "EffectTemplates=512, PrimitiveDefs=2048, EffectVectors=4096, PrimitivesPerEffect=32 (XML2 Fix "
+                         "rules 35 revision 2 and 53-58; the DLL gate refuses a DLL without them) and validate the build "
+                         "against them (V-MOVES, V-EVENTS, V-EFFECT-FILES, V-PRIMITIVES, V-VECTORS, V-CURVES, V-SCRIPTS); "
+                         "'all' also writes ScriptPools=x1 and ParticleScratch=40 (rules 59-60). 'all' by default since "
+                         "0.5.0-beta.1; off is byte-identical to a build made before the option existed")
+    ap.add_argument('--anim-enums', dest='anim_enums', choices=('off', 'xml1'), default='xml1',
+                    help="SPEC 107: XML1's 23 animation enums (flying carry, Juggernaut's grab victims): their 21 clips "
+                         "transplanted into Actors/common.IGB from your XML1 disc, the mappings in Data/shared_anims, "
+                         "XML1's carry nodes in moveset_flying and [Limits] AnimEnums=512 (needs the XML2 Fix with "
+                         "rule 48's AnimEnums table). Default since 0.4.1-beta.1 (beta 8); off only with --grab-carry xml2")
+    ap.add_argument('--rogue-decide', choices=('xml1', 'xml2'), default='xml1',
+                    help="Rogue's power decision: XML1's ch_roguedecide (default since 0.4.1-beta.1; needs XML2 Fix "
+                         "1.9.0-beta.1's rule 43) or xml2, the old D15 collapse (A/B builds)")
+    ap.add_argument('--save-layout', dest='save_layout', choices=('retail', 'w2'), default='w2',
+                    help="the save layout the build is validated and configured for: w2 (default since 0.5.0-beta.1; "
+                         "limits wave 2: the ini gets SaveLayout=w2 / ItemEnhancements=4096 with EntityCapacity=1 and "
+                         "[Save] Format=lc; the validator and the budgets use the W2 limits and refuse data over them; "
+                         "needs XML2 Fix 1.10 or newer) or retail (no [Limits] SaveLayout key, the 0.4.1 baseline; "
+                         "needs --loot off)")
+    ap.add_argument('--loot', choices=('off', 'xml1'), default=None,
+                    help="the first game's item economy (default xml1 since 0.5.0-beta.1; off by default with --save-layout "
+                         "retail or --frontend xml2): xml1 converts the 116 XML1 "
+                         "equipment (97 new lc_x1_<name> definitions, the 19 Danger Room rewards again in place, every "
+                         "bonus), rewrites the maps' references, writes Data/x1economy.txt, approximations.json / "
+                         "APPROXIMATIONS.md and [Game] Xml1Economy=1. Needs --save-layout w2 and XML2 Fix with the "
+                         "economy key")
+    ap.add_argument('--loot-construction', dest='loot_construction', choices=('zero-draw', 'one-roll'),
+                    default='zero-draw',
+                    help="with --loot xml1: which item construction the DLL ships (DESIGN 2.5): zero-draw (plan A, "
+                         "default) or the native one-roll fallback, which adds the construction-one-roll "
+                         "approximations row")
+    ap.add_argument('--loot-def-damage-scale', dest='loot_def_damage_scale', choices=('noop', 'resist'),
+                    default=None,
+                    help="with --loot xml1 (owner decision D8, DESIGN 12): the four items whose only bonus is the "
+                         "original's unregistered def_damage_scale (SHIAR_MIND_GEM, SHIAR_BODY_SHIELD, "
+                         "SHIAR_ENERGY_ARMOR, MAGNETOS_HELMET) carry no working bonus in the first game. resist "
+                         "(the default with --loot xml1, Owen's D8) writes the authored multiplier as a PC "
+                         "damage-resistance record (bonus-approx rows); noop keeps the original's dead bonus exactly. "
+                         "Without --loot xml1 the option is noop")
     ap.add_argument('--hero-bleed', dest='hero_bleed', choices=('on', 'off'), default='on',
                     help="Wolverine's bleed passive as an XML2 add_harming powerup (default) or dropped")
     ap.add_argument('--newgame', choices=('chooseteam', 'keepteam'), default='keepteam',
@@ -110,6 +171,11 @@ def parse_args(argv=None):
                          "intro logos, menu music, Danger Room courses, Review / codex / trivia / credits data "
                          "(xml1, the default; also $XML1BUILD_FRONTEND) or XML2's front end exactly as before SPEC 21 "
                          "(xml2, the A/B fallback)")
+    ap.add_argument('--laa', choices=('on', 'off'), default='on',
+                    help="E12 (SPEC 108): the build's own copy of XMen2.exe is large-address-aware (on, the default: "
+                         "4 GB of address space on 64-bit Windows and Wine/Proton instead of 2 GB; one flag in the "
+                         "exe's file header, the install's exe is never written) or the install's byte-identical "
+                         "exe (off, A/B builds)")
     ap.add_argument('--main-menu-layout', choices=('classic', 'widescreen'), default='classic',
                     help='main-menu composition: classic (the original, centred by the game at every aspect); '
                          'widescreen is a retired name for classic')
@@ -129,6 +195,20 @@ def parse_args(argv=None):
     ap.add_argument('--cache', help='prepared mode: the prepare cache directory (created; kept between builds)')
     ap.add_argument('--iso', help='prepared mode: the XML1 Xbox disc image (Redump .iso or XISO; read-only)')
     a = ap.parse_args(argv)
+    # 0.5.0-beta.1 defaults: telekinesis, the flying carry and the economy are on unless a prerequisite is turned off
+    # (an explicit xml1 with the prerequisite off is still refused below): the moves need --grab-carry xml1, the economy
+    # needs the W2 save layout and the XML1 front end. The guard decide stays off (Owen 10-28: on a real pad candidate
+    # 082f's stunned-only rule refused the grabs XML2's Guard makes and a refused press showed no block), so Guard is
+    # XML2's Block / Grab, as in beta 8; --guard-decide xml1 still writes it.
+    for opt in ('telekinesis', 'flying_carry'):
+        if getattr(a, opt) is None:
+            setattr(a, opt, 'xml1' if a.grab_carry == 'xml1' else 'off')
+    if a.guard_decide is None:
+        a.guard_decide = 'off'
+    if a.loot is None:
+        a.loot = 'xml1' if a.save_layout == 'w2' and (a.frontend or C.FRONTEND_DEFAULT) == 'xml1' else 'off'
+    if a.loot_def_damage_scale is None:     # D8 (Owen 10-26): resist is the default of a --loot xml1 build
+        a.loot_def_damage_scale = 'resist' if a.loot == 'xml1' else 'noop'
     if a.sources == 'prepared' and not a.cache:
         ap.error('--sources prepared needs --cache DIR')
     if a.sources != 'prepared' and (a.cache or a.iso):
@@ -146,8 +226,20 @@ def parse_args(argv=None):
             sel.append('heroes')              # heroes rewrites characters' npcstat / shared_talents / hero styles
             print('[build] --only characters implies heroes (it patches the characters output)')
         a.only = [m for m in C.MODULE_ORDER if m in sel]
+    if a.grab_carry != 'xml1' and 'xml1' in (a.telekinesis, a.guard_decide, a.flying_carry):
+        ap.error('--telekinesis xml1, --guard-decide xml1 and --flying-carry xml1 need --grab-carry xml1 (XML2 Fix rules 46 / 45 refuse them '
+                 "without rule 45's grab lifecycle)")
+    # xml2-fix 1.9.0-beta.1's rule 45 revision 3 (the flying carry, fix7, XML1's flight upkeep) installs only with
+    # [Limits] AnimEnums installed: without it that DLL installs none of rule 45 (xml2-fix xml1_grab_carry.cpp)
+    if a.grab_carry == 'xml1' and a.anim_enums != 'xml1':
+        ap.error('--grab-carry xml1 needs --anim-enums xml1 (XML2 Fix 1.9.0-beta.1 rule 45 revision 3 requires '
+                 '[Limits] AnimEnums); use --grab-carry xml2 for an AnimEnums-off A/B build')
     if a.tour is not None and a.tour <= 0:
         ap.error('--tour needs a positive number of seconds')
+    from xml1build import loot as LOOT
+    why = LOOT.refusal(a)
+    if why:
+        ap.error(why)
     if a.start_zone:
         a.start_zone = C.norm(a.start_zone).removeprefix('maps/')
     if a.main_menu_layout == 'widescreen':
@@ -176,9 +268,21 @@ HOOK_OWNER = 'testhooks'
 # built with a different value is stale, so that module is re-run (plan_content_opts).
 CONTENT_OPTS = {'harm_loop_startup': (tuple(C.MODULE_ORDER), 'workaround'),
                 'blackbird': ('scripts', 'menu'), 'npc_scaling': ('characters', 'off'), 'tiles': ('zones', 'used'),
-                'main_menu_layout': ('frontend', 'classic'),
-                'hero_roster': ('heroes', '21'), 'hero_icons': ('heroes', 'xml1'), 'hero_bleed': ('heroes', 'on'),
+                'main_menu_layout': ('frontend', 'classic'), 'laa': ('exe_flags', 'on'),
+                # ini only (fix_ini.port_keys): no module output depends on them
+                'telekinesis': ((), 'off'), 'guard_decide': ((), 'off'), 'flying_carry': ((), 'off'),
+                'grab_carry': ('characters', 'xml1'), 'actor_pools': ('characters', 'off'), 'anim_enums': ('characters', 'xml1'), 'rogue_decide': ('heroes', 'xml1'), 'hero_roster': ('heroes', '21'), 'hero_icons': ('heroes', 'xml1'), 'hero_bleed': ('heroes', 'on'),
                 'newgame': ('scripts', 'keepteam'),
+                # limits wave 2: the talent precache budget (talent_budget.prune_zone_precache) follows the layout's pool.
+                # 0.5.0-beta.1 turned save_layout / loot (and the three moves above) on by default; their entries here
+                # keep the OLD value on purpose: it is what a _build record without the key was built with (0.4.1
+                # records have no save_layout; loot / loot_def_damage_scale are recorded only when not off / noop), so
+                # a 0.5.0 default build over a 0.4.1 build re-runs zones and frontend (plan_content_opts)
+                'save_layout': ('zones', 'retail'),
+                # loot step 1: zones (the item table, map references, sidecar), frontend (the shop's Training tab)
+                'loot': (('zones', 'frontend'), 'off'),
+                'loot_construction': ('zones', 'zero-draw'),
+                'loot_def_damage_scale': ('zones', 'noop'),
                 # SPEC 19: scripts emits the blocks; zones imports the dialogs / conversations rewrite_data_tree patches
                 'forced_teams': (('scripts', 'zones'), 'seat'),
                 # SPEC 21: scripts (intro, main_back_main, imageViewer literals), zones (menu/main_back, zoneinfo
@@ -193,7 +297,8 @@ LEGACY_OPT_VALUES = {'tiles': 'folder',          # zone packages listed whole ti
                      'forced_teams': 'menu',     # no xml2-fix calls before SPEC 19
                      'frontend': 'xml2',         # XML2's front end before SPEC 21
                      'xp_curve': 'xml2',         # XML2-scaled Danger Room / XP pickup amounts before SPEC 23.1
-                     'buoys': 'empty'}           # every converted zone had an empty buoy network before SPEC 42
+                     'buoys': 'empty',           # every converted zone had an empty buoy network before SPEC 42
+                     'laa': 'off'}               # the install's byte-identical exe before SPEC 108
 
 
 def _prev_build(out: Path):
@@ -430,15 +535,23 @@ def main(argv=None):
                     'forced_rerun': list(forced) + list(opt_rerun),
                     'start_zone': args.start_zone, 'tour': args.tour, 'no_movies': args.no_movies,
                     'blackbird': args.blackbird, 'npc_scaling': args.npc_scaling, 'tiles': args.tiles,
-                    'hero_roster': args.hero_roster, 'hero_icons': args.hero_icons, 'hero_bleed': args.hero_bleed,
+                    'grab_carry': args.grab_carry, 'telekinesis': args.telekinesis, 'guard_decide': args.guard_decide, 'flying_carry': args.flying_carry, 'actor_pools': args.actor_pools, 'anim_enums': args.anim_enums, 'rogue_decide': args.rogue_decide, 'hero_roster': args.hero_roster, 'hero_icons': args.hero_icons, 'hero_bleed': args.hero_bleed,
+                    'save_layout': args.save_layout,
                     'newgame': args.newgame, 'forced_teams': args.forced_teams, 'frontend': args.frontend,
-                    'xp_curve': args.xp_curve, 'buoys': args.buoys, 'main_menu_layout': args.main_menu_layout,
+                    # limits wave 3: recorded only when on, so the default (off) build's report.json is unchanged
+                    **({'limits_wave3': args.limits_wave3} if getattr(args, 'limits_wave3', 'off') != 'off' else {}),
+                    'xp_curve': args.xp_curve, 'buoys': args.buoys, 'main_menu_layout': args.main_menu_layout, 'laa': args.laa,
                     'harm_loop_startup': getattr(args, 'harm_loop_startup', 'workaround'),
                     BAL.REPORT_KEY: BAL.REPORT_ON if BAL.enabled() else 'xml2',
                     'content_fingerprint': ctx.shared.get('content_fingerprint'),
                     'start_party': args.start_party, 'start_skinset': args.start_skinset,
                     'files_registered': len(ctx.registry.entries), 'seconds': round(time.time() - t0, 1),
                     'shared_keys': sorted(ctx.shared)}
+    if args.loot != 'off':          # recorded only when asked for: a build without the option keeps its metadata as before
+        rep['build']['loot'] = args.loot
+        rep['build']['loot_construction'] = args.loot_construction
+        if getattr(args, 'loot_def_damage_scale', 'noop') != 'noop':      # D8: recorded only when asked for
+            rep['build']['loot_def_damage_scale'] = args.loot_def_damage_scale
     (out / '_build' / 'report.json').write_text(json.dumps(rep, indent=1, default=str), encoding='utf-8')
     ctx.report.print_summary()
     errors = ctx.report.error_total()

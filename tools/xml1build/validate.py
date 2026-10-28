@@ -134,6 +134,8 @@ Checks (severity per SPEC 4.6: error = will not load or silently misbehaves; war
                 scoped to a damage type (the six physical / energy / mental _resistant[_share] talents) carries them
                 as def_damage_scope and no resist_<type> of those types - only def_damage strips a hit's reactions
                 (popup, knockback, trip, stun) at scale <= 0.3 in both engines
+                and (C4) physical_resistant_share's two primary effects are XML1's powerups/aura_physical and
+                powerups/aura_physical_src, built and listed in permanent.PKGB
   V63 resistance HUD (resistance_hud.validate): the port requests the scoped target display, and its existing
                 localized resistance labels and type colors match the original resources at the PC's indices
   V45 weapon damage and reaction priority (SPEC 76/95.3, weapons.validate): every built gun-shot trigger
@@ -141,6 +143,13 @@ Checks (severity per SPEC 4.6: error = will not load or silently misbehaves; war
                 declaration's minimum (default.xbe 0xbcc47-0xbcc99) - a powerstyle named for an XML1 weapon carries
                 exactly that weapon's draw, and a built entity file's single-value attributes (explodedamage)
                 hold XML1's minimum, never a 'min max' range
+
+  V-MOVES, V-EVENTS, V-EFFECT-FILES, V-PRIMITIVES, V-VECTORS, V-CURVES, V-SCRIPTS (limits wave 3, limits_wave3.py; only
+                for a build made with --limits-wave3, which also gives V23 the raised capacity, a witness and the 50 %
+                warning): what every converted zone with every allowed four-hero party loads of XMen2.exe's FightMove,
+                style event, effect file / definition, primitive, vector, curve and script pools (retained statement nodes,
+                values, compiled scripts), against the capacity the build asks XML2 Fix for; error above, warning at
+                equality or above half (docs/LIMITS_WAVE3.md)
 
 Inherited defects. Many findings are defects of the XML1 disc itself (a zone, conversation, dialog, script or
 sound bank XML1 references but never shipped; a line default.xbe already dropped). They are re-derived, not
@@ -187,12 +196,18 @@ from . import automaps as AM             # V20 (SPEC 26): XML1 automaps as .zam
 from . import text_trace as TT           # V66 (SPEC 105): every XML1 text string shipped, rewritten or owned elsewhere
 from . import skins as SK                # V21 (SPEC 25): skin blend weights / skeleton against the anim DB
 from . import talent_budget as TB        # V44 (SPEC 75): complete-roster TalentRegistry demand
+from . import w2_limits as WL            # V67 (limits wave 2): the data limits of --save-layout w2
+from . import loot as LT                 # V-LOOT (loot step 1): the first game's item economy, --loot xml1
 from . import style_budget as SB         # V23 (SPEC 43): the fighting / power style registry per zone
 from . import ladder_motion as LM       # V34 (SPEC 46): ladder paths only from the ladder top
 from . import weapons as W              # V5 (SPEC 57, issue #52): a gun-armed entry carries its gun's fighting style
 from . import scripted_approaches as SA  # V47 (SPEC 78): authored scripted approach completion
 from . import characters as CH           # V54 (issue #15): the xml2-fix leader sidecar
+from . import anim_enums as AE           # V7 (SPEC 107): the XML1 enums of xml2-fix [Limits] AnimEnums
+from . import igb_anim_merge as IAM      # V7 (SPEC 107): the transplanted clips in Actors/common.IGB
 from . import save_positions as SP      # V31: identities a save keeps by position
+from . import exe_flags as EXE          # V1 (E12, SPEC 108): the build's large-address-aware exe
+from . import limits_wave3 as L3     # V-MOVES, V-EVENTS, V-EFFECT-FILES, V-PRIMITIVES, V-VECTORS, V-CURVES, V-SCRIPTS
 
 MAX_REPORTED = 50                             # per check and severity, into ctx.error / ctx.warn
 CONTENT_OWNERS = tuple(C.MODULE_ORDER)        # characters, scripts, zones, media
@@ -242,7 +257,9 @@ SPEAKER_RE = re.compile(r'%[^%\s]+%')
 # animation enums: XMen2.exe resolves 'EA_*' names (playanim / FightMove animenum) against its own enum strings
 ANIM_ENUM_RE = re.compile(r'(?i)\bEA_[A-Z0-9_]+\b')
 # enums XML1 data uses that XMen2.exe lacks and that belong to the powers rework (shared_nodes / fightstyles:
-# flying carry and Juggernaut grab moves); reported as deferred warnings, not errors
+# flying carry and Juggernaut grab moves); reported as deferred warnings, not errors - only while the build does not
+# write [Limits] AnimEnums (SPEC 107): with it they are the DLL's 23 built-in enums (anim_enums.BUILTIN_ENUMS) and an
+# ea_flyingcarry_* / ea_jug_grab_* name outside that list is an error like any other unknown enum
 DEFERRED_ANIM_ENUMS = re.compile(r'(?i)^ea_(flyingcarry_|jug_grab_)')
 # zoneinfo attributes of XML2's Xtraction network (zones.XTRACTION_ATTRS; 0x468130 / 0x467f60)
 XTRACTION_ATTRS = ('extraction', 'towncenter', 'mapx', 'mapy')
@@ -975,6 +992,7 @@ class Validator:
                                ('V22', 'buoys', lambda ck: BY.validate(self, ck)),
                                ('V23', 'fight styles', lambda ck: SB.validate(self, ck)),
                                ('V44', 'talent registry demand', lambda ck: TB.validate(self, ck)),
+                               ('V67', 'W2 data limits', lambda ck: WL.check(self, ck)),
                                ('V24', 'conversation portraits', self.conversation_portraits),
                                ('V25', 'harm loop startup', self.harm_loop_startup),
                                ('V26', 'fall kill volumes', self.fall_kill_volumes),
@@ -1005,7 +1023,11 @@ class Validator:
                                ('V52', 'breakable parts', self.vtbd_multipart),
                                ('V53', 'removable resistances', self.vtbd_removable),
                                ('V54', 'leader bit sidecar', self.v54_leader_sidecar),
-                               ('V57', 'script function names', lambda ck: SFN.validate(self, ck))):
+                               ('V57', 'script function names', lambda ck: SFN.validate(self, ck)),
+                               # limits wave 3 (--limits-wave3): V-MOVES .. V-SCRIPTS exist only for a build made with
+                               # it, so a default build's report is the one it always was
+                               *((cid, title, functools.partial(fn, self)) for cid, title, fn in L3.VALIDATORS if L3.enabled(self))) + ((('V-LOOT', 'loot economy', lambda ck: LT.validate(self, ck)),)
+                                   if LT.selected(self.ctx) else ()):      # --loot xml1 only: other builds keep their report
             ck = Check(cid, title)
             self.checks[cid] = ck
             t0 = time.time()
@@ -1236,8 +1258,13 @@ class Validator:
         exe_out, exe_base = out / 'XMen2.exe', self.ctx.base / 'XMen2.exe'
         if not exe_out.is_file():
             ck.error('XMen2.exe missing from <out>')
-        elif exe_base.is_file() and exe_out.stat().st_size != exe_base.stat().st_size:
-            ck.error('XMen2.exe differs in size from the base install (the build never patches the exe)')
+        elif exe_base.is_file():
+            # E12 (SPEC 108): the install's exe, byte for byte, except the large-address-aware flag (and the PE
+            # checksum, if it has one) that exe_flags sets with --laa on
+            want = EXE.mode(self.ctx)
+            for msg in EXE.validate(exe_out.read_bytes(), exe_base.read_bytes(), want):
+                ck.error(msg)
+            ck.set('exe_laa', want)
         ck.set('root_entries', sum(1 for _ in out.iterdir()))
 
     # ================================================================== V2 registry
@@ -1301,7 +1328,13 @@ class Validator:
                         ck.count('merged_banks')
             if ext == '.sfd' and e.get('overwrote_base'):
                 ck.error(f'{e["rel"]}: an XML1 movie replaced XML2 movie (collisions must get the x prefix)')
-            if e['owner'] == 'characters' and e.get('overwrote_base') and \
+            if e['owner'] == 'characters' and e.get('overwrote_base') and n == 'actors/common.igb' and \
+                    AE.mode(self.ctx) == 'xml1':
+                # SPEC 107: XML2's shared anim DB plus the 21 XML1 clips (igb_anim_merge verifies every XML2 item
+                # byte-identical at its old reference number); V7 checks the clips. Nothing of XML2's is replaced.
+                ck.count('anim_enums_common_igb')
+                ck.note(f'{e["rel"]}: XML2\'s shared animation database with the XML1 clips added (--anim-enums xml1)')
+            elif e['owner'] == 'characters' and e.get('overwrote_base') and \
                     re.match(r'(actors|hud|ui/hud/characters|ui/models/characters|textures/loading)/', n):
                 ck.error(f'{e["rel"]}: characters replaced an XML2 character asset (SPEC 5.1 forbids it)')
             if n.startswith('data/herostat.') and not n.endswith('.lcbind') and e['owner'] != 'heroes':
@@ -1975,6 +2008,15 @@ class Validator:
                         ck.error(f'data/{fname}{ext}: stats entry without a name')
                     elif len(x) > NAME_MAX:
                         ck.error(f'data/{fname}{ext}: name {x!r} longer than {NAME_MAX} chars (strncpy 0x20)')
+            # V5 (beta 8): every stats string the engine copies into a fixed-width CStats field fits it. A longer
+            # value is cut silently (powerstyle: 31 characters, 0x43a690), so the engine requests a file that does
+            # not exist (GRSO Officer's x1_ps_grso_m_nullifier_incendiary -> ..._incendia) and the character loses
+            # the whole style. (name is checked above.)
+            for fname in ('herostat', 'npcstat'):
+                for el, attr, val, width in W.stats_string_overflows(v[fname]):
+                    ck.count('stats_strings_over_width')
+                    ck.error(f'data/{fname}{ext}: {el.get("name")!r} {attr}={val!r} is {len(val)} characters, '
+                             f'XMen2.exe keeps {width} (the engine would use {val[:width]!r})')
             both = {x.lower() for x in hero} & {x.lower() for x in npc}
             for b in sorted(both):
                 ck.error(f'{ext}: {b!r} is in herostat and npcstat (the npcstat entry is never registered)')
@@ -2002,8 +2044,9 @@ class Validator:
                 ck.error(f'data/shared_talents{ext} missing or undecodable')
                 continue
             ck.set(f'shared_talents{ext}', len(t))
-            if len(t) > TALENT_CAP:
-                ck.error(f'data/shared_talents{ext}: {len(t)} talents > {TALENT_CAP} (ids 0..98, 0x4c05d0); extras dropped')
+            cap = WL.limits(self).shared_talents
+            if len(t) > cap:
+                ck.error(f'data/shared_talents{ext}: {len(t)} talents > {cap} (ids 0..{cap - 1}, 0x4c05d0); extras dropped')
         if talents.get('.xmlb') is not None and talents.get('.engb') is not None and \
                 {x.lower() for x in talents['.xmlb']} != {x.lower() for x in talents['.engb']}:
             ck.error('shared_talents XMLB and engb define different talents')
@@ -2147,6 +2190,9 @@ class Validator:
             stem = rel.rsplit('/', 1)[-1].rsplit('.', 1)[0].lower()
             if not stem.startswith('x1_'):
                 continue
+            if len(stem) > W.STYLE_NAME_MAX:
+                ck.error(f'{rel}: style name {stem!r} is {len(stem)} characters; XMen2.exe keeps {W.STYLE_NAME_MAX} '
+                         f'of a stats powerstyle, so a character could never load this file')
             p = self.idx.path(rel)
             if p is None:
                 continue
@@ -2177,6 +2223,9 @@ class Validator:
         for rel in self.idx.under('data/fightstyles/'):
             stem = rel.rsplit('/', 1)[-1].rsplit('.', 1)[0].lower()
             want = W.variant_grenade(stem, grenades) if stem.startswith('x1_') else ''
+            if stem.startswith('x1_') and len(stem) > W.STYLE_NAME_MAX:
+                ck.error(f'{rel}: style name {stem!r} is {len(stem)} characters; XMen2.exe keeps {W.STYLE_NAME_MAX} '
+                         f'of a stats moveset1 name')
             if not want:
                 continue
             tree = self.tree(rel)
@@ -3527,6 +3576,8 @@ class Validator:
                 ck.error(f'inventoryitem {v!r} ({sorted(files)[:3]}) names an XML1 item missing from Data/items')
         for n in sc.items:
             for nm in ck.details.get(f'items_added_{n.rsplit(".", 1)[1]}', []):
+                if nm.startswith(LT.NAME_PREFIX) and LT.selected(ctx):
+                    continue                      # the economy's definitions are referenced by the sidecar (V-LOOT)
                 if nm not in used:
                     ck.warn(f'Data/items: XML1 item {nm!r} was added but nothing references it')
 
@@ -3826,9 +3877,16 @@ class Validator:
         """every animation enum literal (EA_* string arguments in scripts, animenum values and EA_* literals in
         inline data code) is a whole ea_* string of XMen2.exe: XML1's EA_MISSIONn must have become EA_ZONEn
         (scripts_transform.rename_mission_anims). An enum default.xbe lacks too is inherited; the XML1-only
-        flying-carry / Juggernaut-grab enums of the added shared nodes are deferred to the powers rework."""
+        flying-carry / Juggernaut-grab enums of the added shared nodes are deferred to the powers rework - unless the
+        build writes [Limits] AnimEnums (--anim-enums xml1, SPEC 107): then the known names are XMen2.exe's plus the
+        builder's 23 built-in enums (checked against the DLL's table when <out> has the DLL), nothing is deferred,
+        and the ANIMTABLE / clip / carry-node checks of _v7_anim_table run."""
         exe = self.idx.path('xmen2.exe') or (self.ctx.base / 'XMen2.exe')
         x2 = self._enum_strings(exe)
+        native = set(x2)
+        anim_on = AE.mode(self.ctx) == 'xml1'
+        if anim_on:
+            x2 |= self._v7_anim_enum_names(ck)
         xbe = self.ctx.x1_xbox / 'default.xbe'
         x1 = self._enum_strings(xbe) if xbe.is_file() else set()
         found = collections.defaultdict(set)
@@ -3853,7 +3911,7 @@ class Validator:
             if re.fullmatch(r'ea_mission\d+', tl):
                 ck.error(f'animation enum {t} is XML1\'s (XMen2.exe has ea_zone1..20, no ea_mission*): '
                          f'{sorted(where)[:4]} (scripts_transform.rename_mission_anims)')
-            elif DEFERRED_ANIM_ENUMS.match(tl):
+            elif DEFERRED_ANIM_ENUMS.match(tl) and not anim_on:
                 deferred[t] = sorted(where)[:3]
             elif tl not in x1:
                 inherited[t] = sorted(where)[:3]
@@ -3866,6 +3924,104 @@ class Validator:
                     f'shared nodes / styles) are not XMen2.exe enums: deferred to the powers rework: {sorted(deferred)}')
         if inherited:
             ck.warn(f'{len(inherited)} animation enums are in neither exe (inherited XML1 defects): {inherited}')
+        self._v7_anim_table(ck, x2, native, anim_on)
+
+    def _v7_anim_enum_names(self, ck):
+        """the builder's built-in XML1 enum names (anim_enums.BUILTIN_ENUMS), which must equal the marked table of
+        <out>'s DLL when there is one (no DLL: a warning, the names are not checked against one). No sidecar names:
+        the build writes no Data/anim_enums.txt."""
+        dll = Path(self.ctx.out) / 'dinput.dll'
+        if dll.is_file():
+            got = AE.dll_builtin_names(dll.read_bytes())
+            if got is None:
+                ck.error('[Limits] AnimEnums is written but dinput.dll has no AnimEnums table (rule 48): the 23 XML1 '
+                         'enums stay unknown to the engine and their mappings are dropped')
+            elif tuple(got) != AE.BUILTIN_ENUMS:
+                ck.error(f'dinput.dll\'s AnimEnums table {list(got)} differs from the builder\'s '
+                         f'{list(AE.BUILTIN_ENUMS)}: the mappings would land on other IDs')
+            ck.set('anim_enums_dll_checked', 1)
+        else:
+            ck.warn('[Limits] AnimEnums is written but <out> has no dinput.dll: the 23 XML1 extension enum names were '
+                    'not checked against a DLL\'s AnimEnums table')
+            ck.set('anim_enums_dll_checked', 0)
+        return set(AE.BUILTIN_ENUMS)
+
+    def _v7_anim_table(self, ck, known, native, anim_on):
+        """Data/shared_anims (the ANIMTABLE the init parser 0x426680 reads into the id table): every ea_ name is a
+        known enum (0x426600 drops an unknown one without a word), the count fits the table (210 stock, 512 with
+        AnimEnums). With AnimEnums also: every built-in enum is mapped, every clip it names (but NO_ANIM) is in the
+        output Actors/common.IGB except the two XML1 lacks too (igb_anim_merge.KNOWN_ABSENT_IN_XML1: the enum falls
+        back to enum 0, as on XML1), and the merged moveset_flying has XML1's carry nodes, all with known enums."""
+        path = self.idx.path('data/shared_anims.xmlb') or self.ctx.base_index.path('data/shared_anims.xmlb')
+        if path is None:
+            ck.error('Data/shared_anims.XMLB is missing')
+            return
+        try:
+            entries = AE.table_entries(C.decode_xmlb(Path(path).read_bytes()))
+        except (ValueError, AE.AnimEnumError) as e:
+            ck.error(f'Data/shared_anims.XMLB: {e}')
+            return
+        cap = AE.CAPACITY if anim_on else AE.NATIVE_ENUMS
+        ck.set('anim_table_entries', len(entries))
+        if len(entries) > cap:
+            ck.error(f'Data/shared_anims: {len(entries)} ANIMTABLE entries > the table\'s {cap}: the parser stops there')
+        unknown = sorted(n for n in entries if n not in known)
+        if unknown:
+            ck.error(f'Data/shared_anims maps {len(unknown)} names that are no enum (dropped by 0x426600 without a '
+                     f'word): {unknown[:8]}')
+        if not anim_on:
+            return
+        missing = [n for n in AE.BUILTIN_ENUMS if n not in entries]
+        if missing:
+            ck.error(f'Data/shared_anims lacks the XML1 enum mappings {missing}')
+        igb = self.idx.path('actors/common.igb')
+        try:
+            clips = {n.lower() for n in IAM.clip_names(IAM.IgbFile(Path(igb).read_bytes()))} if igb else None
+        except IAM.IgbError as e:
+            ck.error(f'Actors/common.IGB: {e}')
+            return
+        if clips is None:
+            ck.error('Actors/common.IGB is missing')
+            return
+        absent_known, absent = {}, []
+        for n in AE.BUILTIN_ENUMS:
+            clip = (entries.get(n) or '').strip()
+            if not clip or clip.lower() == AE.NO_ANIM or clip.lower() in clips:
+                continue
+            if IAM.KNOWN_ABSENT_IN_XML1.get(clip.lower()) == n:
+                absent_known[n] = clip
+            else:
+                absent.append(f'{n}={clip}')
+        ck.set('anim_enum_clips_absent_in_xml1', len(absent_known))
+        ck.details['anim_enum_clips_absent_in_xml1'] = {
+            n: f'{c}: absent from XML1\'s common.igb; enum falls back to enum 0 as on XML1' for n, c in absent_known.items()}
+        if absent:
+            ck.error(f'{len(absent)} XML1 enum mappings name a clip Actors/common.IGB lacks: {absent}')
+        mv = self.idx.path('data/fightstyles/moveset_flying.xmlb')
+        root = C.decode_xmlb(Path(mv).read_bytes()) if mv else None
+        moves = {(m.get('name') or '').lower(): m for m in (root if root is not None else ()) if m.tag.lower() == 'fightmove'}
+        want = sorted(n for n, (side, _w) in AE.MOVESET_FLYING_PRECEDENCE.items() if side == AE.XML1)
+        lost = [n for n in want if n not in moves]
+        if lost:
+            ck.error(f'Data/fightstyles/moveset_flying lacks XML1\'s carry nodes {lost}')
+        # anim_enums.XML1_FLIGHT_UPKEEP: XML1's `flying` (no energypersecond; xml2-fix rule 45 revision 3 charges the
+        # flight upkeep) or PC's (%flight_pwr per second) - the other one pays twice or never
+        fly = moves.get('flying')
+        eps = None if fly is None else next((v for k, v in fly.attrib.items() if k.lower() == 'energypersecond'), None)
+        if fly is None:
+            ck.error('Data/fightstyles/moveset_flying has no flying node')
+        elif AE.XML1_FLIGHT_UPKEEP and eps is not None:
+            ck.error(f'Data/fightstyles/moveset_flying: flying still has energypersecond={eps!r} with XML1\'s flight '
+                     f'upkeep (rule 45 revision 3 charges it): flight would be paid twice')
+        elif not AE.XML1_FLIGHT_UPKEEP and eps is None:
+            ck.error('Data/fightstyles/moveset_flying: flying has no energypersecond and no XML1 flight upkeep: '
+                     'flight would cost nothing')
+        ck.set('anim_enum_flying_xml1_upkeep', int(AE.XML1_FLIGHT_UPKEEP and fly is not None and eps is None))
+        bad = sorted({(m.get('animenum') or '').strip().lower() for m in moves.values()} - set(known) - {''})
+        if bad:
+            ck.error(f'Data/fightstyles/moveset_flying names unknown animation enums {bad}')
+        ck.set('anim_enum_extension_uses', sum(1 for m in moves.values()
+                                               if (m.get('animenum') or '').strip().lower() in set(known) - native))
 
     # ======================================================= npc-loop fix: LOOP_WAKE on NPCs XMen2.exe cannot wake
     # (scripts.spawner_unwakeable / scripts_transform.bound_unwakeable_loops; evidence in scripts_transform.py)
@@ -4004,10 +4160,11 @@ class Validator:
         if t is None:
             ck.error('Data/missions/missions.XMLB missing or undecodable (no objectives at all)')
             return
+        lim = WL.limits(self)           # XMen2.exe's own caps below; --save-layout w2 raises them (limits wave 2, E14)
         names = [m.get('name') or '' for m in t.iter('MISSION')]
         ck.set('mission_files', len(names))
-        if len(names) > MISSION_FILES_MAX:
-            ck.error(f'missions.XMLB lists {len(names)} mission files > {MISSION_FILES_MAX} (0x48908a); the rest never load')
+        if len(names) > lim.mission_files:
+            ck.error(f'missions.XMLB lists {len(names)} mission files > {lim.mission_files} (0x48908a); the rest never load')
         defined = collections.defaultdict(set)              # objective name -> acts
         per_act = collections.Counter()
         total = 0
@@ -4029,11 +4186,11 @@ class Validator:
                     defined[o.lower()].add(act)
         ck.set('objectives_total', total)
         ck.details['objectives_per_act'] = dict(sorted(per_act.items()))
-        if total > OBJECTIVES_MAX:
-            ck.error(f'{total} objectives in the listed mission files > {OBJECTIVES_MAX} (state bytes 0x72b118, 0x4885c0)')
+        if total > lim.objectives:
+            ck.error(f'{total} objectives in the listed mission files > {lim.objectives} (state bytes 0x72b118, 0x4885c0)')
         for act, n in sorted(per_act.items()):
-            if n > OBJECTIVES_PER_ACT:
-                ck.error(f'act {act}: {n} objectives > {OBJECTIVES_PER_ACT} loadable for the current act (0x4899e0)')
+            if n > lim.objectives_per_act:
+                ck.error(f'act {act}: {n} objectives > {lim.objectives_per_act} loadable for the current act (0x4899e0)')
         missing = {o: sorted(f) for o, f in self._obj_refs.items() if o not in defined}
         ck.set('objective_refs', len(self._obj_refs))
         ck.set('objective_refs_undefined', len(missing))
@@ -4150,6 +4307,7 @@ class Validator:
         """zone script + scripts its package lists: statements vs the 620-node pool (0x4d7e6e), literals vs
         the 1,556-value pool, scripts vs 120 script objects, distinct zone-var names vs 32 slots."""
         det = {}
+        wave3 = L3.enabled(self)
         for z in self.converted_zones():
             world, _ = self.zone_world(z)
             ents = self.zone_pkg(z) or []
@@ -4177,13 +4335,18 @@ class Validator:
                         if c.name in ('setZoneVar', 'setZoneFlag') and c.args and c.args[0].kind == 'str':
                             zvars.add(str(c.args[0].value).lower())
             det[z] = {'scripts': nsc, 'statements': stm, 'literals': lits, 'zone_vars': len(zvars)}
-            if stm > VS.NODE_POOL:
+            # limits wave 3 (--limits-wave3): V-SCRIPTS counts retained nodes, values and compiled scripts against
+            # ScriptPools (the source statements above include else / endif, which take a node and free it again), so
+            # the three pool warnings below belong to the default build only
+            if wave3:
+                pass
+            elif stm > VS.NODE_POOL:
                 ck.warn(f'{z}: {stm} statements in the zone script + packaged scripts > {VS.NODE_POOL}-node pool '
                         f'(0x4d7e6e; per-zone residency unverified, test in game)')
                 ck.count('zones_over_node_pool')
-            if lits > VS.VALUE_POOL:
+            if not wave3 and lits > VS.VALUE_POOL:
                 ck.warn(f'{z}: {lits} literals in its scripts > {VS.VALUE_POOL}-value pool (0x4d6578; unverified)')
-            if nsc > VS.SCRIPT_OBJECTS:
+            if not wave3 and nsc > VS.SCRIPT_OBJECTS:
                 ck.warn(f'{z}: {nsc} scripts packaged > {VS.SCRIPT_OBJECTS} script objects (0x4d86d1; unverified)')
             if len(zvars) > VS.ZONE_STORE_NAMES:
                 ck.error(f'{z}: {len(zvars)} distinct zone-var names > {VS.ZONE_STORE_NAMES} slots (0x4d7060)')
@@ -5191,12 +5354,18 @@ def main(argv=None):
     ap.add_argument('--frontend', choices=C.FRONTEND_MODES,
                     help='front end the build was made with (default: from its _build/report.json)')
     ap.add_argument('--jobs', type=int, default=max(1, (os.cpu_count() or 2) // 2))
+    ap.add_argument('--limits-wave3', dest='limits_wave3', choices=('off', 'on', 'all'),
+                    help='limits wave 3 level the build was made with (default: from its _build/report.json)')
     a = ap.parse_args(argv)
     recorded = C.args_for_out(a.out, a.base)
     frontend = a.frontend or getattr(recorded, 'frontend', None)
     args = C.default_args(out=a.out, base=a.base, no_movies=a.no_movies, start_zone=a.start_zone, tour=a.tour,
                           jobs=a.jobs, forced_teams=a.forced_teams, start_party=a.start_party, frontend=frontend,
-                          buoys=getattr(recorded, 'buoys', None))   # SPEC 42: V22 checks the mode the build used
+                          buoys=getattr(recorded, 'buoys', None),   # SPEC 42: V22 checks the mode the build used
+                          limits_wave3=a.limits_wave3 or getattr(recorded, 'limits_wave3', 'off'),
+                          **{k: getattr(recorded, k) for k in ('save_layout', 'loot', 'loot_construction',
+                                                       'loot_def_damage_scale')
+                             if hasattr(recorded, k)})   # V67 / V-LOOT check the options the build used
     reg = C.Registry.load(Path(a.out) / '_build' / 'registry.json')
     ctx = C.BuildContext(a.out, a.base, args=args, registry=reg)
     ok = C.run_step(ctx, 'validate', run)

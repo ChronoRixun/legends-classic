@@ -71,6 +71,14 @@ class Job:
     jobs: int
     prepare_jobs: int
     main_menu_layout: str = 'classic'
+    anim_enums: str = 'xml1'
+    laa: str = 'on'
+    limits_wave3: str = 'all'         # 0.5.0-beta.1: the 0.4.2 line's options are the defaults (cli.py)
+    save_layout: str = 'w2'
+    loot: str = 'xml1'
+    telekinesis: str = 'xml1'         # beta 9 moves: ini-only options (build_xml1 --telekinesis / --guard-decide / --flying-carry)
+    guard_decide: str = 'off'          # off by default (Owen 10-28, the 082f real-pad check): XML2's Block / Grab
+    flying_carry: str = 'xml1'
     disc: dict = field(default_factory=dict)
     ident: dict | None = None
     xml2_info: dict = field(default_factory=dict)
@@ -319,7 +327,17 @@ def cmd_build(a, output, cancel, pipeline_factory):
     prepare_jobs = max(1, a.jobs or PL.default_jobs())
     jobs = max(1, a.jobs or max(1, (os.cpu_count() or 2) // 2))
     job = Job(out=out_dir, xml2=xml2, cache=cache, iso=iso, movies=movies, jobs=jobs, prepare_jobs=prepare_jobs,
-              main_menu_layout=getattr(a, 'main_menu_layout', 'classic'))
+              main_menu_layout=getattr(a, 'main_menu_layout', 'classic'),
+              anim_enums=getattr(a, 'anim_enums', None) or 'xml1', laa=getattr(a, 'laa', None) or 'on',
+              limits_wave3=getattr(a, 'limits_wave3', None) or 'all',
+              save_layout=getattr(a, 'save_layout', None) or 'w2',
+              loot=getattr(a, 'loot', None) or ('xml1' if (getattr(a, 'save_layout', None) or 'w2') == 'w2' else 'off'),
+              telekinesis=getattr(a, 'telekinesis', None) or 'xml1', guard_decide=getattr(a, 'guard_decide', None) or 'off',
+              flying_carry=getattr(a, 'flying_carry', None) or 'xml1')
+    from xml1build import loot as LOOT
+    why = LOOT.refusal(job)
+    if why:
+        raise BuilderError('E_USAGE', why + '.', 'Add --save-layout w2, or build with --loot off.', {})
     ctl = Ctl(output, cancel, job)
     pipeline = pipeline_factory()
     out_lock = cache_lock = None
@@ -600,6 +618,13 @@ def finish(a, output, job, ctl, pipeline, warn):
             missing = getattr(exc, 'missing', None)
             if not missing:
                 raise
+            if '[Limits] SaveLayout' in missing or '[Game] Xml1Economy' in missing:
+                # not a warning: an older DLL ignores the key, so the build would run on the baseline save layout (or
+                # XML2's economy) while it was built (and validated) for W2 / the first game's; nothing is written
+                raise BuilderError('E_XML2FIX_OLD', f'{exc}.', f'Put XML2 Fix {pipeline.required_xml2fix()[2:]} or later '
+                                   'into the folder, or build without --save-layout w2 / --loot xml1.',
+                                   {'missing': missing, 'count': len(missing), 'required': pipeline.required_xml2fix()},
+                                   stage='finish') from exc
             warn('W_XML2FIX_OLD', f'{exc}. The build is complete: put XML2 Fix {pipeline.required_xml2fix()[2:]} or '
                                   'later into the folder (the Ultimate Legends launcher does it after the build).',
                  {'missing': missing, 'count': len(missing), 'required': pipeline.required_xml2fix()}, stage='finish')

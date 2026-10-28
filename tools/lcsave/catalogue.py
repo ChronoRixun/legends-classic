@@ -17,6 +17,10 @@ import os
 
 from .keys import DOMAIN_NUMBER, DOMAINS, make_id, id_domain, id_serial
 
+# ITEM entry attribute bits (catalogue.lcc `attributes`; 0 for everything a release before the loot economy wrote)
+ITEM_OWN_REBUILT = 0x1       # the definition's own bonuses were converted again in place (loot step 1, DESIGN 2.1):
+                             # a saved instance's own enhancement list is replaced by the definition's current list
+
 DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
 CATALOGUE_FILE = os.path.join(DATA_DIR, 'catalogue.json')
 
@@ -98,6 +102,30 @@ class Catalogue:
                     self.add(tag, h)
         self.data['revision'] = self.data.get('revision', 0) + 1
         self.data['content_version'] = content_version
+
+    def extend(self, tables, content_version=None):
+        """append every hash of `tables` that is new, and nothing else: no refusal when a domain also lost keys (the
+        loot economy converts the Danger Room rewards again in place, so some of their old record keys are no longer
+        in the build; they stay in the catalogue, unused). The revision goes up by one like update()."""
+        for tag, hashes in tables.items():
+            for h in hashes:
+                if h and h not in self._by_hash.get(tag, {}):
+                    self.add(tag, h)
+        self.data['revision'] = self.data.get('revision', 0) + 1
+        if content_version is not None:
+            self.data['content_version'] = content_version
+
+    def set_attribute_bits(self, tag, key_hash_hex, bits):
+        """OR `bits` into the attributes of a key's entry (not through an alias)"""
+        e = self._by_hash.get(tag, {}).get(key_hash_hex)
+        if e is None:
+            raise CatalogueError(f'{tag}: no such key to mark')
+        e['attributes'] = int(e.get('attributes', 0)) | int(bits)
+
+    def attributes_of(self, value):
+        """-> the attributes word of a catalogue id (0 when unknown)"""
+        hit = self._by_id.get(value)
+        return int(hit[1].get('attributes', 0)) if hit else 0
 
     def check_invariants(self, previous):
         """-> [problem] against an earlier Catalogue (serials kept, hashes kept, next never down)"""

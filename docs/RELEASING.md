@@ -7,6 +7,16 @@ zeroes in numeric components. The numeric base must match `VERSION` in
 or assign a new lobby identity. Changes to generated game output still require the content
 version and release-identity work described in the [release checklist](RELEASE_CHECKLIST.md).
 
+**0.5.0 (the 0.4.2 line):** `REQUIRED_XML2FIX` is `1.10` and `REQUIRED_XML2FIX_PRERELEASE` `beta.1`, so a 0.5.0 beta
+declares `>=1.10.0-beta.1` and the stable 0.5.0 `>=1.10`; no 1.9.0 DLL satisfies it (the builder's DLL gate refuses one
+by name: it lacks the W2 save layout, the economy and the wave 3 rules). Tags for that line: `v0.5.0-beta.N` here and
+`v1.10.0-beta.N` for XML2 Fix (numeric bases 0.5.0 / 1.10.0). The launcher compares versions numerically (1.10 > 1.9).
+
+**0.4.1 (the port's beta 8):** `REQUIRED_XML2FIX` is `1.9` and `REQUIRED_XML2FIX_PRERELEASE` `beta.1`, so a 0.4.1 beta
+declares `>=1.9.0-beta.1` and the stable 0.4.1 `>=1.9`; neither XML2 Fix 1.8.0-beta.7 nor a stable 1.8.0 satisfies
+it (it knows none of the beta 8 keys and runs rule 16 as revision 11). Tags for that line: `v0.4.1-beta.N` here and
+`v1.9.0-beta.N` for XML2 Fix (numeric bases 0.4.1 / 1.9.0, set by the release step). The 0.4.0 notes follow.
+
 Beta and rc builders declare `requires_xml2fix: ">=1.8.0-beta.7"` in the release manifest and
 `requires.xml2fix` in the generated build stamp (`REQUIRED_XML2FIX_PRERELEASE`, `beta.7` since
 0.4.0-beta.7, which writes the schema 4 `[NpcSemiAuto]` rows for every gun NPC, `[Game] ClassicSpeakers` and

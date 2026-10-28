@@ -1028,13 +1028,16 @@ class StyleCollapse:
         out_root = sc.run()   # sc.talentvalues: {talent: {tv_name: {rank: value}}}, sc.report
     talents: {talent lname: {'power': '0'..'5'|None, 'levels': n}} of the hero's inline talents."""
 
-    def __init__(self, hero, root, values, talents, unregistered, icons='xml1'):
+    def __init__(self, hero, root, values, talents, unregistered, icons='xml1', rogue_decide=False):
         self.hero = hero
         self.src = root
         self.values = values
         self.talents = talents
         self.unregistered = set(unregistered)
         self.icons = icons
+        self.rogue_decide = rogue_decide
+        if rogue_decide:
+            self.unregistered.discard('ch_roguedecide')
         self.report = {'chain_map': {}, 'kept': [], 'dropped': [], 'collapsed': {}, 'renamed': {},
                        'enum_top_rung': [], 'added_triggers': [], 'nonref_top_rung': [], 'losses': [],
                        'warnings': [], 'errors': [], 'unverified_affecters': [], 'unregistered_handlers': [],
@@ -1416,6 +1419,17 @@ class StyleCollapse:
             else:
                 out_name = f'{self.hero}_decide' if name.lower() in TOP_NAMES else name
             plan[name] = [out_name, gate if (rungs or is_power_root) else None, (m.get('handler') or '').lower(), rungs]
+        # Rule 43: the decision remains the public power slot; its drain is an
+        # internal collapsed node. Merely registering the handler leaves two
+        # roots competing for power2, so distinguish them before D15 resolution.
+        if self.rogue_decide:
+            decisions = [name for name, p in plan.items() if p[2] == 'ch_roguedecide']
+            for name in decisions:
+                siblings = [nm for nm, p in plan.items() if p[0] == plan[name][0] and nm != name]
+                if plan[name][0] != 'power2' or len(siblings) != 1 or not siblings[0].startswith('ability_drain'):
+                    self.report['errors'].append(f'{self.hero}: unexpected Rogue decide/drain collapse {name}: {siblings}')
+                    continue
+                plan[siblings[0]][0] = 'ability_drain'
         # power-slot conflicts: two chains gated by the same power talent (Rogue decide + drain): drop the one whose
         # root handler XMen2.exe never registers and transplant its powerusage trigger (D15)
         by_out = collections.defaultdict(list)
@@ -2090,7 +2104,7 @@ class HeroBuilder:
         tinfo = self._talents_info(st)
         if name.lower() in {n.lower() for n in self.plan['npc_heroes']}:
             det['gates_added'] = gate_npc_style(sroot, tinfo)        # an npcstat style: power moves ungated
-        sc = StyleCollapse(h, sroot, self.values, tinfo, self.unregistered, self.icons)
+        sc = StyleCollapse(h, sroot, self.values, tinfo, self.unregistered, self.icons, rogue_decide=self.ctx.opt('rogue_decide') == 'xml1')
         out_style = sc.run()
         C.map_tree_refs(out_style)
         for msg in sc.report['errors']:
@@ -2656,7 +2670,8 @@ class HeroBuilder:
                 ctx.error(f'affecter attribute {attr!r} is not in XMen2.exe\'s affecter table 0x{CE.AFFECTER_TABLE:x} '
                           f'(0x{CE.AFFECTER_PARSER:x} parses it as none; add it to combat_events.AFFECTER_RENAME): '
                           f'{sorted(who)}')
-        ctx.defer('D15 (v1 scope): Rogue\'s decide step (ch_roguedecide) is dropped (Gambit/Jubilee charged_throw: '
+        ctx.defer(('D15: Rogue decide restored by rule 43; ' if ctx.opt('rogue_decide') == 'xml1' else
+                   'D15 (v1 scope): Rogue decide step (ch_roguedecide) is dropped; ') + '(Gambit/Jubilee charged_throw: '
                   'ch_throw -> ch_pickup_throw, SPEC 22); astral solo mode (T10), XML1 Danger Room courses, XML1 '
                   'team bonuses, talent icon re-atlassing, Psylocke blades 2/3 (BoltOn <require>), NPC-vs-hero balance '
                   '(flashback party save+restore: SPEC 19 popParty; mission-start unlocks: scripts.mission_start_unlocks)')
@@ -3028,7 +3043,7 @@ def _validate(ctx, report=None):
                         re.fullmatch(r'(bowl|prop|boost|optic|cyc_|ability_drain|sstrike|card_throw|StaffSlam|kinetic_boost|pick_up_|time_bomb\d|tele_strike|power_frenzy|shadow_arts|master_chaos_start|skate\d|chargeforward\d|fire_|fissure|xtreme\d|xtreme_contact\d|xtreme_frenzy_dash\d|eviscerate|clawfrenzy\d|berserk|MindFry|psychicshield|telekinesis_start|psy_|lnstrike|whirlwind|stormshield|cnfuse|fear\d|frost_shield|ppunch|cslam|colossus_steelskin|ice_|firework|flash\d|taunt\d|independence|beast_xtreme|power_(attack|smash|boost|xtreme)).*', c.get('result')):
                     ck.error(f'{h}: {nm} chains to dropped rung {c.get("result")}')
             hd = (m.get('handler') or '').lower()
-            if hd and hd not in CE.FM_HANDLERS:
+            if hd and hd not in CE.FM_HANDLERS and not (hd == 'ch_roguedecide' and ctx.opt('rogue_decide') == 'xml1'):
                 ck.warn(f'{h}: {nm} handler {hd} is not registered in XMen2.exe (runs as {CE.DEFAULT_HANDLER}, '
                         f'0x4fd860)')
             for e in m.iter():
@@ -3410,7 +3425,7 @@ def check(out, base=None):
     ctx = C.BuildContext(out, base or C.DEFAULT_BASE, args=args, registry=C.Registry.load(Path(out) / '_build' / 'registry.json'))
     try:
         rep = json.loads((Path(out) / '_build' / 'report.json').read_text(encoding='utf-8')).get('build', {})
-        for k in ('hero_roster', 'hero_icons', 'hero_bleed', 'newgame'):
+        for k in ('hero_roster', 'hero_icons', 'hero_bleed', 'rogue_decide', 'newgame'):
             if rep.get(k) is not None:
                 setattr(ctx.args, k, rep[k])
     except (OSError, ValueError):

@@ -684,7 +684,7 @@ Allowlists are named constants with a reason. Checks:
 | V2 registry | Every registered file exists with the recorded size. Report ownership overrides (`history`). The installed `x_common`/`x_voice`/`menu_*`/hero banks have a `research/sound/out/merged` source. | error |
 | V3 xmlb | Every registered XMLB-family file decodes, re-encodes byte-identically, has lowercase + sorted attribute names on every element (`C.xmlb_attr_problems`), and is longer than 8 bytes. Every `classname` is one of XMen2.exe's 27 entity classes (`x1schema.REGISTERED_ENTITY_CLASSES`); no XML1-sourced effect keeps `red`/`green`/`blue` (section 11) | error |
 | V4 packages | Every entry of every registered PKGB resolves (`C.package_entry_files`) in `<out>`. Allowlist: the 29 references dead on the XML1 disc, and `Computer`'s skin. Zone packages have `zonexml`, `characters` and `boy`. | error |
-| V5 stats | Parse `<out>` herostat and npcstat (both XMLB and engb). Unique names ≤ 296; herostat == 21; no npcstat name in herostat; names ≤ 31 characters; skins 4-5 digits with prefix ≤ 255. Per XML1-origin entry: the skin actor, `characteranims`, powerstyle, `moveset1`, talents (in shared_talents or `talents/<name>`), `sounddir` bank, both character packages, BoltOn models and `skin_<costume>` variants exist. shared_talents ≤ 99. The same checks for XML2-origin entries are warnings. | error / warn |
+| V5 stats | Parse `<out>` herostat and npcstat (both XMLB and engb). Unique names ≤ 296; herostat == 21; no npcstat name in herostat; names ≤ 31 characters; skins 4-5 digits with prefix ≤ 255. No stats string longer than the fixed width the engine keeps of it (`weapons.STATS_STRING_MAX`: powerstyle, moveset1, characteranims, footstepfx, sounddir, charactername ≤ 31 - the 32-byte setter 0x43a690 forces a NUL at byte 31, so a longer powerstyle names a file that does not exist and the character loses the style; power1..4 ≤ 19, 0x4b7f30); no generated style file name over 31 (V43 pass). Per XML1-origin entry: the skin actor, `characteranims`, powerstyle, `moveset1`, talents (in shared_talents or `talents/<name>`), `sounddir` bank, both character packages, BoltOn models and `skin_<costume>` variants exist. shared_talents ≤ 99. The same checks for XML2-origin entries are warnings. | error / warn |
 | V6 zones | Per converted zone: CHRB names ⊆ stats names; world entity present; `zonescript` resolves to an installed script; `soundfile` < 10 characters and its `_m` bank exists; `nextzone`/`prevzone` resolve (same directory or full path) to a zone in `<out>` (20 known unresolved `prevzone` are warnings); the zoneinfo entry exists; the zone file is owned by zones. The XML2 front end (`C.FRONTEND_ZONES`) is not rewritten. `Data/items`: XML1 items only in XML2 schema (type item/potion/equipment/money, no `activepowerup`), every `inventoryitem` names an item (section 11) | error / warn |
 | V7 scripts | For every registered `.py` and every script a registered package lists: CRLF only; each statement's function registered **exact-case** in `ctx.xml2_api`, argc == `len(argsig)`, literal types match; no `beginMission`/`beginMissionHack`/`loadMap`/`setMissionVar`/`getMissionVar`/`screenFade` in XML1 output. Inline data scripts (attribute values with `(` in registered XMLB) ≤ 255 bytes and valid. Dialog `runscript` code has no whitespace/`;` and ≤ 127 characters. Per-zone statement total (zone script plus the scripts its package lists) > 620 gives a warning. Distinct game-flag names ≤ 96 free. XML1 zone literals of load calls (and `cinematicStart` paths) lowercase with `/` (warning, section 11.4). Allowlist: the 14 known droppable lines in dead developer scripts (`missions/*_start.py`). Port the statement parser from `research/scripts/verify/v_output.py` / `rewrite_scripts.validate_lines`, but with exact-case matching. | error / warn |
 | V8 sounds | Every installed bank parses strictly (except XML2's own `boss4_m`); no stereo sample in any `.zsm`. Per converted zone, resolve with `research/sound/simlookup.load_banks(paths)` plus `simlookup.resolve(name, soundfile, banks)`: banks = `<soundfile>_{m,a,c,v,d}` + `x_common` + `x_voice` + the `sounddir` banks of its CHRB characters; names = registered zone XMLB attributes containing "sound" plus `sound("PLAY_SOUND","<name>",...)` literals in its package scripts. Report per-zone and total coverage. Warn on misses, and on a total below 94% (research baseline 94.8%, whose misses are absent from XML1 too). | error / warn |
@@ -6363,9 +6363,15 @@ rejects any changed placement SHA1. Optional `Data/lcsave/zone-prefix.lcm` now
 attests a previous and current whole-map hash after the builder compares complete
 resident-prefix definitions, placement-group attributes and instances exactly.
 The release ledger contains only hashes and original placement indices. Generate
-it with `python -m lcsave.zonecompat PREVIOUS_BUILD CURRENT_BUILD --ledger-out
-tools/lcsave/data/zone_prefixes.json`, against every supported old release; both
-`.engb` maps and `.xmlb`-only fallbacks participate. Savefiles retains recorded
+it with `python -m lcsave.zonecompat generate --previous STABLE_BUILD [--previous
+PREVIOUS_BETA_BUILD] CANDIDATE_BUILD --ledger-out tools/lcsave/data/zone_prefixes.json`
+(`plan` reports without writing the sidecar), against the stable release and, for
+later betas, the previous beta as well; both `.engb` maps and `.xmlb`-only fallbacks
+participate. Definition-only edits (`EQUIVALENT_ATTRIBUTES`, plus the zone-, definition-
+and value-bound owner-reviewed `REVIEWED_CHANGES`) produce full-length equivalence rows
+that the readers take as the exact-hash path, and re-target the previous build's
+prefix rows; details and the per-zone real-saves release gate are in
+`tools/lcsave/README.md`. Savefiles retains recorded
 attestations and emits packaged history in fresh builds. V39 under V39 checks
 applicable prefix digests against the built output.
 
@@ -7190,6 +7196,17 @@ co-op peers run the same build, so no gameplay agreement rule is involved.
 as `def_damage_scope` and no `resist_<type>` of those types. npc_values.verify_exe / verify_xbe also check both 0.3
 thresholds.
 
+**Aura art (COVERAGE C4, green-shield).** The HAARP officer's `physical_resistant_share` plays XML1's own effects, not
+XMen2.exe's `aura_physical_loop` (also a cylinder of `swipeband.png`, but without the officer's ripple/smoke): the
+shared powerup's `<special_fx>` is `powerups/aura_physical` (the recipients' swirl) and the apply_self powerup's is
+`powerups/aura_physical_src` (the source's `ripple.png` / `misc_smokepuff.png` sprites), both without `fxlevel`
+(XML1 has none). `npc_values.aura_fx_rewrite` (called from characters.restore_resist_talents, both halves) changes
+only those two references, for the talents in `X1_AURA_FX_TALENTS` (the physical aura; green-shield matched it
+against the original, the energy and mental auras use the same mechanism and are not listed). The two files are
+XML1-only entries of `permanent.PKGB` already (zones.build_permanent), so no package changes. Modifiers, radius 120,
+share life 1 and death cleanup are untouched (a data diff of shared_talents against the beta 7 build shows exactly one
+differing talent). V60 (`aura_fx_problems`) checks the references and that the files are built and listed.
+
 **SPEC 30 follow-up: scoped immunity rows.** SPEC 30 wrote XML1's scoped `def_damage` immunity rows (HavokBoss's
 `def_damage dmg_energy 0`, the Morlock bruisers' `def_damage dmg_physical 0.5`) as XMen2.exe `def_damage` with a
 `scope_damage`. XMen2.exe's `def_damage` (39) is a cached per-actor value: the cache rebuild 0x53bf20 runs
@@ -7701,3 +7718,366 @@ the native fixture and game-agent re-measurement matrix. Release integration mus
 advance CONTENT_VERSION and assign its immutable lobby identity/fingerprint after
 the final build (docs/RELEASE_CHECKLIST.md); this release branch retains the
 previous issued identity until that coordinated step.
+## 106. XML1 boss brains (XML2 Fix `[Game] Xml1Bosses`, gameplay rule 40)
+
+XML2 Fix's shared boss dispatcher (its `docs/xml1-controllers.md`, "Shared boss dispatcher") runs the first game's
+boss brains that XMen2.exe lacks, beside Master Mold (section 86, which keeps its own keys and rule 3).
+`fix_ini.build_bosses` writes `[Game] Xml1Bosses=<comma list>` with the other first-game controller keys: a boss is
+listed only when the finished build carries the converted zone its controller binds to with every instance name it
+binds by (`fix_ini.BOSS_BINDINGS`; a missing or renamed instance would leave the controller idle while rule 40 says it
+is on). Entries: `dopples` (`Maps/astral/ast3/colosseum.XMLB`, the four dopple instances) and `avalanche` (either of his
+two zones with the `avalanche` instance). `RELEASE_18_KEYS`
+refuses a companion DLL that does not know the key. No content, save or content-version change. Live acceptance
+(the original side by side, PLAN G6) is owed per boss; the dopples' list is in XML2 Fix's docs (D1-D3).
+
+### 106.1 Wave two (unreleased)
+
+The list now also supports `pyro` (astral/ast3/astral3_3, pyro), `mystique`
+(nyc/alison/nyc1_1_2b, mansion/dr_mag2/mag_nyc3 or astroid_m/visit1/asteroid2_1, mystique),
+`shadowking` (astral/savepx/final_astral, both shadowking and shadowking2), and `marrow`
+(sewers/hub/sewers1_2_4, marrow). Marrow is the retained native backboss brain; its entry asks the DLL to verify
+that path and advertise it under rule 40. It never requests a replacement tick. Bits 4/8/16/32 extend rule 40;
+Master Mold's rule 3 is unchanged. Avalanche revision 2 includes AI companions in nearest-hero selection and
+separately remembers the controlled hero for ranged facing.
+
+The builder decodes each finished map and checks exact named monsterspawnerent spawns, rather than accepting
+name substrings, waypoint names or references. Source planning accepts both .eng and .xml maps. A scripts-only
+rebuild uses the maps already present; a full zones build checks planned source maps.
+
+For a planned Shadow King controller, `boss_phases.rewrite_script` preserves sk3/sk4 requests without adding
+the section 36 hard invulnerability statements. The authored boost remains def_damage scale 0, life 31; its
+xtreme overrides the tagged lifetime to 0.01. The final INI lists Shadow King only when both actors and both
+generated shield scripts are present and those scripts contain no old hard invulnerability substitute. Thus a
+partial build carrying the old scripts keeps the substitute. The first-form floor relocation and death-script
+completion fix remain: no causal pillar damage fix is established.
+
+Generated shield scripts change, so CONTENT_VERSION advances 26 to 27. VERSION remains 0.4.0. Official identity
+history and save catalogue IDs are unchanged. Unfrozen source validation uses private token BW02; a frozen build
+refuses that source-only envelope. The coordinator must assign the integrated release's immutable identity.
+
+Synthetic coverage is in test_mold_controller.py and test_boss_phases.py. The companion DLL's controller fixtures,
+production Mystique bridge fixtures and synthetic image-install proof are recorded in its REPORT.md. No live
+acceptance is claimed: the complete per-boss checklist is in XML2 Fix docs/xml1-controllers.md.
+
+
+### 106.2 Wave three (unreleased; identity assigned by the coordinator)
+
+`Xml1Bosses` adds `magneto` (astroid_m/visit1/asteroid2_1, named magneto spawn) and `blob`
+(nyc/alison/nyc1_1_3, mansion/dr_mag2/mag_nyc4 or astral/ast3/astral3_5, named blob spawn). The companion DLL
+uses rule 40 bits 64 and 128, each boss revision 1. Rule 3 and the existing rule-40 option bits are unchanged.
+Magneto and Mystique can share the asteroid map; both bindings survive when both named spawns are present.
+
+For planned Magneto ON content, boss_phases keeps all authored stage2-5 phase requests and relay counters,
+removing only section 36's inserted wait/invulnerability release and shieldup protection suffix. The final INI
+requires all four generated scripts, the corresponding mag2-5 requests, no hard invulnerability statements in
+those scripts and no protection substitute on shieldup. Mixed map/script rebuilds retain their old fallback
+without advertising the controller until the contract agrees. The matching wave-three DLL refuses startup if
+requested Magneto cannot install, including a verified transaction rollback. Recovery is a compatible DLL or an
+OFF rebuild retaining section 36's substitute. `mag4` returns the authored shield; shield lifetime stays in the
+powerstyle and map counter graph. Blob's astral armour/pillar/growth scripts are unchanged by its controller.
+
+No content or release identity is assigned here. CONTENT_VERSION, VERSION and release_identity.py are left for
+the coordinator at integration. Synthetic tests cover script idempotence, exact phase requests, mixed builds
+and both actors sharing one map. Focused owned-input contract validation is not a playable-package rebuild.
+The complete phase/boundary/lifecycle/multiplayer acceptance list is in the companion DLL's
+`docs/xml1-controllers.md`; no wave-three game or emulator launch is claimed.
+
+## 107. XML1 animation enums (`--anim-enums xml1`, XML2 Fix `[Limits] AnimEnums`, gameplay rule 48)
+
+XMen2.exe registers 210 animation enums (0x00..0xD1, every slot taken). XML1 needs 23 more: the flying carry's
+(`ea_flyingcarry_*`, Phoenix / Rogue / Storm and their victims) and Juggernaut's grab victim's (`ea_jug_grab_*_v`).
+The companion DLL raises the table to 512 and gives the 23 names the fixed IDs 0xD2..0xE8 (`anim_enums.BUILTIN_ENUMS`
+order; xml2-fix `docs/anim-enums.md`). `--anim-enums xml1` (build_xml1 and the builder CLI; content option owned by
+characters) is the default since 0.4.1-beta.1 (beta 8 candidate 080c): `--grab-carry xml1` needs it, because XML2 Fix
+1.9.0-beta.1's rule 45 revision 3 installs only with AnimEnums (build_xml1 refuses the pair otherwise). Off (with
+`--grab-carry xml2`): none of the files below is written and no key - every output byte as before.
+
+With `xml1`, characters' last step (`anim_enums.run`) writes:
+
+1. `Actors/common.IGB` - XML2's file plus the 21 XML1 clips (`igb_anim_merge.REQUIRED_CLIPS`), transplanted at build
+   time from the player's XML1 `actors/common.igb` (nothing of them is in the repository). The engine loads `common`
+   into anim DB slot 2 of every actor (0x41ff9d), so the clips reach victims too. Both files have byte-identical
+   meta-field tables and the same 39 meta objects by name (parent, fields, versions) but in a different ORDER, so meta
+   numbers are remapped by name; both skeletons `common_skel` have the same 35 bones. Each clip's closure (1,894
+   items for the 21: 1,733 objects, 161 memory blocks) is appended after XML2's items in source reference order, its
+   binding re-pointed at XML2's skeleton, the clips appended to the database's animation list in XML1's order
+   (126 -> 147). `IgbFile.appended` writes it; `igb_anim_merge.verify` re-reads it: every original item
+   byte-identical at its old reference number (the list's count / capacity and its data block's new references
+   aside), every transplanted item byte-identical to its source after mapping back, every clip present once.
+   `V_flyingcarry_enemy_pickup` and `V_flyingcarry_throwdown` are absent from XML1's own file: not invented; their
+   enums fall back to enum 0's animation through the cache build's default, as on XML1
+   (`igb_anim_merge.KNOWN_ABSENT_IN_XML1`).
+2. `Data/shared_anims.XMLB` - XML2's 209 mappings plus XML1's 23 for the built-in enums, values verbatim (the two
+   absent clips included): 232 <= 512. PC wins on a shared name (none today); XML1's `ea_mission1..20` are not added
+   (XML2's `ea_zone1..20` stay, section 18's rename).
+3. `Data/fightstyles/moveset_flying.{XMLB,engb}` - XML2's file plus XML1's carry nodes (flyguarddecide,
+   airgrabpickup, airpickupidle / walk / run / throw / smash, fastball) converted like every XML1 style (x1schema +
+   the style patch), by `anim_enums.MOVESET_FLYING_PRECEDENCE`: every node of either file is listed with its winner
+   and reason, an unlisted node is an error. `flying` is XML1's (`XML1_FLIGHT_UPKEEP`, True since 080c): XML1's node
+   has no `energypersecond`, the DLL's rule 45 revision 3 charges XML1's strict one-second flight upkeep and filters
+   the `%flight_pwr` expression XML2's flymelee1/2 and painairfeetfirst keep (0x4f74b2), so flight is paid once. The
+   carry handlers (`ch_air_grab_pickup*`, `ch_fly_guard_decide`, `ch_air_grab_victim`) are not registered by
+   XMen2.exe; rule 45 revision 3 registers them through the shared lookup (V18 lists them).
+4. `[Limits] AnimEnums=512` (`fix_ini.port_keys`, port-owned: an OFF rebuild removes it). The builder requires the
+   DLL to know the key and to carry its marked table (`XML2FIX.ANIMENUMS.1`, u16 count, NUL-separated names) with
+   exactly the builder's 23 names in ID order (`fix_ini.check_anim_enums_dll`); a source-only build has no DLL.
+
+Validator (V7): with the key the known names are XMen2.exe's plus the 23 (compared with `<out>\dinput.dll`'s table
+when there is one; no DLL is a warning), nothing is deferred (`DEFERRED_ANIM_ENUMS` applies only without the key);
+every ANIMTABLE name must be a known enum, the count must fit (210 / 512), every built-in must be mapped to a clip
+in the output `common.IGB` (the two known-absent clips aside), and `moveset_flying` must hold the carry nodes with
+known enums, and `flying` must match `XML1_FLIGHT_UPKEEP` (XML1's: no `energypersecond`; else XML2's with it - the
+other combination pays flight twice or never). The builder also requires rule 45 revision 3 wherever it writes
+`Xml1GrabCarry` (`fix_ini.GRAB_CARRY_R3_MARKER`, the DLL's install line; 080b's revision 2 DLL is refused by name).
+The IGB cache count (SPEC 13) and the actor-resource budget (SPEC 14) are unchanged: same single file.
+
+### Character sound cache (beta 8, rule 49)
+
+Every XML1 build writing `AnimEnums=512` also writes `[Limits] CharSounds=127`.
+The DLL atomically relocates the 16-record sound cache to 127 records, including its getter and teardown bounds.
+Absent or `16` keeps retail bytes; other values are refused. The builder requires the CharSounds key and the
+rule-49 install marker in an existing companion DLL. Rebuilding with animation enums off drops both keys.
+
+### Motion pool (rule 51)
+
+XML1 builds writing `AnimEnums=512` and `CharSounds=127` also write `[Limits] MotionPool=22528`.
+The companion DLL raises the native pool and bounds each owner to 176 clip records, with guarded readers.
+The builder requires the MotionPool key plus its rule-51 registration marker. Rebuilding with animation enums
+off drops the key. It does not change the release identity.
+
+### Resident stats (rule 50)
+
+XML1 builds writing `AnimEnums=512`, `CharSounds=127` and `MotionPool=22528` also write `[Limits] ResidentStats=320`.
+The companion DLL raises the resident CStats pool (31 -> 320) and the NPC stats payload pool (11 -> 320) together,
+keeps the hero payload pool at 22 (the port has 21 heroes), and admits a character type only when its payload can be
+allocated (no null payload). Rule 50 values are {320,22,320,1}. The builder requires the ResidentStats key plus its
+rule-50 registration marker; rebuilding with animation enums off drops the key.
+
+## 108. Large-address-aware XMen2.exe (`--laa`, content module `exe_flags`, gap row E12)
+
+XMen2.exe is a 32-bit program without `IMAGE_FILE_LARGE_ADDRESS_AWARE`, so Windows gives it 2 GB of address space;
+with the flag a 32-bit process on 64-bit Windows (and Wine / Proton) gets 4 GB. Windows reads the flag from the exe's
+file header when the process starts, so there is no runtime switch: the content module `exe_flags` (before
+`savefiles` in `MODULE_ORDER`) writes the build's own copy of the exe with the flag set - one word of the PE file
+header (the retail exe: file offset 0x146, 0x010f -> 0x012f), the PE checksum recomputed only when the exe has one
+(the retail exe's is 0). The install's exe is never written (`ctx.write_bytes` replaces `<out>`'s file atomically;
+`_check_out_safe` keeps `<out>` away from the install). An install exe that already has the flag is left as copied.
+
+`--laa on|off` (build_xml1, default on; the builder CLI: `--no-laa`), content option owned by `exe_flags` (builds
+from before this section count as `off`). Off: no file is written, the base sync's byte-identical copy stays.
+
+What changes for the hashes: `XMen2.exe` is a built file in the manifest (kind `built`, the flagged copy's sha1)
+instead of a base file; `verify` checks it like any built file, a rebuild writes it again, and the install's own
+exe still has to match the retail reference (`known_xml2.json`, `xml2_retail_files.json.gz`: unchanged, the
+builder checks the install, not the build). The candidate kits' `check_same_build.ps1 -Full` package digest covers
+the flagged exe like every other file (both PCs of a co-op session build it the same way). The launcher has no hash
+of its own (it runs `xml1-builder verify`).
+
+V1 checks the build's exe against the install's: byte-identical with `--laa off`; with `on` identical except the
+flag word (and the checksum, if any). XML2 Fix logs `address space: laa on|off; 2 GB guard ...` at start, keeps the
+64 KB block below 2 GB reserved when the flag is on (no allocation can straddle 0x80000000: the static check found
+signed pointer compares in a D3DX8 MMX mip-filter loop that misbehave only for a buffer across that line), reports
+`memory laa ...` in the test pipe's `status`, and writes a `crash:` line with the flag and the address-space totals.
+The static risk check of every module the game loads and the live high-address test are in the E12 work notes.
+The DLL gate (`fix_ini.check_address_space_dll`): when `<out>/XMen2.exe` carries the flag, the companion DLL must carry
+the module's start line (`ADDRESS_SPACE_MARKER`); `--laa off` builds and builds without an exe yet check nothing.
+
+### Telekinesis and guard decide (rule 46 bits 512 / 1024, candidate 080d)
+
+`port_keys` writes `[Game] TelekinesisRule=xml1` and `GuardDecideRule=xml1` (`fix_ini.TK_GUARD`, xml2-fix
+docs/tk-guard.md) together with `Xml1GrabCarry=xml1` and only with it: the fix installs both only beside an installed
+rule 45 (the shared grab lifecycle and its pickup claim) and otherwise refuses them and closes online. A rebuild with
+`--grab-carry xml2` drops both keys (PORT_OWNED). Both are RELEASE_18_KEYS: a DLL without the key names (080c and
+older) is refused by name.
+
+Beta 8 candidates 080h / 080i: both are off by default and written only on request, still only with
+`Xml1GrabCarry=xml1`: `--telekinesis xml1` (080h) and `--guard-decide xml1` (080i; with the key a real Guard press did
+nothing in Owen's 10-26 hand test while the test pipe's presses worked). Without `GuardDecideRule` Guard runs XML2's
+`ch_guard_decide`, which grabs and picks up through the `grab` talent characters adds (rule 46 installs without bit
+1024). Both options are ini only (CONTENT_OPTS with no module), so toggling one re-runs nothing.
+## 108. Limits wave 3 (`--limits-wave3`, XML2 Fix rules 35 revision 2 and 53-60; validators V-MOVES .. V-SCRIPTS)
+
+Full text: `docs/LIMITS_WAVE3.md`. `--limits-wave3 {off,on,all}` (default off, `build_xml1.py` and `xml1-builder build`) writes
+`[Limits] FightStyles=64, StyleEvents=4096, FightMoves=1024, EffectTemplates=512, PrimitiveDefs=2048, EffectVectors=4096,
+PrimitivesPerEffect=32, AttachedPowerups=256, VFNodes=256` (rules 61 / 62; `all` adds `ScriptPools=x1`, `ParticleScratch=40`; rules 59-60 have no DLL row yet). The option is
+recorded in `report.json` only when on; with it off the build, ini, report and validation are the ones written before the
+option existed. The builder requires each key plus its rule's install line in an existing DLL (`fix_ini.WAVE3_MARKERS`,
+placeholder wording until the DLL rows land) and refuses a DLL without them by name (`FightStyles` above 32 needs rule 35
+revision 2). An off rebuild drops the keys.
+
+With the option on the validator adds V-MOVES, V-EVENTS, V-EFFECT-FILES, V-PRIMITIVES, V-VECTORS, V-CURVES (with the
+combined effect budget) and V-SCRIPTS (`limits_wave3.py`), extends V23 (V-STYLES) with the raised capacity, a witness and
+the 50 % warning, and replaces V7's 620 / 1,556 / 120 pool warnings by V-SCRIPTS (retained nodes = statements minus
+else / endif). Each covers every converted zone and allowed four-hero party (without the two Professor X forms), reports
+count / capacity / witness, fails above capacity and warns at equality or above half.
+
+## 107. The W2 save layout (`--save-layout w2`, XML2 Fix `[Limits] SaveLayout=w2`; validator V67)
+
+Limits wave 2 (XML2 Fix `docs/limits-wave2.md`, "Step 8: DLL selection, admission and builder contract") raises the
+save-bound and engine limits in one transaction, selected by one key. Legends Classic carries it as an **opt-in builder
+option**, default off, because W2 is the 0.4.2 line and is in no candidate yet: a build made without the option writes no
+`SaveLayout` key and validates against the limits the older sections state, so its output and ini are unchanged.
+
+**The option.** `build_xml1.py --save-layout {retail,w2}` (also `xml1-builder build --save-layout ...`, which passes it
+on) records `build.save_layout` in `_build/report.json`; `fix_ini.build_save_layout(out)` reads it back (never the
+existing ini: rebuilding without the option must drop the owned key), `common.args_for_out` hands it to standalone
+checks, and it is a content option of the `zones` module (the talent precache budget follows the layout's pool;
+`plan_content_opts` re-runs `zones` when it changes). `tools/harness.py install` writes the same keys for a build made
+with it and refuses `--stock-limits` / `--stock-opening` with it.
+
+**The keys (`fix_ini`).** `limits_for('w2')` = `LIMITS` with `SaveLayout=w2` after `EntityCapacity=1` and
+`ItemEnhancements=4096` (the DLL accepts only 4096 beside W2 and refuses the build's default 512 at start-up).
+`port_keys` adds `[Save] Format=lc` as for every port build. `check_save_layout_keys` is the contract table, builder
+side: SaveLayout is written only as exactly `w2`, only with `[Save] Format=lc` and `EntityCapacity=1`, with
+`ItemEnhancements` absent or 4096; every other key set raises ValueError (no `[Save] Format=lc` = stock bytes, the DLL
+would ignore the key; EntityCapacity absent / 0 = "SaveLayout=w2 needs EntityCapacity=1"). A key set without SaveLayout
+is the configured baseline (RETAIL, or E10A2 with EntityCapacity alone) and always passes. `check_save_layout_dll`
+probes the companion DLL for the UTF-16 key name with its terminator, as `check_entity_capacity_dll` probes
+EntityCapacity (a message that merely starts with the key is not support), and `write_port_keys` raises FixTooOld for
+it even with `old_fix_ok`: the other keys of an older fix are a warning the launcher resolves right after the build,
+this one is not, because an older DLL ignores the key and the build would run on the baseline layout while it was
+validated for W2. `SaveLayout` is in `PORT_OWNED['Limits']`, so a build that stops asking for it drops it from the ini.
+
+**The data limits (`w2_limits`).** The numbers are read from `lcsave.layout.W2`; `RETAIL_LIMITS` keeps the released
+ones. The existing rows take them from `w2_limits.limits(ctx)`: the missions row of the validator and `scripts`
+(mission files 25 / 64, objectives 299 / 1024, per act 75 / 127), V44 `talent_budget` (registry 100 / 256 names, 9
+files in both, shared cap 99 / 199) with the reviewed-prop precache pruning, `characters` and the validator's shared
+talent cap, and the items stage's enhancement pool (512 / 4096, `zones.item_enhancement_pool`). W2 adds position rows
+(a hero's talent index < the multiplier 200, shared < 199; with the largest stats index 296 the saved id stays below
+65536) and V67 for data nothing checked before:
+
+| Row | Counted over | W2 limit |
+|---|---|---|
+| item definitions | distinct `<item>` names of Data/items | 1024 |
+| enhancement / attached records | every `<enhancement>` of Data/items (attached records are the same records) | 4096 |
+| placements | every `<inst>` of a zone's map, recursively (C2 counting rule, the DLL preflight's count) | 1024 per zone |
+| item instances / world slots | world-item placements (classname inventoryent or an inventoryitem) over the 8 heaviest zones | 1024 |
+| zone-string names / arena | distinct `<inst>` names (plus NUL) over the 8 zones with the most | 8191 / 0x1ffff |
+
+Item instances and world slots are runtime counters (`save layout` status line); the world-item rows bound them from the
+data, and the live peak per real save is gate C3 of the wave. Without the option V67 only notes that it checked nothing.
+Synthetic coverage is `tests/unit/test_w2_builder.py`. No game or emulator was launched for it.
+
+
+## 108. The first game's item economy as data (`--loot xml1`, XML2 Fix `[Game] Xml1Economy=1`, gameplay rule 52; validator V-LOOT)
+
+Loot + Forge step 1 (design: the coordinator's `loot-forge-design` revision 2.2, sections 2.1-2.4, 6, 7, 8.1, 8.3). The
+builder converts the first game's whole equipment table and writes what XMen2.exe's item parser never reads; the roller,
+the prices, the Forge and the zero-draw construction are XML2 Fix's (steps 3a-8). It is an **opt-in builder option**,
+default off, in `build_xml1.py` and `xml1-builder build`: `--loot {off,xml1}` (and `--loot-construction
+{zero-draw,one-roll}`, which only selects the `construction-one-roll` approximation row when the DLL ships the native
+fallback). It is refused unless `--save-layout w2` is selected (185 definitions, records over 512; `loot.w2_selected` is
+the one helper that reads that option) and `--frontend xml1` (the Danger Room rewards). A build without it takes none of
+the paths below: its files, `report.json`, `validate.json` and ini are unchanged. `build.loot` / `build.loot_construction`
+are recorded only when asked for; both are content options of `zones` and `frontend` (`plan_content_opts`).
+
+**Identities (`loot.Plan`).** The 88 definitions of the legacy table (XML2's 64 + the 24 XML1 items a converted map names)
+stay byte-identical, in order and keys. The 19 Danger Room rewards are converted again **in place** (same name and
+position; no cost, unique, source class, every bonus, `own_rebuilt` in the catalogue). The other 97 XML1 equipment are
+appended after everything as `lc_x1_<lowercase name>` (including `lc_x1_exodus_cloak` beside XML2's own unique,
+`lc_x1_astral_stone` beside the legacy plain item, and `lc_x1_magnetos_helmet`, which no path awards). `frontend.
+translate_equipment` keeps converting the legacy list (its order is the ledger the in-place replacement follows) but its
+results for the rewards are replaced. Fields: `item_bonuses.convert_equipment` (class from the numeric source class, cost
+verbatim, quality prefix baked into `displayname` = XML1 strings 1006-1009 + one ASCII space, none for quality 0 and
+uniques, **no PC `quality` attribute**, `enemy_level` -1, the source description, the 21 descriptions missing today filled).
+
+**References.** `loot.rewrite_references` rewrites every `inventoryitem` of the converted maps and world tables that names
+an XML1 equipment to its identity (the only placement in the owned data is the astral stone's); the legacy definition of a
+rewritten name is kept alive in the item references (`item_refs`) so the 88 do not shrink. `rewarditem` keeps the 19 names.
+V-LOOT errors on a remaining reference to a legacy equipment name.
+
+**Bonuses (`item_bonuses`).** All 168 source powerups convert and every record is single-valued (the construction fixes
+the engine's draw, so min == max; a source range collapses to its mean, `atk_damage` keeps its minimum). 28 exact, 134
+approximate (104 as the staging converter had them, plus 21 probabilistic reflections at the expected value `chance x
+amount` with no per-hit gate, 7 `special`/damageaddattack as `class="add_attack"` with a flat `special` affecter - the form
+the shipped XML2 gear uses - and 2 DamageAddBleed as `class="add_harming" radiation="false"`), 6 original no-ops that write
+no record; 0 pending, 0 adapter rows (a PC mechanism exists for every family). Evidence and limits: `docs/ITEM_BONUSES.md`.
+
+**Sidecar `Data/x1economy.txt`** (`loot.sidecar_bytes`, never in Git): the DESIGN 2.2.1 format byte for byte - ASCII, LF,
+`x1economy 1` / `count N` / `sha256 <body digest>` then one line per definition `name group frequency flags cost vendor
+quality source` in PC definition-index order (116 equipment, HEALTH_ITEM / ENERGY_ITEM, XTREME_PIP, SKIRMISH_KING_PIP, the
+keys, SKILL / STAT, MONEY1-3). Flags: 0x1 unique, 0x2 grabbag, 0x4 rebuilt, 0x8 noaward (group -1, not a reward, not
+placed by a map: `MAGNETOS_HELMET`), 0x10 sellable (every equipment; non-equipment with source index above 15), 0x20 money,
+0x40 equipment. Packs carry no cost (the price is code). `loot.parse_sidecar` is the reference parser (every refusal the DLL
+makes).
+
+**Approximations** (`approximations.json` / `APPROXIMATIONS.md` in `_build/` and `Docs/`): one row per item per source bonus
+(`exact` | `bonus-approx` | `noop-original` | `adapter`, with the XML1 value, the port value, why, the family and the record
+number) plus the source-controlled behaviour rows (`loot.BEHAVIOUR_ROWS`: `grabbag-charge-once`, `g-per-roll`,
+`carry-gate-20`, `legacy-xml2-gear`, `dr-king-pip-branch`, `treasure-pc-cadence`, `level-adjust-no-regen`,
+`physical-spawn-rng`; `construction-one-roll` only with `--loot-construction one-roll`). V-LOOT checks them both ways and that
+the markdown equals the JSON.
+
+**INI.** `[Game] Xml1Economy=1` (`fix_ini.build_loot`, owned: a rebuild without the option drops it), only with
+`SaveLayout=w2`; `check_economy_dll` probes the DLL for the UTF-16 key (`write_port_keys` raises even with `old_fix_ok`:
+an older fix would run XML2's economy against the XML1 table). `tools/harness.py install` writes the key too.
+
+**Shop menu.** `shop_appearance` hides the Training controls (`shop_option03`, `shop_option03_focus`: `hide`/`enabled`
+only) under the option; the native two-tab behaviour is the DLL's.
+
+**Save catalogue.** `tools/lcsave/data/catalogue.json` is not edited: every entry is written to `catalogue.lcc`, so a
+build without the option would change. With the option `savefiles` numbers the build's new keys on a copy
+(`loot.derived_catalogue` = `Catalogue.extend`: append-only in table order, no refusal when old reward record keys left;
+`ITEM_OWN_REBUILT` set on the 19 rewards). `python -m lcsave catalogue --append-only [--own-rebuilt-ledger loot.json]`
+commits the same ids at release. `convert.Reverse.instance` is the Python reference of the loader migration: an instance of
+a definition with `own_rebuilt` gets the definition's current own list (interpolation bits 0). Two latent W2 problems
+fixed on the way (found by the 185-definition test): `loaded_zone_metadata` validated against the retail 160 definitions,
+and `_translate` matched the definition-count byte only against the retail 375 / 512 pools (a W2 stream's pool is 4096).
+
+**V-LOOT** (DESIGN 8.1, registered only with the option): 1 accounting of the 132 definitions and the legacy ledger, 2 the
+sidecar field for field, 3 the Forge catalog per tier (18 / 37 / 52 / 69 / 85), the drop pools per tier and bucket and
+the Grab Bag pools against the source, 4 the 168 powerups (none pending), single-valued records, own slots, 5 capacities
+(definitions, records, attached worst inventory below half of 4096, vendor stock 85 of the shop's 100 rows), 6 references,
+7 text, 9 approximations both ways, 10 the PC treasure entities in converted maps (counted). Item 8 (a build without the
+option equals the base) is a build comparison, not a check: `tools/build_equiv.py` over two fresh builds. Synthetic
+coverage: `tests/unit/test_item_bonuses.py`, `test_loot.py`, `test_lcsave_loot.py`. No game or emulator was launched.
+
+
+## 109. Loot + Forge test tools: D8 option, the G8 comparator, the seeded saves (builder side; no game or emulator launched)
+
+Loot step T (`task-loot-impl-tests`), on `loot/builder` (SPEC 108). Three developer tools and one builder option; none of them
+changes a build made without the option, and none ships in a release.
+
+**D8, `--loot-def-damage-scale {noop,resist}`** (default `resist` with `--loot xml1` since the 0.4.2 integration, Owen's
+D8 decision 10-26; `noop` without `--loot xml1` or when asked for; `build_xml1.py` only, with `--loot xml1`; a content option of
+`zones`, `plan_content_opts`; recorded in `report.json` / `loot.json` only when `resist`). Four items carry no working bonus in the
+first game: `def_damage_scale` is never registered by the original's parser (bonus table 0x44e8c8), and these four have no other
+bonus. `noop` (today's output, byte for byte) writes no record for them (`noop-original` rows). `resist` (owner decision D8, option
+b, decided 10-26: the default) writes the authored multiplier as the PC scoped damage-resistance scale record the converter already uses
+for the source `def_damage` scale items: `<affecter attribute="def_damage_scope" level="<authored>" affect_type="scale"
+scope_damage="<authored>"/>`, description `Damage taken x<authored>`, as a `bonus-approx` row (family `defense (resist)`, reason
+names D8). Authored values (owned `items.eng`; aggregate): `MAGNETOS_HELMET` 0 (dmg_mental; a multiplier of 0 is full immunity;
+the item is never awarded), `SHIAR_MIND_GEM` 0.5 (dmg_mental), `SHIAR_BODY_SHIELD` 0.5 (dmg_physical), `SHIAR_ENERGY_ARMOR` 0.5
+(dmg_energy). The rule is "an item whose every bonus is `def_damage_scale`" (`item_bonuses.convert_equipment(...,
+def_damage_scale=)`): `VINDICATOR_GAUNTLETS` (XP plus `def_damage_scale` 0.8 on beam attacks) stays a no-op in both modes, and
+so does the item with another bonus in the unit tests. `resist` adds 4 records (536 to 540) and moves 4 rows from `noop-original`
+to `bonus-approx` (134 to 138 approximate, 6 to 2 no-ops). V-LOOT checks the four items both ways and that `loot.json` records the
+option. Note for the owner decision: the 0.4.1 converter (`frontend.translate_equipment`) writes `resist_<type> = 1 - value` for the
+three Shiar items, so beta 7 / 8 players have a working 0.5 resistance on them today and `noop` removes it.
+
+**`tools/loot_compare.py`, the G8 comparator.** Reads the original-game S6 log and the port's roll log and prints, per run and
+pooled, rolls, pickups, drop events (a roll's pickups of one class count once), events per enemy-minute, events per roll and the
+gear / pack / money / Xtreme mix; PASS needs >= 3 runs a side and the pooled event rate and each of the four shares within +/-20
+percent of the original (z scores; rows with < 20 events are flagged UNDERPOWERED). S6 line format (also in the module docstring):
+`run id=.. zone=.. enemy_minutes=..`, `roll t=.. cat=.. lead=.. [n=..]` per roller entry, `spawn t=.. def=.. amt=.. [n=..] [cls=..]`
+per spawn call. The port side is the DLL's own `roll cat= lead= G= bucket= def= amt= draws=` line (one per pickup; `def=-` for no
+drop), with or without the log timestamp, and carries an explicit roll serial `n=<serial>` (the same on every pickup line of a
+roll): the comparator groups by it, exactly. Without `n=` (an older DLL) it falls back to a 20 ms window and prints WARNING lines
+for merged groups of more than 4 pickups, timestamp-less merges, reused serials and mixed logs (two rolls of three MONEY1 10 ms
+apart were once one six-pickup roll without a word). Tests: `tests/unit/test_loot_compare.py` (synthetic logs from an invented
+drop model). V-LOOT also compares every emitted enhancement record with the converter's (attributes, children, order; a bonus
+10 written as 999 fails) and requires every equipment reference (inventoryitem in any map or script, Danger Room rewards, sidecar
+equipment rows) to name an economy identity (an XML2-only equipment definition fails); tests in `tests/unit/test_loot.py`.
+
+**`tools/loot_seed_saves.py`, seeded saves.** Edits copies of one real LC campaign save (read only): every non-xpexempt hero to the
+seed's level and the first game's XP total for it (highest level 1 / 10 / 20 / 30 / 40 gives tier G1-G5; the ADJ seed holds one
+hero below the rest), money for every Forge row, one carried legacy Danger Room reward with its old own list, the Healer and the
+Forge in the campaign; all other sections stay raw payload. Each seed is re-read, compared with the base and run through the
+reference W2 loader; `manifest.json` lists what each carries. It refuses game folders and `Documents\Activision`. Output is
+personal save data: never for Git. Tests: `tests/unit/test_loot_seed_saves.py` (invented build and save).
+
+**Fix found with the seeds.** `convert.Reverse.instance` resolved every saved record id before it replaced the own list of a
+rebuilt (`ITEM_OWN_REBUILT`) definition, so an old instance whose list shrank (Goddess Medallion and Phoenix Mantle 3 to 2
+records, the three Shiar items 1 to 0 under `noop`) named ids the new table no longer has and the save was refused ("parked /
+unknown"). The own list of a rebuilt definition is now skipped and set from the definition. Test (red before the fix):
+`test_lcsave_loot.test_a_rebuilt_reward_whose_list_shrank_still_loads_with_the_current_list`, with a negative control.

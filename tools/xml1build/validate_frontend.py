@@ -922,7 +922,7 @@ def v_classic_pause(v, ck):
             ck.error('classic pause animation graph is unreadable: ' + str(error))
     native_halves = F.pda_menu_trees(v.ctx)[:2]
     if native_halves[0] is not None and native_halves[0].find("item[@name='object_screen']") is not None:
-        for problem in M.placement_problems(scene, P.objectives_layout()):
+        for problem in M.placement_problems(scene, P.objectives_layout()) + P.objectives_layout_problems():
             ck.error('classic objectives: ' + problem)
     for ext, native in zip(('.XMLB', '.engb'), native_halves):
         root = v.tree(F.PDA_MENU_REL + ext)
@@ -1145,7 +1145,8 @@ def _classic_service(v, ck, adapter, menu, native_scene):
         if root is None or root.get('igb') != adapter.SCENE:
             ck.error('classic service definition/scene missing: ' + menu)
             continue
-        for problem in H.control_problems(v.ctx.read_base_xmlb('UI/menus/' + menu + ext), root, adapter.RETIRED):
+        extra = getattr(adapter, 'extra_retired', lambda _ctx: ())(v.ctx)       # --loot xml1: the shop's Training tab
+        for problem in H.control_problems(v.ctx.read_base_xmlb('UI/menus/' + menu + ext), root, adapter.RETIRED + extra):
             ck.error(menu + ': ' + problem)
         if hasattr(adapter, 'BACK'):
             helper = root.find('items')

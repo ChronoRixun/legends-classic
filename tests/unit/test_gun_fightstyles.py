@@ -126,3 +126,32 @@ def test_convert_stats_leaves_melee_holders_alone():
         assert _fight_talents(out) == ['fightstyle_testclub']
         out = b.convert_stats(_stats('', 'fightstyle_testbrawl'), 'xml1')       # unarmed (pistol bosses, brawlers)
         assert _fight_talents(out) == ['fightstyle_testbrawl']
+
+
+def _real_weapon_style_builder():
+    errors = []
+    ctx = types.SimpleNamespace(count=lambda *a: None, warn=lambda *a: None, defer=lambda *a: None,
+                                error=lambda m: errors.append(m), x1_path=lambda rel: None,
+                                x1_is_empty=lambda rel: True)
+    b = CH._Builder.__new__(CH._Builder)
+    b.ctx, b.lock = ctx, threading.RLock()
+    b.styles, b.variant_base, b.variant_ident = {}, {}, {}
+    return b, errors
+
+
+def test_weapon_style_refuses_a_name_the_engine_would_cut():
+    b, errors = _real_weapon_style_builder()
+    with patch.object(CH.C, 'map_powerstyle', lambda n: 'x1_' + n):
+        # 'x1_ps_<39 characters>' cannot be fitted by dropping 'ps_': refused, nothing registered
+        assert b.weapon_style('p' * 34, {'name': 'wp_x'}, 'wp_x') is None
+    assert len(errors) == 1 and 'more than the 31' in errors[0]
+    assert not b.variant_base and not b.variant_ident
+
+
+def test_weapon_style_refuses_two_variants_that_share_a_name():
+    b, errors = _real_weapon_style_builder()
+    with patch.object(CH.C, 'map_powerstyle', lambda n: 'x1_ps_grso'):
+        # two different XML1 weapons whose generated names collide: the first claims it, the second is refused
+        b.variant_ident['x1_ps_grso_mp5'] = ('x1_ps_other', 'wp_mp5', '')
+        assert b.weapon_style('ps_grso', {'name': 'wp_mp5'}, 'wp_mp5') is None
+    assert len(errors) == 1 and 'generated for' in errors[0]

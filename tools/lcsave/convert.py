@@ -18,7 +18,7 @@ import time
 from . import layout as L
 from . import oldsave
 from .binds import Binds, KEY_ITEM_NAMES, TRIVIA_PER_ACT, REVIEW_PER_CATEGORY, COSTUME_SLOT_COUNT
-from .catalogue import Catalogue
+from .catalogue import Catalogue, ITEM_OWN_REBUILT
 from .container import write_file, read_file, feature_decision, SECTION_FLAGS, SECTION_MINOR, CAMPAIGN_SECTIONS
 from .keys import key_hash, make_id, DOMAIN_NUMBER, id_domain, DOMAINS, canonical_key
 from .legacy import load_eras, eras_of, talent_era, zone_record_eras, CONTENT_TO_RELEASE
@@ -39,6 +39,7 @@ DEFAULT_RESTORE_ATTR = dict(trait_base=[1, 1, 1, 1], trait_pending=[0] * 4, trai
 DEFAULT_RESTORE_TAIL = dict(health=0.0, energy=0.0, player_seat=-1, vitals_valid=0, pad0d=[0, 0, 0], experience=0,
                             ack_level=1, health_boosts=0, energy_boosts=0, levels_purchased=0, points_bought=0,
                             respec_count=0, skirmish_boost=0, flags=0)
+OWN_SLOTS = 8                  # a definition's own enhancement slots (the instance's own list never holds more)
 ITEM_POOLS = (375, 512)          # enhancement record pools of XML2 Fix before / from 1.3.0 (the item table cut)
 
 
@@ -49,14 +50,15 @@ class ConvertError(ValueError):
 class Environment:
     """what a conversion needs: the era model, the catalogue, and (for names, zones and KEYS) the player's build"""
 
-    def __init__(self, build=None, eras_path=None, catalogue_path=None):
+    def __init__(self, build=None, eras_path=None, catalogue_path=None, catalogue=None):
         self.model = load_eras(eras_path) if eras_path else load_eras()
         self.eras = eras_of(self.model)                        # newest first
         self.by_cv = {e.cv: e for e in self.eras}
         self.ref = self.model['reference']
         from .conversations import historical_tables
         self.conversation_tables = historical_tables(self.model)
-        self.catalogue = Catalogue.load(catalogue_path) if catalogue_path else Catalogue.load()
+        self.catalogue = catalogue if catalogue is not None else (Catalogue.load(catalogue_path) if catalogue_path
+                                                                  else Catalogue.load())
         self.binds = Binds(build) if build else None
         if self.binds:
             from .conversations import current_tables
@@ -130,6 +132,7 @@ class Result:
         self.dropped = {'zone_records': 0, 'world_items': 0, 'zone_vars': 0, 'other': 0, 'talents': 0, 'states': 0}
         self.era = {}
         self.parked = 0
+        self.native = L.RETAIL   # the stream's layout (talent multiplier, world-item slot field); the saver sets it
 
     def summary(self):
         return (f'start era {self.era.get("start")} items era {self.era.get("items")}; dropped {self.dropped}; '
@@ -237,10 +240,11 @@ def _hero_record(env, res, era, item_era, block_index, stats_index, h, what):
                ai_level=a['ai_level'], ai_attack=a['ai_attack'])
     talents = []
     hero_tal = era.table('TALN_hero').get(stat_hash, [])
+    M = res.native.talent_multiplier          # the layout's id space (RETAIL / E10A2 100, W2 200)
     for e in a['talents'][:a['count']]:
         tid = e['id']
         f = oldsave.talent_fields(e)
-        if tid < 100:
+        if tid < M:
             t = era.table('TALN_shared')
             if tid >= len(t):
                 res.dropped['talents'] += 1
@@ -248,8 +252,8 @@ def _hero_record(env, res, era, item_era, block_index, stats_index, h, what):
                 continue
             h_ = t[tid]
         else:
-            owner = tid // 100 - 1
-            pos = tid % 100
+            owner = tid // M - 1
+            pos = tid % M
             if owner != stats_index:
                 res.dropped['talents'] += 1
                 res.notes.append(f'{what}: talent id {tid} belongs to stats index {owner}, not this hero: dropped')
@@ -399,7 +403,7 @@ def _zone_record(env, res, old, z, index, candidate_eras, what, captures=None, r
                    inst_name=nm(s['inst_name']), flags_a=s['flags_a'], flags_b=s['flags_b'],
                    position=[float(x) for x in s['position']])
         if s['flags_a'] & 1:
-            slot = p[0]
+            slot = s['world_slot'] if res.native.world_slot_bytes == 2 else p[0]   # W2: the record's own u16 (3.5)
             qty = struct.unpack('<h', p[1:3])[0]
             if slot not in world_handles:
                 # Native factory 0x465c35 checks numbered alive bit 8 before
@@ -554,11 +558,11 @@ def _translate(old, env, res, original_name, old_bytes, slot, now=None, context=
                          f'(kept under builder {start_era.release} names): {ev["unexplained"][:6]}')
     # items: the era whose table the definition count byte fits (the engine wrote the live count: the table cut
     # by the enhancement pool of the XML2 Fix in use) and whose own-record ranges every instance agrees with
-    counts = _counts_by_era(env)
+    counts = _counts_by_era(env, getattr(res, 'native', None))
     item_eras = [e for e in eras_ok if old['items']['def_count'] in counts[e.cv]]
     if not item_eras:
         raise ConvertError(f'definition count byte {old["items"]["def_count"]} matches no builder release '
-                           f'(expected one of { {CONTENT_TO_RELEASE[cv]: sorted(c) for cv, c in counts.items()} })')
+                           f'(expected one of { {CONTENT_TO_RELEASE.get(cv, cv): sorted(c) for cv, c in counts.items()} })')
     all_instances = list(it_instances(old))
     era_items = None
     reasons = []
@@ -634,7 +638,7 @@ def _translate(old, env, res, original_name, old_bytes, slot, now=None, context=
     it = old['items']
     item_table = era_items.table('ITEM')
     def_state = []
-    for i in range(L.OLD_DEF_STATE_PAIRS):
+    for i in range(len(it['def_state']) // 2):
         q, f = it['def_state'][2 * i], it['def_state'][2 * i + 1]
         if q or f:
             if i >= len(item_table):
@@ -780,14 +784,16 @@ def profile_sections(p, env, res, era):
     return out
 
 
-def _counts_by_era(env):
-    """{cv: {definition count the engine would load: pool}} per era from ITEM_own and the pre-item record count"""
+def _counts_by_era(env, native=None):
+    """{cv: {definition count the engine would load: pool}} per era from ITEM_own and the pre-item record count. A W2
+    stream's pool is the layout's (4096 records: the economy's 185 definitions all load), besides the retail ones."""
+    pools = ITEM_POOLS + ((native.enhancement_records,) if native is not None and native.w2 else ())
     out = {}
     for era in env.eras:
         own = era.table('ITEM_own')
         pre = era.table('ENHC_ranges')['trit'][1]
         out[era.cv] = {}
-        for pool in ITEM_POOLS:
+        for pool in pools:
             used, k = pre, 0
             for lst in own:
                 if used + len(lst) > pool:
@@ -872,7 +878,7 @@ def power_slots(records):
     return names, flags
 
 
-def reverse_slot(new_bytes, env, template=None, *, native=L.RETAIL, registry=None, report=None):
+def reverse_slot(new_bytes, env, template=None, *, native=L.RETAIL, registry=None, report=None, probe=False):
     """LC campaign -> old model (the internal stream the fix's loader must feed the engine), laid out for the
     native layout `native` (explicit; RETAIL by default). Needs the build's binds (positions). `template`: the old
     model of the original file when known (pads and stale bytes); without it those bytes are zero.
@@ -881,15 +887,18 @@ def reverse_slot(new_bytes, env, template=None, *, native=L.RETAIL, registry=Non
     typed_registry.load_registry; required then); a feature-1 file on a contiguous layout has them validated.
     `report` (a dict) receives the migration counts. -> (old model, notes)"""
     f = read_file(new_bytes, L.KIND_CAMPAIGN)
-    ok, reason, _ = feature_decision(f['header']['required_features'], native)
+    # probe (limits-wave2.md section 7): the target's translation; a bit 1 the file already carries is not a reason, the
+    # definition index is per build and the model is not written
+    required = f['header']['required_features'] & ~L.FEATURE_NATIVE_W2 if probe else f['header']['required_features']
+    ok, reason, _ = feature_decision(required, native)
     if not ok:
         raise ConvertError(reason)
     S = {t: f['sections'][t]['data'] for t in f['sections'] if f['sections'][t]['data'] is not None}
     b = env.binds
     if b is None:
         raise ConvertError('the reverse reader needs the build (--build)')
-    pos = PositionTables(env)
-    validate_native_sections(S, env, native=native)
+    pos = PositionTables(env, native=native, probe=probe)
+    validate_native_sections(S, env, native=native, probe=probe)
     notes = []
     # the typed entity-id adapter (PHASE-A-PLAN section 4): the only translation of saved integers, at this boundary
     migration = {}
@@ -925,7 +934,7 @@ def reverse_slot(new_bytes, env, template=None, *, native=L.RETAIL, registry=Non
                      flags_d8=(G['team_potion'] & 3) | ((G['counter_a'] & 0x1f) << 2),
                      flags_d9=(G['counter_b'] & 0x1f) | ((fl & 7) << 5), flags_da=(fl >> 3) & 0x7f, pad_db=0)
     I = S['ITEM']
-    ds = [0] * (2 * L.OLD_DEF_STATE_PAIRS)
+    ds = [0] * (2 * pos.definitions)
     for e in I['def_state']:
         i = pos.item(e['item'])
         ds[2 * i] = e['quantity']; ds[2 * i + 1] = e['flag']
@@ -934,6 +943,8 @@ def reverse_slot(new_bytes, env, template=None, *, native=L.RETAIL, registry=Non
         n = pos.item_name(e['item'])
         if n not in KEY_ITEM_NAMES: raise ConvertError('key counter definition is not a native key item')
         keyc[KEY_ITEM_NAMES.index(n)] = e['quantity']
+    if len(b.item) > pos.definitions:
+        raise ConvertError(f'native definition count {len(b.item)} beyond {pos.definitions}')
     m['items'] = dict(def_count=len(b.item), def_state=ds, tech_bits=I['tech_bits'], health_items=I['health_items'],
                       energy_items=I['energy_items'], key_counts=keyc,
                       carried=[pos.instance(x) for x in I['instances']],
@@ -964,7 +975,7 @@ def reverse_slot(new_bytes, env, template=None, *, native=L.RETAIL, registry=Non
     m['restore'] = rest
     snaps = [pos.snapshot(s) for s in S['MISS']['snapshots']]
     m['mission'] = snaps[0]
-    frames = snaps[1:] + [_empty_snapshot() for _ in range(L.OLD_SIDE_FRAMES - len(snaps) + 1)]
+    frames = snaps[1:] + [_empty_snapshot(native) for _ in range(L.OLD_SIDE_FRAMES - len(snaps) + 1)]
     m['side'] = dict(frames=frames[:L.OLD_SIDE_FRAMES], pad_4d8=0, count=S['MISS']['stack_depth'])
     courses = []
     by_course = {pos.course(c['course']): c for c in S['DNGR']['courses']}
@@ -1003,6 +1014,8 @@ def reverse_slot(new_bytes, env, template=None, *, native=L.RETAIL, registry=Non
     m['town_centres'] = mask
     if template is not None:
         _apply_template(m, template)
+    if probe:
+        return m, notes
     try:
         oldsave.write_slot(m, native)  # verify all unmasked scalar widths and fixed layouts before exposing a native model
     except (ValueError, struct.error, OverflowError) as e:
@@ -1018,7 +1031,10 @@ def _default_restore():
     return dict(attributes=a, equipment=t)
 
 
-def _empty_snapshot():
+def _empty_snapshot(native=L.RETAIL):
+    if native.snapshot_objectives != 300:      # W2 (3.4): 1024 objective bytes and 3 pad bytes
+        return dict(zone='', seat_pose=[0.0] * 24, pad_a0=0, seat_names=['', '', '', ''], pad_124=0,
+                    objectives=[0] * native.snapshot_objectives, pad_525=[0, 0, 0], anchor_pos=[0.0] * 3, anchor_orient=[0.0] * 3)
     return dict(zone='', seat_pose=[0.0] * 24, pad_a0=0, seat_names=['', '', '', ''], pad_124=0, objectives=[0] * 300,
                 objective_301=0, pad_252=0, anchor_pos=[0.0] * 3, anchor_orient=[0.0] * 3)
 
@@ -1041,7 +1057,7 @@ def _apply_template(m, t):
     for r, tr in zip(m['restore'], t['restore']):
         _template_block(r, tr)
     for s, ts in zip([m['mission']] + m['side']['frames'], [t['mission']] + t['side']['frames']):
-        for k in ('pad_a0', 'pad_124', 'objective_301', 'pad_252', 'zone_raw'):
+        for k in ('pad_a0', 'pad_124', 'objective_301', 'pad_252', 'pad_525', 'zone_raw'):
             if k in ts:
                 s[k] = ts[k]
         for i in range(4):
@@ -1098,9 +1114,9 @@ def _template_block(h, th):
     e['flags'] = (e['flags'] & 0x1f) | (te['flags'] & 0xe0)
 
 
-def _validate_native_build(b):
-    # Native installation budgets; reader ceilings remain unchanged (SPEC 2.16).
-    budgets = ((len(b.item), 160, 'item definitions'), (b.hero_count, 21, 'hero records'),
+def _validate_native_build(b, native=L.RETAIL):
+    # Native installation budgets; reader ceilings remain unchanged (SPEC 2.16). The definitions are the layout's (160 / 1024).
+    budgets = ((len(b.item), native.definitions, 'item definitions'), (b.hero_count, 21, 'hero records'),
                (len(b.stat), 297, 'stats slots including reserved zero'), (len(b.name_a), 32, 'flat names'),
                (len(b.trit), 128, 'special items'))
     for count, maximum, what in budgets:
@@ -1115,14 +1131,17 @@ def _validate_native_build(b):
 class PositionTables:
     """id -> position for the reverse direction (the build's binds through the catalogue)"""
 
-    def __init__(self, env, *, hash_conversations=True):
+    def __init__(self, env, *, hash_conversations=True, native=L.RETAIL, probe=False):
         self.env = env
+        self.native = native
+        self.probe = probe                       # the representability probe: definition indices are per build
+        self.definitions = L.W2.definitions if probe else native.definitions
         from .lcfiles import CONVERSATION_LCM, read_conversation_lcm
         sidecar = os.path.join(env.binds.build, CONVERSATION_LCM)
         if os.path.isfile(sidecar):
             env.conversation_tables.update(read_conversation_lcm(open(sidecar, 'rb').read()))
         b = env.binds
-        _validate_native_build(b)
+        _validate_native_build(b, L.W2 if probe else native)
         self.b = b
         cat = env.catalogue
         self._hash_conversations = hash_conversations
@@ -1134,11 +1153,12 @@ class PositionTables:
         self._nama = {cat.lookup('NAMA', h): i for i, h in enumerate(T['NAMA'])}
         self._namb = {cat.lookup('NAMB', h): i for lst in T['NAMB'].values() for i, h in enumerate(lst)}
         self._trit = {cat.lookup('TRIT', h): i for i, h in enumerate(T['TRIT'])}
-        self._tal = {cat.lookup('TALN', h): i for i, h in enumerate(T['TALN_shared'])}
+        # talent codes (owner + 1, position); the engine id is the layout's (L.talent_engine_id)
+        self._tal = {cat.lookup('TALN', h): L.talent_code(0, i) for i, h in enumerate(T['TALN_shared'])}
         for hh, lst in T['TALN_hero'].items():
             si = next(i for i, h in enumerate(T['STAT']) if h == hh)
             for p, h in enumerate(lst):
-                self._tal[cat.lookup('TALN', h)] = (si + 1) * 100 + p
+                self._tal[cat.lookup('TALN', h)] = L.talent_code(si + 1, p)
         self._cost = {cat.lookup('COST', h): int(s) for d in T['COST'].values() for s, h in d.items()}
         self._obj = {cat.lookup('OBJV', h): i for i, h in enumerate(T['OBJV'])}
         self._course = {cat.lookup('DRCS', h): i for i, h in enumerate(T['DRCS'])}
@@ -1158,7 +1178,7 @@ class PositionTables:
         return value
 
     def stat(self, v): return self._native(self._get(self._stat, v, 'character'), 1, 296, 'stats')
-    def item(self, v): return self._native(self._get(self._item, v, 'item'), 0, 159, 'item definition')
+    def item(self, v): return self._native(self._get(self._item, v, 'item'), 0, self.definitions - 1, 'item definition')
     def item_name(self, v): return self.b.item[self.item(v)]
     def course(self, v): return self._get(self._course, v, 'course')
     def grade(self, v): return self._get(self._grade, v, 'grade')
@@ -1171,8 +1191,20 @@ class PositionTables:
         inst = dict(definition=self.item(r['definition']), name_a=self._native(self._get(self._nama, r['name_a'], 'item name'), 0, 31, 'flat name') if r['name_a'] else 0xff,
                     name_b=self._native(self._get(self._namb, r['name_b'], 'item name'), 0, 3, 'category name') if r['name_b'] else 0xff,
                     special=self._native(self._get(self._trit, r['special'], 'special item'), 0, 127, 'special item') if r['special'] else 0xff, location=r['location'])
+        rebuilt = bool(self.env.catalogue.attributes_of(r['definition']) & ITEM_OWN_REBUILT)
         for lst in ('prefixes', 'own', 'suffixes'):
+            if lst == 'own' and rebuilt:
+                continue                  # the old list is replaced below; its records may no longer exist in the build
             inst[lst] = [dict(record=self._get(self._enh, e['enhancement'], 'enhancement'), value=e['value']) for e in r[lst]]
+        if rebuilt:
+            # loot step 1 (DESIGN 2.1): the definition's own bonuses were converted again in place; the instance
+            # takes the definition's current own list (interpolation 0.0f, bits 0: every economy record is single-valued).
+            # The saved list is not resolved first: a list that SHRANK (an old third record, or the only record of an
+            # item that is now a no-op) names ids the new table no longer has, and resolving them would refuse the save.
+            own = self.b.item_own[inst['definition']]
+            if len(own) > OWN_SLOTS:
+                raise ConvertError(f'definition {inst["definition"]} has {len(own)} own records, the instance holds {OWN_SLOTS}')
+            inst['own'] = [dict(record=n, value=0) for n in own]            # value = the bits of 0.0f
         if r['name_b']:
             category = self.b.item_class[inst['definition']]
             hashes = (self.b.hash_tables() if self._hash_conversations else self.b.hash_tables(include_conversation_digest=False))['NAMB'].get(category or '', [])
@@ -1187,7 +1219,10 @@ class PositionTables:
                  ai_attack=h['ai_attack'], pad17=0)
         ents = []
         for t in h['talents']:
-            tid = self._get(self._tal, t['talent'], 'talent')
+            try:
+                tid = L.talent_engine_id(self._get(self._tal, t['talent'], 'talent'), self.native)
+            except ValueError as e:
+                raise ConvertError(str(e)) from e
             ents.append(dict(id=tid, rank_bits=t['rank'] & 0x3f, pending_cap_bits=(t['pending'] & 0x3f) | ((t['cap'] & 3) << 6),
                              base_bits=t['base'] & 3, byte5=t['byte5'], pad6=0))
         ents.sort(key=lambda e: e['id'])
@@ -1208,7 +1243,7 @@ class PositionTables:
         return dict(attributes=a, equipment=eq)
 
     def snapshot(self, s):
-        out = _empty_snapshot()
+        out = _empty_snapshot(self.native)
         out['zone'] = self.zone_name(s['zone']) if s['zone'] else ''
         for seat in s['seats']:
             i = seat['seat']
@@ -1310,9 +1345,12 @@ class PositionTables:
             if r['capture_flags'] & 1:
                 notes.append(f'zone {zone!r}: incomplete capture: record not applied')
                 continue
-            from .zonecompat import match
+            from .zonecompat import match, equivalent
             prefix = match(self.b.zone_prefixes, zone, r['content_hash'], num)
-            if r['content_hash'] != bytes.fromhex(num['sha1']) and prefix is None:
+            same = r['content_hash'] == bytes.fromhex(num['sha1']) or (prefix is not None and equivalent(prefix, num))
+            if same:
+                prefix = None  # an equivalence row reads the record exactly as the exact-hash path does
+            if not same and prefix is None:
                 notes.append(f'zone {zone!r}: placement file changed since the record was made: record not applied')
                 continue
             mapped = {}
@@ -1339,7 +1377,13 @@ class PositionTables:
                     continue
                 notes.append(f'zone {zone!r}: verified append-only resident prefix retained; new tail starts fresh')
             promoted = {} if prefix else _legacy_pinned_states(r, num['numbered'], set(mapped.values()), legacy_import)
-            states = [dict(def_name=0, inst_name=0, payload=b'\0' * 8, flags_a=0, flags_b=0, position=[0, 0, 0])]
+            w2 = native.float_positions
+
+            def empty_state():
+                if w2:
+                    return dict(def_name=0, inst_name=0, payload=b'\0' * 8, flags_a=0, flags_b=0, world_slot=L.WORLD_SLOT_NONE, position=[0.0, 0.0, 0.0])
+                return dict(def_name=0, inst_name=0, payload=b'\0' * 8, flags_a=0, flags_b=0, position=[0, 0, 0])
+            states = [empty_state()]
             ordinal_map = [0] * native.ordinals
             dynamic, smart = [], []
             retained_states = []
@@ -1351,17 +1395,27 @@ class PositionTables:
                 retained_states.append(s)
                 if len(states) >= native.states:
                     raise ConvertError('more states than the engine record holds')
+                world_slot = L.WORLD_SLOT_NONE
                 if s['payload_kind'] == PAYLOAD_WORLD_ITEM:
                     slot, qty = struct.unpack('<Ii', s['payload'][:8])
-                    if slot > 0xff or not -32768 <= qty <= 32767:
+                    if slot > (0xfffe if native.world_slot_bytes == 2 else 0xff) or not -32768 <= qty <= 32767:
                         raise ConvertError('world item handle / quantity do not fit the engine record')
-                    payload = bytes([slot]) + struct.pack('<h', qty) + s['payload'][8:13]
+                    if native.world_slot_bytes == 2:       # W2: the record's own u16; payload byte 0 stays 0
+                        world_slot = slot
+                        payload = b'\0' + struct.pack('<h', qty) + s['payload'][8:13]
+                    else:
+                        payload = bytes([slot]) + struct.pack('<h', qty) + s['payload'][8:13]
                 else:
                     payload = s['payload'][:8]
-                posi = [int(round(x)) for x in s['position']]
                 idx = len(states)
-                states.append(dict(def_name=intern(r['names'][s['def_name']]), inst_name=intern(r['names'][s['inst_name']]),
-                                   payload=payload, flags_a=s['flags_a'] & 0xff, flags_b=s['flags_b'] & 0xff, position=posi))
+                if w2:                                     # the float as is (bit-exact)
+                    states.append(dict(def_name=intern(r['names'][s['def_name']]), inst_name=intern(r['names'][s['inst_name']]),
+                                       payload=payload, flags_a=s['flags_a'] & 0xff, flags_b=s['flags_b'] & 0xff,
+                                       world_slot=world_slot, position=[float(x) for x in s['position']]))
+                else:
+                    posi = [int(round(x)) for x in s['position']]
+                    states.append(dict(def_name=intern(r['names'][s['def_name']]), inst_name=intern(r['names'][s['inst_name']]),
+                                       payload=payload, flags_a=s['flags_a'] & 0xff, flags_b=s['flags_b'] & 0xff, position=posi))
                 if s['list'] == STATE_NUMBERED:
                     k = mapped[s['ordinal']]
                     if not 1 <= k <= native.ordinals:
@@ -1381,7 +1435,7 @@ class PositionTables:
                 else:
                     smart.append(idx)
             while len(states) < native.states:
-                states.append(dict(def_name=0, inst_name=0, payload=b'\0' * 8, flags_a=0, flags_b=0, position=[0, 0, 0]))
+                states.append(empty_state())
             # the list capacities of the layout (the message is the one struct.pack gave before the explicit check)
             if len(dynamic) > native.dynamic:
                 raise ConvertError(f'pack expected {native.dynamic} items for packing')
@@ -1531,10 +1585,10 @@ def _retain_sections(sections, retained_file, kind, native=L.RETAIL):
     return out
 
 
-def _current_environment(env, *, hash_conversations=True):
+def _current_environment(env, *, hash_conversations=True, native=L.RETAIL):
     import copy
     from .legacy import Era
-    _validate_native_build(env.binds)
+    _validate_native_build(env.binds, native)
     current = copy.copy(env)
     current.ref = env.binds.hash_tables() if hash_conversations else env.binds.hash_tables(include_conversation_digest=False)
     current.ref['content_version'] = env.catalogue.data.get('content_version', 0)
@@ -1553,11 +1607,12 @@ def old_stream_to_new(old_bytes, env, *, retained_file=b'', now=None, zone_captu
     layout's (RETAIL: 0; E10A2: bit 0 ENTITY_LAYOUT_CONTIGUOUS10). optional_features: header bits the caller vouches
     for (L.OPTIONAL_LEVEL_SKILL_POINTS / L.OPTIONAL_LEVEL_STAT_POINTS); KEYS is the writer's own."""
     res = Result()
+    res.native = native
     try:
         if len(old_bytes) == native.payload:
             old_bytes = bytes(0x80) + struct.pack('<I', native.payload) + old_bytes
         old = oldsave.read_slot(old_bytes, native)
-        current = _current_environment(env, hash_conversations=_hash_conversations)
+        current = _current_environment(env, hash_conversations=_hash_conversations, native=native)
         context = dict(zone_captures=zone_captures or [], require_capture_metadata=require_capture_metadata)
         sections = _translate(old, current, res, '', old_bytes, slot, now, context)
         if any(res.dropped.values()):
@@ -1568,9 +1623,17 @@ def old_stream_to_new(old_bytes, env, *, retained_file=b'', now=None, zone_captu
         sections = _retain_sections(add_keys_section(sections, env), retained_file, L.KIND_CAMPAIGN, native)
         header = dict(writer_version=writer_version, content_version=current.ref['content_version'],
                       catalogue_revision=env.catalogue.revision, campaign_serial=campaign_serial, save_sequence=save_sequence,
-                      required_features=native.feature_bits, optional_features=optional_features)
+                      required_features=native.feature_bits & ~L.FEATURE_NATIVE_W2, optional_features=optional_features)
         res.file_bytes = write_file(L.KIND_CAMPAIGN, sections, header)
         read_file(res.file_bytes, L.KIND_CAMPAIGN)
+        # W2 sets bit 1 exactly when the file cannot be applied by a pre-W2 build (limits-wave2.md section 7)
+        if native.w2:
+            why = representable(res.file_bytes, env, L.E10A2)
+            if why:
+                res.notes.append(f'NATIVE_W2 (required feature bit 1) set: {why}')
+                header['required_features'] |= L.FEATURE_NATIVE_W2
+                res.file_bytes = write_file(L.KIND_CAMPAIGN, sections, header)
+                read_file(res.file_bytes, L.KIND_CAMPAIGN)
     except (ValueError, IndexError, KeyError) as e:
         res.refused = str(e); res.file_bytes = None
     return res
@@ -1616,7 +1679,7 @@ def reverse_profile(new_bytes, env):
     return sections['META']['description'], PositionTables(env).profile(sections)
 
 
-def validate_native_sections(S, env, *, hash_conversations=True, native=L.RETAIL):
+def validate_native_sections(S, env, *, hash_conversations=True, native=L.RETAIL, probe=False):
     """the semantic preflight of a file's decoded sections against the installed build and the native layout
     `native` (ordinal map, state pool and list capacities are the layout's)"""
     import math
@@ -1634,7 +1697,7 @@ def validate_native_sections(S, env, *, hash_conversations=True, native=L.RETAIL
         elif isinstance(v, float) and not math.isfinite(v):
             raise ConvertError('nonfinite native value')
     finite(S)
-    pos = PositionTables(env, hash_conversations=hash_conversations)
+    pos = PositionTables(env, hash_conversations=hash_conversations, native=native, probe=probe)
     if 'GAME' in S:
         g = S['GAME']
         for n, hi in (('team_potion', 3), ('counter_a', 31), ('counter_b', 31), ('flags', 1023)):
@@ -1663,28 +1726,32 @@ def validate_native_sections(S, env, *, hash_conversations=True, native=L.RETAIL
         unique(items['def_state'], 'item', 'definition state'); unique(items['key_counts'], 'item', 'key counter')
         unique(items['world'], 'handle', 'world item handle')
         handles = {w['handle'] for w in items['world']}
-        for handle in handles: bound(handle, 0, 149, 'world handle')
-        if len(handles) > 150: raise ConvertError('world item pool exhausted')
+        for handle in handles: bound(handle, 0, native.world_slots - 1, 'world handle')
+        if len(handles) > native.world_slots: raise ConvertError('world item pool exhausted')
         instances = list(items['instances']) + [w['instance'] for w in items['world']]
         for hero in S['HERO']['heroes'] + S['REST']['records']:
             bound(hero['player_seat'], -1, 3, 'player seat'); bound(hero['flags'], 0, 31, 'hero flags')
             unique(hero['talents'], 'talent', 'talent')
             owner = pos.stat(hero.get('hero', hero.get('owner')))
             for t in hero['talents']:
-                tid = pos._get(pos._tal, t['talent'], 'talent')
-                if tid >= 100 and tid // 100 != owner + 1: raise ConvertError('talent does not belong to hero')
+                code = pos._get(pos._tal, t['talent'], 'talent')
+                if code >> 16 and code >> 16 != owner + 1: raise ConvertError('talent does not belong to hero')
+                try:
+                    L.talent_engine_id(code, native)        # the layout's id space (position < M, shared < M - 1)
+                except ValueError as e:
+                    raise ConvertError(str(e)) from e
             for talent in hero['talents']:
                 for field, hi in (('rank', 63), ('pending', 63), ('cap', 3), ('base', 3)):
                     bound(talent[field], 0, hi, 'talent ' + field)
             instances.extend(hero['equipped'])
-        if len(instances) > 256: raise ConvertError('native instance pool exhausted')
+        if len(instances) > native.instances: raise ConvertError('native instance pool exhausted')
         attached = sum(len(i[n]) for i in instances for n in ('prefixes', 'own', 'suffixes'))
-        if attached > 375: raise ConvertError('native attached enhancement pool exhausted')
-        era = _current_environment(env, hash_conversations=hash_conversations).eras[0]
+        if attached > native.attached_enhancements: raise ConvertError('native attached enhancement pool exhausted')
+        era = _current_environment(env, hash_conversations=hash_conversations, native=L.W2 if probe else native).eras[0]
         for instance in instances:
             _cross_check_instance(env, era, pos.instance(instance), 'item')
         unique(S['ZONE']['records'], 'zone', 'zone record')
-        if len(S['ZONE']['records']) > 5: raise ConvertError('native zone cache exhausted')
+        if len(S['ZONE']['records']) > native.record_count: raise ConvertError('native zone cache exhausted')
         for z in S['ZONE']['records']:
             if z['fog']['encoding'] != 1 or z['fog']['width'] != 82 or z['fog']['height'] != 82 or len(z['fog']['data']) != L.OLD_FOG_BYTES:
                 raise ConvertError('unsupported native fog')
@@ -1695,8 +1762,8 @@ def validate_native_sections(S, env, *, hash_conversations=True, native=L.RETAIL
             for state in z['states']:
                 bound(state['list'], 1, 3, 'state list')
                 for n in ('def_name', 'inst_name'): bound(state[n], 0, len(z['names']) - 1, 'state name index')
-                for x in state['position']:
-                    if not -32768 <= x <= 32767 or x != round(x): raise ConvertError('state position not representable')
+                for x in state['position']:      # RETAIL / E10A2: integral i16; W2: any finite f32 (stored as is)
+                    if not native.float_positions and (not -32768 <= x <= 32767 or x != round(x)): raise ConvertError('state position not representable')
                 bound(state['flags_a'], 0, 255, 'state flags'); bound(state['flags_b'], 0, 255, 'state flags')
                 if state['list'] == 1:
                     bound(state['ordinal'], 1, native.ordinals, 'ordinal'); ords.append(state['ordinal'])
@@ -1717,6 +1784,41 @@ def validate_native_sections(S, env, *, hash_conversations=True, native=L.RETAIL
     if len(Scores) > L.OLD_HIGH_SCORES: raise ConvertError('native profile score count')
     for score in Scores:
         if len(score['party_a']) > 6 or len(score['party_b']) > 6: raise ConvertError('native profile party count')
+
+def representable(file_bytes, env, target=L.E10A2, registry=None):
+    """the representability probe (limits-wave2.md section 7): '' when a pre-W2 build of the layout `target` (E10A2)
+    can apply the LC campaign exactly, else the first failing rule by name. 1. the target's reverse translation with its
+    mappings (pools, handles, positions, zone-record count, talent multiplier; definition indices stay per build);
+    2. the engine constraints that translation does not check (objective index <= 255, enhancement record < 512, zone
+    records it would not apply); 3. feature gates (an optional bit never marks)."""
+    f = read_file(file_bytes, L.KIND_CAMPAIGN)
+    if f['header']['required_features'] & ~target.feature_bits & ~L.FEATURE_NATIVE_W2:
+        return 'required feature bits beyond the target layout'
+    try:
+        m, notes = reverse_slot(file_bytes, env, native=target, registry=registry, probe=True)
+    except (ValueError, IndexError, KeyError) as e:
+        return f'the {target.id} translation refuses: {e}'
+    S = {t: f['sections'][t]['data'] for t in f['sections'] if f['sections'][t]['data'] is not None}
+    applicable = sum(1 for r in S['ZONE']['records'] if not r['capture_flags'] & 1)
+    if len(m['zones']) < applicable:
+        return f'the {target.id} translation would not apply {applicable - len(m["zones"])} zone record(s)'
+    pos = PositionTables(env, native=target, probe=True)
+    for snap in S['MISS']['snapshots']:
+        for o in snap['objectives']:
+            i = pos._obj.get(o['objective'])
+            if i is not None and i > 255:
+                return f'objective index {i} > 255 (the pre-W2 engine keeps a loaded objective\'s index in a byte)'
+    records = 512   # the pre-W2 release default of [Limits] ItemEnhancements: the contract (the target's INI is unknowable)
+    instances = list(m['items']['carried']) + [w['instance'] for w in m['items']['world']]
+    for h in m['heroes'] + m['restore']:
+        instances += h['equipment']['equipped']
+    for inst in instances:
+        for lst in ('prefixes', 'own', 'suffixes'):
+            for e in inst[lst]:
+                if e['record'] >= records:
+                    return f'enhancement record {e["record"]} >= {records} (the pre-W2 release\'s enhancement table)'
+    return ''
+
 
 def native_zone_metadata(old_stream, env, *, native=L.RETAIL):
     """Validated current-build associations for a native transfer (a stream of the native layout `native`)
@@ -1767,11 +1869,12 @@ def _legacy_pinned_states(record, numbered, occupied, legacy_import=False):
 
 def loaded_zone_metadata(new_bytes, env, *, native=L.RETAIL, registry=None):
     """Applied cached captures, with ordinals aligned to the reconstructed native map (of the layout `native`)."""
-    native, _ = reverse_slot(new_bytes, env, native=native, registry=registry)
+    layout = native
+    native, _ = reverse_slot(new_bytes, env, native=layout, registry=registry)
     applied = {oldsave.zone_string(native['zone_strings'], z['name_handle']) for z in native['zones']}
     f = read_file(new_bytes)
     records = f['sections']['ZONE']['data']['records']
-    pos = PositionTables(env)
+    pos = PositionTables(env, native=layout)       # the layout's definition budget (W2: 1024), not the retail 160
     from .conversations import zone_digest
     out = []
     for r in records:
@@ -1779,8 +1882,10 @@ def loaded_zone_metadata(new_bytes, env, *, native=L.RETAIL, registry=None):
         if zone not in applied: continue
         numbering = env.binds.zone_numbering(zone)
         num = numbering['numbered']
-        from .zonecompat import match
+        from .zonecompat import match, equivalent
         prefix = match(env.binds.zone_prefixes, zone, r['content_hash'], numbering)
+        if prefix is not None and equivalent(prefix, numbering):
+            prefix = None  # equivalent maps: the capture describes the current map, as an exact-hash record does
         restored = next(z for z in native['zones'] if oldsave.zone_string(native['zone_strings'], z['name_handle']) == zone)
         entities = [dict(ordinal=k + 1, placement_index=num[k][2],
                         definition_name=oldsave.zone_string(native['zone_strings'], restored['states'][idx]['def_name']),
