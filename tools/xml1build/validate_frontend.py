@@ -1404,7 +1404,8 @@ def v_online_menus(v, ck):
                 if signature(root)!=signature(expected): ck.error(name+': authored tree differs')
         if data is None: ck.error(name+': missing scene')
         else:
-            for error in O.scene_problems(screen,data): ck.error(name+': '+error)
+            # D2: the capacity is the companion DLL's (menu-anchors/512 probe), as output_problems / authoring use it
+            for error in O.scene_problems(screen,data,anchor_capacity=O.engine_scene_anchors(v.read('dinput.dll') or b'')): ck.error(name+': '+error)
         pkg=v.tree(F.MENU_PKG_DIR+'/'+name+'.PKGB')
         if pkg is None: ck.error(name+': missing package')
         else:

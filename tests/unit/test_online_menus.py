@@ -801,3 +801,13 @@ def test_blended_layer_keeps_the_alpha_quad_and_refuses_any_other_panel():
                 [(144, None, None), (12, True, (4, 5))],                      # the alpha layer is not a quad
                 [(4, False, (4, 5))]):                                        # blend state off
         raises(G.IgbError, lambda bad=bad: O.blended_layer(G.IgbFile(_panel_graph(bad))))
+
+
+def test_validator_scene_capacity_follows_the_companion_dll():
+    # 060s integration: V-online called scene_problems with the retail default (175) and refused the seven-row Browse
+    # (214 anchors) that output_problems / authoring accept with the DLL's menu-anchors/512 probe.
+    import ast, inspect
+    from xml1build import validate_frontend as VF
+    calls = [n for n in ast.walk(ast.parse(inspect.getsource(VF))) if isinstance(n, ast.Call)
+             and getattr(n.func, 'attr', None) == 'scene_problems']
+    assert calls and all(any(k.arg == 'anchor_capacity' for k in c.keywords) for c in calls)
