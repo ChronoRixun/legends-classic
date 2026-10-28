@@ -40,8 +40,10 @@ def test_broker_intents_only_appear_on_their_allowed_screens_and_with_row_number
     assert seen['lc_online'] == {'retry': 20} and seen['lc_code'] == {'retry': 20}
     browse = seen['lc_browse']
     assert browse['prompt_refresh'] == 18 and browse['scroll_up'] == 22 and browse['scroll'] == 23 and browse['prompt_join'] == 31 and browse['retry'] == 20
-    assert {browse[f'room_{r}_{c}'] for r in range(7) for c in O.ROW_COLUMNS} == set(range(24, 31))
-    assert all(browse[f'room_{r}_{c}'] == 24 + r for r in range(7) for c in O.ROW_COLUMNS)
+    # one page holds BROWSE_ROWS rows (engine scene anchor capacity); commands 24..30 stay reserved for seven
+    assert {browse[f'room_{r}_{c}'] for r in range(O.BROWSE_ROWS) for c in O.ROW_COLUMNS} == set(range(24, 24 + O.BROWSE_ROWS))
+    assert all(browse[f'room_{r}_{c}'] == 24 + r for r in range(O.BROWSE_ROWS) for c in O.ROW_COLUMNS)
+    assert f'room_{O.BROWSE_ROWS}_0' not in browse
     # a mutated scope or number is refused by the validator
     screen, root, items = tree('lc_host')
     bad = copy.deepcopy(root); next(e for e in bad if e.get('name') == 'open').set('usecmd', O.command(18))
@@ -98,7 +100,7 @@ def test_retry_is_visible_disabled_and_diagnostic_error_is_data_only():
 
 def test_browse_rows_exist_for_an_empty_list_with_row_commands_and_closed_grid():
     screen, root, items = tree('lc_browse')
-    for r in range(7):
+    for r in range(O.BROWSE_ROWS):
         assert 'room_%d_4' % r not in items  # the status word belongs to the row scenes
         assert items['room_%d_5' % r].get('neverfocus') == 'true' and not items['room_%d_5' % r].get('usecmd')  # round 7: measured RTT, DATA only
         for ci, c in enumerate(O.ROW_COLUMNS):
@@ -108,13 +110,18 @@ def test_browse_rows_exist_for_an_empty_list_with_row_commands_and_closed_grid()
             assert not any('gamevar' in k.lower() for k in e.attrib)
             assert e.get('left') == f'room_{r}_{O.ROW_COLUMNS[max(0, ci - 1)]}' and e.get('right') == f'room_{r}_{O.ROW_COLUMNS[min(4, ci + 1)]}'
             assert e.get('up') == (f'room_{r - 1}_{c}' if r else 'prompt_refresh')
-            assert e.get('down') == (f'room_{r + 1}_{c}' if r < 6 else 'scroll')
-            assert any(f.get('item') == f'room_{r}_{c}_focus' for f in e.findall('onfocus'))  # mouse/focus rectangle kept while disabled
+            assert e.get('down') == (f'room_{r + 1}_{c}' if r < O.BROWSE_ROWS - 1 else 'scroll')
+            # mouse/focus rectangle kept while disabled; the five cells of a row share one focus anchor (engine budget)
+            assert any(f.get('item') == f'room_{r}_focus' and f.get('type') == 'focus' for f in e.findall('onfocus'))
+            assert f'room_{r}_{c}_focus' not in items
+        assert items[f'room_{r}_focus'].get('type') == 'MENU_ITEM_MODEL'
+        models = {f.get('model') for c in O.ROW_COLUMNS for f in items[f'room_{r}_{c}'].findall('onfocus') if f.get('type') == 'focus'}
+        assert len(models) == 1, models  # one row-wide focus bar, whichever cell has focus
     raw = {e['name']: e for e in screen['items']}
-    for r in range(7):
+    for r in range(O.BROWSE_ROWS):
         rects = {raw[f'room_{r}_{c}']['rect'][1] for c in O.ROW_COLUMNS}
         assert len(rects) == 1 and not any(raw[f'room_{r}_{c}']['rect'][3] < 20 for c in O.ROW_COLUMNS)
-    for r in range(7):
+    for r in range(O.BROWSE_ROWS):
         sel = items[f'lc_row{r}_selected']
         assert sel.get('hide') == 'true' and sel.get('type') == 'MENU_ITEM_MODEL' and sel.get('neverfocus') == 'true'
         assert raw[f'lc_row{r}_selected']['rect'] == (44, 178 + 31 * r, 552, 29)
@@ -248,7 +255,7 @@ def test_round_5b_browse_row_scenes_header_nodes_and_shared_models():
     screen, root, items = tree('lc_browse')
     raw = {e['name']: e for e in screen['items']}
     models = set()
-    for r in range(7):
+    for r in range(O.BROWSE_ROWS):
         y = 178 + 31 * r
         want = [f'lc_row{r}_st_{k}' for k in O.STATUS_KINDS] + [f'lc_row{r}_pips_{n}' for n in range(5)] + \
             [f'lc_row{r}_build_{k}' for k in O.BUILD_KINDS] + [f'lc_row{r}_dim']
@@ -309,9 +316,10 @@ def test_round_5b_scene_anchor_budget_and_ping_text_live_in_the_pip_scenes():
     from xml1build import menu_scene
     for name in O.MENUS:
         screen = O.bound_layout(O.runtime_layout(name), F.metrics())
-        assert len(O.scene_layout(screen)) <= 256, name  # author_anchors' bound
+        # The engine's per-scene capacity (0x5882e0), not the old 256: seven Browse rows authored 241 and crashed 060p.
+        assert len(O.scene_layout(screen)) <= O.ENGINE_SCENE_ANCHORS, (name, len(O.scene_layout(screen)))
     raw = {e['name']: e for e in O.runtime_layout('lc_browse')['items']}
-    for r in range(7):
+    for r in range(O.BROWSE_ROWS):
         for n in range(5):
             scene = raw[f'lc_row{r}_pips_{n}']
             assert [p['text'] for p in scene['parts'] if 'text' in p] == ['--']  # never a number: no ping is measured

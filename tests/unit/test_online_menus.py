@@ -27,14 +27,14 @@ def test_code_grid_graph_and_fixture_editing():
 def test_browse_bounded_scroll_clipping_and_disabled_join():
     state = O.Fixture()
     for _ in range(40): state.dispatch('scroll:1')
-    assert state.selected == len(state.rooms)-1 and state.offset == len(state.rooms)-7
+    assert state.selected == len(state.rooms)-1 and state.offset == len(state.rooms)-O.BROWSE_ROWS
     for _ in range(40): state.dispatch('scroll:-1')
     assert (state.selected, state.offset) == (0, 0)
     for i in range(len(state.rooms)):
         state.selected = i; state.rebound()
         screen = O.layout('lc_browse', state)
         assert not O.layout_problems(screen)
-        assert len([e for e in screen['items'] if e['name'].startswith('room_')]) == 49
+        assert len([e for e in screen['items'] if e['name'].startswith('room_')]) == 7 * O.BROWSE_ROWS
     state.selected = 5; state.dispatch('join'); assert state.error and state.phase != 'resolved fixture'
     state.rooms = []; state.rebound()
     assert (state.selected,state.offset)==(0,0)
@@ -99,7 +99,7 @@ def test_back_deletes_last_cell_without_leaving_and_caps_browser_cache():
     state.dispatch('back'); assert state.menu=='lc_online'
     state.dispatch('open:lc_host'); state.dispatch('back'); assert state.menu=='lc_online'
     state.rooms=O.synthetic_rooms()*10; state.selected=1000; state.rebound()
-    assert len(state.rooms)==50 and state.selected==49 and state.offset==43
+    assert len(state.rooms)==50 and state.selected==49 and state.offset==50-O.BROWSE_ROWS
 
 
 def test_native_initial_focus_and_budget_consumption_are_explicit():
@@ -190,7 +190,8 @@ def test_host_preview_and_page_controls_follow_fixture_settings():
     values={e['name']:e['text'] for e in screen['items']}
     assert values['preview_save']=='New campaign - Normal'
     assert values['preview_drop']=='Drop-in off'
-    state.dispatch('page:1'); assert (state.selected,state.offset)==(2,2)
+    page=min(O.BROWSE_ROWS,len(state.rooms)-O.BROWSE_ROWS)
+    state.dispatch('page:1'); assert (state.selected,state.offset)==(page,page)
     state.dispatch('page:-1'); assert (state.selected,state.offset)==(0,0)
 
 
@@ -340,3 +341,39 @@ def test_right_aligned_fields_keep_their_native_alignment_after_serialization():
     value=next(e for e in bounded['items'] if e['name']=='host_hint')['text']
     assert value.startswith('Private or ') and len(value)*6<=113*.8
     assert len(value)>int(70*.8/6)
+
+
+
+def test_every_authored_menu_scene_fits_the_engine_anchor_capacity():
+    """060p: Browse authored 241 named anchors; XMen2.exe's playfield build (0x5882e0, walk 0x587f90, push 0x587e40)
+    holds 175, so the 183rd overwrote the stack vector's count and the next push wrote to a wild address (0x587654).
+    The old guard here was author_anchors' 256, which 241 passed."""
+    from xml1build import menu_scene as S, online_fonts as F
+    from xml1build.igb_file import IgbError
+    for name in O.MENUS:
+        screen=O.bound_layout(O.runtime_layout(name),F.metrics())
+        layouts=O.scene_layout(screen)
+        assert len(layouts)<=O.ENGINE_SCENE_ANCHORS, (name, len(layouts))
+        S.author_anchors(anchor_fixture(),'template',layouts)
+    assert len(O.scene_layout(O.runtime_layout('lc_browse')))<=O.ENGINE_SCENE_ANCHORS-4  # headroom
+    # Seven Browse rows (the approved design) exceed it: authoring refuses the scene instead of shipping a crash.
+    old=O.BROWSE_ROWS
+    try:
+        O.BROWSE_ROWS=7
+        layouts=O.scene_layout(O.bound_layout(O.runtime_layout('lc_browse'),F.metrics()))
+        assert len(layouts)>O.ENGINE_SCENE_ANCHORS
+        raises(IgbError,lambda:S.author_anchors(anchor_fixture(),'template',layouts))
+    finally:
+        O.BROWSE_ROWS=old
+
+
+def test_anchor_count_matches_the_engine_walk_on_the_060p_candidate_scenes():
+    """Fixture from the live round: the 060p candidate's own menu scenes. The engine-walk count reproduces the crash
+    (Browse 241 > 175) and the screens that worked (Host lobby 153, Join by code 132, Hub 96)."""
+    import unittest
+    from pathlib import Path
+    menus=Path('D:/Projects/xml1-port/build/_candidate_060p/UI/menus')
+    if not (menus/'lc_browse.IGB').is_file(): raise unittest.SkipTest('060p candidate build not on this machine')
+    counts={n:O.anchor_count((menus/(n+'.IGB')).read_bytes()) for n in ('lc_browse','lc_lobby_host','lc_code','lc_online')}
+    assert counts=={'lc_browse':241,'lc_lobby_host':153,'lc_code':132,'lc_online':67}, counts
+    assert counts['lc_browse']>O.ENGINE_SCENE_ANCHORS>=max(v for k,v in counts.items() if k!='lc_browse')
