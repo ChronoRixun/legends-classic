@@ -1351,6 +1351,10 @@ def v_online_menus(v, ck):
         ck.set('online_menus',0)
         return
     for problem in O.output_problems(v.ctx.out):ck.error(problem)
+    # D2: the scene capacity is the companion DLL's (menu-anchors/512 probe), read from the output folder as
+    # output_problems / check_online_dll do (the validator's file index lists built files only, not the DLL)
+    _dll=v.ctx.out/'dinput.dll'
+    anchor_capacity=O.engine_scene_anchors(_dll.read_bytes() if _dll.is_file() else b'')
     from . import fix_ini as FI
     try:FI.check_online_dll(v.ctx.out/'dinput.dll',{'Online':{'Menus':'1'},'Game':{'LegendsClassicFonts':'1'}})
     except FI.FixTooOld as error:ck.error(str(error))
@@ -1404,8 +1408,7 @@ def v_online_menus(v, ck):
                 if signature(root)!=signature(expected): ck.error(name+': authored tree differs')
         if data is None: ck.error(name+': missing scene')
         else:
-            # D2: the capacity is the companion DLL's (menu-anchors/512 probe), as output_problems / authoring use it
-            for error in O.scene_problems(screen,data,anchor_capacity=O.engine_scene_anchors(v.read('dinput.dll') or b'')): ck.error(name+': '+error)
+            for error in O.scene_problems(screen,data,anchor_capacity=anchor_capacity): ck.error(name+': '+error)
         pkg=v.tree(F.MENU_PKG_DIR+'/'+name+'.PKGB')
         if pkg is None: ck.error(name+': missing package')
         else:
