@@ -50,6 +50,9 @@ for rel in R.RESEARCH_DATA:
         raise SystemExit(f'a packaged research table is missing: {src} (run tools/freeze_builder.py)')
     datas.append((str(src), str(Path('research', rel).parent.as_posix())))
 datas.append((str(TOOLS / 'xml1build' / 'lib' / 'ima_kernel.c'), 'xml1build/lib'))
+for p in sorted((TOOLS / 'xml1build' / 'fonts' / 'barlowcondensed').iterdir()):
+    if p.is_file():
+        datas.append((str(p), 'xml1build/fonts/barlowcondensed'))
 for p in sorted((TOOLS / 'lcsave' / 'data').iterdir()):          # the master catalogue and the era model
     if p.is_file():                                             # (hashes only - decision D3), read by the
         datas.append((str(p), 'lcsave/data'))                   # savefiles step of every build (SPEC 70)

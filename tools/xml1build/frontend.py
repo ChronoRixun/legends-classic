@@ -542,6 +542,10 @@ def menu_igb(ctx):
         data, appearance = MA.help_alias(data)
         # one composition, centred by the engine at every aspect (MA.screen_x); 'widescreen' is retired
         appearance['layout'] = MA.layout(ctx.opt('main_menu_layout', 'classic'))
+        from . import online_menus as OM
+        if OM.enabled(ctx):
+            from . import menu_scene as MS
+            data=MS.author_anchors(data,'button7',OM.main_hint_layout(),preserve_existing=True)
     except (ValueError, MA.G.IgbError) as ex:
         return None, {'problems': [str(ex)], 'nodes': {}, 'camera': summary,
                       'spacing': spacing, 'source': str(src)}
@@ -579,6 +583,11 @@ def menu_tree(ctx):
         'name': 'main', 'igb': MENU_IGB_NAME, 'type': 'MAIN_MENU', 'fullscreen': 'false', 'gamepause': 'false',
         'resetcontroller': 'true', 'updownonly': 'true', 'lighting': 'true', 'fadein': 'false', 'fadeout': 'false',
         'desctext1': desc, 'image': MENU_IMAGE})
+    from . import online_menus as OM
+    if OM.enabled(ctx):
+        ET.SubElement(root,'item',name='lc_online_continue',type='MENU_ITEM_TEXT',
+                      text='$MENU_ACCEPT Press Accept to continue',style='lc_o_body',
+                      neverfocus='true',hide='true',textalignx='TEXT_ALIGN_LEFT',textaligny='TEXT_ALIGN_TOP')
     shown = [b[0] for b in MENU_BUTTONS]
     hidden = {'enabled': 'false', 'hide': 'true'}
     for i in range(1, MENU_NODES + 1):                   # the button meshes (XML1: enabled="false")
@@ -1715,6 +1724,8 @@ def run(ctx):
     det['trivia_appearance'] = TA.write(ctx)
     from . import team_appearance as TEAM
     det['team_appearance'] = TEAM.write(ctx)
+    from . import online_menus as OM
+    det['online_menus'] = OM.write(ctx)
     data, irep = menu_igb(ctx)
     for p in irep['problems']:
         ctx.error(f'{MENU_IGB_REL}: {p}')

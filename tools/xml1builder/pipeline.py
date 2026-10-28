@@ -198,6 +198,7 @@ class RealPipeline:
         import build_xml1
         argv = ['--out', str(job.out), '--base', str(job.xml2), '--jobs', str(job.jobs)]
         argv += ['--main-menu-layout', getattr(job, 'main_menu_layout', 'classic')]
+        argv += ['--online-menus', getattr(job, 'online_menus', 'off')]
         argv += ['--anim-enums', getattr(job, 'anim_enums', None) or 'xml1']
         argv += ['--laa', getattr(job, 'laa', None) or 'on']
         if (getattr(job, 'limits_wave3', None) or 'off') != 'off':

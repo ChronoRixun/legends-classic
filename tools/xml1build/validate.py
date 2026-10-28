@@ -968,6 +968,7 @@ class Validator:
                                ('V14', 'forced teams', self.v14_forced_teams),
                                ('V15', 'front end', lambda ck: VF.v15_front_end(self, ck)),
                                ('V49', 'main appearance', lambda ck: VF.v_main_appearance(self, ck)),
+                                 ('V-online', 'online menu fixtures', lambda ck: VF.v_online_menus(self, ck)),
                                ('V-TBD', 'classic pause appearance', lambda ck: VF.v_classic_pause(self, ck)),
                                ('V-TBD-loading', 'classic loading appearance', lambda ck: VF.v_classic_loading(self, ck)),
                                ('V-TBD-options', 'classic Options appearance', lambda ck: VF.v_classic_options(self, ck)),
