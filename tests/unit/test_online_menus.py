@@ -117,7 +117,7 @@ def test_native_initial_focus_and_budget_consumption_are_explicit():
     assert O.reserved_budget(c,s)==(8,4)
 
 
-def anchor_fixture(broken=False):
+def anchor_fixture(broken=False, *, item_name=False):
     """Invented native-shaped binding graph and camera for serializer coverage."""
     import struct
     from test_main_appearance import fixture
@@ -143,6 +143,11 @@ def anchor_fixture(broken=False):
              ('igNodeList',{2:0,3:0,4:-1}),
              ('igTransform',{2:'synth_camera_transform',3:-1,5:0,7:13,8:identity,11:-1}),
              ('igNodeList',{2:1,3:1,4:18}),('igCamera',{2:'synth_camera',3:-1,5:0})]
+    if item_name:
+        specs += [('igStringKey',None,[(2,'s')]),('igProperty',None,[(2,'r'),(3,'r')])]
+        objects += [('igStringKey',{2:'ItemName'}),('igProperty',{2:15,3:8})]
+        objects[6][1][8]=16
+        for index in (0,3,5,13): objects[index][1][4]+=2
     return fixture(specs,objects,tuple(struct.pack('<'+'i'*len(v),*v) for v in ((1,),(4,12),(6,),(14,))))
 
 
@@ -364,31 +369,25 @@ def test_right_aligned_fields_keep_their_native_alignment_after_serialization():
 
 
 def test_every_authored_menu_scene_fits_the_engine_anchor_capacity():
-    """060p: Browse authored 241 named anchors; XMen2.exe's playfield build (0x5882e0, walk 0x587f90, push 0x587e40)
-    holds 175, so the 183rd overwrote the stack vector's count and the next push wrote to a wild address (0x587654).
-    The old guard here was author_anchors' 256, which 241 passed."""
     from xml1build import menu_scene as S, online_fonts as F
     from xml1build.igb_file import IgbError
+    cap=O.engine_scene_anchors(O.ANCHOR_CAPABILITY)
+    assert O.BROWSE_ROWS==7 and cap==512 and O.engine_scene_anchors(b'')==175
     for name in O.MENUS:
         screen=O.bound_layout(O.runtime_layout(name),F.metrics())
-        layouts=O.scene_layout(screen)
-        assert len(layouts)<=O.ENGINE_SCENE_ANCHORS, (name, len(layouts))
-        S.author_anchors(anchor_fixture(),'template',layouts)
-    # 060q: round 15's notices / cause scenes and fix B's two backdrop models (also anchors, author_scene) on one page:
-    # Browse fits only because its focus bars share one model item; it keeps at least one anchor of headroom.
-    browse=len(O.scene_layout(O.runtime_layout('lc_browse')))+len(O.backdrop_layouts())
-    assert browse<=O.ENGINE_SCENE_ANCHORS-1, browse
-    for name in O.MENUS:
-        assert len(O.scene_layout(O.bound_layout(O.runtime_layout(name),F.metrics())))+len(O.backdrop_layouts())<=O.ENGINE_SCENE_ANCHORS, name
-    # Seven Browse rows (the approved design) exceed it: authoring refuses the scene instead of shipping a crash.
-    old=O.BROWSE_ROWS
-    try:
-        O.BROWSE_ROWS=7
-        layouts=O.scene_layout(O.bound_layout(O.runtime_layout('lc_browse'),F.metrics()))
-        assert len(layouts)>O.ENGINE_SCENE_ANCHORS
-        raises(IgbError,lambda:S.author_anchors(anchor_fixture(),'template',layouts))
-    finally:
-        O.BROWSE_ROWS=old
+        layouts={**O.backdrop_layouts(),**O.scene_layout(screen)}
+        assert len(layouts)<=cap, (name,len(layouts))
+        authored=S.author_anchors(anchor_fixture(item_name=True),'template',layouts,anchor_capacity=cap)
+        assert O.anchor_count(authored)==len(layouts)
+        assert not any('engine holds' in problem for problem in O.scene_problems(screen,authored,anchor_capacity=cap))
+        if name=='lc_browse':
+            assert any('engine holds 175' in problem for problem in O.scene_problems(screen,authored))
+    layouts=O.scene_layout(O.bound_layout(O.runtime_layout('lc_browse'),F.metrics()))
+    assert 175<len(layouts)<512
+    raises(IgbError,lambda:S.author_anchors(anchor_fixture(),'template',layouts))
+    probes=b' '.join(O.DLL_PROBES)
+    assert not O.capability_problems(probes)
+    assert O.capability_problems(probes.replace(O.ANCHOR_CAPABILITY,b''))
 
 
 def test_anchor_count_matches_the_engine_walk_on_the_060p_candidate_scenes():
@@ -529,7 +528,7 @@ def test_kicked_guest_notice_is_a_plain_hub_notice_within_the_anchor_budget():
     browse=O.bound_layout(O.runtime_layout('lc_browse'),F.metrics())
     assert 'lc_notice_removed' not in {e['name'] for e in browse['items']}
     for name in O.MENUS:
-        assert len(O.scene_layout(O.bound_layout(O.runtime_layout(name),F.metrics())))+len(O.backdrop_layouts())<=O.ENGINE_SCENE_ANCHORS, name
+        assert len(O.scene_layout(O.bound_layout(O.runtime_layout(name),F.metrics())))+len(O.backdrop_layouts())<=O.engine_scene_anchors(O.ANCHOR_CAPABILITY), name
 
 
 # ---- 0.6 preview fix E2: the hit table is validated by the builder and compared with the built bars ---------------------------
@@ -653,8 +652,11 @@ def _built_output():
     import pytest
     for candidate in (os.environ.get('XML1_BUILT_OUT'), r'D:\Projects\xml1-port\build\_candidate_060q'):
         if candidate and (pathlib.Path(candidate) / 'UI/menus/lc_online.XMLB').exists():
+            dll=pathlib.Path(candidate)/'dinput.dll'
+            if O.BROWSE_ROWS>5 and (not dll.is_file() or O.engine_scene_anchors(dll.read_bytes())==175):
+                continue  # This owned-output gate requires a build made with the expanded capability.
             return pathlib.Path(candidate)
-    pytest.skip('no built online-menus output (set XML1_BUILT_OUT)')
+    pytest.skip('no compatible built online-menus output (set XML1_BUILT_OUT; seven rows require menu-anchors/512)')
 
 
 def test_hit_table_matches_the_focus_bars_as_built():

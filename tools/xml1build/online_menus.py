@@ -22,11 +22,16 @@ COLUMNS = ((59,128),(188,67),(255,93),(348,58),(406,76),(482,78),(560,37))
 # Browse row cells kept as hit/focus targets. [4] status and [5] ping are drawn by the row scenes (no DATA cell).
 # The five cells of a row share ONE focus anchor (room_<r>_focus): their focus bar is the whole row anyway.
 ROW_COLUMNS = (0, 1, 2, 3, 6)
-# XMen2.exe keeps at most 175 named anchors per menu scene (playfield build 0x5882e0: two inline 175-entry vectors
-# with their count at +0x2d4, plus the 175-entry name table whose add 0x588120 checks 0xaf). The 176th anchor
-# overwrites the vectors' bit masks and counts, and the next push writes to a wild address: the 060p Browse crash at
-# 0x587654 (241 anchors). Every authored menu scene is checked against this (scene_problems / anchor_count).
+# Retail has 175 anchors; the atomic co-op installer advertises the expanded tables.
 ENGINE_SCENE_ANCHORS = 175
+ANCHOR_CAPABILITY = b'menu-anchors/512'
+
+
+def engine_scene_anchors(dll=b''):
+    """Effective capacity of ONE probed companion DLL, with the retail fallback."""
+    return 512 if ANCHOR_CAPABILITY in dll else ENGINE_SCENE_ANCHORS
+
+
 # 060q (round 15 + fix A/B: Browse 184 + 2 backdrop anchors, Host lobby 178 + 2): on a screen listed here every focus
 # bar of one plane is carried by ONE model item at that plane's scene origin, its geometry authored at the owner's
 # absolute position (the same bar, pixel for pixel). Each focusable item sets the shared item's model on focus and
@@ -41,9 +46,8 @@ SHARED_FOCUS_ORIGIN = (0, -150, 384)
 def shared_focus(plane):
     """(target item name, scene origin) of the shared focus item for one plane."""
     return (SHARED_FOCUS if plane == -150 else f'{SHARED_FOCUS}_{abs(int(plane))}'), (0, plane, 384)
-# Rows per Browse page (the DLL's online_menus_rules::browse_rows is the same number). Seven approved rows need 241
-# anchors; five fit (171) until the engine's per-scene anchor tables are raised. Row commands 24..30 stay reserved.
-BROWSE_ROWS = 5
+# Approved seven rows require the companion's menu-anchors/512 capability.
+BROWSE_ROWS = 7
 PROMPT_TOKENS = {'back':'$MENU_BACK','delete':'$MENU_BACK','paste':'$MENU_NEXT',
                  'refresh':'$MENU_NEXT','rejoin':'$MENU_NEXT','clear':'$MENU_OTHER',
                  'name':'$MENU_OTHER','change':'$MENU_OTHER','open':'$MENU_OK'}
@@ -726,6 +730,8 @@ def write(ctx, *, preview=False):
     if not preview:
         from . import fix_ini as FI
         FI.check_online_dll(ctx.out/'dinput.dll',{'Online':{'Menus':'1'},'Game':{'LegendsClassicFonts':'1'},'Limits':{'ScriptFunctions':'1024'}})
+    dll=(ctx.out/'dinput.dll').read_bytes() if (ctx.out/'dinput.dll').is_file() else b''
+    anchor_capacity=engine_scene_anchors(ANCHOR_CAPABILITY if preview else dll)
     original=ctx.x1_path(F.X1_MENU_IGB)
     if original is None: raise ValueError('online authoring needs the owned menu scene')
     source,_=M.convert_scene(original.read_bytes())
@@ -769,9 +775,9 @@ def write(ctx, *, preview=False):
         extra={e.get('name'):(((-1000,-150,-1000)),(0,-1,1,0)) for e in tree.findall('item')
                if e.get('name') not in layouts}
         if name in LOBBIES:
-            data=author_scene(source,screen,native_lobby_layouts(tree,screen))
-        else:data=author_scene(source,screen)
-        problems+=scene_problems(screen,data)
+            data=author_scene(source,screen,native_lobby_layouts(tree,screen),anchor_capacity=anchor_capacity)
+        else:data=author_scene(source,screen,anchor_capacity=anchor_capacity)
+        problems+=scene_problems(screen,data,anchor_capacity=anchor_capacity)
         if problems: raise ValueError('; '.join(problems))
         focus_models.update(backdrop_models(focus_source.read_bytes(),screen))
         add_backdrop(tree,screen['name'])
@@ -869,14 +875,14 @@ def backdrop_layouts():
     return {name:(BACKDROP_ANCHOR,(0,-1,1,0)) for name in BACKDROP_ITEMS}
 
 
-def author_scene(source,screen,extra=None):
+def author_scene(source,screen,extra=None,*,anchor_capacity=ENGINE_SCENE_ANCHORS):
     """Author description aliases without colliding with retired source objects."""
     from . import menu_scene as S, igb_file as G
     existing={o.get(2) for o in G.IgbFile(source).objects_of('igTransform')}
     layouts={**backdrop_layouts(),**(extra or {}),**scene_layout(screen)}
     retired={name:'lc_o_source_'+name for name in layouts if name in existing and name!='button1'}
     if retired: source,_=M.rename_aliases(source,retired)
-    return S.author_anchors(source,'button1',layouts)
+    return S.author_anchors(source,'button1',layouts,anchor_capacity=anchor_capacity)
 
 
 def focus_resource(rect, outline=False, variant=''):
@@ -1108,7 +1114,7 @@ def fit_text(text, width, measure):
     return text[:end].rstrip()+'...'
 
 
-def scene_problems(screen,data):
+def scene_problems(screen,data,*,anchor_capacity=ENGINE_SCENE_ANCHORS):
     from . import igb_file as G, frontend as F
     graph=G.IgbFile(data)
     errors=M.placement_problems(data,scene_layout(screen))
@@ -1121,8 +1127,8 @@ def scene_problems(screen,data):
             errors.append('incomplete scene alias: '+name)
         if name not in reachable: errors.append('unreachable scene binding: '+name)
     anchors=anchor_count(data)
-    if anchors>ENGINE_SCENE_ANCHORS:
-        errors.append(f"{screen['name']}: {anchors} scene anchors, the engine holds {ENGINE_SCENE_ANCHORS} (0x5882e0)")
+    if anchors>anchor_capacity:
+        errors.append(f"{screen['name']}: {anchors} scene anchors, the engine holds {anchor_capacity} (0x5882e0)")
     return errors
 
 
@@ -1199,7 +1205,7 @@ DLL_PROBES = (b'lc-online-menus/1\n', b'lc-online-input/1', b'lc-online-lobby/1'
               # Menus=1 + LegendsClassicFonts=0 fallback to the native Play Online menus.
               b'lc-fonts-screen/1', b'LegendsClassicFonts is not active',
               # 0.6 preview fix E: the mouse hit boxes are the drawn focus bars (Data/lc_online_hits.txt, hit_table).
-              b'lc-online-hits/1')
+              b'lc-online-hits/1', ANCHOR_CAPABILITY)
 CAPABILITY = b'lc-online-menus/1\n'
 # Mouse hit boxes (xml2-fix online_menus_hits_rules.hpp). XMen2.exe hit-tests an item with the box its text is laid out in
 # (0x5bc530 -> 0x5bc1b0); every focus bar here is larger than that box (an ordinary row: 12 units left and right, 5 above,
@@ -1546,7 +1552,8 @@ def enabled(ctx):
 
 
 def capability_problems(data):
-    return ['missing DLL probe: '+repr(token) for token in DLL_PROBES if token not in data]
+    probes=DLL_PROBES if BROWSE_ROWS>5 else tuple(t for t in DLL_PROBES if t!=ANCHOR_CAPABILITY)
+    return ['missing DLL probe: '+repr(token) for token in probes if token not in data]
 
 
 # Round 8 (lc-online-party/1): the in-session Party screen. 68 and 70 are reserved; 63..74 exist on lc_party only.
@@ -2322,6 +2329,8 @@ def output_problems(out):
     from pathlib import Path
     from .common import decode_xmlb,FileIndex
     out=Path(out);errors=[];index=FileIndex(out)
+    dll=index.path('dinput.dll')
+    anchor_capacity=engine_scene_anchors(dll.read_bytes() if dll else b'')
     marker=index.path('Data/lc_online_menus.cap')
     if marker is None or marker.read_bytes()!=CAPABILITY:errors.append('exact capability marker missing')
     for name in (*MENUS,*LOBBIES,PARTY_MENU):
@@ -2334,7 +2343,7 @@ def output_problems(out):
             # The engine's per-scene anchor capacity (0x5882e0): over it the playfield build corrupts memory (060p).
             try:
                 anchors=anchor_count(igb.read_bytes())
-                if anchors>ENGINE_SCENE_ANCHORS:errors.append(f'{scene}: {anchors} scene anchors, the engine holds {ENGINE_SCENE_ANCHORS}')
+                if anchors>anchor_capacity:errors.append(f'{scene}: {anchors} scene anchors, the engine holds {anchor_capacity}')
             except Exception as error:
                 errors.append(scene+': unreadable scene ('+type(error).__name__+')')
         pkg=index.path(f'Packages/generated/maps/package/menus/{name}.PKGB')
