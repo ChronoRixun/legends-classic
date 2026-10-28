@@ -57,11 +57,11 @@ Play Online always retains the native `openmenu online` command as fallback.
 
 Round 5 wires the custom screens to the DLL's broker bridge with constant
 commands only: `lcOnlineIntent` 18 Refresh, 19 Open room, 20 Retry, 21 Public/Private,
-22/23 page, 24..30 select Browse row 0..6 (a page authors `online_menus.BROWSE_ROWS` = 5 rows, so 24..28 are
+22/23 page, 24..30 select Browse row 0..6 (a page authors `online_menus.BROWSE_ROWS` = 7 rows, so 24..30 are
 used) and 31 Join selected (resolve only), each
 valid only on its own screen (`online_menus.BROKER_SCOPE`, checked by the validator).
-Every authored menu scene stays within XMen2.exe's 175 named anchors per scene (`ENGINE_SCENE_ANCHORS`; the
-playfield build `0x5882e0` corrupts memory past it - the 060p Browse crash); the builder and `output_problems` refuse more.
+Every authored menu scene stays within the supplied DLL's probed capacity (175 retail, 512 with `menu-anchors/512`; the
+retail playfield build `0x5882e0` overflows at 175, while the expanded push refuses above 512); the builder and `output_problems` refuse more.
 Browse and the two lobby skins (round 15's cause scenes / notices / inline lobby scenes + the two backdrop models) fit
 because their focus bars share one model item per plane (`SHARED_FOCUS_SCREENS`: `lc_focus` at -150, `lc_focus_300` at
 -300, at the scene origin): each focusable item sets it to its own bar on focus (authored at the owner's absolute

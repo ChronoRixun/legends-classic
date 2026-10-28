@@ -293,7 +293,7 @@ def attach(primary_data, artwork_data, *, anchors=(), keep_camera=False, merge_t
                          'native_references': len(gs[0].items), 'scene_infos': 1}
 
 
-def author_anchors(data, template_name, layouts, *, preserve_existing=False):
+def author_anchors(data, template_name, layouts, *, preserve_existing=False, anchor_capacity=175):
     """Clone a checked native text-anchor subtree for an original flat menu.
 
     Keep schemas/camera, replace the root children with camera and named bindings.
@@ -302,9 +302,10 @@ def author_anchors(data, template_name, layouts, *, preserve_existing=False):
     """
     import math
     g = G.IgbFile(data)
-    # 175: XMen2.exe's per-menu-scene anchor capacity (playfield build 0x5882e0; online_menus.ENGINE_SCENE_ANCHORS).
-    if not layouts or len(layouts)>175 or any(not n or not n.isascii() or len(n)>128 for n in layouts):
-        raise G.IgbError('invalid authored anchor set (more than the engine 175 scene anchors?)')
+    # Caller supplies the capacity certified by its companion DLL; retail is the fallback.
+    if anchor_capacity not in (175,512): raise G.IgbError('unsupported scene anchor capacity')
+    if not layouts or len(layouts)>anchor_capacity or any(not n or not n.isascii() or len(n)>128 for n in layouts):
+        raise G.IgbError(f'invalid authored anchor set (engine capacity {anchor_capacity} scene anchors)')
     sources=[o for o in g.objects_of('igTransform') if o.get(2)==template_name]
     infos=g.objects_of('igSceneInfo')
     if len(sources)!=1 or len(infos)!=1:

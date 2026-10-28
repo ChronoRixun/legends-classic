@@ -318,7 +318,7 @@ def test_round_5b_scene_anchor_budget_and_ping_text_live_in_the_pip_scenes():
     for name in O.MENUS:
         screen = O.bound_layout(O.runtime_layout(name), F.metrics())
         # The engine's per-scene capacity (0x5882e0), not the old 256: seven Browse rows authored 241 and crashed 060p.
-        assert len(O.scene_layout(screen)) <= O.ENGINE_SCENE_ANCHORS, (name, len(O.scene_layout(screen)))
+        assert len(O.scene_layout(screen)) <= O.engine_scene_anchors(O.ANCHOR_CAPABILITY), (name, len(O.scene_layout(screen)))
     raw = {e['name']: e for e in O.runtime_layout('lc_browse')['items']}
     for r in range(O.BROWSE_ROWS):
         for n in range(5):
