@@ -2109,7 +2109,7 @@ def lobby_layout(role, *, members=1, ready=False, fixture=False, pending=False, 
         e=text(key,label,rect,'body',intent=intent,hidden=True,plane=-300);e['enabled']=False
     text('desctext1','$MENU_BACK Leave' if role=='host' else '',(324,455,65,18))
     text('desctext2','$MENU_OTHER Kick player' if role=='host' else '$MENU_OTHER Ready / Unready',(106,455,110,18))
-    text('desctext3','Copy: Ctrl+C / Y',(221,455,98,18))
+    text('desctext3','Ctrl+C Copy code',(221,455,98,18))  # the keyboard form; the DLL rebinds it to "Y Copy code" for a pad
     text('desctext4','',(315,455,80,18))
     text('desctext5','$MENU_ACCEPT Select',(43,455,59,18))
     text('breadcrumb','Online > Party',(476,455,121,18),'label',3,align='right')
@@ -2204,6 +2204,10 @@ def lobby_tree(original,screen,palette_ids=None):
         else:
             for k in ('text','style','textalignx','textaligny'):
                 if k in e.attrib:item.set(k,e.get(k))
+            # 060r live (failure 9): the native prompts (desctext1..5) kept animtext_scene="help", the native help bar's
+            # fade-in, which this scene does not carry - not one lobby prompt (A Select / X Kick player / X Ready / Copy / B
+            # Leave) was ever drawn. Every other reskin (codex, options, pause, the action buttons above) drops it too.
+            item.attrib.pop('animtext_scene',None)
     for key,item in existing.items():
         if key not in by_name:
             if item.get('type')=='MENU_ITEM_MODEL':
