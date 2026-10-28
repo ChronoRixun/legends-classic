@@ -104,17 +104,21 @@ def test_combined_option_off_and_capacity_are_not_inferred_from_files():
 
 
 def test_lobby_action_mouse_bounds_follow_full_approved_bars():
+    """The mouse reaches the whole approved bar through the hit table (fix E); the label keeps its own text box. 060q live:
+    with the bar as the layout box CText drew START GAME / KICK PLAYER / LEAVE at the bar's left edge (the S clipped)."""
     for role in ('host','join'):
         screen=O.lobby_layout(role)
         placements=O.scene_layout(screen)
+        bars={r[0]:r[1:] for r in O.hit_rows(screen)}
         for item in screen['items']:
             if item.get('hit_rect'):
                 (x,_,z),(l,b,r,t)=placements[item['name']]
-                hx,hy,hw,hh=item['hit_rect']
-                assert abs(x+l-hx*.8)<1e-6
-                assert abs(x+r-(hx+hw)*.8)<1e-6
-                assert abs(z+t-(480-hy)*.8)<1e-6
-                assert abs(z+b-(480-hy-hh)*.8)<1e-6
+                rx,ry,rw,rh=item['rect']
+                assert abs(x+l-rx*.8)<1e-6 and abs(x+r-(rx+rw)*.8)<1e-6
+                assert abs(z+t-(480-ry)*.8)<1e-6 and abs(z+b-(480-ry-rh)*.8)<1e-6
+                if item['name'] in bars:
+                    L,B,R,T=bars[item['name']];hx,hy,hw,hh=item['hit_rect']
+                    assert L<=hx*.8+1e-6 and R>=(hx+hw)*.8-1e-6 and T>=(480-hy)*.8-1e-6 and B<=(480-hy-hh)*.8+0.5
 
 
 def test_card_names_use_upright_bold_and_measured_approved_scale():

@@ -186,6 +186,13 @@ def theme(colors, styles):
     return result
 
 
+# Hub help box copy per focusable row (01-hub: the Host row's is the approved text).
+HUB_HELP = {'host': ('HOST A GAME', 'Open a private room and share its code with friends,', 'or list it so anyone can join.'),
+            'code': ('JOIN BY CODE', 'Type the 8-character code your host sent you,', 'or paste it. Keyboard, pad and mouse all work.'),
+            'browse': ('BROWSE GAMES', 'See the public games that are open right now', 'and join one. Players there see your address.'),
+            'other': ('OTHER WAYS TO PLAY', "The game's own LAN and direct IP menus,", 'for a local network or a known address.')}
+
+
 def layout(name, state=None):
     if name not in MENUS: raise ValueError('unknown online menu')
     s=state or Fixture(); s.rebound()
@@ -240,11 +247,18 @@ def layout(name, state=None):
             # left-aligned box discarded the unused space between label and hint.
             text(key+'_hint',hint,181,142+39*i,113,15,'label',3)
             items[-1].update(align='right',selected_with=key)
-        panel('help_header','HOST A GAME',(43,334,266,74))
-        shapes[:]=[q for q in shapes if q['rect']!=(43,334,266,22)]
-        next(e for e in items if e['name']=='help_header').update(color=5,rect=(59,348,240,14))
-        text('help','Open a private room and share its code with friends,',59,365,240,17)
-        text('help2','or list it so anyone can join.',59,382,240,17)
+            if enabled:
+                # 060q live: the light-blue hint stayed on the focused amber bar (design: navy). The DLL shows this navy
+                # twin instead while its row has the focus (online_menus.cpp hub_focus_follow).
+                text(key+'_hint_on',hint,181,142+39*i,113,15,'label',0)
+                items[-1].update(align='right',hidden=True)
+        # The help box follows the focused row (060q live: it always read HOST A GAME): one hidden set per focusable row,
+        # the Host row's shown at the start (the Hub opens on it).
+        panel('help_panel','',(43,334,266,74))
+        for key,(head,line1,line2) in HUB_HELP.items():
+            for part,value,y,h,style,color in (('_title',head,348,14,'label',5),('_1',line1,365,17,'body',4),('_2',line2,382,17,'body',4)):
+                text('lc_help_'+key+part,value,59,y,240,h,style,color)
+                if key!='host': items[-1]['hidden']=True
         panel('you_header','YOU',(338,133,259,120))
         text('name_label','SCREEN NAME',354,166,220,13,'label',3)
         text('local_name','LOGAN',354,181,140,25,'title')
@@ -628,10 +642,10 @@ def scene_layout(screen):
     layouts={e['name']:(((e['rect'][0]+(e['rect'][2]/2 if e.get('align')=='center' else 0))*.8,e.get('plane',-150),(480-e['rect'][1])*.8),
                        ((-e['rect'][2]*.4 if e.get('align')=='center' else 0),-e['rect'][3]*.8,
                         e['rect'][2]*(.4 if e.get('align')=='center' else .8),0)) for e in screen['items']}
-    for e in screen['items']:
-        if e.get('hit_rect'):
-            x,y,_,_=e['rect'];hx,hy,hw,hh=e['hit_rect']
-            layouts[e['name']]=(layouts[e['name']][0],((hx-x)*.8,-(hy+hh-y)*.8,(hx+hw-x)*.8,(y-hy)*.8))
+    # 060q live: a hit_rect used to become the item's layout box, and CText aligns the text in that box - so every button
+    # with a hit_rect (lobby START GAME / KICK PLAYER / LEAVE, the Party rail, INVITE, Retry) drew its label at the bar's
+    # left edge, START GAME's S under the bar's slanted end. The text box is the text's own rect now; the mouse uses the
+    # drawn bars (Data/lc_online_hits.txt, fix E), which never depended on this box.
     for e in screen['items']:
         if e['intent'] and (e['enabled'] or screen.get('runtime')):
             target,owner=focus_target(screen,e)
@@ -865,6 +879,7 @@ def focus_model(source, rect, outline=False, picture=None, depth=40, slant=None)
     from . import igb_file as G, menu_scene as S
     data,_=M.fit_flat_panel(source,rect,border=1,opaque=True)
     g=G.IgbFile(data); blocks={}
+    keep=blended_layer(g)
     solid=bytes.fromhex(PALETTE[5])+b'\xff'
     for o in g.objects_of('igImage'):
         image=picture.convert('RGBA') if picture is not None else None
@@ -879,6 +894,21 @@ def focus_model(source, rect, outline=False, picture=None, depth=40, slant=None)
     for o in g.objects_of('igVertexArray1_1'):
         refs=g.ref_list(o.get(2)); vertices=g.block_floats(refs[0]); l,b,r,t=rect
         lean=(0 if outline or r-l<50 else FOCUS_LEAN) if slant is None else slant
+        if o.ref!=keep:
+            # 060q live: dialog.igb draws three layers - a 144-vertex frame with NO blend state (opaque: the picture's
+            # transparent texels came out black = the black boxes / outline bars / light outer frames) and a 12-vertex
+            # inset with an ADDITIVE blend (the lighter inner rectangles and the dark-rectangle layering). Only the one
+            # alpha-blended quad may draw; the others collapse to a zero-area point (topology and references kept).
+            vertices[:]=[l,depth,b]*(len(vertices)//3)
+            g.set_block_floats(refs[0],vertices)
+            if len(refs)>11 and refs[11] in g.blocks: g.set_block_floats(refs[11],[0.0]*(2*(len(vertices)//3)))
+            if len(refs)>2 and refs[2] in g.blocks: blocks[refs[2]]=b'\xff'*4*o.get(3)
+            continue
+        # The kept quad sits inset in the source panel (its corner band); it spans the whole target rectangle now.
+        xs=vertices[0::3];zs=vertices[2::3];lo_x,hi_x,lo_z,hi_z=min(xs),max(xs),min(zs),max(zs)
+        for i in range(0,len(vertices),3):
+            vertices[i]=l if vertices[i]-lo_x<hi_x-vertices[i] else r
+            vertices[i+2]=b if vertices[i+2]-lo_z<hi_z-vertices[i+2] else t
         for i in range(0,len(vertices),3):
             vertices[i]+=lean*(vertices[i+2]-b)/(t-b)
             vertices[i+1]=depth  # relative to the anchor; 40 = behind text, in front of the backdrop
@@ -898,6 +928,50 @@ def focus_model(source, rect, outline=False, picture=None, depth=40, slant=None)
     image_name='lc_o_focus_'+hashlib.sha256(picture.tobytes()).hexdigest()[:12] if picture is not None else 'lc_o_focus_amber'
     return namespace_images(S.static_model(g.rebuilt(blocks)),image_name)
 
+
+
+def _layer_walk(g):
+    """(vertex array ref, blend enabled, (src, dst) blend function) of every drawn layer, from the scene root down the
+    attribute sets, inheriting blend state / function as the renderer does."""
+    found=[];seen=set()
+    def items(ref):
+        return (g.list_items(ref) or []) if isinstance(ref,int) and ref>=0 else []
+    def walk(ref,state,func):
+        if ref in seen: return
+        seen.add(ref);o=g.obj(ref)
+        if o is None: return
+        if o.name in ('igAttrSet','igGeometry'):
+            for a in items(o.get(8)):
+                at=g.obj(a)
+                if at is None: continue
+                if at.name=='igBlendStateAttr': state=bool(at.get(4))
+                elif at.name=='igBlendFunctionAttr': func=(at.get(4),at.get(5))
+                elif at.name=='igGeometryAttr1_5': found.append((at.get(4),state,func))
+            for c in items(o.get(7)): walk(c,state,func)
+    for info in g.objects_of('igSceneInfo'): walk(info.get(5),False,None)
+    return found
+
+
+def blended_layer(g):
+    """The one vertex array of the flat panel drawn with ordinary alpha blending (SRC_ALPHA, ONE_MINUS_SRC_ALPHA).
+    Refuses a panel whose layers are not one 4-vertex alpha-blended quad among the others."""
+    from . import igb_file as G
+    found=_layer_walk(g)
+    alpha=[va for va,state,func in found if state and func==(4,5)]
+    if len(found)!=len(g.objects_of('igVertexArray1_1')) or len(alpha)!=1 or g.obj(alpha[0]).get(3)!=4:
+        raise G.IgbError('flat focus panel needs exactly one alpha-blended quad layer')
+    return alpha[0]
+
+
+def panel_layers(data):
+    """(vertex count, blend enabled, blend function, zero area, (l, b, r, t)) per layer of a built model (output checks)."""
+    from . import igb_file as G
+    g=G.IgbFile(data);out=[]
+    for va,state,func in _layer_walk(g):
+        o=g.obj(va);v=g.block_floats(g.ref_list(o.get(2))[0])
+        box=(min(v[0::3]),min(v[2::3]),max(v[0::3]),max(v[2::3]))
+        out.append((o.get(3),state,func,box[0]==box[2] and box[1]==box[3],box))
+    return out
 
 
 def palette_ids(colors):
@@ -948,7 +1022,19 @@ def focus_spec(screen,item):
     if screen.get('lobby') and screen['name']=='join' and item['name']=='text_leaveroom':
         hx,hy,hw,hh=item['hit_rect']
         return ((hx-x)*.8,-(hy+hh-y)*.8,(hx+hw-x)*.8,(y-hy)*.8),True
+    if y>=FOOTER_TOP:
+        # Footer prompts sit 2-5 layout units apart: the ordinary row's 12-unit ends covered the neighbouring prompts
+        # (060q live: Browse's Refresh bar over "[Enter] Join" and "[Esc] Back"). Each end reaches at most to just short of
+        # the middle of the gap to the next prompt (view units), never more than the row's 12.
+        others=[e['rect'] for e in screen['items'] if e is not item and e['intent'] and e['rect'][1]>=FOOTER_TOP]
+        left_gap=min([x-(o[0]+o[2]) for o in others if o[0]+o[2]<=x]+[30])
+        right_gap=min([o[0]-(x+w) for o in others if o[0]>=x+w]+[30])
+        pad=lambda gap: max(0.0,min(12.0,round(gap*.8/2-FOOTER_CLEAR,2)))
+        return (-pad(left_gap),-h*.8-2,w*.8+pad(right_gap),5),False
     return (-12,-h*.8-2,w*.8+12,5),False
+
+
+FOOTER_TOP, FOOTER_CLEAR = 440, 0.2
 
 
 def focus_target(screen, item):
@@ -1312,7 +1398,7 @@ NOTICE_TEXT = {
 DATA_NAMES = {'local_name', 'self_name', 'last_name', 'last_code', 'last_time',
               'code_value', 'code_remaining', *(f'cell{i}' for i in range(8)),
               # Round 5: every field the broker bridge binds is DATA (normal interned text, no gamevar owner).
-              'service', 'self_state', 'browse_hint', 'room_name', 'preview_name', 'room_code', 'details_name',
+              'service', 'self_state', 'browse_hint', 'browse_hint_on', 'room_name', 'preview_name', 'room_code', 'details_name',
               'details', 'broker_error', 'list_count', 'list_age', 'lc_host_max_players', 'lc_refusal_rules', 'lc_toast_name', *(f'room_{r}_{c}' for r in range(BROWSE_ROWS) for c in (*ROW_COLUMNS, 5))}
 # Round 5b: the DLL selects ONE lc_broker_err_<cause> scene per failure (and hides Retry where retrying cannot help),
 # one status / pip / build scene and a dim veil per Browse row, a count + age header and a connected-service scene.
@@ -1594,8 +1680,10 @@ def broker_layout(name, screen):
                     dict(text='PUBLIC',rect=(81,5,52,16),style='row',color=0 if public else 3),
                     dict(kind='outline',rect=(385,1,46,14),color=3),
                     dict(text='PUBLIC' if public else 'PRIVATE',rect=(391,3,50,14),style='label',color=3)]
-        items.append(_variant('lc_host_private',(148,167,431,23),scene(False)));items[-1]['hidden']=False
-        items.append(_variant('lc_host_public',(148,167,431,23),scene(True)))
+        # 060q live: at the default plane the VISIBILITY focus bar (same plane, drawn later) covered both chips. The pair
+        # sits in front of the focus fill and behind the text, as the Browse row scenes do.
+        items.append(_variant('lc_host_private',(148,167,431,23),scene(False),plane=-170));items[-1]['hidden']=False
+        items.append(_variant('lc_host_public',(148,167,431,23),scene(True),plane=-170))
         items.append(_entry('visibility','',(148,167,129,23),'row',4,intent='visibility'))
         # Eight code cells of the round-1 fixture cannot show a DLL string; one DATA field inside one dashed frame can.
         shapes[:]=[q for q in shapes if not(q['kind']=='dashed' and q['rect'][1]==260)]
@@ -1702,7 +1790,7 @@ def runtime_layout(name,state=None):
     # Short truthful fallbacks only: the DLL binds the live service/count/room values over these.
     replacements={'local_name':'Player','self_name':'Player','self_initial':'P',
         'self_state':'Not connected','service':'Not connected',
-        'browse_hint':'Browse public games','last_name':'','last_code':'',
+        'browse_hint':'Browse public games','browse_hint_on':'Browse public games','last_name':'','last_code':'',
         'identity':'Installed build: see launcher', 'code_state':'Not connected',
         'code_status':'Type or paste all eight symbols. The code is looked up automatically.',
         'preview_save':'Campaign selection pending',
@@ -1837,7 +1925,7 @@ def broker_problems(root, screen):
     for key,e in items.items():
         if 'fixture' in (e.get('text') or '').lower(): errors.append('fixture wording in production asset: '+key)
     if name=='lc_online':
-        for key in ('service','browse_hint'): need(key,clamp='true')
+        for key in ('service','browse_hint','browse_hint_on'): need(key,clamp='true')
         need('lc_hub_host_left',hide='true',type='MENU_ITEM_MODEL',neverfocus='true')
         need('lc_hub_host_left_veil',hide='true',type='MENU_ITEM_MODEL',neverfocus='true')
         need('lc_hostleft_again',usecmd=command(2),enabled='false',hide='true',type='MENU_ITEM_TEXT')
@@ -2223,6 +2311,23 @@ def output_problems(out):
                     if ext and index.path(filename+ext) is None:errors.append(name+': unresolved '+filename)
             except Exception as error:
                 errors.append(name+': invalid package ('+type(error).__name__+')')
+    errors+=model_output_problems(out,index)
+    return errors
+
+
+def model_output_problems(out, index=None):
+    """060q live (fix H): every LC model draws exactly one alpha-blended layer (dialog.igb's opaque frame and additive inset
+    drew black boxes, outline bars and lighter inner rectangles)."""
+    from pathlib import Path
+    out=Path(out);errors=[]
+    for path in sorted(p for p in (out/'UI'/'models').glob('*') if p.name.lower().startswith('lc_o_') and p.suffix.lower()=='.igb'):
+        try:
+            layers=panel_layers(path.read_bytes())
+            drawn=[l for l in layers if not l[3]]
+            if len(drawn)!=1 or not drawn[0][1] or drawn[0][2]!=(4,5):
+                errors.append(path.name+': model must draw one alpha-blended layer, draws '+repr([(l[0],l[1],l[2]) for l in drawn]))
+        except Exception as error:
+            errors.append(path.name+': unreadable model ('+type(error).__name__+')')
     return errors
 
 

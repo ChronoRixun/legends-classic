@@ -685,3 +685,117 @@ def test_hit_table_matches_the_focus_bars_as_built():
     wide = [l.replace('lc_online code 34.4 222 247.2 246.6', 'lc_online code 34.4 222 255 246.6') for l in lines]
     assert any('lc_online: code' in p for p in O.hit_scene_problems('\n'.join(wide).encode('ascii'), list(screens), *read))
     assert O.hit_table_rows(data)['lc_online']['code'] == (34.4, 222.0, 247.2, 246.6) and O.FOCUS_LEAN == 4
+
+def test_host_visibility_pair_draws_in_front_of_its_focus_bar():
+    screen=O.runtime_layout('lc_host')
+    by={e['name']:e for e in screen['items']}
+    assert by['lc_host_private']['plane']==by['lc_host_public']['plane']==-170
+    assert by['visibility'].get('plane',-150)==-150  # the focus bar's plane: -170 is nearer the camera
+
+
+def test_focus_models_draw_exactly_one_alpha_blended_layer():
+    """060q live: dialog.igb's three layers - an opaque 144-vertex frame (no blend state) and an additive 12-vertex inset
+    beside the alpha quad - drew the picture's transparent texels black (the black box behind "1 of N ready.", the outline
+    bar to the YOUR ROOM badge, the light frame round the 4:3 field) and a lighter inner rectangle on every amber bar."""
+    import pytest
+    from pathlib import Path
+    from PIL import Image
+    src=Path('D:/Projects/xml1-port/xml1_loose/ui/hud/dialog.igb')
+    if not src.is_file(): pytest.skip('owned dialog.igb not available on this machine')
+    source=src.read_bytes()
+    picture=Image.new('RGBA',(64,32));picture.paste((255,255,255,255),(0,0,8,8))
+    for rect,outline,pic in (((0,-13.6,56,0),True,picture),((0,-20,177,0),False,None),(O.BACKDROP_RECT,True,picture),
+                             (O.FIELD_RECT,True,O.field_picture())):
+        layers=O.panel_layers(O.focus_model(source,rect,outline,pic))
+        drawn=[l for l in layers if not l[3]]
+        assert len(layers)==3 and len(drawn)==1 and drawn[0][0]==4 and drawn[0][1] and drawn[0][2]==(4,5)
+        l,b,r,t=drawn[0][4]
+        lean=0 if outline or rect[2]-rect[0]<50 else 4
+        assert all(abs(u-v)<1e-4 for u,v in zip((l,b,t,r),(rect[0],rect[1],rect[3],rect[2]+lean))),(rect,drawn[0][4])
+    # the unpatched source really is three drawn layers: opaque, additive and alpha
+    from xml1build import igb_file as G, menu_conversion as M
+    raw=O._layer_walk(G.IgbFile(M.fit_flat_panel(source,(0,-13.6,56,0),border=1,opaque=True)[0]))
+    assert sorted((s,f) for _,s,f in raw)==sorted([(False,None),(True,(4,1)),(True,(4,5))])
+
+
+def test_footer_prompt_focus_bars_never_cover_a_neighbouring_prompt():
+    """060q live (failure 11): Browse's focused Refresh bar ran over "[Enter] Join" and "[Esc] Back" - the ordinary row's
+    12-unit bar ends on prompts 3-5 layout units apart. Every footer prompt's drawn bar stays clear of the next prompt's."""
+    for name,screen in _built_screens().items():
+        rows=[]
+        for e in screen['items']:
+            if not (e['intent'] and (e['enabled'] or screen.get('runtime'))) or e['rect'][1]<O.FOOTER_TOP: continue
+            _,owner,_,_,(l,b,r,t)=O.focus_placement(screen,e);ax,_,_=O._anchor(owner)
+            rows.append((ax+l,ax+r,e['name'],e['rect']))
+        rows.sort()
+        for (l1,r1,n1,box1),(l2,r2,n2,box2) in zip(rows,rows[1:]):
+            assert r1<l2,(name,n1,n2)
+            assert r1<box2[0]*.8 and l2>(box1[0]+box1[2])*.8,(name,n1,n2)   # never over the other prompt's text
+
+
+def test_party_field_paints_no_amber_action_under_a_focusable_item():
+    """060q live (failure 8): INVITE was painted amber in the static field (plus its focus tick), so the rail's focused PARTY
+    and INVITE showed two amber bars at once. Amber under an action comes only from its focus model now."""
+    from xml1build import online_party as PT
+    screen=PT.party_layout('host')
+    actions=[e.get('hit_rect') or e['rect'] for e in screen['items'] if e['intent']]
+    def meets(a,b): return a[0]<b[0]+b[2] and b[0]<a[0]+a[2] and a[1]<b[1]+b[3] and b[1]<a[1]+a[3]
+    for q in screen['shapes']:
+        if q['color']==5 and q['kind'] in ('bar','slash','rect'):
+            assert not any(meets(q['rect'],a) for a in actions),q
+    by={e['name']:e for e in screen['items']}
+    assert by['lc_party_invite']['color']==4 and by['lc_party_invite_hint']['color']==3
+
+
+def _panel_graph(layers):
+    """A synthetic flat panel in the owned dialog.igb's shape (all numbers invented): igSceneInfo -> root igAttrSet -> one
+    igAttrSet per layer (optional blend state / function) -> igGeometry -> igGeometryAttr1_5 -> igVertexArray1_1.
+    layers = [(vertex count, blend enabled or None, (src, dst) or None)]."""
+    import struct
+    from test_main_appearance import fixture
+    lst = [(2, 'i'), (3, 'i'), (4, 'b')]
+    schemas = [('igDataList', None, []), ('igNodeList', 'igDataList', lst), ('igAttrList', 'igDataList', lst),
+               ('igSceneInfo', None, [(5, 'r')]), ('igAttrSet', None, [(7, 'r'), (8, 'r')]), ('igGeometry', None, [(7, 'r'), (8, 'r')]),
+               ('igBlendStateAttr', None, [(4, 'i')]), ('igBlendFunctionAttr', None, [(4, 'i'), (5, 'i')]),
+               ('igGeometryAttr1_5', None, [(4, 'r')]), ('igVertexArray1_1', None, [(2, 'b'), (3, 'i')])]
+    objects, blocks = [], []
+    def obj(name, values): objects.append((name, values)); return len(objects) - 1
+    pending = []   # (object index, slot, block index) patched after the object count is known
+    def block(data): blocks.append(data); return len(blocks) - 1
+    def data_list(name, refs):
+        b = block(struct.pack('<' + 'i' * len(refs), *refs)); i = obj(name, {2: len(refs), 3: len(refs), 4: 0}); pending.append((i, 4, b)); return i
+    children = []
+    for n, state, func in layers:
+        pos = block(struct.pack('<' + 'f' * (3 * n), *[float(k) for k in range(3 * n)]))
+        comp = block(b'')   # replaced below: the component ref list (positions first)
+        va = obj('igVertexArray1_1', {2: 0, 3: n}); pending.append((va, 2, comp)); blocks[comp] = ('comp', pos)
+        ga = obj('igGeometryAttr1_5', {4: va})
+        geo = obj('igGeometry', {7: data_list('igNodeList', []), 8: data_list('igAttrList', [ga])})
+        attrs = []
+        if state is not None: attrs.append(obj('igBlendStateAttr', {4: int(state)}))
+        if func is not None: attrs.append(obj('igBlendFunctionAttr', {4: func[0], 5: func[1]}))
+        children.append(obj('igAttrSet', {7: data_list('igNodeList', [geo]), 8: data_list('igAttrList', attrs)}))
+    root = obj('igAttrSet', {7: data_list('igNodeList', children), 8: data_list('igAttrList', [])})
+    obj('igSceneInfo', {5: root})
+    base = len(objects)
+    blocks = [struct.pack('<i', base + b[1]) if isinstance(b, tuple) else b for b in blocks]
+    for i, slot, b in pending: objects[i][1][slot] = base + b
+    return fixture(schemas, objects, tuple(blocks))
+
+
+def test_blended_layer_keeps_the_alpha_quad_and_refuses_any_other_panel():
+    """Fix H: the dialog.igb shape (opaque 144-vertex frame, additive 12-vertex inset, one SRC_ALPHA / INV_SRC_ALPHA quad) gives
+    the quad; a panel with no such quad, two of them, or an alpha layer that is not a quad is refused, never guessed."""
+    from xml1build import igb_file as G
+    dialog = [(144, None, None), (12, True, (4, 1)), (4, True, (4, 5))]
+    g = G.IgbFile(_panel_graph(dialog))
+    keep = O.blended_layer(g)
+    assert g.obj(keep).get(3) == 4
+    walk = O._layer_walk(g)
+    assert sorted((s, f) for _, s, f in walk) == sorted([(False, None), (True, (4, 1)), (True, (4, 5))])
+    assert [l[0] for l in O.panel_layers(_panel_graph(dialog))] == [144, 12, 4]
+    for bad in ([(144, None, None), (12, True, (4, 1))],                     # no alpha quad
+                [(4, True, (4, 5)), (4, True, (4, 5))],                       # two alpha quads
+                [(144, None, None), (12, True, (4, 5))],                      # the alpha layer is not a quad
+                [(4, False, (4, 5))]):                                        # blend state off
+        raises(G.IgbError, lambda bad=bad: O.blended_layer(G.IgbFile(_panel_graph(bad))))
