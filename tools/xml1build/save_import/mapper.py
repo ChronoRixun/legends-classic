@@ -383,6 +383,8 @@ def map_campaign(ir, source, table, *, slot, allow_inferred=False, profile_bytes
                   signature_status=source.signature_status, signature_message='Xbox signature not checked' if source.signature_status == 'unavailable' else 'Xbox signature verified',
                   target_fingerprint=table.fingerprint, import_table_sha256=table.sha256, checkpoint=recipe['name'],
                   zone=recipe['target_zone'], slot=slot, merge_unlocks=merge_unlocks,
+                  heroes=[dict(name=h['name'], level=h['level'], experience=h['experience'], unlocked=h['definition_id'] in ir['unlocked']) for h in ir['heroes']],
+                  progress=dict(zone=ir['mission']['zone'], mission_id=ir['mission']['mission_id'], party=ir['mission']['party']),
                   imported=changes.imported, approximated=changes.approximated, skipped=changes.skipped,
                   player_use_validated=False, validation='Python LC loader only; native C++ and real-save acceptance pending')
     if changes.approximated and not allow_inferred:

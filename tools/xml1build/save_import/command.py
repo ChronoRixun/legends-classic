@@ -8,18 +8,64 @@ from lcsave import container
 from .errors import ImportRefusal
 from .mapper import map_campaign
 from .retail import decode
-from .source import bounded_read, digest, read_source, safe_path
+from .source import bounded_read, campaigns, digest, read_source, safe_path
 from .tables import ImportTable
-from .transaction import check_destination
+from .transaction import check_destination, slot_status
 
 # No real source save, checkpoint golden or C++ economy/load parity was supplied
 # in round 1. A user-editable table must not override this release gate.
 PLAYER_INSTALL_ENABLED = False
 
 
+def capabilities():
+    return dict(schema=1, extracted_folders=True, hdd_images=False, recomp_extensions=False,
+                player_install=PLAYER_INSTALL_ENABLED, merge_unlocks=False, undo=False,
+                backup_policy='empty-slot-only; retained campaign copy and report')
+
+
+def source_summary(source, ir):
+    return dict(schema=1, source_sha256=source.sha256, decoder=ir['decoder'],
+                description=ir['description'], signature_status=source.signature_status,
+                signature_message='Xbox signature not checked.',
+                identity_status='Provisional stock roster; mapping requires a build-bound import table.',
+                heroes=[dict(name=h['name'], level=h['level'], experience=h['experience'],
+                             unlocked=h['definition_id'] in ir['unlocked']) for h in ir['heroes']],
+                progress=dict(zone=ir['mission']['zone'], mission_id=ir['mission']['mission_id'],
+                              party=ir['mission']['party'], side_mission_depth=ir['side_depth']),
+                player_use_validated=False)
+
+
 def run(args, output, cancel):
     from xml1builder.errors import BuilderError
     try:
+        cancel.check()
+        if sum(bool(x) for x in (args.inspect_source, args.list_slots, args.undo_import)) > 1:
+            raise BuilderError('E_USAGE', 'Choose one import operation.', exit_code=2)
+        if args.list_slots:
+            if not args.save_dir:
+                raise BuilderError('E_USAGE', '--list-slots needs --save-dir.', exit_code=2)
+            status = slot_status(args.save_dir)
+            cancel.check()
+            output.event('result', ok=True, exit=0, imported=False, slots=status['slots'],
+                         imports=status['imports'], capabilities=capabilities())
+            return 0
+        if args.undo_import:
+            # The game-writer lock and player installation are not admitted yet.
+            raise ImportRefusal('UNVALIDATED', 'Undo requires the admitted game save lock and import transaction.')
+        if args.inspect_source:
+            if not args.source:
+                raise BuilderError('E_USAGE', '--inspect-source needs a source folder.', exit_code=2)
+            root, paths = campaigns(args.source)
+            candidates = [dict(folder=str(p.parent), label=p.parent.relative_to(root).as_posix()) for p in paths]
+            summary = None
+            if len(paths) == 1:
+                original = read_source(root)
+                summary = source_summary(original, decode(original.payload))
+                original.recheck()
+            cancel.check()
+            output.event('result', ok=True, exit=0, imported=False, source_report=summary,
+                         candidates=candidates, capabilities=capabilities())
+            return 0
         if not args.source or args.slot is None or not args.build or not args.save_dir:
             raise BuilderError('E_USAGE', 'import-xml1-save needs a save folder, --slot, --build and --save-dir.', exit_code=2)
         if not 0 <= args.slot <= 9:
@@ -61,7 +107,7 @@ def run(args, output, cancel):
         table.recheck()
         cancel.check()
         if args.dry_run:
-            output.event('result', ok=True, exit=0, imported=False, dry_run=True, import_report=report,
+            output.event('result', ok=True, exit=0, imported=False, dry_run=True, import_report=report, capabilities=capabilities(),
                          msg='Preview only. Continue from ' + report['checkpoint'] + '. No files were written.')
             return 0
         if not args.preview_token or args.preview_token != preview_token:

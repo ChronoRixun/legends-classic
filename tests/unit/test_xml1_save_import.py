@@ -675,3 +675,112 @@ def test_xml1_exclusive_temp_creation_never_deletes_a_foreign_file():
                 raise AssertionError('Expected exclusive-create collision')
         assert foreign.read_bytes() == b'foreign pending bytes'
         assert not (dest / 'saveslot0.lcsave').exists() and not (dest / '.xml1-import.lock').exists()
+
+
+def file_hashes(folder):
+    return {p.relative_to(folder).as_posix(): source.digest(p.read_bytes())
+            for p in Path(folder).rglob('*') if p.is_file()}
+
+
+def test_xml1_launcher_source_discovery_and_slots_are_read_only():
+    from test_builder_cli import run, check_stream
+    with tempfile.TemporaryDirectory() as d:
+        build, src, dest, mapping, pos = fixture(d)
+        (dest / 'saveslot1.lcsave').write_bytes(b'existing player campaign')
+        (dest / 'saveslot2.backup').write_bytes(b'backup')
+        (dest / 'saveslot3.pending.tmp').write_bytes(b'pending')
+        before = file_hashes(Path(d))
+        code, events, _ = run(['import-xml1-save', '--events', 'jsonl', str(src), '--inspect-source'])
+        check_stream(events)
+        assert code == 0, events
+        result = events[-1]
+        assert result['imported'] is False and result['capabilities']['player_install'] is False
+        assert not result['capabilities']['hdd_images'] and not result['capabilities']['recomp_extensions']
+        report = result['source_report']
+        assert report['heroes'][0]['level'] == 5 and len(report['heroes']) == 16
+        assert report['progress']['mission_id'] == 7
+        assert report['signature_status'] == 'unavailable'
+        assert len(result['candidates']) == 1
+        assert Path(result['candidates'][0]['folder']) == src
+        code, events, _ = run(['import-xml1-save', '--list-slots', '--save-dir', str(dest), '--events', 'jsonl'])
+        assert code == 0, events
+        assert [r['slot'] for r in events[-1]['slots'] if r['occupied']] == [1, 2, 3]
+        assert events[-1]['imports'] == []
+        assert file_hashes(Path(d)) == before
+        extra = src / 'another'; extra.mkdir()
+        (extra / 'save.dat').write_bytes((src / 'save.dat').read_bytes())
+        code, events, _ = run(['import-xml1-save', '--events', 'jsonl', str(src), '--inspect-source'])
+        assert code == 0 and len(events[-1]['candidates']) == 2
+        assert events[-1]['source_report'] is None  # no implicit latest campaign
+        code, events, _ = run(['import-xml1-save', '--list-slots', '--inspect-source', '--events', 'jsonl'])
+        assert code == 2 and events[-2]['code'] == 'E_USAGE'
+        code, events, _ = run(['import-xml1-save', '--undo-import', 'a'*32, '--save-dir', str(dest), '--events', 'jsonl'])
+        assert code == 2 and events[-2]['code'] == 'E_XML1_UNVALIDATED'
+
+
+def test_xml1_retained_campaign_copy_and_unchanged_slot_undo():
+    with tempfile.TemporaryDirectory() as d:
+        build, src, dest, table, original, ir, raw, report, _ = convert_fixture(d)
+        (dest / 'saveslot7.lcsave').write_bytes(b'unrelated campaign')
+        (dest / 'profile.lcsave').write_bytes(b'unrelated profile')
+        source_before = file_hashes(src)
+        saved = transaction.install_campaign(raw, report, dest, original, table)
+        assert saved['backup'].read_bytes() == raw
+        assert saved['path'].read_bytes() == raw
+        ledger = json.loads(saved['report'].read_text())
+        assert ledger['backup_name'] == 'campaign.lcsave'
+        status = transaction.slot_status(dest)
+        assert status['imports'][0]['undo_available'] is True
+        undone = transaction.undo_campaign(dest, saved['transaction_id'])
+        assert undone['undone'] is True and undone['slot'] == 0
+        assert undone['transaction_id'] == saved['transaction_id']
+        assert not saved['path'].exists()
+        assert Path(undone['retained']).read_bytes() == raw and saved['backup'].read_bytes() == raw
+        assert saved['report'].is_file()
+        assert transaction.slot_status(dest)['imports'][0]['undo_available'] is False
+        assert not transaction.slot_status(dest)['slots'][0]['occupied']
+        assert (dest / 'saveslot7.lcsave').read_bytes() == b'unrelated campaign'
+        assert (dest / 'profile.lcsave').read_bytes() == b'unrelated profile'
+        assert source_before == file_hashes(src)
+        refused(lambda: transaction.undo_campaign(dest, saved['transaction_id']), 'CHANGED')
+        assert not (dest / '.xml1-import.lock').exists()
+
+
+def test_xml1_undo_refuses_changed_missing_backup_busy_pending_and_cancel():
+    for mode in ('changed', 'missing_backup', 'busy', 'pending', 'cancel'):
+        with tempfile.TemporaryDirectory() as d:
+            build, src, dest, table, original, ir, raw, report, _ = convert_fixture(d)
+            saved = transaction.install_campaign(raw, report, dest, original, table)
+            if mode == 'changed': saved['path'].write_bytes(b'new player progress')
+            if mode == 'missing_backup': os.remove(str(saved['backup'].absolute()))
+            if mode == 'busy': (dest / '.xml1-import.lock').write_bytes(b'another importer')
+            if mode == 'pending': (dest / 'saveslot0.backup').write_bytes(b'new backup')
+            before = file_hashes(dest)
+            if mode == 'cancel':
+                from xml1builder.errors import Cancelled
+                def cancel(): raise Cancelled('test')
+                try:
+                    transaction.undo_campaign(dest, saved['transaction_id'], cancel=cancel)
+                except Cancelled: pass
+                else: raise AssertionError('Expected cancellation')
+            else:
+                refused(lambda: transaction.undo_campaign(dest, saved['transaction_id']),
+                        'BUSY' if mode == 'busy' else 'SLOT' if mode == 'pending' else 'CHANGED')
+            assert before == file_hashes(dest), mode
+    refused(lambda: transaction.undo_campaign('unused', '../escape'), 'INPUT')
+
+
+def test_xml1_retained_copy_failure_never_installs_campaign():
+    with tempfile.TemporaryDirectory() as d:
+        build, src, dest, table, original, ir, raw, report, _ = convert_fixture(d)
+        write = transaction._write_new
+        def fail(path, data, on_created=lambda: None):
+            if path.name == 'campaign.lcsave': raise OSError('disk full during retained copy')
+            return write(path, data, on_created)
+        with patch.object(transaction, '_write_new', fail):
+            try: transaction.install_campaign(raw, report, dest, original, table)
+            except OSError: pass
+            else: raise AssertionError('Expected retained-copy failure')
+        assert not (dest / 'saveslot0.lcsave').exists()
+        assert not (dest / '.xml1-import.lock').exists()
+        assert not list(dest.glob('*.tmp'))

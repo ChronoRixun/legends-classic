@@ -194,3 +194,89 @@ Before enabling player installation:
 
 No game/emulator, desktop, network, full owned-input build or actual co-op test
 is part of this round's automated validation.
+
+
+## Launcher discovery, slot history and retained campaign copy
+
+The launcher integration adds two read-only operations to the same command. All
+JSONL clients keep stdin open until the process finishes; `cancel` or EOF retain
+exit 5. The launcher uses individual argv values and no shell. Both source and
+slot discovery emit `hello` followed by a terminal `result`.
+
+```text
+xml1-builder import-xml1-save --events jsonl <folder> --inspect-source
+xml1-builder import-xml1-save --events jsonl --save-dir <SaveLC> --list-slots
+```
+
+`--inspect-source` enumerates bounded campaign folders. A successful result has
+`imported=false`, `candidates=[{folder,label}]`, `source_report` and `capabilities`.
+Multiple campaigns return all candidates and `source_report=null`; no latest-save
+selection is made. One campaign is decoded without an installed mapping table.
+Its source report includes source SHA-256, decoder, description, signature status,
+provisional stock heroes with level/XP/unlocked state, mission ID/zone/party and
+side-mission depth. These are source facts, not approved destination mappings.
+Recomp extensions and damaged envelopes retain their specific `E_XML1_*` refusal.
+HDD images are not decoded or extracted by this command.
+
+`--list-slots` returns exactly ten `slots=[{slot,occupied}]` and an `imports` array.
+Any primary, backup or pending filename with a slot's prefix reserves that slot.
+Each recognized ledger row reports transaction ID, slot, checkpoint, report path,
+retained campaign path and `undo_available`. That last field means that the current
+slot and retained copy match the ledger hash; it does not override the release gate.
+Malformed/incomplete ledgers are never advertised as undoable. Paths are local;
+link/reparse ancestors are rejected before reads. No directories are created.
+
+`capabilities` schema 1 is additive. Its flags are `extracted_folders`, `hdd_images`,
+`recomp_extensions`, `player_install`, `merge_unlocks`, `undo`, plus a description
+of `backup_policy`. Only extracted-folder analysis is enabled in this round.
+Successful dry previews now include these capabilities, per-hero level/XP/unlock
+rows and source progress in the existing `import_report`. A successful preview
+still has `dry_run=true` and `imported=false`.
+
+The existing builder exits are unchanged: 0 successful read/preview, 2 explicit
+usage/import refusal, 5 cancellation, 6 operating-system I/O failure and 70 an
+internal bug (1 remains general validation/pipeline failure). Machine JSON stays
+on stdout. Import-specific refusal details stay in `error.detail`, with complete
+English fallback text in `error.msg`; the launcher escapes that text.
+
+The tested empty-slot installation primitive now flushes and reads back an
+independent `campaign.lcsave` beside `report.json` under
+`SaveLC/.xml1-imports/<transaction-id>/` before publishing the slot. Failure to
+retain that copy prevents installation. Source folders, unrelated slots and the
+PC profile are preserved. Existing slots are never overwritten, even after a
+race; there is no overwrite option.
+
+`undo_campaign()` is a separately tested future-CLI primitive. Its caller must
+hold a cooperating game-writer lock. It takes the importer lock, validates the
+ledger, checks both slot and retained-copy hashes, refuses additional slot backup
+or pending files, creates an exclusive archive link and removes only the unchanged
+imported slot. Both the archive and independent copy remain with the report. A
+changed slot, missing copy, foreign lock or cancellation leaves the slot intact.
+The archive operation never replaces a prior archive. It does not restore or
+modify a global profile.
+
+`--undo-import <transaction-id>` is reserved at the CLI but currently returns
+`E_XML1_UNVALIDATED` (exit 2) without writes, just as player apply remains gated.
+Neither a user-edited table nor a frontend capability flag can enable installation.
+
+### What still needs implementation or acceptance
+
+- Real-source/native-loader/checkpoint acceptance, build-bound shipping import
+  tables and the cooperating game save-writer lock before enabling apply or undo.
+- Wire admitted apply to the transaction primitive and produce a final result only
+  after slot, retained copy and report are committed. Required fields for the
+  launcher are `ok=true`, `exit=0`, `imported=true`, `dry_run=false`, `slot`,
+  `checkpoint`, `preview_token`, `output_sha256`, `transaction_id`, `backup` and
+  `report` (paths as strings). The process exit must also be 0.
+- Wire admitted undo to the primitive and return `ok=true`, `exit=0`, `undone=true`,
+  the matching `transaction_id` and `slot`, and `retained`/`backup` paths only after
+  success. A changed campaign must continue to refuse. Fresh slot scanning follows
+  undo before another destination is selected.
+- General read-only xemu image extraction and a separately validated XML1-recomp
+  decoder. Current refusals are deliberate; no fixed-geometry research extractor
+  has been promoted into production.
+- Recoverable multi-file global profile merging before advertising that capability.
+  The launcher leaves the merge option off and disabled for this core.
+
+No new public exit-code family or progress-event protocol is needed. Existing
+JSONL result/error/warning events suffice for bounded discovery and previews.
