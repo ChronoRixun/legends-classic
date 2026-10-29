@@ -487,9 +487,9 @@ def test_mouse_hit_table_lists_every_drawn_focus_bar():
     both ends were dead. The builder lists each drawn bar (absolute view units) for the DLL's scoped hit test."""
     screens=_built_screens()
     data=O.hit_table(screens)
-    assert data.startswith(b'lc-online-hits/1\n') and data.endswith(b'\n') and b'\r' not in data
+    assert data.startswith(b'lc-online-hits/2\n') and data.endswith(b'\n') and b'\r' not in data
     lines=data.decode('ascii').splitlines()[1:]
-    rows={(l.split()[0],l.split()[1]):tuple(map(float,l.split()[2:])) for l in lines}
+    rows={(l.split()[0],l.split()[1]):tuple(map(float,l.split()[2:6])) for l in lines}
     assert len(rows)==len(lines)  # one bar per item and screen
     for name,screen in screens.items():
         drawn=[e for e in screen['items'] if e['intent'] and (e['enabled'] or screen.get('runtime'))]
@@ -685,12 +685,45 @@ def test_hit_table_matches_the_focus_bars_as_built():
     moved = [l.replace('lc_online code 34.4 222 247.2 246.6', 'lc_online code 34.4 223 247.2 246.6') for l in lines]
     assert moved != lines
     assert any('lc_online: code' in p for p in O.hit_scene_problems('\n'.join(moved).encode('ascii'), list(screens), *read))
-    assert any('no focus model' in p for p in O.hit_scene_problems(data + b'lc_online ghost 1 2 3 4\n', list(screens), *read))
+    assert any('no focus model' in p for p in O.hit_scene_problems(data + b'lc_online ghost 1 2 3 4 0\n', list(screens), *read))
     dropped = [l for l in lines if not l.startswith('lc_online browse ')]
     assert any('draws a focus bar but the table has no row' in p for p in O.hit_scene_problems('\n'.join(dropped).encode('ascii'), list(screens), *read))
     wide = [l.replace('lc_online code 34.4 222 247.2 246.6', 'lc_online code 34.4 222 255 246.6') for l in lines]
     assert any('lc_online: code' in p for p in O.hit_scene_problems('\n'.join(wide).encode('ascii'), list(screens), *read))
     assert O.hit_table_rows(data)['lc_online']['code'] == (34.4, 222.0, 247.2, 246.6) and O.FOCUS_LEAN == 4
+
+
+def test_060s_slanted_right_edge_is_described_and_legacy_table_exposes_the_gap():
+    """060s g5 log: pixel 624,222 -> view 247.73,265.33, outside v1 right=247.2 but on the drawn amber bar."""
+    screens=_hit_screens()
+    data=O.hit_table(screens)
+    fields=next(line.split() for line in data.decode('ascii').splitlines()[1:] if line.startswith('lc_online host '))
+    l,b,r,t,lean=map(float,fields[2:])
+    assert lean==4
+    def inside(x,y):
+        shift=lean*(y-b)/(t-b)
+        return b<y<=t and l+shift<=x<r+shift
+    assert not l<=247.73<r and inside(247.73,265.33)
+    assert inside(249.87,276.53)  # actual top-right of the row, near pixel 628,201
+    assert not inside(277.60,276.53)  # live probe 680,201 picked the separate YOU-card triangle
+    assert not inside(l, t) and inside(l+lean,t)  # the shear is applied to both ends
+    # The builder's built-model check must reject the old rectangle even though its bounds used to pass.
+    from xml1build import common as C
+    out=_built_output()
+    read=(lambda n:C.decode_xmlb((out/('UI/menus/'+n+'.XMLB')).read_bytes()),lambda n:(out/('UI/menus/'+n+'.IGB')).read_bytes(),lambda n:(out/(n+'.IGB')).read_bytes())
+    legacy=b'lc-online-hits/1\n'+b'\n'.join(b' '.join(line.split()[:6]) for line in data.splitlines()[1:])+b'\n'
+    assert any('lc_online: host' in problem for problem in O.hit_scene_problems(legacy,list(screens),*read))
+    for extra in (b'65',b'-65',b'NaN',b'1e2'):
+        assert O.hit_table_problems(b'lc-online-hits/2\nx y 1 2 3 4 '+extra+b'\n')
+
+
+def test_060s_hostleft_actions_form_a_closed_native_navigation_ring():
+    screen=O.runtime_layout('lc_online')
+    tree=O.menu_tree(screen)
+    for name,other in [('lc_hostleft_again','lc_hostleft_back'),('lc_hostleft_back','lc_hostleft_again')]:
+        item=tree.find("item[@name='%s']"%name)
+        assert item.get('enabled')=='false' and item.get('neverfocus')=='false'
+        assert all(item.get(direction)==other for direction in ('left','right','up','down'))
 
 def test_host_visibility_pair_draws_in_front_of_its_focus_bar():
     screen=O.runtime_layout('lc_host')
