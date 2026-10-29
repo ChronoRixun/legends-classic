@@ -6,6 +6,8 @@ MESSAGES = {
     'DAMAGED': 'This save is incomplete or damaged. Your original has not been changed.',
     'VERSION': "This game's save version is not supported yet.",
     'RECOMP_VERSION': 'This XML1-recomp save version is not supported yet.',
+    'DISK_VERSION': 'This HDD image format or feature is not supported. No source files were changed.',
+    'DISK_DAMAGED': 'This HDD image has invalid or incomplete disk structures. No source files were changed.',
     'IDENTITY': 'A saved hero, power or item cannot be identified safely. No import was created.',
     'CONTEXT': 'This campaign needs a supported mission checkpoint before it can be imported.',
     'SIDE_MISSION': 'Finish the flashback or side mission, save again, then import that save.',

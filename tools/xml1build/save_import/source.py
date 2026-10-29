@@ -29,7 +29,7 @@ def safe_path(value, *, directory=False):
     """Reject network/device paths and every existing reparse ancestor before resolving."""
     text = os.fspath(value)
     if text.startswith(('\\\\', '//')) or '://' in text or '\x00' in text:
-        raise ImportRefusal('INPUT', 'Only local extracted folders are supported.')
+        raise ImportRefusal('INPUT', 'Only local save folders or HDD image files are supported.')
     if '..' in text.replace('\\', '/').split('/'):
         raise ImportRefusal('INPUT', 'Choose a folder without parent traversals.')
     # Reject alternate data streams, but allow a Windows drive prefix.
@@ -133,7 +133,24 @@ def envelope(data, verifier=None):
     return payload, status
 
 
-def read_source(folder, verifier=None):
+def discover_source(value, *, campaign=None):
+    root = safe_path(value)
+    if root.is_file():
+        from .disk import inspect_image
+        return inspect_image(root, campaign=campaign, discover_only=True)
+    if campaign is not None:
+        raise ImportRefusal('INPUT', '--campaign selects a campaign inside an HDD image only.')
+    root, paths = campaigns(root)
+    rows = [dict(folder=str(p.parent), label=p.parent.relative_to(root).as_posix()) for p in paths]
+    return rows, read_source(root) if len(paths) == 1 else None
+
+
+def read_source(folder, verifier=None, *, campaign=None):
+    if safe_path(folder).is_file():
+        from .disk import inspect_image
+        return inspect_image(folder, campaign=campaign, verifier=verifier)[1]
+    if campaign is not None:
+        raise ImportRefusal('INPUT', '--campaign selects a campaign inside an HDD image only.')
     root, paths = campaigns(folder)
     if len(paths) != 1:
         raise ImportRefusal('MULTIPLE', candidates=[str(p.parent.relative_to(root)).replace('\\', '/') for p in paths])

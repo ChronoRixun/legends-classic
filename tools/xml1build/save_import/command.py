@@ -8,9 +8,10 @@ from lcsave import container
 from .errors import ImportRefusal
 from .mapper import map_campaign
 from .retail import decode
-from .source import bounded_read, campaigns, digest, read_source, safe_path
+from .source import bounded_read, discover_source, digest, read_source, safe_path
 from .tables import ImportTable
 from .transaction import check_destination, slot_status
+from .writer_lock import PROTOCOL as WRITER_LOCK_PROTOCOL
 
 # No real source save, checkpoint golden or C++ economy/load parity was supplied
 # in round 1. A user-editable table must not override this release gate.
@@ -18,13 +19,15 @@ PLAYER_INSTALL_ENABLED = False
 
 
 def capabilities():
-    return dict(schema=1, extracted_folders=True, hdd_images=False, recomp_extensions=False,
+    return dict(schema=1, extracted_folders=True, hdd_images=True, recomp_extensions=False,
                 player_install=PLAYER_INSTALL_ENABLED, merge_unlocks=False, undo=False,
+                writer_lock=WRITER_LOCK_PROTOCOL,
                 backup_policy='empty-slot-only; retained campaign copy and report')
 
 
 def source_summary(source, ir):
     return dict(schema=1, source_sha256=source.sha256, decoder=ir['decoder'],
+                source_container=getattr(source, 'binding', dict(kind='extracted-folder')),
                 description=ir['description'], signature_status=source.signature_status,
                 signature_message='Xbox signature not checked.',
                 identity_status='Provisional stock roster; mapping requires a build-bound import table.',
@@ -50,16 +53,15 @@ def run(args, output, cancel):
                          imports=status['imports'], capabilities=capabilities())
             return 0
         if args.undo_import:
-            # The game-writer lock and player installation are not admitted yet.
-            raise ImportRefusal('UNVALIDATED', 'Undo requires the admitted game save lock and import transaction.')
+            # The cooperating writer lease exists; player installation still
+            # requires real-source/native acceptance and admitted producers.
+            raise ImportRefusal('UNVALIDATED', 'Undo still requires admitted player imports and native acceptance.')
         if args.inspect_source:
             if not args.source:
-                raise BuilderError('E_USAGE', '--inspect-source needs a source folder.', exit_code=2)
-            root, paths = campaigns(args.source)
-            candidates = [dict(folder=str(p.parent), label=p.parent.relative_to(root).as_posix()) for p in paths]
+                raise BuilderError('E_USAGE', '--inspect-source needs a save folder or HDD image.', exit_code=2)
+            candidates, original = discover_source(args.source, campaign=args.campaign)
             summary = None
-            if len(paths) == 1:
-                original = read_source(root)
+            if original is not None:
                 summary = source_summary(original, decode(original.payload))
                 original.recheck()
             cancel.check()
@@ -67,11 +69,11 @@ def run(args, output, cancel):
                          candidates=candidates, capabilities=capabilities())
             return 0
         if not args.source or args.slot is None or not args.build or not args.save_dir:
-            raise BuilderError('E_USAGE', 'import-xml1-save needs a save folder, --slot, --build and --save-dir.', exit_code=2)
+            raise BuilderError('E_USAGE', 'import-xml1-save needs a save folder or HDD image, --slot, --build and --save-dir.', exit_code=2)
         if not 0 <= args.slot <= 9:
             raise BuilderError('E_USAGE', '--slot must be between 0 and 9.', exit_code=2)
         cancel.check()
-        source = read_source(args.source)
+        source = read_source(args.source, campaign=args.campaign)
         output.event('log', level='info', stage='import', msg='Found one Xbox campaign. Your original will remain unchanged.',
                      detail=dict(source_sha256=source.sha256, signature_status=source.signature_status))
         output.event('warning', stage='import', code='W_XML1_SIGNATURE', msg='Xbox signature not checked.', detail={})
@@ -96,11 +98,13 @@ def run(args, output, cancel):
                                            allow_inferred=args.allow_inferred, profile_bytes=profile,
                                            merge_unlocks=args.merge_unlocks)
         binding = dict(source_sha256=source.sha256, target_fingerprint=table.fingerprint,
+                       source_container=getattr(source, 'binding', dict(kind='extracted-folder')),
                        table_sha256=table.sha256, slot=args.slot, merge_unlocks=args.merge_unlocks,
                        allow_inferred=args.allow_inferred, profile_sha256=digest(profile) if profile else None,
                        checkpoint=report['checkpoint'])
         preview_token = digest(json.dumps(binding, sort_keys=True, separators=(',', ':')).encode('utf-8'))
         report['preview_token'] = preview_token
+        report['source_container'] = getattr(source, 'binding', dict(kind='extracted-folder'))
         for row in report['approximated']:
             output.event('warning', stage='import', code='W_XML1_APPROXIMATED', msg=row['reason'], detail=row)
         source.recheck()
@@ -121,5 +125,5 @@ def run(args, output, cancel):
     except ImportRefusal as e:
         raise BuilderError(e.code, e.msg, detail=e.detail, stage='import', exit_code=2) from e
     except (FileNotFoundError, NotADirectoryError, PermissionError) as e:
-        raise BuilderError('E_XML1_INPUT', 'The selected save folder or installation could not be read.',
+        raise BuilderError('E_XML1_INPUT', 'The selected save source or installation could not be read.',
                            detail=dict(reason=type(e).__name__), stage='import', exit_code=2) from e

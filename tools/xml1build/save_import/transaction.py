@@ -14,11 +14,14 @@ from lcsave import container, layout as L
 
 from .errors import ImportRefusal
 from .source import bounded_read, digest, safe_path
+from .writer_lock import WriterLock
 
 
 def check_destination(save_dir, slot, source_root, *, own_temp=None):
     dest = safe_path(save_dir, directory=True)
-    root = safe_path(source_root, directory=True)
+    root = safe_path(source_root)
+    if not root.is_dir() and not root.is_file():
+        raise ImportRefusal('INPUT', 'The source does not exist.')
     if dest == root or dest.is_relative_to(root) or root.is_relative_to(dest):
         raise ImportRefusal('INPUT', 'The source and target save folders overlap.')
     prefix = f'saveslot{slot}'
@@ -37,6 +40,13 @@ def _write_new(path, data, on_created=lambda: None):
 
 
 def install_campaign(data, report, save_dir, source, table, *, cancel=lambda: None, before_link=lambda: None):
+    """Acquire the cooperating game writer lease before any transaction writes."""
+    dest = check_destination(save_dir, report['slot'], source.root)
+    with WriterLock(dest):
+        return _install_campaign_locked(data, report, dest, source, table, cancel=cancel, before_link=before_link)
+
+
+def _install_campaign_locked(data, report, save_dir, source, table, *, cancel, before_link):
     """No overwrite, no source writes, no success before report and final install.
 
     Report files are a per-import ledger. A report is effective only when its
@@ -45,19 +55,9 @@ def install_campaign(data, report, save_dir, source, table, *, cancel=lambda: No
     """
     slot = report['slot']
     dest = check_destination(save_dir, slot, source.root)
-    lock = dest / '.xml1-import.lock'
-    owned_lock = False
     owned_files, owned_dirs = [], []
     installed = False
     try:
-        try:
-            with open(lock, 'xb') as stream:
-                owned_lock = True
-                stream.write(str(os.getpid()).encode('ascii'))
-                stream.flush()
-                os.fsync(stream.fileno())
-        except FileExistsError as e:
-            raise ImportRefusal('BUSY') from e
         cancel()
         source.recheck()
         table.recheck()
@@ -121,11 +121,6 @@ def install_campaign(data, report, save_dir, source, table, *, cancel=lambda: No
                     os.rmdir(str(p.absolute()))
                 except OSError:
                     pass
-        if owned_lock:
-            try:
-                os.remove(str(lock.absolute()))
-            except OSError:
-                pass
 
 
 def slot_status(save_dir):
@@ -167,52 +162,41 @@ def slot_status(save_dir):
 
 
 def undo_campaign(save_dir, transaction_id, *, cancel=lambda: None):
+    """Hold the cooperating writer lease across undo validation and mutation."""
+    with WriterLock(save_dir):
+        return _undo_campaign_locked(save_dir, transaction_id, cancel=cancel)
+
+
+def _undo_campaign_locked(save_dir, transaction_id, *, cancel):
     """Primitive for a future admitted CLI. Only an unchanged imported slot moves.
 
-    Caller must hold the cooperating game-writer lock (not yet shipped). Preserve
-    both the independent copy and the removed slot in its private ledger folder.
+    The public wrapper holds the writer lease. Preserve both the independent
+    copy and the removed slot in its private ledger folder.
     """
     if len(transaction_id) != 32 or any(c not in '0123456789abcdef' for c in transaction_id):
         raise ImportRefusal('INPUT', 'Invalid import transaction.')
     dest = safe_path(save_dir, directory=True)
-    lock = dest / '.xml1-import.lock'
-    owned_lock = False
-    try:
-        try:
-            with open(lock, 'xb') as stream:
-                owned_lock = True
-                stream.write(str(os.getpid()).encode('ascii'))
-                stream.flush()
-                os.fsync(stream.fileno())
-        except FileExistsError as e:
-            raise ImportRefusal('BUSY') from e
-        cancel()
-        status = slot_status(dest)
-        row = next((r for r in status['imports'] if r['transaction_id'] == transaction_id), None)
-        if not row or not row['undo_available']:
-            raise ImportRefusal('CHANGED', 'Undo only removes an unchanged imported campaign. Backups are retained.')
-        ledger = safe_path(dest / '.xml1-imports' / transaction_id, directory=True)
-        target = safe_path(dest / f"saveslot{row['slot']}.lcsave")
-        # Refuse associated game backups/pending writes; never leave an older save
-        # hidden behind a supposedly empty slot.
-        if any(p != target and p.name.lower().startswith(f"saveslot{row['slot']}") for p in dest.iterdir()):
-            raise ImportRefusal('SLOT', 'The game has written additional files for this slot.')
-        cancel()
-        report = json.loads(bounded_read(ledger / 'report.json', 16 << 20))
-        if digest(bounded_read(target, container.MAX_FILE)) != report['output_sha256']:
-            raise ImportRefusal('CHANGED')
-        parked = safe_path(ledger / ('undone-' + uuid.uuid4().hex + '.lcsave'))
-        # Exclusive archive creation never overwrites an earlier retained file.
-        # The caller's game-writer lock covers link/recheck/unlink. A crash
-        # before unlink leaves the slot present; after it the archive remains.
-        os.link(target, parked)
-        if digest(bounded_read(parked, container.MAX_FILE)) != report['output_sha256'] or digest(bounded_read(target, container.MAX_FILE)) != report['output_sha256']:
-            raise ImportRefusal('CHANGED')
-        os.remove(str(target.absolute()))
-        return dict(slot=row['slot'], transaction_id=transaction_id, retained=str(parked), backup=row['backup'], undone=True)
-    finally:
-        if owned_lock:
-            try:
-                os.remove(str(lock.absolute()))
-            except OSError:
-                pass
+    cancel()
+    status = slot_status(dest)
+    row = next((r for r in status['imports'] if r['transaction_id'] == transaction_id), None)
+    if not row or not row['undo_available']:
+        raise ImportRefusal('CHANGED', 'Undo only removes an unchanged imported campaign. Backups are retained.')
+    ledger = safe_path(dest / '.xml1-imports' / transaction_id, directory=True)
+    target = safe_path(dest / f"saveslot{row['slot']}.lcsave")
+    # Refuse associated game backups/pending writes; never leave an older save
+    # hidden behind a supposedly empty slot.
+    if any(p != target and p.name.lower().startswith(f"saveslot{row['slot']}") for p in dest.iterdir()):
+        raise ImportRefusal('SLOT', 'The game has written additional files for this slot.')
+    cancel()
+    report = json.loads(bounded_read(ledger / 'report.json', 16 << 20))
+    if digest(bounded_read(target, container.MAX_FILE)) != report['output_sha256']:
+        raise ImportRefusal('CHANGED')
+    parked = safe_path(ledger / ('undone-' + uuid.uuid4().hex + '.lcsave'))
+    # Exclusive archive creation never overwrites an earlier retained file.
+    # The public wrapper's game-writer lease covers link/recheck/unlink. A crash
+    # before unlink leaves the slot present; after it the archive remains.
+    os.link(target, parked)
+    if digest(bounded_read(parked, container.MAX_FILE)) != report['output_sha256'] or digest(bounded_read(target, container.MAX_FILE)) != report['output_sha256']:
+        raise ImportRefusal('CHANGED')
+    os.remove(str(target.absolute()))
+    return dict(slot=row['slot'], transaction_id=transaction_id, retained=str(parked), backup=row['backup'], undone=True)

@@ -1,4 +1,4 @@
-# Original Xbox campaign import core (round 1)
+# Original Xbox campaign import preview core
 
 This is an offline developer core with synthetic acceptance tests. It is **not
 enabled for player installation**. No real Xbox campaign was available for this
@@ -15,10 +15,11 @@ and an unchanged global profile unless the player selects **Also merge unlocks**
 From `tools/`, or through the packaged `xml1-builder` entry point:
 
 ```text
-python -m xml1builder import-xml1-save <extracted Xbox save folder>
+python -m xml1builder import-xml1-save <extracted Xbox folder or HDD image>
     --build <installed LC build> --save-dir <actual SaveLC folder>
     --slot 0..9 [--merge-unlocks] [--dry-run] [--events jsonl]
     [--allow-inferred] [--import-table <local table>]
+    [--campaign <exact E:/UDATA/4156001e/campaign path from discovery>]
 ```
 
 `--dry-run` performs bounded parsing, mapping, encoding and the existing Python
@@ -33,12 +34,12 @@ the source bytes, build/table hashes, existing profile bytes, slot, checkpoint
 and both opt-ins. A mismatched token refuses with `E_XML1_CHANGED`. Round 1
 then refuses with `E_XML1_UNVALIDATED`: the code-level admission gate cannot be
 overridden by editing a local table. Enabling player writes needs real-save
-checkpoint evidence, shipping C++ loader/economy parity, cooperating game save
-locking and a recoverable campaign/profile transaction.
+checkpoint evidence, shipping C++ loader/economy parity, live acceptance of the
+cooperating game save lease and a recoverable campaign/profile transaction.
 
 There is no network input, upload, signature repair or original-save write.
-Inputs must be extracted local folders, not archives, disk images, save states,
-URLs, links or reparse points. Selecting multiple `save.dat` files produces a
+Inputs may be extracted local folders or standalone raw/QCOW2 Xbox HDD images.
+Archives, save states, URLs, links and reparse points are refused. Multiple `save.dat` files produce a
 picker refusal, never a latest-file guess. Xbox signature verification is
 reported as unavailable unless an independent verifier is supplied to the
 reader API. A source SHA-256 records bytes; it does not authenticate them.
@@ -186,7 +187,7 @@ Before enabling player installation:
   party, objectives and flags through two cycles. A slot listing is insufficient.
 - Run at least one late-game host/client campaign transfer, join/leave/rejoin,
   both sides save/reload, plus a mismatched-build refusal control.
-- Add cooperating game-writer locking and recoverable optional global-profile
+- Accept the cooperating game-writer lease live and add recoverable optional global-profile
   merge. Exercise cancel/disk-full/report failure, occupied final slot, changed
   source/build/profile, concurrent import and crash-recovery cases. Verify all
   original, unrelated slot and existing profile hashes; profile changes only
@@ -216,7 +217,7 @@ Its source report includes source SHA-256, decoder, description, signature statu
 provisional stock heroes with level/XP/unlocked state, mission ID/zone/party and
 side-mission depth. These are source facts, not approved destination mappings.
 Recomp extensions and damaged envelopes retain their specific `E_XML1_*` refusal.
-HDD images are not decoded or extracted by this command.
+HDD images follow the read-only path below; no extracted host files are created.
 
 `--list-slots` returns exactly ten `slots=[{slot,occupied}]` and an `imports` array.
 Any primary, backup or pending filename with a slot's prefix reserves that slot.
@@ -228,7 +229,8 @@ link/reparse ancestors are rejected before reads. No directories are created.
 
 `capabilities` schema 1 is additive. Its flags are `extracted_folders`, `hdd_images`,
 `recomp_extensions`, `player_install`, `merge_unlocks`, `undo`, plus a description
-of `backup_policy`. Only extracted-folder analysis is enabled in this round.
+of `backup_policy`. Extracted-folder and HDD analysis are enabled. `writer_lock`
+additionally names the lease protocol (`lc-save-writer/1`); it does not admit player writes.
 Successful dry previews now include these capabilities, per-hero level/XP/unlock
 rows and source progress in the existing `import_report`. A successful preview
 still has `dry_run=true` and `imported=false`.
@@ -246,8 +248,8 @@ retain that copy prevents installation. Source folders, unrelated slots and the
 PC profile are preserved. Existing slots are never overwritten, even after a
 race; there is no overwrite option.
 
-`undo_campaign()` is a separately tested future-CLI primitive. Its caller must
-hold a cooperating game-writer lock. It takes the importer lock, validates the
+`undo_campaign()` is a separately tested future-CLI primitive. It holds the
+cooperating game-writer lease itself, validates the
 ledger, checks both slot and retained-copy hashes, refuses additional slot backup
 or pending files, creates an exclusive archive link and removes only the unchanged
 imported slot. Both the archive and independent copy remain with the report. A
@@ -262,7 +264,7 @@ Neither a user-edited table nor a frontend capability flag can enable installati
 ### What still needs implementation or acceptance
 
 - Real-source/native-loader/checkpoint acceptance, build-bound shipping import
-  tables and the cooperating game save-writer lock before enabling apply or undo.
+  tables and live acceptance with the cooperating DLL before enabling apply or undo.
 - Wire admitted apply to the transaction primitive and produce a final result only
   after slot, retained copy and report are committed. Required fields for the
   launcher are `ok=true`, `exit=0`, `imported=true`, `dry_run=false`, `slot`,
@@ -272,11 +274,114 @@ Neither a user-edited table nor a frontend capability flag can enable installati
   the matching `transaction_id` and `slot`, and `retained`/`backup` paths only after
   success. A changed campaign must continue to refuse. Fresh slot scanning follows
   undo before another destination is selected.
-- General read-only xemu image extraction and a separately validated XML1-recomp
-  decoder. Current refusals are deliberate; no fixed-geometry research extractor
-  has been promoted into production.
+- A separately validated XML1-recomp decoder and real-image acceptance of the
+  bounded raw/QCOW2 reader below. Synthetic image coverage is not real-save acceptance.
 - Recoverable multi-file global profile merging before advertising that capability.
   The launcher leaves the merge option off and disabled for this core.
 
 No new public exit-code family or progress-event protocol is needed. Existing
 JSONL result/error/warning events suffice for bounded discovery and previews.
+
+## Read-only HDD sources (round 2)
+
+The CLI identifies an image by bytes, not its suffix. It opens a regular local
+file for reading only; Windows sharing denies a live writer and prevents writes
+and deletion until inspection closes. It never opens backing files, mounts a
+volume, opens a device, follows links, exports a save, or repairs disk structures.
+The Xbox envelope and retail decoder receive the selected `save.dat` bytes in RAM.
+
+```text
+xml1-builder import-xml1-save <image.qcow2> --inspect-source --events jsonl
+xml1-builder import-xml1-save <image.raw> --campaign E:/UDATA/4156001e/<campaign>
+    --build <build> --save-dir <SaveLC> --slot 0 --dry-run --events jsonl
+```
+
+Standalone QCOW2 v2/v3 supports standard L1/L2 mappings, sparse/zero clusters,
+and bounded raw-DEFLATE compressed clusters. Encryption, backing chains, internal
+snapshots, dirty/corrupt flags, external data files, extended L2 tables and other
+incompatible features refuse with `E_XML1_DISK_VERSION`. Unsupported input is
+never flattened or rewritten. Invalid bounds, alignment, metadata overlaps,
+reserved mapping bits, truncation and invalid compression produce
+`E_XML1_DISK_DAMAGED`. These use the existing refusal exit 2.
+
+The reader parses the 512-byte Xbox `****PARTINFO****` sector: fourteen 32-byte
+entries at byte 48, with 16-byte names and little-endian flags/start/count/reserved
+dwords. Only active flag `0x80000000` is supported. All active ranges must fit
+and not overlap. Entry zero must be the E data partition (`XBOX DATA`, `E`, or
+`E:`). Without PARTINFO it tries only the retail E offset `0xabe80000`, length
+`0x9896b0 * 512`, and requires a FATX superblock there. It does not scan a disk
+for plausible saves or infer partitions from the image's unused end.
+
+FATX16/32 reads the 4096-byte superblock, aligned FAT and root cluster; sectors
+are 512 bytes and cluster sizes are 1..128 power-of-two sectors. FAT width uses
+partition cluster capacity (<65525: 16-bit, otherwise 32-bit); accessible cluster
+bounds additionally subtract the header and FAT. It traverses E:/UDATA, selects
+only title `4156001e`, and enumerates bounded campaign subdirectories. FATX names
+retain their byte spelling via Latin-1, up to the native 42 bytes, including long
+names and fragmented directory/file chains. No host path is derived from a name.
+Unsafe names, duplicate folded names, free/reserved/bad/out-of-range clusters,
+cycles, touched-chain cross-links and file/chain length disagreements refuse.
+The reader validates structures it uses; it is not a full-volume filesystem or
+QCOW2 refcount consistency checker. Unrelated title contents are not scanned.
+
+Budgets per inspection are 2 TiB guest size, 16 MiB per read, 64 MiB physical
+I/O and 64 MiB decompression, 8 MiB L1/refcount tables, 4096 metadata extents,
+eight L2 cache entries, 8 MiB compressed-cluster cache, 1024 clusters per directory,
+8192 root/UDATA/title entries total, and the existing 256 title entries/four nested
+levels. Campaign bytes remain capped at `0x2fc00 + 24`. Excessive but potentially
+valid inputs refuse explicitly. No whole multi-gigabyte image hash is required.
+
+Discovery candidates for images are `{folder: <image path>, label: <in-image
+campaign path>, campaign: <same exact path>}`. Multiple candidates return
+`source_report=null`; a client must retain the image as the source and pass the
+selected `campaign` as `--campaign` in both inspection and preview. A unique
+campaign needs no selector. Extracted-folder candidates retain their previous
+shape. The launcher from the earlier UI round still has a hard-coded HDD guidance
+branch; its next integration must enable this CLI path and carry the selector.
+No launcher source is changed in this round.
+
+Source facts and preview reports include `source_container`: kind, image format,
+campaign, image file identity and a SHA-256 of the bounded physical read set.
+The preview token binds this context as well as the extracted envelope hash.
+Rechecking reopens the same image, repeats mapping and traversal, and compares
+file identity, read-set hash and envelope hash; drift refuses. SHA-256 remains
+provenance rather than Xbox signature authentication. No real HDD/save sample
+has been inspected in this implementation round; synthetic fixtures prove the
+code paths, not compatibility with all real images.
+
+## Cooperating game writer lease (round 2)
+
+Protocol `lc-save-writer/1` uses `SaveLC/.lc-save-writer.lock`. Both Python and
+the companion DLL open that same file with Win32 `GENERIC_READ | GENERIC_WRITE`,
+share mode zero, `OPEN_ALWAYS`, no handle inheritance and reparse-point refusal.
+Neither truncates, writes contents, deletes, replaces or ages the lock file.
+Its existence is normal; the live handle is the lease. Normal close or process
+death releases it immediately, so an unlocked file left by a crash is reusable.
+No PID, timeout, boot identifier or stale-file deletion is involved. The Python
+fallback uses a nonblocking exclusive `flock` on other hosts; the game is Windows.
+
+The DLL acquires its lease during `save_format::ensure_ready()`, after resolving
+and creating SaveLC but before reading save data, loading tables or migrating
+legacy files. It keeps the handle through its entire LC save lifetime, including
+menus, campaign/profile writes and slot deletion. Acquisition failure uses the
+existing fail-closed LC state; restarting after the other owner exits is required.
+Holding through gameplay also prevents an importer installing over a slot that
+an already loaded campaign might later overwrite. `save status` reports the
+protocol and whether the lease is held. `[Save] Format=off` does not participate.
+
+`install_campaign()` and `undo_campaign()` acquire the same lease themselves,
+before any transaction mutation and through every source/table/slot/hash recheck,
+publication/archive and cleanup. Concurrent cooperating games/importers refuse
+`E_XML1_BUSY`; a pre-protocol `.xml1-import.lock` also refuses and is preserved for
+manual review with all old writers closed. Preview/discovery never create or
+acquire a writer lock, so they remain read-only. Slot occupancy and hashes must
+still be rechecked on admitted apply. The lease excludes cooperating versions;
+it cannot prove an older DLL or another tool obeys it. Apply/undo admission gates
+remain false, including when a table advertises release readiness.
+
+The DLL's evidence anchors are CMemoryCardWin32 vtable `0x69aa8c`, object
+`0x6e03d8`, folder buffer `0x7ad6a0`, init `0x55e760`; slot writer `0x55fe70`
+(vt+0x64), profile writer `0x55f9a0` (vt+0x54), slot delete `0x55e930` (vt+0x70),
+delete-all `0x55f6f0` (vt+0x28), serializer `0x46baf0` (CGame vt+0x208).
+`save_format_rules.hpp` retains the guarded addresses/signatures; no new binary
+hook or unverified save-writer address is introduced by the lease.
