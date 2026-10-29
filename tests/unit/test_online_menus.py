@@ -893,3 +893,15 @@ def test_060t_every_control_including_retry_fits_retail_focus_events():
         for item in tree.findall('item'):
             if item.get('usecmd'):
                 assert any(e.get('type')=='focus' for e in item.findall('onfocus')), (name,item.get('name'))
+
+
+def test_060u_browse_header_has_space_for_the_visible_fresh_and_stale_count():
+    screen=O.runtime_layout('lc_browse');by={e['name']:e for e in screen['items']}
+    # One DATA field owns the whole count, including singular wording. The old
+    # PUBLIC GAMES - N arrangement only allowed 60 units and never showed it.
+    assert not by['list_header']['text']
+    count=by['list_count'];assert count['data'] and count['rect'][2]>=132
+    stale=by['lc_broker_stale']['rect']
+    assert count['rect'][0]+count['rect'][2]<=stale[0]
+    tree=O.menu_tree(screen)
+    assert tree.find("item[@name='list_count']").get('clamp')=='true'

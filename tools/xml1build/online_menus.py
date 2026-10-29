@@ -1812,11 +1812,11 @@ def broker_layout(name, screen):
         items.append(_entry('desctext1','',(43,455,1,17)))
         items.append(_entry('desctext2','',(98,455,1,17)))
         items[:]=[e for e in items if not re.fullmatch(r'room_[0-6]_[45]',e['name'])]
-        # List header: "PUBLIC GAMES" + DATA count ("- N") after it, DLL-ticked "Updated N s ago" at the right with the
+        # List header: DATA fresh/stale count, DLL-ticked "Updated N s ago" at the right with the
         # five-segment refresh bar (the 10 s idle refresh interval); the track is static, the fills are scenes.
         items.remove(by['age'])
-        by['list_header']['rect']=(59,137,60,13)
-        items.append(_entry('list_count','',(121,137,60,14),'label',4,data=True))
+        by['list_header'].update(text='',rect=(59,137,132,13))
+        items.append(_entry('list_count','',(59,137,132,14),'label',4,data=True))
         items.append(_entry('list_age','',(456,137,84,14),'label',3,data=True,align='right'))
         shapes[:]=[q for q in shapes if q['rect']!=(546,139,16,4)]
         for k in range(5):
@@ -1909,7 +1909,7 @@ def runtime_layout(name,state=None):
         'save':'No campaign selected','campaign':'SELECT CAMPAIGN',
         'preview_visibility':'PENDING','open_hint':'Creates your room',
         'code_pending':'Share this code with friends','age':'',
-        'list_header':'PUBLIC GAMES',
+        'list_header':'',
         'details':''}
     for e in screen['items']:
         if e['name'] in replacements: e['text']=replacements[e['name']]

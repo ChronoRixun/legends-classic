@@ -213,3 +213,16 @@ trigger events: moves 307, largest style 109, events 833. This is self-test
 accounting only; capacities and the census counting rules are unchanged. Missing
 Guard nodes retain historical expectations; malformed or altered Guard payloads
 are refused instead of adjusting the expected totals from observed content.
+## 060u presentation follow-up
+
+Regenerate online menu resources and `Data/lc_online_hits.txt` with the matching
+companion DLL. Browse's header is now the complete DATA count (`1 public game`
+or `1 last known game`), with its own space before the stale badge. The empty
+static `list_header` anchor remains for layout compatibility.
+
+Code/Browse keep 40/41 focus records. Their shared-origin model names require
+the companion's expanded, bounded frontend string arena; its native string
+handles and scene-anchor layout stay compatible. The companion also clears the
+shared focus model when Retry loses focus, hides or becomes disabled. Native
+and synthetic authoring tests cover these contracts; integration still needs
+owned-output regeneration and live rendering/input checks.
