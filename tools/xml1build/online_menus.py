@@ -1679,6 +1679,9 @@ def _error_node(name, cause):
     retry_ok = cause in RETRYABLE_CAUSES
     if name == 'lc_code':
         rect = (111, 396, 268, 18)
+        if cause in ('too_many_public_rooms', 'too_many_joins'):
+            # Cap refusals have no Retry bar; use the space before its reserved cell.
+            rect = (111, 396, 350, 18)
     elif name == 'lc_browse':
         rect = (121, 425, 247, 15) if retry_ok else (59, 425, 309, 15)
     else:
