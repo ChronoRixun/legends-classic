@@ -104,6 +104,11 @@ global font indices. The bright Cerebro backdrop requires a companion XML2 Fix b
 | The pipeline's self-tests | `python -m xml1build.<module>_selftest --out <a build>` from `tools/` (characters, heroes, scripts, zones, skins, automaps, combat_events, npc_values, frontend, validate, sound) | a build + the games |
 | Equivalence of two builds | `python tools/build_equiv.py <build A> <build B>` | two builds |
 
+For the offline G3 saved-zone corpus, use
+[`check_saved_zone_corpus.py`](saved-zone-corpus.md) with the native host and a
+finished W2/economy build. It checks all 148 inputs, reporting 147 successful
+loads separately from the hash-pinned synthetic capacity save's expected refusal.
+
 Tests that need the games never run in CI: a public repository's workflows must not reach game files.
 The [release checklist](RELEASE_CHECKLIST.md) makes the zones output self-test a required local gate
 for every release candidate and gives its exact command (its build directory is positional).
