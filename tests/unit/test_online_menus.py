@@ -441,20 +441,16 @@ def test_browse_focus_bars_share_one_model_item_at_the_same_screen_position():
     root=O.menu_tree(screen);layouts=O.scene_layout(screen)
     assert layouts[O.SHARED_FOCUS][0]==O.SHARED_FOCUS_ORIGIN
     assert [e.get('name') for e in root.findall('item')].count(O.SHARED_FOCUS)==1
-    assert [n for n in layouts if n.endswith('_focus')]==[O.SHARED_FOCUS,'prompt_refresh_focus']
+    assert [n for n in layouts if n.endswith('_focus')]==[O.SHARED_FOCUS]
     sx,sy,sz=O.SHARED_FOCUS_ORIGIN;checked=0
     for e in screen['items']:
         if not (e['intent'] and (e['enabled'] or screen.get('runtime'))): continue
         target,owner,rect,outline,relative=O.focus_placement(screen,e)
-        if e['name']=='prompt_refresh':
-            assert target=='prompt_refresh_focus' and rect==relative
-            assert layouts[target]==layouts[e['name']]
-            continue
         assert target==O.SHARED_FOCUS
         ax,ay,az=O._anchor(owner);assert ay==sy
         assert all(abs(m-(r+o))<1e-3 for m,r,o in zip(rect,relative,(ax-sx,az-sz,ax-sx,az-sz)))
         item=next(i for i in root.findall('item') if i.get('name')==e['name'])
-        assert [(f.get('item'),f.get('type'),f.get('model')) for f in item.findall('onfocus')]==[(O.SHARED_FOCUS,'focus',O.focus_resource(rect,outline,O.focus_variant(screen,owner))),(O.SHARED_FOCUS,'nofocus','ui/models/model_hide')]
+        assert [(f.get('item'),f.get('type'),f.get('model')) for f in item.findall('onfocus')]==[(O.SHARED_FOCUS,'focus',O.focus_resource(rect,outline,O.focus_variant(screen,owner)))]
         checked+=1
     assert checked>=11
     # the lobbies share one focus item per plane (-150 actions, -300 player list / Leave confirm)
@@ -848,3 +844,52 @@ def test_validator_scene_capacity_follows_the_companion_dll():
     calls = [n for n in ast.walk(ast.parse(inspect.getsource(VF))) if isinstance(n, ast.Call)
              and getattr(n.func, 'attr', None) == 'scene_problems']
     assert calls and all(any(k.arg == 'anchor_capacity' for k in c.keywords) for c in calls)
+
+
+def test_060t_hostleft_has_only_the_focused_action_amber():
+    screen=O.runtime_layout('lc_online')
+    by={e['name']:e for e in screen['items']}
+    actions=[by[k]['hit_rect'] for k in ('lc_hostleft_again','lc_hostleft_back')]
+    panel=by['lc_hub_host_left']
+    x,y,_,_=panel['rect']
+    for part in panel['parts']:
+        if part.get('color')!=5 or part.get('kind') not in ('bar','rect'): continue
+        a,b,c,d=part['rect']; box=(x+a,y+b,c,d)
+        assert not any(box[0]<q[0]+q[2] and q[0]<box[0]+box[2] and box[1]<q[1]+q[3] and q[1]<box[1]+box[3] for q in actions)
+    assert by['lc_hostleft_again']['color']==4
+
+
+def test_060t_footer_polygons_never_steal_the_select_edge():
+    for name,screen in _built_screens().items():
+        entries={e['name']:e for e in screen['items']}
+        bars=[]
+        for key,l,b,r,t in O.hit_rows(screen):
+            if entries[key]['rect'][1]>=O.FOOTER_TOP:
+                bars.append((key,l,b,r,t,O.hit_lean(screen,key)))
+        for a in bars:
+            for z in bars:
+                if a[0]>=z[0]:continue
+                low,high=max(a[2],z[2]),min(a[4],z[4])
+                for step in range(1,101):
+                    y=low+(high-low)*step/101
+                    al,ar=a[1]+a[5]*(y-a[2])/(a[4]-a[2]),a[3]+a[5]*(y-a[2])/(a[4]-a[2])
+                    zl,zr=z[1]+z[5]*(y-z[2])/(z[4]-z[2]),z[3]+z[5]*(y-z[2])/(z[4]-z[2])
+                    assert ar<=zl or zr<=al,(name,a[0],z[0],y)
+
+
+def test_060t_browse_diagnostic_has_room_for_the_redacted_error():
+    screen=O.runtime_layout('lc_browse');by={e['name']:e for e in screen['items']}
+    diag=by['broker_error']['rect'];prev=by['scroll_up']['rect']
+    assert diag[2]>=150  # the longest allowlisted list error at the label font, in its own line
+    assert diag[1]+diag[3]<=prev[1] or prev[1]+prev[3]<=diag[1]
+
+
+def test_060t_every_control_including_retry_fits_retail_focus_events():
+    # 5af147 refuses the 76th global focus record (52 bytes at 8a72b0).
+    for name,screen in _built_screens().items():
+        tree=O.menu_tree(screen)
+        events=tree.findall('.//onfocus')
+        assert len(events)<=75,(name,len(events))
+        for item in tree.findall('item'):
+            if item.get('usecmd'):
+                assert any(e.get('type')=='focus' for e in item.findall('onfocus')), (name,item.get('name'))

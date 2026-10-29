@@ -192,3 +192,12 @@ labels are disabled for native hit testing and keep explicit palette prefixes fo
 has its own focus model while the list rows keep their shared focus model. The Party Invite hint has normal and navy
 copies, selected by the companion DLL. Build these assets with the corresponding fix P DLL changes; unit contracts
 cover the generated trees and layout, while final depth, keyboard/pad and mouse behavior still needs a rendered check.
+
+
+The 060t online presentation follow-up requires the matching companion DLL for
+accepted resolution overrides, stale-empty Browse, guest controller prompts and
+PDA Party mouse focus. Code/Browse author one shared highlight and at most 75 native
+focus records; a builder contract rejects overflow. Paging uses separate footer
+cells and footer bars share a consistent shear. The integration build must regenerate
+menu resources and the hit table together. Module unit tests cover authoring here;
+full owned-input generation and live visual acceptance remain separate gates.

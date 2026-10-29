@@ -36,10 +36,13 @@ def engine_scene_anchors(dll=b''):
 # 060q (round 15 + fix A/B: Browse 184 + 2 backdrop anchors, Host lobby 178 + 2): on a screen listed here every focus
 # bar of one plane is carried by ONE model item at that plane's scene origin, its geometry authored at the owner's
 # absolute position (the same bar, pixel for pixel). Each focusable item sets the shared item's model on focus and
-# hides it on nofocus, as before. XMen2.exe's menu setFocus (base CMenu vt+4 = 0x5aaf80) runs the old item's loss
+# normally hides it on nofocus. Code/Browse use gain-only replacement below. XMen2.exe's menu setFocus (base CMenu vt+4 = 0x5aaf80) runs the old item's loss
 # (item vt+0x4c(0)) to completion before the new item's gain (vt+0x4c(1)), so a shared target always ends with the new
 # item's bar. Saves (focus anchors - planes) per screen. Browse has one plane (-150); the lobbies two (-150, -300).
-SHARED_FOCUS_SCREENS = ('lc_browse', 'host', 'join')
+SHARED_FOCUS_SCREENS = ('lc_code', 'lc_browse', 'host', 'join')
+# Retail onfocus storage is 75 records (5af147, 52 bytes each). These pages used 80/82.
+# One plane and gain-only replacement needs one record per action, including Retry.
+COMPACT_FOCUS_SCREENS = ('lc_code', 'lc_browse')
 SHARED_FOCUS = 'lc_focus'
 SHARED_FOCUS_ORIGIN = (0, -150, 384)
 
@@ -494,12 +497,14 @@ def menu_tree(screen, palette_ids=None):
             if root.find(f"item[@name='{target}']") is None:
                 ET.SubElement(root,'item',name=target,type='MENU_ITEM_MODEL',model='ui/models/model_hide',neverfocus='true',animate='true')
             ET.SubElement(item,'onfocus',item=target,type='focus',model=focus_resource(rect,outline,focus_variant(screen,owner)),loop='1')
-            ET.SubElement(item,'onfocus',item=target,type='nofocus',model='ui/models/model_hide')
+            if screen['name'] not in COMPACT_FOCUS_SCREENS:
+                ET.SubElement(item,'onfocus',item=target,type='nofocus',model='ui/models/model_hide')
     return root
 
 
 def tree_problems(root, screen, palette_ids=None):
     errors=layout_problems(screen); items={e.get('name'):e for e in root.findall('item')}
+    if len(root.findall('.//onfocus'))>75: errors.append('retail onfocus record budget exceeded (75)')
     if root.get('igb')!=screen['name'] or root.get('type'): errors.append('base menu contract')
     expected_root=menu_tree(screen,palette_ids)
     if any(root.get('desctext'+str(i))!=expected_root.get('desctext'+str(i)) for i in range(1,6)):
@@ -672,7 +677,7 @@ def scene_layout(screen):
     for e in screen['items']:
         if e['intent'] and (e['enabled'] or screen.get('runtime')):
             target,owner=focus_target(screen,e)
-            layouts[target]=(shared_focus(owner.get('plane',-150))[1],(0,-1,1,0)) if screen['name'] in SHARED_FOCUS_SCREENS and target!='prompt_refresh_focus' else layouts[owner['name']]
+            layouts[target]=(shared_focus(owner.get('plane',-150))[1],(0,-1,1,0)) if screen['name'] in SHARED_FOCUS_SCREENS else layouts[owner['name']]
     return layouts
 
 
@@ -686,7 +691,7 @@ def focus_placement(screen,item):
     the owner-relative focus rect moved into its plane's shared origin frame (the same bar on screen)."""
     target,owner=focus_target(screen,item)
     rect,outline=focus_spec(screen,owner)
-    if screen['name'] not in SHARED_FOCUS_SCREENS or owner['name']=='prompt_refresh': return target,owner,rect,outline,rect
+    if screen['name'] not in SHARED_FOCUS_SCREENS: return target,owner,rect,outline,rect
     (ax,ay,az),(sx,sy,sz)=_anchor(owner),shared_focus(owner.get('plane',-150))[1]
     assert ay==sy and target==shared_focus(ay)[0]
     l,b,r,t=rect;dx,dz=ax-sx,az-sz
@@ -777,7 +782,7 @@ def write(ctx, *, preview=False):
                 resource=focus_resource(rect,outline,focus_variant(screen,owner))
                 if resource not in focus_models:
                     picture=focus_picture(screen,owner,relative) if outline else None
-                    focus_models[resource]=focus_model(focus_source.read_bytes(),rect,outline,picture)
+                    focus_models[resource]=focus_model(focus_source.read_bytes(),rect,outline,picture,slant=hit_lean(screen,owner['name']))
         extra={e.get('name'):(((-1000,-150,-1000)),(0,-1,1,0)) for e in tree.findall('item')
                if e.get('name') not in layouts}
         if name in LOBBIES:
@@ -1054,8 +1059,8 @@ def focus_spec(screen,item):
         # Rail rows, action bars and kick buttons: the focus fill is exactly the drawn control.
         hx,hy,hw,hh=item['hit_rect']
         return ((hx-x)*.8,-(hy+hh-y)*.8,(hx+hw-x)*.8,(y-hy)*.8),False
-    if item['name']=='retry' and item.get('hit_rect'):
-        # The Retry bar is part of the error scene: focus replaces exactly that bar, never the message beside it.
+    if item['name'] in ('retry','lc_hostleft_again','lc_hostleft_back') and item.get('hit_rect'):
+        # Retry and modal actions fill their authored control rectangle, leaving adjacent copy clear.
         hx,hy,hw,hh=item['hit_rect']
         return ((hx-x)*.8,-(hy+hh-y)*.8,(hx+hw-x)*.8,(y-hy)*.8),False
     if screen['name']=='lc_code' and item['name'].startswith('key_'):
@@ -1088,7 +1093,6 @@ def focus_target(screen, item):
     and, on a SHARED_FOCUS_SCREENS screen, every focusable item shares the one SHARED_FOCUS model item."""
     m=re.fullmatch(r'room_(\d)_(\d)',item['name']) if screen['name']=='lc_browse' else None
     owner=next((e for e in screen['items'] if e['name']=='room_'+m.group(1)+'_0'),item) if m else item
-    if screen['name']=='lc_browse' and item['name']=='prompt_refresh': return 'prompt_refresh_focus',item
     if screen['name'] in SHARED_FOCUS_SCREENS: return shared_focus(owner.get('plane',-150))[0],owner  # one model item per plane (060q)
     if m: return 'room_'+m.group(1)+'_focus',owner
     return item['name']+'_focus',item
@@ -1208,7 +1212,7 @@ def namespace_images(data,prefix):
 
 
 def focus_variant(screen,item):
-    return '_row'+item['name'].split('_')[1] if screen['name']=='lc_browse' and item['name'].startswith('room_') else ''
+    return '_row'+item['name'].split('_')[1] if screen['name']=='lc_browse' and item['name'].startswith('room_') else '_footer' if item['rect'][1]>=FOOTER_TOP else ''
 
 
 def focus_picture(screen,item,rect):
@@ -1258,7 +1262,7 @@ def hit_lean(screen, name):
     item=next((e for e in screen['items'] if e['name']==name),None)
     if item is None: return 0  # the table validator still diagnoses synthetic bad rows
     _,_,(l,b,r,t),outline,_=focus_placement(screen,item)
-    return 0 if outline or r-l<50 else FOCUS_LEAN
+    return FOCUS_LEAN if not outline and (item['rect'][1]>=FOOTER_TOP or r-l>=50) else 0
 
 
 def hit_rows(screen):
@@ -1756,7 +1760,7 @@ def broker_layout(name, screen):
     # Default text colour: the item is drawn on the plain page (no baked bar behind it) and takes the native highlight on focus.
     e=_entry('retry','RETRY',(retry[0]+13,retry[1]+(retry[3]-12)/2,retry[2]-14,12),'label',4,intent='retry')
     e['enabled']=False;e['hidden']=True;e['hit_rect']=retry;items.append(e)
-    diag={'lc_code':(382,399,104,14),'lc_browse':(370,426,85,14)}.get(name,(393,425,128,14))
+    diag={'lc_code':(382,399,104,14),'lc_browse':(370,425,227,14)}.get(name,(393,425,128,14))
     items.append(_entry('broker_error','',diag,'label',7,data=True,align='right'))
     if name=='lc_host':
         # Mutually exclusive localized visibility scenes: segment control + the preview badge. Private is the
@@ -1844,9 +1848,9 @@ def _host_left_nodes(items):
            dict(kind='rect',rect=(20,106,3,52),color=5),
            dict(text=c['capsule'],rect=(34,112,380,13),style='label',color=3),
            dict(text=c['capsule_line'],rect=(34,130,380,18),style='row',color=4),
-           _bar((20,172,168,31)),_bar((200,172,168,31),2)]
+           _bar((20,172,168,31),2),_bar((200,172,168,31),2)]
     items.append(_variant('lc_hub_host_left',(x,y,w,h),parts,model_name='host_left',plane=-280))
-    for key,label,rect,intent,color in (('lc_hostleft_again',c['again'],(x+20,y+172,168,31),'open:lc_host',0),
+    for key,label,rect,intent,color in (('lc_hostleft_again',c['again'],(x+20,y+172,168,31),'open:lc_host',4),
                                          ('lc_hostleft_back',c['back'],(x+200,y+172,168,31),'dismiss',4)):
         e=_entry(key,label,(rect[0]+15,rect[1]+6,rect[2]-25,rect[3]-9),'row',color,intent=intent)
         e['enabled']=False;e['hidden']=True;e['hit_rect']=rect;e['plane']=-300;items.append(e)
@@ -1957,6 +1961,12 @@ def runtime_layout(name,state=None):
                 other='lc_hostleft_back' if e['name']=='lc_hostleft_again' else 'lc_hostleft_again'
                 e.update(left=other,right=other,up=other,down=other)
     if name=='lc_browse':
+        # The diagnostic owns the full right cell of the error row; paging has its
+        # own footer cells instead of clipping the error against Previous page.
+        for e in screen['items']:
+            if e['name']=='scroll_up': e['rect']=(382,455,100,18)
+            if e['name']=='scroll': e['rect']=(497,455,100,18)
+            if e['name']=='breadcrumb': e['text']=''
         # Row cells keep the closed grid (left/right in a row, up/down in a column) while disabled or rebound.
         for e in screen['items']:
             m=re.fullmatch(r'room_([0-6])_([0-6])',e['name'])
