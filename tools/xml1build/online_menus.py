@@ -1490,16 +1490,17 @@ DATA_NAMES = {'local_name', 'self_name', 'last_name', 'last_code', 'last_time',
 # Round 15 completes the table (INGAME-DESIGN 3.3): the first eight keep their broker/2 meaning; the DLL's
 # online_menus_rules::error_cause_key / cause_table are the other half of this contract (tests pin both).
 ERROR_CAUSES = ('code_not_found', 'room_full', 'version_mismatch', 'rate_limited', 'timeout', 'offline', 'refused', 'generic',
-                'pin_mismatch', 'code_expired', 'room_closed', 'test_mode', 'unsupported', 'busy', 'invalid_name')
+                'pin_mismatch', 'code_expired', 'room_closed', 'test_mode', 'unsupported', 'busy', 'invalid_name', 'too_many_public_rooms', 'too_many_joins')
 RETRYABLE_CAUSES = ('rate_limited', 'timeout', 'offline', 'generic', 'room_closed')
 # What each cause tells the player to do next (the DLL's next_action; Retry is the only one that is a control).
 NEXT_ACTION = {'code_not_found': 'edit_code', 'room_full': 'browse', 'version_mismatch': 'back', 'rate_limited': 'retry',
                'timeout': 'retry', 'offline': 'retry', 'refused': 'back', 'generic': 'retry', 'pin_mismatch': 'back',
                'code_expired': 'edit_code', 'room_closed': 'retry', 'test_mode': 'back', 'unsupported': 'other_ways',
-               'busy': 'wait', 'invalid_name': 'back'}
+               'busy': 'wait', 'invalid_name': 'back', 'too_many_public_rooms': 'close_room', 'too_many_joins': 'leave_game'}
 # One word each action's copy must contain, so a cause can never name the wrong next step.
 NEXT_WORD = {'retry': ('retry', 'try again'), 'edit_code': ('code',), 'browse': ('another game', 'browse'),
-             'back': ('back', 'update', 'check', 'turn it off', 'turn off'), 'other_ways': ('other ways',), 'wait': ('wait',)}
+             'back': ('back', 'update', 'check', 'turn it off', 'turn off'), 'other_ways': ('other ways',), 'wait': ('wait',),
+             'close_room': ('close one',), 'leave_game': ('leave another game',)}
 # Localized copy per cause (09-errors wording, in the inline style round 5 chose: one line, names cause + next step).
 ERROR_COPY = {
     'code_not_found': 'Code not found. Ask the host for the current code.',
@@ -1517,11 +1518,13 @@ ERROR_COPY = {
     'unsupported': 'Online needs a complete install. Use Other ways to play.',
     'busy': 'The network link is busy. Wait a moment, then repeat.',
     'invalid_name': 'Room name must be 1-32 plain characters. Go Back.',
+    'too_many_public_rooms': 'You already host 2 public rooms from this network. Close one.',
+    'too_many_joins': 'This network has no free player seats. Leave another game.',
 }
 # Failures that are transient limits or waits read amber; the rest are red (09-errors: Full is amber, the rest red).
-AMBER_CAUSES = ('room_full', 'room_closed', 'rate_limited', 'busy')
+AMBER_CAUSES = ('room_full', 'room_closed', 'rate_limited', 'busy', 'too_many_public_rooms', 'too_many_joins')
 # Causes each screen's own operations can reach (Hub/Host never resolve a code or list rooms).
-_HUB_CAUSES = ('rate_limited', 'timeout', 'offline', 'refused', 'generic', 'pin_mismatch', 'test_mode', 'unsupported', 'busy')
+_HUB_CAUSES = ('rate_limited', 'timeout', 'offline', 'refused', 'generic', 'pin_mismatch', 'test_mode', 'unsupported', 'busy', 'too_many_public_rooms', 'too_many_joins')
 BROKER_CAUSES = {'lc_online': _HUB_CAUSES,
                  'lc_host': _HUB_CAUSES + ('invalid_name',),
                  'lc_code': tuple(c for c in ERROR_CAUSES if c != 'invalid_name'),

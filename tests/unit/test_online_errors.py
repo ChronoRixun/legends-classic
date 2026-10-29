@@ -13,8 +13,8 @@ def tree(name):
 # The DLL's online_menus_rules::error_cause_key / cause_table, mirrored here and pinned by the DLL's own table test
 # (test/online_menus_errors.inl). Changing either side alone fails one of the two suites.
 DLL_CAUSES = ('code_not_found', 'room_full', 'version_mismatch', 'rate_limited', 'timeout', 'offline', 'refused', 'generic',
-              'pin_mismatch', 'code_expired', 'room_closed', 'test_mode', 'unsupported', 'busy', 'invalid_name')
-DLL_NEXT = ('edit_code', 'browse', 'back', 'retry', 'retry', 'retry', 'back', 'retry', 'back', 'edit_code', 'retry', 'back', 'other_ways', 'wait', 'back')
+              'pin_mismatch', 'code_expired', 'room_closed', 'test_mode', 'unsupported', 'busy', 'invalid_name', 'too_many_public_rooms', 'too_many_joins')
+DLL_NEXT = ('edit_code', 'browse', 'back', 'retry', 'retry', 'retry', 'back', 'retry', 'back', 'edit_code', 'retry', 'back', 'other_ways', 'wait', 'back', 'close_room', 'leave_game')
 DLL_RETRY = ('rate_limited', 'timeout', 'offline', 'generic', 'room_closed')
 
 
@@ -54,6 +54,19 @@ def test_every_cause_names_its_cause_and_its_next_action_in_one_line():
     # the two causes that refuse the service never offer to continue without it
     assert 'Check its setting' in O.ERROR_COPY['pin_mismatch'] and 'Turn it off' in O.ERROR_COPY['test_mode']
     assert 'Other ways to play' in O.ERROR_COPY['unsupported'] and 'LAN and IP' in O.ERROR_COPY['offline']
+
+
+def test_network_room_and_seat_caps_have_actionable_copy_without_retry():
+    for cause, phrase, action in (
+        ('too_many_public_rooms', '2 public rooms from this network', 'Close one.'),
+        ('too_many_joins', 'no free player seats', 'Leave another game.'),
+    ):
+        assert phrase in O.ERROR_COPY[cause] and O.ERROR_COPY[cause].endswith(action)
+        assert cause not in O.RETRYABLE_CAUSES
+        for name in O.MENUS:
+            screen, root, items = tree(name)
+            assert O._plain(items['lc_broker_err_' + cause].get('text')) == O.ERROR_COPY[cause]
+            assert not O.broker_problems(root, screen)
 
 
 def test_each_screen_authors_exactly_the_causes_it_can_reach_with_a_retry_bar_only_where_retryable():
