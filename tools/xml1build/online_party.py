@@ -92,8 +92,8 @@ def party_layout(role='host', *, native=None, members=4, fixture=False, notice='
         e = text(key, word, (54, cy - 9, 118, 18), 'row', 4 if key == 'lc_rail_party' else 3, hit_rect=(43, cy - 13, 133, 26),
                  intent={'lc_rail_resume': 'party-resume', 'lc_rail_party': 'current', 'lc_rail_quit': 'party-leave'}.get(key, 'native:' + key))
         if key == 'lc_rail_codex': e['usecmd'] = CODEX_COMMAND
-        # QUIT GAME is the Leave confirmation (intent 66): the native mainmenuexit has no confirmation of its own, so a host
-        # would skip 'End for everyone'. The DLL runs the native quit after the confirmation (and at once outside a session).
+        # QUIT GAME is the Leave confirmation (intent 66): the bare native mainmenuexit can ask its own confirmation, so the DLL
+        # queues mainmenuexit 1 only after this confirmation; outside a session the native quit keeps its own question.
         elif key == 'lc_rail_quit': e['usecmd'] = O.command(66)
         elif key in native: e['usecmd'] = native[key]
         elif key == 'lc_rail_party': e['usecmd'] = ''
