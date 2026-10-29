@@ -8,7 +8,7 @@ from collections import Counter, defaultdict
 
 def test_guard_block_both_variants_and_preservation():
     for ext in ('.XMLB', '.engb'):
-        top = ET.Element('FightStyle')
+        top = ET.Element('NodeList')
         reaction = ET.SubElement(top, 'FightMove', name='block', handler='ch_pain')
         retail = ET.SubElement(top, 'FightMove', name='blocking', handler='ch_block')
         before = [ET.tostring(n) for n in top]
@@ -21,7 +21,7 @@ def test_guard_block_both_variants_and_preservation():
 
 
 def test_guard_block_rejects_missing_or_incomplete_energy_lifecycle():
-    top = ET.Element('FightStyle')
+    top = ET.Element('NodeList')
     assert G.problems(top)
     G.install(top)
     for mutation in ('handler', 'animation', 'skill', 'level', 'upkeep', 'cleanup', 'release', 'extra'):
@@ -48,7 +48,7 @@ def test_guard_block_rejects_missing_or_incomplete_energy_lifecycle():
 
 def test_world_table_pipeline_emits_both_native_block_variants():
     from xml1build.zones import Zones
-    native = ET.Element('FightStyle')
+    native = ET.Element('NodeList')
     ET.SubElement(native, 'FightMove', name='block', handler='ch_pain')
     ET.SubElement(native, 'FightMove', name='blocking', handler='ch_block')
     emitted = {}
@@ -57,7 +57,7 @@ def test_world_table_pipeline_emits_both_native_block_variants():
         def read_x1_xml(self, rel):
             if rel != 'data/shared_nodes.eng':
                 raise KeyError(rel)
-            return ET.Element('FightStyle')
+            return ET.Element('NodeList')
 
         def base_exists(self, rel):
             return rel in ('Data/shared_nodes.XMLB', 'Data/shared_nodes.engb')
@@ -90,3 +90,58 @@ def test_world_table_pipeline_emits_both_native_block_variants():
     for root in emitted.values():
         assert G.problems(root) == []
         assert [ET.tostring(n) for n in list(root)[:2]] == [ET.tostring(n) for n in native]
+
+
+def test_guard_block_rejects_wrong_tag():
+    for ext in ('.XMLB', '.engb'):
+        top = ET.Element('NodeList')
+        G.install(top)
+        top[0].tag = 'ignored'
+        assert G.problems(top), ext
+
+
+def test_guard_block_rejects_nested_node():
+    for ext in ('.XMLB', '.engb'):
+        top = ET.Element('NodeList')
+        container = ET.SubElement(top, 'ignored')
+        container.append(G.make_node())
+        assert G.problems(top), ext
+
+
+def test_guard_block_style_root_and_xmlb_wrapper():
+    import xmlb
+    top = ET.Element('NodeList')
+    G.install(top)
+    wrapped = ET.Element(xmlb.MULTI_ROOT)
+    wrapped.append(top)
+    assert G.problems(wrapped) == []
+    top.tag = 'ignored'
+    assert G.problems(wrapped)
+    assert G.problems(G.make_node())
+
+
+def test_v18_rejects_structural_mutations_in_each_variant():
+    from pathlib import Path
+    from xml1build.combat_events import v18
+    for ext in ('.XMLB', '.engb'):
+        for mutation in ('wrong-tag', 'nested'):
+            roots = {}
+            for variant in ('.XMLB', '.engb'):
+                root = ET.Element('NodeList')
+                G.install(root)
+                roots['Data/shared_nodes' + variant] = root
+            root = roots['Data/shared_nodes' + ext]
+            if mutation == 'wrong-tag':
+                root[0].tag = 'ignored'
+            else:
+                node = root[0]
+                root.remove(node)
+                ET.SubElement(root, 'ignored').append(node)
+            errors = []
+            validator = SimpleNamespace(
+                ctx=SimpleNamespace(args=SimpleNamespace(guard_decide='xml1'), base=Path('.')),
+                idx=SimpleNamespace(path=lambda rel: None), tree=roots.get)
+            check = SimpleNamespace(error=errors.append, set=lambda *args: None)
+            v18(validator, check)
+            structural = [error for error in errors if 'direct FightMove child' in error]
+            assert len(structural) == 1 and 'Data/shared_nodes' + ext in structural[0], (ext, mutation, errors)

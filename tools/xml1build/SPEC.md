@@ -7913,7 +7913,10 @@ private handler only with Guard enabled; native entry/exit/cancel and owned
 native effect cleanup pair with the normalized held mask0x100. Successful
 interactions take precedence; AI/script admissions retain source behavior.
 
-V18 requires the complete node in both output variants when Guard is selected.
+V18 requires the complete node as a direct FightMove child of the shared NodeList
+root in both output variants when Guard is selected (including XMLB multi-root
+wrappers). A same-name node with another tag or inside an ignored container
+is rejected.
 An older cached build missing it must rebuild zones; an INI-only toggle cannot
 silently certify missing content. The DLL compatibility gate requires
 GUARD_XML1_NATIVE_MARKER. Guard policy value1=1 in rule46's agreement rejects

@@ -30,6 +30,12 @@ def problems(root):
     if len(nodes) != 1:
         return ['requires exactly one guardblocking node']
     node = nodes[0]
+    # Shared tables may have the XMLB multi-root wrapper. Only direct style
+    # children are registered by the native style loader.
+    from .common import iter_roots
+    styles = [top for top in iter_roots(root) if top.tag == 'NodeList']
+    if node.tag != 'FightMove' or not any(node in list(top) for top in styles):
+        return ['requires guardblocking as a direct FightMove child of NodeList']
     expected = make_node()
     issues = []
     if any(node.get(k) != v for k, v in expected.attrib.items()):
