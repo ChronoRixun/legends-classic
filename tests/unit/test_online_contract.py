@@ -290,7 +290,7 @@ def test_code_background_does_not_freeze_edit_cursor_or_disabled_done():
     cells=[s for s in screen['shapes'] if s['rect'][1]==130 and s['rect'][3]==54]
     assert len(cells)==8 and all(s.get('outline')==3 for s in cells)
     assert not any(s['color']==5 and s['rect'][1] in (130,172) for s in screen['shapes'])
-    done=next(s for s in screen['shapes'] if s['rect']==(483,307,76,46))
+    done=next(s for s in screen['shapes'] if s['rect']==(483,307,104,46))
     assert not done.get('dim')
 
 
