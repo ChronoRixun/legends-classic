@@ -2370,9 +2370,12 @@ def model_output_problems(out, index=None):
     drew black boxes, outline bars and lighter inner rectangles)."""
     from pathlib import Path
     out=Path(out);errors=[]
+    from . import menu_scene as S
     for path in sorted(p for p in (out/'UI'/'models').glob('*') if p.name.lower().startswith('lc_o_') and p.suffix.lower()=='.igb'):
         try:
-            layers=panel_layers(path.read_bytes())
+            data=path.read_bytes()
+            errors.extend(path.name+': '+problem for problem in S.static_model_problems(data))
+            layers=panel_layers(data)
             drawn=[l for l in layers if not l[3]]
             if len(drawn)!=1 or not drawn[0][1] or drawn[0][2]!=(4,5):
                 errors.append(path.name+': model must draw one alpha-blended layer, draws '+repr([(l[0],l[1],l[2]) for l in drawn]))
