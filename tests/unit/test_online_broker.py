@@ -281,10 +281,10 @@ def test_round_5b_browse_row_scenes_header_nodes_and_shared_models():
         assert items[f'lc_age_fill{k}'].get('hide') == 'true'
     for key in ('list_count', 'list_age'):
         assert items[key].get('clamp') == 'true' and raw[key]['data']
-    assert raw['list_header']['text'] == 'PUBLIC GAMES' and raw['details']['text'] == ''  # the empty message is lc_broker_empty's alone
-    # header zones never collide: label+count | stale/offline line | age
+    assert raw['list_header']['text'] == '' and raw['details']['text'] == ''  # the count owns the header; the empty message is lc_broker_empty's alone
+    # header zones never collide: complete fresh/stale count | stale/offline line | age
     def span(key): x, y, w, h = raw[key]['rect']; return x, x + w
-    assert span('list_header')[1] <= span('list_count')[0] and span('list_count')[1] <= span('lc_broker_stale')[0]
+    assert span('list_count')[0] >= 59 and span('list_count')[1] <= span('lc_broker_stale')[0]
     assert span('lc_broker_stale')[1] <= span('list_age')[0] and span('lc_broker_offline_room') == span('lc_broker_stale')
     assert span('list_age')[1] <= 546  # the refresh bar track starts after the age
     # status words are drawn by the scenes; the data cell for the status/ping columns stays a hit target only
