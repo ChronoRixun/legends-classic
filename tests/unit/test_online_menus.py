@@ -441,11 +441,15 @@ def test_browse_focus_bars_share_one_model_item_at_the_same_screen_position():
     root=O.menu_tree(screen);layouts=O.scene_layout(screen)
     assert layouts[O.SHARED_FOCUS][0]==O.SHARED_FOCUS_ORIGIN
     assert [e.get('name') for e in root.findall('item')].count(O.SHARED_FOCUS)==1
-    assert [n for n in layouts if n.endswith('_focus')]==[O.SHARED_FOCUS]
+    assert [n for n in layouts if n.endswith('_focus')]==[O.SHARED_FOCUS,'prompt_refresh_focus']
     sx,sy,sz=O.SHARED_FOCUS_ORIGIN;checked=0
     for e in screen['items']:
         if not (e['intent'] and (e['enabled'] or screen.get('runtime'))): continue
         target,owner,rect,outline,relative=O.focus_placement(screen,e)
+        if e['name']=='prompt_refresh':
+            assert target=='prompt_refresh_focus' and rect==relative
+            assert layouts[target]==layouts[e['name']]
+            continue
         assert target==O.SHARED_FOCUS
         ax,ay,az=O._anchor(owner);assert ay==sy
         assert all(abs(m-(r+o))<1e-3 for m,r,o in zip(rect,relative,(ax-sx,az-sz,ax-sx,az-sz)))

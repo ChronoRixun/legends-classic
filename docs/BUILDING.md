@@ -185,3 +185,10 @@ reference set. The optional Win32 owned-runtime test in
 set repeatedly and asserts flat private memory and handle counts after warm-up.
 It uses the player's copied runtime DLLs and generated output, never starts
 XMen2.exe, and does not replace integration's full output build and live check.
+
+The 060s lobby/Browse presentation fixes keep the lobby card words in native text items in front of the card models;
+readiness, role and build labels must not be converted back into overlapping coplanar raster surfaces. These display
+labels are disabled for native hit testing and keep explicit palette prefixes for their authored glyph colors. Browse Refresh
+has its own focus model while the list rows keep their shared focus model. The Party Invite hint has normal and navy
+copies, selected by the companion DLL. Build these assets with the corresponding fix P DLL changes; unit contracts
+cover the generated trees and layout, while final depth, keyboard/pad and mouse behavior still needs a rendered check.
