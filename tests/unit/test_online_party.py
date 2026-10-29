@@ -22,7 +22,7 @@ def lobby(role, **kw):
 
 
 CARD_DATA = ('phase', 'route')
-CARD_SCENES = ('to_host', 'other_build', 'pending')
+CARD_SCENES = ('to_host', 'pending')
 
 
 def test_every_lobby_card_authors_the_round7_fields_hidden_or_data_and_never_focusable():
@@ -38,6 +38,9 @@ def test_every_lobby_card_authors_the_round7_fields_hidden_or_data_and_never_foc
                 e = items[f'lc_p{n}_{key}']
                 assert e.get('type') == 'MENU_ITEM_MODEL' and e.get('hide') == 'true' and e.get('neverfocus') == 'true', (role, n, key)
                 assert not e.get('usecmd'), (role, n, key)
+        for n in range(1,5):
+            e=items[f'lc_p{n}_other_build']
+            assert e.get('type')=='MENU_ITEM_TEXT' and e.get('hide')=='true' and e.get('neverfocus')=='true'
         assert not O.lobby_problems(tree, native, screen), role
 
 

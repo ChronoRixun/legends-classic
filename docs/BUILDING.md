@@ -171,3 +171,11 @@ builder refuses an older DLL by name.
 Schema 4 requires the beta 7 bullet-trace follow-up DLL and a content rebuild
 (SPEC 95.5). Earlier beta 7 DLLs refuse these wider rows; a DLL swap alone into
 an old content build does not add the converted-bullet event markers.
+
+
+The 060s lobby/Browse presentation fixes keep the lobby card words in native text items in front of the card models;
+readiness, role and build labels must not be converted back into overlapping coplanar raster surfaces. These display
+labels are disabled for native hit testing and keep explicit palette prefixes for their authored glyph colors. Browse Refresh
+has its own focus model while the list rows keep their shared focus model. The Party Invite hint has normal and navy
+copies, selected by the companion DLL. Build these assets with the corresponding fix P DLL changes; unit contracts
+cover the generated trees and layout, while final depth, keyboard/pad and mouse behavior still needs a rendered check.

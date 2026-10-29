@@ -186,7 +186,7 @@ def test_optional_lobby_scene_children_are_owned_by_the_hidden_variant():
     screen=O.lobby_layout('host')
     items={e['name']:e for e in screen['items']}
     for n in range(1,5):
-        for suffix in ('card','ready','not_ready','host','you','ms','measuring','same_build','checking_build','empty'):
+        for suffix in ('card','empty'):
             e=items[f'lc_p{n}_{suffix}']
             assert e.get('hidden') and e.get('parts')
             assert not e['text']
@@ -347,3 +347,38 @@ def test_lobby_render_states_do_not_claim_pending_admission():
     screen = O.lobby_layout('host')
     assert 'Measuring' in str(screen) and 'Hero assigned at start' in str(screen)
     assert 'next area' in str(screen)
+
+
+def test_060s_lobby_words_use_native_text_in_front_of_card_models():
+    # Live 060s: the facts said HOST READY YOU while only a panel opening revealed HOST.
+    # Software previews composite alpha without the retail depth test, so they missed overlapping model glyph surfaces.
+    for role in ('host','join'):
+        screen=O.lobby_layout(role)
+        tree=O.lobby_tree(native(role),screen)
+        by={e['name']:e for e in screen['items']}
+        for n in range(1,5):
+            for suffix in ('host','ready','not_ready','same_build','checking_build','other_build','you'):
+                key=f'lc_p{n}_{suffix}'
+                e=tree.find(f"item[@name='{key}']")
+                assert e.get('type')=='MENU_ITEM_TEXT' and e.get('text')
+                assert e.get('enabled')=='false' and e.get('neverfocus')=='true'
+                assert e.get('text').startswith('~')  # explicit authored colour survives the engine's disabled style
+                assert by[key]['plane'] < by[f'lc_p{n}_card'].get('plane',-150)
+
+
+def test_060s_browse_refresh_has_own_bar_and_rows_are_the_main_navigation_target():
+    screen=O.runtime_layout('lc_browse')
+    assert screen['focus']=='prompt_refresh'
+    by={e['name']:e for e in screen['items']}
+    target,owner,rect,_,_=O.focus_placement(screen,by['prompt_refresh'])
+    assert target=='prompt_refresh_focus' and owner is by['prompt_refresh']
+    assert O.scene_layout(screen)[target]==O.scene_layout(screen)['prompt_refresh']
+    assert by['prompt_join']['down']=='room_0_0'
+
+
+def test_060s_party_invite_hint_has_a_navy_focus_twin():
+    from xml1build import online_party as P
+    screen=P.party_layout('host')
+    by={e['name']:e for e in screen['items']}
+    assert by['lc_party_invite_hint']['rect']==by['lc_party_invite_hint_on']['rect']
+    assert by['lc_party_invite_hint_on']['color']==0 and by['lc_party_invite_hint_on']['hidden']

@@ -160,6 +160,7 @@ def party_layout(role='host', *, native=None, members=4, fixture=False, notice='
     shape('bar', (221, 351, 142, 30), 2); shape('bar', (372, 351, 116, 30), 2); shape('bar', (497, 351, 83, 30), 2)
     text('lc_party_invite', 'INVITE', (234, 358, 60, 16), 'row', 4, intent='party-invite', hit_rect=(221, 351, 142, 30))
     text('lc_party_invite_hint', 'Copy code', (294, 361, 62, 13), 'body', 3, align='right')
+    text('lc_party_invite_hint_on', 'Copy code', (294, 361, 62, 13), 'body', 0, align='right', hidden=True)
     e = text('lc_party_propose', 'PROPOSE LOAD...', (384, 351, 98, 16), 'row', 4, intent='party-propose', hit_rect=(372, 351, 116, 30))
     e['enabled'] = False
     text('lc_party_leave', 'LEAVE', (509, 358, 60, 16), 'row', 4, intent='party-leave', hit_rect=(497, 351, 83, 30))

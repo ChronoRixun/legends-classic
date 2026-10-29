@@ -668,7 +668,7 @@ def scene_layout(screen):
     for e in screen['items']:
         if e['intent'] and (e['enabled'] or screen.get('runtime')):
             target,owner=focus_target(screen,e)
-            layouts[target]=(shared_focus(owner.get('plane',-150))[1],(0,-1,1,0)) if screen['name'] in SHARED_FOCUS_SCREENS else layouts[owner['name']]
+            layouts[target]=(shared_focus(owner.get('plane',-150))[1],(0,-1,1,0)) if screen['name'] in SHARED_FOCUS_SCREENS and target!='prompt_refresh_focus' else layouts[owner['name']]
     return layouts
 
 
@@ -682,7 +682,7 @@ def focus_placement(screen,item):
     the owner-relative focus rect moved into its plane's shared origin frame (the same bar on screen)."""
     target,owner=focus_target(screen,item)
     rect,outline=focus_spec(screen,owner)
-    if screen['name'] not in SHARED_FOCUS_SCREENS: return target,owner,rect,outline,rect
+    if screen['name'] not in SHARED_FOCUS_SCREENS or owner['name']=='prompt_refresh': return target,owner,rect,outline,rect
     (ax,ay,az),(sx,sy,sz)=_anchor(owner),shared_focus(owner.get('plane',-150))[1]
     assert ay==sy and target==shared_focus(ay)[0]
     l,b,r,t=rect;dx,dz=ax-sx,az-sz
@@ -1063,6 +1063,7 @@ def focus_target(screen, item):
     and, on a SHARED_FOCUS_SCREENS screen, every focusable item shares the one SHARED_FOCUS model item."""
     m=re.fullmatch(r'room_(\d)_(\d)',item['name']) if screen['name']=='lc_browse' else None
     owner=next((e for e in screen['items'] if e['name']=='room_'+m.group(1)+'_0'),item) if m else item
+    if screen['name']=='lc_browse' and item['name']=='prompt_refresh': return 'prompt_refresh_focus',item
     if screen['name'] in SHARED_FOCUS_SCREENS: return shared_focus(owner.get('plane',-150))[0],owner  # one model item per plane (060q)
     if m: return 'room_'+m.group(1)+'_focus',owner
     return item['name']+'_focus',item
@@ -1897,6 +1898,8 @@ def runtime_layout(name,state=None):
             i=ROW_COLUMNS.index(c)
             e.update(left=f'room_{r}_{ROW_COLUMNS[max(0,i-1)]}',right=f'room_{r}_{ROW_COLUMNS[min(len(ROW_COLUMNS)-1,i+1)]}',
                      up=f'room_{r-1}_{c}' if r else 'prompt_refresh',down=f'room_{r+1}_{c}' if r<BROWSE_ROWS-1 else 'scroll')
+    if name=='lc_browse':
+        next(e for e in screen['items'] if e['name']=='prompt_join')['down']='room_0_0'
     if name=='lc_code':
         keys={e['name']:e for e in screen['items'] if e['name'].startswith('key_')}
         for i in range(32):
@@ -2200,6 +2203,19 @@ def lobby_layout(role, *, members=1, ready=False, fixture=False, pending=False, 
         if key in ('lc_code_copied','lc_leave_confirm','lc_lobby_error','lc_lobby_error_copy','lc_lobby_error_target'):
             value=e['text'];e.update(text='',plane=-280,parts=[dict(kind='panel',rect=(0,0,554,29),color=1),
                 child_text(value,(10,6,340 if key in ('lc_code_copied','lc_leave_confirm','lc_lobby_error') else 470,20),'row',e['color'])])
+    # 060s bound HOST/READY/SAME BUILD correctly, but their overlapping raster models shared the card's depth.
+    # Native text supplies independent glyph draws in front of the card; the visible words do not depend on model ordering.
+    card_labels={'host':'HOST','ready':'READY','not_ready':'NOT READY','you':'You','ms':'ms','measuring':'Measuring',
+                 'same_build':'SAME BUILD','checking_build':'CHECKING BUILD...','other_build':'OTHER BUILD'}
+    for e in items:
+        match=re.fullmatch(r'lc_p([1-4])_(.+)',e['name'])
+        if not match or match[2] not in card_labels: continue
+        n=int(match[1]);suffix=match[2];x=43+(n-1)*141
+        rects={'host':(x+90,195,33,14),'ready':(x+23,275,100,18),'not_ready':(x+23,275,100,18),
+               'you':(x+26,293,96,16),'ms':(x+73,293,39,16),'measuring':(x+26,293,96,16)}
+        e.update(text=card_labels[suffix],parts=[],plane=-190,rect=rects.get(suffix,e['rect']),enabled=False)
+        # Never let a display label answer CMenu's mouse walk and raise Accept on the action focused elsewhere.
+        # Inline palette prefixes retain the authored glyph colour even though this native item is disabled.
     _graph(screen)
     # Only offline previews reflect a gate. Authored Start must be available for
     # the native activator/tick to own enabling, and must keep its original flags.
