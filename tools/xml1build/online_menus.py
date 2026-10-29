@@ -16,6 +16,7 @@ from . import menu_theme as T, menu_conversion as M, online_fonts as OF
 MENUS = ('lc_online', 'lc_host', 'lc_code', 'lc_browse')
 NATIVE_ENTRY = 'openmenu online'
 ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'
+CODE_TOOL_WIDTH = 104  # Space/Enter key label plus DONE, with inner padding
 PALETTE = ('0A1830','11284A','2A4A78','7FA6D9','EEF3FA','FFCB3D','54D68A','FF6F55')
 STYLES = {'title': ('big',37), 'row': ('medium',15), 'body': ('medium',12.5), 'label': ('medium',11)}
 COLUMNS = ((59,128),(188,67),(255,93),(348,58),(406,76),(482,78),(560,37))
@@ -342,7 +343,7 @@ def layout(name, state=None):
             button('key_'+str(i),'' if c=='<' else c,(81+col*49.8,205+row*38.2,44.5,33), 'delete' if c=='<' else 'code:'+c)
             if c=='<': shape('backspace',(445.5,329.5,12,9),4)
         for i,(key,label,intent) in enumerate((('paste','$MENU_NEXT PASTE','paste'),('clear','$MENU_OTHER CLEAR','clear'),('done','$MENU_OK DONE','done'))):
-            button(key,label,(483,205+i*51,76,46),intent, key!='done' or len(s.code)==8)
+            button(key,label,(483,205+i*51,CODE_TOOL_WIDTH,46),intent, key!='done' or len(s.code)==8)
         text('alphabet_hint','Codes never contain zero, one, or the letters O, I and L. Keyboard: just type it, or paste with Ctrl+V.',119,366,440,16,'body',3)
         panel('code_status_header','',(81,387,478,34))
         if s.error: shape('rect',(81,387,478,2),7)
@@ -520,7 +521,10 @@ def tree_problems(root, screen, palette_ids=None):
 def package(root):
     pkg=M.package_for(root)
     ET.SubElement(pkg,'xml',filename='ui/menus/'+(root.get('name') if root.get('type') in ('HOST_MENU','JOIN_MENU') else root.get('igb')))
-    ET.SubElement(pkg,'texture',filename='textures/menus/'+root.get('igb'))
+    # Model backdrops embed their pixels. A retired image= sprite must not
+    # preload another 5 MiB copy of the page at every open.
+    if root.get('image'):
+        ET.SubElement(pkg,'texture',filename=root.get('image'))
     return pkg
 
 
@@ -765,7 +769,9 @@ def write(ctx, *, preview=False):
         for e in screen['items']:
             if e.get('variant') and e.get('parts'):
                 rect=(0,-e['rect'][3]*.8,e['rect'][2]*.8,0)
-                focus_models[variant_resource(screen,e)]=focus_model(focus_source.read_bytes(),rect,True,variant_picture(e))
+                resource=variant_resource(screen,e)
+                if resource not in focus_models:
+                    focus_models[resource]=focus_model(focus_source.read_bytes(),rect,True,variant_picture(e))
             if e['intent'] and (e['enabled'] or screen.get('runtime')):
                 _,owner,rect,outline,relative=focus_placement(screen,e)
                 resource=focus_resource(rect,outline,focus_variant(screen,owner))
@@ -890,6 +896,31 @@ def focus_resource(rect, outline=False, variant=''):
     return 'ui/models/lc_o_focus_'+('outline_' if outline else '')+'_'.join(str(round(v*10)) for v in rect)+variant
 
 
+def _focus_images(graph, blocks, picture, solid):
+    """One shared image for the panel's texture attributes; retire duplicate pixels.
+
+    The owned flat topology has two images. All layers receive the same original
+    artwork, so keeping two full RGBA images doubles disk and upload cost for no
+    visual benefit. Keep object references valid with a 1x1 retired image.
+    """
+    import struct
+    images = graph.objects_of('igImage')
+    if not images:
+        raise ValueError('focus model has no image')
+    for attr in graph.objects_of('igTextureAttr'):
+        if 12 not in attr.fields or attr.get(12) not in {o.ref for o in images}:
+            raise ValueError('unsupported focus texture image binding')
+        struct.pack_into('<i', graph.buf, attr.fields[12].offset, images[0].ref)
+    for index, image in enumerate(images):
+        art = picture.convert('RGBA') if picture is not None and index == 0 else None
+        blob = art.tobytes() if art is not None else solid
+        width, height = art.size if art is not None else (1, 1)
+        for slot, value in {2:width,3:height,6:100,7:8,8:8,9:8,10:8,11:7,12:len(blob),19:width*4,20:0}.items():
+            if slot in image.fields:
+                struct.pack_into('<i', graph.buf, image.fields[slot].offset, value)
+        blocks[image.get(13)] = blob
+
+
 def focus_model(source, rect, outline=False, picture=None, depth=40, slant=None):
     """Fit owned flat topology to an original solid amber slanted focus bar.
 
@@ -902,13 +933,7 @@ def focus_model(source, rect, outline=False, picture=None, depth=40, slant=None)
     g=G.IgbFile(data); blocks={}
     keep=blended_layer(g)
     solid=bytes.fromhex(PALETTE[5])+b'\xff'
-    for o in g.objects_of('igImage'):
-        image=picture.convert('RGBA') if picture is not None else None
-        blob=image.tobytes() if image is not None else solid
-        width,height=image.size if image is not None else (1,1)
-        for slot,value in {2:width,3:height,6:100,7:8,8:8,9:8,10:8,11:7,12:len(blob),19:width*4,20:0}.items():
-            if slot in o.fields: struct.pack_into('<i',g.buf,o.fields[slot].offset,value)
-        blocks[o.get(13)]=blob
+    _focus_images(g, blocks, picture, solid)
     for o in g.objects_of('igMaterialAttr'):
         for slot in (5,6,7):
             if slot in o.fields: g.set_floats(o,slot,(1,1,1,1))
@@ -1862,7 +1887,7 @@ def runtime_layout(name,state=None):
         if shape['kind']=='diamond' and shape['color']==6:shape['color']=3
         if name=='lc_code' and shape['rect'][1]==130 and shape['rect'][3]==54:
             shape.update(kind='cell',outline=3)
-        if name=='lc_code' and shape['rect']==(483,307,76,46):shape['dim']=False
+        if name=='lc_code' and shape['rect']==(483,307,CODE_TOOL_WIDTH,46):shape['dim']=False
     if name=='lc_code':
         # Only cell text/remaining count is published by input API /1. Neutral
         # cells avoid freezing the round-1 cursor at its initial edit position.
@@ -2207,8 +2232,15 @@ def lobby_layout(role, *, members=1, ready=False, fixture=False, pending=False, 
 
 
 def variant_resource(screen,item):
-    # Identical relative art (the seven Browse rows' status/pip/build/dim scenes) shares one model across anchors.
-    return 'ui/models/lc_o_'+screen['name']+'_'+item.get('model_name',item['name'])
+    # Relative artwork is independent of its card/row anchor and screen. Share
+    # identical pictures across all four Party cards and the native lobby skins.
+    # Include every variant_picture input that can affect pixels or geometry.
+    import hashlib, json
+    visual = {key:item.get(key) for key in ('text','parts','picture_scale','dim','font_alias','align')}
+    visual.update(size=item['rect'][2:], font=font_binding(item),
+                  enabled=item.get('enabled',True), color=item['color'])
+    digest=hashlib.sha256(json.dumps(visual,sort_keys=True,separators=(',',':')).encode()).hexdigest()[:24]
+    return 'ui/models/lc_o_variant_'+digest
 
 
 def lobby_tree(original,screen,palette_ids=None):
