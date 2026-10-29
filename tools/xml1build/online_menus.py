@@ -1196,7 +1196,7 @@ def focus_picture(screen,item,rect):
 
 # These probes describe additive APIs, not release or gameplay identities. Each
 # must be present in ONE supplied DLL; separate menu/font DLLs cannot be stacked.
-DLL_PROBES = (b'lc-online-menus/1\n', b'lc-online-input/1', b'lc-online-lobby/1', b'lc-online-broker/2', b'lc-online-native/1', b'lc-online-party/1', b'lc-online-errors/1',
+DLL_PROBES = (b'lc-online-menus/1\n', b'lc-online-input/1', b'lc-online-lobby/1', b'lc-online-broker/2', b'lc-online-native/1', b'lc-online-party/1', b'lc-online-errors/1', b'lc-online-hits/2',
               b'lcOnlineIntent\0', 'Online\0'.encode('utf-16le'),
               'Menus\0'.encode('utf-16le'), 'LegendsClassicFonts\0'.encode('utf-16le'),
               b'ui/fonts/lc_fonts_pc.xmlb\0', b'ui/fonts/lc_fonts_hd.xmlb\0',
@@ -1212,6 +1212,7 @@ CAPABILITY = b'lc-online-menus/1\n'
 # 2 below), so the bar's top and both ends were dead (live 060p item 7). The builder lists each focusable item's drawn bar
 # (absolute view units, x right, y up: left bottom right top) and the DLL hit-tests our screens against it.
 HITS_CONTRACT = 'lc-online-hits/1'
+HITS_SHAPE_CONTRACT = 'lc-online-hits/2'
 HITS_FILE = 'Data/lc_online_hits.txt'
 # The DLL parser's limits (online_menus_hits_rules.hpp parse / name_ok / number): ONE bad line makes it refuse the WHOLE table
 # and the mouse hit boxes of every co-op screen go off. The builder holds itself to the same rules (hit_table_problems) and
@@ -1223,8 +1224,15 @@ HITS_VIEW_LIMIT = 4096.0
 HITS_NAME = re.compile(r'[A-Za-z0-9_]{1,63}')
 HITS_NUMBER = re.compile(r'-?(?:[0-9]+\.?[0-9]*|\.[0-9]+)')
 # focus_model: a wide solid bar leans right as it rises (the top edge is FOCUS_LEAN view units to the right of the bottom
-# edge); the table lists the bottom-edge rectangle (see hit_scene_problems).
+# edge); table v2 also records this shear (v1 omitted the drawn right strip).
 FOCUS_LEAN = 4
+
+
+def hit_lean(screen, name):
+    item=next((e for e in screen['items'] if e['name']==name),None)
+    if item is None: return 0  # the table validator still diagnoses synthetic bad rows
+    _,_,(l,b,r,t),outline,_=focus_placement(screen,item)
+    return 0 if outline or r-l<50 else FOCUS_LEAN
 
 
 def hit_rows(screen):
@@ -1269,7 +1277,8 @@ def hit_table_problems(data):
     if not data.endswith(b'\n'): return ['last line not terminated']
     lines=data[:-1].split(b'\n')
     problems=[]
-    if lines[0]!=HITS_CONTRACT.encode('ascii'): problems.append('line 1: bad header')
+    shaped=lines[0]==HITS_SHAPE_CONTRACT.encode('ascii')
+    if lines[0] not in (HITS_CONTRACT.encode('ascii'),HITS_SHAPE_CONTRACT.encode('ascii')): problems.append('line 1: bad header')
     seen=set()
     for number,raw in enumerate(lines[1:],2):
         if len(raw)>HITS_MAX_LINE: problems.append('line %d: line too long'%number); continue
@@ -1277,16 +1286,19 @@ def hit_table_problems(data):
         try: line=raw.decode('ascii')
         except UnicodeDecodeError: problems.append('line %d: not ASCII'%number); continue
         fields=line.split(' ')
-        if len(fields)!=6 or '' in fields: problems.append('line %d: bad fields'%number); continue
+        if len(fields)!=(7 if shaped else 6) or '' in fields: problems.append('line %d: bad fields'%number); continue
         menu,item,*numbers=fields
         if not (HITS_NAME.fullmatch(menu) and HITS_NAME.fullmatch(item)): problems.append('line %d: bad name'%number); continue
         try:
             for token in numbers:
                 if len(token)>24 or not HITS_NUMBER.fullmatch(token): raise ValueError(token)
-            left,bottom,right,top=map(float,numbers)
+            left,bottom,right,top=map(float,numbers[:4])
+            lean=float(numbers[4]) if shaped else 0
         except ValueError: problems.append('line %d: bad number'%number); continue
         if any(abs(v)>HITS_VIEW_LIMIT for v in (left,bottom,right,top)): problems.append('line %d: number out of range'%number); continue
         if not (left<right and bottom<top): problems.append('line %d: empty or inverted rectangle'%number); continue
+        if abs(lean)>64 or abs(left+lean)>HITS_VIEW_LIMIT or abs(right+lean)>HITS_VIEW_LIMIT:
+            problems.append('line %d: bad lean'%number); continue
         if (menu,item) in seen: problems.append('line %d: duplicate entry'%number)
         seen.add((menu,item))
     if len(lines)-1>HITS_MAX_ENTRIES: problems.append('too many entries')
@@ -1298,15 +1310,16 @@ def hit_table(screens):
     """The Data/lc_online_hits.txt bytes for {engine menu name: bound screen}. Raises ValueError for anything the DLL's
     parser would refuse (that would switch the mouse hit boxes of every co-op screen off), and for a bar that reaches an
     unlisted focusable item (the Kick picker): the engine could hand it the click."""
-    lines=[HITS_CONTRACT]
+    lines=[HITS_SHAPE_CONTRACT]
     problems=[]
     for name,screen in screens.items():
         rows=hit_rows(screen)
         for item,*rect in rows:
-            lines.append(' '.join([name,item,*map(_hit_number,rect)]))
+            lines.append(' '.join([name,item,*map(_hit_number,rect),_hit_number(hit_lean(screen,item))]))
         for item,pl,pb,pr,pt in hit_unlisted_boxes(screen):
             for bar,l,b,r,t in rows:
-                if l<pr and pl<r and b<pt and pb<t:
+                lean=hit_lean(screen,bar)
+                if l+min(0,lean)<pr and pl<r+max(0,lean) and b<pt and pb<t:
                     problems.append('%s: bar %s [%g %g %g %g] reaches the unlisted focusable item %s [%g %g %g %g]'%(name,bar,l,b,r,t,item,pl,pb,pr,pt))
     data=('\n'.join(lines)+'\n').encode('ascii')
     problems+=hit_table_problems(data)
@@ -1321,7 +1334,7 @@ def hit_table_rows(data):
     rows={}
     for line in data.decode('ascii').split('\n')[1:-1]:
         menu,item,*numbers=line.split(' ')
-        rows.setdefault(menu,{})[item]=tuple(map(float,numbers))
+        rows.setdefault(menu,{})[item]=tuple(map(float,numbers[:4]))
     return rows
 
 
@@ -1335,15 +1348,30 @@ def _model_bar(model):
     return min(xs),min(zs),max(xs),max(zs)
 
 
+def _model_edges(model):
+    """Bottom and top x endpoints of the one nondegenerate focus quad, read from actual model vertices."""
+    from . import igb_file as G
+    g=G.IgbFile(model)
+    for o in g.objects_of('igVertexArray1_1'):
+        v=g.block_floats(g.ref_list(o.get(2))[0]);points=list(zip(v[0::3],v[2::3]))
+        bottom=min(z for x,z in points);top=max(z for x,z in points)
+        if top-bottom<.01 or max(x for x,z in points)-min(x for x,z in points)<.01: continue
+        low=[x for x,z in points if abs(z-bottom)<.001];high=[x for x,z in points if abs(z-top)<.001]
+        if len(low)!=2 or len(high)!=2: raise ValueError('focus model is not a four-corner quad')
+        return min(low),max(low),min(high),max(high)
+    raise ValueError('focus model has no drawn quad')
+
+
 def hit_scene_problems(data, names, read_tree, read_scene, read_model):
     """Compare the table with the focus bars as BUILT: for every item of each built menu tree that has a focus model
     (<onfocus type="focus" item=ANCHOR model=MODEL>), the bar is the model's own vertices placed at ANCHOR's transform in
     the built scene IGB - nothing from focus_placement. The table row must have the bar's left, bottom and top and a right
-    edge between the bar's bottom-right corner and its leaning top-right corner (FOCUS_LEAN), and the table must list
+    edge and shear matching all four drawn corners, and the table must list
     exactly the items that have such a model (the Kick picker has none). Callables: read_tree(menu) -> XMLB root,
     read_scene(igb name) -> bytes, read_model(resource) -> bytes or None."""
     from . import igb_file as G
     rows=hit_table_rows(data)
+    leans={(f[0],f[1]):float(f[6]) if len(f)==7 else 0 for f in (line.split() for line in data.decode('ascii').splitlines()[1:])}
     problems=[]
     tol=0.06
     for name in names:
@@ -1364,8 +1392,10 @@ def hit_scene_problems(data, names, read_tree, read_scene, read_model):
                 row=table.get(key)
                 if row is None: problems.append('%s: %s draws a focus bar but the table has no row'%(name,key)); continue
                 l,b,r,t=row
-                if abs(l-bar[0])>tol or abs(b-bar[1])>tol or abs(t-bar[3])>tol or not (bar[2]-FOCUS_LEAN-tol<=r<=bar[2]+tol):
-                    problems.append('%s: %s: table [%g %g %g %g] vs built bar [%g %g %g %g] (right edge may lean by %g)'%(name,key,l,b,r,t,*bar,FOCUS_LEAN))
+                lean=leans[(name,key)]
+                edges=tuple(anchor[0]+x for x in _model_edges(model))
+                if abs(b-bar[1])>tol or abs(t-bar[3])>tol or any(abs(a-z)>tol for a,z in zip((l,r,l+lean,r+lean),edges)):
+                    problems.append('%s: %s: table [%g %g %g %g] shear %g vs built bar [%g %g %g %g]'%(name,key,l,b,r,t,lean,*bar))
         for key in sorted(set(table)-seen): problems.append('%s: table row %s has no focus model in the built menu'%(name,key))
     for name in sorted(set(rows)-set(names)): problems.append('table lists an unknown menu: '+name)
     return problems
@@ -1790,6 +1820,7 @@ def _host_left_nodes(items):
         e['enabled']=False;e['hidden']=True;e['hit_rect']=rect;e['plane']=-300;items.append(e)
 
 
+
 # The focusable settings rows' side-marker positions (top y, layout units): visibility, room name, campaign (the fixture's baked slash).
 # DROP-IN is read-only (no intent): it is never focused and has no marker.
 HOST_MARKER_ROWS = {'visibility': 155, 'room_name': 202, 'campaign': 248}
@@ -1888,6 +1919,11 @@ def runtime_layout(name,state=None):
     # The old optional generic error anchor was not an input target. All
     # authored Back usecmds are routed by the scoped DLL handler, once.
     _graph(screen)
+    if name=='lc_online':
+        for e in screen['items']:
+            if e['name'] in ('lc_hostleft_again','lc_hostleft_back'):
+                other='lc_hostleft_back' if e['name']=='lc_hostleft_again' else 'lc_hostleft_again'
+                e.update(left=other,right=other,up=other,down=other)
     if name=='lc_browse':
         # Row cells keep the closed grid (left/right in a row, up/down in a column) while disabled or rebound.
         for e in screen['items']:
