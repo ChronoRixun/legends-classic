@@ -115,8 +115,9 @@ def test_browse_rows_exist_for_an_empty_list_with_row_commands_and_closed_grid()
             assert e.get('up') == (f'room_{r - 1}_{c}' if r else 'prompt_refresh')
             assert e.get('down') == (f'room_{r + 1}_{c}' if r < O.BROWSE_ROWS - 1 else 'scroll')
             # mouse/focus rectangle kept while disabled; every Browse focus bar is carried by the one shared model item
-            # (engine budget, 060q): set on focus, hidden on nofocus (setFocus 0x5aaf80 loses the old item first)
-            assert [(f.get('item'), f.get('type')) for f in e.findall('onfocus')] == [(O.SHARED_FOCUS, 'focus'), (O.SHARED_FOCUS, 'nofocus')]
+            # X1 gain-only replacement fits the native 75-record budget; native
+            # focus loss stops the outgoing gain before the next one replaces it.
+            assert [(f.get('item'), f.get('type')) for f in e.findall('onfocus')] == [(O.SHARED_FOCUS, 'focus')]
             assert f'room_{r}_{c}_focus' not in items and f'room_{r}_focus' not in items
         models = {f.get('model') for c in O.ROW_COLUMNS for f in items[f'room_{r}_{c}'].findall('onfocus') if f.get('type') == 'focus'}
         assert len(models) == 1, models  # one row-wide focus bar, whichever cell has focus
@@ -193,13 +194,16 @@ def test_variant_models_stay_inside_safe_bounds_and_do_not_overlap_unrelated_con
             if cause in O.RETRYABLE_CAUSES:  # the DLL hides Retry for every other cause, so only then does it share the row
                 assert node[0] + node[2] <= retry[0] or retry[0] + retry[2] <= node[0] or node[1] + node[3] <= retry[1] or retry[1] + retry[3] <= node[1], (name, cause)
             assert node[0] + node[2] <= diag[0] + (14 if name == 'lc_code' else 0) or node[1] + node[3] <= diag[1] or diag[1] + diag[3] <= node[1], (name, cause)
-    # the Browse retry/status band never reaches the page controls
+    # X1 puts paging in its own footer row. Require separation on either
+    # axis, including wide status copy that now extends past the page x origin.
     raw = {e['name']: e for e in O.runtime_layout('lc_browse')['items']}
-    for cause in O.BROKER_CAUSES['lc_browse']:
-        band = raw['lc_broker_err_' + cause]['rect']
-        assert band[0] + band[2] <= raw['scroll_up']['rect'][0], cause
-    for key in ('lc_broker_cancel', 'lc_broker_empty', 'lc_broker_room'):
-        r = raw[key]['rect']; assert r[0] + r[2] <= raw['scroll_up']['rect'][0], key
+    bands = ['lc_broker_err_' + cause for cause in O.BROKER_CAUSES['lc_browse']]
+    bands += ['lc_broker_cancel', 'lc_broker_empty', 'lc_broker_room', 'broker_error']
+    for key in bands:
+        x, y, w, h = raw[key]['rect']
+        for control in ('scroll_up', 'scroll'):
+            px, py, pw, ph = raw[control]['rect']
+            assert x + w <= px or px + pw <= x or y + h <= py or py + ph <= y, (key, control)
 
 
 def test_status_nodes_the_dll_can_show_together_never_overlap():

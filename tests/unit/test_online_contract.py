@@ -370,9 +370,12 @@ def test_060s_browse_refresh_has_own_bar_and_rows_are_the_main_navigation_target
     screen=O.runtime_layout('lc_browse')
     assert screen['focus']=='prompt_refresh'
     by={e['name']:e for e in screen['items']}
-    target,owner,rect,_,_=O.focus_placement(screen,by['prompt_refresh'])
-    assert target=='prompt_refresh_focus' and owner is by['prompt_refresh']
-    assert O.scene_layout(screen)[target]==O.scene_layout(screen)['prompt_refresh']
+    target,owner,rect,_,relative=O.focus_placement(screen,by['prompt_refresh'])
+    assert target==O.SHARED_FOCUS and owner is by['prompt_refresh']
+    sx,sy,sz=O.scene_layout(screen)[target][0]
+    assert (sx,sy,sz)==O.SHARED_FOCUS_ORIGIN
+    ax,ay,az=O._anchor(owner);assert ay==sy
+    assert all(abs(got-(local+offset))<1e-3 for got,local,offset in zip(rect,relative,(ax-sx,az-sz,ax-sx,az-sz)))
     assert by['prompt_join']['down']=='room_0_0'
 
 

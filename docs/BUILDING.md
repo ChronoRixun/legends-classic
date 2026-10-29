@@ -193,8 +193,8 @@ XMen2.exe, and does not replace integration's full output build and live check.
 
 The 060s lobby/Browse presentation fixes keep the lobby card words in native text items in front of the card models;
 readiness, role and build labels must not be converted back into overlapping coplanar raster surfaces. These display
-labels are disabled for native hit testing and keep explicit palette prefixes for their authored glyph colors. Browse Refresh
-has its own focus model while the list rows keep their shared focus model. The Party Invite hint has normal and navy
+labels are disabled for native hit testing and keep explicit palette prefixes for their authored glyph colors. The X1
+follow-up shares Browse Refresh's highlight with the rows to fit the native focus-event budget. The Party Invite hint has normal and navy
 copies, selected by the companion DLL. Build these assets with the corresponding fix P DLL changes; unit contracts
 cover the generated trees and layout, while final depth, keyboard/pad and mouse behavior still needs a rendered check.
 
@@ -206,3 +206,10 @@ focus records; a builder contract rejects overflow. Paging uses separate footer
 cells and footer bars share a consistent shear. The integration build must regenerate
 menu resources and the hit table together. Module unit tests cover authoring here;
 full owned-input generation and live visual acceptance remain separate gates.
+
+The Wave 3 self-test retains the original 080c witness counts. A build with the
+exact authored private Guard node adds one shared FightMove and two resident
+trigger events: moves 307, largest style 109, events 833. This is self-test
+accounting only; capacities and the census counting rules are unchanged. Missing
+Guard nodes retain historical expectations; malformed or altered Guard payloads
+are refused instead of adjusting the expected totals from observed content.

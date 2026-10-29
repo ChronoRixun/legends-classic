@@ -634,6 +634,42 @@ def test_the_validator_hooks_run_every_check_through_a_validator_object():
     assert ck.status == 'skipped' and not ck.counts
 
 
+def test_static_witnesses_adjust_only_for_the_exact_authored_guard_node():
+    from xml1build import guard_block as GB
+    historical = L3.EXPECTED_WITNESSES
+    assert L3.expected_witnesses(None) == historical
+    root = ET.Element('NodeList')
+    assert L3.expected_witnesses(root) == historical
+    GB.install(root)
+    expected = L3.expected_witnesses(root)
+    delta = {'moves': 1, 'largest style': 1, 'events': 2}
+    assert expected == tuple((name, count + delta.get(name, 0), zone, what)
+                             for name, count, zone, what in historical)
+    # Unreviewed growth must not change the expected census automatically.
+    ET.SubElement(root, 'FightMove', name='unreviewed_move')
+    assert L3.expected_witnesses(root) == expected
+    assert L3.EXPECTED_WITNESSES == historical
+
+
+def test_static_witnesses_reject_malformed_or_repeated_guard_nodes():
+    import copy
+    from xml1build import guard_block as GB
+    roots = []
+    root = ET.Element('NodeList'); GB.install(root)
+    duplicate = copy.deepcopy(root); duplicate.append(GB.make_node()); roots.append(duplicate)
+    wrong_tag = copy.deepcopy(root); wrong_tag[0].tag = 'container'; roots.append(wrong_tag)
+    nested = ET.Element('NodeList'); ET.SubElement(nested, 'container').append(GB.make_node()); roots.append(nested)
+    inherited = copy.deepcopy(root); inherited[0].set('inherit', 'unreviewed'); roots.append(inherited)
+    event = copy.deepcopy(root); event[0][0].set('powerusage', '2'); roots.append(event)
+    for bad in roots:
+        try:
+            L3.expected_witnesses(bad)
+        except ValueError:
+            pass
+        else:
+            raise AssertionError('malformed guard changed the expected census')
+
+
 def test_the_static_reports_witnesses_reproduce_on_a_finished_build():
     """env-gated (LC_W3_SELFTEST_OUT = a finished 080c-era build folder; never public CI): the replay gives the design's
     witnesses - styles 24, moves 306, largest style 108, events 831, Master Mold 2 at 585 retained nodes."""
