@@ -1440,6 +1440,8 @@ EXTRA_MARKERS = [(('Game', 'Xml1GrabCarry'), CARRY_CHAIN_MARKER, '[Game] Xml1Gra
 # are the byte markers.
 TK_STILL_MARKER = b"a still telekinesis throw keeps the victim's facing (no zero divide)"
 GUARD_TAP_MARKER = b'guard decide runs at input and exits after a tap'
+GUARD_XML1_NATIVE_MARKER = b'XML1 ordinary grab and guardblocking rank1 native energy lifecycle'
+GUARD_XML1_NATIVE_NAME = '[Game] GuardDecideRule (XML1 admission and native held block)'
 COLOSSUS_CASTER_MARKER = b'Colossus charge evaluates its talents on the caster'
 THROWN_IMPACT_MARKER = b'thrown bodies forward world impacts (42C09E); carry pose on animated bones'
 # xml2-fix 1.9.0-beta.1 (beta 8 candidate 080h): [Game] Xml1FlyingCarry=0. A DLL before it (080g and older) ignores the key
@@ -1447,7 +1449,8 @@ THROWN_IMPACT_MARKER = b'thrown bodies forward world impacts (42C09E); carry pos
 FLYING_CARRY_OFF_MARKER = b'flying carry off (Xml1FlyingCarry=0): no carry handlers, PC flight descent'
 RELEASE_18_KEYS = {**RELEASE_18_KEYS, 'Game': RELEASE_18_KEYS['Game'] + tuple(FLYING_CARRY_OFF)}
 RELEASE_MARKERS[('Game', 'Xml1FlyingCarry')] = (FLYING_CARRY_OFF_MARKER, '[Game] Xml1FlyingCarry (flying carry off)')
-EXTRA_MARKERS += [(('Game', 'TelekinesisRule'), TK_STILL_MARKER, '[Game] TelekinesisRule (still throw)'),
+EXTRA_MARKERS += [(('Game', 'GuardDecideRule'), GUARD_XML1_NATIVE_MARKER, GUARD_XML1_NATIVE_NAME),
+                  (('Game', 'TelekinesisRule'), TK_STILL_MARKER, '[Game] TelekinesisRule (still throw)'),
                   (('Game', 'GuardDecideRule'), GUARD_TAP_MARKER, '[Game] GuardDecideRule (tap exit)'),
                   (('Game', 'ColossusChargeRule'), COLOSSUS_CASTER_MARKER, '[Game] ColossusChargeRule (caster talents)'),
                   (('Game', 'Xml1GrabCarry'), THROWN_IMPACT_MARKER, '[Game] Xml1GrabCarry (thrown impact, animated bones)')]
