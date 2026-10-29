@@ -171,3 +171,17 @@ builder refuses an older DLL by name.
 Schema 4 requires the beta 7 bullet-trace follow-up DLL and a content rebuild
 (SPEC 95.5). Earlier beta 7 DLLs refuse these wider rows; a DLL swap alone into
 an old content build does not add the converted-bullet event markers.
+
+
+### Co-op model resource lifetime
+
+Static menu models must serialize a single scene information reference with
+matching list count, capacity and reference-buffer length. Shortening the
+logical list while retaining discarded pump/scene references leaks the model's
+pixel graph in Alchemy on every reopen (060s). `menu_scene.static_model` rebuilds
+the root information buffer; the unit test checks the complete serialized
+reference set. The optional Win32 owned-runtime test in
+[`tests/native`](../tests/native/README.md) loads/unloads each co-op skin resource
+set repeatedly and asserts flat private memory and handle counts after warm-up.
+It uses the player's copied runtime DLLs and generated output, never starts
+XMen2.exe, and does not replace integration's full output build and live check.
