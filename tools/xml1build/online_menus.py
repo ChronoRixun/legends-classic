@@ -1728,6 +1728,10 @@ def broker_layout(name, screen):
     # The connected-service scene: green diamond + localized word, selected by the DLL (it empties the plain text then).
     if name=='lc_online':
         _host_left_nodes(items)
+        # Inline description colors override focused styles. The DLL copies the
+        # matching localized source into Select after native description refresh.
+        for suffix,color in (('normal',4),('hover',0)):
+            items.append(_entry('lc_hub_select_'+suffix,'$MENU_ACCEPT Select',(43,454,59,17),'body',color,hidden=True))
         items.append(_variant('lc_service_ok',(355,229,120,18),[dict(kind='diamond',rect=(0,3,7,6),color=6),
                               dict(text='Connected',rect=(12,0,100,18),style='row',color=6)],model_name='service_ok'))
     else:
