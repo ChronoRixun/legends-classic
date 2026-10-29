@@ -2770,6 +2770,9 @@ class Zones:
                         filled = fill_item_model(have[low], src) if low in have else None
                         if filled:
                             filled_models.add(filled)
+                if name == 'shared_nodes':
+                    from . import guard_block
+                    guard_block.install(top)
                 trees[ext] = tree
             if len(exts) == 2:
                 ctx.write_xmlb_pair(f'Data/{name}', trees['.XMLB'], trees['.engb'], source=f'zones:{x1rel}')

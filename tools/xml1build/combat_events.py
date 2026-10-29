@@ -213,6 +213,8 @@ UNRESOLVED_ALLOWED = {
 # XML1 handlers XMen2.exe does not register and that have no XML2 counterpart: the move runs as %default%
 # (animation + triggers, no handler logic). Reported (V18 warning), not rewritten.
 UNREGISTERED_HANDLER_NOTES = {
+    'ch_guard_block': 'Private Guard fallback; installed by XML2 Fix rule46 with GuardDecideRule=xml1; '
+                      'the unreachable node is also emitted when the option is off',
     'ch_grab_attack': "Juggernaut's single hit-and-release attack; candidate XML2 Fix rule 45 restores the "
                       "entry lookup (normally absent grabattackvictim), large hold and shared victim retention. "
                       "The authored juggrabthrowforwardvictim trigger remains distinct; see docs/GRAB_CARRY.md",
@@ -768,6 +770,13 @@ def v18(v, ck):
     XML1 removal (remove="true") is an error: heroes.convert_npc_powerups / convert_powerup_trigger convert every one
     (SPEC 22.7). XML2 retail style files (base copies) are allowlisted per file."""
     ctx = v.ctx
+    from . import guard_block
+    if getattr(ctx.args, 'guard_decide', 'off') == 'xml1':
+        for ext in ('.XMLB', '.engb'):
+            rel = 'Data/shared_nodes' + ext
+            root = v.tree(rel)
+            for issue in guard_block.problems(root) if root is not None else ['shared table missing']:
+                ck.error(f'{rel}: {issue}')
     exe = Path(ctx.base) / 'XMen2.exe'
     if not exe.exists():
         exe = v.idx.path('XMen2.exe')

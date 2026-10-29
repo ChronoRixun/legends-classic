@@ -7895,6 +7895,32 @@ Beta 8 candidates 080h / 080i: both are off by default and written only on reque
 nothing in Owen's 10-26 hand test while the test pipe's presses worked). Without `GuardDecideRule` Guard runs XML2's
 `ch_guard_decide`, which grabs and picks up through the `grab` talent characters adds (rule 46 installs without bit
 1024). Both options are ini only (CONTENT_OPTS with no module), so toggling one re-runs nothing.
+
+Guard correction (2026-10-28): ordinary XML1 enemy admission is not stun-only.
+The native target predicate admits raw stun or simulation time at/after the
+physical descriptor deadline; an ordinary hit impulse can set that deadline to
+time + 1.5 seconds. Large, ownership, death/status and def_grab exclusions still
+apply. Might limits object lifting separately. Both ordinary action3 and the
+raw-stun action25 resolve through the authored grabstart mapping.
+
+The requested refused-held-Guard block is an explicit PC port policy. `zones`
+always appends a private `guardblocking` node to both shared-node variants,
+preserving retail `blocking` and the ch_pain `block` reaction. It uses
+ea_blocking, ch_guard_block, no saved skill requirement, powerusage=1 upkeep,
+and a time0/remove-on-node-end damage_to_energy scale affecter at literal1
+(PC rank1 policy). Its Special chain releases to Idle. Rule46 registers the
+private handler only with Guard enabled; native entry/exit/cancel and owned
+native effect cleanup pair with the normalized held mask0x100. Successful
+interactions take precedence; AI/script admissions retain source behavior.
+
+V18 requires the complete node in both output variants when Guard is selected.
+An older cached build missing it must rebuild zones; an INI-only toggle cannot
+silently certify missing content. The DLL compatibility gate requires
+GUARD_XML1_NATIVE_MARKER. Guard policy value1=1 in rule46's agreement rejects
+older-policy peers without altering unrelated rule46 selections. Content/release
+identity remains assigned by integration. Synthetic coverage is in
+tests/unit/test_guard_block.py and the companion native Guard block fixture.
+
 ## 108. Limits wave 3 (`--limits-wave3`, XML2 Fix rules 35 revision 2 and 53-60; validators V-MOVES .. V-SCRIPTS)
 
 Full text: `docs/LIMITS_WAVE3.md`. `--limits-wave3 {off,on,all}` (default off, `build_xml1.py` and `xml1-builder build`) writes
