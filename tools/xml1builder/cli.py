@@ -23,7 +23,7 @@ from . import resources as R
 from .errors import BuilderError, REPORT_HINT
 from .events import Output, mask
 
-COMMANDS = ('info', 'build', 'verify', 'clean')
+COMMANDS = ('info', 'build', 'verify', 'clean', 'import-xml1-save')
 
 
 class _Parser(argparse.ArgumentParser):
@@ -44,6 +44,14 @@ def make_parser():
     p.add_argument('--log', help='log file (default: <out>/_build/builder.log for a build)')
     p.add_argument('--quiet', action='store_true', help='no human text on the console (the log keeps it)')
     p.add_argument('command', nargs='?', choices=COMMANDS)
+    p.add_argument('source', nargs='?', help='import-xml1-save: extracted Xbox campaign or title folder (read only)')
+    p.add_argument('--slot', type=int, help='import-xml1-save: empty destination slot, 0 through 9')
+    p.add_argument('--build', help='import-xml1-save: installed Legends Classic build (read only)')
+    p.add_argument('--save-dir', help='import-xml1-save: actual SaveLC folder')
+    p.add_argument('--import-table', help='import-xml1-save: explicit build-bound import table (developer testing)')
+    p.add_argument('--merge-unlocks', action='store_true', help='import-xml1-save: explicitly merge proven earned profile unlocks')
+    p.add_argument('--allow-inferred', action='store_true', help='import-xml1-save: opt in to the individually reported experimental mappings')
+    p.add_argument('--preview-token', help='import-xml1-save: bind apply to a matching dry-run preview')
     p.add_argument('--iso', help='your X-Men Legends Xbox disc image (Redump .iso or XISO; read only)')
     p.add_argument('--xml2', help='your X-Men Legends II PC install (read only)')
     p.add_argument('--out', help='the folder the game is built into (empty, or one the builder made)')
@@ -100,7 +108,7 @@ def make_parser():
                    help='testers: build for an XMen2.exe that is not a known retail build')
     p.add_argument('--deep', action='store_true', help='verify: also check every file inside the disc image')
     p.add_argument('--mods', action='store_true', help='clean: also delete <out>\\mods')
-    p.add_argument('--dry-run', dest='dry_run', action='store_true', help='clean: only count what would go')
+    p.add_argument('--dry-run', dest='dry_run', action='store_true', help='clean: only count; import-xml1-save: preview without writes')
     return p
 
 
@@ -129,6 +137,8 @@ def main(argv=None, *, pipeline_factory=None, stdin=None, fd_redirect=True, exit
     v = CMD.version_info()
     try:
         a = make_parser().parse_args(argv)
+        if a.source is not None and a.command != 'import-xml1-save':
+            raise BuilderError('E_USAGE', 'A source folder is accepted only by import-xml1-save.', exit_code=2)
     except SystemExit as e:                                   # --help
         return 0 if not e.code else 2
     except BuilderError as e:
@@ -161,7 +171,7 @@ def main(argv=None, *, pipeline_factory=None, stdin=None, fd_redirect=True, exit
     cancel = CancelToken(**kwargs)
     if output.jsonl:
         watch_stdin(cancel, stdin, log=output.human)
-    if pipeline_factory is None:
+    if pipeline_factory is None and a.command != 'import-xml1-save':
         from .pipeline import RealPipeline
         pipeline_factory = RealPipeline
     CMD.log_header(output, a.command, [mask(x) for x in argv])
@@ -169,6 +179,9 @@ def main(argv=None, *, pipeline_factory=None, stdin=None, fd_redirect=True, exit
         own_job_object(output.human)
     try:
         R.check_root()                                        # frozen: the data comes from the bundle only
+        if a.command == 'import-xml1-save':
+            from xml1build.save_import.command import run as import_save
+            return import_save(a, output, cancel)
         if a.command == 'info':
             return CMD.cmd_info(a, output, pipeline_factory)
         if a.command == 'build':
