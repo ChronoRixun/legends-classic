@@ -905,3 +905,9 @@ def test_060u_browse_header_has_space_for_the_visible_fresh_and_stale_count():
     assert count['rect'][0]+count['rect'][2]<=stale[0]
     tree=O.menu_tree(screen)
     assert tree.find("item[@name='list_count']").get('clamp')=='true'
+
+
+def test_relay_refusal_has_specific_authored_notice():
+    assert 'TURN' in O.NOTICE_TEXT['lc_notice_relay']
+    for name in ('lc_code', 'lc_browse'):
+        assert O.menu_tree(O.runtime_layout(name)).find("item[@name='lc_notice_relay']") is not None
