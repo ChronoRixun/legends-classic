@@ -49,7 +49,7 @@ def test_party_commands_are_the_exact_manifest_and_the_rail_uses_the_native_rout
     scripted = {k for k, e in items.items() if (e.get('usecmd') or '').startswith('runscript lcOnlineIntent(')}
     assert scripted == set(expected)
     # reserved numbers are not public commands, and party numbers exist on lc_party only
-    for number in (68, 70, 75):
+    for number in (68, 70, 76):
         raises(ValueError, lambda n=number: O.command(n))
     for name in O.MENUS:
         hub = O.runtime_layout(name)
