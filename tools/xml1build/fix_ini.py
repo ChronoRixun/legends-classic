@@ -495,8 +495,12 @@ RECEIVE_VALIDATION = '1'
 # [Online] JoinInProgress=1 (XML2 Fix 1.8, gameplay agreement rule 26): drop-in co-op - the host may start alone, a
 # player joins a running game and is brought in at the next level change, solo story segments keep the other players
 # watching, and the host keeps hosting when the last player leaves. Every co-op PC must have it (a peer without it is
-# refused by name). Written for every port build (0.4.0: drop-in on by default).
+# refused by name). Written for every port build. LateJoin below separately
+# gates the experimental restore; the release retains lifecycle/spectator support.
 JOIN_IN_PROGRESS = '1'
+# Retain spectators/host lifecycle while the late-join restore remains unsafe.
+# Rule26 revision7 supports this host-only admission choice; guests need no matching policy.
+LATE_JOIN = '0'
 
 # [Online] TickRate=60 (XML2 Fix 1.8.0-beta.3, gameplay agreement rule 29): online sessions run at 60 frames a second
 # like single-player instead of the game's own 30 (CClient::frame's online 1/30 s frame). Lockstep runs every PC's
@@ -545,7 +549,7 @@ PORT_OWNED = {'Game': ('NewGameTeam', 'ResetUnlocks', 'SaveFolder', 'ForcedTeams
               'Limits': ('ActorSlots', 'ResourceNames', 'ItemEnhancements', 'FightStyles', 'EffectCurves', 'MoveTriggers', 'EntityCapacity',
                          'ScriptFunctions', 'IGBCache', 'ActorPools', 'AnimEnums', 'CharSounds', 'MotionPool', 'ResidentStats',
                          *(k for k in LIMITS_WAVE3 if k != 'FightStyles'), *LIMITS_WAVE3_LATE, SAVE_LAYOUT_KEY),
-              'Online': ('GameVersion', 'ContentFingerprint', 'FastTransfer', 'ReceiveValidation', 'JoinInProgress', 'TickRate', 'Menus'),
+              'Online': ('GameVersion', 'ContentFingerprint', 'FastTransfer', 'ReceiveValidation', 'JoinInProgress', 'LateJoin', 'TickRate', 'Menus'),
               'Save': ('Format',),
               'Engine': ('ModelPools', 'ModelHandles'),
               'Xml1Turrets': ('Count',) + tuple(f'T{i}' for i in range(1, 33)),
@@ -979,7 +983,7 @@ def online_keys(*, port_identity=False, balance=False, fingerprint=None) -> dict
     if not port_identity:
         return {}
     keys = {'GameVersion': RI.game_version(), 'FastTransfer': FAST_TRANSFER, 'ReceiveValidation': RECEIVE_VALIDATION,
-            'JoinInProgress': JOIN_IN_PROGRESS, 'TickRate': TICK_RATE}
+            'JoinInProgress': JOIN_IN_PROGRESS, 'LateJoin': LATE_JOIN, 'TickRate': TICK_RATE}
     if fingerprint:
         keys['ContentFingerprint'] = fingerprint
     keys.update(broker_keys())
@@ -1656,9 +1660,13 @@ def check_online_dll(dll, keys: dict) -> None:
     Unlike old source-only options, missing DLLs cannot certify an online API.
     A bytes argument supports synthetic capability-negative unit tests.
     """
-    if keys.get('Online',{}).get('Menus')!='1':return
+    online=keys.get('Online',{})
+    if online.get('Menus')!='1' and 'LateJoin' not in online:return
+    data=dll if isinstance(dll,bytes) else Path(dll).read_bytes() if dll is not None and Path(dll).is_file() else b''
+    if 'LateJoin' in online and b'LateJoinPolicyV1' not in data:
+        raise FixTooOld('LateJoin policy requires the matching companion DLL', ['[Online] LateJoin'])
+    if online.get('Menus')!='1':return
     from . import online_menus as OM
-    data=dll if isinstance(dll,bytes) else Path(dll).read_bytes() if Path(dll).is_file() else b''
     problems=OM.capability_problems(data)
     if keys.get('Game',{}).get('LegendsClassicFonts')!='1':problems.append('LegendsClassicFonts must be enabled together')
     try:capacity=int(keys.get('Limits',{}).get('ScriptFunctions','1024'))

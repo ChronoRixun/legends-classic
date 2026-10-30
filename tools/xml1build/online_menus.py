@@ -1227,6 +1227,7 @@ def focus_picture(screen,item,rect):
 # These probes describe additive APIs, not release or gameplay identities. Each
 # must be present in ONE supplied DLL; separate menu/font DLLs cannot be stacked.
 DLL_PROBES = (b'lc-online-menus/1\n', b'lc-online-input/1', b'lc-online-lobby/1', b'lc-online-broker/2', b'lc-online-native/1', b'lc-online-party/1', b'lc-online-errors/1', b'lc-online-hits/2',
+              b'lc_notice_started', b'lc-online-drop-in/1',
               b'lcOnlineIntent\0', 'Online\0'.encode('utf-16le'),
               'Menus\0'.encode('utf-16le'), 'LegendsClassicFonts\0'.encode('utf-16le'),
               b'ui/fonts/lc_fonts_pc.xmlb\0', b'ui/fonts/lc_fonts_hd.xmlb\0',
@@ -1455,6 +1456,7 @@ BROWSE_UNREACHABLE_NOTICES = ('lc_notice_paste_invalid', 'lc_notice_code_invalid
                               # 0.6 preview fix L: the Host screen's native setup found the service not answering (before any room existed).
                               'lc_notice_service_silent')
 NOTICE_TEXT = {
+    'lc_notice_started': 'This session has started; ask the host to return to the lobby',
     'lc_inline_error': 'This action could not be completed. No room was joined.',
     'lc_notice_unavailable': 'Unavailable in this preview. Use Other ways to play.',
     'lc_notice_resolving': 'Looking up room code...',
@@ -1603,10 +1605,10 @@ INTENTS = {'open:lc_host':2, 'open:lc_code':3, 'open:lc_browse':4, 'other':5,
            'back':6, 'unavailable':7, 'dismiss':8, 'name':9, 'paste':10, 'delete':11,
            'clear':12, 'done':13, 'rejoin':14, 'copy':16, 'leave-yes':17,
            # Round 5 broker lifecycle (lc-online-broker/2). Rows 0..6 are 24..30, see intent_number.
-           'refresh':18, 'open-room':19, 'retry':20, 'visibility':21, 'page:-1':22, 'page:1':23, 'join':31}
+           'refresh':18, 'open-room':19, 'retry':20, 'visibility':21, 'page:-1':22, 'page:1':23, 'join':31, 'drop-in':75}
 BROKER_ROW_FIRST, BROKER_ROW_LAST = 24, 30
 # Exact allowed screens of the round-5 intents (docs/online-menus.md table); anything else is a contract error.
-BROKER_SCOPE = {18:('lc_browse',), 19:('lc_host',), 20:MENUS, 21:('lc_host',), 22:('lc_browse',), 23:('lc_browse',),
+BROKER_SCOPE = {75:('lc_host',), 18:('lc_browse',), 19:('lc_host',), 20:MENUS, 21:('lc_host',), 22:('lc_browse',), 23:('lc_browse',),
                 **{n:('lc_browse',) for n in range(24,31)}, 31:('lc_browse',)}
 
 
@@ -1624,7 +1626,7 @@ PARTY_MENU = 'lc_party'
 PARTY_INTENTS = {'party-resume':63,'party-invite':64,'party-propose':65,'party-leave':66,'party-leave-yes':67,'party-kick-yes':69,
                  **{f'party-kick:{n}':70+n for n in range(1,5)}}
 PARTY_INTENT_NUMBERS = tuple(sorted(PARTY_INTENTS.values()))
-PUBLIC_INTENTS = (*range(2,15),16,17,*range(18,32),*range(32,63),*PARTY_INTENT_NUMBERS)
+PUBLIC_INTENTS = (*range(2,15),16,17,*range(18,32),*range(32,63),*PARTY_INTENT_NUMBERS,75)
 
 
 def command(number):
@@ -1862,8 +1864,8 @@ def _host_left_nodes(items):
 
 
 # The focusable settings rows' side-marker positions (top y, layout units): visibility, room name, campaign (the fixture's baked slash).
-# DROP-IN is read-only (no intent): it is never focused and has no marker.
-HOST_MARKER_ROWS = {'visibility': 155, 'room_name': 202, 'campaign': 248}
+# DROP-IN changes the current host admission policy before posting.
+HOST_MARKER_ROWS = {'visibility': 155, 'room_name': 202, 'campaign': 248, 'drop':295}
 
 
 def _native_host_nodes(screen,by):
@@ -1871,9 +1873,9 @@ def _native_host_nodes(screen,by):
     shown through hidden localized nodes at the approved anchors. The fixture prose the DLL clears is not authored."""
     items=screen['items']
     items[:]=[e for e in items if e['name'] not in HOST_FIXTURE_PROSE]
-    # The CAMPAIGN row is the second way into the native options (the Open button is the first); DROP-IN is read-only.
+    # CAMPAIGN opens native options; DROP-IN is an editable host-only admission choice.
     by['campaign'].update(text='',intent='open-room')
-    by['drop_in'].update(text='',intent='')
+    by['drop_in'].update(text='',intent='drop-in')
     by['open_hint'].update(text='Game options next')
     def node(key,text,rect,style,color,**kw): items.append(_entry(key,text,rect,style,color,hidden=True,**kw))
     items.append(_variant('lc_host_settings_unknown',(164,258,204,36),
@@ -2081,8 +2083,8 @@ def broker_problems(root, screen):
         if 'open_room' in items: errors.append('Open item must be named open')
         e=need('campaign',usecmd=command(19),type='MENU_ITEM_TEXT')
         if e is not None and e.get('text') not in ('',None): errors.append('campaign text belongs to the native setting nodes')
-        e=need('drop_in',type='MENU_ITEM_TEXT')
-        if e is not None and (e.get('usecmd') or e.get('text')): errors.append('drop-in row is read-only and its prose comes from the policy scenes')
+        e=need('drop_in',usecmd=command(75),type='MENU_ITEM_TEXT')
+        if e is not None and e.get('text'): errors.append('drop-in prose comes from the policy scenes')
         for key in HOST_FIXTURE_PROSE:
             if key in items: errors.append('fixture prose left in the Host asset: '+key)
         for key in HOST_SETTING_COPY:

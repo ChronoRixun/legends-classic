@@ -383,7 +383,7 @@ def test_port_keys_from_a_synthetic_build():
         assert g['ClassicMainBackdrop'] == '1' and g['DangerRoomGate'] == 'button3'
         assert g['PostgameScript'] == FI.POSTGAME_SCRIPT and g['WindowTitle'] == 'X-Men Legends'
         assert g['NewGamePlus'] == '0' and g['ReviewStats'] == '0' and g['XPCurve'] == 'xml1' and g['Xtract'] == '0' and g['RevivalCost'] == 'xml1'
-        assert keys['Online'] == {'GameVersion': FI.PORT_GAME_VERSION, 'FastTransfer': '1', 'ReceiveValidation': '1', 'JoinInProgress': '1', 'TickRate': '60', **FI.broker_keys()} and set(g) <= set(FI.PORT_OWNED['Game'])
+        assert keys['Online'] == {'GameVersion': FI.PORT_GAME_VERSION, 'FastTransfer': '1', 'ReceiveValidation': '1', 'JoinInProgress': '1', 'LateJoin': '0', 'TickRate': '60', **FI.broker_keys()} and set(g) <= set(FI.PORT_OWNED['Game'])
         assert keys['Save'] == {'Format': 'lc'} and 'Format' in FI.PORT_OWNED['Save']
         # the harness builds its test ini from the same keys
         sys.path.insert(0, str(Path(C.__file__).resolve().parents[1]))
@@ -1157,6 +1157,8 @@ def test_online_broker_defaults_for_deployed_project_broker():
     with tempfile.TemporaryDirectory() as tmp:
         ini = Path(tmp) / 'xml2-fix.ini'
         ini.write_text('[Online]\nBroker=old.example.org\nBrokerPin=old\nServer=keep\n')
+        from test_w2_builder import dll_knowing
+        (Path(tmp) / 'dinput.dll').write_bytes(dll_knowing({'Online': keys}))
         FI.write_port_keys(tmp, {'Online': keys})
         written = FI.read_ini(ini)['Online']
         assert written['Broker'] == FI.PROJECT_BROKER and written['BrokerPin'] == FI.PROJECT_BROKER_PIN
