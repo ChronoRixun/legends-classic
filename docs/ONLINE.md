@@ -31,7 +31,7 @@ The list refreshes about every ten seconds while visible and idle. Use **Refresh
 
 ## Join during a campaign
 
-**Drop-in is on by default** in the 0.4.0 build. You can join a running game with a free place. You wait on **Joined Game** while the others keep playing. At the **next level change**, the game brings you into the shared campaign. You do not appear immediately in the current level. The party needs enough heroes for everyone to control one.
+**Drop-in is on by default** (`[Online] LateJoin=1` since 0.6.0; the host's **DROP-IN** row turns it off for one room). You can join a running game with a free place. You wait on **Joined Game** while the others keep playing. At the host's **next level change** everyone, the host included, reloads that level together from the host's campaign image, so the load takes a little longer and you are in, controlling a free hero. You do not appear immediately in the current level. The party needs enough heroes for everyone to control one. With DROP-IN off, a late joiner sees "This session has started; ask the host to return to the lobby" and Browse shows the room as not taking players. If you set `LateJoin=0` yourself in `xml2-fix.ini`, a rebuild or repair keeps it.
 
 During a solo story segment, players without a hero stay connected and watch the shared camera. The game says **Solo story segment - you rejoin when it ends**. When the story restores a larger party, you regain a hero; the game tries to return your previous hero when the group has not changed. Wolverine's opening and Magma's mansion tour are examples. Keep the watching PC connected and responsive.
 
@@ -45,7 +45,7 @@ Use the game's normal leave option when you can. The host keeps playing, the dep
 
 If a guest freezes, crashes or loses their connection in a game of three or more, the remaining players agree a cut frame before removing that player and continue together. The departed player can join again by code and enter play at the next level change. With only a host and one guest, the host keeps hosting after the guest leaves.
 
-**If the host leaves, freezes or loses connection, the session ends for joiners** with "lost connection to the host". There is no host migration or automatic reconnection: host again and load the last save. A failed shared-campaign restore can also require rehosting. Still to be verified on separate PCs: three real PCs including a hotspot PC, swapped heroes across a level change, a joiner frozen for 30 seconds, public-browser join and drop-in.
+**If the host leaves, freezes or loses connection, the session ends for joiners** with "lost connection to the host". There is no host migration or automatic reconnection: host again and load the last save. A failed shared-campaign restore can also require rehosting. Still to be verified on separate PCs: three real PCs including a hotspot PC, swapped heroes across a level change, a joiner frozen for 30 seconds, public-browser join and a late joiner on two PCs (one-PC late joins stayed in lockstep through the first checksum periods only in the 0.6.0 re-check; see the release notes).
 
 If the online service becomes unavailable, existing player connections may continue, but new joins stop. A service restart loses its rooms: host again for a new code if you need to reconnect.
 
