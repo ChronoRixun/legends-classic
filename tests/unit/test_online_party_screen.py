@@ -322,3 +322,9 @@ def test_every_confirmation_is_completable_by_pad_and_keyboard_and_quit_goes_thr
     f.dispatch('party-kick:2'); assert f.confirm == 'lc_party_confirm_kick'
     f.dispatch('party-leave-yes')                                       # the shared Yes completes a Kick
     assert [d[0] for d in f.departures] == [2] and not f.confirm
+
+
+def test_party_header_contains_host_campaign_summary():
+    _, root = party()
+    item = root.find("item[@name='lc_campaign_summary']")
+    assert item is not None and item.get('clamp') == 'true'

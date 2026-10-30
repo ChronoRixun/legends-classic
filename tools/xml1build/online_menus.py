@@ -1475,6 +1475,7 @@ NOTICE_TEXT = {
     'lc_notice_refusal_rules': 'Refused. Settings possibly differ:',
     'lc_notice_service_lost': 'Lost the online service during setup. Try again.',
     'lc_notice_timeout': 'Took too long to connect. Go Back and try again.',
+    'lc_notice_relay': 'A TURN relay is required. No relay route is available.',
     'lc_notice_clipboard': 'Could not open the clipboard. Type the code instead.',
     # 0.6 preview fix E: a guest the host removed (its native Kick: removal notice 0x2b, reason 0x10ce, flag 1) sees this on the
     # Hub instead of the host-left panel (xml2-fix online_menus_rules kicked_by_host).

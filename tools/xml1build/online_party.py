@@ -37,7 +37,7 @@ NOTICE_COPY = {'lc_party_waiting': 'is waiting for the next area', 'lc_party_rec
 FEEDBACK_COPY = {'lc_party_copied': ('Invite code copied', 6), 'lc_party_copy_failed': ('Could not copy the invite code', 7)}
 RECOVERY = ('If the host disconnects, the game ends.', 'Host again from an available local save.')
 BREADCRUMB = 'Pause > Party - the game keeps running'
-DATA = ('lc_room_name', 'lc_room_visibility', 'lc_room_code', 'lc_notice_name', 'lc_notice_percent', 'lc_kick_name',
+DATA = ('lc_campaign_summary', 'lc_room_name', 'lc_room_visibility', 'lc_room_code', 'lc_notice_name', 'lc_notice_percent', 'lc_kick_name',
         *(f'lc_p{n}_{k}' for n in range(1, 5) for k in ('name', 'slot', 'phase', 'ping', 'route')))
 CARD_SCENES = ('card', 'empty', 'empty_title', 'empty_help', 'empty_plus', 'host', 'you', 'hero_fallback', 'hero_next', 'ms', 'measuring',
                'to_host', 'same_build', 'checking_build', 'other_build', 'pending', 'selected', 'tone_good', 'tone_warn', 'tone_idle')
@@ -103,6 +103,7 @@ def party_layout(role='host', *, native=None, members=4, fixture=False, notice='
     text('lc_party_title', 'PARTY -', (220, 49, 54, 13), 'label', 4)
     text('lc_room_name', 'WEEKEND CO-OP' if fixture else 'Room details pending', (262, 49, 272, 13), 'label', 4, data=True)
     text('lc_room_visibility', 'PRIVATE' if fixture else 'PENDING', (546, 49, 37, 12), 'label', 3, data=True)
+    text('lc_campaign_summary', 'Campaign set by the host', (221, 91, 195, 18), 'body', 3, data=True)
     text('lc_party_code_label', 'INVITE CODE', (440, 78, 140, 13), 'label', 3, align='right')
     text('lc_room_code', 'K7QN-2X9M' if fixture else '---- ----', (430, 88, 150, 24), 'title', 5, data=True, align='right')
     # Notice bar (the one joining member): one of two scenes; the DLL binds the name/percent beside them.
