@@ -1934,6 +1934,14 @@ def runtime_layout(name,state=None):
         if name=='lc_code' and shape['rect'][1]==130 and shape['rect'][3]==54:
             shape.update(kind='cell',outline=3)
         if name=='lc_code' and shape['rect']==(483,307,CODE_TOOL_WIDTH,46):shape['dim']=False
+    if name in ('lc_code','lc_browse'):
+        # Native descriptions expand MENU_BACK and add an explicit light
+        # palette prefix. Keep localized sources for both visual states so
+        # the DLL can restore navy on amber after description refresh.
+        back=next(e for e in screen['items'] if e['name']==('desctext2' if name=='lc_code' else 'desctext3'))
+        label=back['text']
+        for suffix,color in (('normal',4),('hover',0)):
+            screen['items'].append(_entry('lc_footer_back_'+suffix,label,back['rect'],back['style'],color,hidden=True))
     if name=='lc_code':
         # Only cell text/remaining count is published by input API /1. Neutral
         # cells avoid freezing the round-1 cursor at its initial edit position.
