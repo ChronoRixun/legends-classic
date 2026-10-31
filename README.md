@@ -1,4 +1,4 @@
-<!-- banner: docs/img/banner.png -->
+![Legends Classic](https://chronorixun.github.io/legends-classic-site/img/banner.png)
 # Legends Classic
 
 **Play X-Men Legends (2004) on PC, built from your own copies of the games.**
