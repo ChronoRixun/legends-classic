@@ -1,0 +1,370 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Legends Classic</title>
+<meta name="description" content="Legends Classic: play X-Men Legends (2004) on PC, built from your own copies of the games. An unofficial, non-commercial fan project that ships no game content.">
+<meta name="color-scheme" content="light dark">
+<style>
+  :root {
+    --bg: #f6f5f1;
+    --surface: #ffffff;
+    --surface-2: #eceae3;
+    --text: #1b1d22;
+    --muted: #555a64;
+    --line: #d9d6cc;
+    --accent: #b5480f;
+    --accent-2: #1f4f8f;
+    --accent-ink: #ffffff;
+    --shadow: 0 1px 2px rgba(20, 20, 30, .06), 0 4px 16px rgba(20, 20, 30, .06);
+    --radius: 12px;
+    --max: 68rem;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #111318;
+      --surface: #181b22;
+      --surface-2: #20242d;
+      --text: #e9e7e1;
+      --muted: #a3a7b0;
+      --line: #2d323d;
+      --accent: #f08a4b;
+      --accent-2: #8db4ec;
+      --accent-ink: #15110d;
+      --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 4px 16px rgba(0, 0, 0, .3);
+    }
+  }
+  *, *::before, *::after { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 1rem/1.6 system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  }
+  a { color: var(--accent-2); text-underline-offset: .15em; }
+  a:hover { text-decoration-thickness: 2px; }
+  :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+  .wrap { max-width: var(--max); margin: 0 auto; padding: 0 16px; }
+  @media (min-width: 720px) { .wrap { padding: 0 32px; } }
+
+  /* header */
+  .top { border-bottom: 1px solid var(--line); background: var(--surface); }
+  .top .wrap { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem 1.5rem; padding-top: .75rem; padding-bottom: .75rem; }
+  .top .name { font-weight: 800; letter-spacing: .02em; text-decoration: none; color: var(--text); }
+  .top nav { display: flex; flex-wrap: wrap; gap: .25rem 1rem; font-size: .925rem; }
+  .top nav a { color: var(--muted); text-decoration: none; }
+  .top nav a:hover { color: var(--text); text-decoration: underline; }
+
+  /* hero */
+  .hero { padding-top: 3.5rem; padding-bottom: 2.5rem; }
+  @media (min-width: 720px) { .hero { padding-top: 5rem; padding-bottom: 3.5rem; } }
+  .wordmark {
+    margin: 0;
+    font-size: clamp(2.6rem, 9vw, 5.25rem);
+    line-height: 1;
+    font-weight: 900;
+    letter-spacing: -.02em;
+  }
+  .wordmark span { color: var(--accent); }
+  .pitch { margin: 1.25rem 0 0; font-size: clamp(1.15rem, 2.6vw, 1.45rem); line-height: 1.45; max-width: 40rem; font-weight: 600; }
+  .sub { margin: .75rem 0 0; color: var(--muted); max-width: 44rem; }
+  .need {
+    margin: 1.75rem 0 0; padding: 1rem 1.25rem; max-width: 46rem;
+    background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--accent);
+    border-radius: var(--radius); box-shadow: var(--shadow);
+  }
+  .need p { margin: 0; }
+  .need p + p { margin-top: .5rem; color: var(--muted); font-size: .95rem; }
+  .cta { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: 1.75rem; }
+  .btn {
+    display: inline-block; padding: .7rem 1.15rem; border-radius: 999px; font-weight: 700; text-decoration: none;
+    border: 2px solid var(--accent); color: var(--accent);
+  }
+  .btn.primary { background: var(--accent); color: var(--accent-ink); }
+  .btn:hover { text-decoration: none; filter: brightness(1.05); }
+  .release { margin-top: 1.5rem; font-size: .925rem; color: var(--muted); max-width: 46rem; }
+  .release p { margin: .25rem 0; }
+  .release strong { color: var(--text); }
+
+  /* sections */
+  section { padding: 2.5rem 0; border-top: 1px solid var(--line); }
+  h2 { margin: 0 0 1.25rem; font-size: clamp(1.4rem, 3.4vw, 1.85rem); line-height: 1.2; letter-spacing: -.01em; }
+  h3 { margin: 0 0 .35rem; font-size: 1.075rem; line-height: 1.3; }
+  .lead { margin: -.5rem 0 1.25rem; color: var(--muted); max-width: 46rem; }
+
+  /* steps */
+  .steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); counter-reset: step; }
+  .steps li {
+    counter-increment: step; position: relative; padding: 1.25rem 1.25rem 1.25rem 4rem;
+    background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow);
+  }
+  .steps li::before {
+    content: counter(step); position: absolute; left: 1.1rem; top: 1.15rem;
+    width: 2.1rem; height: 2.1rem; border-radius: 50%; display: grid; place-items: center;
+    background: var(--accent); color: var(--accent-ink); font-weight: 800;
+  }
+  .steps p { margin: 0; color: var(--muted); }
+  .note { margin: 1rem 0 0; font-size: .925rem; color: var(--muted); max-width: 52rem; }
+
+  /* screenshots */
+  .shots { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr)); }
+  .shots figure { margin: 0; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); }
+  .frame { position: relative; aspect-ratio: 16 / 9; background: var(--surface-2); }
+  .frame::before {
+    content: "Screenshot to come"; position: absolute; inset: 0; display: grid; place-items: center;
+    color: var(--muted); font-size: .875rem; letter-spacing: .04em;
+    background-image: repeating-linear-gradient(135deg, transparent 0 14px, rgba(127, 127, 127, .08) 14px 28px);
+  }
+  .frame img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; background: #000; }
+  .frame img[hidden] { display: none; }
+  figcaption { padding: .7rem 1rem .85rem; font-size: .925rem; color: var(--muted); }
+
+  /* cards */
+  .cards { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr)); }
+  .card { padding: 1.25rem; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); }
+  .card p { margin: 0; color: var(--muted); }
+  .tag { display: inline-block; margin-left: .35rem; padding: .05rem .5rem; border-radius: 999px; font-size: .75rem; font-weight: 700; vertical-align: .1em; background: var(--accent); color: var(--accent-ink); }
+
+  /* limits */
+  .limits { margin: 0; padding: 0; list-style: none; display: grid; gap: .75rem; max-width: 52rem; }
+  .limits li { padding: .9rem 1.1rem; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
+  .limits strong { display: block; }
+  .limits span { color: var(--muted); }
+
+  /* roadmap */
+  .road { margin: 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: .75rem; }
+  .road li { flex: 1 1 12rem; padding: .9rem 1.1rem; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
+  .road b { display: block; color: var(--accent); font-size: 1.1rem; }
+  .road span { color: var(--muted); font-size: .95rem; }
+
+  /* community */
+  .links { margin: 0; padding: 0; list-style: none; display: grid; gap: .75rem; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); }
+  .links a { display: block; height: 100%; padding: 1rem 1.15rem; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); text-decoration: none; color: var(--text); }
+  .links a:hover { border-color: var(--accent-2); }
+  .links b { display: block; color: var(--accent-2); }
+  .links span { color: var(--muted); font-size: .925rem; }
+
+  /* footer */
+  footer { border-top: 1px solid var(--line); background: var(--surface); padding: 2rem 0 2.5rem; font-size: .875rem; color: var(--muted); }
+  footer p { margin: 0 0 .75rem; max-width: 56rem; }
+  footer p:last-child { margin-bottom: 0; }
+  footer strong { color: var(--text); }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <a class="name" href="#">Legends Classic</a>
+    <nav aria-label="Sections">
+      <a href="#get-it">Get it</a>
+      <a href="#screenshots">Screenshots</a>
+      <a href="#what-you-get">What you get</a>
+      <a href="#limits">Honest limits</a>
+      <a href="#roadmap">Roadmap</a>
+      <a href="#community">Community</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <div class="hero wrap">
+    <!-- banner: img/banner.png -->
+    <h1 class="wordmark">Legends <span>Classic</span></h1>
+    <p class="pitch">Play X-Men Legends (2004) on PC, built from your own copies of the games.</p>
+    <p class="sub">X-Men Legends came out on consoles only. Legends Classic takes the first game from your own Xbox disc
+      and rebuilds it to run on your own PC copy of its sequel, X-Men Legends II: Rise of Apocalypse, with modern display
+      options, controller support and saves of its own.</p>
+
+    <div class="need">
+      <p><strong>You need both games:</strong> your own X-Men Legends disc for the original Xbox, and your own copy of
+        X-Men Legends II for PC, installed.</p>
+      <p>It is a builder, not a download: every file of the result is made on your computer from the two copies you
+        own. This project ships no game content, and the builder makes no network connections.</p>
+    </div>
+
+    <div class="cta">
+      <a class="btn primary" href="#get-it">How to get it</a>
+      <a class="btn" href="https://github.com/ChronoRixun/legends-classic">Source on GitHub</a>
+    </div>
+
+    <div class="release">
+      <p><strong>Current release: 0.5.0-beta.1</strong> (beta) - the first game's items, shops and drops. Stable: 0.4.0.</p>
+      <!-- release round: update -->
+      <p><strong>Coming next: 0.6.0-beta.1</strong> (not released yet) - in-game online co-op, and friends can join a
+        game in progress at the host's next area.</p>
+    </div>
+  </div>
+
+  <section id="get-it">
+    <div class="wrap">
+      <h2>Get it</h2>
+      <p class="lead">The <a href="https://github.com/ChronoRixun/ultimate-legends">Ultimate Legends</a> launcher (a
+        portable zip, no install) does everything: it downloads the builder, runs it and installs the engine fix.</p>
+      <ol class="steps">
+        <li>
+          <h3>Set up X-Men Legends II</h3>
+          <p>Set up X-Men Legends II in Ultimate Legends as usual. It installs
+            <a href="https://github.com/ChronoRixun/xml2-fix">xml2-fix</a>, the engine fix the port needs.</p>
+        </li>
+        <li>
+          <h3>Set up the port with your disc image</h3>
+          <p>Open <b>X-Men Legends - community port</b> in the library, choose <b>Set up</b>, then pick your disc image
+            (<code>.iso</code> or XISO) and a destination folder. The launcher checks the image and shows the space and
+            time the build needs.</p>
+        </li>
+        <li>
+          <h3>Build, then Play</h3>
+          <p><b>Build</b> takes 6-8 minutes the first time (rebuilds 2-3 minutes); you can hide it, cancel it and resume
+            later. Then <b>Play</b>.</p>
+        </li>
+      </ol>
+      <p class="note">Windows 10 or 11, 64-bit, and about 8 GB of disk space. Steam Deck / Linux via Proton works as a
+        compatibility path. PS2 and GameCube discs are different games and don't work. Imaging your disc, the command
+        line and the Steam Deck:
+        <a href="https://github.com/ChronoRixun/legends-classic/blob/HEAD/docs/DUMPING.md">dumping guide</a> and
+        <a href="https://github.com/ChronoRixun/legends-classic/blob/HEAD/docs/CLI.md">builder guide</a>.</p>
+    </div>
+  </section>
+
+  <section id="screenshots">
+    <div class="wrap">
+      <h2>Screenshots</h2>
+      <!-- Six slots. Drop img/shot-01.png ... img/shot-06.png next to this page (see README.md), then replace each
+           alt text and caption below. Until a file exists the slot shows a placeholder. -->
+      <div class="shots">
+        <figure>
+          <div class="frame"><img src="img/shot-01.png" alt="TODO: describe screenshot 1" loading="lazy" width="1600" height="900" onerror="this.hidden=true"></div>
+          <figcaption>TODO: caption for screenshot 1</figcaption>
+        </figure>
+        <figure>
+          <div class="frame"><img src="img/shot-02.png" alt="TODO: describe screenshot 2" loading="lazy" width="1600" height="900" onerror="this.hidden=true"></div>
+          <figcaption>TODO: caption for screenshot 2</figcaption>
+        </figure>
+        <figure>
+          <div class="frame"><img src="img/shot-03.png" alt="TODO: describe screenshot 3" loading="lazy" width="1600" height="900" onerror="this.hidden=true"></div>
+          <figcaption>TODO: caption for screenshot 3</figcaption>
+        </figure>
+        <figure>
+          <div class="frame"><img src="img/shot-04.png" alt="TODO: describe screenshot 4" loading="lazy" width="1600" height="900" onerror="this.hidden=true"></div>
+          <figcaption>TODO: caption for screenshot 4</figcaption>
+        </figure>
+        <figure>
+          <div class="frame"><img src="img/shot-05.png" alt="TODO: describe screenshot 5" loading="lazy" width="1600" height="900" onerror="this.hidden=true"></div>
+          <figcaption>TODO: caption for screenshot 5</figcaption>
+        </figure>
+        <figure>
+          <div class="frame"><img src="img/shot-06.png" alt="TODO: describe screenshot 6" loading="lazy" width="1600" height="900" onerror="this.hidden=true"></div>
+          <figcaption>TODO: caption for screenshot 6</figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <section id="what-you-get">
+    <div class="wrap">
+      <h2>What you get</h2>
+      <p class="lead">The campaign, the heroes, the front end and the display modes are verified on the developer's PC.</p>
+      <div class="cards">
+        <div class="card">
+          <h3>The whole campaign</h3>
+          <p>The first game's story and zones, from the opening to the credits, with its movies and layered music.</p>
+        </div>
+        <div class="card">
+          <h3>The heroes</h3>
+          <p>Every hero with the first game's stats, powers and level curve.</p>
+        </div>
+        <div class="card">
+          <h3>The classic look</h3>
+          <p>The first game's front end: its menus, fonts, colours and HUD.</p>
+        </div>
+        <!-- release round: update -->
+        <div class="card">
+          <h3>Online co-op, with drop-in <span class="tag">0.6</span></h3>
+          <p>Up to four players: host, share a code or list the game publicly; no port forwarding. Friends can join a
+            game in progress at the host's next area (the host can turn drop-in off). In 0.6 it all moves into the
+            game's own Play Online screens; up to 0.5 you start it from Ultimate Legends.</p>
+        </div>
+        <div class="card">
+          <h3>Modern display modes</h3>
+          <p>Borderless, windowed or exclusive fullscreen at your desktop's resolution and refresh rate, with
+            anti-aliasing.</p>
+        </div>
+        <div class="card">
+          <h3>Controllers and saves</h3>
+          <p>Controller support, and saves of its own, separate from X-Men Legends II's.</p>
+        </div>
+      </div>
+      <p class="note">Online co-op, drop-in and the display options are additions the first game never had, not part of
+        what is matched to the original.</p>
+    </div>
+  </section>
+
+  <section id="limits">
+    <div class="wrap">
+      <h2>Honest limits</h2>
+      <ul class="limits">
+        <li><strong>The first game's loot and shops are still being checked.</strong>
+          <span>They are in the 0.5 beta; the stable 0.4.0 uses X-Men Legends II's drops and shops.</span></li>
+        <li><strong>Some fall kill zones stay off</strong>
+          <span>until each is proven safe.</span></li>
+        <li><strong>Enemies attack somewhat more often than in the original.</strong>
+          <span>Unarmed enemies still attack about 1.5 times as often per minute; the cause is not found yet.</span></li>
+        <!-- release round: update -->
+        <li><strong>Online is certified on two PCs on a LAN.</strong>
+          <span>Internet play through the relay is not verified yet, and if the host leaves the session ends (until
+            co-op recovery in 0.8).</span></li>
+      </ul>
+      <p class="note">Everything open, with measurements:
+        <a href="https://github.com/ChronoRixun/legends-classic/blob/HEAD/docs/KNOWN-ISSUES.md">known issues</a> and
+        <a href="https://github.com/ChronoRixun/legends-classic/issues">issues</a>.</p>
+    </div>
+  </section>
+
+  <section id="roadmap">
+    <div class="wrap">
+      <h2>Roadmap</h2>
+      <!-- release round: update -->
+      <ol class="road">
+        <li><b>0.6</b><span>Online co-op with drop-in (the next release)</span></li>
+        <li><b>0.7</b><span>An optional "Remastered" graphics toggle, and save import from the original Xbox game</span></li>
+        <li><b>0.8</b><span>Co-op recovery</span></li>
+        <li><b>1.0</b><span>After a full hand-played run</span></li>
+      </ol>
+      <p class="note">Plans move with what testing finds.
+        <a href="https://github.com/ChronoRixun/legends-classic/blob/HEAD/docs/ROADMAP.md">Full roadmap</a>.</p>
+    </div>
+  </section>
+
+  <section id="community">
+    <div class="wrap">
+      <h2>Community</h2>
+      <ul class="links">
+        <li><a href="https://discord.gg/tFxwHtZv8k"><b>Discord</b><span>Setup help, bug reports, co-op partners.</span></a></li>
+        <li><a href="https://github.com/ChronoRixun/legends-classic"><b>legends-classic</b><span>The builder: source, issues, changelog.</span></a></li>
+        <li><a href="https://github.com/ChronoRixun/ultimate-legends"><b>ultimate-legends</b><span>The launcher that sets it all up.</span></a></li>
+        <li><a href="https://github.com/ChronoRixun/xml2-fix"><b>xml2-fix</b><span>The engine fix the port needs.</span></a></li>
+      </ul>
+      <p class="note">The same rule everywhere: no game files, disc images or links to them.</p>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <p><strong>Legends Classic is an unofficial, non-commercial fan project</strong>, not affiliated with or endorsed by
+      Marvel, Disney, Activision, Raven Software or Beenox. Marvel, X-Men, X-Men Legends and all related character names
+      are trademarks of Marvel; all other trademarks belong to their owners and are used only to say which games this
+      project works with. It contains and distributes no game content: you need your own copies of both games.
+      Full text: <a href="https://github.com/ChronoRixun/legends-classic/blob/HEAD/LEGAL.md">LEGAL.md</a>.</p>
+    <p>X-Men Legends and X-Men Legends II were made by Raven Software (the PC version of X-Men Legends II with Beenox)
+      and published by Activision; this project exists because those games are worth playing.</p>
+    <p>Code and documentation: <a href="https://github.com/ChronoRixun/legends-classic/blob/HEAD/LICENSE">MIT</a>.
+      No paid builds, no paid features, no ads.</p>
+  </div>
+</footer>
+
+</body>
+</html>
