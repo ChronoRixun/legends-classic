@@ -203,7 +203,11 @@ def test_build_option_roundtrip_and_on_to_off_invalidates_frontend():
     import build_xml1
     from xml1build import common as C
     from xml1builder.cli import make_parser
-    assert make_parser().parse_args(['build']).online_menus=='off'
+    assert make_parser().parse_args(['build']).online_menus=='on'            # default since 0.6.0-beta.1
+    assert make_parser().parse_args(['build','--online-menus','off']).online_menus=='off'
+    assert build_xml1.parse_args(['--out','synthetic']).online_menus=='on'
+    assert build_xml1.parse_args(['--out','synthetic','--frontend','xml2']).online_menus=='off'
+    assert build_xml1.CONTENT_OPTS['online_menus']==('frontend','off')     # a record without the key
     assert make_parser().parse_args(['build','--online-menus','on']).online_menus=='on'
     with tempfile.TemporaryDirectory() as folder:
         out=Path(folder);(out/'_build').mkdir()

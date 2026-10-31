@@ -321,7 +321,9 @@ SHARED_HANDLERS_C = {'JumpAttackDamageRule': 'xml1', 'FlyChargeDamageRule': 'xml
 # Beta 8 (080h, owner decision): the telekinesis is in progress (beta 9), so TelekinesisRule is written only with
 # --telekinesis xml1 (default off). Beta 8 (080i, Owen's hand test 10-26): with GuardDecideRule=xml1 a real Guard press
 # (pad X / keyboard E) did nothing at all, so it is written only with --guard-decide xml1 (default off) and Guard is
-# XML2's ch_guard_decide again (grabs and pickups through the grab talent characters adds).
+# XML2's ch_guard_decide again (grabs and pickups through the grab talent characters adds). 0.5.0-beta.1 keeps it off
+# (Owen's real-pad check of 082f, 10-28: GuardTrace showed native_grab=1 stunned=0 on every press - the 082d
+# stunned-only rule refused the grab XML2's Guard makes and the refused press showed no block).
 TELEKINESIS = {'TelekinesisRule': 'xml1'}
 GUARD_DECIDE = {'GuardDecideRule': 'xml1'}
 TK_GUARD = {**TELEKINESIS, **GUARD_DECIDE}
@@ -434,7 +436,7 @@ FORCED_TEAMS_VALUES = ('1', '0', 'off')
 # v1.5: the 0.2.2 wave's [Game] keys - PlacementCrush, DoubleHeal, RankCosts, LevelSkillPoints, LevelStatPoints,
 # Xml1Multipart, X1Leader, SoloMode, DeathRule, DangerRoomGate, RevivalCost, Xml1Turrets, PackAmount, DeathSwitchClear - and
 # [Limits] ScriptFunctions; a 1.4 DLL silently ignores every one of them, so check_release_dll refuses it)
-REQUIRED_XML2FIX = '1.9'
+REQUIRED_XML2FIX = '1.11'
 # The companion fix's prerelease a beta/rc builder needs (launcher-facing requires.xml2fix only): 0.3.0-beta.2 writes
 # [Engine] ModelPools and [Game] ComboPopupGuard, first read by XML2 Fix 1.8.0-beta.2; 0.3.0-beta.3 writes [Online]
 # TickRate, first read by 1.8.0-beta.3; 0.4.0-beta.5 writes [Game] ClassicHud / ClassicCodex (the classic look), first
@@ -442,7 +444,10 @@ REQUIRED_XML2FIX = '1.9'
 # revision 10), first read by 1.8.0-beta.6, so its requirement is '>=1.8.0-beta.6' (SemVer: beta.6, beta.N > 6, every
 # rc and the final 1.8.0 meet it; 1.8.0-beta.5 and older do not). 0.4.0-beta.7 writes schema 3 [NpcSemiAuto] rows (every
 # gun family) and [Game] ClassicSpeakers, first read by 1.8.0-beta.7 (a beta.6 DLL refuses the schema 3 rows: weapon
-# brain off, host/join closed), so its requirement is '>=1.8.0-beta.7'.
+# brain off, host/join closed), so its requirement is '>=1.8.0-beta.7'. 0.4.1 (beta 8) required 1.9 / beta.1. 0.6.0 writes
+# the 0.5 profile ([Limits] SaveLayout=w2, [Game] Xml1Economy, wave 3, TelekinesisRule and flying carry), plus
+# the co-op screens and fonts. GuardDecideRule stays opt-in. The matching companion for this release is
+# XML2 Fix 1.11.0-beta.1: '>=1.11.0-beta.1' / '>=1.11'.
 REQUIRED_XML2FIX_PRERELEASE = 'beta.1'
 
 

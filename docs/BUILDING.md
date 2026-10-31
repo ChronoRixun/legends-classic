@@ -41,8 +41,8 @@ XML2 install, the disc image, the cache or this repository's `tools/` and `resea
 
 ## Tests
 
-`--online-menus off` is the default. `--online-menus on` opts into the custom
-online screens, native Host/Join skins and private Barlow fonts together. It
+`--online-menus on` is the 0.6 release default with the XML1 front end. It enables the custom
+online screens, native Host/Join skins and private Barlow fonts together. `--online-menus off` keeps the fallback. It
 requires `--frontend xml1` and one companion DLL carrying the exact menu, input,
 lobby, broker (`lc-online-broker/2`), native Host/admission (`lc-online-native/1`) and font capabilities; a release number or
 separate DLLs do not suffice.
@@ -226,3 +226,4 @@ handles and scene-anchor layout stay compatible. The companion also clears the
 shared focus model when Retry loses focus, hides or becomes disabled. Native
 and synthetic authoring tests cover these contracts; integration still needs
 owned-output regeneration and live rendering/input checks.
+Release maintainers: [Guard default and acceptance switch](RELEASE_GUARD.md).

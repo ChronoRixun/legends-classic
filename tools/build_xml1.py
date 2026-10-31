@@ -45,6 +45,7 @@ import sys
 import time
 from pathlib import Path
 
+from xml1builder import DEFAULT_GUARD_DECIDE
 from xml1build import common as C  # noqa: E402  (tools/ = this script's folder, sys.path[0]; the builder imports us)
 from xml1build import balance as BAL  # noqa: E402
 from xml1build import main_appearance as MA  # noqa: E402
@@ -90,27 +91,27 @@ def parse_args(argv=None):
                          "flying-charge collision, the flying carry and XML1's flight upkeep (default since 0.4.1-beta.1; needs "
                          "XML2 Fix 1.9.0-beta.1's rule 45 revision 3 and --anim-enums xml1) or xml2, the stock "
                          "handlers (A/B builds)")
-    ap.add_argument('--telekinesis', choices=('off', 'xml1'), default='off',
+    ap.add_argument('--telekinesis', choices=('off', 'xml1'), default=None,
                     help="Phoenix's XML1 telekinesis ([Game] TelekinesisRule=xml1, XML2 Fix rule 46 bit 512; needs "
-                         "--grab-carry xml1). Off by default in beta 8 (in progress for beta 9); the ini only")
-    ap.add_argument('--guard-decide', dest='guard_decide', choices=('off', 'xml1'), default='off',
+                         "--grab-carry xml1). On by default since 0.5.0-beta.1 (off in beta 8; off with --grab-carry xml2); the ini only")
+    ap.add_argument('--guard-decide', dest='guard_decide', choices=('off', 'xml1'), default=None,
                     help="XML1's guard decide ([Game] GuardDecideRule=xml1, XML2 Fix rule 46 bit 1024: held Guard's "
-                         "pickups, ally throws and the acrobats' wall lunge; needs --grab-carry xml1). Off by default in "
-                         "beta 8 (in progress for beta 9: with real input Guard did nothing); the ini only")
-    ap.add_argument('--flying-carry', dest='flying_carry', choices=('off', 'xml1'), default='off',
+                         "pickups, ally throws and the acrobats' wall lunge; needs --grab-carry xml1). "
+                         f"Default: {DEFAULT_GUARD_DECIDE}; corrected XML1 rules await real-controller acceptance; the ini only")
+    ap.add_argument('--flying-carry', dest='flying_carry', choices=('off', 'xml1'), default=None,
                     help="XML1's flying carry within rule 45 (needs --grab-carry xml1): off writes [Game] "
                          "Xml1FlyingCarry=0 (Juggernaut's grab, fix7 and XML1's flight upkeep stay); xml1 leaves the key "
-                         "out (the DLL's default). Off by default in beta 8 (in progress for beta 9); the ini only")
+                         "out (the DLL's default). On by default since 0.5.0-beta.1 (off in beta 8); the ini only")
     ap.add_argument('--actor-pools', dest='actor_pools', choices=('off', '124'), default='off',
                     help="E4 stage 1: write [Limits] ActorPools=124 (XML2 Fix rule 44: path, shadow and delayed-damage "
                          "pools 32 -> 124). Off by default until its live runs pass")
-    ap.add_argument('--limits-wave3', dest='limits_wave3', choices=('off', 'on', 'all'), default='off',
+    ap.add_argument('--limits-wave3', dest='limits_wave3', choices=('off', 'on', 'all'), default='all',
                     help="limits wave 3: write [Limits] FightStyles=64, StyleEvents=4096, FightMoves=1024, "
                          "EffectTemplates=512, PrimitiveDefs=2048, EffectVectors=4096, PrimitivesPerEffect=32 (XML2 Fix "
                          "rules 35 revision 2 and 53-58; the DLL gate refuses a DLL without them) and validate the build "
                          "against them (V-MOVES, V-EVENTS, V-EFFECT-FILES, V-PRIMITIVES, V-VECTORS, V-CURVES, V-SCRIPTS); "
-                         "'all' also writes ScriptPools=x1 and ParticleScratch=40 (rules 59-60). Off by default until the "
-                         "DLL rows land: a build without it is byte-identical to one made before the option existed")
+                         "'all' also writes ScriptPools=x1 and ParticleScratch=40 (rules 59-60). 'all' by default since "
+                         "0.5.0-beta.1; off is byte-identical to a build made before the option existed")
     ap.add_argument('--anim-enums', dest='anim_enums', choices=('off', 'xml1'), default='xml1',
                     help="SPEC 107: XML1's 23 animation enums (flying carry, Juggernaut's grab victims): their 21 clips "
                          "transplanted into Actors/common.IGB from your XML1 disc, the mappings in Data/shared_anims, "
@@ -119,14 +120,15 @@ def parse_args(argv=None):
     ap.add_argument('--rogue-decide', choices=('xml1', 'xml2'), default='xml1',
                     help="Rogue's power decision: XML1's ch_roguedecide (default since 0.4.1-beta.1; needs XML2 Fix "
                          "1.9.0-beta.1's rule 43) or xml2, the old D15 collapse (A/B builds)")
-    ap.add_argument('--save-layout', dest='save_layout', choices=('retail', 'w2'), default='retail',
-                    help="the save layout the build is validated and configured for: retail (default; no [Limits] "
-                         "SaveLayout key, the baseline) or w2 (limits wave 2, Legends Classic 0.4.2: the ini gets "
-                         "SaveLayout=w2 / ItemEnhancements=4096 with EntityCapacity=1 and [Save] Format=lc; the "
-                         "validator and the budgets use the W2 limits and refuse data over them; needs XML2 Fix 1.9 "
-                         "or newer)")
-    ap.add_argument('--loot', choices=('off', 'xml1'), default='off',
-                    help="the first game's item economy (Legends Classic 0.4.2; default off): xml1 converts the 116 XML1 "
+    ap.add_argument('--save-layout', dest='save_layout', choices=('retail', 'w2'), default='w2',
+                    help="the save layout the build is validated and configured for: w2 (default since 0.5.0-beta.1; "
+                         "limits wave 2: the ini gets SaveLayout=w2 / ItemEnhancements=4096 with EntityCapacity=1 and "
+                         "[Save] Format=lc; the validator and the budgets use the W2 limits and refuse data over them; "
+                         "needs XML2 Fix 1.10 or newer) or retail (no [Limits] SaveLayout key, the 0.4.1 baseline; "
+                         "needs --loot off)")
+    ap.add_argument('--loot', choices=('off', 'xml1'), default=None,
+                    help="the first game's item economy (default xml1 since 0.5.0-beta.1; off by default with --save-layout "
+                         "retail or --frontend xml2): xml1 converts the 116 XML1 "
                          "equipment (97 new lc_x1_<name> definitions, the 19 Danger Room rewards again in place, every "
                          "bonus), rewrites the maps' references, writes Data/x1economy.txt, approximations.json / "
                          "APPROXIMATIONS.md and [Game] Xml1Economy=1. Needs --save-layout w2 and XML2 Fix with the "
@@ -174,8 +176,9 @@ def parse_args(argv=None):
                          "4 GB of address space on 64-bit Windows and Wine/Proton instead of 2 GB; one flag in the "
                          "exe's file header, the install's exe is never written) or the install's byte-identical "
                          "exe (off, A/B builds)")
-    ap.add_argument('--online-menus', choices=('off','on'), default='off',
-                    help='opt in to online menus and private fonts together; requires one matching companion DLL')
+    ap.add_argument('--online-menus', choices=('off','on'), default=None,
+                    help='online menus and private fonts together (on by default since 0.6.0-beta.1 with the XML1 front '
+                         'end, off with --frontend xml2); requires one matching companion DLL')
     ap.add_argument('--main-menu-layout', choices=('classic', 'widescreen'), default='classic',
                     help='main-menu composition: classic (the original, centred by the game at every aspect); '
                          'widescreen is a retired name for classic')
@@ -195,6 +198,20 @@ def parse_args(argv=None):
     ap.add_argument('--cache', help='prepared mode: the prepare cache directory (created; kept between builds)')
     ap.add_argument('--iso', help='prepared mode: the XML1 Xbox disc image (Redump .iso or XISO; read-only)')
     a = ap.parse_args(argv)
+    # 0.5.0-beta.1 defaults: telekinesis, the flying carry and the economy are on unless a prerequisite is turned off
+    # (an explicit xml1 with the prerequisite off is still refused below): the moves need --grab-carry xml1, the economy
+    # needs the W2 save layout and the XML1 front end. The guard decide stays off (Owen 10-28: on a real pad candidate
+    # 082f's stunned-only rule refused the grabs XML2's Guard makes and a refused press showed no block), so Guard is
+    # XML2's Block / Grab, as in beta 8; --guard-decide xml1 still writes it.
+    for opt in ('telekinesis', 'flying_carry'):
+        if getattr(a, opt) is None:
+            setattr(a, opt, 'xml1' if a.grab_carry == 'xml1' else 'off')
+    if a.guard_decide is None:
+        a.guard_decide = DEFAULT_GUARD_DECIDE
+    if a.loot is None:
+        a.loot = 'xml1' if a.save_layout == 'w2' and (a.frontend or C.FRONTEND_DEFAULT) == 'xml1' else 'off'
+    if a.online_menus is None:      # 0.6.0-beta.1: the in-game online menus need the XML1 front end
+        a.online_menus = 'on' if (a.frontend or C.FRONTEND_DEFAULT) == 'xml1' else 'off'
     if a.loot_def_damage_scale is None:     # D8 (Owen 10-26): resist is the default of a --loot xml1 build
         a.loot_def_damage_scale = 'resist' if a.loot == 'xml1' else 'noop'
     if a.sources == 'prepared' and not a.cache:
@@ -264,7 +281,11 @@ CONTENT_OPTS = {'harm_loop_startup': (tuple(C.MODULE_ORDER), 'workaround'),
                 'telekinesis': ((), 'off'), 'guard_decide': ((), 'off'), 'flying_carry': ((), 'off'),
                 'grab_carry': ('characters', 'xml1'), 'actor_pools': ('characters', 'off'), 'anim_enums': ('characters', 'xml1'), 'rogue_decide': ('heroes', 'xml1'), 'hero_roster': ('heroes', '21'), 'hero_icons': ('heroes', 'xml1'), 'hero_bleed': ('heroes', 'on'),
                 'newgame': ('scripts', 'keepteam'),
-                # limits wave 2: the talent precache budget (talent_budget.prune_zone_precache) follows the layout's pool
+                # limits wave 2: the talent precache budget (talent_budget.prune_zone_precache) follows the layout's pool.
+                # 0.5.0-beta.1 turned save_layout / loot (and the three moves above) on by default; their entries here
+                # keep the OLD value on purpose: it is what a _build record without the key was built with (0.4.1
+                # records have no save_layout; loot / loot_def_damage_scale are recorded only when not off / noop), so
+                # a 0.5.0 default build over a 0.4.1 build re-runs zones and frontend (plan_content_opts)
                 'save_layout': ('zones', 'retail'),
                 # loot step 1: zones (the item table, map references, sidecar), frontend (the shop's Training tab)
                 'loot': (('zones', 'frontend'), 'off'),

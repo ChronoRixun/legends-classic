@@ -21,6 +21,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
+from . import DEFAULT_GUARD_DECIDE
 from . import manifest as M
 from . import plan as PL
 from .errors import BuilderError, io_cause, io_in_chain
@@ -198,17 +199,17 @@ class RealPipeline:
         import build_xml1
         argv = ['--out', str(job.out), '--base', str(job.xml2), '--jobs', str(job.jobs)]
         argv += ['--main-menu-layout', getattr(job, 'main_menu_layout', 'classic')]
-        argv += ['--online-menus', getattr(job, 'online_menus', 'off')]
+        argv += ['--online-menus', getattr(job, 'online_menus', None) or 'on']
         argv += ['--anim-enums', getattr(job, 'anim_enums', None) or 'xml1']
         argv += ['--laa', getattr(job, 'laa', None) or 'on']
-        if (getattr(job, 'limits_wave3', None) or 'off') != 'off':
-            argv += ['--limits-wave3', job.limits_wave3]
-        argv += ['--save-layout', getattr(job, 'save_layout', 'retail')]
-        if getattr(job, 'loot', 'off') != 'off':
-            argv += ['--loot', job.loot]
-        for opt, flag in (('telekinesis', '--telekinesis'), ('guard_decide', '--guard-decide'), ('flying_carry', '--flying-carry')):
-            if (getattr(job, opt, None) or 'off') != 'off':        # beta 9 moves (ini only); off = build_xml1's default
-                argv += [flag, getattr(job, opt)]
+        # Pass defaults and explicit off values through to the source builder.
+        argv += ['--limits-wave3', getattr(job, 'limits_wave3', None) or 'all']
+        argv += ['--save-layout', getattr(job, 'save_layout', None) or 'w2']
+        argv += ['--loot', getattr(job, 'loot', None) or 'xml1']
+        # INI-only moves: telekinesis/carry on; Guard follows the shared release default
+        for opt, flag, default in (('telekinesis', '--telekinesis', 'xml1'), ('guard_decide', '--guard-decide', DEFAULT_GUARD_DECIDE),
+                                   ('flying_carry', '--flying-carry', 'xml1')):
+            argv += [flag, getattr(job, opt, None) or default]
         if not job.movies:
             argv.append('--no-movies')
         args = build_xml1.parse_args(argv)

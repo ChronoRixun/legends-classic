@@ -18,7 +18,7 @@ import os
 import sys
 import traceback
 
-from . import CONTENT_VERSION, DISCLAIMER, ISSUES_URL, PROJECT, REPO, SCHEMA, VERSION
+from . import DEFAULT_GUARD_DECIDE, CONTENT_VERSION, DISCLAIMER, ISSUES_URL, PROJECT, REPO, SCHEMA, VERSION
 from . import resources as R
 from .errors import BuilderError, REPORT_HINT
 from .events import Output, mask
@@ -57,8 +57,9 @@ def make_parser():
                       help='delete this disc\'s cache after a successful build')
     p.add_argument('--link-base', dest='link_base', action='store_true', help='(not supported yet: files are copied)')
     p.add_argument('--jobs', type=int, help='worker processes for the sound stages (default: every CPU)')
-    p.add_argument('--online-menus', choices=('off','on'), default='off',
-                   help='build: opt in to online menus and scoped fonts with a matching companion DLL')
+    p.add_argument('--online-menus', choices=('off','on'), default='on',
+                   help='build: the in-game online menus and scoped fonts (on by default since 0.6.0-beta.1; needs a '
+                        'matching companion DLL); off builds the menus as 0.4.1 did')
     p.add_argument('--main-menu-layout', choices=('classic', 'widescreen'), default='classic',
                    help='build: the classic main menu, centred by the game at every aspect '
                         '(widescreen: a retired name for classic)')
@@ -69,31 +70,33 @@ def make_parser():
                    help="build: XML1's 23 animation enums - the flying carry's and Juggernaut's grab clips from your "
                         "disc, their mappings and XML1's carry nodes - and [Limits] AnimEnums=512 (needs an XML2 Fix "
                         "with the AnimEnums table). On by default since 0.4.1-beta.1 (the grab lifecycle needs it)")
-    p.add_argument('--limits-wave3', dest='limits_wave3', choices=('off', 'on', 'all'), default='off',
+    p.add_argument('--limits-wave3', dest='limits_wave3', choices=('off', 'on', 'all'), default='all',
                    help="build: limits wave 3 - [Limits] FightStyles=64, StyleEvents, FightMoves, EffectTemplates, "
                         "PrimitiveDefs, EffectVectors and PrimitivesPerEffect at their raised values (needs an XML2 Fix "
-                        "with rules 35 revision 2 and 53-58; 'all' adds ScriptPools and ParticleScratch). Off by default "
-                        "until the XML2 Fix rows land; a build without it is unchanged")
-    p.add_argument('--save-layout', dest='save_layout', choices=('retail', 'w2'), default='retail',
-                   help='build: the save layout the build is validated and configured for. retail (default) writes '
-                        'no [Limits] SaveLayout key (the baseline); w2 is the wave 2 layout (Legends Classic 0.4.2, '
-                        'XML2 Fix 1.9 or newer: [Limits] SaveLayout=w2 with ItemEnhancements=4096, EntityCapacity=1 '
-                        'and [Save] Format=lc) and refuses data over its limits')
-    p.add_argument('--loot', choices=('off', 'xml1'), default='off',
-                   help='build: the first-game item economy (Legends Classic 0.4.2). off (default) builds exactly as '
-                        'before; xml1 converts all 116 XML1 equipment with their bonuses, writes the economy sidecar and '
-                        'the approximations files, and needs --save-layout w2 and XML2 Fix with the Xml1Economy key')
-    # beta 9 moves (candidate 082b): the three ini-only options build_xml1.py has had since beta 8, so a builder build
-    # can turn them on for a live round. Defaults stay off until a live round and the owner's hand test pass.
-    p.add_argument('--telekinesis', choices=('off', 'xml1'), default='off',
+                        "with rules 35 revision 2 and 53-58; 'all' adds ScriptPools and ParticleScratch). 'all' by "
+                        "default since 0.5.0-beta.1; off builds as 0.4.1 did")
+    p.add_argument('--save-layout', dest='save_layout', choices=('retail', 'w2'), default='w2',
+                   help='build: the save layout the build is validated and configured for. w2 (default since '
+                        '0.5.0-beta.1) is the wave 2 layout (XML2 Fix 1.10 or newer: [Limits] SaveLayout=w2 with '
+                        'ItemEnhancements=4096, EntityCapacity=1 and [Save] Format=lc) and refuses data over its '
+                        'limits; retail writes no [Limits] SaveLayout key (the 0.4.1 baseline; needs --loot off)')
+    p.add_argument('--loot', choices=('off', 'xml1'), default=None,
+                   help='build: the first-game item economy. xml1 (default since 0.5.0-beta.1; off by default with '
+                        '--save-layout retail) converts all 116 XML1 '
+                        'equipment with their bonuses, writes the economy sidecar and the approximations files, and '
+                        'needs --save-layout w2 and XML2 Fix with the Xml1Economy key; off builds the items as 0.4.1 did')
+    # beta 9 moves: the three ini-only options build_xml1.py has had since beta 8. Telekinesis and the flying carry are
+    # on by default since 0.5.0-beta.1 (live-tested on 082e / 082f); the guard decide stays off (Owen's real-pad check of
+    # 082f, 10-28: Guard grabbed nothing and showed no block), so Guard is XML2's Block / Grab, as in 0.4.1.
+    p.add_argument('--telekinesis', choices=('off', 'xml1'), default='xml1',
                    help="build: Phoenix's XML1 telekinesis ([Game] TelekinesisRule=xml1, XML2 Fix rule 46 bit 512; "
-                        "needs the grab lifecycle). Off by default (in progress); the ini only")
-    p.add_argument('--guard-decide', dest='guard_decide', choices=('off', 'xml1'), default='off',
-                   help="build: XML1's guard decide ([Game] GuardDecideRule=xml1, XML2 Fix rule 46 bit 1024). Off by "
-                        "default (in progress); the ini only")
-    p.add_argument('--flying-carry', dest='flying_carry', choices=('off', 'xml1'), default='off',
+                        "needs the grab lifecycle). On by default since 0.5.0-beta.1; the ini only")
+    p.add_argument('--guard-decide', dest='guard_decide', choices=('off', 'xml1'), default=DEFAULT_GUARD_DECIDE,
+                   help=f"build: XML1 Guard; default {DEFAULT_GUARD_DECIDE}. Corrected XML1 rules await "
+                        "real-controller acceptance; needs the grab lifecycle")
+    p.add_argument('--flying-carry', dest='flying_carry', choices=('off', 'xml1'), default='xml1',
                    help="build: XML1's flying carry within rule 45: off writes [Game] Xml1FlyingCarry=0, xml1 leaves "
-                        "the key out (the DLL's default). Off by default (in progress); the ini only")
+                        "the key out (the DLL's default). On by default since 0.5.0-beta.1; the ini only")
     p.add_argument('--no-ini', dest='no_ini', action='store_true', help='do not merge the port\'s keys into '
                                                                          'xml2-fix.ini (they are in the stamp)')
     p.add_argument('--allow-unknown-exe', dest='allow_unknown_exe', action='store_true',

@@ -1,5 +1,10 @@
 # Legends Classic
 
+> Local release draft: Legends Classic 0.6.0-beta.1 (content 30 / catalogue 8 / LC40) and XML2 Fix 1.11.0-beta.1.
+> Co-op menu, session, controller and flying-pickup fixes are integrated; final live acceptance is pending.
+> Guard defaults OFF; corrected XML1 Guard awaits a real-controller check. See CHANGELOG.md. No release is published.
+
+
 **Play X-Men Legends (2004) on PC, built from your own copies of the games.**
 
 X-Men Legends came out on consoles only. Its sequel, X-Men Legends II: Rise of Apocalypse, came to PC on the same
@@ -347,7 +352,7 @@ Linux), archive support needs 0.2.1 or later; 0.4.0 online/Deck acceptance remai
 | | this public repository, the community Discord | done |
 | | release testing on a clean PC (Windows Sandbox): the builder alone, and the launcher's one-click setup | done |
 | M4 | **Public test period**: fixes from playthroughs, release by release (0.1.x, then 0.2.x: the port's own save format, the first game's combat balance, hazards, co-op fixes) | now |
-| M5 | **Complete**: the first game's mechanics this engine lacks (see [What isn't there](#what-isnt-there)) | under way: turrets, breakable parts, solo mode, Xtraction services and ranks done in 0.2.2 |
+| M5 | **Complete**: the first game's mechanics this engine lacks (see [What isn't there](#what-isnt-there)) | under way: turrets, breakable parts, solo mode, Xtraction services and ranks in 0.2.2; items, shops and drops in 0.5 |
 | M6 | **Classic look**: the first game's menus, fonts, colours and HUD (the main menu is done in 0.2.0) | planned |
 | 1.0 | **Finished**: a full campaign played by hand on a release build with nothing blocking, checked on the Steam Deck, co-op checked on one PC and across the internet | goal |
 | later | settings separate from X-Men Legends II's; compressed disc images | ideas |
@@ -375,19 +380,26 @@ What comes next, by version (plans move with what testing finds):
 - **0.2.5 - done:** the bedroom items' pictures in the first game's picture window
   ([#54](https://github.com/ChronoRixun/legends-classic/issues/54)) and heroes re-stunned by every stun hit
   ([#101](https://github.com/ChronoRixun/legends-classic/issues/101)). Needs XML2 Fix 1.7.1.
-- **0.4.0 - done when released:** online by code, a public game browser, drop-in co-op and the solo story segments
+- **0.4.0 - done:** online by code, a public game browser, drop-in co-op and the solo story segments
   ([#106](https://github.com/ChronoRixun/legends-classic/issues/106)): host and join from Ultimate Legends,
   share a code or browse public games, join a running campaign at the next level change, and keep the second
   player connected through Wolverine's opening and Magma's mansion tour. A new encrypted network layer adapts
   to bad connections, with relay fallback for internet play without port forwarding.
-- **0.4 - next:** classic look: the rest of the menus (pause, characters, Review, shops, loading) and the HUD, made from
-  your own disc's art.
-- **0.5** - complete, part two: the first game's loot and shops
-  ([#6](https://github.com/ChronoRixun/legends-classic/issues/6)) and others.
-- **0.6** - graphics: an optional DXVK toggle, and an investigation into graphical engine upgrades.
-- **0.6 to 0.7** - the online section and join screen overhaul: a modern lobby.
-- **0.7 to 1.0** - more may come, spread between 0.7 and 1.0: whatever is still open from these lists, and whatever
-  the playthroughs turn up next.
+- **0.4.1 - done (beta 8):** Colossus's charge, Juggernaut's grab, the first game's boss behaviour, more of the
+  first game's moves, guns that aim like the first game's, saved rooms kept after updating, and bigger engine
+  limits (including 4 GB of memory for the build's own copy of the game).
+- **0.5 - in beta:** the first game's items, shops and drops
+  ([#6](https://github.com/ChronoRixun/legends-classic/issues/6)), a bigger save format (your saves carry over),
+  Phoenix's telekinesis, the flying carry, and controllers that are switched on after the game starts.
+- **0.6 - next:** co-op screens inside the game: Play Online with Host, Join by code and Browse, a lobby with
+  ready checks, and an in-game Party screen with host controls. Friends still join at the next area.
+- **0.7** - graphics: an optional DXVK toggle and the first graphics upgrades from the investigation now under way;
+  and importing your X-Men Legends saves from the Xbox (through xemu) or from XML1-recomp.
+- **0.8** - co-op that keeps going: every player keeps the same checkpoint at the start of each area, and if the
+  host drops, another player takes over and everyone carries on from there.
+- **Later** - classic look for the rest of the menus (pause, characters, Review, shops, loading) and the HUD, made
+  from your own disc's art; capes and coats that move on the MUA2 costumes (being researched).
+- **0.8 to 1.0** - whatever is still open from these lists, and whatever the playthroughs turn up next.
 
 ## Repository layout
 

@@ -28,14 +28,19 @@ def _record(out: Path, grab_carry, **opts):
 
 def test_tk_guard_written_only_with_grab_carry():
     # beta 8: the telekinesis and the flying carry (080h) and the guard decide (080i: a real Guard press did nothing)
-    # are off (beta 9); each is written only on request and only with the grab
+    # were off; telekinesis and the flying carry on by default since 0.5.0-beta.1, the guard decide still off (Owen
+    # 10-28, the 082f real-pad check), and each is written only with the grab
     assert FI.TK_GUARD == {'TelekinesisRule': 'xml1', 'GuardDecideRule': 'xml1'}
     assert FI.TELEKINESIS == {'TelekinesisRule': 'xml1'} and FI.GUARD_DECIDE == {'GuardDecideRule': 'xml1'}
     assert FI.FLYING_CARRY_OFF == {'Xml1FlyingCarry': '0'}
     assert all(k in FI.PORT_OWNED['Game'] and k in FI.RELEASE_18_KEYS['Game'] for k in (*FI.TK_GUARD, 'Xml1FlyingCarry'))
     args = build_xml1.parse_args(['--out', '.'])
+    assert args.telekinesis == 'xml1' and args.guard_decide == 'off' and args.flying_carry == 'xml1'
+    args = build_xml1.parse_args(['--out', '.', '--guard-decide', 'xml1'])
+    assert args.telekinesis == 'xml1' and args.guard_decide == 'xml1' and args.flying_carry == 'xml1'
+    assert all(build_xml1.CONTENT_OPTS[k] == ((), 'off') for k in ('telekinesis', 'guard_decide', 'flying_carry'))  # an absent record key
+    args = build_xml1.parse_args(['--out', '.', '--grab-carry', 'xml2'])         # their defaults follow the grab
     assert args.telekinesis == 'off' and args.guard_decide == 'off' and args.flying_carry == 'off'
-    assert all(build_xml1.CONTENT_OPTS[k] == ((), 'off') for k in ('telekinesis', 'guard_decide', 'flying_carry'))
     for bad in (['--telekinesis', 'xml1'], ['--guard-decide', 'xml1'], ['--flying-carry', 'xml1']):
         try:
             build_xml1.parse_args(['--out', '.', '--grab-carry', 'xml2', *bad])
@@ -68,13 +73,14 @@ def test_tk_guard_written_only_with_grab_carry():
                     assert ('Xml1FlyingCarry=0' in merged) == carry_off
                     assert 'KeepMe=7' in merged
                     if value == 'xml1' and tk is None and gd is None and fc is None:
-                        # the default profile: the grab, no telekinesis, no guard decide, flying carry off
+                        # a record without the keys (beta 8's profile): the grab, no telekinesis, no guard decide, carry off
                         assert getattr(C.args_for_out(out), 'telekinesis', 'off') == 'off'
                         assert getattr(C.args_for_out(out), 'guard_decide', 'off') == 'off'
                         assert 'GuardDecideRule' not in game and 'TelekinesisRule' not in game
         # an ini-only option re-runs no module when toggled
         _record(out, 'xml1', telekinesis='off', guard_decide='off', flying_carry='off')
-        args = build_xml1.parse_args(['--out', td, '--telekinesis', 'xml1', '--guard-decide', 'xml1', '--flying-carry', 'xml1'])
+        args = build_xml1.parse_args(['--out', td, '--save-layout', 'retail', '--online-menus', 'off',  # the record's (CONTENT_OPTS) values
+                                      '--telekinesis', 'xml1', '--guard-decide', 'xml1', '--flying-carry', 'xml1'])
         assert build_xml1.plan_content_opts(out, args, []) == []
 
 

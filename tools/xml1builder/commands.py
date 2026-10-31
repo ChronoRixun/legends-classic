@@ -25,7 +25,7 @@ import traceback
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from . import CONTENT_VERSION, DISCLAIMER, ISSUES_URL, PROJECT, REPO, VERSION
+from . import DEFAULT_GUARD_DECIDE, CONTENT_VERSION, DISCLAIMER, ISSUES_URL, PROJECT, REPO, VERSION
 from . import inputs as I
 from . import manifest as M
 from . import plan as PL
@@ -71,15 +71,15 @@ class Job:
     jobs: int
     prepare_jobs: int
     main_menu_layout: str = 'classic'
-    online_menus: str = 'off'
+    online_menus: str = 'on'          # 0.6.0-beta.1: on by default (cli.py)
     anim_enums: str = 'xml1'
     laa: str = 'on'
-    limits_wave3: str = 'off'
-    save_layout: str = 'retail'
-    loot: str = 'off'
-    telekinesis: str = 'off'          # beta 9 moves: ini-only options (build_xml1 --telekinesis / --guard-decide / --flying-carry)
-    guard_decide: str = 'off'
-    flying_carry: str = 'off'
+    limits_wave3: str = 'all'
+    save_layout: str = 'w2'
+    loot: str = 'xml1'
+    telekinesis: str = 'xml1'          # beta 9 moves: ini-only options (build_xml1 --telekinesis / --guard-decide / --flying-carry)
+    guard_decide: str = DEFAULT_GUARD_DECIDE          # shared release default; corrected XML1 rules await real-pad acceptance
+    flying_carry: str = 'xml1'
     disc: dict = field(default_factory=dict)
     ident: dict | None = None
     xml2_info: dict = field(default_factory=dict)
@@ -329,16 +329,17 @@ def cmd_build(a, output, cancel, pipeline_factory):
     jobs = max(1, a.jobs or max(1, (os.cpu_count() or 2) // 2))
     job = Job(out=out_dir, xml2=xml2, cache=cache, iso=iso, movies=movies, jobs=jobs, prepare_jobs=prepare_jobs,
               main_menu_layout=getattr(a, 'main_menu_layout', 'classic'),
-              online_menus=getattr(a, 'online_menus', 'off'),
+              online_menus=getattr(a, 'online_menus', None) or 'on',
               anim_enums=getattr(a, 'anim_enums', None) or 'xml1', laa=getattr(a, 'laa', None) or 'on',
-              limits_wave3=getattr(a, 'limits_wave3', None) or 'off',
-              save_layout=getattr(a, 'save_layout', 'retail'), loot=getattr(a, 'loot', 'off'),
-              telekinesis=getattr(a, 'telekinesis', None) or 'off', guard_decide=getattr(a, 'guard_decide', None) or 'off',
-              flying_carry=getattr(a, 'flying_carry', None) or 'off')
+              limits_wave3=getattr(a, 'limits_wave3', None) or 'all',
+              save_layout=getattr(a, 'save_layout', None) or 'w2',
+              loot=getattr(a, 'loot', None) or ('xml1' if (getattr(a, 'save_layout', None) or 'w2') == 'w2' else 'off'),
+              telekinesis=getattr(a, 'telekinesis', None) or 'xml1', guard_decide=getattr(a, 'guard_decide', None) or DEFAULT_GUARD_DECIDE,
+              flying_carry=getattr(a, 'flying_carry', None) or 'xml1')
     from xml1build import loot as LOOT
     why = LOOT.refusal(job)
     if why:
-        raise BuilderError('E_USAGE', why + '.', 'Add --save-layout w2, or build without --loot xml1.', {})
+        raise BuilderError('E_USAGE', why + '.', 'Add --save-layout w2, or build with --loot off.', {})
     ctl = Ctl(output, cancel, job)
     pipeline = pipeline_factory()
     out_lock = cache_lock = None

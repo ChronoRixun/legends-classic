@@ -48,8 +48,9 @@ def port_keys_with(record):
         return FI.port_keys(out), FI.dropped_keys(FI.port_keys(out))
 
 
-def test_the_option_defaults_off_and_is_recorded_only_when_on():
-    assert build_xml1.parse_args(['--out', '.']).limits_wave3 == 'off'
+def test_the_option_defaults_all_and_is_recorded_only_when_on():
+    assert build_xml1.parse_args(['--out', '.']).limits_wave3 == 'all'          # default since 0.5.0-beta.1
+    assert build_xml1.parse_args(['--out', '.', '--limits-wave3', 'off']).limits_wave3 == 'off'
     assert build_xml1.parse_args(['--out', '.', '--limits-wave3', 'on']).limits_wave3 == 'on'
     assert build_xml1.parse_args(['--out', '.', '--limits-wave3', 'all']).limits_wave3 == 'all'
     # not a content option: the stamp's profile (and so every existing build's state) stays what it was
