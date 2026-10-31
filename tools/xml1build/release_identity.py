@@ -64,7 +64,7 @@ HISTORY = (
     # Prepared for 0.6.0-beta.1 (the 0.4.2 line and the 0.6 co-op screens, XML2 Fix 1.11.0-beta.1): the W2 save layout, the first
     # game's item economy (catalogue revision 8), limits wave 3, Phoenix's telekinesis, the flying
     # carry. GuardDecide stays opt-in; integration must measure the final bind manifest.
-    Identity('0.6.0-beta.1', 30, 8, 'LC40', ''),
+    Identity('0.6.0-beta.1', 30, 8, 'LC40', 'a8ec20954386445ea93d1c3ecb23aecb1c9665c2af0fb8a64e98b352ed407c1d'),
 )
 
 
