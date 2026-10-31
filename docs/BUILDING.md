@@ -152,6 +152,18 @@ manifest and, with `--smoke`, runs `tools/freeze_smoke.py` against it. CI does t
 release. Beta and rc tags match the numeric base and carry the suffix through the frozen
 builder and manifest; see [RELEASING.md](RELEASING.md).
 
+## Repository layout
+
+| Path | What |
+|---|---|
+| `tools/xml1builder/` | the builder (`python -m xml1builder` from `tools/`; frozen into `xml1-builder.exe`) |
+| `tools/xml1build/` | the conversion pipeline (zones, characters, heroes, scripts, front end, media, validator), the prepare stages (`prepare/`), shared format code (`lib/`) and the specifications `SPEC.md` / `SPEC_heroes.md` |
+| `tools/` | format tools (disc image, bundles, binary XML, sound banks), the developer build `build_xml1.py`, the freeze scripts and the test harness that drives the game through xml2-fix |
+| `tests/unit/` | synthetic tests (no game data); CI runs them on Windows and Linux |
+| `research/` | the reverse-engineering and design notes behind every decision: file formats, engine behaviour, addresses, measurements ([research/README.md](../research/README.md)) |
+| `docs/` | player guides - [CLI.md](CLI.md) (the standalone builder), [SAVES.md](SAVES.md), [ONLINE.md](ONLINE.md), [COMPATIBILITY.md](COMPATIBILITY.md) (versions and settings), [KNOWN-ISSUES.md](KNOWN-ISSUES.md), [ROADMAP.md](ROADMAP.md), [DUMPING.md](DUMPING.md) (imaging your own disc) - and developer notes: this file (from source, tests, freezing), [RELEASING.md](RELEASING.md) |
+| `tools/check_no_game_content.py` | the guard that keeps game content out of this repository (pre-commit hook + CI) |
+
 ## Where to read next
 
 - `tools/xml1build/SPEC.md` - what every pipeline module does and why (the engine facts behind it), section 27 for
