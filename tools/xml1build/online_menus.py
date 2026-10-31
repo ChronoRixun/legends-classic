@@ -1497,17 +1497,17 @@ DATA_NAMES = {'local_name', 'self_name', 'last_name', 'last_code', 'last_time',
 # Round 15 completes the table (INGAME-DESIGN 3.3): the first eight keep their broker/2 meaning; the DLL's
 # online_menus_rules::error_cause_key / cause_table are the other half of this contract (tests pin both).
 ERROR_CAUSES = ('code_not_found', 'room_full', 'version_mismatch', 'rate_limited', 'timeout', 'offline', 'refused', 'generic',
-                'pin_mismatch', 'code_expired', 'room_closed', 'test_mode', 'unsupported', 'busy', 'invalid_name', 'too_many_public_rooms', 'too_many_joins')
+                'pin_mismatch', 'code_expired', 'room_closed', 'test_mode', 'unsupported', 'busy', 'invalid_name', 'too_many_public_rooms', 'too_many_joins', 'session_started')
 RETRYABLE_CAUSES = ('rate_limited', 'timeout', 'offline', 'generic', 'room_closed')
 # What each cause tells the player to do next (the DLL's next_action; Retry is the only one that is a control).
 NEXT_ACTION = {'code_not_found': 'edit_code', 'room_full': 'browse', 'version_mismatch': 'back', 'rate_limited': 'retry',
                'timeout': 'retry', 'offline': 'retry', 'refused': 'back', 'generic': 'retry', 'pin_mismatch': 'back',
                'code_expired': 'edit_code', 'room_closed': 'retry', 'test_mode': 'back', 'unsupported': 'other_ways',
-               'busy': 'wait', 'invalid_name': 'back', 'too_many_public_rooms': 'close_room', 'too_many_joins': 'leave_game'}
+               'busy': 'wait', 'invalid_name': 'back', 'too_many_public_rooms': 'close_room', 'too_many_joins': 'leave_game', 'session_started': 'lobby'}
 # One word each action's copy must contain, so a cause can never name the wrong next step.
 NEXT_WORD = {'retry': ('retry', 'try again'), 'edit_code': ('code',), 'browse': ('another game', 'browse'),
              'back': ('back', 'update', 'check', 'turn it off', 'turn off'), 'other_ways': ('other ways',), 'wait': ('wait',),
-             'close_room': ('close one',), 'leave_game': ('leave another game',)}
+             'close_room': ('close one',), 'leave_game': ('leave another game',), 'lobby': ('lobby',)}
 # Localized copy per cause (09-errors wording, in the inline style round 5 chose: one line, names cause + next step).
 ERROR_COPY = {
     'code_not_found': 'Code not found. Ask the host for the current code.',
@@ -1521,6 +1521,7 @@ ERROR_COPY = {
     'pin_mismatch': 'Online service not verified. Check its setting or update.',
     'code_expired': 'That room closed. Ask the host for a new code.',
     'room_closed': 'Not taking players right now. Try again soon.',
+    'session_started': 'This session has started. Ask the host to return to the lobby.',
     'test_mode': 'TestMode is on, so online play is off. Turn it off.',
     'unsupported': 'Online needs a complete install. Use Other ways to play.',
     'busy': 'The network link is busy. Wait a moment, then repeat.',

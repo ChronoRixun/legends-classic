@@ -31,7 +31,7 @@ The list refreshes about every ten seconds while visible and idle. Use **Refresh
 
 ## Join during a campaign
 
-**Drop-in is on by default** (`[Online] LateJoin=1` since 0.6.0; the host's **DROP-IN** row turns it off for one room). You can join a running game with a free place. You wait on **Joined Game** while the others keep playing. At the host's **next level change** everyone, the host included, reloads that level together from the host's campaign image, so the load takes a little longer and you are in, controlling a free hero. You do not appear immediately in the current level. The party needs enough heroes for everyone to control one. With DROP-IN off, a late joiner sees "This session has started; ask the host to return to the lobby" and Browse shows the room as not taking players. If you set `LateJoin=0` yourself in `xml2-fix.ini`, a rebuild or repair keeps it.
+**Drop-in is on by default** (`[Online] LateJoin=1` since 0.6.0; the host's **DROP-IN** row turns it off for one room). You can join a running game with a free place. You wait on **Joined Game** while the others keep playing. At the host's **next level change** everyone, the host included, reloads that level together from the host's campaign image, so the load takes a little longer and you are in, controlling a free hero. You do not appear immediately in the current level. The party needs enough heroes for everyone to control one. With DROP-IN off, a late joiner sees "This session has started. Ask the host to return to the lobby." when a fresh public listing confirms the started room has a free place but accepts no players. Private rooms or an unavailable or inconclusive listing show "Not taking players right now. Try again soon." Browse shows the room as not taking players. If you set `LateJoin=0` yourself in `xml2-fix.ini`, a rebuild or repair keeps it.
 
 During a solo story segment, players without a hero stay connected and watch the shared camera. The game says **Solo story segment - you rejoin when it ends**. When the story restores a larger party, you regain a hero; the game tries to return your previous hero when the group has not changed. Wolverine's opening and Magma's mansion tour are examples. Keep the watching PC connected and responsive.
 
@@ -76,7 +76,7 @@ These are the English Online-panel messages, including input checks, disabled co
 | Code not found | Check the current code with the host and make sure they have opened Play Online and kept the room running. |
 | Code expired | Ask the host to open a new room and share its new code. |
 | The game is full | All four places are taken (`room_full`); wait for a place. |
-| That game can't take new players right now. Try again in a moment. | The room exists but is temporarily not accepting players (`room_closed`, contract v1.5). Wait and retry; it need not be full. |
+| Not taking players right now. Try again soon. | The room exists but is temporarily not accepting players (`room_closed`, contract v1.5). Wait and retry; it need not be full. |
 | Different game version | Everyone should Rebuild to 0.4.0 and use matching game content/settings. 0.2.x cannot join 0.4.0. Browse games compares the room token with your build's GameVersion (`LC33`); matching builds should have Join enabled when a place is available. |
 | Test mode is on | Turn Test mode off, close the game and host/join again. |
 | The online service could not be verified | Update the game and launcher, check for connection interception on the network, and report persistent failures. Do not bypass the check. |
@@ -148,3 +148,8 @@ service text, so it is safe to quote in a report.
 | {Name} left or lost connection. The party continues; they can rejoin with the code. | A guest left the lobby (six seconds, then it clears). | Nothing; the code still works. |
 | Online service lost. Players here stay connected; new players cannot join. | The service dropped while your room was open. | Keep playing; host again later for a new code. |
 | THE HOST LEFT: Host again to continue from a save on this PC. | You were a guest and your connection to the host ended. The 0.6 game ends; there is no takeover. | **Host again** opens Host setup (choose a new or saved campaign); **Back to Online** closes the panel. It shows only when the game's connection to the host ended (a lost or crashed host, or the 10 s watchdog); other ways a session can end (a normal host quit, removal by the host) are not claimed as host loss and show only the game's own message. |
+
+
+The started-session refusal scene requires the companion Fix AN DLL and rebuilt online menus. The DLL keeps the broker
+and launcher error identifiers unchanged; it uses the existing public list to choose the copy, so a private room's
+drop-in setting cannot be inferred. The specific message asks the host to return to the lobby and offers no Retry.
