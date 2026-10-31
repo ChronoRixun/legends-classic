@@ -86,6 +86,7 @@ hand-played run. [Full roadmap](docs/ROADMAP.md).
 
 ## Community, contributing and bug reports
 
+- **Project page**: [chronorixun.github.io/legends-classic-site](https://chronorixun.github.io/legends-classic-site/).
 - **Discord**: [discord.gg/tFxwHtZv8k](https://discord.gg/tFxwHtZv8k) - setup help, bug reports, co-op partners.
 - **Bug reports**: use the issue form (builder version, `_build\verify-report.json`, the end of `_build\builder.log`).
   Never attach the disc image, the build, saves or any game file, and no links to disc images or ROMs anywhere.
