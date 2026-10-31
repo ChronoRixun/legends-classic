@@ -1251,3 +1251,27 @@ mission's team selection) and V37 (the first game's Xtraction beacons; no power 
 
 - First public release: `info` / `build` / `verify` / `clean`, the prepare stages from the disc image, the
   compiled sound encoder, the launcher's release manifest.
+
+## Verified in game
+
+What the developer's checks have confirmed across the releases above (moved here from the README's Status section;
+newer releases list their own checks under **Tested** in their entries). Verified in game on the developer's PC,
+mostly by automated runs that drive the game through xml2-fix's test pipe:
+
+- **The whole campaign, in automated runs**: the opening, every mission start (73) with the party the first game used
+  (forced parties, flashbacks with their fixed heroes and costumes, heroes joining mid-level), the ending chain (the
+  final bosses' defeats triggered by script), the credits and back to the main menu; a tour of every converted zone
+  reachable from New Game, in one session without a crash. A full hand-played run is under way (act 1 so far).
+- **The first game's heroes** with their own stats, powers (64 of 64 fire), unlock points and level curve (its
+  45-level table, via xml2-fix), and its enemies with their own damage and energy values.
+- **The first game's front end**: main menu (since 0.2.0 with its own Cerebro room, panels, fonts and colours, in a
+  widescreen layout), Danger Room, Review (load screens, cinematics), credits.
+- **Movies and music**, including the first game's layered music.
+- **Display** (xml2-fix): borderless or windowed at your desktop's resolution, and since 0.2.2 exclusive fullscreen
+  at a high-refresh desktop's own mode (2560x1440 at 180 Hz, with 8x anti-aliasing).
+- **A clean Windows 11** (Windows Sandbox: no Python, nothing preinstalled): the released builder made the game from a
+  disc image in about 6.5 minutes and verified every file; a new game there played from the intro through several
+  zones. The files matched the developer's own builds one for one.
+
+What each release fixed is in its entry above; when the content version rises the launcher offers the rebuild, or
+run `xml1-builder build` again.
