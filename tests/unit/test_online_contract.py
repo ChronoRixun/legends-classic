@@ -346,7 +346,10 @@ def test_lobby_render_states_do_not_claim_pending_admission():
                 assert O.render(screen, size=(640,480), text=False).size == (640,480)
     screen = O.lobby_layout('host')
     assert 'Measuring' in str(screen) and 'Hero assigned at start' in str(screen)
-    assert 'next area' in str(screen)
+    for role, expected in (('host', 'Campaign chosen in Game options.'), ('join', 'Campaign set by the host.')):
+        items = {e['name']: e for e in O.lobby_layout(role)['items']}
+        assert items['lc_campaign_summary']['text'] == expected
+        assert items['lc_ready_all']['text'] == 'All ready.'
 
 
 def test_060s_lobby_words_use_native_text_in_front_of_card_models():

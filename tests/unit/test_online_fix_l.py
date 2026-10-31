@@ -37,7 +37,8 @@ def test_no_lobby_text_says_pending_where_the_dll_names_the_room_and_the_badge_w
     for role in O.LOBBIES:
         items = {e['name']: e for e in O.lobby_layout(role)['items']}
         assert 'pending' not in items['lc_room_name']['text'].lower() and 'pending' not in items['lc_campaign_summary']['text'].lower(), role
-        assert 'next area' in items['lc_campaign_summary']['text']
+        expected = 'Campaign chosen in Game options.' if role == 'host' else 'Campaign set by the host.'
+        assert items['lc_campaign_summary']['text'] == expected
     guest = {e['name']: e for e in O.lobby_layout('join')['items']}['lc_campaign_summary']['text']
     assert 'host' in guest  # the guest does not choose the campaign
     # 060r live: "Room connected" did not fit the 67-unit badge field ("Room connecte"). The DLL binds ROOM_BADGE_TEXT (pinned there).
