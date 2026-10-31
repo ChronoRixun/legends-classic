@@ -13,15 +13,15 @@ PC, installed. It is a builder, not a download: every file of the result is made
 copies you own. This project ships no game content - no game files, no parts of them, no modified executables - and
 the builder makes no network connections.
 
-How it differs from GTTeancum's [XML1-recomp](https://github.com/GTTeancum/XML1-recomp): that project runs the
-original Xbox game natively on PC; Legends Classic runs the first game on the sequel's PC engine, which is what makes
-online co-op with drop-in and the sequel's modding possible.
+Unlike [XML1-recomp](https://github.com/GTTeancum/XML1-recomp), which runs the original Xbox game natively, Legends
+Classic runs the first game on the sequel's PC engine - which is what makes online co-op and the sequel's mods possible.
 
-> **Current release: 0.5.0-beta.1** (beta: builder 0.5.0-beta.1, XML2 Fix 1.10.0-beta.1, Ultimate Legends 0.4.0 or
-> later on its Beta channel) - the first game's items, shops and drops. Stable: 0.4.0 (XML2 Fix 1.8.0 or later).
-> **Coming next: 0.6.0-beta.1** (not released yet): in-game online co-op (Host, Join by code, Browse, lobby and Party), and friends can join a game in progress at the host's next area (the host's DROP-IN setting turns it off per room); co-op checked on two real PCs. <!-- release round: update -->
-> Updating? Update Ultimate Legends first, then **Rebuild**, then **Play**. Everyone in an online game needs the same build.
-> Help and bug reports: the [community Discord](https://discord.gg/tFxwHtZv8k). Details: [CHANGELOG](CHANGELOG.md),
+> **Current beta: 0.6.0-beta.1** (builder 0.6.0-beta.1 with XML2 Fix 1.11.0-beta.1, on Ultimate Legends' Beta
+> channel): online co-op inside the game - Host, Join by code, Browse, a lobby and a Party screen - and friends can
+> join a game in progress at the host's next area (the host's DROP-IN setting turns that off per room).
+> Previous beta: 0.5.0-beta.1 with XML2 Fix 1.10.0-beta.1. Stable: 0.4.0 (XML2 Fix 1.8.0 or later).
+> Updating? Update Ultimate Legends first, then **Rebuild**, then **Play**. Everyone in an online game needs the same
+> build. Help: the [community Discord](https://discord.gg/tFxwHtZv8k). Details: [CHANGELOG](CHANGELOG.md),
 > [known issues](docs/KNOWN-ISSUES.md).
 
 ## What you need
@@ -33,8 +33,8 @@ online co-op with drop-in and the sequel's modding possible.
 | **Windows 10 or 11, 64-bit** | Steam Deck / Linux via Proton works as a compatibility path ([notes](docs/CLI.md#steam-deck--proton)). |
 | **Disk space and time** | about 8 GB and 6-8 minutes for the first build; rebuilds take 2-3 minutes. |
 
-The engine fix the port needs, [xml2-fix](https://github.com/ChronoRixun/xml2-fix), is installed for you by the
-launcher. Full requirements: [docs/CLI.md](docs/CLI.md#requirements).
+The launcher installs the engine fix the port needs, [xml2-fix](https://github.com/ChronoRixun/xml2-fix), for you.
+Full requirements: [docs/CLI.md](docs/CLI.md#requirements).
 
 ## Installing
 
@@ -51,55 +51,46 @@ it downloads the builder, runs it and installs the engine fix.
 The launcher tells you when a new builder needs a rebuild (never automatic), can **Verify** every file, and
 **Uninstall** removes exactly what it made - your saves stay.
 
-Prefer the command line, or on a Steam Deck? See the [builder guide](docs/CLI.md).
+Prefer the command line, or on a Steam Deck? See the [builder guide](docs/CLI.md). Without the launcher, copy the
+matching XML2 Fix `dinput.dll` into the output folder **before** you build: the default co-op screens need it.
 
 ## Playing
 
-- **Saves** live in `Documents\Activision\X-Men Legends`, separate from X-Men Legends II's. Saves from every earlier
-  version carry over automatically on first start. 0.5 writes a bigger save format that 0.4.x cannot load, so back up
-  the `SaveLC` folder before updating if you may want to go back. Details: [docs/SAVES.md](docs/SAVES.md).
-- **Online co-op** for up to four players: host, share a code or list the game publicly; friends join by code or
-  from the public list. No port forwarding. Friends can drop in to a game in progress at the host's next area
-  (the host can turn drop-in off). In 0.6 all of it moves into the game's own Play Online screens; up to 0.5 you
-  start it from Ultimate Legends. Full steps, privacy and limits: [docs/ONLINE.md](docs/ONLINE.md). <!-- release round: update -->
+- **Saves** live in `Documents\Activision\X-Men Legends`, separate from X-Men Legends II's, and earlier saves carry
+  over. 0.4.x cannot load the bigger 0.5/0.6 saves, so back up `SaveLC` before updating ([docs/SAVES.md](docs/SAVES.md)).
+- **Online co-op** for up to four players, from the game's own **Play Online** screen: **Host** a public or private
+  room, **Join by code** or **Browse** public games, get ready in the lobby, and manage the group from **Party**.
+  Friends can join a game in progress at the host's next area. Steps, privacy and limits: [docs/ONLINE.md](docs/ONLINE.md).
 - **Settings and key bindings** are shared with X-Men Legends II (same registry key).
 
 ## What to expect
 
 Verified on the developer's PC: the whole campaign from opening to credits, every hero with the first game's stats,
-powers and level curve, the first game's front end, movies and layered music, and modern display modes
-([details](CHANGELOG.md#verified-in-game)). Online co-op, drop-in and the display options are additions the first game
-never had ([what is not fidelity](docs/KNOWN-ISSUES.md#additions-not-fidelity)).
+powers and level curve, its front end, movies and layered music, and modern display modes ([details](CHANGELOG.md#verified-in-game)).
+Online co-op and the display options are additions the first game never had ([what is not fidelity](docs/KNOWN-ISSUES.md#additions-not-fidelity)).
 
-Still open:
+Still open (everything, with measurements: [docs/KNOWN-ISSUES.md](docs/KNOWN-ISSUES.md) and [issues](https://github.com/ChronoRixun/legends-classic/issues)):
 
-- **The first game's loot and shops** are in the 0.5 beta and still being checked ([#6](https://github.com/ChronoRixun/legends-classic/issues/6));
-  the stable 0.4.0 uses X-Men Legends II's drops and shops.
+- **The first game's items, shops and drops** shipped in 0.5.0-beta.1 and are on by default; they are still being
+  checked against the original ([#6](https://github.com/ChronoRixun/legends-classic/issues/6)). Stable 0.4.0 uses X-Men Legends II's.
 - **Some fall kill zones** stay off until proven safe ([#22](https://github.com/ChronoRixun/legends-classic/issues/22)).
 - **Enemies attack somewhat more often** than in the original ([#101](https://github.com/ChronoRixun/legends-classic/issues/101)).
-- **Online** co-op (0.6) is certified on two PCs on a LAN; internet play through the relay is not verified yet. If the host
-  leaves, the session ends (until co-op recovery in 0.8).
-
-Everything open, with measurements: [docs/KNOWN-ISSUES.md](docs/KNOWN-ISSUES.md) and
-[issues](https://github.com/ChronoRixun/legends-classic/issues).
+- **Online** co-op is a beta: tested on two PCs at home, not yet through the relay or with four players on
+  separate PCs. If the host leaves, the session ends (until co-op recovery in 0.8).
 
 ## Roadmap
 
-0.6: online co-op with drop-in (the next release). <!-- release round: update --> 0.7: an optional "Remastered" graphics toggle and save import from
-the original Xbox game. 0.8: co-op recovery. Then the first game's loot and shops finished, and 1.0 after a full
+0.6 (this beta): online co-op in the game's own screens, with joining a game in progress. 0.7: an optional
+"Remastered" graphics toggle and save import from the original Xbox game. 0.8: co-op recovery. 1.0 after a full
 hand-played run. [Full roadmap](docs/ROADMAP.md).
 
 ## Community, contributing and bug reports
 
 - **Discord**: [discord.gg/tFxwHtZv8k](https://discord.gg/tFxwHtZv8k) - setup help, bug reports, co-op partners.
-  The same rule as here: no game files, disc images or links to them.
-- **Bug reports**: use the issue form. It asks for the builder version, `_build\verify-report.json` and the end of
-  `_build\builder.log` (file names, sizes, hashes and error codes) - nothing from the games. Never attach the disc
-  image, the build, saves or any game file.
+- **Bug reports**: use the issue form (builder version, `_build\verify-report.json`, the end of `_build\builder.log`).
+  Never attach the disc image, the build, saves or any game file, and no links to disc images or ROMs anywhere.
 - **Pull requests**: our code and our words only - see [CONTRIBUTING.md](CONTRIBUTING.md). A content guard runs on
-  every commit (`pre-commit install`) and in CI; it rejects game files, decoded game data, game text, disassembly
-  listings, personal data and large binaries.
-- No links to disc images, ROMs or download sites, anywhere in the project.
+  every commit and in CI and rejects game files, decoded game data, game text and personal data.
 
 Building from source, repository layout and the test harness: [docs/BUILDING.md](docs/BUILDING.md).
 

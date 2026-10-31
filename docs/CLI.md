@@ -14,7 +14,8 @@ and rc releases](RELEASING.md).
 - **[xml2-fix](https://github.com/ChronoRixun/xml2-fix)**: the in-memory engine fixes the port relies on (new-game
   party, forced parties, the first game's level curve and combat numbers, bigger zones, its own save format and
   folder, display options). The Ultimate Legends launcher installs it for you. Each builder needs a minimum version
-  (0.5.0-beta.1 needs 1.10.0-beta.1, the stable 0.4.0 needs 1.8.0): see [versions that go together](COMPATIBILITY.md).
+  (0.6.0-beta.1 needs 1.11.0-beta.1, 0.5.0-beta.1 needs 1.10.0-beta.1, the stable 0.4.0 needs 1.8.0): see
+  [versions that go together](COMPATIBILITY.md).
 - **Windows 10 or 11, 64-bit.** The released builder is a Windows program. From source it is plain Python + numpy +
   Pillow, written to run on Linux too (its tests run there in CI; a full Linux build is untested so far).
 - **Disk space**: about 8 GB while building with movies (the game ~4.6 GB + a build cache ~3.2 GB you can delete
@@ -25,8 +26,13 @@ and rc releases](RELEASING.md).
 ## Install
 
 Download `xml1-builder-<version>-win64.zip` from [Releases](https://github.com/ChronoRixun/legends-classic/releases)
-(check it against `SHA256SUMS.txt`), unzip it into a folder of its own (the zip has no top-level folder) and run it
-from a command prompt:
+(check it against `SHA256SUMS.txt`) and unzip it into a folder of its own (the zip has no top-level folder).
+
+**Before Build or Rebuild**, create the output folder and copy `dinput.dll` from the matching
+[xml2-fix release](https://github.com/ChronoRixun/xml2-fix/releases) into it - for 0.6.0-beta.1 that is
+**XML2 Fix 1.11.0-beta.1** (a beta builder needs the matching beta fix, not the latest stable one). The default
+co-op screens check this DLL while the build runs; updating the fix only in your X-Men Legends II folder is not
+enough. Then run the builder from a command prompt:
 
 ```
 xml1-builder info    --iso "D:\Images\X-Men Legends.iso" --xml2 "C:\Games\X-Men Legends II"
@@ -35,10 +41,8 @@ xml1-builder verify  --out "C:\Games\X-Men Legends (Port)"
 xml1-builder clean   --out "C:\Games\X-Men Legends (Port)"
 ```
 
-Then copy `dinput.dll` from the matching [xml2-fix release](https://github.com/ChronoRixun/xml2-fix/releases) (the
-minimum version for your builder is in [COMPATIBILITY.md](COMPATIBILITY.md); a beta builder needs the matching beta
-fix) into the output folder and start `XMen2.exe` there. The builder has already written the `xml2-fix.ini` settings
-the port needs (`--no-ini` leaves the file alone; the keys are in `_build\stamp.json`).
+After the build succeeds, start `XMen2.exe` in the output folder. The builder writes the port's `xml2-fix.ini`
+settings (`--no-ini` leaves the file alone and records the required keys in `_build\stamp.json`).
 
 The release zip is not code-signed yet, so Windows SmartScreen or an antivirus may warn about it: compare the
 SHA-256 with the release page, or build it yourself from source ([BUILDING.md](BUILDING.md)).

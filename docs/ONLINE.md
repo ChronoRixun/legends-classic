@@ -1,61 +1,137 @@
-﻿# Play online in 0.4.0
+﻿# Play online in 0.6
 
-Player guide for Legends Classic 0.4.0, XML2 Fix 1.8.0 and Ultimate Legends 0.4.0. Online was tested on one PC with two instances of the game; play between separate PCs and four-player internet games are not certified yet.
+Player guide for Legends Classic **0.6.0-beta.1** with XML2 Fix **1.11.0-beta.1**. Online co-op now runs from the
+game's own **Play Online** screen. This is a beta: it was tested on one PC with two copies of the game and on two PCs
+at home. Play through the relay, four players on separate PCs and long sessions are not verified yet
+([known issues](KNOWN-ISSUES.md#online)).
 
-Up to four players can share a campaign. Start from the **Online** section on X-Men Legends' page in Ultimate Legends. Everyone needs the same 0.4.0 build and XML2 Fix **1.8.0 or later**, with Test mode off. Update the launcher to **0.4.0 first**, then **Rebuild** in the **Build** section, then **Play**. 0.2.x and 0.4.0 never join each other; **Verify Files** installs or updates the fix.
+Up to four players can share a campaign. Everyone needs the same build - builder 0.6.0-beta.1 with XML2 Fix
+1.11.0-beta.1 - with the same gameplay settings and Test mode off; a different build or setting is refused with the
+reason on both PCs. A 0.5 game cannot join a 0.6 game. To update, use Ultimate Legends' **Beta** channel: update XML2
+Fix and the builder, then **Rebuild**, then **Play**.
 
-## Host and share a code
+## Open Play Online
 
-1. Choose **Host a game** in the launcher. Leave **List my game publicly** off for a private room.
-2. In the game, open **Play Online**. Your room opens now; waiting at the main menu does not open it.
-3. Share the join code with your friends. The launcher copies it automatically when it first appears; **Copy** copies it again. The code also appears in the game's Host/Join menu and host lobby help bar.
-4. Choose **Host**, then **New Campaign** or **Load Saved Campaign** as usual. You can start alone and let friends join later.
+From the main menu choose **Play Online**. The screen shows your online screen name and whether the online service is
+connected, and offers four choices:
 
-A code has eight letters and digits, sometimes displayed with a dash in the middle. It never contains 0, O, 1, I or L. Anyone with a private room's code can join, so share it with the people you want to play with. Codes are temporary: ask for the current one after the host starts a new room.
+- **Host** - open a room for your campaign.
+- **Join by code** - join a friend's room with the code they send you.
+- **Browse** - pick a public room from a list.
+- **Other ways** - the original online menus: LAN search, Connect by IP and the rest of X-Men Legends II's online
+  screens. These do not need the online service.
 
-## Join a friend
+Mouse, keyboard and controller all work on these screens. If you build with `--online-menus off`, the game keeps the
+original online menus instead.
 
-1. Paste the code under **Join a game** in the launcher and press **Join**. Lower case, spaces and dashes are fine.
-2. In the game, open **Play Online → Join Game**.
-3. Select the host's game from the game's list to finish joining. Starting from the launcher does not skip this step.
+## Host a game
 
-The room count includes the host and people waiting to enter play. **Connected – playing together** can appear in the lobby; it does not mean a level has loaded yet.
+1. Choose **Host** and set up the room:
+   - **VISIBILITY** - **Private** (only people with the code can join) or **Public** (also listed in Browse).
+   - **ROOM NAME** - shown in Browse when the room is public. Up to 32 plain letters, digits, spaces and simple
+     punctuation; no `;` or `"`.
+   - **CAMPAIGN** - a new campaign or a saved one, chosen in the game's own options.
+   - **DROP-IN** - **ON**: friends can join after the game has started and come in at your next area. **OFF**: no
+     joining once the game starts.
+2. Open the room. The **ROOM CODE** appears as soon as the room is open; **Copy code** copies it to share.
+3. The **lobby** shows everyone who joins. Players mark themselves **Ready**; when you are happy, press **Start**. You
+   can also start alone and let friends join later (with DROP-IN on).
+
+A code has eight letters and digits, sometimes shown with a dash in the middle. It never contains 0, O, 1, I or L.
+Anyone with a private room's code can join, so share it only with the people you want to play with. Codes are
+temporary: ask for the current one after the host opens a new room.
+
+## Join by code
+
+1. Choose **Join by code** and paste or type the code. Lower case, spaces and dashes are fine.
+2. Join. You arrive in the host's lobby; mark yourself **Ready** and wait for the host to start.
+
+If the game has already started, you join it in progress (below) - or, when the host's DROP-IN is off, you see
+"This session has started; ask the host to return to the lobby".
 
 ## Browse public games
 
-To invite anyone, turn on **List my game publicly** before hosting. You can give the room a name of up to 32 plain English letters, digits, spaces and simple punctuation; semicolons and double quotes are not allowed. With no name, the game uses your online screen name to name the room. The first listing may briefly show the game's default screen name.
+**Browse** lists public rooms: the host, the campaign, the player count and whether drop-in is on. Pick a room and
+join it; **Refresh** checks again, and the page buttons move through longer lists. An empty list says so - host a
+public game yourself or ask a friend for a code. A room missing from the list may still be joinable by code. Private
+rooms are never listed.
 
-Other players open **Browse games**, choose a room and press its **Join**, then use **Play Online → Join Game** in the game. Rows show the host, mode, level, player count and whether play has started. An unfamiliar level may appear with a short internal name.
+## Join a game in progress
 
-The list refreshes about every ten seconds while visible and idle. Use **Refresh** to check again. It pauses while a session runs or the page/window is hidden. A failed refresh keeps the old list, so an old row is not proof that a room is still available. The browser shows a limited selection of public rooms; a friend's code is useful if their room is missing. Private rooms and password-protected rooms are not listed; this release does not offer password entry.
+**Joining a game in progress is on by default** (`[Online] LateJoin=1`; the host's **DROP-IN** row turns it off for
+one room). When you join a running game with a free place, you wait on **Joined Game** while the others keep playing.
+At the host's **next area load** everyone, the host included, reloads that area together from the host's campaign, so
+that load takes a little longer - then you are in, controlling a free hero. You do not appear in the middle of the
+current area. The party needs a free hero for you. If you set `LateJoin=0` yourself in `xml2-fix.ini`, a rebuild or
+repair keeps your choice.
 
-## Join during a campaign
+During a solo story segment, players without a hero stay connected and watch. The game says **Solo story segment -
+you rejoin when it ends**; when the story restores a larger party you get a hero back (your previous one when the
+group has not changed). Wolverine's opening and Magma's mansion tour are examples. Keep the watching PC connected.
 
-**Drop-in is on by default** (`[Online] LateJoin=1` since 0.6.0; the host's **DROP-IN** row turns it off for one room). You can join a running game with a free place. You wait on **Joined Game** while the others keep playing. At the host's **next level change** everyone, the host included, reloads that level together from the host's campaign image, so the load takes a little longer and you are in, controlling a free hero. You do not appear immediately in the current level. The party needs enough heroes for everyone to control one. With DROP-IN off, a late joiner sees "This session has started; ask the host to return to the lobby" and Browse shows the room as not taking players. If you set `LateJoin=0` yourself in `xml2-fix.ini`, a rebuild or repair keeps it.
+## The Party screen
 
-During a solo story segment, players without a hero stay connected and watch the shared camera. The game says **Solo story segment - you rejoin when it ends**. When the story restores a larger party, you regain a hero; the game tries to return your previous hero when the group has not changed. Wolverine's opening and Magma's mansion tour are examples. Keep the watching PC connected and responsive.
-
-Hero swaps survive ordinary level changes. The solo-segment hand-back uses the heroes held when the segment
-began and runs only through that segment and its end. Four-player Start Game no longer hits the mesh-peer crash.
-Slow PCs may still show LAG warnings, but the slow-player drop is disabled.
+During play, the pause menu's **Party** row opens the Party screen: who is in the game and what each player is doing
+(playing, loading, waiting for the next area, watching a story segment), the room code to invite more friends, and
+**Leave**. The host can also **Kick** a player.
 
 ## Leaving and lost connections
 
-Use the game's normal leave option when you can. The host keeps playing, the departed player's hero returns to computer control, and a replacement can join at the next level change.
+Use **Leave** (or the game's normal quit) when you can. The host keeps playing, the departed player's hero returns to
+computer control, and someone can join again at the next area.
 
-If a guest freezes, crashes or loses their connection in a game of three or more, the remaining players agree a cut frame before removing that player and continue together. The departed player can join again by code and enter play at the next level change. With only a host and one guest, the host keeps hosting after the guest leaves.
+If a guest freezes, crashes or loses their connection in a game of three or more, the remaining players agree when to
+remove that player and carry on together. The departed player can join again by code. With only a host and one
+guest, the host keeps hosting after the guest leaves.
 
-**If the host leaves, freezes or loses connection, the session ends for joiners** with "lost connection to the host". There is no host migration or automatic reconnection: host again and load the last save. A failed shared-campaign restore can also require rehosting. Still to be verified on separate PCs: three real PCs including a hotspot PC, swapped heroes across a level change, a joiner frozen for 30 seconds, public-browser join and a late joiner on two PCs (one-PC late joins stayed in lockstep through the first checksum periods only in the 0.6.0 re-check; see the release notes).
+**If the host leaves, freezes or loses connection, the session ends for everyone else.** Guests see **THE HOST LEFT**
+with **Host again** (continue from a save on your own PC) and **Back to Online**. There is no host migration or
+automatic reconnection yet (planned for 0.8). A sudden host crash can take about ten seconds to be noticed. A failed
+shared-campaign restore can also mean hosting again.
 
-If the online service becomes unavailable, existing player connections may continue, but new joins stop. A service restart loses its rooms: host again for a new code if you need to reconnect.
+If the online service becomes unavailable during a game, existing players stay connected but new players cannot join.
+A service restart loses its rooms: host again for a new code. Slow PCs may show LAG warnings; the slow-player drop is
+disabled.
 
-## LAN and Connect by IP
+## Messages and what to do
 
-Start with the launcher's normal **Play** button to use LAN search or **Connect by IP** as usual. A normal start does not open or rejoin a code room. Hosting or joining from the launcher applies to that start only; starting the game directly later does not reuse it.
+The in-game Play Online screens name the cause and the next step of every failure, one message at a time, on the screen
+you are on. Host and Join stay open; nothing here restarts the game. **Retry** appears only where trying the same thing
+again can help, and waits (with a countdown in the corner of the message) for the online service's request spacing.
+The small grey text beside a message is a redacted diagnostic (`join: room_full`): it never contains codes, addresses or
+service text, so it is safe to quote in a report.
+
+| Message | Cause | What to do |
+|---|---|---|
+| Code not found. Ask the host for the current code. | The service has no open room for that code. | Edit the code or ask the host; Back leaves the screen. |
+| That room closed. Ask the host for a new code. | The room closed before you got in. | Ask the host to host again; Edit the code. |
+| That game is full. Try another game or ask for a new code. | All four places are taken. | Browse another game. |
+| This session has started; ask the host to return to the lobby | The host's DROP-IN is off and the game has started. | Ask the host to return to the lobby, or to turn DROP-IN on for the next room. |
+| Not taking players right now. Try again soon. | The room exists but is loading or has drop-in off. | Retry (spaced by the service limit) or Browse. |
+| Different game version. Update to the same build. | The host's build differs; the grey line names both builds (`LC36 vs your LC37`). | Update together, then try again. |
+| Too many requests. Wait a few seconds, then retry. | The service limit; the grey line counts down. | Wait; Retry and Refresh stay off until it ends. |
+| The online service did not answer. Try again. | A timeout, or Host > Open while the service never answered (nothing was lost: no room existed yet). | Retry. |
+| Can't reach the service. Retry; LAN and IP still work. | No connection to the service. A running game is not affected. | Retry, or use Other ways to play. |
+| The online service refused this game. Update the game. | The service rejected this build or its sign-in. | Update the game and launcher. |
+| Online service not verified. Check its setting or update. | The service's certificate is not the one this build trusts. | Update; check for connection interception. There is no bypass. |
+| TestMode is on, so online play is off. Turn it off. | `[TestMode]` blocks online play. | Turn TestMode off and restart through Host/Join. |
+| Online needs a complete install. Use Other ways to play. | A required install guard failed (rooms, save format, native lists). | Verify Files; or play by LAN/IP. |
+| The network link is busy. Wait a moment, then repeat. | The previous connection is still closing. | Wait a moment, then press the screen's own button again (Done, Open the room, Refresh); there is no Retry button for this one. |
+| Room name must be 1-32 plain characters. Go Back. | The room name has characters the service does not accept. | Shorten it; no `;` or `"`. |
+| Online service request failed. Retry or go Back. | Anything else (the diagnostic names the operation). | Retry; report the diagnostic if it repeats. |
+| Could not find the host's game. Go Back and try again. | The host's game did not answer the lobby search. | Go Back and join again. |
+| The host's game refused you. Check build and settings. / Refused. Settings possibly differ: {rules} | The host's game refused admission. The rule names are possibly (they share summary buckets). | Match builds and settings, then join again. |
+| Took too long to connect. Go Back and try again. | A native step timed out. | Go Back and join again. |
+| Lost the online service during setup. Try again. | The service dropped while the lobby was being set up. | Try again. |
+| Game setup or admission failed. Go Back and try again. | Any other native setup step failed. | Go Back and try again. |
+| Could not open the clipboard. Type the code instead. / No code on the clipboard. Copy the 8-symbol code first. | The clipboard could not be opened / holds no text or no code (an empty clipboard or an image reads as "no code"). | Type the code; a valid typed code is never erased. |
+| {Name} left or lost connection. The party continues; they can rejoin with the code. | A guest left the lobby (six seconds, then it clears). | Nothing; the code still works. |
+| Online service lost. Players here stay connected; new players cannot join. | The service dropped while your room was open. | Keep playing; host again later for a new code. |
+| THE HOST LEFT: Host again to continue from a save on this PC. | You were a guest and your connection to the host ended. The 0.6 game ends; there is no takeover. | **Host again** opens Host setup (choose a new or saved campaign); **Back to Online** closes the panel. It shows only when the game's connection to the host ended (a lost or crashed host, or the 10 s watchdog); other ways a session can end (a normal host quit, removal by the host) are not claimed as host loss and show only the game's own message. |
 
 ## The online service and privacy
 
-The project's **broker** is a small service that introduces the players and maintains temporary rooms and codes. The game tries a direct connection and can use a relay when the networks need it. Code-based online play needs no port forwarding or router changes. The relay passes encrypted game traffic between players; the broker is not a server that runs your campaign.
+The project's **broker** is a small service that introduces the players and maintains temporary rooms and codes. The game tries a direct connection and can use a relay when the networks need it (successful relayed play is not verified yet; relay-only mode refuses an unavailable relay instead of falling back to a direct connection). Code-based online play needs no port forwarding or router changes. The relay passes encrypted game traffic between players; the broker is not a server that runs your campaign.
 
 Public games connect players directly, so players can see each other's internet address. Use a private code to play only with friends; a private code does not hide your address from the friends in your session.
 
@@ -65,9 +141,9 @@ Rooms and memberships live in memory and disappear when closed, expired or the s
 
 No personal account is required. Operational logs include network connection details, an installation identifier and join codes. The deployment keeps a limited amount of logs; a room's disappearance does not erase its log entries. Use a screen name and room name you are happy to share. Keep active private codes out of public reports.
 
-## Messages and what to do
+## Messages in Ultimate Legends' Online panel (0.4 and 0.5)
 
-These are the English Online-panel messages, including input checks, disabled controls and public-browser failures. Values in braces vary. If a message includes **Details**, keep that text with your report after removing private connection details.
+Up to 0.5, online play started from the launcher's Online panel. These are its English messages, including input checks, disabled controls and public-browser failures. Values in braces vary. If a message includes **Details**, keep that text with your report after removing private connection details.
 
 | Message | What to do |
 |---|---|
@@ -113,38 +189,3 @@ These are the English Online-panel messages, including input checks, disabled co
 | The online game has ended. / The game was closed. | The run has finished. Start Host or Join again for another run. This message alone does not diagnose a crash. |
 
 When reporting a problem, include the exact message, the step that failed, everyone's game/fix versions, whether anyone used a hotspot, and each affected PC's `xml2-fix.log` and `online-status.json`. Copy them before the next launch. Review copies for private details before sharing; do not attach game files, saves, disc images or online identity keys.
-
-## In-game messages (Play Online menus)
-
-The in-game Play Online screens name the cause and the next step of every failure, one message at a time, on the screen
-you are on. Host and Join stay open; nothing here restarts the game. **Retry** appears only where trying the same thing
-again can help, and waits (with a countdown in the corner of the message) for the online service's request spacing.
-The small grey text beside a message is a redacted diagnostic (`join: room_full`): it never contains codes, addresses or
-service text, so it is safe to quote in a report.
-
-| Message | Cause | What to do |
-|---|---|---|
-| Code not found. Ask the host for the current code. | The service has no open room for that code. | Edit the code or ask the host; Back leaves the screen. |
-| That room closed. Ask the host for a new code. | The room closed before you got in. | Ask the host to host again; Edit the code. |
-| That game is full. Try another game or ask for a new code. | All four places are taken. | Browse another game. |
-| Not taking players right now. Try again soon. | The room exists but is loading or has drop-in off. | Retry (spaced by the service limit) or Browse. |
-| Different game version. Update to the same build. | The host's build differs; the grey line names both builds (`LC36 vs your LC37`). | Update together, then try again. |
-| Too many requests. Wait a few seconds, then retry. | The service limit; the grey line counts down. | Wait; Retry and Refresh stay off until it ends. |
-| The online service did not answer. Try again. | A timeout, or Host > Open while the service never answered (nothing was lost: no room existed yet). | Retry. |
-| Can't reach the service. Retry; LAN and IP still work. | No connection to the service. A running game is not affected. | Retry, or use Other ways to play. |
-| The online service refused this game. Update the game. | The service rejected this build or its sign-in. | Update the game and launcher. |
-| Online service not verified. Check its setting or update. | The service's certificate is not the one this build trusts. | Update; check for connection interception. There is no bypass. |
-| TestMode is on, so online play is off. Turn it off. | `[TestMode]` blocks online play. | Turn TestMode off and restart through Host/Join. |
-| Online needs a complete install. Use Other ways to play. | A required install guard failed (rooms, save format, native lists). | Verify Files; or play by LAN/IP. |
-| The network link is busy. Wait a moment, then repeat. | The previous connection is still closing. | Wait a moment, then press the screen's own button again (Done, Open the room, Refresh); there is no Retry button for this one. |
-| Room name must be 1-32 plain characters. Go Back. | The room name has characters the service does not accept. | Shorten it; no `;` or `"`. |
-| Online service request failed. Retry or go Back. | Anything else (the diagnostic names the operation). | Retry; report the diagnostic if it repeats. |
-| Could not find the host's game. Go Back and try again. | The host's game did not answer the lobby search. | Go Back and join again. |
-| The host's game refused you. Check build and settings. / Refused. Settings possibly differ: {rules} | The host's game refused admission. The rule names are possibly (they share summary buckets). | Match builds and settings, then join again. |
-| Took too long to connect. Go Back and try again. | A native step timed out. | Go Back and join again. |
-| Lost the online service during setup. Try again. | The service dropped while the lobby was being set up. | Try again. |
-| Game setup or admission failed. Go Back and try again. | Any other native setup step failed. | Go Back and try again. |
-| Could not open the clipboard. Type the code instead. / No code on the clipboard. Copy the 8-symbol code first. | The clipboard could not be opened / holds no text or no code (an empty clipboard or an image reads as "no code"). | Type the code; a valid typed code is never erased. |
-| {Name} left or lost connection. The party continues; they can rejoin with the code. | A guest left the lobby (six seconds, then it clears). | Nothing; the code still works. |
-| Online service lost. Players here stay connected; new players cannot join. | The service dropped while your room was open. | Keep playing; host again later for a new code. |
-| THE HOST LEFT: Host again to continue from a save on this PC. | You were a guest and your connection to the host ended. The 0.6 game ends; there is no takeover. | **Host again** opens Host setup (choose a new or saved campaign); **Back to Online** closes the panel. It shows only when the game's connection to the host ended (a lost or crashed host, or the 10 s watchdog); other ways a session can end (a normal host quit, removal by the host) are not claimed as host loss and show only the game's own message. |

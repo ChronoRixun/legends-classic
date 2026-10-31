@@ -5,147 +5,111 @@ build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebui
 
 ## v0.6.0 - content version 30 (needs XML2 Fix 1.11.0)
 
-DRAFT - 0.6.0-beta.1 is being prepared with XML2 Fix 1.11.0-beta.1.
-It is not released. The local release report records the measured fingerprint and package; hands-on checks remain pending.
+Legends Classic 0.6.0-beta.1 goes with XML2 Fix 1.11.0-beta.1 (content 30 / catalogue 8 / LC40). It is a beta: the
+co-op parts were tested on one PC with two copies of the game and on two PCs at home, and still need wider testing
+(see "Known limitations"). Guard stays off by default.
 
-**What's new in 0.6.0-beta.1**
+**What's new: online co-op inside the game**
 
-**Co-op screens.** Play Online brings together Host, Join by code and Browse. You can choose public or private
-rooms, see lobby cards, mark yourself Ready and copy or paste room codes. Retry messages explain connection
-problems. The in-game Party screen gives the host controls for the group. Other ways still opens the original
-online menus. The new screens and their fonts are on by default when you use the first game's menus and the
-matching XML2 Fix version. Use `--online-menus off` when building to keep the original menus.
-These screens are experimental. The fixes below passed automated checks. Hands-on checks are still needed
-before release.
+- **Play Online** now opens the game's own co-op screens. **Host** opens a room: choose Public or Private, give it a
+  name, pick a new or saved campaign and choose whether friends may join after the start (**DROP-IN**). The room code
+  appears as soon as the room is open, with **Copy code**. **Join by code** takes a pasted or typed code, and
+  **Browse** lists public rooms with the host, campaign, player count and drop-in setting.
+- **The lobby** shows everyone who has joined. Players mark themselves Ready and the host starts when the group is
+  set. The host can also start alone.
+- **The Party screen** (the pause menu's Party row) shows who is playing and what each player is doing, keeps the
+  room code at hand for inviting more friends, and lets the host remove a player.
+- **Other ways** still opens X-Men Legends II's original online menus (LAN search, Connect by IP). The new screens and
+  their fonts are on by default; build with `--online-menus off` to keep the original menus.
+- Clear messages explain every connection problem on the screen where it happens, with **Retry** only where trying
+  again can help. When a room or player limit is reached, the message says what to do instead.
+
+**What's new: join a game in progress**
+
+- **Friends can join a game that has already started.** The newcomer waits on Joined Game while the others keep
+  playing; at the host's next area load everyone, the host included, reloads that area together and the newcomer
+  takes a free hero. That one load takes a little longer. Nobody appears in the middle of an area.
+- It is on by default. The host's **DROP-IN** setting turns it off for one room; a friend who tries to join a started
+  game then sees "This session has started; ask the host to return to the lobby". A player who set `LateJoin=0` in
+  `xml2-fix.ini` keeps that choice through a rebuild or repair.
+- In testing, admissions on one PC and on two PCs at home held through movement by both players and the walked exits
+  that followed, with every PC staying in step.
+
+**Co-op fixes since 0.5**
+
+- A lost connection to the room listing service no longer ends a healthy game during a long loading screen: players
+  already in keep playing, and new players cannot join until the host opens a new room.
+- When the host quits (even with a dead hero), crashes or loses the connection, guests see a host-left message with
+  working **Host again** and **Back to Online** buttons. A sudden crash can take about ten seconds to be noticed.
+- Guests stay connected while the host uses Team Management, and a player who leaves and rejoins gets the roster back.
+- Fixed a crash when starting with a guest, focus and input getting stuck when returning to Play Online, and
+  Party confirmations that swallowed the next Quit or Back.
+- Screens free their text, panels and model data when they close; repeated opening and closing kept memory use steady
+  in automated checks.
+- Ready, Start, lobby cards, badges, headings, prompts and the Copy code button were corrected; Browse, Retry and the
+  dialogs respond correctly to keyboard, controller and clicks, including on button edges and corners. Resolution keeps
+  its value at 4:3.
+- Relay-only connections refuse an unavailable relay instead of quietly connecting directly, and refusing one
+  connection no longer disturbs the healthy players in the room.
+- The flying carry attaches the carried character from the first frame.
 
 **Carried forward from 0.5**
 
-- **The first game's items, shops and drops.** All 116 X-Men Legends equipment pieces are included, with their
-  bonuses. Enemies use the first game's drop tables. The Forge sells its gear tier by tier. The Healer uses its
-  prices. The Grab Bag, selling and Danger Room rewards work as in the first game. Where a bonus has no exact
-  PC equivalent, it is converted as closely as the PC game allows. The build's `Docs\APPROXIMATIONS.md` lists each one.
-- **A bigger save format.** Saves have room for 1024 item definitions (up from 160) and 4096 item bonus records
-  (up from 512). They also hold more objectives, talents and world items, leaving room for heavier mods.
-  Existing saves load and are converted. See "Back up your saves" below.
-- **Phoenix's telekinesis from the first game.** Hold power 1 to lift an enemy, move them and throw them.
-  Thrown enemies take damage when they hit a wall, a prop or another enemy.
-- **Guard (Block / Grab) works as in beta 8.** The corrected first-game grabs and held blocking are optional.
-  They are off by default and still being checked with a real controller.
-- **The flying carry.** Buy Flight rank 3 for Phoenix, Rogue or Storm. Fly over an ally or enemy and hold Guard
-  to come down and pick them up. Carry them for up to about 10 seconds, then throw them.
+- **The first game's items, shops and drops.** All 116 X-Men Legends equipment pieces with their bonuses, the first
+  game's drop tables, the Forge tier by tier, the Healer's prices, the Grab Bag, selling and Danger Room rewards. Where
+  a bonus has no exact PC equivalent it is converted as closely as the PC game allows; the build's
+  `Docs\APPROXIMATIONS.md` lists each one.
+- **A bigger save format** with room for 1024 item definitions and 4096 item bonus records, more objectives, talents
+  and world items. Existing saves load and are converted.
+- **Phoenix's telekinesis** (hold power 1 to lift, move and throw an enemy) and **the flying carry** (Flight rank 3
+  for Phoenix, Rogue or Storm: hold Guard over an ally or enemy to pick them up, carry them for about 10 seconds and
+  throw them).
+- **Guard (Block / Grab) works as in beta 8.** The first game's grab rules and held blocking stay optional
+  (`--guard-decide xml1`) and off by default until they pass real-controller checks; `docs/RELEASE_GUARD.md`
+  describes how that default would change.
 
-The bigger saves, first-game shops and drops, raised engine limits, telekinesis and flying carry stay on by default.
-The builder and launcher use the same defaults, including when a build is run from the command line.
-Options you explicitly turn off stay off. `--guard-decide off` is the default and leaves the optional first-game
-Guard setting out of the game configuration. Use `--guard-decide xml1` to try it.
-See Legends Classic's `docs/RELEASE_GUARD.md` for how to change that default after controller checks pass.
+These stay on by default, from the launcher and from the command line alike; options you turn off stay off.
 
-**How to update.** Once released, use Ultimate Legends' Beta channel. Update **XML2 Fix to 1.11.0-beta.1** and
-**the builder to 0.6.0-beta.1**, then **Rebuild**, then **Play**.
+**How to update.** Use Ultimate Legends' Beta channel: update **XML2 Fix to 1.11.0-beta.1** and **the builder to
+0.6.0-beta.1**, then **Rebuild**, then **Play**. With the standalone builder, copy the matching `dinput.dll` into the
+output folder before you build (the co-op screens need it during the build).
 
-**Co-op needs the same version.** Everyone needs that same pair, content version 30 and matching gameplay
-settings. Test mode must be off. A 0.5 game uses content version 29 and cannot join a 0.6 game.
-The item catalogue is unchanged from 0.5. One intermediate co-op compatibility code was skipped because an earlier
-test configuration had already used it.
+**Co-op needs the same version.** Everyone needs the same pair, content version 30 and the same gameplay settings,
+with Test mode off. A 0.5 game (content version 29) cannot join a 0.6 game. The item catalogue is unchanged from 0.5.
 
-**Back up your saves.** Copy `Documents\Activision\X-Men Legends\SaveLC` somewhere safe before updating.
-The bigger save format from 0.5 is unchanged. Beta 8 and stable 0.4.0 cannot load these saves.
-The final 0.6 package still needs checks with real 0.5 campaigns: load, play, save, quit and reload.
-Older versions must also refuse the saved files without changing them.
+**Back up your saves.** Copy `Documents\Activision\X-Men Legends\SaveLC` somewhere safe before updating. 0.6 keeps the
+0.5 save format; beta 8 and stable 0.4.0 cannot load these saves (they refuse them without changing them).
 
-**Fixes awaiting hands-on confirmation**
+**Known limitations**
 
-- Advanced Options now frees its panel when closed without changing a setting. Co-op screens also free model
-  data they no longer use. Repeated loading and unloading in automated checks showed stable memory use and no
-  growing count of open system resources. The checks do not yet confirm how the screens draw, graphics memory use
-  or whether a guest can still freeze during a long session.
-- Guests stay connected while the host uses Team Management. Rejoining later restores the roster.
-  When the host leaves, including after a slow connection loss, guests see a host-left message with working buttons.
-- For guests, Delete now toggles Ready instead of copying the room code. The host's Start button selection updates
-  when players change readiness. Lobby cards, host badges, campaign headings, prompts at the bottom of the screen
-  and the contrast of Copy code have been corrected.
-- Browse opens with a visible choice selected. It accepts keyboard, controller and clicks on a row.
-  Slanted button edges and corners now respond to clicks correctly. Leave confirmation, Retry and host-left buttons
-  have corrected click areas and actions.
-- Empty Browse results explain what happened. If a room or player limit is reached, the message tells you what to do:
-  close another public room hosted from the same network, or leave another game to free a player slot.
-  Repeated retries will not help with those limits.
-- Resolution keeps the active value, including at a 4:3 aspect ratio. Online screens load less unused data.
-  Controller shortcuts for room codes, screen wording and spacing have improved. Actual loading times still need
-  measuring.
-- Flying pickup attaches the carried character from the first frame. Pickup visibility still needs a real-controller
-  check.
-- Automated game copies running in the background accept input sent specifically to them. They do not take the
-  player's keyboard input when background input sharing is disabled.
-- Optional first-game Guard restores the original rules for which enemies can be grabbed. It adds held blocking
-  and includes the required block animation. It stays off by default until real-controller checks pass.
-
-- A lost connection to the room listing service no longer ends an otherwise healthy game during a long
-  loading screen. New players cannot join a closed room; existing players keep playing until the game connection
-  itself ends. Sudden host crashes still depend on connection-loss detection and can take about ten seconds.
-- Host Quit is recognized even when the host's hero has died. The host-left panel appears as soon as departure
-  is detected; its buttons become available after the old session finishes closing. This still needs timing checks
-  on separate PCs.
-- Starting with a guest no longer runs a retired network task after its session has closed, fixing a startup crash.
-  Live networking continues to run normally. Retry navigation recovers when its button hides or becomes unavailable;
-  hovering the Play Online footer no longer changes the selected list row.
-- Returning to Play Online retries a lost screen-change request and releases blocked input after a short timeout.
-  Team Management no longer mistakes a temporarily empty hero slot for a spectator.
-- Closing and reopening screens clears their text buffers and cached labels, including when a new screen reuses
-  the same memory. Failed secure connections also release their temporary system resources.
-- Escape during the opening fade of Advanced Options is handled before its rows appear. Back and Delete retain
-  readable selected labels and their keyboard/controller prompts. Empty Browse lists cannot focus hidden page
-  controls; paging remains available when there are more rooms.
-- Choosing Public or Private with the mouse selects that choice consistently. Expired Party confirmations no
-  longer swallow the next Quit or Back action. Waiting-player cards better distinguish Playing, Loading and
-  pending admission; the host still controls actual admission and kicking.
-- Relay-only connections refuse an unavailable relay instead of falling back to a direct game connection.
-  Refusing one connection preserves healthy room members. Successful relayed play still needs separate-PC checks.
-
-**Tested:** the local release round runs fresh automated engine, startup, menu, converted-content,
-memory-cleanup and release-identity checks, plus a build from legally owned game copies. Exact results and package
-receipts are recorded in the local release report. These checks do not establish hands-on gameplay acceptance.
-Earlier gameplay checks ran two game copies on one PC. Separate-PC play remains unverified.
+- Co-op was tested on one PC and on two PCs at home. Not verified yet: play through the relay (for networks where a
+  direct connection fails; relay connection failures are still being investigated), four players on separate PCs,
+  and sessions longer than about ten minutes.
+- If the host leaves or loses the connection, the session ends; there is no host takeover or automatic reconnect yet
+  (planned for 0.8). If a healthy host drops out unexpectedly, please keep `xml2-fix.log` from every PC: the cause is
+  not known yet.
+- Joining a game in progress happens only at the host's next area, never mid-area.
+- The new screens still need more checks with mouse, keyboard and controllers at 720p, 1080p and 4:3, over long
+  sessions (memory and graphics memory), and on the first opening of Party and the slower original screens. The
+  Play Online Back selection, Party status labels and the original Kick button's lettering are still being reviewed.
+- Phoenix's telekinesis can pick a nearby crate or nobody in a crowd or when she faces away. The flying carry ends if
+  the carried character hits a prop or wall or the carrier lands. Throws hurt enemies through collisions, not by
+  landing on the floor, and throw damage against resistant soldiers is still being judged.
+- The first Grab Bag course and some earlier campaign, appearance and button-prompt issues remain under review.
+- The optional 96-character limit and larger character pools (`[Limits] Actors=96`, `ActorPools=124`) stay off by
+  default; saves made with them on need them on to load.
 
 **What to test**
 
-The final package still needs these checks before release:
-
-- Quit while the host's hero is dead; kill the host with both active and waiting guests; check when the
-  host-left panel appears and when its buttons work. Close only the listing-service connection, cross a real area
-  exit and confirm healthy gameplay continues through loading.
-- Press Escape before Advanced Options rows appear and during its fade. Check selected Back/Delete labels,
-  empty Browse navigation, positive paging with more than seven rooms, repeated Public/Private clicks and
-  Party Kick followed immediately by Quit or Back.
-- If a healthy host still leaves unexpectedly, retain the diagnostic log. The cause remains unresolved; the
-  extra log details are for investigation and do not establish a gameplay fix.
-
-- Close Advanced Options with Escape. Open and close Browse, the lobby and Party repeatedly. Check that memory
-  use stays steady over a long session and that the screens draw correctly. Check graphics memory as well.
-- Keep a guest waiting during Team Management. Join late, leave, rejoin and check the roster. Try kicking and
-  rejoining. Check every way the host can leave or lose connection and every button on the host-left message.
-- Check Delete, Ready and Start, lobby cards, badges, headings and prompts. In Browse, check the first selection,
-  row clicks, Retry and paging.
-- Use the mouse, keyboard and controller on every dialog at 720p, 1080p and 4:3. Click button edges and corners.
-- Measure the previously slow Post Game screen under Other ways and the first opening of Party.
-- Check that the original menus still work with the new menus disabled or their setting omitted. Also check with
-  the new fonts disabled. Check that mismatched builds and gameplay settings prevent joining with a clear message.
-- Play on two real PCs through two area exits. Join late in the next area, try a relayed connection and play for
-  ten minutes. Separate-PC play and long-session stability are not yet confirmed.
-- Recheck shops, campaign saves, telekinesis and flying pickup visibility. Check the usual Block / Grab and the
-  optional first-game Guard with a real controller.
-
-**Known issues**
-
-- Phoenix's telekinesis can select a nearby crate or nobody when she is in a crowd or faces away.
-- Flying carry ends if the carried character hits a prop or wall, or if the carrier lands.
-- Throws hurt enemies through collisions, not through landing on the floor. Throw damage against resistant soldiers
-  is still being judged.
-- The first Grab Bag course and earlier campaign, appearance and button-prompt issues remain under review.
-- The Back button selection on the Play Online hub, Party status labels and the original Kick button's lettering
-  still need review.
-- The optional 96-character limit and larger character pools (`[Limits] Actors=96` and `ActorPools=124`) stay off
-  by default. Saves made with them enabled need matching settings to load.
+- Host, Join by code and Browse with mouse, keyboard and controller; Ready, Start and Copy code; public and private
+  rooms; empty and long Browse lists; every message's buttons.
+- Join a game in progress on two PCs, then play through two more areas together; turn DROP-IN off and check the
+  refusal; leave and rejoin; remove a player from Party.
+- Every way the host can leave (Quit, dead hero, crash, lost connection) and the host-left buttons.
+- A relayed connection, three or four players on separate PCs, and a long session.
+- A real 0.5 campaign: load, play, save, quit and reload; shops and rewards; telekinesis and flying pickup.
+- The original online menus with `--online-menus off`, and a mismatched build or setting being refused with a clear
+  message.
 
 ## v0.5.0 - content version 29 (needs XML2 Fix 1.10.0)
 
