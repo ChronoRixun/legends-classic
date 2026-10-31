@@ -2154,7 +2154,9 @@ def lobby_layout(role, *, members=1, ready=False, fixture=False, pending=False, 
     shape('outline',(315,128,75,16),3)
     text('lc_room_visibility','PENDING',(320,130,65,14),'label',3)
     # 060r live: no "pending" copy for a guest or a LAN host - the campaign is the host's choice; the host's own DLL line names it.
-    text('lc_campaign_summary','Campaign chosen in Game options. Friends join at the next area.' if role=='host' else 'Campaign set by the host. Friends join at the next area.',(61,153,375,18),color=3)
+    # p060fix/AE: the authored line claims no admission policy; the host's DLL line adds "Friends join at the next area" or
+    # "No joining once the game starts" from the host's actual DROP-IN choice, and a guest never claims the remote policy.
+    text('lc_campaign_summary','Campaign chosen in Game options.' if role=='host' else 'Campaign set by the host.',(61,153,375,18),color=3)
     text('lc_code_label','ROOM CODE',(487,118,95,14),'label',3,align='right')
     text('lc_room_code','K7QN-2X9M' if fixture else '---- ----',(452,132,130,23),'title',5,data=True,align='right')
     text('lc_copy_code','Copy code',(486,159,96,16),'label',intent='copy')
@@ -2208,7 +2210,7 @@ def lobby_layout(role, *, members=1, ready=False, fixture=False, pending=False, 
         parts=[dict(text='to get ready.',rect=(177,0,100,17),style='body',color=3)])
     waiting_row=ready_flags.index(False) if waiting else 0
     text('lc_waiting_name',('Logan','Kitty','Alex','Sam')[waiting_row] if fixture and waiting else '',(193,365,106,17),'body',3,data=True)
-    variant('lc_ready_all','All ready. Friends join at the next area.',(125,365,420,17),'body',3,visible=fixture and not waiting and members>1)
+    variant('lc_ready_all','All ready.',(125,365,420,17),'body',3,visible=fixture and not waiting and members>1)
     variant('lc_ready_solo','Solo start follows the native minimum-player rule.',(125,365,420,17),'body',3,visible=fixture and members==1 and not waiting)
     for key,label,rect,intent in (
         ('text_startgame','START GAME',(43,391,177,31),'native-start'),

@@ -496,11 +496,15 @@ RECEIVE_VALIDATION = '1'
 # player joins a running game and is brought in at the next level change, solo story segments keep the other players
 # watching, and the host keeps hosting when the last player leaves. Every co-op PC must have it (a peer without it is
 # refused by name). Written for every port build. LateJoin below separately
-# gates the experimental restore; the release retains lifecycle/spectator support.
+# gates the admission of a player who joins AFTER the host pressed START.
 JOIN_IN_PROGRESS = '1'
-# Retain spectators/host lifecycle while the late-join restore remains unsafe.
-# Rule26 revision7 supports this host-only admission choice; guests need no matching policy.
-LATE_JOIN = '0'
+# [Online] LateJoin=1 (0.6.0, XML2 Fix p060fix/AE): a friend who joins a running game waits on the Joined Game screen
+# and, at the host's next area load, everyone (host included) reloads the host's campaign image together through the
+# saved-campaign START path, with a canonical camera and RNG epoch on every PC. It is the host's choice (rule 26
+# revision 7; guests need no matching policy) and the host's DROP-IN row toggles it for one room. 0.6.0-preview
+# shipped 0 while the restart desynchronised at its first checksum (live-060y); a tester's explicit value in the
+# existing xml2-fix.ini survives a rebuild or repair (keep_player_late_join).
+LATE_JOIN = '1'
 
 # [Online] TickRate=60 (XML2 Fix 1.8.0-beta.3, gameplay agreement rule 29): online sessions run at 60 frames a second
 # like single-player instead of the game's own 30 (CClient::frame's online 1/30 s frame). Lockstep runs every PC's
@@ -1689,6 +1693,25 @@ def old_fix_keys(dll, keys: dict) -> list:
     return missing
 
 
+def keep_player_late_join(existing_text: str, keys: dict) -> dict:
+    """`keys` with [Online] LateJoin taken from the existing ini when a player set it explicitly to 0 or 1 (any
+    case). The port owns the key (it is written for every build, default LATE_JOIN), but a tester who turned late
+    joining off, or on while the default was 0, keeps that choice across a rebuild or a repair. Anything but 0/1
+    is replaced by the default; no [Online] LateJoin in `keys` (not a port build) leaves `keys` as it is."""
+    online = keys.get('Online') or {}
+    if 'LateJoin' not in online:
+        return keys
+    for section, values in parse_ini(existing_text).items():
+        if section.lower() != 'online':
+            continue
+        for k, v in values.items():
+            if k.lower() == 'latejoin' and v.strip() in ('0', '1') and v.strip() != online['LateJoin']:
+                kept = {s: dict(vals) for s, vals in keys.items()}
+                kept['Online']['LateJoin'] = v.strip()
+                return kept
+    return keys
+
+
 def write_port_keys(out, keys: dict | None = None, *, old_fix_ok: bool = False) -> dict:
     """merge the port's keys (default: port_keys(out)) into <out>/xml2-fix.ini, dropping the PORT_OWNED keys it does
     not need; the launcher's keys stay. Returns the keys written. An existing DLL that doesn't know every key raises
@@ -1701,6 +1724,7 @@ def write_port_keys(out, keys: dict | None = None, *, old_fix_ok: bool = False) 
         text = _decode(ini.read_bytes())[0]
     except FileNotFoundError:
         text = ''
+    keys = keep_player_late_join(text, keys)
     drop = dropped_keys(keys)
     actors = any(section.lower() == 'limits' and any(k.lower() == ACTORS_KEY.lower() for k in values)
                  for section, values in parse_ini(text).items())
