@@ -18,7 +18,8 @@ Classic runs the first game on the sequel's PC engine - which is what makes onli
 
 > **Current beta: 0.6.0-beta.1** (builder 0.6.0-beta.1 with XML2 Fix 1.11.0-beta.1, on Ultimate Legends' Beta
 > channel): online co-op inside the game - Host, Join by code, Browse, a lobby and a Party screen - and friends can
-> join a game in progress at the host's next area (the host's DROP-IN setting turns that off per room).
+> join a game in progress at the host's next area, with two, three or four players (the host's DROP-IN setting
+> turns that off per room).
 > Previous beta: 0.5.0-beta.1 with XML2 Fix 1.10.0-beta.1. Stable: 0.4.0 (XML2 Fix 1.8.0 or later).
 > Updating? Update Ultimate Legends first, then **Rebuild**, then **Play**. Everyone in an online game needs the same
 > build. Help: the [community Discord](https://discord.gg/tFxwHtZv8k). Details: [CHANGELOG](CHANGELOG.md),
@@ -75,8 +76,10 @@ Still open (everything, with measurements: [docs/KNOWN-ISSUES.md](docs/KNOWN-ISS
   checked against the original ([#6](https://github.com/ChronoRixun/legends-classic/issues/6)). Stable 0.4.0 uses X-Men Legends II's.
 - **Some fall kill zones** stay off until proven safe ([#22](https://github.com/ChronoRixun/legends-classic/issues/22)).
 - **Enemies attack somewhat more often** than in the original ([#101](https://github.com/ChronoRixun/legends-classic/issues/101)).
-- **Online** co-op is a beta: tested on two PCs at home, not yet through the relay or with four players on
-  separate PCs. If the host leaves, the session ends (until co-op recovery in 0.8).
+- **Online** co-op is a beta. Co-op was tested on one PC and on two PCs at home, with two, three and four players,
+  including fights. Not verified yet: playing through the relay (networks where a direct connection fails), four
+  players on four separate PCs, long sessions, and joins over slow connections. If the host leaves, the session
+  ends (until co-op recovery in 0.8).
 
 ## Roadmap
 

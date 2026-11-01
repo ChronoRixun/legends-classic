@@ -96,16 +96,19 @@ try. If a screen's text or labels are cut off, or something looks off, please re
 
 ## Online
 
-- **0.6.0-beta.1 is a co-op beta.** The in-game screens and joining a game in progress were tested on one PC with
-  two copies of the game and on two PCs at home. Not verified yet: play through the relay (for networks where a
-  direct connection fails), four players on separate PCs, and long sessions. Relay-only mode refuses an unavailable
-  relay instead of falling back to a direct connection, and relay connection failures are still being investigated.
+- **0.6.0-beta.1 is a co-op beta.** Co-op was tested on one PC and on two PCs at home, with two, three and four
+  players, including fights. Not verified yet: playing through the relay (networks where a direct connection fails),
+  four players on four separate PCs, long sessions, and joins over slow connections (if a join takes longer than the
+  wait, play continues and the friend comes in moments later). Relay-only mode refuses an unavailable relay instead
+  of falling back to a direct connection, and relay connection failures are still being investigated.
 - **Host loss ends the session** until co-op recovery (0.8): no host migration or automatic reconnection yet. A guest
   can join again by code. If a healthy host still drops out unexpectedly, please keep `xml2-fix.log` from every PC:
   the cause is not known yet.
 - **Joining a game in progress happens at the host's next area**, not mid-level: the newcomer waits on Joined Game,
-  then everyone, the host included, reloads that area together, so that load takes a little longer. The host's
-  DROP-IN row turns it off for a room; a friend who tries to join then is told the session has started.
+  then everyone, the host included, reloads that area together, so that load takes a little longer. While the
+  friend gets the host's game, the host and the other players wait up to 10 seconds on "A player is joining..."
+  (`[Online] JoinHoldSeconds`, default 10, 0..15, `0` = off). The host's DROP-IN row turns joining off for a room; a friend
+  who enters the code of a started game then is told the session has started.
 - **The new screens** still need more checks with mouse, keyboard and controllers at different resolutions, over
   long sessions (memory, graphics memory) and on the slowest screens' first opening. `--online-menus off` keeps the
   original online menus.

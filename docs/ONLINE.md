@@ -1,8 +1,9 @@
 ﻿# Play online in 0.6
 
 Player guide for Legends Classic **0.6.0-beta.1** with XML2 Fix **1.11.0-beta.1**. Online co-op now runs from the
-game's own **Play Online** screen. This is a beta: it was tested on one PC with two copies of the game and on two PCs
-at home. Play through the relay, four players on separate PCs and long sessions are not verified yet
+game's own **Play Online** screen. This is a beta. Co-op was tested on one PC and on two PCs at home, with two, three
+and four players, including fights. Not verified yet: playing through the relay (networks where a direct connection
+fails), four players on four separate PCs, long sessions, and joins over slow connections
 ([known issues](KNOWN-ISSUES.md#online)).
 
 Up to four players can share a campaign. Everyone needs the same build - builder 0.6.0-beta.1 with XML2 Fix
@@ -46,8 +47,8 @@ temporary: ask for the current one after the host opens a new room.
 1. Choose **Join by code** and paste or type the code. Lower case, spaces and dashes are fine.
 2. Join. You arrive in the host's lobby; mark yourself **Ready** and wait for the host to start.
 
-If the game has already started, you join it in progress (below) - or, when the host's DROP-IN is off, you see
-"This session has started; ask the host to return to the lobby".
+If the game has already started, you join it in progress (below) - or, when the host's DROP-IN is off, you are told
+that the session has started and to ask the host to return to the lobby.
 
 ## Browse public games
 
@@ -63,7 +64,14 @@ one room). When you join a running game with a free place, you wait on **Joined 
 At the host's **next area load** everyone, the host included, reloads that area together from the host's campaign, so
 that load takes a little longer - then you are in, controlling a free hero. You do not appear in the middle of the
 current area. The party needs a free hero for you. If you set `LateJoin=0` yourself in `xml2-fix.ini`, a rebuild or
-repair keeps your choice.
+repair keeps your choice. It works with two, three and four players, at any exit and in areas with enemies; two
+friends who are waiting at the same time both come in at the same exit.
+
+While you get the host's game, the host and the other players wait up to 10 seconds on **A player is joining...** (or
+**2 players are joining...**) instead of playing on and then replaying that moment. The wait is the
+`[Online] JoinHoldSeconds` setting in `xml2-fix.ini`: default 10, up to 15, and `0` turns it off. Each PC
+uses its own value, and it does not have to match between players. If a join takes longer than the wait (a slow
+connection), play continues and you come in moments later.
 
 During a solo story segment, players without a hero stay connected and watch. The game says **Solo story segment -
 you rejoin when it ends**; when the story restores a larger party you get a hero back (your previous one when the
@@ -106,8 +114,8 @@ service text, so it is safe to quote in a report.
 | Code not found. Ask the host for the current code. | The service has no open room for that code. | Edit the code or ask the host; Back leaves the screen. |
 | That room closed. Ask the host for a new code. | The room closed before you got in. | Ask the host to host again; Edit the code. |
 | That game is full. Try another game or ask for a new code. | All four places are taken. | Browse another game. |
-| This session has started; ask the host to return to the lobby | The host's DROP-IN is off and the game has started. | Ask the host to return to the lobby, or to turn DROP-IN on for the next room. |
-| Not taking players right now. Try again soon. | The room exists but is loading or has drop-in off. | Retry (spaced by the service limit) or Browse. |
+| This session has started. Ask the host to return to the lobby. | The host's DROP-IN is off and the game has started. | Ask the host to return to the lobby, or to turn DROP-IN on for the next room. There is no Retry. |
+| Not taking players right now. Try again soon. | The room exists but is not taking players at the moment (it is loading, its places just changed, or the list could not confirm that the game has started). | Retry (spaced by the service limit) or Browse. |
 | Different game version. Update to the same build. | The host's build differs; the grey line names both builds (`LC36 vs your LC37`). | Update together, then try again. |
 | Too many requests. Wait a few seconds, then retry. | The service limit; the grey line counts down. | Wait; Retry and Refresh stay off until it ends. |
 | The online service did not answer. Try again. | A timeout, or Host > Open while the service never answered (nothing was lost: no room existed yet). | Retry. |
