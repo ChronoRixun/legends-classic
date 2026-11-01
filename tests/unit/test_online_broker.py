@@ -237,7 +237,7 @@ def test_native_play_online_fallback_and_off_are_unchanged_by_round_5():
 
 def test_round_5b_cause_scenes_retry_bar_only_for_retryable_causes_and_exact_copy():
     assert set(O.ERROR_CAUSES) == {'code_not_found', 'room_full', 'version_mismatch', 'rate_limited', 'timeout', 'offline', 'refused', 'generic',
-                                   'pin_mismatch', 'code_expired', 'room_closed', 'test_mode', 'unsupported', 'busy', 'invalid_name', 'too_many_public_rooms', 'too_many_joins'}
+                                   'pin_mismatch', 'code_expired', 'room_closed', 'test_mode', 'unsupported', 'busy', 'invalid_name', 'too_many_public_rooms', 'too_many_joins', 'session_started'}
     assert set(O.RETRYABLE_CAUSES) == {'rate_limited', 'timeout', 'offline', 'generic', 'room_closed'}  # same set the DLL's cause_retryable() allows
     for name in O.MENUS:
         screen, root, items = tree(name)
