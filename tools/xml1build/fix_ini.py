@@ -511,6 +511,15 @@ JOIN_IN_PROGRESS = '1'
 # existing xml2-fix.ini survives a rebuild or repair (keep_player_late_join).
 LATE_JOIN = '1'
 
+# [Online] Transport=gns (XML2 Fix gameplay-agreement rule 25 GnsTransport; xml2-fix docs/gns-transport.md): the game's
+# messages over GameNetworkingSockets. The new online screens ([Online] Menus=1) need it: without it the DLL keeps the
+# menu broker client off ("menu broker client unavailable - select Transport=gns") and refuses JoinInProgress, so Play
+# Online says "Online service: Unavailable". Written exactly when Menus=1 is written (online_menus_keys), never
+# otherwise: a build with --online-menus off keeps the stock transport (the launcher's Host / JoinCode imply gns by
+# themselves). Port-owned like Menus, so a rebuild sets it to gns over any other value and a rebuild with the online
+# menus off drops it; only [Online] LateJoin keeps a player's explicit value (keep_player_late_join).
+ONLINE_TRANSPORT = 'gns'
+
 # [Online] TickRate=60 (XML2 Fix 1.8.0-beta.3, gameplay agreement rule 29): online sessions run at 60 frames a second
 # like single-player instead of the game's own 30 (CClient::frame's online 1/30 s frame). Lockstep runs every PC's
 # frames together, so every co-op PC must have the same rate: a 60 and a 30 PC refuse each other at join by name.
@@ -558,7 +567,7 @@ PORT_OWNED = {'Game': ('NewGameTeam', 'ResetUnlocks', 'SaveFolder', 'ForcedTeams
               'Limits': ('ActorSlots', 'ResourceNames', 'ItemEnhancements', 'FightStyles', 'EffectCurves', 'MoveTriggers', 'EntityCapacity',
                          'ScriptFunctions', 'IGBCache', 'ActorPools', 'AnimEnums', 'CharSounds', 'MotionPool', 'ResidentStats',
                          *(k for k in LIMITS_WAVE3 if k != 'FightStyles'), *LIMITS_WAVE3_LATE, SAVE_LAYOUT_KEY),
-              'Online': ('GameVersion', 'ContentFingerprint', 'FastTransfer', 'ReceiveValidation', 'JoinInProgress', 'LateJoin', 'TickRate', 'Menus'),
+              'Online': ('GameVersion', 'ContentFingerprint', 'FastTransfer', 'ReceiveValidation', 'JoinInProgress', 'LateJoin', 'TickRate', 'Menus', 'Transport'),
               'Save': ('Format',),
               'Engine': ('ModelPools', 'ModelHandles'),
               'Xml1Turrets': ('Count',) + tuple(f'T{i}' for i in range(1, 33)),
@@ -999,6 +1008,12 @@ def online_keys(*, port_identity=False, balance=False, fingerprint=None) -> dict
     return keys
 
 
+def online_menus_keys() -> dict:
+    """the [Online] keys a build with the new online screens adds: Menus=1 and the transport they need (Transport=gns,
+    rule 25; see ONLINE_TRANSPORT). A build without the online menus writes neither."""
+    return {'Menus': '1', 'Transport': ONLINE_TRANSPORT}
+
+
 def save_keys(*, port_identity=False) -> dict:
     """[Save] Format=lc: the LC save format (xml2-fix 1.4; SPEC 70), written for a port build."""
     return {'Format': SAVE_FORMAT} if port_identity else {}
@@ -1106,7 +1121,7 @@ def port_keys(out, *, save_folder=PLAY_SAVE_FOLDER, eighth=True) -> dict:
             raise ValueError('Online menus are incomplete: '+'; '.join(problems))
         if game.get('LegendsClassicFonts')!='1':
             raise ValueError('Online menus require the complete private font family')
-        online['Menus']='1'
+        online.update(online_menus_keys())
     if postgame and (Path(out) / 'Data/lcsave/catalogue.lcc').is_file():
         online['GameVersion'] = RI.manifest(out)['game_version']
     if online:

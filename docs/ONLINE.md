@@ -25,6 +25,9 @@ connected, and offers four choices:
 Mouse, keyboard and controller all work on these screens. If you build with `--online-menus off`, the game keeps the
 original online menus instead.
 
+These screens need the connection setting `[Online] Transport=gns` in `xml2-fix.ini`. The builder writes it with them,
+and a **Rebuild** adds it to an older install; without it Play Online shows the online service as unavailable.
+
 ## Host a game
 
 1. Choose **Host** and set up the room:
@@ -123,7 +126,7 @@ service text, so it is safe to quote in a report.
 | The online service refused this game. Update the game. | The service rejected this build or its sign-in. | Update the game and launcher. |
 | Online service not verified. Check its setting or update. | The service's certificate is not the one this build trusts. | Update; check for connection interception. There is no bypass. |
 | TestMode is on, so online play is off. Turn it off. | `[TestMode]` blocks online play. | Turn TestMode off and restart through Host/Join. |
-| Online needs a complete install. Use Other ways to play. | A required install guard failed (rooms, save format, native lists). | Verify Files; or play by LAN/IP. |
+| Online needs a complete install. Use Other ways to play. | A required install guard failed (rooms, save format, native lists), or `xml2-fix.ini` lacks `[Online] Transport=gns`. | Verify Files and Rebuild; or play by LAN/IP. |
 | The network link is busy. Wait a moment, then repeat. | The previous connection is still closing. | Wait a moment, then press the screen's own button again (Done, Open the room, Refresh); there is no Retry button for this one. |
 | Room name must be 1-32 plain characters. Go Back. | The room name has characters the service does not accept. | Shorten it; no `;` or `"`. |
 | Online service request failed. Retry or go Back. | Anything else (the diagnostic names the operation). | Retry; report the diagnostic if it repeats. |

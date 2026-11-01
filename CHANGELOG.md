@@ -21,6 +21,8 @@ co-op parts were tested on one PC with two copies of the game and on two PCs at 
   room code at hand for inviting more friends, and lets the host remove a player.
 - **Other ways** still opens X-Men Legends II's original online menus (LAN search, Connect by IP). The new screens and
   their fonts are on by default; build with `--online-menus off` to keep the original menus.
+- A build with the new screens writes `[Online] Transport=gns` in `xml2-fix.ini`, the connection setting they need;
+  a **Rebuild** adds it to an older install.
 - Clear messages explain every connection problem on the screen where it happens, with **Retry** only where trying
   again can help. When a room or player limit is reached, the message says what to do instead.
 
