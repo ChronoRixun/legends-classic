@@ -185,17 +185,31 @@ def end_on_real_death(text, store, count_check, real, images, done_var, dispel=4
     return '\r\n'.join(lines)
 
 
-def rewrite_script(ref, text):
+def rewrite_script(ref, text, *, controller_bosses=()):
     ref = _ref(ref)
     if ref in TOAD_ELEVATOR_SCRIPTS:
         text = lift_handoff(text, *TOAD_ELEVATOR_SCRIPTS[ref])
+    elif ref in MAGNETO_STAGES and 'magneto' in controller_bosses:
+        # Remove only our exact legacy insertion on partial/repeated rebuilds.
+        # Authored map counters and phase requests still own shield lifetime.
+        stage = ref[-1]
+        lines = text.replace('\r\n', '\n').split('\n')
+        pattern = _call_pattern('setPatternSequence', 'magneto', f'mag{stage}')
+        found = [i for i, line in enumerate(lines) if pattern.fullmatch(line)]
+        if len(found) != 1:
+            raise ValueError(f'{ref}: expected one controller phase request')
+        i = found[0]
+        if ([line.strip() for line in lines[i + 1:i + 3]] ==
+                ['waittimed ( 0.100 )', 'setInvulnerable("magneto", "FALSE" )']):
+            del lines[i + 1:i + 3]
+        text = '\r\n'.join(lines)
     elif ref in MAGNETO_STAGES:
         stage = ref[-1]
         text, count = insert_after_call(text, 'setPatternSequence', 'magneto', f'mag{stage}',
                                        ['waittimed ( 0.100 )', 'setInvulnerable("magneto", "FALSE" )'])
         if not count and 'setInvulnerable("magneto", "FALSE" )' not in text:
             raise ValueError(f'{ref}: missing boss phase transition')
-    elif ref in SHADOW_SCRIPTS:
+    elif ref in SHADOW_SCRIPTS and 'shadowking' not in controller_bosses:
         for state, enabled in (('sk3', 'TRUE'), ('sk4', 'FALSE')):
             text, _ = insert_after_call(text, 'setPatternSequence', 'shadowking', state,
                                        [f'setInvulnerable("shadowking", "{enabled}" )'])
@@ -306,7 +320,7 @@ def landing_trigger_problems(root, rel):
             for el in rows if el.get('actteamplayer', '').lower() != 'false']
 
 
-def rewrite_data(root, rel):
+def rewrite_data(root, rel, *, controller_bosses=()):
     if _ref(rel) == TOAD_ZONE or _ref(rel) in TOAD_REINFORCEMENT_ZONES:
         changed = lift_arrivals(root, TOAD_WAVE_MARKERS) if _ref(rel) in TOAD_REINFORCEMENT_ZONES else 0
         if _ref(rel) == TOAD_ZONE:
@@ -316,5 +330,14 @@ def rewrite_data(root, rel):
         return relocate_spawn(root, 'sp_shadowking01', 'waypoint',
                               floor_name=SHADOW_FLOOR_MARKER, height_type='player_start')
     if _ref(rel) == MAGNETO_ZONE:
+        if 'magneto' in controller_bosses:
+            # Preserve relay counts, targets and the original stage-four spelling.
+            count = 0
+            suffix = r'\n\r' + 'setInvulnerable("magneto","TRUE")'
+            for el in root.iter('entity'):
+                if el.get('name', '').lower() == 'shieldup' and el.get('actscript', '').endswith(suffix):
+                    el.set('actscript', el.get('actscript')[:-len(suffix)])
+                    count += 1
+            return count
         return protect_relay(root, 'shieldup', 'magneto', 'magshield')
     return 0

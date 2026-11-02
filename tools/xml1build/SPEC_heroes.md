@@ -206,6 +206,15 @@ moves, handlers registered) -> `<hero>_decide` (XML2's own `gambit_decide` form)
 ability_drain`) keep the registered one; the dropped chain's `powerusage` trigger is transplanted per rank (tag
 90). Every `inherit=` / `<chain result>` naming a rung is remapped; a dangling reference is an error.
 
+Candidate rule 43: `build_xml1.py --rogue-decide xml1` preserves both Rogue chains as two collapsed nodes:
+`power2` with `ch_roguedecide` and internal `ability_drain` (eleven ranks each). Special selects `ability_drain`,
+Special2 selects `drain_notarget`; powerusage stays on decide tag 1 and no transplant is emitted. The recorded
+content option also emits `[Game] Xml1RogueDecide=xml1`, owned by fix_ini and removed when rebuilding OFF.
+Changing the option invalidates carried heroes output. Requires the companion XML2 Fix rule-43 implementation;
+an older DLL does not implement the handler. Default `xml2` preserves D15's output byte for byte. This is a
+developer opt-in, not a released builder profile: integration must advance CONTENT_VERSION and assign its
+content identity before enabling it in a release. See [the candidate guide](../../docs/ROGUE_DECIDE.md).
+
 Folding (`_collapse`): output = root effective move renamed; for each trigger tag and attribute the per-rank
 values are compared: constant -> literal; numeric (after value-code resolution) -> `%<code>_<talent>_<short>`
 (`<code>` = `x` + two hero letters, e.g. `xcy_beam_dmg`, `xwo_frenzy_dmg_t1`; the talent part drops a leading token

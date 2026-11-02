@@ -33,14 +33,18 @@ def content_version():
         return 0
 
 
-def expected_files(out):
-    """(files {rel: bytes}, problems) of the save-file set for the build in <out> (lcsave.lcfiles)."""
+def expected_files(out, loot=False):
+    """(files {rel: bytes}, problems) of the save-file set for the build in <out> (lcsave.lcfiles). loot: a build made
+    with --loot xml1 numbers its economy keys on top of the master catalogue (loot.derived_catalogue)."""
+    if loot:
+        from . import loot as LOOT
+        return LF.write_build_files(str(out), content_version(), cat=LOOT.derived_catalogue(out, content_version()))
     return LF.write_build_files(str(out), content_version())
 
 
 def run(ctx):
     out = str(ctx.out)
-    files, problems = expected_files(out)
+    files, problems = expected_files(out, loot=_loot(ctx))
     for prob in problems:
         # a key of the build the master catalogue does not know: update tools/lcsave/data/catalogue.json from
         # this build (python -m lcsave catalogue --build <out> --previous ... --content-version N) before shipping
@@ -64,6 +68,11 @@ def run(ctx):
 
 
 REGISTRY_REL = 'Data/lcsave/typed-entity-ids.txt'
+
+
+def _loot(ctx):
+    from . import loot as LOOT
+    return LOOT.selected(ctx)
 
 
 def typed_registry_for(out, ctx=None):
@@ -92,7 +101,7 @@ def validate(v, ck):
     in the master catalogue (SPEC-new-save 3.3's builder rule)."""
     out = str(v.ctx.out)
     try:
-        files, problems = expected_files(out)
+        files, problems = expected_files(out, loot=_loot(v.ctx))
     except Exception as e:  # noqa: BLE001 - a build whose data cannot be numbered fails the check, not the run
         ck.error(f'the save-file set cannot be computed from this build: {e}')
         return

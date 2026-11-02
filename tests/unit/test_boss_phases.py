@@ -58,6 +58,18 @@ def test_unrelated_scripts_and_zones_are_unchanged():
     assert B.rewrite_data(root, 'maps/unrelated/test.xml') == 0
 
 
+def test_shadow_controller_uses_authored_shield_requests_and_keeps_floor_fix():
+    for ref in B.SHADOW_SCRIPTS:
+        source = 'setPatternSequence("shadowking", "sk3")\r\nwaittimed(30)\r\nsetPatternSequence("shadowking", "sk4")\r\n'
+        assert B.rewrite_script(ref, source, controller_bosses={'shadowking'}) == source
+        off = B.rewrite_script(ref, source)
+        assert 'setInvulnerable("shadowking", "TRUE" )' in off
+        assert 'setInvulnerable("shadowking", "FALSE" )' in off
+        assert B.rewrite_script(ref, source, controller_bosses={'mystique'}) == off
+    entry = 'setDefaultTarget("shadowking" )\r\n'
+    assert B.rewrite_script(B.SHADOW_START, entry, controller_bosses={'shadowking'}) == B.rewrite_script(B.SHADOW_START, entry)
+
+
 def landing_fixture():
     root = ET.Element('world')
     scripts = frozenset(f'invented/landing{i}' for i in range(4))
@@ -215,3 +227,30 @@ def test_real_death_rewrite_fails_closed_on_a_changed_source():
             pass
         else:
             raise AssertionError('a missing, misplaced or repeated anchor must fail')
+
+
+def test_magneto_controller_preserves_authored_phases_and_removes_only_legacy_insertions():
+    for stage in range(2, 6):
+        ref = f'asteroid_m/stage{stage}'
+        source = f'if phase == {stage}\r\n     setPatternSequence("magneto", "mag{stage}")\r\nendif\r\n'
+        off = B.rewrite_script(ref, source)
+        assert 'setInvulnerable' in off
+        assert B.rewrite_script(ref, source, controller_bosses={'magneto'}) == source
+        assert B.rewrite_script(ref, off, controller_bosses={'magneto'}) == source
+        assert B.rewrite_script(ref, off) == off
+        assert B.rewrite_script(ref, source, controller_bosses={'blob'}) == off
+    root = ET.Element('world')
+    relay = ET.SubElement(root, 'entity', name='shieldup', actcountact='4', acttargets='helpers',
+                          actscript='setPatternSequence("magneto","magshield")')
+    original = dict(relay.attrib)
+    assert B.rewrite_data(root, B.MAGNETO_ZONE, controller_bosses={'magneto'}) == 0
+    assert dict(relay.attrib) == original
+    assert B.rewrite_data(root, B.MAGNETO_ZONE) == 1
+    assert B.rewrite_data(root, B.MAGNETO_ZONE, controller_bosses={'magneto'}) == 1
+    assert dict(relay.attrib) == original
+
+
+def test_blob_brain_keeps_astral_armour_script_owned():
+    source = 'armorEvent("invented_guardian")\r\n'
+    for ref in ('astral/ast3/blobpain', 'astral/ast3/blob_pillar_death'):
+        assert B.rewrite_script(ref, source, controller_bosses={'blob'}) == source

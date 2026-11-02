@@ -55,9 +55,26 @@ def static_model(data, *, allow_transforms=False):
     block = g.block(root.get(4))
     if block is None:
         raise G.IgbError('static menu model has no info list data')
-    struct.pack_into('<i',g.buf,block[0],scenes[0])
-    struct.pack_into('<i',g.buf,root.fields[2].offset,1)
-    return g.edited()
+    # The loader resolves and retains EVERY reference in the serialized buffer,
+    # while igObjectList::clearAll releases only count entries. Shrinking count
+    # alone leaves the discarded pumps (and a duplicate scene) retained forever.
+    # Keep the count, capacity and typed reference buffer in agreement.
+    for slot in (2, 3):
+        struct.pack_into('<i',g.buf,root.fields[slot].offset,1)
+    return g.rebuilt({root.get(4): _u32(scenes[0])})
+
+
+def static_model_problems(data):
+    """The root ownership serialized by static_model, including unused slots."""
+    g = G.IgbFile(data)
+    root = g.obj(struct.unpack_from('<i', g.data, g._obj_start - 4)[0])
+    if root is None or root.name != 'igInfoList':
+        return ['static model needs an information list']
+    refs = g.ref_list(root.get(4))
+    if (root.get(2) != 1 or root.get(3) != 1 or len(refs) != 1
+            or g.obj(refs[0]) is None or g.obj(refs[0]).name != 'igSceneInfo'):
+        return ['static model information buffer retains discarded references']
+    return []
 
 
 def _metadata(g):
@@ -291,3 +308,87 @@ def attach(primary_data, artwork_data, *, anchors=(), keep_camera=False, merge_t
             raise G.IgbError('attached scene memory did not round-trip')
     return bytes(out), {'objects': len(objects), 'memory_blocks': len(blocks), 'references': next_ref,
                          'native_references': len(gs[0].items), 'scene_infos': 1}
+
+
+def author_anchors(data, template_name, layouts, *, preserve_existing=False, anchor_capacity=175):
+    """Clone a checked native text-anchor subtree for an original flat menu.
+
+    Keep schemas/camera, replace the root children with camera and named bindings.
+    This is bounded to leaf text anchors (transform, user info, properties/bounds).
+    Never clone geometry, animations, textures or arbitrary scene resources.
+    """
+    import math
+    g = G.IgbFile(data)
+    # Caller supplies the capacity certified by its companion DLL; retail is the fallback.
+    if anchor_capacity not in (175,512): raise G.IgbError('unsupported scene anchor capacity')
+    if not layouts or len(layouts)>anchor_capacity or any(not n or not n.isascii() or len(n)>128 for n in layouts):
+        raise G.IgbError(f'invalid authored anchor set (engine capacity {anchor_capacity} scene anchors)')
+    sources=[o for o in g.objects_of('igTransform') if o.get(2)==template_name]
+    infos=g.objects_of('igSceneInfo')
+    if len(sources)!=1 or len(infos)!=1:
+        raise G.IgbError('authoring needs one scene and template anchor')
+    source=sources[0]
+    allowed={'igTransform','igHashedUserInfo','igStringValue','igAABox','igNodeList',
+             'igPropertyList','igProperty','igString','igStringKey','igNameValue'}
+    closure=set()
+    def visit(ref):
+        if ref==-1 or ref in closure: return
+        closure.add(ref)
+        o=g.obj(ref)
+        if o is None:
+            if ref not in g.blocks: raise G.IgbError('anchor has dangling reference')
+            for value in g.ref_list(ref): visit(value)
+            return
+        if o.name not in allowed or not o.decoded: raise G.IgbError('unsupported anchor owner: '+o.name)
+        for f in o.fields.values():
+            if f.type in ('igObjectRefMetaField','igMemoryRefMetaField'): visit(f.value)
+    visit(source.ref)
+    aliases=[g.obj(r) for r in closure if g.obj(r) and g.obj(r).get(2)==template_name]
+    if {o.name for o in aliases}!={'igTransform','igHashedUserInfo','igStringValue'} or len(aliases)!=3:
+        raise G.IgbError('template needs complete binding triple')
+    root=g.obj(infos[0].get(5)); children=g.obj(root.get(7))
+    if not children or children.name!='igNodeList' or children.get(4) not in g.blocks:
+        raise G.IgbError('authoring needs root child buffer')
+    from . import frontend as F
+    frame=F._scene_frame(g)
+    camera=frame.get('camera_transform')
+    if frame['problems'] or camera is None: raise G.IgbError('authoring needs checked camera transform')
+    additions=[]; anchor_refs=[]; start=len(g.items)
+    for name,(position,bounds) in layouts.items():
+        if len(position)!=3 or len(bounds)!=4 or any(not math.isfinite(v) for v in (*position,*bounds)):
+            raise G.IgbError('invalid authored rectangle')
+        if bounds[0]>=bounds[2] or bounds[1]>=bounds[3]: raise G.IgbError('empty authored rectangle')
+        remap={old:start+i for i,old in enumerate(sorted(closure))}
+        start+=len(closure); anchor_refs.append(remap[source.ref])
+        for old in sorted(closure):
+            off,size,fields=g._dir_entries[g.index[old]]
+            entry=bytes(g.data[off:off+size]); o=g.obj(old)
+            if o is None:
+                blob=_u32(*(remap[v] if v>=0 else v for v in g.ref_list(old)))
+                additions.append(('memory',entry,blob)); continue
+            record=bytearray(g.data[o.offset:o.offset+o.size]); edits=[]
+            for f in o.fields.values():
+                at=f.offset-o.offset
+                if f.type in ('igObjectRefMetaField','igMemoryRefMetaField'):
+                    struct.pack_into('<i',record,at,remap[f.value] if f.value>=0 else -1)
+                elif f.type=='igStringMetaField' and f.value==template_name:
+                    raw=name.encode('ascii')+b'\0'; raw+=b'\0'*(-len(raw)%4)
+                    edits.append((at,f.size,_u32(len(raw))+raw))
+            if o.name=='igTransform':
+                matrix=[float(i in (0,5,10,15)) for i in range(16)];matrix[12:15]=position
+                struct.pack_into('<16f',record,o.fields[8].offset-o.offset,*matrix)
+            if o.name=='igAABox':
+                l,b,r,t=bounds
+                for slot,xyz in ((2,(l,0,b)),(3,(r,0,t))):
+                    struct.pack_into('<3f',record,o.fields[slot].offset-o.offset,*xyz)
+            for at,size,raw in sorted(edits,reverse=True): record[at:at+size]=raw
+            struct.pack_into('<I',record,4,len(record))
+            additions.append(('object',entry,record))
+    # Camera's own subtree stays reachable; artwork and old UI anchors are retired.
+    refs=(g.ref_list(children.get(4)) if preserve_existing else [camera.ref])+anchor_refs
+    for slot in (2,3): struct.pack_into('<i',g.buf,children.fields[slot].offset,len(refs))
+    result=g.appended(additions,{children.get(4):_u32(*refs)})
+    from . import menu_conversion as M
+    problems=M.placement_problems(result,layouts)
+    if problems: raise G.IgbError('; '.join(problems))
+    return result

@@ -145,12 +145,20 @@ callbacks, and keep the camera's text-overlay depths visible. Standard and endin
 credits share existing fonts/styles; ending/campaign-unlock runtime acceptance is
 separate from static frame validation.
 
-The PDA objective picture uses a fixed upper-left drawing inset relative to its
-selector anchor. Its classic square frame and focus frame must follow that inset,
-including the native dynamically loaded selector resource. Centring the frame on
-the larger hit rectangle leaves the picture overlapping its upper-left corner.
-The selector validator checks the serialized frame vertices; the native hit
-rectangle, picture, objective state and input actions stay native.
+XMen2.exe draws each PDA objective picture at a fixed virtual-screen point, not at
+its selector: slot n (0..6) is centred at (36, 346 - 45 n), 34 units square
+(0x5cda36..0x5cda84; the selector only supplies its depth). Each selector, focus and
+current anchor therefore sits on its slot's picture centre with a 44-unit square
+frame and hit box, including the native dynamically loaded selector resource. The
+beta 5 column (36-unit spacing from z 306) matched the pictures only at slot 3: slot
+1's picture covered the title and slot 7's hung below its frame. The title sits to
+the right of the column. The panel's bottom strip and the prompts rise off the
+screen edge towards the first game's Back bar (prompts 23..43 above the
+bottom). `objectives_layout_problems` and the selector validator check the layout
+and the serialized frame vertices; picture, objective state and input stay native.
+With XML2 Fix's `[Game] ClassicObjectives=1` the slots hold only visible objectives
+(no hole for a hidden one), in the act file's order (objectives carry `order`), and
+the page opens on the current objective, as the first game's list does.
 
 Review retains the native four-category service, its tab order, unlock filtering,
 movie callbacks, list and viewer return. Disc-authored list chrome surrounds a
@@ -277,3 +285,146 @@ existing invisible model. These retire the pulsing cones and helix rings while
 the flat blue podium still visibly follows native keyboard and virtual-pad
 selection. Private 4:3 and 16:9 checks confirmed that selection remains visible;
 the cleanup does not require a new runtime hook or a replacement roster flow.
+
+## Online presentation fixtures (round 1)
+
+`online_menus` authors original base-menu definitions, paired English halves,
+scenes, geometric background textures, focus models and packages for `lc_online`,
+`lc_host`, `lc_code` and `lc_browse`. The normal main-menu Play Online command
+remains `openmenu online`. These assets are a presentation fixture, not a live
+online feature or an installed runtime capability.
+
+The family adds eight colours and four named styles through `menu_theme.allocate`.
+On the current 63-colour/24-style baseline it produces 71/28, leaving four slots
+in each native table. The allocator checks this ceiling before any output write.
+The pause validator recognizes this reservation consumption only when the complete
+online family is present; unrelated native pause text, modes and actions retain
+their existing checks. The frontend validator also checks the exact online style
+bindings, paired definitions, reachable alias triples and package resource closure.
+
+The approved composition uses a 640x480 design canvas, mapped to the established
+512x384 native camera. Every text item and focus anchor has a matching hit bound.
+Code has 31 symbols plus Delete in a four-by-eight grid, eight display cells,
+Paste/Clear/Done, a connected four-way graph and a disabled incomplete Done.
+Browse has seven independent fields in each of seven visible rows; it does not
+try to fit seven columns into the native four-column LISTBOX. The fixture caps
+its cache at 50 records and bounds selection/window movement, including empty,
+full, mismatched, loading, stale and long-name records. Unconnected ping values
+remain `--` with neutral bars. Host preview follows visibility, campaign and
+drop-in settings, with **next area** wording.
+
+`Fixture.dispatch` is a pure, synthetic controller. Its finite intent manifest
+covers every authored action, code editing and validation, Back/Delete behavior,
+page movement, join refusals, inline errors and reentry. It never hosts a network
+session, reads the clipboard, changes a save, resolves a code or registers a DLL
+script. `_build/online_menus_detail.json` records item-to-intent bindings and the
+actual authored layouts. Existing native `openmenu` commands provide safe menu
+transitions; other fixture controls require the later authorized test adapter.
+The manifest is data, not executable console/script source. Device tokens remain
+native; custom shortcut consumption and the scoped Code Back bridge are later
+runtime work. An empty `usecmd` must not be mistaken for an installed action.
+
+The retail font registration obstruction has now been traced statically. The
+PC/HD map loader at `0x5980f0` compares each row's index against the four names
+at `0x6e4344`: `medium`, `big`, `hud`, `digital`. The loop at
+`0x5981e6..0x59821a` checks exactly four names; an unknown name falls back to
+slot zero. Metrics load at `0x596af0` into fixed `0x1c18`-byte slots, each
+containing 256 glyphs. Seven map rows represent language mappings and English
+overrides, not seven independent fonts. Extra rows cannot allocate another slot.
+
+Menu styles are more restrictive: `0x5d7cb0` sets font slot one only for `big`;
+every other font string selects slot zero (`medium`). The text-item reader at
+`0x5c6c30` resolves that style, and its renderer at `0x5c61d0` passes fixed scale
+one (`0x5c636e`). A scaled scene anchor changes placement/bounds, not glyph
+scale. A new font filename, a fifth index name, `font="hud"`, a nominal point
+size or an italic flag in a style therefore cannot scope Barlow to these menus.
+Exact Barlow Condensed needs the companion runtime capability described in
+[SCOPED_ONLINE_FONTS.md](SCOPED_ONLINE_FONTS.md). Without it, unknown private
+style font names select readable classic medium; the existing big font retains
+its usual meaning. These fallback fonts do not match the approved four sizes.
+The original PC thin font is a closer condensed/italic title candidate, but it
+is the French/German mapping of the same medium slot, not a separately selectable
+English menu font. Selecting it through the map would replace unrelated menus.
+The adapter now writes four private metric/atlas pairs and separate PC/HD map
+copies. It preserves original maps and classic font pairs byte for byte. The
+DLL redirects to the private copies only after the opt-in guarded transaction.
+
+Native definitions use the emitted private metrics and actual style scale when
+fitting fields before serialization. A preview using only a TTF cannot establish
+native glyph size, spacing, clipping or prompt expansion. Offline native samples
+must read the emitted atlas pixels and metrics; they remain predictions of the
+engine, not game screenshots. Direct3D sampling and input still need the live
+step. Generated images have scoped internal names to avoid container collisions.
+
+The footer now uses all five native `desctext1..5` items and scene anchors, with
+matching root description attributes. Unused slots are empty. Their scoped
+colour prefix survives CMenu's description refresh. Source description aliases
+are retired under private names before new aliases are authored. The companion
+`pad_prompts` hook expands `$MENU_ACCEPT`, `$MENU_BACK`, `$MENU_NEXT`,
+`$MENU_OTHER` and `$MENU_OK` according to the player's input device. Hub Change,
+Rejoin and Host Edit/Open also retain these tokens. The builder never replaces
+them with fixed `[A]` text. Its offline device fixture returns the companion's
+single coloured A/B/X/Y letters, bracketed Start, or keyboard key names for the
+retail fallback. On a pad `$MENU_OTHER` (Change name, Clear) is drawn and pressed as X and
+`$MENU_NEXT` (Rejoin, Paste, Refresh) as Y, as in the designs: the
+game's own menu codes sit on the play layout (OTHER on Y, NEXT on RT), so the companion
+swaps them on the Hub, Host, Code, Browse and Party screens only (`PAD_TOKEN_BUTTONS`; xml2-fix
+`pad_menu_mask`); the native Host/Join lobbies keep the engine's own buttons (Ready / Kick / Copy on Y). With the scoped font capability, the companion returns private
+atlas glyphs only while drawing a ready private-font item: round pad prompts or
+the actual bound keyboard keycaps. No fixed circles are baked into backgrounds.
+
+Hub hints now align at their approved right edge using the available interval;
+identity and breadcrumb fields use their full approved space. Host has native
+tokens, arrows, the secondary visibility outline, dashed code cells and the
+primary-action helper. Code has its active-cell cap, dashed empty cell and status
+diamond. Browse retains status colours under dimming and separates selected-room
+and campaign details. Oversized untrusted fields still receive bounded ellipses;
+normal approved fixture fields fit at the four real sizes. The offline host and
+asset gates do not close the separate real-game visual gate.
+
+Synthetic coverage lives in `tests/unit/test_online_menus.py`; the frontend
+self-test runs the synthetic menu contract without owned output and additionally
+runs `v_online_menus` with `--out`. The complete validator registers `V-online`.
+No gameplay rule or release identity is assigned by these fixtures.
+
+## In-session Party and the pause rename (round 8, DLL probe `lc-online-party/1`)
+
+Authored only when the online menus are enabled for the build (`--online-menus on`) and the supplied DLL carries the
+probe string `lc-online-party/1` (an old DLL is refused like any missing probe). An OFF or old-DLL build keeps the native
+PDA Players row byte for byte.
+
+**Pause rename.** The native PDA intercepts the item named `label_option07` (the Players page) in its own code,
+independently of `usecmd`. `pause_appearance.pause_tree(..., party_link=True)` renames that one row to `lc_party_link`
+with `usecmd="openmenu lc_party"` and the literal text `Party`, in BOTH localization halves (`.XMLB` and `.engb`
+trees). The up/down links of its neighbours, the focus order and the scene alias table follow the new name; the scene
+nodes and focus models keep their native slot names (`option07`, `option07_focus`). `label_option07` appears nowhere
+in the converted halves. `native_text_problems` stays strict for every other item and attribute: the rename is allowed
+only through the explicit adapter contract `party_link_contract()` (exactly that item, exactly that text and route),
+and `party_link_problems` checks closure (neighbour links, type/mode unchanged, no leftover reference). Nothing is
+relaxed globally; `validate_frontend.v_classic_pause` applies the same contract when the online build is on.
+
+**`lc_party` (base CMenu, no type, no `menu_cancel`).** Files `UI/menus/lc_party.{XMLB,engb,IGB}` plus its package.
+Back is routed by the DLL: the builder authors no second Back command. Layout and states live in
+`tools/xml1build/online_party.py` and follow approved frame 06-party with the 0.6 copy variants (next area, no
+checkpoint recovery promise).
+
+- Rail (real focusable items): Resume (`runscript lcOnlineIntent(63)`), Team, Codex (`runscript codexMenu(0)`),
+  Options, Quit. Team and Options copy the `usecmd` of the native PDA rows (`label_option02`, `06`) at build
+  time from BOTH native halves (they must agree) and the validator asserts equality (the native Quit row must still exist);
+  QUIT GAME is the Leave confirmation (`runscript lcOnlineIntent(66)`) because the native `mainmenuexit` has no confirmation
+  of its own; the current page (Party) runs nothing.
+- Commands (constants through the guarded dispatcher; reserved numbers 68 and 70, party numbers exist on this screen
+  only): 63 resume, 64 invite (copies the code), 65 propose load (the item is authored disabled: visibly unavailable
+  until the load rounds), 66 leave (also the rail's Quit), 67 the one shared Yes of whichever confirmation is open (leave or kick; 69 stays accepted
+  by the DLL but has no item), 71..74 kick card 1..4, 8 cancel.
+- DATA text the DLL binds: `lc_room_name`, `lc_room_visibility`, `lc_room_code`, `lc_notice_name`,
+  `lc_notice_percent`, `lc_kick_name` and per card `lc_pN_name/slot/phase/ping/route`. Everything else the DLL shows or
+  hides is a separately named, hidden-by-default scene (card, host/you badges, hero text, ping scenes, build badges,
+  pending marker, selection, status tone, kick button, notice, feedback, the three confirmations).
+- Confirmations are inline scenes with their own buttons (never `openmenu`): host Leave says End for everyone.
+- Round-7 card fields on the pre-game lobby skins (`lc_pN_phase`, `_route`, `_to_host`, `_other_build`, `_pending`)
+  and the Browse column-5 DATA text `room_<row>_5` are authored under the same contract.
+
+Tests: `tests/unit/test_online_party.py` (card fields, Browse column 5) and `test_online_party_screen.py` (probe gate,
+command manifest, native routes, rename closure and its negative cases, role selection, kick/leave fixtures).
+No gameplay rule or release identity is assigned by these changes.

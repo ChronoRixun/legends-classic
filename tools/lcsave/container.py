@@ -281,7 +281,8 @@ def write_file(kind, sections, header):
     # decides it (header['required_features']; a rewrite passes the read header through, so the marker survives);
     # a bit this code does not implement is never written
     required = header.get('required_features', 0)
-    if required & ~L.KNOWN_REQUIRED_FEATURES:
+    # (bit 1 NATIVE_W2, limits-wave2.md section 7, always with bit 0: a W2 file's typed ids are ten-bit)
+    if required & ~L.KNOWN_REQUIRED_FEATURES or (required & L.FEATURE_NATIVE_W2 and not required & L.FEATURE_ENTITY_LAYOUT_CONTIGUOUS10):
         raise ContainerError(f'required feature bits {required:#x} not implemented by this writer')
     h = dict(magic=L.NEW_MAGIC, kind=kind, header_size_8=L.NEW_HEADER_SIZE // 8, major=1, minor=0, reserved_0e=0,
              required_features=required, optional_features=optional, file_length=L.NEW_HEADER_SIZE + len(after),
@@ -307,6 +308,8 @@ def read_file(buf, expect_kind=None):
         raise ContainerError(f'format major {h["major"]} / header size not supported (needs a newer version)')
     if h['required_features'] & ~L.KNOWN_REQUIRED_FEATURES:
         raise ContainerError(f'required feature bits {h["required_features"]:#x} not implemented (needs a newer version)')
+    if h['required_features'] & L.FEATURE_NATIVE_W2 and not h['required_features'] & L.FEATURE_ENTITY_LAYOUT_CONTIGUOUS10:
+        raise ContainerError(f'required feature bits {h["required_features"]:#x}: NATIVE_W2 without ENTITY_LAYOUT_CONTIGUOUS10 (damaged marker)')
     if expect_kind is not None and h['kind'] != expect_kind:
         raise ContainerError(f'file kind {h["kind"]} is not the expected {expect_kind}')
     if h['file_length'] != len(buf) or len(buf) > MAX_FILE:
@@ -364,6 +367,10 @@ def read_file(buf, expect_kind=None):
 # ------------------------------------------------------------------------------------------------ features
 DOWNGRADE_REFUSED = ('this save requires ENTITY_LAYOUT_CONTIGUOUS10 (required feature bit 0): it needs the '
                      'entity-capacity build and cannot be loaded by a retail-layout build')
+W2_REFUSED = ('this save requires NATIVE_W2 (required feature bit 1): it needs the W2 save layout '
+              '([Limits] SaveLayout=w2; Legends Classic 0.4.2 / XML2 Fix 1.9 or newer); enable it or use the build that wrote it')
+REQUIRED_FEATURE_NAMES = {L.FEATURE_ENTITY_LAYOUT_CONTIGUOUS10: ('ENTITY_LAYOUT_CONTIGUOUS10', 'the entity-capacity build'),
+                          L.FEATURE_NATIVE_W2: ('NATIVE_W2', 'Legends Classic 0.4.2 (XML2 Fix 1.9) or newer with [Limits] SaveLayout=w2')}
 
 
 def feature_decision(required_features, native):
@@ -377,6 +384,12 @@ def feature_decision(required_features, native):
     if required_features & ~L.KNOWN_REQUIRED_FEATURES:
         return False, f'required feature bits {required_features:#x} not implemented (needs a newer version)', False
     contiguous = bool(required_features & L.FEATURE_ENTITY_LAYOUT_CONTIGUOUS10)
+    # bit 1 (W2 section 7): known by name; applicable only by the W2 layout; never without bit 0
+    if required_features & L.FEATURE_NATIVE_W2:
+        if not contiguous:
+            return False, f'required feature bits {required_features:#x}: NATIVE_W2 without ENTITY_LAYOUT_CONTIGUOUS10 (damaged marker)', False
+        if not native.w2:
+            return False, W2_REFUSED if native.contiguous else DOWNGRADE_REFUSED, False
     if contiguous and not native.contiguous:
         return False, DOWNGRADE_REFUSED, False
     return True, '', native.contiguous and not contiguous

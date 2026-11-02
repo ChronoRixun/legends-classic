@@ -41,6 +41,54 @@ XML2 install, the disc image, the cache or this repository's `tools/` and `resea
 
 ## Tests
 
+`--online-menus on` is the 0.6 release default with the XML1 front end. It enables the custom
+online screens, native Host/Join skins and private Barlow fonts together. `--online-menus off` keeps the fallback. It
+requires `--frontend xml1` and one companion DLL carrying the exact menu, input,
+lobby, broker (`lc-online-broker/2`), native Host/admission (`lc-online-native/1`) and font capabilities; a release number or
+separate DLLs do not suffice.
+Place that DLL in the output folder before the frontend runs. A missing or
+incompatible DLL refuses the build, including the old-fix warning path.
+
+The installer writes `[Online] Menus=1` and `[Game] LegendsClassicFonts=1` only
+for a recorded enabled build with complete resources and the exact asset
+marker. Rebuilding with the option off restores the owned base's native lobby
+menus and removes the generated online resources and both owned INI keys.
+Play Online always retains the native `openmenu online` command as fallback.
+
+Round 5 wires the custom screens to the DLL's broker bridge with constant
+commands only: `lcOnlineIntent` 18 Refresh, 19 Open room, 20 Retry, 21 Public/Private,
+22/23 page, 24..30 select Browse row 0..6 (a page authors `online_menus.BROWSE_ROWS` = 7 rows, so 24..30 are
+used) and 31 Join selected (resolve only), each
+valid only on its own screen (`online_menus.BROKER_SCOPE`, checked by the validator).
+Every authored menu scene stays within the supplied DLL's probed capacity (175 retail, 512 with `menu-anchors/512`; the
+retail playfield build `0x5882e0` overflows at 175, while the expanded push refuses above 512); the builder and `output_problems` refuse more.
+Browse and the two lobby skins (round 15's cause scenes / notices / inline lobby scenes + the two backdrop models) fit
+because their focus bars share one model item per plane (`SHARED_FOCUS_SCREENS`: `lc_focus` at -150, `lc_focus_300` at
+-300, at the scene origin): each focusable item sets it to its own bar on focus (authored at the owner's absolute
+position) and hides it on nofocus; XMen2.exe's setFocus (0x5aaf80) loses the old item before the new one gains. The
+clipboard / unavailable notices Browse can never raise are not authored there (the DLL falls back to `lc_inline_error`).
+Predicted scene anchors (backdrop included): Browse 214, Host lobby 174, Join lobby 170, Party 159, the rest <= 147.
+Every Browse row cell exists from the start with its row command and starts disabled;
+the DLL binds text and enables rows. Hidden localized variants (`lc_broker_*`, the
+`lc_host_private`/`lc_host_public` scenes, `lc_rowN_selected`) are selected by the
+DLL; remote text only ever reaches DATA fields and `broker_error` is a diagnostic
+label, never a command. Room opening and joining create or resolve the broker room
+only: native campaign setup and admission into the native lobby are the next round.
+The native Host/Join classes retain their own actions, rosters and
+admission. No live room, RTT, build, campaign or hero data is invented. Copy and
+Code tool captions currently list both supported keyboard/pad shortcuts because
+the supplied DLL contract does not expose an authored device selector for those
+special actions. Guest Back state is shown in the right action bar; its footer
+X caption remains Ready / Unready. These presentation gaps and real-game input,
+clipping and rendering acceptance remain open; the option is experimental.
+The retained native LISTBOXes keep their original font styles: their row metric
+and render methods bypass the private CText scale hooks. New cards and status
+fields use Barlow. The temporary Kick picker therefore retains native lettering;
+its layered backdrop, arrows and actual selection/mouse bounds need live checks.
+Code cells use neutral frames because input API /1 publishes cell text but no
+cursor scene selector. Done and Start use native enabled text/focus rather than
+baking a disabled state into an immutable background.
+
 The classic main menu is XML1's composition, which the game centres at every aspect (4:3 to
 21:9) without any change to the file. `--main-menu-layout` keeps only `classic`; the 0.2.0j
 `widescreen` value, which pushed the menu right of centre, is accepted as a retired name for
@@ -55,6 +103,11 @@ global font indices. The bright Cerebro backdrop requires a companion XML2 Fix b
 | Sound kernel self-check | `python tools/build_sound_kernel.py --check` | a built kernel |
 | The pipeline's self-tests | `python -m xml1build.<module>_selftest --out <a build>` from `tools/` (characters, heroes, scripts, zones, skins, automaps, combat_events, npc_values, frontend, validate, sound) | a build + the games |
 | Equivalence of two builds | `python tools/build_equiv.py <build A> <build B>` | two builds |
+
+For the offline G3 saved-zone corpus, use
+[`check_saved_zone_corpus.py`](saved-zone-corpus.md) with the native host and a
+finished W2/economy build. It checks all 148 inputs, reporting 147 successful
+loads separately from the hash-pinned synthetic capacity save's expected refusal.
 
 Tests that need the games never run in CI: a public repository's workflows must not reach game files.
 The [release checklist](RELEASE_CHECKLIST.md) makes the zones output self-test a required local gate
@@ -99,6 +152,18 @@ manifest and, with `--smoke`, runs `tools/freeze_smoke.py` against it. CI does t
 release. Beta and rc tags match the numeric base and carry the suffix through the frozen
 builder and manifest; see [RELEASING.md](RELEASING.md).
 
+## Repository layout
+
+| Path | What |
+|---|---|
+| `tools/xml1builder/` | the builder (`python -m xml1builder` from `tools/`; frozen into `xml1-builder.exe`) |
+| `tools/xml1build/` | the conversion pipeline (zones, characters, heroes, scripts, front end, media, validator), the prepare stages (`prepare/`), shared format code (`lib/`) and the specifications `SPEC.md` / `SPEC_heroes.md` |
+| `tools/` | format tools (disc image, bundles, binary XML, sound banks), the developer build `build_xml1.py`, the freeze scripts and the test harness that drives the game through xml2-fix |
+| `tests/unit/` | synthetic tests (no game data); CI runs them on Windows and Linux |
+| `research/` | the reverse-engineering and design notes behind every decision: file formats, engine behaviour, addresses, measurements ([research/README.md](../research/README.md)) |
+| `docs/` | player guides - [CLI.md](CLI.md) (the standalone builder), [SAVES.md](SAVES.md), [ONLINE.md](ONLINE.md), [COMPATIBILITY.md](COMPATIBILITY.md) (versions and settings), [KNOWN-ISSUES.md](KNOWN-ISSUES.md), [ROADMAP.md](ROADMAP.md), [DUMPING.md](DUMPING.md) (imaging your own disc) - and developer notes: this file (from source, tests, freezing), [RELEASING.md](RELEASING.md) |
+| `tools/check_no_game_content.py` | the guard that keeps game content out of this repository (pre-commit hook + CI) |
+
 ## Where to read next
 
 - `tools/xml1build/SPEC.md` - what every pipeline module does and why (the engine facts behind it), section 27 for
@@ -123,3 +188,54 @@ builder refuses an older DLL by name.
 Schema 4 requires the beta 7 bullet-trace follow-up DLL and a content rebuild
 (SPEC 95.5). Earlier beta 7 DLLs refuse these wider rows; a DLL swap alone into
 an old content build does not add the converted-bullet event markers.
+
+
+### Co-op model resource lifetime
+
+Static menu models must serialize a single scene information reference with
+matching list count, capacity and reference-buffer length. Shortening the
+logical list while retaining discarded pump/scene references leaks the model's
+pixel graph in Alchemy on every reopen (060s). `menu_scene.static_model` rebuilds
+the root information buffer; the unit test checks the complete serialized
+reference set. The optional Win32 owned-runtime test in
+[`tests/native`](../tests/native/README.md) loads/unloads each co-op skin resource
+set repeatedly and asserts flat private memory and handle counts after warm-up.
+It uses the player's copied runtime DLLs and generated output, never starts
+XMen2.exe, and does not replace integration's full output build and live check.
+
+The 060s lobby/Browse presentation fixes keep the lobby card words in native text items in front of the card models;
+readiness, role and build labels must not be converted back into overlapping coplanar raster surfaces. These display
+labels are disabled for native hit testing and keep explicit palette prefixes for their authored glyph colors. The X1
+follow-up shares Browse Refresh's highlight with the rows to fit the native focus-event budget. The Party Invite hint has normal and navy
+copies, selected by the companion DLL. Build these assets with the corresponding fix P DLL changes; unit contracts
+cover the generated trees and layout, while final depth, keyboard/pad and mouse behavior still needs a rendered check.
+
+
+The 060t online presentation follow-up requires the matching companion DLL for
+accepted resolution overrides, stale-empty Browse, guest controller prompts and
+PDA Party mouse focus. Code/Browse author one shared highlight and at most 75 native
+focus records; a builder contract rejects overflow. Paging uses separate footer
+cells and footer bars share a consistent shear. The integration build must regenerate
+menu resources and the hit table together. Module unit tests cover authoring here;
+full owned-input generation and live visual acceptance remain separate gates.
+
+The Wave 3 self-test retains the original 080c witness counts. A build with the
+exact authored private Guard node adds one shared FightMove and two resident
+trigger events: moves 307, largest style 109, events 833. This is self-test
+accounting only; capacities and the census counting rules are unchanged. Missing
+Guard nodes retain historical expectations; malformed or altered Guard payloads
+are refused instead of adjusting the expected totals from observed content.
+## 060u presentation follow-up
+
+Regenerate online menu resources and `Data/lc_online_hits.txt` with the matching
+companion DLL. Browse's header is now the complete DATA count (`1 public game`
+or `1 last known game`), with its own space before the stale badge. The empty
+static `list_header` anchor remains for layout compatibility.
+
+Code/Browse keep 40/41 focus records. Their shared-origin model names require
+the companion's expanded, bounded frontend string arena; its native string
+handles and scene-anchor layout stay compatible. The companion also clears the
+shared focus model when Retry loses focus, hides or becomes disabled. Native
+and synthetic authoring tests cover these contracts; integration still needs
+owned-output regeneration and live rendering/input checks.
+Release maintainers: [Guard default and acceptance switch](RELEASE_GUARD.md).

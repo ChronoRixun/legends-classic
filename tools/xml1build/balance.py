@@ -45,7 +45,10 @@ def enabled() -> bool:
 # herostat entries it did not scale; fix_ini.balance_keys fills both from the caller's values.
 BALANCE_KEYS = {'EnemyHealthPerBody': '10', 'HeroHealthPerBody': '2.5', 'HeroStatScale': None, 'NativeStatHeroes': None, 'StrengthBonus': '0.1',
                 'MindBonus': '0.1', 'MightBonus': '0.05', 'PowerAttacks': 'xml1', 'HitChance': 'xml1', 'Rounding': 'xml1',
-                'DamageRolls': 'xml1'}
+                'DamageRolls': 'xml1', 'ReceiveRounding': 'xml1', 'DamageCap': 'xml1'}
+# ReceiveRounding / DamageCap (xml2-fix 1.9.0-beta.1, gameplay rule 41, its docs/balance.md): the receive side converts a
+# hit to a whole number after the defense and after the scale as default.xbe 0x45517..0x45558 does, and a hit is
+# capped at XML1's 32,000 (0x5ce0d) instead of XMen2.exe's 1,000,000.
 # tuning keys xml2-fix also reads; the port owns them (a build that does not set one drops it) HeroHealthPerBody ships as 2.5
 TUNING_KEYS = ('HitChanceBase', 'HitChancePerPoint', 'HeroStrengthBonus', 'HeroMindBonus', 'HeroHealthPerBody',
                'MeleeWeapons')

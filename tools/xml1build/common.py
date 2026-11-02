@@ -53,9 +53,10 @@ import xmlb                    # noqa: E402  tools/xmlb.py
 from .lib import sweeplib      # noqa: E402  robust XML1 text-XML parser (was research/sweep)
 from .lib import x1names       # noqa: E402  skin/animdb/style namespace (was research/characters)
 
-MODULE_ORDER = ('characters', 'heroes', 'autospend', 'scripts', 'zones', 'media', 'frontend',
+MODULE_ORDER = ('characters', 'heroes', 'autospend', 'scripts', 'zones', 'media', 'frontend', 'exe_flags',
                 'savefiles')                   # content modules, in run order (savefiles last: the .lcbind
                                                # headers carry the SHA-1 of the finished data files)
+                                               # exe_flags: the build's XMen2.exe copy, large-address-aware (E12)
 POST_STEPS = ('testhooks', 'validate')                          # run after the content modules
 BUILD_OWNER = 'build'                                           # owner name used by build_xml1.py itself
 
@@ -708,8 +709,9 @@ def args_for_out(out, base=None, **kw):
     forced_teams, no_movies, ...), so a standalone check sees the build as it was made. kw overrides."""
     b = build_options(out)
     keep = {k: b[k] for k in ('frontend', 'forced_teams', 'no_movies', 'newgame', 'blackbird', 'npc_scaling',
-                              'tiles', 'hero_roster', 'hero_icons', 'hero_bleed', 'start_zone', 'tour', 'xp_curve',
-                              'buoys', 'main_menu_layout', 'harm_loop_startup')
+                              'tiles', 'grab_carry', 'telekinesis', 'guard_decide', 'flying_carry', 'actor_pools', 'anim_enums', 'limits_wave3', 'rogue_decide', 'hero_roster', 'hero_icons', 'hero_bleed', 'start_zone', 'tour', 'xp_curve',
+                              'buoys', 'main_menu_layout', 'online_menus', 'harm_loop_startup', 'save_layout', 'loot',
+                              'loot_construction', 'loot_def_damage_scale')
             if k in b and b[k] is not None}
     if 'frontend' not in b and b:
         keep['frontend'] = 'xml2'            # a build made before SPEC 21 had XML2's front end
@@ -900,6 +902,9 @@ class BuildContext:
             for name, e in self.research_json(XML2FIX_API_JSON)['functions'].items():
                 if seat or name in XML2FIX_ALWAYS_FUNCS:
                     api.setdefault(name, dict(e))
+            if self.opt('online_menus','off')=='on':
+                from .script_functions import ONLINE_API
+                api.update(ONLINE_API)
             self._json[key] = api
         return self._json[key]
 

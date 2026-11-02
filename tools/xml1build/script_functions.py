@@ -16,6 +16,7 @@ from __future__ import annotations
 
 STOCK_LIMIT = 320          # XMen2.exe's tree (0x4d7637)
 MAX_LIMIT = 4096           # xml2-fix's ceiling
+ONLINE_API = {'lcOnlineIntent': {'ret':'n','args':'i','func':'xml2-fix','table':'xml2-fix'}}
 
 
 def registered_names(retail_api, fix_api) -> set:
@@ -57,6 +58,8 @@ def validate(v, ck):
     from . import validate_script as VS
     retail = v.ctx.research_json('scripts/xml2_api.json')
     fix = v.ctx.research_json(C.XML2FIX_API_JSON)['functions']
+    from . import online_menus as OM
+    if OM.enabled(v.ctx):fix={**fix,**ONLINE_API}
     names = registered_names(retail, fix)
     ck.set('script_function_names', len(names))
     for msg in limit_problems(len(names), FI.LIMITS):

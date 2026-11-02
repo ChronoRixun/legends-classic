@@ -36,11 +36,12 @@ from . import disc as P1
 from .. import common as C
 
 STAGE = 'tables'
-VERSION = 5            # 2: SPEC 37 (issue #8) - required="false" -> major="false"; updatedescription counted
+VERSION = 6            # 2: SPEC 37 (issue #8) - required="false" -> major="false"; updatedescription counted
                        # 3: PR #41 alone - SPEC 47, completion descriptions kept for xml2-fix
                        # 4: issue #49 - names_xml1 also tries character/<voice folder>/<event> (XML1's voice lines);
                        #    skips 3, which PR #41 uses: a shared number would let one branch reuse the other's cache
                        # 5: SPEC 47 and issue #49 together (the integration of #41 with main)
+                       # 6: objectives carry `order` (their act-file position) so the PDA lists them in XML1's order
 NEWLINE = '\r\n'
 # research-relative path -> file name in the stage directory (Sources.prepared overrides these)
 OUTPUTS = {'scripts/mission_plan.json': 'mission_plan.json', 'characters/collisions.json': 'collisions.json',
@@ -312,7 +313,7 @@ def mission_plan(assets: Path, loose: Path):
         for m in g['missions']:
             plan['missions'][m] = {**missions[m], 'act': i, 'group_file': gname}
         root = ET.Element('MISSION', {'act': str(i)})
-        for n, o in g['objs'].items():
+        for position, (n, o) in enumerate(g['objs'].items(), 1):
             # Optional objectives stay secondary. The extension reader in xml2-fix
             # selects updatedescription when the existing completion bit is set.
             if o.get('required', '').strip().lower() == 'false':
@@ -330,6 +331,11 @@ def mission_plan(assets: Path, loose: Path):
             if o.get('count'):
                 a['count'] = o['count']
             a['xp'] = o.get('xp', '0')
+            # XMen2.exe heap-sorts an act's objective records by `order` (signed byte at record+0x1a8,
+            # 0x489680) after loading; without it every key is 0 and the PDA's slots come out scrambled
+            # (Mystique before Blob). The first game's file order is the order its objectives screen lists.
+            # State indices (+0x1a9, the save's identity) are assigned in load order, before the sort.
+            a['order'] = str(position)
             ET.SubElement(root, 'OBJECTIVE', dict(sorted(a.items())))
         ET.indent(root)
         texts[gname + '.xml'] = ET.tostring(root, encoding='unicode')

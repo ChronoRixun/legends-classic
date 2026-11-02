@@ -37,6 +37,7 @@ Check. Pure: never writes game files.
 from __future__ import annotations
 
 import collections
+import json
 import re
 from pathlib import Path
 
@@ -885,6 +886,7 @@ def v_classic_pause(v, ck):
     if C.frontend_mode(v.ctx) != 'xml1':
         return
     from . import menu_conversion as M, menu_theme as T, pause_appearance as P
+    party = P.party_link_enabled(v.ctx)
     for rel in (P.OBJECTIVES_ICON, P.OBJECTIVES_FOCUS, 'UI/models/m_pda_icon_screen'):
         frame = v.read(rel + '.IGB')
         if frame is None:
@@ -922,7 +924,7 @@ def v_classic_pause(v, ck):
             ck.error('classic pause animation graph is unreadable: ' + str(error))
     native_halves = F.pda_menu_trees(v.ctx)[:2]
     if native_halves[0] is not None and native_halves[0].find("item[@name='object_screen']") is not None:
-        for problem in M.placement_problems(scene, P.objectives_layout()):
+        for problem in M.placement_problems(scene, P.objectives_layout()) + P.objectives_layout_problems():
             ck.error('classic objectives: ' + problem)
     for ext, native in zip(('.XMLB', '.engb'), native_halves):
         root = v.tree(F.PDA_MENU_REL + ext)
@@ -932,24 +934,33 @@ def v_classic_pause(v, ck):
         if root.get('igb') != P.SCENE:
             ck.error('pause does not bind the combined classic/native scene')
         try:
-            for problem in M.widget_problems(root, scene, focus_names=P.ROWS, optional_anchors=P.OPTIONAL_ANCHORS):
+            for problem in M.widget_problems(root, scene, focus_names=P.rows(party), optional_anchors=P.OPTIONAL_ANCHORS):
                 ck.error('classic pause: ' + problem)
         except (ValueError, TypeError) as error:
             ck.error('classic pause scene is unreadable: ' + str(error))
         if native is not None:
-            for problem in P.native_text_problems(native, root):
+            renamed = P.party_link_contract() if party else {}
+            for problem in P.native_text_problems(native, root, renamed or None):
                 ck.error(f'classic pause {ext}: {problem}')
+            if party:
+                for problem in P.party_link_problems(native, root):
+                    ck.error(f'classic pause {ext}: {problem}')
             actual_items = {e.get('name'): e for e in root.iter('item')}
             for item in native.findall('item'):
                 name = item.get('name')
-                actual = actual_items.get(name)
-                if actual is None or any(actual.get(k) != item.get(k) for k in ('type', 'mode', 'usecmd')):
+                target = renamed.get(name, (name, {}))[0]
+                actual = actual_items.get(target)
+                # The renamed Players row carries the Party route (checked by party_link_problems), not the native usecmd.
+                keys = ('type', 'mode') if name in renamed else ('type', 'mode', 'usecmd')
+                if actual is None or any(actual.get(k) != item.get(k) for k in keys):
                     ck.error(f'classic pause lost a native service contract: {name}')
         if root.findall('items'):
             ck.error('pause widgets must share one scene and text layer')
     colors, styles = v.tree('Data/colors.XMLB'), v.tree('Data/styles.XMLB')
-    if colors is None or styles is None or len(colors) > T.COLOR_LIMIT - T.COLOR_RESERVE or \
-            len(styles) > T.STYLE_LIMIT - T.STYLE_RESERVE:
+    from . import online_menus as O
+    color_reserve,style_reserve=O.reserved_budget(colors,styles)
+    if colors is None or styles is None or len(colors) > T.COLOR_LIMIT - color_reserve or \
+            len(styles) > T.STYLE_LIMIT - style_reserve:
         ck.error('classic menu tables consumed reserved native headroom')
     elif colors is not None and styles is not None:
         ids = {e.get('id') for e in colors}
@@ -1145,7 +1156,8 @@ def _classic_service(v, ck, adapter, menu, native_scene):
         if root is None or root.get('igb') != adapter.SCENE:
             ck.error('classic service definition/scene missing: ' + menu)
             continue
-        for problem in H.control_problems(v.ctx.read_base_xmlb('UI/menus/' + menu + ext), root, adapter.RETIRED):
+        extra = getattr(adapter, 'extra_retired', lambda _ctx: ())(v.ctx)       # --loot xml1: the shop's Training tab
+        for problem in H.control_problems(v.ctx.read_base_xmlb('UI/menus/' + menu + ext), root, adapter.RETIRED + extra):
             ck.error(menu + ': ' + problem)
         if hasattr(adapter, 'BACK'):
             helper = root.find('items')
@@ -1328,3 +1340,123 @@ def v_personal_items(v, ck):
                     problems += 1
         if not problems:
             ck.count('personal_items_ok')
+
+
+def v_online_menus(v, ck):
+    """Scoped fonts, paired presentation resources and fixture command boundary."""
+    if C.frontend_mode(v.ctx) != 'xml1': return
+    from . import online_menus as O
+    import xml.etree.ElementTree as ET
+    if not O.enabled(v.ctx):
+        ck.set('online_menus',0)
+        return
+    for problem in O.output_problems(v.ctx.out):ck.error(problem)
+    # D2: the scene capacity is the companion DLL's (menu-anchors/512 probe), read from the output folder as
+    # output_problems / check_online_dll do (the validator's file index lists built files only, not the DLL)
+    _dll=v.ctx.out/'dinput.dll'
+    anchor_capacity=O.engine_scene_anchors(_dll.read_bytes() if _dll.is_file() else b'')
+    from . import fix_ini as FI
+    try:FI.check_online_dll(v.ctx.out/'dinput.dll',{'Online':{'Menus':'1'},'Game':{'LegendsClassicFonts':'1'}})
+    except FI.FixTooOld as error:ck.error(str(error))
+    colors=v.tree('Data/colors.XMLB')
+    try: ids=O.palette_ids(colors if colors is not None else ())
+    except ValueError as error:
+        ck.error(str(error)); return
+    from . import online_fonts as OF
+    for map_name,suffix in (('fonts_pc','pc'),('fonts_hd','hd')):
+        original=v.tree('UI/fonts/'+map_name+'.XMLB')
+        private=v.tree('UI/fonts/lc_fonts_'+suffix+'.XMLB')
+        expected=[] if original is None else [dict(e.attrib) for e in original]
+        expected += [dict(index='lc_'+r,data='lc_online_'+r,texture='lc_online_'+r) for r in OF.ROLES]
+        if private is None or [dict(e.attrib) for e in private]!=expected:ck.error('private font map differs: '+suffix)
+    for role in OF.ROLES:
+        table=v.tree('UI/fonts/lc_online_'+role+'.XMLB')
+        atlas=v.read('Textures/fonts/lc_online_'+role+'.IGB')
+        for problem in OF.resource_problems(table,atlas,role):ck.error(problem)
+    if v.read('licenses/BarlowCondensed-OFL.txt')!=(OF.SOURCE/'OFL.txt').read_bytes():ck.error('private font OFL license missing or changed')
+    manifest=(json.dumps(OF.verify_source(),indent=2)+'\n').encode()
+    if v.read('licenses/BarlowCondensed-source.json')!=manifest:ck.error('private font provenance missing or changed')
+    from . import online_party as PT
+    try: rail=O.party_rail(F.pda_menu_trees(v.ctx)[:2])
+    except ValueError as error:
+        ck.error(str(error)); rail=None
+    for name in (*O.MENUS,*O.LOBBIES,O.PARTY_MENU):
+        party=name==O.PARTY_MENU
+        if party and rail is None: continue
+        if party: screen=O.bound_layout(PT.party_layout('host',native=rail),O.native_metrics(v.ctx))
+        else: screen=O.bound_layout(O.runtime_layout(name) if name in O.MENUS else O.lobby_layout(name),O.native_metrics(v.ctx))
+        native=v.ctx.read_base_xmlb('UI/menus/'+name+'.engb') if name in O.LOBBIES else None
+        expected=O.menu_tree(screen,ids) if name in (*O.MENUS,O.PARTY_MENU) else O.lobby_tree(native,screen,ids)
+        # Live 060p: the art is drawn as the first two scene models (the menu sprite never drew on the base
+        # CMenu and was flipped/pillarboxed on the lobbies); both model files must ship.
+        O.add_backdrop(expected,screen['name'])
+        for model in ('ui/models/lc_o_field',O.backdrop_resource(screen['name'])):
+            if v.read(model+'.IGB') is None: ck.error(name+': backdrop model missing: '+model)
+        data=v.read('UI/menus/'+expected.get('igb')+'.IGB')
+        for suffix in ('.XMLB','.engb'):
+            root=v.tree('UI/menus/'+name+suffix)
+            if root is None:
+                ck.error(name+suffix+': missing online definition'); continue
+            if party: problems=PT.party_problems(root,screen,rail,ids)
+            else: problems=O.tree_problems(root,screen,ids) if name in O.MENUS else O.lobby_problems(root,native,screen)
+            for error in problems: ck.error(name+': '+error)
+            if name in O.MENUS:
+                for error in O.runtime_problems(root,screen,ids):ck.error(name+': '+error)
+            if ET.tostring(root)!=ET.tostring(expected):
+                # Binary codec sorts attributes; compare semantic trees below.
+                def signature(e): return (e.tag,dict(e.attrib),[signature(c) for c in e])
+                if signature(root)!=signature(expected): ck.error(name+': authored tree differs')
+        if data is None: ck.error(name+': missing scene')
+        else:
+            for error in O.scene_problems(screen,data,anchor_capacity=anchor_capacity): ck.error(name+': '+error)
+        pkg=v.tree(F.MENU_PKG_DIR+'/'+name+'.PKGB')
+        if pkg is None: ck.error(name+': missing package')
+        else:
+            expected_entries={(e.tag,e.get('filename')) for e in O.package(expected)}
+            actual_entries={(e.tag,e.get('filename')) for e in pkg}
+            if name in (*O.MENUS,O.PARTY_MENU) and actual_entries!=expected_entries:ck.error(name+': package closure differs')
+            if not actual_entries.issuperset(expected_entries):ck.error(name+': native package closure differs')
+            if name in O.LOBBIES:
+                inherited=v.ctx.read_base_xmlb(F.MENU_PKG_DIR+'/'+name+'.PKGB')
+                if inherited is not None and not actual_entries.issuperset({(e.tag,e.get('filename')) for e in inherited}):
+                    ck.error(name+': native dynamic precaches missing')
+            for kind,filename in expected_entries:
+                suffix='.IGB' if kind in ('model','texture') else '.XMLB'
+                if v.read(filename+suffix) is None: ck.error(name+': unresolved '+filename)
+    colors,styles=v.tree('Data/colors.XMLB'),v.tree('Data/styles.XMLB')
+    if colors is None or styles is None: ck.error('online tables missing')
+    else:
+        if len(colors)>71 or len(styles)>31: ck.error('online table overflow')
+        try:
+            _,expected_styles,_=O.theme(colors,styles)
+            by_name={e.get('name'):e for e in expected_styles}
+            for e in styles:
+                if e.get('name') in {'lc_o_'+r for r in O.STYLES}|{'lc_o_'+r for r in O.STYLE_ALIASES} and e.attrib!=by_name[e.get('name')].attrib:
+                    ck.error('online style binding differs: '+e.get('name'))
+        except ValueError as error: ck.error(str(error))
+        for role in O.STYLES:
+            if len([e for e in styles if e.get('name')=='lc_o_'+role])!=1: ck.error('online style missing: '+role)
+        for alias in O.STYLE_ALIASES:
+            if len([e for e in styles if e.get('name')=='lc_o_'+alias])!=1:ck.error('online alias style missing: '+alias)
+    main=v.tree(F.MENU_REL+'.XMLB')
+    if main is None or not any(e.get('usecmd')==O.NATIVE_ENTRY for e in main.findall('item')):
+        ck.error('must preserve native main-menu Online entry')
+    if main is not None:
+        hint=next((e for e in main if e.get('name')=='lc_online_continue'),None)
+        if hint is None or hint.get('hide')!='true' or '$MENU_ACCEPT' not in hint.get('text',''):
+            ck.error('localized main Accept hint missing')
+        scene=v.read(F.MENU_IGB_REL)
+        if scene is not None:
+            for error in O.M.placement_problems(scene,O.main_hint_layout()):ck.error(error)
+    # 0.6 preview fix E2: the mouse hit table must be one the DLL's parser accepts (one bad line switches every co-op screen's
+    # hit boxes off) and must equal the focus bars as built (model vertices at the scene anchors).
+    hits=v.read(O.HITS_FILE)
+    if hits is None: ck.error('mouse hit table missing: '+O.HITS_FILE)
+    else:
+        problems=O.hit_table_problems(hits)
+        for error in problems: ck.error(O.HITS_FILE+': '+error)
+        if not problems:
+            menus=[n for n in (*O.MENUS,*O.LOBBIES,O.PARTY_MENU) if v.tree('UI/menus/'+n+'.XMLB') is not None]
+            for error in O.hit_scene_problems(hits,menus,lambda n:v.tree('UI/menus/'+n+'.XMLB'),lambda igb:v.read('UI/menus/'+igb+'.IGB'),
+                                              lambda resource:v.read(resource+'.IGB')):ck.error(O.HITS_FILE+': '+error)
+    ck.set('online_menus',len(O.MENUS)+len(O.LOBBIES)+1)

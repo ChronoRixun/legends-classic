@@ -325,3 +325,218 @@ def test_native_fresh_tail_rejects_invalid_or_stale_provenance():
                 pass
             else:
                 assert False, mutation
+
+
+def _equivalence_case(folder, extra=None):
+    """The converted save's exact-hash record, then the map gains xml1heaviness (and `extra`) on numbered and smart
+    definitions; -> (env, saved, report, restored before the change)"""
+    env = _env(folder)
+    _, saved = _converted(env)
+    before, _ = convert.reverse_slot(saved, env)
+    previous = Path(folder) / 'previous'
+    shutil.copytree(env.binds.build, previous)
+    path = Path(env.binds.zone_file('zone/x/y'))
+    root = xmlb.decode(path.read_bytes())
+    for name in ('gate', 'lamp'):
+        next(e for e in root.iter('entity') if e.get('name') == name).set('xml1heaviness', '4')
+    if extra:
+        extra(root)
+    _xmlb(str(path), root)
+    report = Z.generate(previous, env.binds.build)
+    env.binds._zones.clear()
+    env.binds.zone_prefixes = Z.load(env.binds.build)
+    return env, saved, report, before
+
+
+def test_equivalent_definition_attribute_keeps_exact_record():
+    with tempfile.TemporaryDirectory() as folder:
+        env, saved, report, before = _equivalence_case(folder)
+        assert report['accepted'] == ['zone/x/y'] and not report['rejected']
+        row, = [r for r in Z.load(env.binds.build) if r['zone'] == Z.zone_hash('zone/x/y')]
+        assert len(row['placements']) == len(env.binds.zone_numbering('zone/x/y')['numbered'])
+        assert Z.validate_current(env.binds.build) == 1
+        restored, notes = convert.reverse_slot(saved, env)
+        assert not any('record not applied' in n for n in notes), notes
+        assert restored['zones'] == before['zones']
+        # Without the sidecar the same save keeps the old whole-file guard.
+        env.binds.zone_prefixes = []
+        restored, notes = convert.reverse_slot(saved, env)
+        assert not restored['zones'] and any('placement file changed' in n for n in notes)
+
+
+def test_equivalence_rejects_any_other_definition_change():
+    def health(root):
+        next(e for e in root.iter('entity') if e.get('name') == 'lamp').set('health', '99')
+    def moved(root):
+        next(e for e in root.iter('inst') if e.get('name') == 'gate01').set('origin', '1 2 3')
+    def numbering(root):
+        next(e for e in root.iter('entity') if e.get('name') == 'crate').set('smartent', 'false')
+    for extra in (health, moved, numbering):
+        with tempfile.TemporaryDirectory() as folder:
+            env, saved, report, _ = _equivalence_case(folder, extra)
+            if extra is numbering:
+                continue  # an append-only change: attest() decides; equivalence never sees it
+            assert report['rejected'] == ['zone/x/y'], extra.__name__
+            restored, notes = convert.reverse_slot(saved, env)
+            assert not restored['zones'] and any('record not applied' in n for n in notes)
+
+
+def test_equivalence_retargets_append_rows_of_the_previous_build():
+    with tempfile.TemporaryDirectory() as folder:
+        env, saved, report = fixture(folder)              # previous map -> appended map (prefix row)
+        appended = Path(folder) / 'appended'
+        shutil.copytree(env.binds.build, appended)
+        before, _ = convert.reverse_slot(saved, env)
+        path = Path(env.binds.zone_file('zone/x/y'))
+        root = xmlb.decode(path.read_bytes())
+        next(e for e in root.iter('entity') if e.get('name') == 'gate').set('xml1heaviness', '5')
+        _xmlb(str(path), root)
+        result = Z.generate(appended, env.binds.build)
+        assert result['accepted'] == ['zone/x/y'] and result['retargeted'] == 1
+        env.binds._zones.clear()
+        env.binds.zone_prefixes = Z.load(env.binds.build)
+        assert Z.validate_current(env.binds.build) == 2  # the equivalence row and the re-targeted row
+        restored, notes = convert.reverse_slot(saved, env)
+        assert any('prefix retained' in n for n in notes)
+        # Same restored entities; only the fresh-tail sentinel (state 0) names the current map.
+        strip = lambda z: dict(z, states=z['states'][1:])
+        assert [strip(z) for z in restored['zones']] == [strip(z) for z in before['zones']]
+        sentinel = oldsave.zone_string(restored['zone_strings'], restored['zones'][0]['states'][0]['def_name'])
+        assert sentinel.split('|')[3] == env.binds.zone_numbering('zone/x/y')['sha1']
+
+
+def _reviewed_maps(folder, change):
+    """(env, saved, previous map bytes, current map bytes): two definitions carry a synthetic script attribute and the
+    save's record is made on that map; `change(root)` then edits the current map."""
+    env = _env(folder)
+    path = Path(env.binds.zone_file('zone/x/y'))
+    root = xmlb.decode(path.read_bytes())
+    for name in ('gate', 'crate'):
+        next(e for e in root.iter('entity') if e.get('name') == name).set('actscript', SCRIPT_BEFORE)
+    _xmlb(str(path), root)
+    env.binds._zones.clear()
+    _, saved = _converted(env)
+    previous = path.read_bytes()
+    root = xmlb.decode(previous)
+    change(root)
+    _xmlb(str(path), root)
+    env.binds._zones.clear()
+    return env, saved, previous, path.read_bytes()
+
+
+def _drop_guard(name):
+    def change(root):
+        next(e for e in root.iter('entity') if e.get('name') == name).set('actscript', SCRIPT_AFTER)
+    return change
+
+
+SCRIPT_BEFORE, SCRIPT_AFTER = 'synthetic_step()\\n\\rsynthetic_guard()', 'synthetic_step()'
+OLD_SCRIPT, NEW_SCRIPT = Z.value_sha256(SCRIPT_BEFORE), Z.value_sha256(SCRIPT_AFTER)
+GATE_EDIT = ('zone/x/y', 'gate', 'actscript', OLD_SCRIPT, NEW_SCRIPT)
+
+
+def test_reviewed_actscript_edit_is_scoped_to_its_zone_definition_and_values():
+    with tempfile.TemporaryDirectory() as folder:
+        env, saved, old, new = _reviewed_maps(folder, _drop_guard('gate'))
+        row = Z.attest_equivalent('zone/x/y', old, new, reviewed={GATE_EDIT})
+        assert row and len(row['placements']) == len(env.binds.zone_numbering('zone/x/y')['numbered'])
+        assert Z.attest_equivalent('ZoNe/X/Y', old, new, reviewed={GATE_EDIT}) == row  # zone keys are case-normalised
+        # The shipped table (asteroid2_1 shieldup only) rejects the same edit in any other zone.
+        assert Z.attest_equivalent('zone/x/y', old, new) is None
+        for other in ({('zone/x/z', 'gate', 'actscript', OLD_SCRIPT, NEW_SCRIPT)},            # another zone
+                      {('zone/x/y', 'crate', 'actscript', OLD_SCRIPT, NEW_SCRIPT)},           # another definition
+                      {('zone/x/y', 'gate', 'note', OLD_SCRIPT, NEW_SCRIPT)},                 # another attribute
+                      {('zone/x/y', 'gate', 'actscript', OLD_SCRIPT, Z.value_sha256('x'))},   # another new value
+                      {('zone/x/y', 'gate', 'actscript', Z.value_sha256('x'), NEW_SCRIPT)}):  # another old value
+            assert Z.attest_equivalent('zone/x/y', old, new, reviewed=other) is None, other
+    with tempfile.TemporaryDirectory() as folder:
+        # The reviewed edit on gate does not excuse the same edit on crate as well.
+        def both(root):
+            _drop_guard('gate')(root); _drop_guard('crate')(root)
+        env, saved, old, new = _reviewed_maps(folder, both)
+        assert Z.attest_equivalent('zone/x/y', old, new, reviewed={GATE_EDIT}) is None
+        assert Z.attest_equivalent('zone/x/y', old, new, reviewed={GATE_EDIT, ('zone/x/y', 'crate', 'actscript', OLD_SCRIPT, NEW_SCRIPT)})
+    with tempfile.TemporaryDirectory() as folder:
+        # A reviewed edit plus xml1heaviness stays equivalent; plus any other definition edit does not.
+        def heavy(root):
+            _drop_guard('gate')(root); next(e for e in root.iter('entity') if e.get('name') == 'lamp').set('xml1heaviness', '4')
+        env, saved, old, new = _reviewed_maps(folder, heavy)
+        assert Z.attest_equivalent('zone/x/y', old, new, reviewed={GATE_EDIT})
+        root = xmlb.decode(new)
+        next(e for e in root.iter('entity') if e.get('name') == 'gate').set('health', '99')
+        edited = Path(folder) / 'edited.engb'
+        _xmlb(str(edited), root)
+        assert Z.attest_equivalent('zone/x/y', old, edited.read_bytes(), reviewed={GATE_EDIT}) is None
+
+
+def test_reviewed_edit_keeps_the_saved_record_and_other_zones_reject():
+    shipped = Z.REVIEWED_CHANGES
+    try:
+        for zone, kept in (('zone/x/y', True), ('zone/x/z', False)):
+            Z.REVIEWED_CHANGES = frozenset({(zone, 'gate', 'actscript', OLD_SCRIPT, NEW_SCRIPT)})
+            with tempfile.TemporaryDirectory() as folder:
+                env, saved, old, new = _reviewed_maps(folder, _drop_guard('gate'))
+                before = Path(folder) / 'before'
+                shutil.copytree(env.binds.build, before)
+                (before / Path(env.binds.zone_file('zone/x/y')).relative_to(env.binds.build)).write_bytes(old)
+                report = Z.generate(before, env.binds.build)
+                assert report['accepted' if kept else 'rejected'] == ['zone/x/y'], report
+                env.binds._zones.clear()
+                env.binds.zone_prefixes = Z.load(env.binds.build)
+                restored, notes = convert.reverse_slot(saved, env)
+                if kept:
+                    assert restored['zones'] and not any('record not applied' in n for n in notes), notes
+                else:
+                    assert not restored['zones'] and any('placement file changed' in n for n in notes), notes
+    finally:
+        Z.REVIEWED_CHANGES = shipped
+
+
+def test_shipped_reviewed_changes_are_the_one_owner_reviewed_edit():
+    assert len(Z.REVIEWED_CHANGES) == 1
+    (zone, definition, attribute, old, new), = Z.REVIEWED_CHANGES
+    assert (zone, definition, attribute) == ('astroid_m/visit1/asteroid2_1', 'shieldup', 'actscript')
+    assert len(old) == len(new) == 64 and old != new and int(old, 16) and int(new, 16)
+    assert 'actscript' not in Z.EQUIVALENT_ATTRIBUTES
+
+
+def test_owned_asteroid2_1_magneto_edit_is_equivalent():
+    import hashlib, os, unittest
+    stable, candidate = os.environ.get('LC_OWNED_STABLE_BUILD'), os.environ.get('LC_OWNED_CANDIDATE_BUILD')
+    if not (stable and candidate):
+        raise unittest.SkipTest('LC_OWNED_STABLE_BUILD / LC_OWNED_CANDIDATE_BUILD not set (owned builds)')
+    zone = 'astroid_m/visit1/asteroid2_1'
+    old, new = (Path(binds.Binds(b).zone_file(zone)).read_bytes() for b in (stable, candidate))
+    assert old != new
+    row = Z.attest_equivalent(zone, old, new)
+    assert row and row['current'] == hashlib.sha1(new).digest()
+    assert Z.attest_equivalent(zone, old, new, reviewed=frozenset()) is None  # only the reviewed row accepts it
+    assert Z.attest_equivalent('astroid_m/visit1/asteroid2_2', old, new) is None  # bound to its zone
+
+
+def test_plan_against_stable_and_previous_beta_merges_and_writes_nothing():
+    with tempfile.TemporaryDirectory() as folder:
+        env, saved, report = fixture(folder)              # stable map -> appended map (the previous beta)
+        stable, beta = Path(folder) / 'previous', Path(folder) / 'appended'
+        shutil.copytree(env.binds.build, beta)
+        path = Path(env.binds.zone_file('zone/x/y'))
+        root = xmlb.decode(path.read_bytes())
+        next(e for e in root.iter('entity') if e.get('name') == 'gate').set('xml1heaviness', '5')
+        _xmlb(str(path), root)
+        sidecar = (Path(env.binds.build) / Z.REL).read_bytes()
+        ledger = Path(folder) / 'ledger.json'
+        assert Z.main(['plan', '--previous', str(stable), '--previous', str(beta), env.binds.build,
+                       '--ledger-out', str(ledger)]) == 0
+        assert (Path(env.binds.build) / Z.REL).read_bytes() == sidecar  # plan writes only the ledger
+        rows, accepted, rejected, retargeted, per_build = Z.plan_all([stable, beta], env.binds.build)
+        assert ledger.read_text(encoding='utf-8') == Z.ledger_json(rows)
+        # stable -> current is an append plus an equivalence edit (no single attestation); beta -> current is
+        # equivalent and re-targets beta's stable -> beta row, so a stable save keeps its record.
+        assert per_build[str(stable)][1] == ['zone/x/y'] and per_build[str(beta)][0] == ['zone/x/y']
+        assert accepted == ['zone/x/y'] and rejected == [] and retargeted == ['zone/x/y']
+        assert Z.main(['generate', '--previous', str(stable), '--previous', str(beta), env.binds.build]) == 0
+        env.binds._zones.clear()
+        env.binds.zone_prefixes = Z.load(env.binds.build)
+        assert Z.ledger_json(env.binds.zone_prefixes) == Z.ledger_json(rows)
+        restored, notes = convert.reverse_slot(saved, env)
+        assert restored['zones'] and any('prefix retained' in n for n in notes), notes

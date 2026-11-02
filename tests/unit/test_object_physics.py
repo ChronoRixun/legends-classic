@@ -25,6 +25,16 @@ def test_heaviness_follows_xml1_lift_ranks():
     assert not S.physics_scale_problems(root)
 
 
+def test_xml1_heaviness_4_and_5_are_kept_for_the_lift_rule():
+    # [Game] LiftRule=xml1 tells XML1's 4 (Might 3 lifts it) from 5 (never) by this attribute; 0-3 need none
+    root = zone(*({'name': f'box{v}', 'classname': 'physent', 'heaviness': str(v)} for v in range(7)))
+    changes = S.convert(root, 'maps/invented/zone5.eng')
+    got = {n: e.get(S.XML1_HEAVINESS_ATTR) for n, e in by_name(root).items()}
+    assert got == {'box0': None, 'box1': None, 'box2': None, 'box3': None, 'box4': '4', 'box5': '5', 'box6': '5'}
+    assert changes['xml1heaviness_kept'] == 3
+    assert {n: e.get('heaviness') for n, e in by_name(root).items()}['box4'] == '3'   # the byte is unchanged
+
+
 def test_every_entity_class_but_not_character_stats():
     root = zone({'name': 'gate', 'classname': 'doorent', 'heaviness': '4'},
                 {'name': 'lift', 'classname': 'moverent', 'heaviness': '3'},

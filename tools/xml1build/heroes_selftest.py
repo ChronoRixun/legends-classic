@@ -33,7 +33,7 @@ out = Path(sys.argv[1] if len(sys.argv) > 1 else C.ROOT / 'build' / '_heroes').r
 ctx = C.BuildContext(out, scan_out=True, registry=C.Registry.load(out / '_build' / 'registry.json'))
 try:
     _rep = json.loads((out / '_build' / 'report.json').read_text(encoding='utf-8')).get('build', {})
-    for _k in ('hero_roster', 'hero_icons', 'hero_bleed', 'newgame'):
+    for _k in ('hero_roster', 'hero_icons', 'hero_bleed', 'rogue_decide', 'newgame'):
         if _rep.get(_k) is not None:
             setattr(ctx.args, _k, _rep[_k])
 except (OSError, ValueError):
@@ -216,7 +216,7 @@ info.append(f'HE: {bad_desc} description problems')
 
 # ------------------------------------------------------------------ HF
 fresh = C.BuildContext(out, scan_out=False)
-for k in ('hero_roster', 'hero_icons', 'hero_bleed'):
+for k in ('hero_roster', 'hero_icons', 'hero_bleed', 'rogue_decide'):
     setattr(fresh.args, k, getattr(ctx.args, k, None))
 fplan = H.hero_plan(fresh)
 names_out = [(s.get('name') or '') for s in hero_root.iter('stats')]

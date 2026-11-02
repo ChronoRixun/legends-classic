@@ -16,8 +16,23 @@ RETIRED = ('track01', 'track02', 'item_inven_bracket', 'options_hinge', 'shop_hi
            'helpbar_hinge_left', 'helpbar_hinge_right', 'shop_focus01', 'shop_focus02', 'shop_light01', 'shop_light02')
 
 
-def tree(native):
-    return H.tree(native, SCENE, FRAMES, RETIRED, lists=('list',))
+# --loot xml1 (DESIGN 5.3): the first game's shops have no Training; the DLL cycles two tabs and labels the third
+# empty, the menu file hides its control (and the focus model that follows it)
+TRAINING = ('shop_option03', 'shop_option03_focus')
+
+
+def extra_retired(ctx):
+    """controls this build hides beyond RETIRED (their hide / enabled may differ from the native menu)"""
+    from . import loot as LOOT
+    return TRAINING if LOOT.selected(ctx) else ()
+
+
+def tree(native, hide=()):
+    root = H.tree(native, SCENE, FRAMES, RETIRED, lists=('list',))
+    for item in root.findall('item'):
+        if item.get('name') in hide:
+            item.attrib.update(hide='true', enabled='false')
+    return root
 
 
 def write(ctx):
@@ -48,8 +63,8 @@ def write(ctx):
     halves = []
     for ext in ('.XMLB', '.engb'):
         before = ctx.read_base_xmlb('UI/menus/shop' + ext)
-        after = tree(before)
-        errors = H.control_problems(before, after, RETIRED)
+        after = tree(before, extra_retired(ctx))
+        errors = H.control_problems(before, after, RETIRED + extra_retired(ctx))
         if errors:
             raise ValueError('; '.join(errors))
         halves.append(after)
