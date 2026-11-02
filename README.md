@@ -107,9 +107,7 @@ published by Activision; this project exists because those games are worth playi
 [xml2-fix](https://github.com/ChronoRixun/xml2-fix). Launcher: [Ultimate Legends](https://github.com/ChronoRixun/ultimate-legends).
 Built with Python, numpy, Pillow and PyInstaller. Project: [ChronoRixun](https://github.com/ChronoRixun).
 
-The reverse engineering, the pipeline and these notes were made by one person working with Claude (Opus 5.5 and
-Fable 5.1) over a couple of months; the commit trailers and the research notes show that work as it happened. It is meant as
-a showcase of what people and AI can do together on preservation work.
+The reverse engineering, the pipeline and these notes were made by one person working with AI; the commit trailers and the research notes show that work as it happened.
 
 ## License and disclaimer
 
