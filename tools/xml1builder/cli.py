@@ -44,8 +44,10 @@ def make_parser():
     p.add_argument('--log', help='log file (default: <out>/_build/builder.log for a build)')
     p.add_argument('--quiet', action='store_true', help='no human text on the console (the log keeps it)')
     p.add_argument('command', nargs='?', choices=COMMANDS)
-    p.add_argument('source', nargs='?', help='import-xml1-save: extracted Xbox folder or raw/qcow2 HDD image (read only)')
+    p.add_argument('source', nargs='?', help='import-xml1-save: Xbox/recomp save folder, save.dat or raw/qcow2 HDD image (read only)')
     p.add_argument('--campaign', help='import-xml1-save: exact in-image campaign path returned by --inspect-source')
+    p.add_argument('--source-kind', choices=('auto', 'xemu', 'recomp'), default='auto',
+                   help='import-xml1-save: source format; recomp also accepts its installation root or save.dat')
     p.add_argument('--slot', type=int, help='import-xml1-save: empty destination slot, 0 through 9')
     p.add_argument('--build', help='import-xml1-save: installed Legends Classic build (read only)')
     p.add_argument('--save-dir', help='import-xml1-save: actual SaveLC folder')

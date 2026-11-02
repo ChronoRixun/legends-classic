@@ -68,34 +68,45 @@ class Cursor:
         return text
 
 
-def character(c, *, max_talents=64, max_equipped=3):
+def character(c, *, max_talents=64, max_equipped=3, version=0):
     offset = c.offset
     raw = c.take(44, 'character scalars')
     health, energy, seat = struct.unpack_from('<ffi', raw)
     if not math.isfinite(health) or not math.isfinite(energy) or seat not in (-1, 0, 1, 2, 3):
         raise ImportRefusal('DAMAGED', 'Invalid character vitals or control seat.', offset=offset)
+    vitality = list(c.take(2, 'permanent vitality bonuses')) if version >= 5 else [0, 0]
+    auto_equip = c.take(1, 'auto-equip preference')[0] if version >= 6 else 0
+    if auto_equip > 1:
+        raise ImportRefusal('DAMAGED', 'Invalid auto-equip preference.', offset=c.offset - 1)
     count, = c.unpack('<B', 'talent count')
     if count > max_talents:
         raise ImportRefusal('DAMAGED', 'Talent count exceeds this source profile.', offset=c.offset - 1)
     talents, ids = [], set()
     for _ in range(count):
-        native, packed = c.unpack('<B3s', 'talent')
+        native, packed = c.unpack('<B4s' if version >= 2 else '<B3s', 'talent')
         if native in ids:
             raise ImportRefusal('DAMAGED', 'Duplicate native talent ID.', offset=c.offset - 4)
         ids.add(native)
         bits = int.from_bytes(packed, 'little')
-        talents.append(dict(native_id=native, rank=bits & 15, pending=(bits >> 4) & 15,
-                            bonus=(bits >> 8) & 15, limit=(bits >> 12) & 15,
-                            baseline=(bits >> 16) & 15, padding=(bits >> 20) & 15))
+        width, mask = (6, 63) if version >= 2 else (4, 15)
+        if version >= 2 and bits >> 30:
+            raise ImportRefusal('DAMAGED', 'Reserved expanded talent bits are set.', offset=c.offset - 4)
+        talents.append(dict(native_id=native, **{name: (bits >> (i * width)) & mask
+            for i, name in enumerate(('rank', 'pending', 'bonus', 'limit', 'baseline'))},
+            padding=bits >> (width * 5)))
     equipped, = c.unpack('<B', 'equipped count')
     if equipped > max_equipped:
         raise ImportRefusal('DAMAGED', 'Equipment count exceeds this source profile.', offset=c.offset - 1)
+    equipped_ids = list(c.take(equipped, 'equipped IDs'))
+    if any(i >= 160 for i in equipped_ids):
+        raise ImportRefusal('DAMAGED', 'Equipped definition exceeds the native item bank.', offset=c.offset - equipped)
     return dict(offset=offset, raw=raw, health=health, energy=energy, seat=seat, validity=raw[12],
                 experience=struct.unpack_from('<I', raw, 16)[0], level=raw[20], ack_level=raw[21],
                 skin=raw[22], base=list(raw[23:27]), pending=list(raw[27:31]), bonus=list(raw[31:35]),
                 bonus2=list(raw[35:39]), trait_points=raw[39], skill_points=raw[40],
                 ai_level=raw[41] & 15, ai_power=raw[41] >> 4, talents=talents,
-                equipped=list(c.take(equipped, 'equipped IDs')))
+                equipped=equipped_ids, **(
+                    dict(vitality=vitality, auto_equip=bool(auto_equip)) if version else {}))
 
 
 def objective_counter(word):
@@ -128,7 +139,37 @@ def snapshot(raw):
 def decode(payload, *, hero_names=HEROES, max_talents=64, max_equipped=3):
     if not 0 < len(payload) <= CAPACITY or len(hero_names) != 16 or len(set(hero_names)) != 16:
         raise ImportRefusal('VERSION', 'Unsupported retail payload or roster profile.')
-    c = Cursor(payload)
+    return _decode(payload, lambda c: _characters(c, hero_names, max_talents, max_equipped))
+
+
+def _characters(c, hero_names, max_talents, max_equipped):
+    chars = [dict(character(c, max_talents=max_talents, max_equipped=max_equipped), name=name,
+                  definition_id=i + 1) for i, name in enumerate(hero_names)]
+    unlocked = _unlocks(c)
+    valid, restore = _restore(c, 17, lambda c: character(c, max_talents=max_talents, max_equipped=max_equipped))
+    return dict(heroes=chars, unlocked=unlocked, restore_valid=valid, restore=restore)
+
+
+def _unlocks(c):
+    c.marker('unlocked')
+    unlock = c.take(0x104, 'hero unlock bank')
+    count = struct.unpack_from('<I', unlock, 0x100)[0]
+    if count > 256 or len(set(unlock[:count])) != count or any(x == 0 for x in unlock[:count]):
+        raise ImportRefusal('DAMAGED', 'Invalid hero unlock count or IDs.')
+    return list(unlock[:count])
+
+
+def _restore(c, count, read_character):
+    c.marker('restore')
+    valid, = c.unpack('<B', 'restore validity')
+    if valid > 1:
+        raise ImportRefusal('DAMAGED', 'Invalid restore validity.')
+    return valid, [read_character(c) for _ in range(count)]
+
+
+def _decode(payload, read_characters, *, cursor_type=Cursor, read_adjuncts=None):
+    """Shared native framing; each source decoder owns its section boundaries."""
+    c = cursor_type(payload)
     begin = c.marker()
     if not begin.startswith('[SAVEGAMEBEGIN: ') or not begin.endswith(']'):
         raise ImportRefusal('DAMAGED', 'Invalid begin marker.', offset=0)
@@ -148,18 +189,7 @@ def decode(payload, *, hero_names=HEROES, max_talents=64, max_equipped=3):
     c.marker('credits')
     credits, = c.unpack('<H', 'Danger Room credits')
     c.boundary('characters')
-    chars = [dict(character(c, max_talents=max_talents, max_equipped=max_equipped), name=name,
-                  definition_id=i + 1) for i, name in enumerate(hero_names)]
-    c.marker('unlocked')
-    unlock = c.take(0x104, 'hero unlock bank')
-    unlock_count = struct.unpack_from('<I', unlock, 0x100)[0]
-    if unlock_count > 256 or len(set(unlock[:unlock_count])) != unlock_count or any(x == 0 for x in unlock[:unlock_count]):
-        raise ImportRefusal('DAMAGED', 'Invalid hero unlock count or IDs.')
-    c.marker('restore')
-    valid, = c.unpack('<B', 'restore validity')
-    if valid > 1:
-        raise ImportRefusal('DAMAGED', 'Invalid restore validity.')
-    restore = [character(c, max_talents=max_talents, max_equipped=max_equipped) for _ in range(17)]
+    manager = read_characters(c)
     c.boundary('inventory')
     inventory = c.take(0x289, 'inventory')
     if inventory[0x280] > 1:
@@ -184,6 +214,7 @@ def decode(payload, *, hero_names=HEROES, max_talents=64, max_equipped=3):
     c.boundary('profile')
     profile = c.take(0x194, 'embedded profile')
     c.boundary('variables')
+    adjuncts = read_adjuncts(c, inventory) if read_adjuncts else {}
     variables = {'mission': [], 'game': []}
     for family, count in (('mission', 32), ('game', 16)):
         names = set()
@@ -203,9 +234,8 @@ def decode(payload, *, hero_names=HEROES, max_talents=64, max_equipped=3):
     saved = [dict(quantity=inventory[0x140+2*i], flag=inventory[0x141+2*i]) for i in range(160)]
     return dict(decoder='retail-v1', description=begin[16:-1], play_time=play_time, game=game,
                 retained_game=retained_game, side=side, side_depth=depth, courses=courses,
-                grades=grades, credits=credits, heroes=chars, unlocked=list(unlock[:unlock_count]),
-                restore_valid=valid, restore=restore, inventory=live, inventory_snapshot=saved,
+                grades=grades, credits=credits, **manager, inventory=live, inventory_snapshot=saved,
                 inventory_snapshot_valid=inventory[0x280], tech_bits=struct.unpack_from('<I', inventory, 0x281)[0],
                 snapshot_tech_bits=struct.unpack_from('<I', inventory, 0x285)[0], review=review,
                 strings=strings, zones=zones, mission=mission, profile=profile, variables=variables,
-                consumed=c.offset, slack=payload[c.offset:], boundaries=c.boundaries)
+                consumed=c.offset, slack=payload[c.offset:], boundaries=c.boundaries, **adjuncts)

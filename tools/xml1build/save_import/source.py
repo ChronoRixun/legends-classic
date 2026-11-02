@@ -68,12 +68,7 @@ def bounded_read(path, maximum):
 
 def campaigns(folder):
     root = safe_path(folder, directory=True)
-    chain = list(reversed((root, *root.parents)))
-    for i, node in enumerate(chain):
-        if node.name.lower() == 'tdata':
-            raise ImportRefusal('INPUT', 'Select the extracted UDATA campaign folder.')
-        if node.name.lower() == 'udata' and i + 1 < len(chain) and chain[i + 1].name.lower() != TITLE_ID:
-            raise ImportRefusal('VERSION', 'This UDATA folder belongs to another title.')
+    _title_path(root)
     queue, found, count = [(root, 0)], [], 0
     while queue:
         current, depth = queue.pop(0)
@@ -102,6 +97,15 @@ def campaigns(folder):
     return root, found
 
 
+def _title_path(root):
+    chain = list(reversed((root, *root.parents)))
+    for i, node in enumerate(chain):
+        if node.name.lower() == 'tdata':
+            raise ImportRefusal('INPUT', 'Select the extracted UDATA campaign folder.')
+        if node.name.lower() == 'udata' and i + 1 < len(chain) and chain[i + 1].name.lower() != TITLE_ID:
+            raise ImportRefusal('VERSION', 'This UDATA folder belongs to another title.')
+
+
 @dataclass(frozen=True)
 class Source:
     root: Path
@@ -109,6 +113,11 @@ class Source:
     sha256: str
     payload: bytes
     signature_status: str
+    kind: str = 'xemu'
+
+    @property
+    def binding(self):
+        return dict(kind='recomp' if self.kind == 'recomp' else 'extracted-folder')
 
     def recheck(self):
         if digest(bounded_read(self.path, CAPACITY + 24)) != self.sha256:
@@ -133,27 +142,62 @@ def envelope(data, verifier=None):
     return payload, status
 
 
-def discover_source(value, *, campaign=None):
+def _recomp_root(root):
+    """Select only installation/UDATA; never descend into installed assets."""
+    matches = []
+    for count, p in enumerate(root.iterdir(), 1):
+        if count > MAX_ENTRIES:
+            raise ImportRefusal('INPUT', 'Choose the UDATA or campaign folder directly.')
+        if p.name.lower() == 'udata':
+            matches.append(safe_path(p, directory=True))
+    if len(matches) > 1:
+        raise ImportRefusal('INPUT', 'Case-insensitive UDATA folders are ambiguous.')
+    return matches[0] if matches else root
+
+
+def _kind(source_kind):
+    if source_kind not in ('auto', 'xemu', 'recomp'):
+        raise ImportRefusal('INPUT', 'Unknown save source kind.')
+
+
+def is_recomp(payload):
+    # The native prefix is fixed. Never search variable records or slack.
+    return payload[0x5c6:0x5ce] == b'XML1CHR\0'
+
+
+def discover_source(value, *, campaign=None, source_kind='auto'):
+    _kind(source_kind)
     root = safe_path(value)
     if root.is_file():
+        if root.name.lower() == 'save.dat':
+            original = read_source(root, source_kind=source_kind, campaign=campaign)
+            return [dict(folder=str(root.parent), label=root.parent.name)], original
         from .disk import inspect_image
-        return inspect_image(root, campaign=campaign, discover_only=True)
+        return inspect_image(root, campaign=campaign, discover_only=True, source_kind=source_kind)
     if campaign is not None:
         raise ImportRefusal('INPUT', '--campaign selects a campaign inside an HDD image only.')
-    root, paths = campaigns(root)
+    selected = root
+    root, paths = campaigns(_recomp_root(root) if source_kind == 'recomp' else root)
     rows = [dict(folder=str(p.parent), label=p.parent.relative_to(root).as_posix()) for p in paths]
-    return rows, read_source(root) if len(paths) == 1 else None
+    return rows, read_source(selected, source_kind=source_kind) if len(paths) == 1 else None
 
 
-def read_source(folder, verifier=None, *, campaign=None):
-    if safe_path(folder).is_file():
+def read_source(folder, verifier=None, *, campaign=None, source_kind='auto'):
+    _kind(source_kind)
+    selected = safe_path(folder)
+    if selected.is_file() and selected.name.lower() != 'save.dat':
         from .disk import inspect_image
-        return inspect_image(folder, campaign=campaign, verifier=verifier)[1]
+        return inspect_image(folder, campaign=campaign, verifier=verifier, source_kind=source_kind)[1]
     if campaign is not None:
         raise ImportRefusal('INPUT', '--campaign selects a campaign inside an HDD image only.')
-    root, paths = campaigns(folder)
+    if selected.is_file():
+        root, paths = selected.parent, [selected]
+        _title_path(root)
+    else:
+        root, paths = campaigns(_recomp_root(selected) if source_kind == 'recomp' else selected)
     if len(paths) != 1:
         raise ImportRefusal('MULTIPLE', candidates=[str(p.parent.relative_to(root)).replace('\\', '/') for p in paths])
     data = bounded_read(paths[0], CAPACITY + 24)
     payload, status = envelope(data, verifier)
-    return Source(root, paths[0], digest(data), payload, status)
+    kind = 'recomp' if source_kind == 'recomp' or (source_kind == 'auto' and is_recomp(payload)) else 'xemu'
+    return Source(selected if selected.is_dir() else root, paths[0], digest(data), payload, status, kind)

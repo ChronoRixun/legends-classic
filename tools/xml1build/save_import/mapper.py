@@ -143,6 +143,12 @@ def _hero(source, row, table, changes):
     result.update(hero=table.resolve('STAT', target), level=level, experience=xp, ack_level=source['ack_level'],
                   player_seat=-1, skill_points=source['skill_points'], trait_points=source['trait_points'] * 4,
                   talents=[], equipped=[], powers=copy.deepcopy(row['powers']))
+    if 'vitality' in source:
+        result['health_boosts'], result['energy_boosts'] = source['vitality']
+        changes.preserve(name + '.permanent_vitality', source['vitality'])
+        if source['auto_equip']:
+            changes.approximate('auto_equip', name + '.auto_equip', True, False,
+                                'The source auto-equip preference has no proven target flag mapping; use manual equipment.')
     formula = row.get('stat_reconstruction')
     if formula:
         # Saved base = authored base + native class growth + earned allocations.
@@ -178,7 +184,15 @@ def _hero(source, row, table, changes):
                             'No proven target interpretation for these source bytes.')
     talents = table.data.get('talents', {}).get(name, {})
     for t in source['talents']:
-        identity = talents.get(str(t['native_id']))
+        if source.get('talent_identities') is not None:
+            saved = source['talent_identities'][t['native_id']]
+            matches = [r['target'] for r in table.data.get('named_talents', {}).get(name, [])
+                       if all(r[k] == saved[k] for k in ('name', 'source', 'selector'))]
+            if len(matches) > 1:
+                raise ImportRefusal('BUILD', 'Ambiguous named talent mapping.', hero=name)
+            identity = matches[0] if matches else None
+        else:
+            identity = talents.get(str(t['native_id']))
         if not identity:
             if t['rank'] or t['baseline'] or t['bonus']:
                 raise ImportRefusal('IDENTITY', 'Unknown purchased or active native talent ID.', hero=name, native_id=t['native_id'])
@@ -206,18 +220,89 @@ def _hero(source, row, table, changes):
     return result
 
 
+def _source_roster(ir, table, changes):
+    """Resolve every source ID before selecting supported destination records."""
+    recomp = ir['decoder'].startswith('recomp-')
+    target_names = {n.lower() for n in table.env.binds.stat[1:table.env.binds.hero_count + 1]}
+    party = {n.lower() for n in ir['mission']['party'] if n}
+    supported, by_id, names = [], {}, set()
+    for h in ir['heroes']:
+        ident, name = h['definition_id'], h['name']
+        if ident in by_id or name.lower() in names:
+            raise ImportRefusal('IDENTITY', 'Duplicate source definition ID or name.')
+        by_id[ident] = h
+        names.add(name.lower())
+        if recomp and (not getattr(table, 'recomp', False) or table.definitions.get(ident) != name):
+            raise ImportRefusal('IDENTITY', 'The character does not match the effective source definition ledger.', definition_id=ident)
+        row = table.data['heroes'].get(name)
+        if row is None or row['target'].lower() not in target_names:
+            if not recomp or name.lower() in party or h['seat'] != -1:
+                raise ImportRefusal('IDENTITY', 'An active or required source hero cannot be represented by this roster.', hero=name,
+                                    definition_id=ident)
+            loss = {key: copy.deepcopy(value) for key, value in h.items()
+                    if key not in ('raw', 'offset', 'identity_resolved')}
+            loss['unlocked'] = ident in ir['unlocked']
+            changes.skip('unsupported_hero.' + str(ident), loss,
+                         'This source character is absent from the target roster; its progression and unlock are omitted. Equipment is handled separately.')
+            continue
+        supported.append(h)
+    if any(n not in names for n in party):
+        raise ImportRefusal('IDENTITY', 'Unknown saved party hero.')
+    return supported, by_id
+
+
+def _recomp_state(ir, table, result, changes, supported):
+    """Preserve known adjunct state, disclose every remaining adjunct field."""
+    if not ir['decoder'].startswith('recomp-'):
+        return
+    mapped_names = {h['name'] for h in supported}
+    for name, moves in ir['power_selections'].items():
+        if name not in mapped_names:
+            changes.skip('recomp.power_selections.' + name, moves,
+                         'The saved power owner has no mapped source character; these selections are omitted.')
+    if ir['hard_unlocked']:
+        changes.skip('recomp.hard_unlocked', True, 'No confirmed destination profile-completion flag mapping is supplied.')
+    extra = ir['campaign_extra']
+    if extra:
+        if 'acts' in extra and extra['acts'][0] != result['GAME']['act']:
+            raise ImportRefusal('CONTEXT', 'The saved current act disagrees with the checkpoint recipe.')
+        changes.skip('recomp.campaign_extra', {k: v for k, v in extra.items() if k != 'difficulty'},
+                     'Retained difficulty/act, recall departure and cooldowns, and collectible allowances reset at the checkpoint.')
+    stash = ir['stash']
+    if stash['live']:
+        for value in stash['live']:
+            matches = [r for r in table.data['items'] if r.get('source_name') == value['name']]
+            if len(matches) != 1 or matches[0]['route'] != 'equipment':
+                raise ImportRefusal('IDENTITY', 'A named stash item has no unique equipment mapping.', item=value['name'])
+            row = matches[0]
+            result['ITEM']['instances'] += [_instance(table, row['target'], 2) for _ in range(value['quantity'])]
+        changes.approximate('stash_location', 'recomp.stash.live', stash['live'], 'carried equipment',
+                            'Preserve every named stash copy in carried equipment; the target has no matching source stash container.')
+    if stash['valid'] or stash['snapshot']:
+        changes.skip('recomp.stash.snapshot', dict(valid=stash['valid'], items=stash['snapshot']),
+                     'This is rollback inventory, invalidated with the other source restore banks.')
+
+
 def map_campaign(ir, source, table, *, slot, allow_inferred=False, profile_bytes=None, merge_unlocks=False, now=None, serial=None):
     if not 0 <= slot <= 9:
         raise ImportRefusal('SLOT', 'Slot must be in the range 0 through 9.')
     changes = Changes()
+    source_heroes, by_id = _source_roster(ir, table, changes)
     recipe = checkpoint(ir, table.data.get('checkpoints', []))
     result = empty_campaign()
     target_zone = table.resolve('ZONE', recipe['target_zone'])
+    difficulty = ir.get('difficulty', 1)
+    if type(difficulty) is not int or difficulty not in (0, 1, 2):
+        raise ImportRefusal('CONTEXT', 'The source difficulty is not representable.', difficulty=difficulty)
     result['META'].update(saved_at=int(time.time() if now is None else now), description='Imported XML1 campaign',
-                          origin=1, zone=target_zone, act=recipe['act'], difficulty=1,
+                          origin=1, zone=target_zone, act=recipe['act'], difficulty=difficulty,
                           play_time=ir['play_time'], writer='XML1 save importer', slot=slot)
-    result['GAME'].update(act=recipe['act'], difficulty=1, play_time=ir['play_time'])
-    changes.approximate('difficulty', 'difficulty', 'retail semantics unresolved', 1, 'Imported campaign uses Normal difficulty.')
+    result['GAME'].update(act=recipe['act'], difficulty=difficulty, play_time=ir['play_time'])
+    if 'difficulty' in ir:
+        changes.preserve('difficulty', difficulty)
+    else:
+        changes.approximate('difficulty', 'difficulty', 'retail semantics unresolved', 1,
+                            'No source difficulty field is established; use Normal difficulty.')
     changes.approximate('checkpoint', 'world', dict(zone=ir['mission']['zone'], cached_zones=len(ir['zones'])),
                         dict(zone=recipe['target_zone'], checkpoint=recipe['name']),
                         'Resume at zone/checkpoint start. Enemies and props respawn; fog, heard lines and world drops reset.')
@@ -227,14 +312,29 @@ def map_campaign(ir, source, table, *, slot, allow_inferred=False, profile_bytes
                  'Unresolved game-mode, trivia and loading fields use idle target checkpoint defaults.')
     hero_rows = table.data['heroes']
     source_targets = {}
-    for h in ir['heroes']:
-        if h['name'] not in hero_rows:
-            raise ImportRefusal('IDENTITY', 'No hero mapping.', hero=h['name'])
+    for h in source_heroes:
         row = hero_rows[h['name']]
         target = row['target'].lower()
         if target in source_targets:
             raise ImportRefusal('IDENTITY', 'Two source heroes map to one target hero.')
-        source_targets[target] = (_hero(h, row, table, changes), h)
+        h = copy.deepcopy(h)
+        if ir.get('character_version', 0) >= 4:
+            h['talent_identities'] = ir['talent_identities']
+        mapped = _hero(h, row, table, changes)
+        selected = ir.get('power_selections', {}).get(h['name'])
+        if selected is not None:
+            defaults_by_button = {p['button']: p for p in mapped['powers']}
+            for button, move in enumerate(selected):
+                target_move = row.get('power_selections', {}).get(move)
+                if target_move is not None:
+                    defaults_by_button[button] = dict(button=button, name=target_move, flags=int(bool(target_move)))
+                    changes.preserve(h['name'] + '.selected_power.' + str(button), target_move)
+                elif move or defaults_by_button.get(button, {}).get('name'):
+                    changes.approximate('selected_power', h['name'] + '.selected_power.' + str(button), move,
+                                        defaults_by_button.get(button, {}).get('name', ''),
+                                        'This named source power has no confirmed target move mapping; use the pinned default.')
+            mapped['powers'] = [p for _, p in sorted(defaults_by_button.items())]
+        source_targets[target] = (mapped, h)
     target_heroes = table.env.binds.stat[1:table.env.binds.hero_count + 1]
     if any(n not in [x.lower() for x in target_heroes] for n in source_targets):
         raise ImportRefusal('IDENTITY', 'A source hero is absent from the target roster.')
@@ -264,12 +364,12 @@ def map_campaign(ir, source, table, *, slot, allow_inferred=False, profile_bytes
         seats.append(dict(seat=i, hero=mapped['hero'], position=pose[:3], orientation=pose[3:]))
     unlocked = []
     for source_id in ir['unlocked']:
-        if not 1 <= source_id <= len(ir['heroes']):
+        if source_id not in by_id:
             raise ImportRefusal('IDENTITY', 'Unknown unlocked hero definition.', definition_id=source_id)
-        name = ir['heroes'][source_id - 1]['name']
+        name = by_id[source_id]['name']
         if name == 'default':
             changes.skip('unlocked.default', source_id, 'The default definition is not a playable hero.')
-        else:
+        elif name in hero_rows and hero_rows[name]['target'].lower() in source_targets:
             unlocked.append(table.resolve('STAT', hero_rows[name]['target']))
     if any(s['hero'] not in unlocked for s in seats):
         raise ImportRefusal('CONTEXT', 'A party hero is absent from the campaign unlock list.')
@@ -305,7 +405,7 @@ def map_campaign(ir, source, table, *, slot, allow_inferred=False, profile_bytes
     if len(items) != len(table.data['items']):
         raise ImportRefusal('BUILD', 'Duplicate source item mappings.')
     equipped_counts = {}
-    for _, h in source_targets.values():
+    for h in ir['heroes']:
         for index in h['equipped']:
             equipped_counts[index] = equipped_counts.get(index, 0) + 1
     mode = table.data.get('quantity_policy')
@@ -354,6 +454,14 @@ def map_campaign(ir, source, table, *, slot, allow_inferred=False, profile_bytes
     for hero, h in source_targets.values():
         for index in h['equipped']:
             hero['equipped'].append(_instance(table, items[index]['target'], 1))
+    supported_ids = {h['definition_id'] for h in source_heroes}
+    for h in ir['heroes']:
+        if h['definition_id'] not in supported_ids and h['equipped']:
+            for index in h['equipped']:
+                result['ITEM']['instances'].append(_instance(table, items[index]['target'], 2))
+            changes.approximate('unsupported_hero_equipment', h['name'] + '.equipped', h['equipped'], 'carried equipment',
+                                'Preserve these equipped copies as carried gear because the source hero is absent from the target roster.')
+    _recomp_state(ir, table, result, changes, source_heroes)
     patch = _profile_patch(ir, table)
     if profile_bytes:
         f = validate_profile(profile_bytes, table.env)
@@ -382,17 +490,20 @@ def map_campaign(ir, source, table, *, slot, allow_inferred=False, profile_bytes
     report = dict(schema=1, source_sha256=source.sha256, source_profile=table.source['id'], decoder=ir['decoder'],
                   signature_status=source.signature_status, signature_message='Xbox signature not checked' if source.signature_status == 'unavailable' else 'Xbox signature verified',
                   target_fingerprint=table.fingerprint, import_table_sha256=table.sha256, checkpoint=recipe['name'],
-                  zone=recipe['target_zone'], slot=slot, merge_unlocks=merge_unlocks,
+                  zone=recipe['target_zone'], slot=slot, merge_unlocks=merge_unlocks, difficulty=difficulty,
                   heroes=[dict(name=h['name'], level=h['level'], experience=h['experience'], unlocked=h['definition_id'] in ir['unlocked']) for h in ir['heroes']],
                   progress=dict(zone=ir['mission']['zone'], mission_id=ir['mission']['mission_id'], party=ir['mission']['party']),
                   imported=changes.imported, approximated=changes.approximated, skipped=changes.skipped,
                   player_use_validated=False, validation='Python LC loader only; native C++ and real-save acceptance pending')
+    if ir['decoder'].startswith('recomp-'):
+        report['source_herostat_sha256'] = table.source['herostat_sha256']
+        report['survey_revision'] = ir['survey_revision']
     if changes.approximated and not allow_inferred:
         raise ImportRefusal('INFERRED', approximated=changes.approximated, skipped=changes.skipped)
     # A semantic model goes directly through the real encoder, never the PC-era
     # detector. Native W2 is required only by the shared representability rule.
     optional = L.OPTIONAL_LEVEL_SKILL_POINTS | L.OPTIONAL_LEVEL_STAT_POINTS
-    if all(hero_rows[h['name']].get('stat_reconstruction') for h in ir['heroes']):
+    if all(hero_rows[h['name']].get('stat_reconstruction') for h in source_heroes):
         optional |= L.OPTIONAL_CLASS_GROWTH
     header = dict(writer_version=0x01000000, content_version=table.env.catalogue.data['content_version'],
                   catalogue_revision=table.env.catalogue.revision, campaign_serial=serial or secrets.randbits(64) or 1,

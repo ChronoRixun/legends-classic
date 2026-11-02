@@ -123,9 +123,26 @@ class ImportTable:
         if d['schema'] != 1 or d['source']['title_id'].lower() != TITLE_ID:
             raise ImportRefusal('VERSION', 'Unrecognized source profile or import table schema.')
         self.source = d['source']
-        names = self.source['hero_names']
-        if len(names) != 16 or len(set(n.lower() for n in names)) != 16:
-            raise ImportRefusal('VERSION', 'The retail source roster must have sixteen unique definitions.')
+        self.recomp = self.source.get('kind') == 'recomp'
+        if self.source.get('kind', 'retail') not in ('retail', 'xemu', 'recomp'):
+            raise ImportRefusal('VERSION', 'Unsupported source profile kind.')
+        if self.recomp:
+            definitions = self.source.get('definitions')
+            if (not isinstance(definitions, dict) or not 1 <= len(definitions) <= 254 or
+                any(not re.fullmatch(r'[1-9][0-9]{0,2}', i) or not 1 <= int(i) <= 254 or
+                    not isinstance(n, str) or not re.fullmatch(r'[A-Za-z0-9_]+', n) for i, n in definitions.items()) or
+                len({n.lower() for n in definitions.values()}) != len(definitions) or
+                not re.fullmatch('[0-9a-f]{64}', self.source.get('herostat_sha256', ''))):
+                raise ImportRefusal('VERSION', 'Recomp needs the exact effective source herostat hash and definition ID ledger.')
+            self.definitions = {int(i): n for i, n in definitions.items()}
+            names = list(definitions.values())
+            if 'hero_names' in self.source and set(self.source['hero_names']) != set(names):
+                raise ImportRefusal('VERSION', 'Source hero names disagree with the definition ID ledger.')
+        else:
+            names = self.source['hero_names']
+            if len(names) != 16 or len(set(n.lower() for n in names)) != 16:
+                raise ImportRefusal('VERSION', 'The retail source roster must have sixteen unique definitions.')
+        self.source_names = names
         if not self.source.get('id') or not re.fullmatch('[0-9a-f]{64}', self.source.get('xbe_sha256', '')):
             raise ImportRefusal('VERSION', 'The source profile must identify its original executable.')
         expected = d['target_files']
@@ -202,13 +219,14 @@ class ImportTable:
             return isinstance(value, str) and re.fullmatch(r'[A-Za-z0-9_/-]+', value) is not None and '..' not in value.split('/')
         def pose(value):
             return isinstance(value, list) and len(value) == 6 and all(type(v) in (float, int) and math.isfinite(v) for v in value)
-        names = self.source['hero_names']
+        names = self.source_names
         require(all(ident(n) for n in names), 'Invalid source hero names.')
         thresholds = d['xp_thresholds']
         require(isinstance(thresholds, list) and 1 <= len(thresholds) <= 255 and thresholds[0] == 0 and
                 all(integer(v, 0, 0xffffffff) for v in thresholds) and
                 all(a < b for a, b in zip(thresholds, thresholds[1:])), 'XP thresholds must start at zero and strictly increase.')
-        require(isinstance(d['heroes'], dict) and set(d['heroes']) == set(names), 'The source hero table is incomplete.')
+        require(isinstance(d['heroes'], dict) and (set(d['heroes']) <= set(names) if self.recomp else
+                set(d['heroes']) == set(names)), 'The source hero table is incomplete or names unknown definitions.')
         targets = []
         for row in d['heroes'].values():
             require(ident(row['target']), 'Invalid target hero name.')
@@ -221,6 +239,9 @@ class ImportTable:
                         power['name'] in ('', 'power1', 'power2', 'power3', 'power9'), 'Invalid target default power slot.')
             for key, val in row.get('skins', {}).items():
                 require(key.isdigit() and 0 <= int(key) <= 255 and ident(val), 'Invalid source skin-byte mapping.')
+            for source_power, target_power in row.get('power_selections', {}).items():
+                require((source_power == '' or ident(source_power)) and target_power in ('', 'power1', 'power2', 'power3', 'power9'),
+                        'Invalid named power selection mapping.')
             growth = row.get('stat_reconstruction')
             if growth:
                 require(growth.get('confirmed') is True, 'Stat reconstruction requires sample-confirmed metadata.')
@@ -235,6 +256,18 @@ class ImportTable:
             for tid, fields in ledger.items():
                 require(re.fullmatch(r'0|[1-9][0-9]{0,2}', tid) is not None and int(tid) <= 255 and
                         isinstance(fields, list) and len(fields) == 2 and all(ident(v) for v in fields), 'Invalid native talent ledger.')
+        for hero, ledger in d.get('named_talents', {}).items():
+            require(hero in d['heroes'] and isinstance(ledger, list), 'Invalid named talent ledger owner.')
+            seen = set()
+            for row in ledger:
+                identity = tuple(row[field] for field in ('name', 'source', 'selector'))
+                require(all(isinstance(v, str) and v and len(v) < limit and v.isascii() and
+                            not any(ord(c) < 32 or ord(c) == 127 for c in v)
+                            for v, limit in zip(identity, (32, 32, 64))) and identity not in seen,
+                        'Invalid or duplicate named talent identity.')
+                seen.add(identity)
+                require(isinstance(row['target'], list) and len(row['target']) == 2 and all(ident(n) for n in row['target']),
+                        'Invalid named talent destination.')
         indices = set()
         health_routes = set()
         for row in d['items']:

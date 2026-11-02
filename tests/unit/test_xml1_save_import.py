@@ -695,7 +695,7 @@ def test_xml1_launcher_source_discovery_and_slots_are_read_only():
         assert code == 0, events
         result = events[-1]
         assert result['imported'] is False and result['capabilities']['player_install'] is False
-        assert result['capabilities']['hdd_images'] and not result['capabilities']['recomp_extensions']
+        assert result['capabilities']['hdd_images'] and result['capabilities']['recomp_extensions']
         report = result['source_report']
         assert report['heroes'][0]['level'] == 5 and len(report['heroes']) == 16
         assert report['progress']['mission_id'] == 7

@@ -3,8 +3,8 @@
 This is an offline developer core with synthetic acceptance tests. It is **not
 enabled for player installation**. No real Xbox campaign was available for this
 round. No stock talent-byte ledger, source mission-byte ledger or tested retail
-checkpoint recipe is invented to fill that gap. XML1-recomp extensions produce
-specific version refusals; they are not decoded as retail padding.
+checkpoint recipe is invented to fill that gap. A separate decoder supports
+the surveyed XML1-recomp sections; unsupported versions retain explicit refusals.
 
 The owner-approved behavior is checkpoint continuation with an explicit list
 of changes, W2 saves plus the XML1 economy and XP curve, an unchanged source,
@@ -20,6 +20,7 @@ python -m xml1builder import-xml1-save <extracted Xbox folder or HDD image>
     --slot 0..9 [--merge-unlocks] [--dry-run] [--events jsonl]
     [--allow-inferred] [--import-table <local table>]
     [--campaign <exact E:/UDATA/4156001e/campaign path from discovery>]
+    [--source-kind auto|xemu|recomp]
 ```
 
 `--dry-run` performs bounded parsing, mapping, encoding and the existing Python
@@ -216,7 +217,7 @@ selection is made. One campaign is decoded without an installed mapping table.
 Its source report includes source SHA-256, decoder, description, signature status,
 provisional stock heroes with level/XP/unlocked state, mission ID/zone/party and
 side-mission depth. These are source facts, not approved destination mappings.
-Recomp extensions and damaged envelopes retain their specific `E_XML1_*` refusal.
+Unsupported recomp versions and damaged envelopes retain their specific `E_XML1_*` refusal.
 HDD images follow the read-only path below; no extracted host files are created.
 
 `--list-slots` returns exactly ten `slots=[{slot,occupied}]` and an `imports` array.
@@ -274,8 +275,8 @@ Neither a user-edited table nor a frontend capability flag can enable installati
   the matching `transaction_id` and `slot`, and `retained`/`backup` paths only after
   success. A changed campaign must continue to refuse. Fresh slot scanning follows
   undo before another destination is selected.
-- A separately validated XML1-recomp decoder and real-image acceptance of the
-  bounded raw/QCOW2 reader below. Synthetic image coverage is not real-save acceptance.
+- Real-save acceptance of the XML1-recomp decoder and real-image acceptance of
+  the bounded raw/QCOW2 reader below. Synthetic coverage is not real-save acceptance.
 - Recoverable multi-file global profile merging before advertising that capability.
   The launcher leaves the merge option off and disabled for this core.
 
@@ -385,3 +386,104 @@ The DLL's evidence anchors are CMemoryCardWin32 vtable `0x69aa8c`, object
 delete-all `0x55f6f0` (vt+0x28), serializer `0x46baf0` (CGame vt+0x208).
 `save_format_rules.hpp` retains the guarded addresses/signatures; no new binary
 hook or unverified save-writer address is introduced by the lease.
+
+## XML1-recomp source decoding and preview
+
+This implementation follows the locally surveyed upstream revision `a30ec29`.
+Newer upstream may differ. The evidence is the source's `character_save.h`,
+`character_talent_record.h`, `talent_identity_save.c`, `raven_power_bindings.cpp`,
+`raven_progress_stream.h`, `raven_campaign_state_guest.c` and `raven_stash_owner.cpp`.
+It has been checked with invented saves, through the Python LC/W2 loader and
+two native-stream serialization cycles. No player recomp save or shipping
+C++ game load has been tested here. Import and Undo remain disabled.
+
+The surveyed Windows player build resolves its data root beside the executable
+when `default.xbe` is present, and keeps saves under
+`<recomp installation>/UDATA/4156001e/<campaign>/save.dat`. Its README documents
+installation-local `UDATA`/`TDATA`; `TDATA` and `pc-settings.ini` are not campaign
+inputs. Developer builds use their configured game-data root (and diagnostic
+builds may explicitly override it). No user-profile or AppData save location is
+assumed, and no disks or user directories are searched automatically.
+
+```text
+xml1-builder import-xml1-save <recomp installation> --source-kind recomp
+    --inspect-source --events jsonl
+xml1-builder import-xml1-save <campaign folder or save.dat> --source-kind recomp
+    --build <build> --save-dir <SaveLC> --slot 0 --dry-run --allow-inferred
+```
+
+The explicit `recomp` kind selects only installation-local `UDATA`, avoiding
+asset subtrees. A UDATA, title or individual campaign folder also works. Multiple
+campaigns are returned for selection; no latest-save choice is made. `auto`
+recognizes XML1CHR only at payload `0x5c6`, including saves extracted into memory
+from HDD images. `xemu` explicitly selects the retail decoder. Both retain the
+existing raw/QCOW2 readers. The outer envelope remains a little-endian u32 length,
+20 opaque signature bytes and exactly that many payload bytes, capped at
+`0x2fc00`. Signatures remain unauthenticated. Inspection and previews write no
+source, destination, profile, lock or metadata files.
+
+| Section | Supported wire contract |
+| --- | --- |
+| XML1CHR v1 | Minimum 48-byte header: magic, u16 version/header length/snapshot count/reserved, 32-byte positional definition bitmap. Records follow ascending set IDs; IDs 0/255, empty/over-48 live rosters and snapshots other than 48 refuse. Native unlock bank and 48 restore records follow. |
+| XML1CHR v2 | Each talent value expands from three bytes of four-bit fields to four bytes of five six-bit fields. The top two bits must be zero. |
+| XML1CHR v3 | Header adds a u16 selection count and 100 bytes per named owner: five zero-padded 20-byte strings (owner plus four moves). |
+| XML1CHR v4 | Header adds separate u16 selection/identity lengths. TLID v1 records bind each nonzero native talent byte ID to exact name, source filename and selector. A saved talent without an identity refuses. |
+| XML1CHR v5/v6 | Every live and restore record inserts two permanent health/energy bonus bytes after its 44-byte prefix; v6 adds a boolean auto-equip byte. |
+| XML1PRG v1 | Optional 16-byte hard-difficulty unlock section after the native embedded profile. |
+| XML1DIF v1–5 | Optional 20/22/112/120/124-byte records: live/retained difficulty, acts, two recall records, cooldown floats, then pickup-allowance bonuses. |
+| XML1STSH v1 | Optional declared-size section after PRG/DIF, with snapshot-valid flag and two named item/quantity lists. Each list has at most 60 copies total; names, quantities, framing and native inventory validity are checked. |
+
+Adjuncts are consumed only at their documented boundary, in PRG/DIF/STSH order;
+duplicates or reordered known sections refuse. No magic scanning or resynchronization
+is used. Bounds, versions, reserved fields, finite floats, duplicate identities,
+name termination/padding and aggregate counts are checked before mapping.
+
+A schema-1 import table can describe a recomp source with `source.kind="recomp"`,
+the existing source `id`, `title_id`, `xbe_sha256`, plus `herostat_sha256` and
+`definitions`, an explicit object of decimal definition IDs to exact source names.
+The hash identifies the **effective** source herostat, including loose/modded
+overlays. The ledger must be captured from that exact configuration; it must not
+be filled from the stock roster, a sorted list, or the first 21 save records.
+Optional `hero_names`, if supplied, must agree with those names. The envelope
+does not authenticate the ledger or identify which herostat produced it: choosing
+and proving the right source profile remains part of real-save acceptance.
+Without a table, inspection reports `definition_<id>` placeholders and explicitly
+unresolved identity status. It does not label these as identified heroes.
+
+Recomp `heroes` mappings may cover a subset of the source definitions. Supported
+heroes are written in the installed LC roster order (21 slots in LC), with pinned
+`target_defaults` for absent heroes. Unlocks use exact definition IDs, including
+sparse/high IDs. Unsupported nonparty heroes are individually listed in `skipped`,
+including progression, talents, selected skin, equipment and unlock status.
+Representable equipment from those heroes moves to carried inventory, with an
+explicit approximation and copy conservation under either quantity policy. Any
+unsupported party member or controlled character refuses with `E_XML1_IDENTITY`.
+There is no record-count truncation. Unknown saved/unlocked IDs refuse.
+
+For v1–3, proven native byte-to-talent tables are still needed. For v4–6,
+`named_talents[hero]` lists `{name,source,selector,target:[owner,talent]}` rows.
+All three source strings must match; a reused runtime byte or matching name alone
+cannot choose a target talent. Purchased ranks through 63 are representable;
+limits/baselines over 3 and pending upgrades refuse rather than clip. Source
+equipment bonuses are explicitly recalculated. Optional per-hero `power_selections`
+maps source move names (including the empty string) to supported target chains;
+unmapped saved selections are individually reported as defaults or omissions.
+Permanent vitality bytes are preserved as target health/energy boosts. Enabled
+auto-equip currently resets to manual equipment with a preview approximation.
+
+An explicit decoded difficulty is preserved in both META and GAME, including
+Easy `0`; absent DIF means Normal by the recomp reader's documented default.
+The shared mapper honors explicit difficulty from either decoder family. No
+retail difficulty byte has been established in the native XML1 record, so retail
+keeps a disclosed Normal fallback instead of interpreting an unrelated byte.
+The saved current act must agree with the checkpoint. Retained act/difficulty,
+recall departure/cooldowns, pickup allowances and unproven Hard-unlock profile
+state are disclosed as reset/skipped. They are not copied into arbitrary flags.
+
+Named live stash gear needs an exact `source_name` on one equipment item mapping.
+Every mapped copy becomes carried target equipment, with the location change
+reported; unknown gear refuses. Stash snapshots are rollback state and are listed
+as invalidated, separately from live inventory. Native equipment and enhancement
+budgets remain enforced by the LC/W2 loader. These previews do not prove gameplay
+effects, source signature validity, actual checkpoint safety, save/reload behavior
+or co-op compatibility. Those require private real recomp saves and runtime tests.

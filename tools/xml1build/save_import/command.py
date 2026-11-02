@@ -7,8 +7,8 @@ from lcsave import container
 
 from .errors import ImportRefusal
 from .mapper import map_campaign
-from .retail import decode
-from .source import bounded_read, discover_source, digest, read_source, safe_path
+from . import recomp, retail
+from .source import bounded_read, discover_source, digest, is_recomp, read_source, safe_path
 from .tables import ImportTable
 from .transaction import check_destination, slot_status
 from .writer_lock import PROTOCOL as WRITER_LOCK_PROTOCOL
@@ -19,20 +19,34 @@ PLAYER_INSTALL_ENABLED = False
 
 
 def capabilities():
-    return dict(schema=1, extracted_folders=True, hdd_images=True, recomp_extensions=False,
+    return dict(schema=1, extracted_folders=True, hdd_images=True, recomp_extensions=True,
                 player_install=PLAYER_INSTALL_ENABLED, merge_unlocks=False, undo=False,
                 writer_lock=WRITER_LOCK_PROTOCOL,
                 backup_policy='empty-slot-only; retained campaign copy and report')
 
 
+def decode_source(source, table=None):
+    kind = getattr(source, 'kind', None)
+    if kind == 'recomp' or (kind != 'xemu' and is_recomp(source.payload)):
+        if table is not None and not table.recomp:
+            raise ImportRefusal('IDENTITY', 'A recomp save needs its effective source definition ledger.')
+        return recomp.decode(source.payload, definitions=table.definitions if table is not None else None)
+    if table is not None and table.recomp:
+        raise ImportRefusal('IDENTITY', 'The selected source profile describes a different save family.')
+    return retail.decode(source.payload, **(dict(hero_names=table.source['hero_names']) if table is not None else {}))
+
+
 def source_summary(source, ir):
+    is_extended = ir['decoder'].startswith('recomp-')
     return dict(schema=1, source_sha256=source.sha256, decoder=ir['decoder'],
                 source_container=getattr(source, 'binding', dict(kind='extracted-folder')),
                 description=ir['description'], signature_status=source.signature_status,
                 signature_message='Xbox signature not checked.',
-                identity_status='Provisional stock roster; mapping requires a build-bound import table.',
-                heroes=[dict(name=h['name'], level=h['level'], experience=h['experience'],
+                identity_status=('Unresolved definition IDs; names require the exact effective source herostat ledger.' if is_extended else
+                                 'Provisional stock roster; mapping requires a build-bound import table.'),
+                heroes=[dict(name=h['name'], definition_id=h['definition_id'], level=h['level'], experience=h['experience'],
                              unlocked=h['definition_id'] in ir['unlocked']) for h in ir['heroes']],
+                difficulty=ir.get('difficulty'),
                 progress=dict(zone=ir['mission']['zone'], mission_id=ir['mission']['mission_id'],
                               party=ir['mission']['party'], side_mission_depth=ir['side_depth']),
                 player_use_validated=False)
@@ -59,10 +73,10 @@ def run(args, output, cancel):
         if args.inspect_source:
             if not args.source:
                 raise BuilderError('E_USAGE', '--inspect-source needs a save folder or HDD image.', exit_code=2)
-            candidates, original = discover_source(args.source, campaign=args.campaign)
+            candidates, original = discover_source(args.source, campaign=args.campaign, source_kind=args.source_kind)
             summary = None
             if original is not None:
-                summary = source_summary(original, decode(original.payload))
+                summary = source_summary(original, decode_source(original))
                 original.recheck()
             cancel.check()
             output.event('result', ok=True, exit=0, imported=False, source_report=summary,
@@ -73,13 +87,12 @@ def run(args, output, cancel):
         if not 0 <= args.slot <= 9:
             raise BuilderError('E_USAGE', '--slot must be between 0 and 9.', exit_code=2)
         cancel.check()
-        source = read_source(args.source, campaign=args.campaign)
+        source = read_source(args.source, campaign=args.campaign, source_kind=args.source_kind)
         output.event('log', level='info', stage='import', msg='Found one Xbox campaign. Your original will remain unchanged.',
                      detail=dict(source_sha256=source.sha256, signature_status=source.signature_status))
         output.event('warning', stage='import', code='W_XML1_SIGNATURE', msg='Xbox signature not checked.', detail={})
-        # Parse the stock wire layout first, even if this installation has no
-        # admitted mapping table. This gives a specific recomp/damage refusal.
-        ir = decode(source.payload)
+        # Parse source facts before requiring an installed mapping table.
+        ir = decode_source(source)
         output.event('log', level='info', stage='import', msg='Read the campaign records.',
                      detail=dict(decoder=ir['decoder'], heroes=len(ir['heroes']), cached_zones=len(ir['zones']),
                                  side_mission_depth=ir['side_depth'], mission_id=ir['mission']['mission_id'],
@@ -88,9 +101,7 @@ def run(args, output, cancel):
             raise ImportRefusal('SIDE_MISSION')
         dest = check_destination(args.save_dir, args.slot, source.root)
         table = ImportTable(args.build, args.import_table)
-        # A pinned source profile can name a stock-shaped synthetic registry;
-        # the parser still consumes exactly sixteen normal and 17 restore rows.
-        ir = decode(source.payload, hero_names=table.source['hero_names'])
+        ir = decode_source(source, table)
         profile_path = safe_path(dest / 'profile.lcsave')
         profile = bounded_read(profile_path, container.MAX_FILE) if profile_path.exists() else None
         cancel.check()

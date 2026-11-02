@@ -18,7 +18,7 @@ import struct
 import zlib
 
 from .errors import ImportRefusal
-from .source import CAPACITY, MAX_DEPTH, MAX_ENTRIES, TITLE_ID, digest, envelope, safe_path
+from .source import CAPACITY, MAX_DEPTH, MAX_ENTRIES, TITLE_ID, digest, envelope, is_recomp, safe_path
 
 MAX_READ = 16 << 20
 MAX_IO = 64 << 20
@@ -412,15 +412,16 @@ class ImageSource:
     image_identity: tuple
     image_format: str
     partition_layout: str
+    kind: str = 'auto'
 
     @property
     def binding(self):
         return dict(kind='hdd-image', campaign=self.campaign, image_snapshot=self.image_snapshot,
-                    image_identity=list(self.image_identity), image_format=self.image_format)
+                    image_identity=list(self.image_identity), image_format=self.image_format, source_kind=self.kind)
 
     def recheck(self):
         try:
-            _, current = inspect_image(self.path, campaign=self.campaign)
+            _, current = inspect_image(self.path, campaign=self.campaign, source_kind=self.kind)
         except (ImportRefusal, OSError) as e:
             if isinstance(e, ImportRefusal) and e.code == 'E_XML1_BUSY':
                 raise
@@ -429,7 +430,9 @@ class ImageSource:
             raise ImportRefusal('CHANGED', 'The HDD image or selected campaign changed.')
 
 
-def inspect_image(path, *, campaign=None, verifier=None, discover_only=False):
+def inspect_image(path, *, campaign=None, verifier=None, discover_only=False, source_kind='auto'):
+    if source_kind not in ('auto', 'xemu', 'recomp'):
+        raise ImportRefusal('INPUT', 'Unknown save source kind.')
     path = safe_path(path)
     with open_image(path) as (stream, before):
         disk = Disk(stream, before.st_size)
@@ -450,5 +453,6 @@ def inspect_image(path, *, campaign=None, verifier=None, discover_only=False):
         raw = fs.file(entry_path, row)
         payload, status = envelope(raw, verifier)
         source = ImageSource(path, path, digest(raw), payload, status, entry_path.rsplit('/', 1)[0],
-                             disk.snapshot(), identity(before), disk.format, layout)
+                             disk.snapshot(), identity(before), disk.format, layout,
+                             'recomp' if source_kind == 'auto' and is_recomp(payload) else source_kind)
         return candidates, source
