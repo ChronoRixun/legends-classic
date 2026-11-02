@@ -68,6 +68,13 @@ co-op parts were tested on one PC with two copies of the game and on two PCs at 
   connection no longer disturbs the healthy players in the room.
 - The flying carry attaches the carried character from the first frame.
 
+**Other fixes**
+
+- Steam Deck and other Linux PCs that run the game through Proton no longer stop on a black screen at start: every
+  XML2 Fix since 1.8.1 could wait there forever while it looked for controllers. Under Proton (Wine),
+  `[Input] CacheDeviceScan` now defaults to `0`, so controllers are found the way they were before 1.8.1; a setting
+  written in `xml2-fix.ini` is used as written, and Windows is unchanged.
+
 **Carried forward from 0.5**
 
 - **The first game's items, shops and drops.** All 116 X-Men Legends equipment pieces with their bonuses, the first
