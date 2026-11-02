@@ -55,6 +55,8 @@ co-op parts were tested on one PC with two copies of the game and on two PCs at 
   player with them. In testing on two PCs with four players, after a player left the lobby (from the first, a middle
   or the last place) or quit a game in progress, a returning or brand-new player joined, in the lobby or later in the
   game, and everyone stayed connected and in step.
+  With three or four players, the guests now connect to each other the same way they connect to the host, and when
+  one player's game closes suddenly, the others agree that it left and play on.
 - Fixed a crash when starting with a guest, focus and input getting stuck when returning to Play Online, and
   Party confirmations that swallowed the next Quit or Back.
 - Screens free their text, panels and model data when they close; repeated opening and closing kept memory use steady
