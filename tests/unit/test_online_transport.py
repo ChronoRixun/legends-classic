@@ -3,7 +3,7 @@ Invented folders and a synthetic DLL only: no game, network or desktop."""
 import os
 from pathlib import Path
 
-import pytest
+import unittest
 
 from xml1build import fix_ini as FI, online_menus as O
 
@@ -84,8 +84,8 @@ def test_built_output_ini_has_the_transport_with_the_menus():
     """The BUILT output (XML1_BUILT_OUT): a Menus=1 player INI must carry Transport=gns (release round 7 blocker)."""
     out = os.environ.get('XML1_BUILT_OUT')
     if not out or not (Path(out) / 'xml2-fix.ini').is_file():
-        pytest.skip('no built output (set XML1_BUILT_OUT)')
+        raise unittest.SkipTest('no built output (set XML1_BUILT_OUT)')
     values = online(Path(out))
     if values.get('menus') != '1':
-        pytest.skip('built without the online menus')
+        raise unittest.SkipTest('built without the online menus')
     assert values.get('transport', '').lower() == 'gns', values

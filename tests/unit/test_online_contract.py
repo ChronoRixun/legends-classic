@@ -115,11 +115,11 @@ def test_built_lobby_prompts_are_not_tied_to_the_native_help_animation():
     """The same on the BUILT lobbies (XML1_BUILT_OUT): 060r's host.XMLB / join.XMLB fail this (desctext1..5 animtext_scene="help")."""
     import os
     import pathlib
-    import pytest
+    import unittest
     from xml1build import common as C
     out = os.environ.get('XML1_BUILT_OUT')
     if not out or not (pathlib.Path(out) / 'UI/menus/host.XMLB').exists():
-        pytest.skip('no built output (set XML1_BUILT_OUT)')
+        raise unittest.SkipTest('no built output (set XML1_BUILT_OUT)')
     for role in ('host', 'join'):
         tree = C.decode_xmlb((pathlib.Path(out) / ('UI/menus/%s.XMLB' % role)).read_bytes())
         items = {e.get('name'): e for e in tree.findall('item')}

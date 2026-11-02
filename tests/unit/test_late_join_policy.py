@@ -1,5 +1,5 @@
 """Late joining (the host's next-area reload of everyone) is the 0.6.0 default; a tester's explicit value survives."""
-import pytest
+import unittest
 from xml1build import fix_ini as F, online_menus as O
 
 
@@ -25,7 +25,7 @@ def test_player_explicit_late_join_survives_rebuild_and_repair():
 def test_legacy_dll_cannot_silently_ignore_the_policy_key():
     keys = {'Online': {'JoinInProgress': '1', 'LateJoin': '1'}}
     legacy = b'\0'.join(O.DLL_PROBES)
-    with pytest.raises(F.FixTooOld, match='LateJoin'):
+    with unittest.TestCase().assertRaisesRegex(F.FixTooOld, 'LateJoin'):
         F.check_online_dll(legacy, keys)
     F.check_online_dll(legacy + b'\0LateJoinPolicyV1\0', keys)
 
@@ -40,7 +40,7 @@ def test_started_notice_is_available_on_each_join_screen():
 def test_offline_dll_check_preserves_the_no_read_path():
     F.check_online_dll(None, {})
     F.check_online_dll(None, {'Online': {'Menus': '0'}})
-    with pytest.raises(F.FixTooOld, match='LateJoin'):
+    with unittest.TestCase().assertRaisesRegex(F.FixTooOld, 'LateJoin'):
         F.check_online_dll(None, {'Online': {'JoinInProgress': '1', 'LateJoin': '1'}})
 
 

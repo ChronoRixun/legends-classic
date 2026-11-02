@@ -600,10 +600,10 @@ def test_hit_table_refuses_a_bar_that_reaches_the_kick_picker():
 def _dll_parser():
     import os
     import pathlib
-    import pytest
+    import unittest
     exe = os.environ.get('XML2_FIX_HITS_PARSE_TEST')
     if not exe or not pathlib.Path(exe).exists():
-        pytest.skip('set XML2_FIX_HITS_PARSE_TEST to xml2_online_hits_parse_test.exe (xml2-fix)')
+        raise unittest.SkipTest('set XML2_FIX_HITS_PARSE_TEST to xml2_online_hits_parse_test.exe (xml2-fix)')
     return exe
 
 
@@ -649,14 +649,14 @@ def test_builder_output_passes_the_dll_parser_and_verdicts_agree(tmp_path):
 def _built_output():
     import os
     import pathlib
-    import pytest
+    import unittest
     for candidate in (os.environ.get('XML1_BUILT_OUT'), r'D:\Projects\xml1-port\build\_candidate_060q'):
         if candidate and (pathlib.Path(candidate) / 'UI/menus/lc_online.XMLB').exists():
             dll=pathlib.Path(candidate)/'dinput.dll'
             if O.BROWSE_ROWS>5 and (not dll.is_file() or O.engine_scene_anchors(dll.read_bytes())==175):
                 continue  # This owned-output gate requires a build made with the expanded capability.
             return pathlib.Path(candidate)
-    pytest.skip('no compatible built online-menus output (set XML1_BUILT_OUT; seven rows require menu-anchors/512)')
+    raise unittest.SkipTest('no compatible built online-menus output (set XML1_BUILT_OUT; seven rows require menu-anchors/512)')
 
 
 def test_hit_table_matches_the_focus_bars_as_built():
@@ -732,11 +732,11 @@ def test_focus_models_draw_exactly_one_alpha_blended_layer():
     """060q live: dialog.igb's three layers - an opaque 144-vertex frame (no blend state) and an additive 12-vertex inset
     beside the alpha quad - drew the picture's transparent texels black (the black box behind "1 of N ready.", the outline
     bar to the YOUR ROOM badge, the light frame round the 4:3 field) and a lighter inner rectangle on every amber bar."""
-    import pytest
+    import unittest
     from pathlib import Path
     from PIL import Image
     src=Path('D:/Projects/xml1-port/xml1_loose/ui/hud/dialog.igb')
-    if not src.is_file(): pytest.skip('owned dialog.igb not available on this machine')
+    if not src.is_file(): raise unittest.SkipTest('owned dialog.igb not available on this machine')
     source=src.read_bytes()
     picture=Image.new('RGBA',(64,32));picture.paste((255,255,255,255),(0,0,8,8))
     for rect,outline,pic in (((0,-13.6,56,0),True,picture),((0,-20,177,0),False,None),(O.BACKDROP_RECT,True,picture),
