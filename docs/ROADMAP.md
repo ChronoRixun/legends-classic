@@ -25,9 +25,13 @@ Plans move with what testing finds. What each released version added is in the [
 - **0.6 - in beta (0.6.0-beta.1):** online co-op in the game's own Play Online screens (Host, Join by code, Browse,
   the lobby and Party), and friends can join a game in progress at the host's next area (the host's DROP-IN setting
   turns it off per room). Still to verify: the relay, four players on four separate PCs, long sessions, joins over slow connections.
+  Later 0.6 betas: **save import** from xemu and from XML1-recomp, the session sharing one frame rate, the rest of the
+  online screens in the new style, and a fix for the one known join issue.
 - **0.7** - an optional **"Remastered" graphics** toggle: DXVK, anti-aliasing, anisotropic filtering, resolution
-  scaling and a centred HUD; off is the original look exactly. And **save import** from the original Xbox game.
+  scaling and a centred HUD; off is the original look exactly.
 - **0.8** - **co-op recovery**: area checkpoints, and rehosting after the host is lost.
+- **0.9** - **moves and characters**: one pass over the heroes' moves, blocking and grabs, each compared with the
+  original game (for example the held block, carrying, and Wolverine's ultimate at high levels).
 - **Then** - whatever is still open from these lists or the playthroughs turn up. (The first game's items, shops and
   drops shipped in 0.5.0-beta.1, on by default; [#6](https://github.com/ChronoRixun/legends-classic/issues/6) stays
   open while they are checked against the original.)

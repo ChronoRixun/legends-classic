@@ -1,7 +1,9 @@
-![Legends Classic](https://chronorixun.github.io/legends-classic-site/img/banner.png)
+![Legends Classic](https://legends.aethyrion.org/img/banner.png)
 # Legends Classic
 
 **Play X-Men Legends (2004) on PC, built from your own copies of the games.**
+
+**Website:** [legends.aethyrion.org](https://legends.aethyrion.org) - screenshots, what you need, and how to start.
 
 X-Men Legends came out on consoles only. Its sequel, X-Men Legends II: Rise of Apocalypse, came to PC on the same
 engine. Legends Classic takes the first game from **your own Xbox disc** and rebuilds it to run on **your own PC copy
@@ -83,13 +85,13 @@ Still open (everything, with measurements: [docs/KNOWN-ISSUES.md](docs/KNOWN-ISS
 
 ## Roadmap
 
-0.6 (this beta): online co-op in the game's own screens, with joining a game in progress. 0.7: an optional
-"Remastered" graphics toggle and save import from the original Xbox game. 0.8: co-op recovery. 1.0 after a full
-hand-played run. [Full roadmap](docs/ROADMAP.md).
+0.6 (this beta): online co-op in the game's own screens, with joining a game in progress; a later 0.6 beta adds
+save import from xemu and XML1-recomp. 0.7: an optional "Remastered" graphics toggle. 0.8: co-op recovery. 0.9:
+moves and characters tuned against the original. 1.0 after a full hand-played run. [Full roadmap](docs/ROADMAP.md).
 
 ## Community, contributing and bug reports
 
-- **Project page**: [chronorixun.github.io/legends-classic-site](https://chronorixun.github.io/legends-classic-site/).
+- **Website**: [legends.aethyrion.org](https://legends.aethyrion.org).
 - **Discord**: [discord.gg/tFxwHtZv8k](https://discord.gg/tFxwHtZv8k) - setup help, bug reports, co-op partners.
 - **Bug reports**: use the issue form (builder version, `_build\verify-report.json`, the end of `_build\builder.log`).
   Never attach the disc image, the build, saves or any game file, and no links to disc images or ROMs anywhere.

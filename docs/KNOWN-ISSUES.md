@@ -96,6 +96,9 @@ try. If a screen's text or labels are cut off, or something looks off, please re
 
 ## Online
 
+- **Everyone in a session should use the same frame rate** (60 is best). Co-op runs at the slowest player's pace, so a
+  player on a 144 Hz monitor with a friend at 60 gets judder and input lag. For online play set the frame rate to 60
+  (`[Display] FrameRate=60` in `xml2-fix.ini`); a later beta will match it for the whole session automatically.
 - **0.6.0-beta.1 is a co-op beta.** Co-op was tested on one PC and on two PCs at home, with two, three and four
   players, including fights. Not verified yet: playing through the relay (networks where a direct connection fails),
   four players on four separate PCs, long sessions, and joins over slow connections (if a join takes longer than the
