@@ -15,6 +15,10 @@ from .errors import ImportRefusal
 from .progress import checkpoint, pack_variables
 from .source import digest
 
+# Import mapping semantics, separate from the manifest schema and content identity.
+# Bind previews to this version as well as the exact installed mapping-table hash.
+MAPPING_VERSION = 1
+
 
 def defaults(schema):
     """One semantic default constructor, using the real codec's schema."""
@@ -487,7 +491,8 @@ def map_campaign(ir, source, table, *, slot, allow_inferred=False, profile_bytes
                             'Review category and seen/unlocked bank semantics need paired samples.')
     result['XTRC']['unlocked'] = [table.resolve('XPNT', *key) for key in recipe.get('xtraction', [])]
     changes.skip('other_travel_unlocks', 'unresolved source representation', 'Only the admitted checkpoint travel anchor is granted.')
-    report = dict(schema=1, source_sha256=source.sha256, source_profile=table.source['id'], decoder=ir['decoder'],
+    report = dict(schema=1, mapping_version=MAPPING_VERSION,
+                  source_sha256=source.sha256, source_profile=table.source['id'], decoder=ir['decoder'],
                   signature_status=source.signature_status, signature_message='Xbox signature not checked' if source.signature_status == 'unavailable' else 'Xbox signature verified',
                   target_fingerprint=table.fingerprint, import_table_sha256=table.sha256, checkpoint=recipe['name'],
                   zone=recipe['target_zone'], slot=slot, merge_unlocks=merge_unlocks, difficulty=difficulty,

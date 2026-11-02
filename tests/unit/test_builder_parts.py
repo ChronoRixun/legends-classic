@@ -55,7 +55,7 @@ def test_log_rotation_and_mask():
 
 
 def test_mask_every_message():
-    """one helper (events.mask) masks the profile folder in every event field and every human / log line: any case,
+    """one helper (events.mask) masks the profile folder in diagnostic event fields and every human / log line: any case,
     either separator, doubled backslashes (a repr), never a longer folder name."""
     saved = {k: os.environ.get(k) for k in ('USERPROFILE', 'HOME')}
     prof, home = 'D:\\Profiles\\Test User', '/srv/profiles/test user'     # placeholders, no real profile folder
@@ -87,6 +87,44 @@ def test_mask_every_message():
             else:
                 os.environ[k] = v
     assert E.check_event({'ev': 'warning', 't': 0, 'stage': 's', 'code': 'W', 'msg': 'm'})      # no detail.count
+
+
+def test_machine_paths_are_usable_in_jsonl_and_redacted_in_text_and_logs():
+    from unittest.mock import patch
+    with tempfile.TemporaryDirectory() as td:
+        profile = Path(td) / 'invented profile'
+        profile.mkdir()
+        target = profile / 'campaign.lcsave'
+        target.write_bytes(b'invented retained campaign')
+        with patch.dict(os.environ, USERPROFILE=str(profile), HOME=str(profile)):
+            for jsonl in (True, False):
+                out, err = io.StringIO(), io.StringIO()
+                log = Path(td) / ('jsonl.log' if jsonl else 'text.log')
+                writer = E.Output(jsonl=jsonl, stdout=out, stderr=err, log_file=log)
+                record = writer.event('result', ok=True, exit=0, msg=f'Retained {target}',
+                                      imports=[dict(backup=E.MachinePath(target))])
+                writer.close()
+                assert record['imports'][0]['backup'] == str(target)
+                assert Path(record['imports'][0]['backup']).read_bytes() == target.read_bytes()
+                assert '%USERPROFILE%' in record['msg']  # diagnostic strings stay private
+                if jsonl:
+                    decoded = json.loads(out.getvalue())
+                    assert decoded['imports'][0]['backup'] == str(target)
+                    assert Path(decoded['imports'][0]['backup']).is_absolute()
+                    assert not E.check_event(decoded)
+                else:
+                    assert str(profile) not in out.getvalue()
+                logged = log.read_text(encoding='utf-8')
+                assert str(profile) not in logged and profile.as_posix() not in logged
+                assert '%USERPROFILE%' in logged
+                logged_record = json.loads(logged.split(' ', 1)[1])
+                assert logged_record['imports'][0]['backup'] == E.mask(target)
+            try:
+                E.MachinePath('%USERPROFILE%/campaign.lcsave')
+            except ValueError:
+                pass
+            else:
+                raise AssertionError('A redacted placeholder must never become a machine path.')
 
 
 # ------------------------------------------------------------------------------------------------ plan

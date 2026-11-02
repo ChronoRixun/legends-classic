@@ -1,14 +1,16 @@
-# Original Xbox campaign import preview core
+# Original Xbox campaign import core
 
 This is an offline developer core with synthetic acceptance tests. It is **not
-enabled for player installation**. No real Xbox campaign was available for this
-round. No stock talent-byte ledger, source mission-byte ledger or tested retail
+enabled for player installation by default**. Testers can explicitly enable
+experimental Install and Undo as described below. No real Xbox campaign was
+available for this round. No stock talent-byte ledger, source mission-byte ledger or tested retail
 checkpoint recipe is invented to fill that gap. A separate decoder supports
 the surveyed XML1-recomp sections; unsupported versions retain explicit refusals.
 
 The owner-approved behavior is checkpoint continuation with an explicit list
 of changes, W2 saves plus the XML1 economy and XP curve, an unchanged source,
-and an unchanged global profile unless the player selects **Also merge unlocks**.
+and an unchanged global profile. **Also merge unlocks** remains disabled until
+a recoverable multi-file transaction is available; `--merge-unlocks` refuses.
 
 ## Command
 
@@ -21,6 +23,7 @@ python -m xml1builder import-xml1-save <extracted Xbox folder or HDD image>
     [--allow-inferred] [--import-table <local table>]
     [--campaign <exact E:/UDATA/4156001e/campaign path from discovery>]
     [--source-kind auto|xemu|recomp]
+    [--experimental-save-import]
 ```
 
 `--dry-run` performs bounded parsing, mapping, encoding and the existing Python
@@ -32,11 +35,68 @@ counters/ranks or ambiguous checkpoint contexts still refuse.
 
 Apply additionally needs `--preview-token <token from dry-run>`. The token binds
 the source bytes, build/table hashes, existing profile bytes, slot, checkpoint
-and both opt-ins. A mismatched token refuses with `E_XML1_CHANGED`. Round 1
-then refuses with `E_XML1_UNVALIDATED`: the code-level admission gate cannot be
-overridden by editing a local table. Enabling player writes needs real-save
+and the opt-ins (including experimental admission), plus the mapping version.
+A mismatched token refuses with `E_XML1_CHANGED`. Without
+`--experimental-save-import`, apply refuses with `E_XML1_UNVALIDATED`.
+Editing a local table cannot enable it. Enabling writes by default needs real-save
 checkpoint evidence, shipping C++ loader/economy parity, live acceptance of the
-cooperating game save lease and a recoverable campaign/profile transaction.
+cooperating game save lease and build-bound shipping mapping tables.
+
+### Experimental tester admission (default off)
+
+`--experimental-save-import` is the single invocation-local switch for both
+Install and Undo. It defaults off, has no INI equivalent, and does not persist.
+Use it on both preview and apply; a preview made without it cannot authorize an
+experimental apply. `--allow-inferred` remains a separate consent to the listed
+losses; it does not enable installation. No opt-in enables global-profile merging.
+The launcher's separate admission remains false; this CLI work does not enable
+its Import or Undo buttons or modify the launcher repository.
+
+Testers must use a companion XML2 Fix implementing `lc-save-writer/1` and close
+the game before apply or undo. The lease cannot detect a running older DLL that
+does not participate. Real-save/checkpoint/native-loader acceptance is still
+pending, even when experimental capabilities report Install and Undo available.
+
+```text
+xml1-builder import-xml1-save <source> --build <build> --save-dir <SaveLC>
+    --slot 0 --dry-run --allow-inferred --experimental-save-import --events jsonl
+xml1-builder import-xml1-save <same source> --build <same build> --save-dir <SaveLC>
+    --slot 0 --allow-inferred --experimental-save-import --preview-token <preview token>
+    --events jsonl
+xml1-builder import-xml1-save --save-dir <SaveLC> --undo-import <transaction ID>
+    --experimental-save-import --events jsonl
+```
+
+Install stages, flushes and reads back the campaign, independent retained copy
+and JSON manifest while holding the writer lease. Source/build/table/profile
+inputs and slot occupancy are rechecked before publication. Publication uses
+an atomic exclusive hard link from the staged file, then removes the temporary
+name; it never replaces a destination. A filesystem without hard-link support
+refuses with an I/O error rather than using an overwriting fallback. Only an
+empty slot is accepted, including absence of slot backup/pending files.
+
+The manifest is `SaveLC/.xml1-imports/<transaction ID>/report.json`. It records
+source container/decoder/profile and hashes, target/table/profile hashes,
+`mapping_version`, checkpoint, all approximations/skips, the actual output hash,
+retained-copy name, experimental admission and unvalidated native status. The
+preview/apply token binds inputs and consent, not byte-identical output: each
+mapping generates a new campaign serial and save timestamp. The successful
+apply result and manifest carry the hash of the bytes actually installed.
+
+Undo holds the same lease, requires both the current slot and retained campaign
+copy to match the installed hash, and refuses any slot backup/pending files.
+It archives and removes only that unchanged slot, restoring empty occupancy;
+report and both copies remain. A played/resaved slot refuses `E_XML1_CHANGED`
+with a message explaining that progress is preserved. `--dry-run` with Undo is
+a usage error; use read-only `--list-slots` to inspect availability.
+
+A process crash before publication can leave a pending temporary file and an
+incomplete/orphan ledger, but no partial primary slot. Pending files reserve the
+slot and require manual review with all writers closed; there is no automatic
+cleanup of files from an earlier process. A crash after publication leaves the
+complete slot and preflushed ledger even if no success event reached the client.
+Slot scanning after a restart shows the artifacts. Power-loss durability and
+filesystem/device flush behavior require separate acceptance.
 
 There is no network input, upload, signature repair or original-save write.
 Inputs may be extracted local folders or standalone raw/QCOW2 Xbox HDD images.
@@ -57,7 +117,7 @@ This extends the existing builder JSONL schema. Each event retains `ev` and
 | `warning`, `code="W_XML1_SIGNATURE"` | “Xbox signature not checked.” |
 | `warning`, `code="W_XML1_APPROXIMATED"` | One exact change: `detail.code`, `field`, `source`, `target`, `reason`, `confidence`. |
 | `error` | Stable `E_XML1_*` code, complete English `msg`, diagnostic `detail`, then a failed result. Parser offsets belong in details, not the primary dialog. |
-| `result`, `ok=true`, `exit=0` | Successful preview only: `dry_run=true`, `imported=false`, `import_report`. Never display “Import complete” for this. |
+| `result`, `ok=true`, `exit=0` | Preview: `dry_run=true`, `imported=false`, `import_report`. Install: `dry_run=false`, `imported=true` only after commit. Undo: `undone=true` only after removal. |
 | `result`, `ok=false`, `exit=2` | Input, unsupported-layout, inference, context or acceptance refusal. |
 
 Cancellation keeps the existing builder exit 5. Internal bugs remain distinct
@@ -81,7 +141,7 @@ result's `imported` boolean states whether installation happened.
    reset/approximation/skip. State that enemies/props, fog, heard lines and world
    drops reset. Show signature status. An unvalidated checkpoint keeps **Import**
    disabled in this round; **Cancel** closes the preview with no writes.
-6. In a future admitted release, **Import** applies the same options and preview
+6. Experimental CLI apply (or **Import** in a future admitted launcher) uses the same options and preview
    token under the cooperating save lock, rechecks source/build/profile hashes
    and installs only into the selected empty slot. Changed inputs return to
    preview. A final successful apply result, not progress or a preview, enables
@@ -114,7 +174,7 @@ The table has these fields:
 | `checkpoints` | Source mission ID and zone, required named variable predicates, party constraints, target act/zone/name, four spawn poses, anchor pose, source objective-slot -> named target objective mapping, required-objective constraints and proven travel anchors. Exactly one must match. |
 | `target_defaults` | Complete validated HREC defaults for any target-only heroes; those heroes remain locked. |
 | `profile_unlock_bits` | Optional confirmed source profile offset/mask -> named character/review identity or target completion flag. No codex-position guess. |
-| `release_ready`, `acceptance` | Reserved admission metadata. Neither can bypass the round-1 code-level gate. |
+| `release_ready`, `acceptance` | Reserved admission metadata. Neither can enable experimental writes. |
 
 The reader verifies installed catalogue/bind identities, bind data SHA-1,
 economy-sidecar framing/digest and active W2/economy/XP/point-award settings.
@@ -228,15 +288,29 @@ slot and retained copy match the ledger hash; it does not override the release g
 Malformed/incomplete ledgers are never advertised as undoable. Paths are local;
 link/reparse ancestors are rejected before reads. No directories are created.
 
+Operational JSONL path fields retain real absolute local paths: discovery
+`candidates[].folder`, history `imports[].report`/`backup`, Install
+`path`/`report`/`backup`, and Undo `retained`/`backup`. Clients can open these
+paths or pass them back unchanged, including under the user's profile. The
+same applies to HDD picker `error.detail.candidates[].folder` on a multiple-campaign refusal. The
+event writer redacts these paths to `%USERPROFILE%` only in human output and
+logs. Diagnostic strings remain redacted in JSONL too. Frontends must redact
+operational paths before display, Copy details or shared reports; never feed
+a display string back into filesystem operations. Transaction manifests store
+relative `output_name` and `backup_name`, resolved against the actual SaveLC
+and transaction directories; they do not store redacted path placeholders.
+
 `capabilities` schema 1 is additive. Its flags are `extracted_folders`, `hdd_images`,
 `recomp_extensions`, `player_install`, `merge_unlocks`, `undo`, plus a description
 of `backup_policy`. Extracted-folder and HDD analysis are enabled. `writer_lock`
 additionally names the lease protocol (`lc-save-writer/1`); it does not admit player writes.
+`player_install` and `undo` are false by default and true for invocations with
+`--experimental-save-import`; they do not assert real-save/native acceptance.
 Successful dry previews now include these capabilities, per-hero level/XP/unlock
 rows and source progress in the existing `import_report`. A successful preview
 still has `dry_run=true` and `imported=false`.
 
-The existing builder exits are unchanged: 0 successful read/preview, 2 explicit
+The existing builder exits are unchanged: 0 successful read/preview/install/undo, 2 explicit
 usage/import refusal, 5 cancellation, 6 operating-system I/O failure and 70 an
 internal bug (1 remains general validation/pipeline failure). Machine JSON stays
 on stdout. Import-specific refusal details stay in `error.detail`, with complete
@@ -249,7 +323,7 @@ retain that copy prevents installation. Source folders, unrelated slots and the
 PC profile are preserved. Existing slots are never overwritten, even after a
 race; there is no overwrite option.
 
-`undo_campaign()` is a separately tested future-CLI primitive. It holds the
+`undo_campaign()` is called by experimental CLI Undo. It holds the
 cooperating game-writer lease itself, validates the
 ledger, checks both slot and retained-copy hashes, refuses additional slot backup
 or pending files, creates an exclusive archive link and removes only the unchanged
@@ -258,30 +332,32 @@ changed slot, missing copy, foreign lock or cancellation leaves the slot intact.
 The archive operation never replaces a prior archive. It does not restore or
 modify a global profile.
 
-`--undo-import <transaction-id>` is reserved at the CLI but currently returns
-`E_XML1_UNVALIDATED` (exit 2) without writes, just as player apply remains gated.
-Neither a user-edited table nor a frontend capability flag can enable installation.
+`--undo-import <transaction-id>` returns `E_XML1_UNVALIDATED` (exit 2) without
+writes unless `--experimental-save-import` is supplied, just as apply remains
+gated. Neither a user-edited table nor a frontend capability flag enables writes.
+
+Experimental apply produces a final result only after slot, retained copy and
+report are committed. Fields for the launcher are `ok=true`, `exit=0`,
+`imported=true`, `dry_run=false`, `slot`, `checkpoint`, `preview_token`,
+`output_sha256`, `transaction_id`, `backup` and `report` (paths as strings).
+The process exit is also 0.
+
+Experimental undo calls the primitive and returns `ok=true`, `exit=0`, `undone=true`,
+the matching `transaction_id` and `slot`, and `retained`/`backup` paths only after
+success. A changed campaign continues to refuse. Fresh slot scanning follows
+undo before another destination is selected.
 
 ### What still needs implementation or acceptance
 
 - Real-source/native-loader/checkpoint acceptance, build-bound shipping import
-  tables and live acceptance with the cooperating DLL before enabling apply or undo.
-- Wire admitted apply to the transaction primitive and produce a final result only
-  after slot, retained copy and report are committed. Required fields for the
-  launcher are `ok=true`, `exit=0`, `imported=true`, `dry_run=false`, `slot`,
-  `checkpoint`, `preview_token`, `output_sha256`, `transaction_id`, `backup` and
-  `report` (paths as strings). The process exit must also be 0.
-- Wire admitted undo to the primitive and return `ok=true`, `exit=0`, `undone=true`,
-  the matching `transaction_id` and `slot`, and `retained`/`backup` paths only after
-  success. A changed campaign must continue to refuse. Fresh slot scanning follows
-  undo before another destination is selected.
+  tables and live acceptance with the cooperating DLL before enabling writes by default.
 - Real-save acceptance of the XML1-recomp decoder and real-image acceptance of
   the bounded raw/QCOW2 reader below. Synthetic coverage is not real-save acceptance.
 - Recoverable multi-file global profile merging before advertising that capability.
   The launcher leaves the merge option off and disabled for this core.
 
 No new public exit-code family or progress-event protocol is needed. Existing
-JSONL result/error/warning events suffice for bounded discovery and previews.
+JSONL result/error/warning events suffice for discovery, previews and transactions.
 
 ## Read-only HDD sources (round 2)
 
@@ -378,7 +454,8 @@ manual review with all old writers closed. Preview/discovery never create or
 acquire a writer lock, so they remain read-only. Slot occupancy and hashes must
 still be rechecked on admitted apply. The lease excludes cooperating versions;
 it cannot prove an older DLL or another tool obeys it. Apply/undo admission gates
-remain false, including when a table advertises release readiness.
+remain false by default, including when a table advertises release readiness;
+the single experimental CLI flag opts into both transactions.
 
 The DLL's evidence anchors are CMemoryCardWin32 vtable `0x69aa8c`, object
 `0x6e03d8`, folder buffer `0x7ad6a0`, init `0x55e760`; slot writer `0x55fe70`
@@ -395,7 +472,7 @@ Newer upstream may differ. The evidence is the source's `character_save.h`,
 `raven_progress_stream.h`, `raven_campaign_state_guest.c` and `raven_stash_owner.cpp`.
 It has been checked with invented saves, through the Python LC/W2 loader and
 two native-stream serialization cycles. No player recomp save or shipping
-C++ game load has been tested here. Import and Undo remain disabled.
+C++ game load has been tested here. Import and Undo remain disabled by default.
 
 The surveyed Windows player build resolves its data root beside the executable
 when `default.xbe` is present, and keeps saves under

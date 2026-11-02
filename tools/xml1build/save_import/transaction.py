@@ -1,6 +1,6 @@
 """Empty-slot installation primitive, with prewritten report/hash ledger.
 
-The CLI's R1 acceptance gate runs before this primitive. No multi-file global
+The CLI's experimental admission gate runs before this primitive. No multi-file global
 profile transaction is admitted yet; profile bytes are never changed here.
 """
 from __future__ import annotations
@@ -39,14 +39,20 @@ def _write_new(path, data, on_created=lambda: None):
         os.fsync(stream.fileno())
 
 
-def install_campaign(data, report, save_dir, source, table, *, cancel=lambda: None, before_link=lambda: None):
-    """Acquire the cooperating game writer lease before any transaction writes."""
+def install_campaign(data, report, save_dir, source, table, *, cancel=lambda: None, before_link=lambda: None,
+                     recheck=lambda: None):
+    """Acquire the writer lease and recheck command-owned inputs before publication.
+
+    The optional recheck callback runs under the lease alongside source/table
+    checks, including before any staging writes and immediately before publish.
+    """
     dest = check_destination(save_dir, report['slot'], source.root)
     with WriterLock(dest):
-        return _install_campaign_locked(data, report, dest, source, table, cancel=cancel, before_link=before_link)
+        return _install_campaign_locked(data, report, dest, source, table, cancel=cancel, before_link=before_link,
+                                        recheck=recheck)
 
 
-def _install_campaign_locked(data, report, save_dir, source, table, *, cancel, before_link):
+def _install_campaign_locked(data, report, save_dir, source, table, *, cancel, before_link, recheck):
     """No overwrite, no source writes, no success before report and final install.
 
     Report files are a per-import ledger. A report is effective only when its
@@ -61,6 +67,7 @@ def _install_campaign_locked(data, report, save_dir, source, table, *, cancel, b
         cancel()
         source.recheck()
         table.recheck()
+        recheck()  # command-owned inputs (profile), now under the writer lease
         check_destination(dest, slot, source.root)
         container.read_file(data, L.KIND_CAMPAIGN)
         if digest(data) != report['output_sha256']:
@@ -90,10 +97,12 @@ def _install_campaign_locked(data, report, save_dir, source, table, *, cancel, b
         cancel()
         source.recheck()
         table.recheck()
+        recheck()
         before_link()  # deterministic failure/race injection for synthetic tests
         cancel()
         source.recheck()
         table.recheck()
+        recheck()
         check_destination(dest, slot, source.root, own_temp=temp)
         target = dest / f'saveslot{slot}.lcsave'
         try:
@@ -168,7 +177,7 @@ def undo_campaign(save_dir, transaction_id, *, cancel=lambda: None):
 
 
 def _undo_campaign_locked(save_dir, transaction_id, *, cancel):
-    """Primitive for a future admitted CLI. Only an unchanged imported slot moves.
+    """Only an unchanged imported slot moves.
 
     The public wrapper holds the writer lease. Preserve both the independent
     copy and the removed slot in its private ledger folder.

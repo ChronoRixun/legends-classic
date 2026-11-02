@@ -52,7 +52,9 @@ def make_parser():
     p.add_argument('--build', help='import-xml1-save: installed Legends Classic build (read only)')
     p.add_argument('--save-dir', help='import-xml1-save: actual SaveLC folder')
     p.add_argument('--import-table', help='import-xml1-save: explicit build-bound import table (developer testing)')
-    p.add_argument('--merge-unlocks', action='store_true', help='import-xml1-save: explicitly merge proven earned profile unlocks')
+    p.add_argument('--merge-unlocks', action='store_true', help='import-xml1-save: reserved; global-profile merging is disabled')
+    p.add_argument('--experimental-save-import', action='store_true',
+                   help='import-xml1-save: enable experimental Install and Undo for this invocation (default off; requires cooperating DLL)')
     p.add_argument('--allow-inferred', action='store_true', help='import-xml1-save: opt in to the individually reported experimental mappings')
     p.add_argument('--inspect-source', action='store_true', help='import-xml1-save: read-only campaign discovery and source facts')
     p.add_argument('--list-slots', action='store_true', help='import-xml1-save: read-only slot occupancy and import history')
