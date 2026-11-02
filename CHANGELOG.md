@@ -98,6 +98,9 @@ with Test mode off. A 0.5 game (content version 29) cannot join a 0.6 game. The 
   (planned for 0.8). If a healthy host drops out unexpectedly, please keep `xml2-fix.log` from every PC: the cause is
   not known yet.
 - Joining a game in progress happens only at the host's next area, never mid-area.
+- If the only friend who is joining drops out partway through, one of the players already in the game can be left on
+  the pause screen with every player shown as "Not Ready". That player has to leave and join again by code; the
+  others play on. This is being fixed for the next beta.
 - The new screens still need more checks with mouse, keyboard and controllers at 720p, 1080p and 4:3, over long
   sessions (memory and graphics memory), and on the first opening of Party and the slower original screens. The
   Play Online Back selection, Party status labels and the original Kick button's lettering are still being reviewed.

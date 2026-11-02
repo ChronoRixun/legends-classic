@@ -109,6 +109,10 @@ try. If a screen's text or labels are cut off, or something looks off, please re
   friend gets the host's game, the host and the other players wait up to 10 seconds on "A player is joining..."
   (`[Online] JoinHoldSeconds`, default 10, 0..15, `0` = off). The host's DROP-IN row turns joining off for a room; a friend
   who enters the code of a started game then is told the session has started.
+- **A friend who drops out while joining.** If the only friend who is joining drops out partway through, one of the
+  players already in the game can be left on the pause screen with every player shown as "Not Ready". That player has
+  to leave and join again by code; the others play on. This is being fixed for the next beta. If two friends are
+  joining and one drops out, the other still gets in; if the host drops out, the others see the host-left message.
 - **The new screens** still need more checks with mouse, keyboard and controllers at different resolutions, over
   long sessions (memory, graphics memory) and on the slowest screens' first opening. `--online-menus off` keeps the
   original online menus.
