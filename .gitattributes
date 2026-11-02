@@ -1,0 +1,2 @@
+# Hash-pinned third-party sources must stay byte-exact on every checkout (Windows autocrlf rewrote OFL.txt).
+tools/xml1build/fonts/** -text
