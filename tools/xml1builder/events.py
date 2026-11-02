@@ -28,6 +28,8 @@ import datetime
 import io
 import json
 import os
+import errno
+import stat
 import re
 import sys
 import threading
@@ -260,7 +262,17 @@ class Output:
             path.parent.mkdir(parents=True, exist_ok=True)
             if rotate:
                 rotate_logs(path)
-            previous, self._log = self._log, open(path, 'a', encoding='utf-8')
+            candidate = open(path, 'a', encoding='utf-8')
+            try:
+                st, lst = os.fstat(candidate.fileno()), path.lstat()
+                if not stat.S_ISREG(st.st_mode) or st.st_nlink != 1 or stat.S_ISLNK(lst.st_mode) \
+                        or getattr(lst, 'st_file_attributes', 0) & stat.FILE_ATTRIBUTE_REPARSE_POINT \
+                        or (st.st_dev, st.st_ino) != (lst.st_dev, lst.st_ino):
+                    raise PermissionError(errno.EPERM, 'log target must be an ordinary file without links', str(path))
+            except BaseException:
+                candidate.close()
+                raise
+            previous, self._log = self._log, candidate
             self.log_path = path
             if previous is not None:
                 previous.close()

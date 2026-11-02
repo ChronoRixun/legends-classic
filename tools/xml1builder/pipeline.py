@@ -39,10 +39,10 @@ class RealPipeline:
         self.C = C
 
     # ------------------------------------------------------------------ probe
-    def identify(self, iso):
+    def identify(self, iso, *, cancel=None):
         """(P1 identity, info.iso) of a disc image (the builder's error mapping)."""
         from .inputs import identify
-        return identify(iso)
+        return identify(iso, cancel=cancel)
 
     def cached_disc(self, cache, disc_id=None):
         """(P1 identity, info.iso) of a disc prepared in the cache (--iso left out), or None. disc_id picks one;
@@ -143,7 +143,8 @@ class RealPipeline:
         prog = ctl.progress_fn(sid)
         if sid == 'extract':
             if job.iso is not None:
-                r = P1.run(job.iso, job.cache, log=log, cancel=ctl.cancel, progress=prog, movies=job.movies)
+                r = P1.run(job.iso, job.cache, log=log, cancel=ctl.cancel, progress=prog, movies=job.movies,
+                           source_snapshot=(job.ident or {}).get('source_snapshot'))
             else:
                 d = Path(job.cache) / job.disc['disc_id'] / P1.STAGE
                 st = prepare.read_stage(d)

@@ -196,7 +196,8 @@ def parse_args(argv=None):
                          "or the prepare stages' cache (prepared: needs --cache, and --iso unless the cache already "
                          "holds a prepared disc)")
     ap.add_argument('--cache', help='prepared mode: the prepare cache directory (created; kept between builds)')
-    ap.add_argument('--iso', help='prepared mode: the XML1 Xbox disc image (Redump .iso or XISO; read-only)')
+    ap.add_argument('--iso', help='prepared mode: the XML1 Xbox disc image (Redump .iso or XISO) or verified '
+                                 'extracted install folder (read-only)')
     a = ap.parse_args(argv)
     # 0.5.0-beta.1 defaults: telekinesis, the flying carry and the economy are on unless a prerequisite is turned off
     # (an explicit xml1 with the prerequisite off is still refused below): the moves need --grab-carry xml1, the economy
@@ -443,6 +444,8 @@ def main(argv=None):
     protected = None
     if args.sources == 'prepared':
         protected = (C.X1_LOOSE, C.X1_ASSETS, C.X1_XBOX, C.RESEARCH, C.TOOLS, Path(args.cache).resolve())
+        if args.iso and Path(args.iso).is_dir():
+            protected += (Path(args.iso).resolve(),)
     try:
         C._check_out_safe(out, base, protected)
         check_out_dir(out, args.adopt)

@@ -3049,7 +3049,22 @@ listings, never the cache path: two caches of the same disc and install get the 
   first: a Redump Xbox image also has an ISO 9660 PVD at 0x8000 (its video partition). Rejected: CCI (`CCIM`),
   CSO/ZSO (`CISO`/`ZISO`), zip/7z/rar -> `E_ISO_COMPRESSED` with how to decompress; GameCube (0xC2339F3D at 0x1C),
   Wii (0x5D1C9EA3 at 0x18), PS2 / PS1 (ISO 9660 + `SYSTEM.CNF` with `BOOT2` / `BOOT`), other ISO 9660, anything else
-  -> `E_ISO_NOT_XBOX` + `detected`; a folder `E_ISO_FOLDER`; a file or directory past the image end `E_ISO_READ`.
+  -> `E_ISO_NOT_XBOX` + `detected`; a file or directory past the image end `E_ISO_READ`.
+- **Extracted folders** (`prepare/folder.py`): `open_image` and the builder's existing `--iso` auto-detect a folder.
+  Only paths in packaged `known_dump_files.json` enter the reader (original XBE, archive, sounds/zsds and
+  movies/ntsc). Every original must match size/SHA-256 before use, including movies with `--no-movies`.
+  Loose recomp assets, settings and saves are ignored. Missing/modified originals produce
+  `E_ISO_FOLDER_MISSING` / `E_ISO_FOLDER_MODIFIED` naming the file; unsafe paths, links/reparse points, hard links
+  and case collisions in traversed directories produce `E_ISO_FOLDER_UNSAFE`. Directory enumeration is bounded;
+  only the directories needed to find reference paths are scanned. File identity/time checks and verified open
+  handles detect source changes (`E_ISO_SOURCE_CHANGED`); Windows handles deny writes/deletes while open.
+  The builder reverifies originals before stamping a build. Folder cache IDs have a `folder-` prefix and include
+  the reference digest; P1/stamp keys include the source kind and reference digest, without changing ISO keys.
+  The existing archive/bundle extraction is reused. Output/cache/log overlap with the source is refused.
+  `info.iso` keeps its existing location and adds `format: folder`, `verified`, `verified_files`, `source_kind`
+  and `recomp_layout` (presence of the recomp layout marker; no claim that recomp overlays are verified).
+  The launcher can keep passing `--iso`; its image-only picker needs separate folder-selection support.
+  Reference generation requires a trusted whole-image SHA-256 as well as the existing dump fingerprints.
 - **Reading**: the directory trees are walked (left/right links in 4-byte units, 0xFFFF = sector padding); every file
   is one extent read through a `SubFile` window; `zipfile` opens `z/assetsfb.zip` on its window. Nothing is copied
   that the build does not read.

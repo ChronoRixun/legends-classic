@@ -639,7 +639,7 @@ def test_identify_synthetic_discs():
         assert disc['disc_id'] == ident['disc_id'] and len(disc['digest']) == 40
         other = Path(td) / 'other.iso'
         other.write_bytes(synth.xdvdfs(synth.xml1_disc_files(title_id=0x41560017)))
-        for path, code, key in ((other, 'E_ISO_WRONG_GAME', 'title_id'), (Path(td), 'E_ISO_NOT_XBOX', 'detected'),
+        for path, code, key in ((other, 'E_ISO_WRONG_GAME', 'title_id'), (Path(td), 'E_ISO_FOLDER_MISSING', 'file'),
                                 (Path(td) / 'gone.iso', 'E_ISO_NOT_FOUND', 'path')):
             try:
                 I.identify(path)

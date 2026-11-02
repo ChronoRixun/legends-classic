@@ -108,10 +108,10 @@ class StubPipeline(RealPipeline):
             raise RuntimeError(f'stub crash in {sid}')
 
     # ---- probe
-    def identify(self, iso):
+    def identify(self, iso, *, cancel=None):
         if not Path(iso).is_file():                       # the real identification's E_ISO_NOT_FOUND (and text)
             from xml1builder.inputs import identify
-            return identify(iso)
+            return identify(iso, cancel=cancel)
         from xml1builder.inputs import describe_disc
         return dict(IDENT), describe_disc(IDENT, iso)
 

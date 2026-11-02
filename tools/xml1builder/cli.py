@@ -33,7 +33,7 @@ class _Parser(argparse.ArgumentParser):
 
 def make_parser():
     p = _Parser(prog='xml1-builder', add_help=True,
-                description=f'{PROJECT}: builds X-Men Legends (from your Xbox disc image) on the X-Men Legends II PC '
+                description=f'{PROJECT}: builds X-Men Legends (from your Xbox disc image or extracted install) on the X-Men Legends II PC '
                             f'engine (your install). https://github.com/{REPO}',
                 epilog='Nothing is downloaded and nothing from the games is shared: the builder reads your disc image '
                        'and your X-Men Legends II install and writes the game into --out (and its cache). '
@@ -44,7 +44,8 @@ def make_parser():
     p.add_argument('--log', help='log file (default: <out>/_build/builder.log for a build)')
     p.add_argument('--quiet', action='store_true', help='no human text on the console (the log keeps it)')
     p.add_argument('command', nargs='?', choices=COMMANDS)
-    p.add_argument('--iso', help='your X-Men Legends Xbox disc image (Redump .iso or XISO; read only)')
+    p.add_argument('--iso', help='your X-Men Legends Xbox disc image (Redump .iso or XISO), or an extracted '
+                                'install folder (auto-detected; original files verified; read only)')
     p.add_argument('--xml2', help='your X-Men Legends II PC install (read only)')
     p.add_argument('--out', help='the folder the game is built into (empty, or one the builder made)')
     p.add_argument('--cache', help='the build cache (default %%LOCALAPPDATA%%\\xml1-builder\\cache)')
@@ -101,7 +102,8 @@ def make_parser():
                                                                          'xml2-fix.ini (they are in the stamp)')
     p.add_argument('--allow-unknown-exe', dest='allow_unknown_exe', action='store_true',
                    help='testers: build for an XMen2.exe that is not a known retail build')
-    p.add_argument('--deep', action='store_true', help='verify: also check every file inside the disc image')
+    p.add_argument('--deep', action='store_true', help='verify: also CRC-check every member of the original assets '
+                                                    'archive (folder originals are always SHA-256 checked)')
     p.add_argument('--mods', action='store_true', help='clean: also delete <out>\\mods')
     p.add_argument('--dry-run', dest='dry_run', action='store_true', help='clean: only count what would go')
     return p
@@ -132,9 +134,11 @@ def main(argv=None, *, pipeline_factory=None, stdin=None, fd_redirect=True, exit
     v = CMD.version_info()
     try:
         a = make_parser().parse_args(argv)
+        CMD.check_source_writes(a)
     except SystemExit as e:                                   # --help
         return 0 if not e.code else 2
-    except BuilderError as e:
+    except (BuilderError, OSError) as exc:
+        e = exc if isinstance(exc, BuilderError) else CMD.failure(exc, 'probe')
         output = Output(jsonl)
         _hello(output, v)
         output.event('error', stage='probe', code=e.code, msg=e.msg, hint=e.hint, detail=e.detail)
@@ -142,7 +146,17 @@ def main(argv=None, *, pipeline_factory=None, stdin=None, fd_redirect=True, exit
         if not jsonl:
             sys.stderr.write(make_parser().format_usage())
         return e.exit_code
-    output = Output(a.events == 'jsonl', a.quiet, a.log)
+    output = Output(a.events == 'jsonl', a.quiet)
+    if a.log:
+        try:
+            output.open_log(a.log, rotate=False)
+        except OSError as e:
+            err = CMD.failure(e, 'probe')
+            _hello(output, v)
+            output.event('error', stage='probe', code=err.code, msg=err.msg, hint=err.hint, detail=err.detail)
+            output.event('result', ok=False, exit=err.exit_code)
+            output.close()
+            return err.exit_code
     if a.version:
         if output.jsonl:
             _hello(output, v)
@@ -173,7 +187,7 @@ def main(argv=None, *, pipeline_factory=None, stdin=None, fd_redirect=True, exit
     try:
         R.check_root()                                        # frozen: the data comes from the bundle only
         if a.command == 'info':
-            return CMD.cmd_info(a, output, pipeline_factory)
+            return CMD.cmd_info(a, output, pipeline_factory, cancel=cancel)
         if a.command == 'build':
             return CMD.cmd_build(a, output, cancel, pipeline_factory)
         if a.command == 'verify':

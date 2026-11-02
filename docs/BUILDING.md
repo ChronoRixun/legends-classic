@@ -39,6 +39,16 @@ The same commands, options, events (`--events jsonl`, what the launcher reads) a
 defaults to `%LOCALAPPDATA%\xml1-builder\cache` (`--cache DIR` elsewhere). The output folder must not overlap the
 XML2 install, the disc image, the cache or this repository's `tools/` and `research/` folders (the builder refuses).
 
+`--iso` also auto-detects an extracted Xbox install folder, including a recomp install. All consumed originals
+must match the packaged World dump hashes; loose overlays are ignored. Output, cache and log files must stay
+outside that source install. See [using an extracted install](DUMPING.md#already-play-the-recomp-point-the-builder-at-its-folder).
+
+Maintainers can regenerate `tools/xml1builder/data/known_dump_files.json` from an owned image with
+`python -m xml1builder.devdata folder-reference --iso <image>` (from `tools/`). The command first checks the
+whole-image SHA-256 against a trusted value already recorded in `known_dumps.json`, then checks the existing
+executable, archive-directory and disc-listing fingerprints. It writes only names, sizes and SHA-256 hashes.
+An extracted folder or an unknown image cannot supply a new trusted reference.
+
 ## Tests
 
 `--online-menus on` is the 0.6 release default with the XML1 front end. It enables the custom

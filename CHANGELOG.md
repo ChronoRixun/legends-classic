@@ -3,6 +3,12 @@
 The builder's releases, newest first. The version is `xml1-builder --version`; the content version is what a
 build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebuild.
 
+## Unreleased
+
+- `--iso` accepts an extracted Xbox install folder, including a recomp install. The builder verifies all required
+  originals against the World dump reference and ignores loose overlays, saves and settings. `info` reports the
+  verification result; folder caches stay separate from image caches. See [using your recomp folder](docs/DUMPING.md#already-play-the-recomp-point-the-builder-at-its-folder).
+
 ## v0.6.0 - content version 30 (needs XML2 Fix 1.11.0)
 
 Legends Classic 0.6.0-beta.1 goes with XML2 Fix 1.11.0-beta.1 (content 30 / catalogue 8 / LC40). It is a beta: the
