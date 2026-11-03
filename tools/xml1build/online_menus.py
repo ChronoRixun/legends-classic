@@ -525,7 +525,7 @@ def tree_problems(root, screen, palette_ids=None):
 
 def package(root):
     pkg=M.package_for(root)
-    ET.SubElement(pkg,'xml',filename='ui/menus/'+(root.get('name') if root.get('type') in ('HOST_MENU','JOIN_MENU') else root.get('igb')))
+    ET.SubElement(pkg,'xml',filename='ui/menus/'+(root.get('name') if root.get('type') in ('HOST_MENU','JOIN_MENU','GAME_OPTIONS_MENU') else root.get('igb')))
     # Model backdrops embed their pixels. A retired image= sprite must not
     # preload another 5 MiB copy of the page at every open.
     if root.get('image'):
@@ -793,6 +793,17 @@ def write(ctx, *, preview=False):
         focus_models.update(backdrop_models(focus_source.read_bytes(),screen))
         add_backdrop(tree,screen['name'])
         pending.append((name,tree,data,texture(atlas.read_bytes(),render(screen,text=False,focus=False),name)))
+    # Optional native-class presentation. Publish it under a separate name so
+    # Menus=0, missing resources, or an unsupported native tree retain retail.
+    from . import online_options as GO
+    options_detail={'enabled':False,'fallback':'game_options'}
+    try:
+        option,models=GO.prepare(ctx,source,atlas.read_bytes(),focus_source.read_bytes(),ids,metrics,anchor_capacity)
+    except (ValueError,OSError,KeyError) as error:
+        options_detail['reason']=str(error)
+    else:
+        pending.append(option);focus_models.update(models)
+        options_detail.update(enabled=True,menu=GO.MENU)
     font_details=OF.write(ctx,atlas.read_bytes())
     probe=font_probe(ctx)
     probe['private_fonts']=font_details
@@ -816,15 +827,17 @@ def write(ctx, *, preview=False):
         ctx.write_xmlb(F.MENU_PKG_DIR+'/'+name,pkg,('.PKGB',),source='frontend:online resource closure')
     hits=hit_table(authored_layouts)
     built={name:(tree,data) for name,tree,data,_ in pending}
-    problems=hit_scene_problems(hits,list(built),lambda n:built[n][0],lambda igb:next((d for t,d in built.values() if t.get('igb')==igb),None),
+    problems=hit_scene_problems(hits,list(authored_layouts),lambda n:built[n][0],lambda igb:next((d for t,d in built.values() if t.get('igb')==igb),None),
                                 lambda resource:focus_models.get(resource))
     if problems: raise ValueError('mouse hit table vs the built focus bars: '+'; '.join(problems))
     ctx.write_bytes(HITS_FILE,hits,source='frontend:mouse hit boxes = drawn focus bars')
     if not preview:ctx.write_bytes('Data/lc_online_menus.cap',CAPABILITY,source='frontend:verified DLL menu capability')
+    ctx.write_bytes('Data/lc_online_options.cap',GO.CAPABILITY if options_detail['enabled'] else b'',
+                    source='frontend:optional native Game Options presentation')
     report={'menus':list(MENUS),'colors':len(colors),'styles':len(styles),'palette_ids':ids,'font_probe':probe,
             'fixture_only':True,'enabled':not preview,'production_entry':F.PLAY_ONLINE_CMD,'layouts':authored_layouts,
             'commands':{name:{e['name']:command(intent_number(e['intent'])) for e in runtime_layout(name)['items'] if e['intent']} for name in MENUS},
-            'intents':command_manifest()}
+            'intents':command_manifest(),'game_options':options_detail}
     ctx.write_meta('online_menus_detail.json',report)
     return report
 
@@ -1053,6 +1066,10 @@ FLAT_FOCUS = ('lc_leave_yes','lc_leave_cancel','lc_lobby_dismiss','lc_party_leav
 
 def focus_spec(screen,item):
     x,y,w,h=item['rect']
+    if screen.get('native_options'):
+        # Identical native text hit rectangle and focus fill, including the
+        # value column. The native Game Options mouse handler owns the click.
+        return (0,-h*.8,w*.8,0),False
     if item['name'] in FLAT_FOCUS:
         return (0,-h*.8,w*.8,0),False
     if screen.get('party') and item.get('hit_rect'):
@@ -1890,7 +1907,7 @@ def _native_host_nodes(screen,by):
     for level in ('easy','normal','hard'): node('lc_host_'+level,HOST_SETTING_COPY['lc_host_'+level],(264,278,100,16),'body',3,align='right')
     for key,(word,why) in HOST_DROP_COPY.items():
         items.append(_variant(key,(164,305,210,34),
-            [dict(text=word,rect=(0,0,198,18),style='row',color=3 if key.endswith('unknown') else 4),dict(text=why,rect=(0,19,210,15),style='body',color=3)]))
+            [dict(text=word,rect=(0,0,198,18),style='row',color=3 if key.endswith('unknown') else 4),dict(text=why,rect=(0,19,210,15),style='body',color=3)],plane=-170))
     # 060r live (failure 7): the amber side marker was baked beside CAMPAIGN and stayed there while the focus bar sat on another row.
     # It is one hidden scene per settings row now (the same slash the fixture bakes: 4 wide, 45 tall, leaning right); the DLL shows the
     # focused row's (online_menus.cpp host_marker_follow) and none while focus is on the Open bar or a prompt.
@@ -1907,7 +1924,7 @@ def runtime_layout(name,state=None):
     screen.update(runtime=True,fixture_only=False)
     # Short truthful fallbacks only: the DLL binds the live service/count/room values over these.
     replacements={'local_name':'Player','self_name':'Player','self_initial':'P',
-        'self_state':'Not connected','service':'Not connected',
+        'self_state':'Connecting...','service':'Connecting...',
         'browse_hint':'Browse public games','browse_hint_on':'Browse public games','last_name':'','last_code':'',
         'identity':'Installed build: see launcher', 'code_state':'Not connected',
         'code_status':'Type or paste all eight symbols. The code is looked up automatically.',
@@ -2451,8 +2468,14 @@ def output_problems(out):
     anchor_capacity=engine_scene_anchors(dll.read_bytes() if dll else b'')
     marker=index.path('Data/lc_online_menus.cap')
     if marker is None or marker.read_bytes()!=CAPABILITY:errors.append('exact capability marker missing')
-    for name in (*MENUS,*LOBBIES,PARTY_MENU):
-        scene=name if name in (*MENUS,PARTY_MENU) else 'lc_lobby_'+name
+    from . import online_options as GO
+    options=index.path('Data/lc_online_options.cap')
+    optional=()
+    if options is not None and options.read_bytes():
+        if options.read_bytes()!=GO.CAPABILITY:errors.append('invalid Game Options capability marker')
+        else:optional=(GO.MENU,)
+    for name in (*MENUS,*LOBBIES,PARTY_MENU,*optional):
+        scene=name if name in (*MENUS,PARTY_MENU,GO.MENU) else 'lc_lobby_'+name
         for rel in [f'UI/menus/{name}.XMLB',f'UI/menus/{name}.engb',f'UI/menus/{scene}.IGB',
                     f'Textures/menus/{scene}.IGB',f'Packages/generated/maps/package/menus/{name}.PKGB']:
             if index.path(rel) is None:errors.append('missing '+rel)
