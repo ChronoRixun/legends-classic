@@ -804,6 +804,20 @@ def write(ctx, *, preview=False):
     else:
         pending.append(option);focus_models.update(models)
         options_detail.update(enabled=True,menu=GO.MENU)
+    from . import online_native_skins as NS
+    native_skins = {}
+    for name in NS.MENUS:
+        detail = {'enabled':False,'fallback':name}
+        try:
+            if not preview and NS.capability(name) not in dll:
+                raise ValueError('companion DLL lacks this native skin adapter')
+            skin,models=NS.prepare(ctx,name,source,atlas.read_bytes(),focus_source.read_bytes(),ids,metrics,anchor_capacity)
+        except (ValueError,OSError,KeyError) as error:
+            detail['reason']=str(error)
+        else:
+            pending.append(skin);focus_models.update(models)
+            detail.update(enabled=True,menu=NS.MENUS[name])
+        native_skins[name]=detail
     font_details=OF.write(ctx,atlas.read_bytes())
     probe=font_probe(ctx)
     probe['private_fonts']=font_details
@@ -834,10 +848,13 @@ def write(ctx, *, preview=False):
     if not preview:ctx.write_bytes('Data/lc_online_menus.cap',CAPABILITY,source='frontend:verified DLL menu capability')
     ctx.write_bytes('Data/lc_online_options.cap',GO.CAPABILITY if options_detail['enabled'] else b'',
                     source='frontend:optional native Game Options presentation')
+    for name,detail in native_skins.items():
+        ctx.write_bytes(NS.marker(name),NS.capability(name) if detail['enabled'] else b'',
+                        source='frontend:optional native online presentation')
     report={'menus':list(MENUS),'colors':len(colors),'styles':len(styles),'palette_ids':ids,'font_probe':probe,
             'fixture_only':True,'enabled':not preview,'production_entry':F.PLAY_ONLINE_CMD,'layouts':authored_layouts,
             'commands':{name:{e['name']:command(intent_number(e['intent'])) for e in runtime_layout(name)['items'] if e['intent']} for name in MENUS},
-            'intents':command_manifest(),'game_options':options_detail}
+            'intents':command_manifest(),'game_options':options_detail,'native_skins':native_skins}
     ctx.write_meta('online_menus_detail.json',report)
     return report
 
@@ -1069,7 +1086,7 @@ def focus_spec(screen,item):
     if screen.get('native_options'):
         # Identical native text hit rectangle and focus fill, including the
         # value column. The native Game Options mouse handler owns the click.
-        return (0,-h*.8,w*.8,0),False
+        return (-w*.4,-h*.8,w*.4,0) if item.get('align')=='center' else (0,-h*.8,w*.8,0),False
     if item['name'] in FLAT_FOCUS:
         return (0,-h*.8,w*.8,0),False
     if screen.get('party') and item.get('hit_rect'):
@@ -2474,8 +2491,14 @@ def output_problems(out):
     if options is not None and options.read_bytes():
         if options.read_bytes()!=GO.CAPABILITY:errors.append('invalid Game Options capability marker')
         else:optional=(GO.MENU,)
+    from . import online_native_skins as NS
+    for name,variant in NS.MENUS.items():
+        cap=index.path(NS.marker(name))
+        if cap is not None and cap.read_bytes():
+            if cap.read_bytes()!=NS.capability(name):errors.append('invalid native online skin marker: '+name)
+            else:optional+= (variant,)
     for name in (*MENUS,*LOBBIES,PARTY_MENU,*optional):
-        scene=name if name in (*MENUS,PARTY_MENU,GO.MENU) else 'lc_lobby_'+name
+        scene=name if name in (*MENUS,PARTY_MENU,GO.MENU,*NS.MENUS.values()) else 'lc_lobby_'+name
         for rel in [f'UI/menus/{name}.XMLB',f'UI/menus/{name}.engb',f'UI/menus/{scene}.IGB',
                     f'Textures/menus/{scene}.IGB',f'Packages/generated/maps/package/menus/{name}.PKGB']:
             if index.path(rel) is None:errors.append('missing '+rel)
