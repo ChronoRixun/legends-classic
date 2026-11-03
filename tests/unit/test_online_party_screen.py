@@ -21,6 +21,34 @@ def party(role='host'):
     return screen, O.menu_tree(screen)
 
 
+def test_linked_frame_rate_text_is_runtime_data_in_both_coop_views():
+    # Names must survive authoring as bindable, initially hidden native text;
+    # otherwise the DLL can synchronize correctly while the warning stays blank.
+    marker = b'lc-online-linked-rate/1'
+    assert marker in O.DLL_PROBES
+    old_dll = b'\0'.join(p for p in O.DLL_PROBES if p != marker)
+    assert O.capability_problems(old_dll)
+    for role in ('host', 'guest'):
+        screen, root = party(role)
+        items = {e.get('name'): e for e in root.findall('item')}
+        for n in range(1, 5):
+            key = f'lc_p{n}_fps'
+            assert key in PT.DATA and key in PT.HIDDEN_BY_DEFAULT
+            assert key in items
+            authored = next(e for e in screen['items'] if e['name'] == key)
+            assert authored['hidden'] and authored['data']
+        assert 'lc_party_rate_warning' in PT.DATA
+        assert 'lc_party_rate_warning' in items
+    for role in O.LOBBIES:
+        screen = O.lobby_layout(role)
+        items = {e['name']: e for e in screen['items']}
+        for n in range(1, 5):
+            for field in ('fps', 'fps_warning'):
+                item = items[f'lc_p{n}_{field}']
+                assert item['data'] and item['hidden']
+                assert item['text'] == ''
+
+
 def test_party_probe_is_required_and_old_dlls_are_refused():
     assert PT.PROBE in O.DLL_PROBES
     data = b'\0'.join(O.DLL_PROBES)

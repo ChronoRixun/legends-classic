@@ -37,14 +37,14 @@ NOTICE_COPY = {'lc_party_waiting': 'is waiting for the next area', 'lc_party_rec
 FEEDBACK_COPY = {'lc_party_copied': ('Invite code copied', 6), 'lc_party_copy_failed': ('Could not copy the invite code', 7)}
 RECOVERY = ('If the host disconnects, the game ends.', 'Host again from an available local save.')
 BREADCRUMB = 'Pause > Party - the game keeps running'
-DATA = ('lc_campaign_summary', 'lc_room_name', 'lc_room_visibility', 'lc_room_code', 'lc_notice_name', 'lc_notice_percent', 'lc_kick_name',
-        *(f'lc_p{n}_{k}' for n in range(1, 5) for k in ('name', 'slot', 'phase', 'ping', 'route')))
+DATA = ('lc_campaign_summary', 'lc_room_name', 'lc_room_visibility', 'lc_room_code', 'lc_notice_name', 'lc_notice_percent', 'lc_kick_name', 'lc_party_rate_warning',
+        *(f'lc_p{n}_{k}' for n in range(1, 5) for k in ('name', 'slot', 'phase', 'ping', 'route', 'fps')))
 CARD_SCENES = ('card', 'empty', 'empty_title', 'empty_help', 'empty_plus', 'host', 'you', 'hero_fallback', 'hero_next', 'ms', 'measuring',
                'to_host', 'same_build', 'checking_build', 'other_build', 'pending', 'selected', 'tone_good', 'tone_warn', 'tone_idle')
-HIDDEN_BY_DEFAULT = (*(f'lc_p{n}_{k}' for n in range(1, 5) for k in (*CARD_SCENES, 'name', 'slot', 'ping', 'kick')),
+HIDDEN_BY_DEFAULT = (*(f'lc_p{n}_{k}' for n in range(1, 5) for k in (*CARD_SCENES, 'name', 'slot', 'ping', 'kick', 'fps')),
                      'lc_party_waiting', 'lc_party_receiving', 'lc_party_copied', 'lc_party_copy_failed', *CONFIRMS,
                      'lc_party_propose_soon', 'lc_party_propose_host_only', 'lc_notice_name', 'lc_notice_percent', 'lc_kick_name',
-                     'lc_party_leave_yes', 'lc_party_cancel')
+                     'lc_party_leave_yes', 'lc_party_cancel', 'lc_party_rate_warning')
 # Commands the screen may carry: constant integers through the guarded dispatcher, plus the native routes below.
 COMMANDS = {'lc_rail_resume': 63, 'lc_party_invite': 64, 'lc_party_propose': 65, 'lc_party_leave': 66, 'lc_party_leave_yes': 67,
             'lc_rail_quit': 66, 'lc_party_cancel': 8, **{f'lc_p{n}_kick': 70 + n for n in range(1, 5)}}
@@ -130,6 +130,8 @@ def party_layout(role='host', *, native=None, members=4, fixture=False, notice='
         waiting = phases[n - 1] == 'waiting for next area'
         text(prefix + 'hero_fallback', 'Hero assigned at start', (221, y + 20, 100, 14), 'body', 3, variant=True, hidden=not shown or waiting)
         text(prefix + 'hero_next', 'Hero at the next area', (221, y + 20, 100, 14), 'body', 3, variant=True, hidden=not (shown and waiting))
+        # Runtime rate facts replace the hero/build detail line when available.
+        text(prefix + 'fps', '', (221, y + 20, 183, 14), 'label', 3, data=True, hidden=True)
         for key, word, color in (('same_build', 'SAME BUILD', 6), ('checking_build', 'CHECKING BUILD...', 3), ('other_build', 'OTHER BUILD', 7)):
             scene(prefix + key, (324, y + 21, 80, 14), [dict(kind='outline', rect=(0, 0, 80, 14), color=color), label(word, (5, 1, 73, 13), 'label', color)],
                   visible=shown and key == {'same': 'same_build', 'agreed': 'same_build', 'other': 'other_build'}.get(builds[n - 1], 'checking_build'))
@@ -154,6 +156,7 @@ def party_layout(role='host', *, native=None, members=4, fixture=False, notice='
                  hidden=not (shown and role == 'host' and n > 1 and n != me and not confirm))
         e['enabled'] = True
     text('lc_party_recovery_1', RECOVERY[0], (221, 317, 359, 15), 'body', 3)
+    text('lc_party_rate_warning', '', (221, 317, 359, 15), 'body', 5, data=True, hidden=True)
     text('lc_party_recovery_2', RECOVERY[1], (221, 333, 359, 15), 'body', 3)
     # ---- action bar. Invite copies the code; Propose load stays visibly unavailable (round 14); Leave confirms inline.
     # 060q live: the field painted INVITE amber with its focus tick, so with the rail's PARTY focused two amber bars showed.
