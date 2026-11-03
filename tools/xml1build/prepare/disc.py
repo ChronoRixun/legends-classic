@@ -91,15 +91,23 @@ def identify(img: image.XdvdfsImage) -> dict:
     members = [(i.filename, i.file_size, i.CRC, i.compress_type) for i in zf.infolist()]
     zip_digest = digest(members)
     xbe_md5 = hashlib.md5(data).hexdigest()
-    return {'format': img.format, 'partition': img.partition, 'image': img.path.as_posix(), 'image_size': img.size,
+    ident = {'format': img.format, 'partition': img.partition, 'image': img.path.as_posix(), 'image_size': img.size,
             'xbe': info, 'xbe_md5': xbe_md5, 'zip_digest': zip_digest, 'zip_members': len(members),
             'listing_digest': digest(img.listing()), 'disc_id': f'{xbe_md5[:12]}{zip_digest[:8]}'}
+    zf.close()
+    if img.format == 'folder':
+        ident.update(img.identity())
+        ident['disc_id'] = f'folder-{ident["disc_id"]}-{ident["source_digest"][:12]}'
+    return ident
 
 
 def stage_key(ident: dict) -> str:
     """the P1 cache key: the stage version + the disc content (never the image path or its layout)."""
-    return digest({'stage': STAGE, 'version': VERSION, 'xbe_md5': ident['xbe_md5'],
-                   'zip_digest': ident['zip_digest'], 'listing_digest': ident['listing_digest']})
+    fields = {'stage': STAGE, 'version': VERSION, 'xbe_md5': ident['xbe_md5'],
+              'zip_digest': ident['zip_digest'], 'listing_digest': ident['listing_digest']}
+    if ident.get('source_kind') == 'folder':
+        fields.update(source_kind='folder', source_digest=ident['source_digest'])
+    return digest(fields)
 
 
 def find_published(cache) -> list:
@@ -118,13 +126,18 @@ def has_movies(stage: dict) -> bool:
     return bool((stage or {}).get('movies', True))
 
 
-def run(iso, cache, *, log=print, cancel=None, progress=None, force=False, movies=True) -> dict:
+def run(iso, cache, *, log=print, cancel=None, progress=None, force=False, movies=True, source_snapshot=None) -> dict:
     """P1 for a disc image into a cache; reuses the published output while its key matches (and adds the movie
     files to it when movies=True and it was prepared without them). movies=False leaves the 648 MB of movies out
     (a --no-movies build reads movies.json instead). Returns {'dir': Path, 'stage': stage.json dict, 'cached': bool}."""
     t0 = time.time()
-    with image.open_image(iso) as img:
+    with image.open_image(iso, cancel=cancel) as img:
+        if img.format == 'folder':
+            img.check_destination(cache)
         ident = identify(img)
+        if source_snapshot is not None and ident.get('source_snapshot') != source_snapshot:
+            raise PrepareError('E_ISO_SOURCE_CHANGED', 'the extracted originals changed after the build probe',
+                               'stop programs changing the original files and build again', {'file': 'originals'})
         key = stage_key(ident)
         final = Path(cache) / ident['disc_id'] / STAGE
         st = read_stage(final)
@@ -152,6 +165,8 @@ def extract(img: image.XdvdfsImage, dst: Path, *, log=print, cancel=None, progre
     """write xbox/ (movies/ntsc only with movies=True), assets/, loose/ (+ manifest) and movies.json into dst.
     Returns (counts, timings, conflicts)."""
     dst = Path(dst)
+    if img.format == 'folder':
+        img.check_destination(dst)
     counts = {'xbox_files': 0, 'xbox_bytes': 0, 'assets_files': 0, 'assets_bytes': 0, 'bundles': 0,
               'bundle_entries': 0, 'loose_files': 0, 'loose_bytes': 0, 'conflicting_duplicates': 0,
               'identical_duplicates': 0}

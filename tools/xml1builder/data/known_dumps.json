@@ -12,7 +12,8 @@
    "images": [
     {
      "format": "redump-xgd1",
-     "size": 7825162240
+     "size": 7825162240,
+     "sha256": "0a1ef03e57458144609906bbc2d44d2c26028cf704f4698ce0f1e61c34030b44"
     }
    ]
   }

@@ -23,7 +23,7 @@ from . import resources as R
 from .errors import BuilderError, REPORT_HINT
 from .events import Output, mask
 
-COMMANDS = ('info', 'build', 'verify', 'clean')
+COMMANDS = ('info', 'build', 'verify', 'clean', 'import-xml1-save')
 
 
 class _Parser(argparse.ArgumentParser):
@@ -33,7 +33,7 @@ class _Parser(argparse.ArgumentParser):
 
 def make_parser():
     p = _Parser(prog='xml1-builder', add_help=True,
-                description=f'{PROJECT}: builds X-Men Legends (from your Xbox disc image) on the X-Men Legends II PC '
+                description=f'{PROJECT}: builds X-Men Legends (from your Xbox disc image or extracted install) on the X-Men Legends II PC '
                             f'engine (your install). https://github.com/{REPO}',
                 epilog='Nothing is downloaded and nothing from the games is shared: the builder reads your disc image '
                        'and your X-Men Legends II install and writes the game into --out (and its cache). '
@@ -44,7 +44,25 @@ def make_parser():
     p.add_argument('--log', help='log file (default: <out>/_build/builder.log for a build)')
     p.add_argument('--quiet', action='store_true', help='no human text on the console (the log keeps it)')
     p.add_argument('command', nargs='?', choices=COMMANDS)
-    p.add_argument('--iso', help='your X-Men Legends Xbox disc image (Redump .iso or XISO; read only)')
+    p.add_argument('source', nargs='?', help='import-xml1-save: Xbox/recomp save folder, save.dat or raw/qcow2 HDD image (read only)')
+    p.add_argument('--campaign', help='import-xml1-save: exact in-image campaign path returned by --inspect-source')
+    p.add_argument('--source-kind', choices=('auto', 'xemu', 'recomp'), default='auto',
+                   help='import-xml1-save: source format; recomp also accepts its installation root or save.dat')
+    p.add_argument('--slot', type=int, help='import-xml1-save: empty destination slot, 0 through 9')
+    p.add_argument('--build', help='import-xml1-save: installed Legends Classic build (read only)')
+    p.add_argument('--save-dir', help='import-xml1-save: actual SaveLC folder')
+    p.add_argument('--import-table', help='import-xml1-save: explicit build-bound import table (developer testing)')
+    p.add_argument('--import-ledger', help='build: private source-receipted native identity/checkpoint ledger; needs --experimental-save-import')
+    p.add_argument('--merge-unlocks', action='store_true', help='import-xml1-save: reserved; global-profile merging is disabled')
+    p.add_argument('--experimental-save-import', action='store_true',
+                   help='import-xml1-save: enable experimental Install and Undo for this invocation (default off; requires cooperating DLL)')
+    p.add_argument('--allow-inferred', action='store_true', help='import-xml1-save: opt in to the individually reported experimental mappings')
+    p.add_argument('--inspect-source', action='store_true', help='import-xml1-save: read-only campaign discovery and source facts')
+    p.add_argument('--list-slots', action='store_true', help='import-xml1-save: read-only slot occupancy and import history')
+    p.add_argument('--undo-import', help='import-xml1-save: transaction ID to undo (release gated)')
+    p.add_argument('--preview-token', help='import-xml1-save: bind apply to a matching dry-run preview')
+    p.add_argument('--iso', help='your X-Men Legends Xbox disc image (Redump .iso or XISO), or an extracted '
+                                'install folder (auto-detected; original files verified; read only)')
     p.add_argument('--xml2', help='your X-Men Legends II PC install (read only)')
     p.add_argument('--out', help='the folder the game is built into (empty, or one the builder made)')
     p.add_argument('--cache', help='the build cache (default %%LOCALAPPDATA%%\\xml1-builder\\cache)')
@@ -101,9 +119,10 @@ def make_parser():
                                                                          'xml2-fix.ini (they are in the stamp)')
     p.add_argument('--allow-unknown-exe', dest='allow_unknown_exe', action='store_true',
                    help='testers: build for an XMen2.exe that is not a known retail build')
-    p.add_argument('--deep', action='store_true', help='verify: also check every file inside the disc image')
+    p.add_argument('--deep', action='store_true', help='verify: also CRC-check every member of the original assets '
+                                                    'archive (folder originals are always SHA-256 checked)')
     p.add_argument('--mods', action='store_true', help='clean: also delete <out>\\mods')
-    p.add_argument('--dry-run', dest='dry_run', action='store_true', help='clean: only count what would go')
+    p.add_argument('--dry-run', dest='dry_run', action='store_true', help='clean: only count; import-xml1-save: preview without writes')
     return p
 
 
@@ -132,9 +151,13 @@ def main(argv=None, *, pipeline_factory=None, stdin=None, fd_redirect=True, exit
     v = CMD.version_info()
     try:
         a = make_parser().parse_args(argv)
+        if a.source is not None and a.command != 'import-xml1-save':
+            raise BuilderError('E_USAGE', 'A source folder is accepted only by import-xml1-save.', exit_code=2)
+        CMD.check_source_writes(a)
     except SystemExit as e:                                   # --help
         return 0 if not e.code else 2
-    except BuilderError as e:
+    except (BuilderError, OSError) as exc:
+        e = exc if isinstance(exc, BuilderError) else CMD.failure(exc, 'probe')
         output = Output(jsonl)
         _hello(output, v)
         output.event('error', stage='probe', code=e.code, msg=e.msg, hint=e.hint, detail=e.detail)
@@ -142,7 +165,17 @@ def main(argv=None, *, pipeline_factory=None, stdin=None, fd_redirect=True, exit
         if not jsonl:
             sys.stderr.write(make_parser().format_usage())
         return e.exit_code
-    output = Output(a.events == 'jsonl', a.quiet, a.log)
+    output = Output(a.events == 'jsonl', a.quiet)
+    if a.log:
+        try:
+            output.open_log(a.log, rotate=False)
+        except OSError as e:
+            err = CMD.failure(e, 'probe')
+            _hello(output, v)
+            output.event('error', stage='probe', code=err.code, msg=err.msg, hint=err.hint, detail=err.detail)
+            output.event('result', ok=False, exit=err.exit_code)
+            output.close()
+            return err.exit_code
     if a.version:
         if output.jsonl:
             _hello(output, v)
@@ -164,7 +197,7 @@ def main(argv=None, *, pipeline_factory=None, stdin=None, fd_redirect=True, exit
     cancel = CancelToken(**kwargs)
     if output.jsonl:
         watch_stdin(cancel, stdin, log=output.human)
-    if pipeline_factory is None:
+    if pipeline_factory is None and a.command != 'import-xml1-save':
         from .pipeline import RealPipeline
         pipeline_factory = RealPipeline
     CMD.log_header(output, a.command, [mask(x) for x in argv])
@@ -172,8 +205,11 @@ def main(argv=None, *, pipeline_factory=None, stdin=None, fd_redirect=True, exit
         own_job_object(output.human)
     try:
         R.check_root()                                        # frozen: the data comes from the bundle only
+        if a.command == 'import-xml1-save':
+            from xml1build.save_import.command import run as import_save
+            return import_save(a, output, cancel)
         if a.command == 'info':
-            return CMD.cmd_info(a, output, pipeline_factory)
+            return CMD.cmd_info(a, output, pipeline_factory, cancel=cancel)
         if a.command == 'build':
             return CMD.cmd_build(a, output, cancel, pipeline_factory)
         if a.command == 'verify':

@@ -3,6 +3,18 @@
 The builder's releases, newest first. The version is `xml1-builder --version`; the content version is what a
 build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebuild.
 
+## Unreleased
+
+- Save import stays off by default. Experimental Install and Undo now require a
+  companion DLL advertising the SaveLC writer lease; previews pin its hash and
+  Undo requires `--build`. Experimental builds can compile a private, source-hash
+  pinned identity/checkpoint ledger into a registered import table. Real saves,
+  proven retail ledgers and live companion acceptance are still required before
+  public admission. Global-profile merging remains disabled.
+- `--iso` accepts an extracted Xbox install folder, including a recomp install. The builder verifies all required
+  originals against the World dump reference and ignores loose overlays, saves and settings. `info` reports the
+  verification result; folder caches stay separate from image caches. See [using your recomp folder](docs/DUMPING.md#already-play-the-recomp-point-the-builder-at-its-folder).
+
 ## v0.6.0 - content version 30 (needs XML2 Fix 1.11.0)
 
 Legends Classic 0.6.0-beta.1 goes with XML2 Fix 1.11.0-beta.1 (content 30 / catalogue 8 / LC40). It is a beta: the
