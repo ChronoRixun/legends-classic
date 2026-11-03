@@ -77,7 +77,17 @@ because their focus bars share one model item per plane (`SHARED_FOCUS_SCREENS`:
 -300, at the scene origin): each focusable item sets it to its own bar on focus (authored at the owner's absolute
 position) and hides it on nofocus; XMen2.exe's setFocus (0x5aaf80) loses the old item before the new one gains. The
 clipboard / unavailable notices Browse can never raise are not authored there (the DLL falls back to `lc_inline_error`).
-Predicted scene anchors (backdrop included): Browse 214, Host lobby 174, Join lobby 170, Party 159, the rest <= 147.
+The independent native menu item map also holds at most **175 items**: insertion `0x5af490` checks the
+count at menu `+0x1608` against `0xaf` at `0x5af4af` (owned retail-image recheck,
+companion `docs/online-menus.md`, "Native item-map budget and LAN list fixes"). The
+`menu-anchors/512` capability does not raise it. Tree validation, final backdrop authoring
+and `output_problems` check this item limit separately from scene anchors. Current owned
+menus including backdrops use Browse **172**, host lobby **173**, join lobby **169** items.
+The lobbies reuse the hero fallback DATA field for linked rate plus slow-peer warning;
+Browse keeps seven rows with numeric occupancy and one build label per row.
+LAN rows additionally require the companion `lc-fonts-list/1` private LISTBOX scale;
+its centered focus art follows the native row-center positioning. Rebuild content with
+the matching DLL; no release/content identity is assigned by this fix.
 Every Browse row cell exists from the start with its row command and starts disabled;
 the DLL binds text and enables rows. Hidden localized variants (`lc_broker_*`, the
 `lc_host_private`/`lc_host_public` scenes, `lc_rowN_selected`) are selected by the

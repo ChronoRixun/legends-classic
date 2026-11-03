@@ -20,11 +20,19 @@ CODE_TOOL_WIDTH = 104  # Space/Enter key label plus DONE, with inner padding
 PALETTE = ('0A1830','11284A','2A4A78','7FA6D9','EEF3FA','FFCB3D','54D68A','FF6F55')
 STYLES = {'title': ('big',37), 'row': ('medium',15), 'body': ('medium',12.5), 'label': ('medium',11)}
 COLUMNS = ((59,128),(188,67),(255,93),(348,58),(406,76),(482,78),(560,37))
-# Browse row cells kept as hit/focus targets. [4] status and [5] ping are drawn by the row scenes (no DATA cell).
+# Browse row cells kept as hit/focus targets. [4] status is a scene; [5] ping is passive DATA.
 # The five cells of a row share ONE focus anchor (room_<r>_focus): their focus bar is the whole row anyway.
 ROW_COLUMNS = (0, 1, 2, 3, 6)
 # Retail has 175 anchors; the atomic co-op installer advertises the expanded tables.
 ENGINE_SCENE_ANCHORS = 175
+# Separate from scene anchors: CMenu item insertion (0x5af490, check 0x5af4af)
+# refuses item 176 at count +0x1608 == 0xaf. menu-anchors/512 does not expand it.
+ENGINE_MENU_ITEMS = 175
+
+
+def menu_item_problems(root):
+    count = len(root.findall("item"))
+    return [f"{count} menu items, the native menu holds {ENGINE_MENU_ITEMS}"] if count > ENGINE_MENU_ITEMS else []
 ANCHOR_CAPABILITY = b'menu-anchors/512'
 
 
@@ -503,7 +511,7 @@ def menu_tree(screen, palette_ids=None):
 
 
 def tree_problems(root, screen, palette_ids=None):
-    errors=layout_problems(screen); items={e.get('name'):e for e in root.findall('item')}
+    errors=layout_problems(screen)+menu_item_problems(root); items={e.get('name'):e for e in root.findall('item')}
     if len(root.findall('.//onfocus'))>75: errors.append('retail onfocus record budget exceeded (75)')
     if root.get('igb')!=screen['name'] or root.get('type'): errors.append('base menu contract')
     expected_root=menu_tree(screen,palette_ids)
@@ -911,6 +919,8 @@ def add_backdrop(tree, name):
     tree.set('image','')
     for index,(item,model) in enumerate((('lc_o_field','ui/models/lc_o_field'),('lc_o_backdrop',backdrop_resource(name)))):
         tree.insert(index,ET.Element('item',name=item,type='MENU_ITEM_MODEL',model=model,neverfocus='true'))
+    problems=menu_item_problems(tree)
+    if problems: raise ValueError('; '.join(problems))
     return tree
 
 
@@ -1270,7 +1280,7 @@ DLL_PROBES = (b'lc-online-menus/1\n', b'lc-online-input/1', b'lc-online-lobby/1'
               b'lc_title\0', b'lc_row\0', b'lc_body\0', b'lc_label\0',
               # Live 060p fixes: glyph scale per screen pixel (textscale is in 512 x 384 view units) and the
               # Menus=1 + LegendsClassicFonts=0 fallback to the native Play Online menus.
-              b'lc-fonts-screen/1', b'LegendsClassicFonts is not active',
+              b'lc-fonts-screen/1', b'lc-fonts-list/1', b'LegendsClassicFonts is not active',
               # 0.6 preview fix E: the mouse hit boxes are the drawn focus bars (Data/lc_online_hits.txt, hit_table).
               b'lc-online-hits/1', ANCHOR_CAPABILITY)
 CAPABILITY = b'lc-online-menus/1\n'
@@ -1734,7 +1744,7 @@ def _error_node(name, cause):
 
 
 def _row_scenes(items):
-    """Per-row status diamond+word, player pips + neutral ping bars, build badge and the dim veil for unjoinable rows.
+    """Per-row status diamond+word, one build DATA label and the dim veil for unjoinable rows.
 
     Models are shared across the seven rows (identical relative art); each row only has its own anchor. They sit between
     the focus fill and the text (plane -170 -> depth -130); the veil sits in front of the text (-200 -> -160)."""
@@ -1745,16 +1755,11 @@ def _row_scenes(items):
                                   [dict(kind='diamond', rect=(1, 5, 7, 6), color=color),
                                    dict(text=word, rect=(13, 2, 59, 18), style='body', color=color)],
                                   model_name=f'row_st_{kind}', plane=-170))
-        for n in range(5):
-            parts = [_bar((bar * 5.5, 2, 3, 11), 4, .8) if bar < n else _bar((bar * 5.5, 2, 3, 11), 3, .8, .4) for bar in range(4)]
-            # No measured ping exists: four neutral bars, never a number or a colour that implies one.
-            parts += [dict(kind='rect', rect=(103 + bar * 3, 12 - bar * 3, 2, 3 + bar * 3), color=3, alpha=.35) for bar in range(4)]
-            parts.append(dict(text='--', rect=(121, 0, 24, 15), style='body', color=3))  # the ping value: none measured
-            items.append(_variant(f'lc_row{r}_pips_{n}', (374, y + 8, 150, 15), parts, model_name=f'row_pips_{n}', plane=-170))
-        for kind, (word, color) in BUILD_KINDS.items():
-            parts = [dict(kind='outline', rect=(0, 1, 35, 14), color=color)]
-            if word: parts.append(dict(text=word, rect=(8, 1, 27, 14), style='label', color=color))
-            items.append(_variant(f'lc_row{r}_build_{kind}', (552, y + 7, 35, 15), parts, model_name=f'row_build_{kind}', plane=-170))
+        # The numeric player cell already carries occupancy. Five pip variants
+        # plus three build variants per row overflowed the independent item map.
+        # Keep the seven-row page and bind one build label instead.
+        items.append(_entry(f'lc_row{r}_build','',(552,y+8,35,15),'label',3,
+                            data=True,hidden=True,plane=-170))
         items.append(_variant(f'lc_row{r}_dim', (44, y, 552, 29), [dict(kind='rect', rect=(0, 0, 552, 29), color=0, alpha=.55)],
                               model_name='row_dim', plane=-200, picture_scale=.05))
 
@@ -2147,8 +2152,8 @@ def broker_problems(root, screen):
                     for d in ('left','right','up','down'):
                         if e.get(d) not in items: errors.append(f'open row graph: room_{r}_{c}')
             need(f'lc_row{r}_selected',hide='true',type='MENU_ITEM_MODEL')
-            scenes=[f'lc_row{r}_st_{k}' for k in STATUS_KINDS]+[f'lc_row{r}_pips_{n}' for n in range(5)]+\
-                [f'lc_row{r}_build_{k}' for k in BUILD_KINDS]+[f'lc_row{r}_dim']
+            scenes=[f'lc_row{r}_st_{k}' for k in STATUS_KINDS]+[f'lc_row{r}_dim']
+            need(f'lc_row{r}_build',hide='true',clamp='true',type='MENU_ITEM_TEXT',neverfocus='true')
             for key in scenes: need(key,hide='true',type='MENU_ITEM_MODEL',neverfocus='true')
         for k in range(1,6): need(f'lc_age_fill{k}',hide='true',type='MENU_ITEM_MODEL',neverfocus='true')
         for key in ('list_count','list_age'): need(key,clamp='true')
@@ -2214,9 +2219,10 @@ def lobby_layout(role, *, members=1, ready=False, fixture=False, pending=False, 
             ('ping',str((38,38,112,65)[n-1]) if fixture and n!=local and not pending else '',(x+26,y+104,40,15),'body',3)):
             e=text(prefix+key,value,rect,style,color,data=True,hidden=not(fixture and occupied))
             if key=='name':e['font_alias']='card_name'
-        variant(prefix+'hero_fallback','Hero assigned at start',(x+10,y+57,112,17),'body',3,visible=fixture and occupied)
-        text(prefix+'fps','',(x+10,y+57,112,12),'label',3,data=True,hidden=True)
-        text(prefix+'fps_warning','',(x+10,y+71,112,12),'label',5,data=True,hidden=True)
+        # Reuse one DATA field: local/session rates, or the slow warning naming the
+        # session target. Eight separate fields overflowed beta.2's item map.
+        text(prefix+'hero_fallback','Hero assigned at start',(x+10,y+57,112,17),'label',3,
+             data=True,hidden=not(fixture and occupied))
         variant(prefix+'host','HOST',(x+90,y+6,33,14),color=5,visible=fixture and occupied and n==1 and (role=='host' or members>1))
         isready=ready_flags[n-1] if occupied else False
         variant(prefix+'ready','READY',(x+10,y+86,112,18),'row',6,visible=fixture and occupied and isready)
@@ -2416,12 +2422,12 @@ def lobby_tree(original,screen,palette_ids=None):
             # Native data_name/title are still instantiated and updated. Their
             # anchors are retired outside the canvas, not their native items.
     for i in range(1,6):root.set('desctext'+str(i),authored.get('desctext'+str(i),''))
-    ET.SubElement(root,'item',name='lc_lobby_v1',type='MENU_ITEM_TEXT',text='',neverfocus='true',hide='true',enabled='false')
+    root.insert(0,ET.Element('item',name='lc_lobby_v1',type='MENU_ITEM_TEXT',text='',neverfocus='true',hide='true',enabled='false'))
     return root
 
 
 def lobby_problems(root,original,screen):
-    errors=layout_problems(screen)
+    errors=layout_problems(screen)+menu_item_problems(root)
     items={e.get('name'):e for e in root.findall('item')}
     if root.get('type')!=original.get('type'):errors.append('native lobby class')
     presentation={'igb','image','updownonly','lighting',*(f'desctext{i}' for i in range(1,6))}
@@ -2509,6 +2515,11 @@ def output_problems(out):
         for rel in [f'UI/menus/{name}.XMLB',f'UI/menus/{name}.engb',f'UI/menus/{scene}.IGB',
                     f'Textures/menus/{scene}.IGB',f'Packages/generated/maps/package/menus/{name}.PKGB']:
             if index.path(rel) is None:errors.append('missing '+rel)
+        for extension in ('XMLB','engb'):
+            menu=index.path(f'UI/menus/{name}.{extension}')
+            if menu is not None:
+                try: errors.extend(f'{name}.{extension}: '+problem for problem in menu_item_problems(decode_xmlb(menu.read_bytes())))
+                except Exception as error: errors.append(f'{name}.{extension}: unreadable menu ('+type(error).__name__+')')
         igb=index.path(f'UI/menus/{scene}.IGB')
         if igb is not None:
             # The engine's per-scene anchor capacity (0x5882e0): over it the playfield build corrupts memory (060p).

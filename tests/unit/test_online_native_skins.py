@@ -108,7 +108,7 @@ def test_other_ways_retains_all_policy_modes_content_and_native_effects():
             old=src.find(f"item[@name='{key}']");new=tree.find(f"item[@name='{key}']")
             for attr in ('text','mode','callback','usecmd','columns','up','down','neverfocus','type'):
                 assert new.get(attr)==old.get(attr),(name,key,attr)
-            if old.get('type') in ('MENU_ITEM_TEXTBOX','MENU_ITEM_LISTBOX'):
+            if old.get('type') in ('MENU_ITEM_TEXTBOX','MENU_ITEM_LISTBOX') and not (name=='games_list' and key=='text_list'):
                 assert new.get('style')==old.get('style')
         for key in N.CONTROLS[name]:
             assert tree.find(f"item[@name='{key}']/onfocus[@item='synthetic_value']") is not None
@@ -125,7 +125,7 @@ def test_native_lan_browser_keeps_list_scroll_selection_columns_and_return():
     assert [(e.get('type'),e.get('item'),e.get('loop')) for e in events]==[
         ('list_focus','text_list','1'),('list_up_arrow','up_arrow','1'),('list_down_arrow','down_arrow','1')]
     assert {e.get('model') for e in events}=={
-        'ui/models/lc_o_picker_focus','ui/models/lc_o_picker_up','ui/models/lc_o_picker_down'}
+        'ui/models/lc_o_lan_focus','ui/models/lc_o_picker_up','ui/models/lc_o_picker_down'}
     layouts=O.native_lobby_layouts(tree,screen)
     assert layouts['text_list'][1]==(0,-137.6,424.0,0)
     assert layouts['up_arrow'][0][0]>layouts['text_list'][0][0]
@@ -139,3 +139,12 @@ def test_unknown_native_interactive_widgets_refuse_optional_authoring():
         try: N.layout(name,tree)
         except ValueError: pass
         else: assert False,name
+
+
+def test_lan_rows_use_private_scale_and_header_describes_the_native_composite_column():
+    src=native('games_list');screen=N.layout('games_list',src);tree=N.menu_tree('games_list',src,screen)
+    by={e['name']:e for e in screen['items']}
+    assert tree.find("item[@name='text_list']").get('style')==O.font_binding(by['text_list'])[2]
+    assert by['text_list']['style']=='row'
+    assert by['lc_lan_players']['text']=='CAMPAIGN / PLAYERS'
+    assert by['lc_lan_players']['rect'][0]+by['lc_lan_players']['rect'][2]==by['text_list']['rect'][0]+by['text_list']['rect'][2]

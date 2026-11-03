@@ -392,3 +392,45 @@ def test_060s_party_invite_hint_has_a_navy_focus_twin():
     by={e['name']:e for e in screen['items']}
     assert by['lc_party_invite_hint']['rect']==by['lc_party_invite_hint_on']['rect']
     assert by['lc_party_invite_hint_on']['color']==0 and by['lc_party_invite_hint_on']['hidden']
+
+
+def test_native_menu_item_cap_is_separate_from_expanded_scene_anchors():
+    # Retail CMenu::insert 0x5af490 refuses at +0x1608 == 0xaf (0x5af4af).
+    # The menu-anchors/512 capability expands playfields, not this item map.
+    assert O.engine_scene_anchors(O.ANCHOR_CAPABILITY)==512
+    for role,retained_extra in (('host',30),('join',26)):
+        original=native(role)
+        for i in range(retained_extra):
+            ET.SubElement(original,'item',name=f'synthetic_dependency_{i}',type='MENU_ITEM_MODEL')
+        screen=O.lobby_layout(role);tree=O.lobby_tree(original,screen)
+        O.add_backdrop(tree,'synthetic')
+        assert len(tree.findall('item'))==dict(host=173,join=169)[role]
+        assert not O.lobby_problems(tree,original,screen)
+        items=tree.findall('item')
+        assert items[2].get('name')=='lc_lobby_v1'
+        for n in range(1,5):
+            rate=tree.find(f"item[@name='lc_p{n}_hero_fallback']")
+            assert rate.get('type')=='MENU_ITEM_TEXT' and rate.get('clamp')=='true'
+            assert tree.find(f"item[@name='lc_p{n}_fps']") is None
+        # A marker stub without a finite insertion map would miss this failure.
+        while len(tree.findall('item'))<175:
+            ET.SubElement(tree,'item',name=f'pad_{len(tree)}',type='MENU_ITEM_MODEL')
+        assert not O.menu_item_problems(tree)
+        assert not O.lobby_problems(tree,original,screen)
+        ET.SubElement(tree,'item',name='overflow',type='MENU_ITEM_MODEL')
+        assert '176 menu items' in '; '.join(O.menu_item_problems(tree))
+        assert '176 menu items' in '; '.join(O.lobby_problems(tree,original,screen))
+
+
+def test_every_generated_online_menu_fits_native_item_map():
+    from xml1build import online_party as P, online_options as G, online_native_skins as N, online_fallback as F
+    from test_online_native_skins import native as native_skin
+    from test_online_options import native as native_options
+    trees=[O.menu_tree(O.runtime_layout(name)) for name in O.MENUS]
+    trees += [O.lobby_tree(native(role),O.lobby_layout(role)) for role in O.LOBBIES]
+    trees += [O.menu_tree(P.party_layout()), *[F.menu_tree(name) for name in ('lc_online_entry','lc_online_unavailable')]]
+    trees += [N.menu_tree(name,native_skin(name),N.layout(name,native_skin(name))) for name in N.MENUS]
+    trees += [G.menu_tree(native_options(),G.layout(native_options()))]
+    for tree in trees:
+        O.add_backdrop(tree,'synthetic')
+        assert not O.menu_item_problems(tree),(tree.get('igb'),len(tree.findall('item')))

@@ -86,8 +86,8 @@ def layout(name, native):
             text('lc_join_help',(76,315,490,20),value='Find a game on your network or at a known address.',color=3)
         else:
             text('lc_lan_header',(61,127,400,16),'label','GAME',3)
-            text('lc_lan_players',(485,127,90,16),'label','PLAYERS',3)['align']='right'
-            text('text_list',(61,151,530,172))
+            text('lc_lan_players',(381,127,210,16),'label','CAMPAIGN / PLAYERS',3)['align']='right'
+            text('text_list',(61,151,530,172),'row')
             text('game_details',(61,343,518,60))
             text('up_arrow',(581,151,9,12))
             text('down_arrow',(581,311,9,12))
@@ -130,7 +130,7 @@ def menu_tree(name, native, screen, palette_ids=None):
         for key in PRESENTATION - {'animtext_scene'}:
             # LISTBOX/TEXTBOX renderers own their native metrics/scroll extent;
             # they do not use the private CText scaling hook.
-            if key=='style' and actual.get('type') in ('MENU_ITEM_LISTBOX','MENU_ITEM_TEXTBOX'): continue
+            if key=='style' and actual.get('type') in ('MENU_ITEM_LISTBOX','MENU_ITEM_TEXTBOX') and not (name=='games_list' and src.get('name')=='text_list'): continue
             if key in src.attrib: actual.set(key, src.get(key))
         actual.attrib.pop('animtext_scene', None)
         if src.get('name') in CONTROLS[name]:
@@ -152,7 +152,7 @@ def menu_tree(name, native, screen, palette_ids=None):
     if name=='games_list':
         listing=existing['text_list']
         for event in listing.findall('onfocus'):
-            replacement={'list_focus':'ui/models/lc_o_picker_focus',
+            replacement={'list_focus':'ui/models/lc_o_lan_focus',
                          'list_up_arrow':'ui/models/lc_o_picker_up',
                          'list_down_arrow':'ui/models/lc_o_picker_down'}.get(event.get('type'))
             if replacement: event.set('model',replacement)
@@ -160,7 +160,7 @@ def menu_tree(name, native, screen, palette_ids=None):
 
 
 def problems(name, tree, native, screen):
-    errors = O.layout_problems(screen)
+    errors = O.layout_problems(screen) + O.menu_item_problems(tree)
     allowed_root = {'name','igb','image','lighting','animonopen','animonclose'}
     for key in set(native.attrib) | set(tree.attrib):
         if key not in allowed_root and tree.get(key) != native.get(key):
@@ -201,6 +201,11 @@ def prepare(ctx, name, source, atlas, focus_source, palette_ids, metrics, anchor
     if errors: raise ValueError('; '.join(errors))
     models = O.backdrop_models(focus_source,screen)
     if name in ('online','games_list'): models.update(O.picker_models(focus_source))
+    if name=='games_list':
+        # Native list focus is positioned at the row centre (0x5c14b4..0x5c14c8).
+        # The old picker art started there and cut through the text.
+        selected=O._entry('lan_focus','',(0,0,530,20),parts=[dict(kind='panel',rect=(0,0,530,20),color=2,outline=5)])
+        models['ui/models/lc_o_lan_focus']=O.focus_model(focus_source,(0,-8,424,8),True,O.variant_picture(selected))
     for item in screen['items']:
         if not item['intent']: continue
         _,_,rect,outline,_ = O.focus_placement(screen,item)

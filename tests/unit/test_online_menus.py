@@ -380,11 +380,15 @@ def test_every_authored_menu_scene_fits_the_engine_anchor_capacity():
         authored=S.author_anchors(anchor_fixture(item_name=True),'template',layouts,anchor_capacity=cap)
         assert O.anchor_count(authored)==len(layouts)
         assert not any('engine holds' in problem for problem in O.scene_problems(screen,authored,anchor_capacity=cap))
-        if name=='lc_browse':
-            assert any('engine holds 175' in problem for problem in O.scene_problems(screen,authored))
+        assert not any('engine holds 175' in problem for problem in O.scene_problems(screen,authored))
     layouts=O.scene_layout(O.bound_layout(O.runtime_layout('lc_browse'),F.metrics()))
-    assert 175<len(layouts)<512
-    raises(IgbError,lambda:S.author_anchors(anchor_fixture(),'template',layouts))
+    assert len(layouts)<=175
+    # Keep the 175/176 boundary proof independent of the current menu composition.
+    overflow={f'synthetic_anchor_{n}':((0,0,0),(0,-1,1,0)) for n in range(176)}
+    raises(IgbError,lambda:S.author_anchors(anchor_fixture(),'template',overflow))
+    expanded=S.author_anchors(anchor_fixture(item_name=True),'template',overflow,anchor_capacity=cap)
+    assert O.anchor_count(expanded)==176
+    assert any('engine holds 175' in problem for problem in O.scene_problems(screen,expanded))
     probes=b' '.join(O.DLL_PROBES)
     assert not O.capability_problems(probes)
     assert O.capability_problems(probes.replace(O.ANCHOR_CAPABILITY,b''))

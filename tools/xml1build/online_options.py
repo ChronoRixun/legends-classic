@@ -89,7 +89,7 @@ def scene_layout(tree, screen):
 
 
 def problems(tree, native, screen):
-    errors = O.layout_problems(screen)
+    errors = O.layout_problems(screen) + O.menu_item_problems(tree)
     if tree.get('type') != native.get('type'): errors.append('native setup class changed')
     for key,value in native.attrib.items():
         if key not in {'name','igb','image','lighting','animonopen','animonclose'} and tree.get(key) != value:

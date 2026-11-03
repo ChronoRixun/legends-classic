@@ -43,10 +43,10 @@ def test_linked_frame_rate_text_is_runtime_data_in_both_coop_views():
         screen = O.lobby_layout(role)
         items = {e['name']: e for e in screen['items']}
         for n in range(1, 5):
-            for field in ('fps', 'fps_warning'):
-                item = items[f'lc_p{n}_{field}']
-                assert item['data'] and item['hidden']
-                assert item['text'] == ''
+            item = items[f'lc_p{n}_hero_fallback']
+            assert item['data'] and item['hidden']
+            assert item['rect'][3]==17
+            assert item['text'] == 'Hero assigned at start'
 
 
 def test_party_probe_is_required_and_old_dlls_are_refused():
