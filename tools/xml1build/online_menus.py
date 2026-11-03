@@ -1244,7 +1244,7 @@ def focus_picture(screen,item,rect):
 # These probes describe additive APIs, not release or gameplay identities. Each
 # must be present in ONE supplied DLL; separate menu/font DLLs cannot be stacked.
 DLL_PROBES = (b'lc-online-menus/1\n', b'lc-online-input/1', b'lc-online-lobby/1', b'lc-online-broker/2', b'lc-online-native/1', b'lc-online-party/1', b'lc-online-errors/1', b'lc-online-hits/2',
-              b'lc_notice_started', b'lc-online-drop-in/1',
+                b'lc_notice_started', b'lc-online-drop-in/1', b'lc-online-linked-rate/1',
               b'lcOnlineIntent\0', 'Online\0'.encode('utf-16le'),
               'Menus\0'.encode('utf-16le'), 'LegendsClassicFonts\0'.encode('utf-16le'),
               b'ui/fonts/lc_fonts_pc.xmlb\0', b'ui/fonts/lc_fonts_hd.xmlb\0',
@@ -2196,6 +2196,8 @@ def lobby_layout(role, *, members=1, ready=False, fixture=False, pending=False, 
             e=text(prefix+key,value,rect,style,color,data=True,hidden=not(fixture and occupied))
             if key=='name':e['font_alias']='card_name'
         variant(prefix+'hero_fallback','Hero assigned at start',(x+10,y+57,112,17),'body',3,visible=fixture and occupied)
+        text(prefix+'fps','',(x+10,y+57,112,12),'label',3,data=True,hidden=True)
+        text(prefix+'fps_warning','',(x+10,y+71,112,12),'label',5,data=True,hidden=True)
         variant(prefix+'host','HOST',(x+90,y+6,33,14),color=5,visible=fixture and occupied and n==1 and (role=='host' or members>1))
         isready=ready_flags[n-1] if occupied else False
         variant(prefix+'ready','READY',(x+10,y+86,112,18),'row',6,visible=fixture and occupied and isready)
