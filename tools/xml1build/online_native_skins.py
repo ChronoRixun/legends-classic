@@ -204,7 +204,7 @@ def prepare(ctx, name, source, atlas, focus_source, palette_ids, metrics, anchor
     if name=='games_list':
         # Native list focus is positioned at the row centre (0x5c14b4..0x5c14c8).
         # The old picker art started there and cut through the text.
-        selected=O._entry('lan_focus','',(0,0,530,20),parts=[dict(kind='panel',rect=(0,0,530,20),color=2,outline=5)])
+        selected=O._entry('lan_focus','',(0,0,530,20),parts=[dict(kind='panel',rect=(0,0,530,20),color=5,outline=5)])
         models['ui/models/lc_o_lan_focus']=O.focus_model(focus_source,(0,-8,424,8),True,O.variant_picture(selected))
     for item in screen['items']:
         if not item['intent']: continue
