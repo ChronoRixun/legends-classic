@@ -100,3 +100,27 @@ def test_optional_output_capability_requires_a_complete_screen(tmp_path):
     assert any(G.MENU+'.XMLB' in e for e in errors)
     marker.write_bytes(b'')
     assert O.output_problems(tmp_path)==baseline
+
+
+def test_host_rows_and_first_frame_hub_prompts_are_explicit():
+    from xml1build import online_menus as O
+    screen=O.runtime_layout('lc_host');by={e['name']:e for e in screen['items']}
+    rows=('visibility','room_name','campaign','drop_in','open')
+    for i,key in enumerate(rows):
+        if i: assert by[key]['up']==rows[i-1]
+        if i<4: assert by[key]['down']==rows[i+1]
+        assert by[key]['left']==key and by[key]['right']==key
+    assert by['desctext2']['intent']=='name'
+    hub={e['name']:e for e in O.runtime_layout('lc_online')['items']}
+    assert [hub['desctext'+str(i)]['text'] for i in range(1,5)]==['Enter Select','Esc Back','Del Change name','F4 Rejoin']
+    # The renderer owns the stable labels; native mouse routing retains tokens.
+    tree=O.menu_tree(O.runtime_layout('lc_online'))
+    assert '$MENU_ACCEPT' in tree.find("item[@name='desctext1']").get('text')
+    assert '$MENU_BACK' in tree.find("item[@name='desctext2']").get('text')
+
+
+def test_host_controls_require_the_matching_companion_api():
+    data=b'\0'.join(O.DLL_PROBES)
+    assert not O.capability_problems(data)
+    problems=O.capability_problems(data.replace(b'lc-online-host-controls/1',b''))
+    assert len(problems)==1 and 'lc-online-host-controls/1' in problems[0]

@@ -470,17 +470,27 @@ def menu_tree(screen, palette_ids=None):
     root=ET.Element('menu',igb=screen['name'],image='textures/menus/'+screen['name'],fullscreen='true',
                     updownonly='false',lighting='false')
     if screen.get('runtime') and not screen.get('party'): root.set('menu_cancel',command(6))
+    def input_tokens(key,value):
+        if screen.get('runtime') and screen['name']=='lc_online':
+            pairs={'desctext1':('Enter Select','$MENU_ACCEPT Select'),'desctext2':('Esc Back','$MENU_BACK Back'),
+                   'desctext3':('Del Change name','$MENU_OTHER Change name'),'desctext4':('F4 Rejoin','$MENU_NEXT Rejoin'),
+                   'lc_hub_select_normal':('Enter Select','$MENU_ACCEPT Select'),'lc_hub_select_hover':('Enter Select','$MENU_ACCEPT Select')}
+            if key in pairs:return value.replace(*pairs[key])
+        if screen.get('runtime') and screen['name']=='lc_host':
+            if key=='desctext1':return value.replace('Enter Select','$MENU_ACCEPT Select')
+            if key=='desctext2':return value.replace('Del Change','$MENU_OTHER Change')
+        return value
     descriptions={e['name']:e for e in screen['items'] if re.fullmatch(r'desctext[1-5]',e['name'])}
     for name,e in descriptions.items():
         # Refresh adds a native dim-colour prefix. A scoped prefix after it keeps
         # the approved foreground while the token still follows the active device.
-        root.set(name,'~'+str(palette_ids[4]).zfill(2)+e['text'] if e['text'] else '')
+        root.set(name,input_tokens(name,'~'+str(palette_ids[4]).zfill(2)+e['text']) if e['text'] else '')
     for e in screen['items']:
         value=e['text']
         # A focusable item's inline ~NN colour wins over the style's focus colour (060r live: Next page / Previous page were
         # pale blue on their own amber bar). The style's own resting colour needs no prefix: white for row / body, pale blue (3) for label.
         if value and (not e['intent'] or e['color'] not in FOCUS_REST_COLORS.get(e['style'],(4,))): value='~'+str(palette_ids[e['color']]).zfill(2)+value
-        attrs=dict(name=e['name'],type='MENU_ITEM_TEXT',text=value,style='lc_o_'+e['style'],
+        attrs=dict(name=e['name'],type='MENU_ITEM_TEXT',text=input_tokens(e['name'],value),style='lc_o_'+e['style'],
                    textalignx={'center':'TEXT_ALIGN_CENTER_X','right':'TEXT_ALIGN_RIGHT'}.get(e.get('align'),'TEXT_ALIGN_LEFT'),textaligny='TEXT_ALIGN_TOP',neverfocus=str(not bool(e['intent'])).lower())
         attrs['style']=font_binding(e)[2]
         if e.get('hidden'): attrs['hide']='true'
@@ -1273,7 +1283,7 @@ def focus_picture(screen,item,rect):
 # These probes describe additive APIs, not release or gameplay identities. Each
 # must be present in ONE supplied DLL; separate menu/font DLLs cannot be stacked.
 DLL_PROBES = (b'lc-online-menus/1\n', b'lc-online-input/1', b'lc-online-lobby/1', b'lc-online-broker/2', b'lc-online-native/1', b'lc-online-party/1', b'lc-online-errors/1', b'lc-online-hits/2', b'lc-online-no-gamespy/1',
-                b'lc_notice_started', b'lc-online-drop-in/1', b'lc-online-linked-rate/1',
+                b'lc-online-host-controls/1', b'lc_notice_started', b'lc-online-drop-in/1', b'lc-online-linked-rate/1',
               b'lcOnlineIntent\0', 'Online\0'.encode('utf-16le'),
               'Menus\0'.encode('utf-16le'), 'LegendsClassicFonts\0'.encode('utf-16le'),
               b'ui/fonts/lc_fonts_pc.xmlb\0', b'ui/fonts/lc_fonts_hd.xmlb\0',
@@ -1502,7 +1512,7 @@ BROWSE_UNREACHABLE_NOTICES = ('lc_notice_paste_invalid', 'lc_notice_code_invalid
                               # 0.6 preview fix L: the Host screen's native setup found the service not answering (before any room existed).
                               'lc_notice_service_silent')
 NOTICE_TEXT = {
-    'lc_notice_started': 'This session has started; ask the host to return to the lobby',
+    'lc_notice_started': 'This session has started. Ask the host to start a new session.',
     'lc_inline_error': 'This action could not be completed. No room was joined.',
     'lc_notice_unavailable': 'Unavailable in this preview. Use Other ways to play.',
     'lc_notice_resolving': 'Looking up room code...',
@@ -1549,9 +1559,9 @@ RETRYABLE_CAUSES = ('rate_limited', 'timeout', 'offline', 'generic', 'room_close
 NEXT_ACTION = {'code_not_found': 'edit_code', 'room_full': 'browse', 'version_mismatch': 'back', 'rate_limited': 'retry',
                'timeout': 'retry', 'offline': 'retry', 'refused': 'back', 'generic': 'retry', 'pin_mismatch': 'back',
                'code_expired': 'edit_code', 'room_closed': 'retry', 'test_mode': 'back', 'unsupported': 'other_ways',
-               'busy': 'wait', 'invalid_name': 'back', 'too_many_public_rooms': 'close_room', 'too_many_joins': 'leave_game', 'session_started': 'lobby'}
+               'busy': 'wait', 'invalid_name': 'back', 'too_many_public_rooms': 'close_room', 'too_many_joins': 'leave_game', 'session_started': 'new_session'}
 # One word each action's copy must contain, so a cause can never name the wrong next step.
-NEXT_WORD = {'retry': ('retry', 'try again'), 'edit_code': ('code',), 'browse': ('another game', 'browse'),
+NEXT_WORD = {'new_session': ('new session',), 'retry': ('retry', 'try again'), 'edit_code': ('code',), 'browse': ('another game', 'browse'),
              'back': ('back', 'update', 'check', 'turn it off', 'turn off'), 'other_ways': ('other ways',), 'wait': ('wait',),
              'close_room': ('close one',), 'leave_game': ('leave another game',), 'lobby': ('lobby',)}
 # Localized copy per cause (09-errors wording, in the inline style round 5 chose: one line, names cause + next step).
@@ -1567,7 +1577,7 @@ ERROR_COPY = {
     'pin_mismatch': 'Online service not verified. Check its setting or update.',
     'code_expired': 'That room closed. Ask the host for a new code.',
     'room_closed': 'Not taking players right now. Try again soon.',
-    'session_started': 'This session has started. Ask the host to return to the lobby.',
+    'session_started': 'This session has started. Ask the host to start a new session.',
     'test_mode': 'TestMode is on, so online play is off. Turn it off.',
     'unsupported': 'Online needs a complete install. Use Other ways to play.',
     'busy': 'The network link is busy. Wait a moment, then repeat.',
@@ -2017,6 +2027,24 @@ def runtime_layout(name,state=None):
             if e['name'] in ('lc_hostleft_again','lc_hostleft_back'):
                 other='lc_hostleft_back' if e['name']=='lc_hostleft_again' else 'lc_hostleft_again'
                 e.update(left=other,right=other,up=other,down=other)
+    if name=='lc_host':
+        rows=('visibility','room_name','campaign','drop_in','open')
+        by_name={e['name']:e for e in screen['items']}
+        screen['focus']='visibility'
+        extras=tuple(e['name'] for e in screen['items'] if e['intent'] and e['name'] not in rows)
+        order=rows+extras
+        for i,key in enumerate(order):
+            by_name[key].update(up=order[i-1],down=order[(i+1)%len(order)],left=key,right=key)
+        by_name['edit_room'].update(left='room_name',right='room_name')
+        by_name['room_name']['intent']=by_name['edit_room']['intent']='campaign'
+        for key in ('desctext1','desctext2'):by_name[key]['intent']='name' # Host-scoped focused activation/change
+        by_name['desctext1']['text']='Enter Select'
+        by_name['desctext2']['text']='Del Change'
+    if name=='lc_online':
+        labels={'desctext1':'Enter Select','desctext2':'Esc Back','desctext3':'Del Change name','desctext4':'F4 Rejoin',
+                'lc_hub_select_normal':'Enter Select','lc_hub_select_hover':'Enter Select'}
+        for e in screen['items']:
+            if e['name'] in labels:e['text']=labels[e['name']]
     if name=='lc_browse':
         # The diagnostic owns the full right cell of the error row; paging has its
         # own footer cells instead of clipping the error against Previous page.

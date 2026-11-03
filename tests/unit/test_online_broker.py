@@ -146,7 +146,7 @@ def test_host_open_item_and_exclusive_visibility_scenes():
     assert raw['lc_host_private']['rect'] == raw['lc_host_public']['rect']
     for key in ('room_name', 'preview_name', 'room_code'):
         assert items[key].get('clamp') == 'true'
-    assert items['desctext1'].get('usecmd') == O.command(7)  # the generic Select prompt never opens a room
+    assert items['desctext1'].get('usecmd') == O.command(9)  # Host-scoped activation of the selected row
     bad = copy.deepcopy(root)
     next(e for e in bad if e.get('name') == 'lc_host_public').attrib.pop('hide')
     assert O.runtime_problems(bad, screen)
