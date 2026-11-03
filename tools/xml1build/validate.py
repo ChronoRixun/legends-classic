@@ -193,6 +193,7 @@ from . import combat_events as CE        # V18 (SPEC 22): style triggers / event
 from . import npc_values as NV           # V19 (SPEC 24): value codes XMen2.exe reads as 0, the NPC energy talent
 from . import buoys as BY
 from . import automaps as AM             # V20 (SPEC 26): XML1 automaps as .zam
+from . import conversation_appearance as CA
 from . import text_trace as TT           # V66 (SPEC 105): every XML1 text string shipped, rewritten or owned elsewhere
 from . import skins as SK                # V21 (SPEC 25): skin blend weights / skeleton against the anim DB
 from . import talent_budget as TB        # V44 (SPEC 75): complete-roster TalentRegistry demand
@@ -987,6 +988,7 @@ class Validator:
                                ('V19', 'npc values', lambda ck: NV.v19(self, ck)),
                                ('V60', 'resistance talents', lambda ck: NV.v_resist_talents(self, ck)),
                                ('V63', 'resistance HUD', lambda ck: RH.validate(self, ck)),
+                               ('V-TBD-conversation', 'conversation background appearance', lambda ck: CA.validate(self, ck)),
                                ('V-TBD-hud', 'classic HUD assets', lambda ck: HUD.validate(self, ck)),
                                ('V20', 'automaps', lambda ck: AM.v20(self, ck)),
                                ('V21', 'skins', lambda ck: SK.validate(self, ck)),
@@ -1193,7 +1195,7 @@ class Validator:
         summary['result'] = 'FAIL' if summary['errors'] else 'PASS'
         doc = {'version': 1, 'out': ctx.out.as_posix(),
                'args': {k: getattr(ctx.args, k, None) for k in ('start_zone', 'tour', 'no_movies', 'only',
-                                                                 'forced_teams', 'start_party', 'frontend')},
+                                                                 'forced_teams', 'start_party', 'frontend', 'classic_conversation')},
                'checks': {cid: ck.to_json() for cid, ck in self.checks.items()}, 'summary': summary}
         ctx.write_meta('validate.json', doc)
         ctx.note(f'validate: {summary["result"]}: {summary["errors"]} errors, {summary["warnings"]} warnings, '
@@ -5352,6 +5354,8 @@ def main(argv=None):
     ap.add_argument('--tour', type=float)
     ap.add_argument('--forced-teams', dest='forced_teams', choices=C.FORCED_TEAMS_MODES, default='seat')
     ap.add_argument('--start-party', dest='start_party')
+    ap.add_argument('--classic-conversation', choices=CA.MODES,
+                    help='conversation appearance (default: from the build record, or off for older builds)')
     ap.add_argument('--frontend', choices=C.FRONTEND_MODES,
                     help='front end the build was made with (default: from its _build/report.json)')
     ap.add_argument('--jobs', type=int, default=max(1, (os.cpu_count() or 2) // 2))
@@ -5362,6 +5366,7 @@ def main(argv=None):
     frontend = a.frontend or getattr(recorded, 'frontend', None)
     args = C.default_args(out=a.out, base=a.base, no_movies=a.no_movies, start_zone=a.start_zone, tour=a.tour,
                           jobs=a.jobs, forced_teams=a.forced_teams, start_party=a.start_party, frontend=frontend,
+                          classic_conversation=a.classic_conversation or recorded.classic_conversation,
                           buoys=getattr(recorded, 'buoys', None),   # SPEC 42: V22 checks the mode the build used
                           limits_wave3=a.limits_wave3 or getattr(recorded, 'limits_wave3', 'off'),
                           **{k: getattr(recorded, k) for k in ('save_layout', 'loot', 'loot_construction',
