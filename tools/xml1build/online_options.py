@@ -1,6 +1,6 @@
 """LC Game Options presentation over the native online setup service.
 
-The unmodified game_options resources remain the runtime fallback. No session
+The original game_options definition is an authoring input; failure uses an LC message. No session
 values, commands, availability gates or native data bindings are authored here.
 """
 from __future__ import annotations
@@ -52,7 +52,8 @@ def layout(native):
 
 
 def menu_tree(native, screen, palette_ids=None):
-    root = copy.deepcopy(native)
+    from .online_fallback import strip_branding
+    root = strip_branding(native)
     root.set('name',MENU); root.set('igb',MENU); root.set('image','')
     root.set('lighting','false')
     root.set('animonopen','false'); root.set('animonclose','false')
@@ -94,6 +95,8 @@ def problems(tree, native, screen):
         if key not in {'name','igb','image','lighting','animonopen','animonclose'} and tree.get(key) != value:
             errors.append('native root contract changed: '+key)
     for old in native.findall('item'):
+        from .online_fallback import branding_item
+        if branding_item(old): continue
         name = old.get('name'); new = tree.find(f"item[@name='{name}']")
         if new is None:
             errors.append('missing native setup item: '+name); continue
@@ -110,7 +113,7 @@ def problems(tree, native, screen):
 
 
 def prepare(ctx, source, atlas, focus_source, palette_ids, metrics, anchor_capacity):
-    """Build everything before publication; the caller retains native on error."""
+    """Build everything before publication; the caller publishes no skin on error."""
     native = ctx.read_base_xmlb('UI/menus/game_options.engb')
     screen = O.bound_layout(layout(native),metrics)
     tree = menu_tree(native,screen,palette_ids)

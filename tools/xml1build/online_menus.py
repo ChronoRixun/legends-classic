@@ -524,13 +524,14 @@ def tree_problems(root, screen, palette_ids=None):
 
 
 def package(root):
+    from .online_fallback import strip_branding
     pkg=M.package_for(root)
     ET.SubElement(pkg,'xml',filename='ui/menus/'+(root.get('name') if root.get('type') in ('HOST_MENU','JOIN_MENU','GAME_OPTIONS_MENU') else root.get('igb')))
     # Model backdrops embed their pixels. A retired image= sprite must not
     # preload another 5 MiB copy of the page at every open.
     if root.get('image'):
         ET.SubElement(pkg,'texture',filename=root.get('image'))
-    return pkg
+    return strip_branding(pkg)
 
 
 def preview_text(value, device='pad'):
@@ -734,7 +735,7 @@ def font_probe(ctx):
 def write(ctx, *, preview=False):
     """Preflight the entire family before writing any palette, scene or menu."""
     from . import frontend as F
-    if not enabled(ctx) and not preview:return {'enabled':False,'production_entry':NATIVE_ENTRY}
+    if not enabled(ctx) and not preview:return {'enabled':False,'production_entry':F.PLAY_ONLINE_CMD}
     colors,styles,ids=theme(ctx.read_out_xmlb('Data/colors.XMLB'),ctx.read_out_xmlb('Data/styles.XMLB'))
     if not preview:
         from . import fix_ini as FI
@@ -838,7 +839,8 @@ def write(ctx, *, preview=False):
                 have={(e.tag,e.get('filename')) for e in pkg}
                 for e in native_pkg:
                     if (e.tag,e.get('filename')) not in have:pkg.append(copy.deepcopy(e))
-        ctx.write_xmlb(F.MENU_PKG_DIR+'/'+name,pkg,('.PKGB',),source='frontend:online resource closure')
+        from .online_fallback import strip_branding
+        ctx.write_xmlb(F.MENU_PKG_DIR+'/'+name,strip_branding(pkg),('.PKGB',),source='frontend:online resource closure')
     hits=hit_table(authored_layouts)
     built={name:(tree,data) for name,tree,data,_ in pending}
     problems=hit_scene_problems(hits,list(authored_layouts),lambda n:built[n][0],lambda igb:next((d for t,d in built.values() if t.get('igb')==igb),None),
@@ -1260,7 +1262,7 @@ def focus_picture(screen,item,rect):
 
 # These probes describe additive APIs, not release or gameplay identities. Each
 # must be present in ONE supplied DLL; separate menu/font DLLs cannot be stacked.
-DLL_PROBES = (b'lc-online-menus/1\n', b'lc-online-input/1', b'lc-online-lobby/1', b'lc-online-broker/2', b'lc-online-native/1', b'lc-online-party/1', b'lc-online-errors/1', b'lc-online-hits/2',
+DLL_PROBES = (b'lc-online-menus/1\n', b'lc-online-input/1', b'lc-online-lobby/1', b'lc-online-broker/2', b'lc-online-native/1', b'lc-online-party/1', b'lc-online-errors/1', b'lc-online-hits/2', b'lc-online-no-gamespy/1',
                 b'lc_notice_started', b'lc-online-drop-in/1', b'lc-online-linked-rate/1',
               b'lcOnlineIntent\0', 'Online\0'.encode('utf-16le'),
               'Menus\0'.encode('utf-16le'), 'LegendsClassicFonts\0'.encode('utf-16le'),
@@ -2367,7 +2369,8 @@ def variant_resource(screen,item):
 
 def lobby_tree(original,screen,palette_ids=None):
     """Copy native dependencies and callbacks, replacing only presentation."""
-    root=copy.deepcopy(original)
+    from .online_fallback import strip_branding
+    root=strip_branding(original)
     root.set('igb','lc_lobby_'+screen['name']);root.set('image','textures/menus/lc_lobby_'+screen['name'])
     root.set('updownonly','false');root.set('lighting','false')
     authored=menu_tree(screen,palette_ids)
@@ -2427,6 +2430,8 @@ def lobby_problems(root,original,screen):
     if len(items)!=len(root.findall('item')):errors.append('duplicate lobby item')
     if 'lc_lobby_v1' not in items:errors.append('missing parsed lobby marker')
     for src in original.findall('item'):
+        from .online_fallback import branding_item
+        if branding_item(src): continue
         key=src.get('name');actual=items.get(key)
         if actual is None:errors.append('native dependency missing: '+key);continue
         for attr,value in src.attrib.items():

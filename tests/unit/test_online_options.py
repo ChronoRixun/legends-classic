@@ -40,7 +40,7 @@ def test_options_retains_native_actions_bindings_modes_and_return():
         assert not new.get('animtext_scene')
     for name in G.ROWS:
         assert result.find(f"item[@name='{name}']/onfocus[@item='data_{name[5:]}']") is not None
-    assert result.find("item[@name='gamespy']").get('model') == 'ui/models/model_hide'
+    assert result.find("item[@name='gamespy']") is None
     assert not any('lcOnlineIntent' in e.get('usecmd','') for e in result)
 
 
@@ -71,7 +71,7 @@ def test_options_scene_and_native_mouse_targets_cover_full_rows():
         # Runtime's optional closure gate names this shared resource too.
         assert O.focus_resource(rect,outline) == 'ui/models/lc_o_focus_0_-192_4144_0'
     assert len(layouts) < O.ENGINE_SCENE_ANCHORS
-    assert layouts['gamespy'][0][0] < 0
+    assert 'gamespy' not in layouts
     assert ('xml','ui/menus/'+G.MENU) in {(e.tag,e.get('filename')) for e in O.package(tree)}
 
 

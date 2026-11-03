@@ -255,8 +255,18 @@ the online text editor, Other ways settings and all four policy/info modes,
 Host/Join chooser, native LAN/IP browser and the PC Join-options intermediate
 page. Original menu classes, actions, modes, policy content and list services
 come from the player's definitions. Unsupported or additional unknown widgets
-leave the native resource available, with an empty optional capability marker.
+publish an empty optional capability marker and select the plain LC failure page.
 Each variant requires its matching adapter marker in the companion DLL before
 the builder advertises it. The installer/output validator checks the same
 complete resource closure. This changes generated content; integration owns
 the content/cache identity and must regenerate the front end before live checks.
+
+
+LC never falls back to the GameSpy-era online pages. `online_fallback.py` always
+writes a native-font LC message for `lc_online_entry` and failed/unsupported
+online resources, even when online menus are off. Back and Escape return to Main
+through a native cancel item. Only already-skinned host/join resources are kept;
+all retained online variants drop GameSpy/sequel logo model records and their
+references. The DLL must expose `lc-online-no-gamespy/1` for enabled online menus.
+Regenerate the matching content; the maintainer assigns its new content/cache
+identity. No release/content token is assigned by this behavior change.

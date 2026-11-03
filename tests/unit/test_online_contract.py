@@ -277,7 +277,7 @@ def test_off_does_not_require_optional_palette_slots_or_owned_online_inputs():
     class Context:
         def opt(self,key,default):return 'off'
         def read_out_xmlb(self,rel):raise AssertionError('OFF read optional resources')
-    assert O.write(Context())=={'enabled':False,'production_entry':'openmenu online'}
+    assert O.write(Context())=={'enabled':False,'production_entry':'openmenu lc_online_entry'}
 
 
 def test_supported_code_tool_instructions_are_not_ellipsized():

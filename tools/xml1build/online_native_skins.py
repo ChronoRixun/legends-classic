@@ -1,7 +1,7 @@
 """Optional LC scenes for native online services, using the player's definitions.
 
 The native classes retain input, limits, modes, values, actions and return paths.
-Only presentation is authored here; unsupported definitions keep retail assets.
+Only presentation is authored here; unsupported definitions use the LC failure page.
 """
 from __future__ import annotations
 import copy
@@ -116,7 +116,8 @@ def layout(name, native):
 
 
 def menu_tree(name, native, screen, palette_ids=None):
-    root = copy.deepcopy(native)
+    from .online_fallback import strip_branding
+    root = strip_branding(native)
     root.set('name', MENUS[name]); root.set('igb', MENUS[name]); root.set('image', '')
     for key, value in [('lighting','false'),('animonopen','false'),('animonclose','false')]:
         root.set(key, value)
@@ -165,6 +166,8 @@ def problems(name, tree, native, screen):
         if key not in allowed_root and tree.get(key) != native.get(key):
             errors.append('native root contract changed: ' + key)
     for old in native.findall('item'):
+        from .online_fallback import branding_item
+        if branding_item(old): continue
         new = tree.find(f"item[@name='{old.get('name')}']")
         if new is None:
             errors.append('missing native item: '+old.get('name')); continue
