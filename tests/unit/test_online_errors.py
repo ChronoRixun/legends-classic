@@ -13,8 +13,8 @@ def tree(name):
 # The DLL's online_menus_rules::error_cause_key / cause_table, mirrored here and pinned by the DLL's own table test
 # (test/online_menus_errors.inl). Changing either side alone fails one of the two suites.
 DLL_CAUSES = ('code_not_found', 'room_full', 'version_mismatch', 'rate_limited', 'timeout', 'offline', 'refused', 'generic',
-              'pin_mismatch', 'code_expired', 'room_closed', 'test_mode', 'unsupported', 'busy', 'invalid_name')
-DLL_NEXT = ('edit_code', 'browse', 'back', 'retry', 'retry', 'retry', 'back', 'retry', 'back', 'edit_code', 'retry', 'back', 'other_ways', 'wait', 'back')
+              'pin_mismatch', 'code_expired', 'room_closed', 'test_mode', 'unsupported', 'busy', 'invalid_name', 'too_many_public_rooms', 'too_many_joins', 'session_started')
+DLL_NEXT = ('edit_code', 'browse', 'back', 'retry', 'retry', 'retry', 'back', 'retry', 'back', 'edit_code', 'retry', 'back', 'other_ways', 'wait', 'back', 'close_room', 'leave_game', 'lobby')
 DLL_RETRY = ('rate_limited', 'timeout', 'offline', 'generic', 'room_closed')
 
 
@@ -56,6 +56,19 @@ def test_every_cause_names_its_cause_and_its_next_action_in_one_line():
     assert 'Other ways to play' in O.ERROR_COPY['unsupported'] and 'LAN and IP' in O.ERROR_COPY['offline']
 
 
+def test_network_room_and_seat_caps_have_actionable_copy_without_retry():
+    for cause, phrase, action in (
+        ('too_many_public_rooms', '2 public rooms from this network', 'Close one.'),
+        ('too_many_joins', 'no free player seats', 'Leave another game.'),
+    ):
+        assert phrase in O.ERROR_COPY[cause] and O.ERROR_COPY[cause].endswith(action)
+        assert cause not in O.RETRYABLE_CAUSES
+        for name in O.MENUS:
+            screen, root, items = tree(name)
+            assert O._plain(items['lc_broker_err_' + cause].get('text')) == O.ERROR_COPY[cause]
+            assert not O.broker_problems(root, screen)
+
+
 def test_each_screen_authors_exactly_the_causes_it_can_reach_with_a_retry_bar_only_where_retryable():
     for name in O.MENUS:
         screen, root, items = tree(name)
@@ -69,7 +82,7 @@ def test_each_screen_authors_exactly_the_causes_it_can_reach_with_a_retry_bar_on
         assert not O.broker_problems(root, screen), O.broker_problems(root, screen)
     # reachability: the Host screen alone can say a room name is invalid; Browse/Code resolve (and so see every code failure)
     assert 'invalid_name' in O.BROKER_CAUSES['lc_host'] and 'invalid_name' not in O.BROKER_CAUSES['lc_code']
-    for cause in ('code_not_found', 'code_expired', 'room_full', 'room_closed', 'version_mismatch'):
+    for cause in ('code_not_found', 'code_expired', 'room_full', 'room_closed', 'version_mismatch', 'session_started'):
         assert cause in O.BROKER_CAUSES['lc_code'] and cause in O.BROKER_CAUSES['lc_browse'] and cause not in O.BROKER_CAUSES['lc_host']
     for cause in ('pin_mismatch', 'test_mode', 'unsupported', 'busy', 'offline', 'timeout', 'rate_limited', 'refused', 'generic'):
         assert all(cause in O.BROKER_CAUSES[n] for n in O.MENUS), cause
@@ -187,3 +200,14 @@ def test_retry_is_a_plain_light_label_on_every_screen_and_every_message_is_a_pla
         for key in ('lc_lobby_service_lost', 'lc_lobby_guest_left'):
             e = next(e for e in screen['items'] if e['name'] == key)
             assert not e.get('parts') and e['text'], (role, key)
+
+
+def test_started_code_refusal_has_specific_scene_and_transient_keeps_retry():
+    for name in ('lc_code', 'lc_browse'):
+        screen, root, items = tree(name)
+        text = O._plain(items['lc_broker_err_session_started'].get('text'))
+        assert 'session has started' in text.lower() and 'lobby' in text.lower()
+        assert 'retry' not in text.lower() and 'try again' not in text.lower()
+        assert O._plain(items['lc_broker_err_room_closed'].get('text')) == 'Not taking players right now. Try again soon.'
+        assert 'session_started' not in O.RETRYABLE_CAUSES
+        assert not O.broker_problems(root, screen)

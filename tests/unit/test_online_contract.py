@@ -115,11 +115,11 @@ def test_built_lobby_prompts_are_not_tied_to_the_native_help_animation():
     """The same on the BUILT lobbies (XML1_BUILT_OUT): 060r's host.XMLB / join.XMLB fail this (desctext1..5 animtext_scene="help")."""
     import os
     import pathlib
-    import pytest
+    import unittest
     from xml1build import common as C
     out = os.environ.get('XML1_BUILT_OUT')
     if not out or not (pathlib.Path(out) / 'UI/menus/host.XMLB').exists():
-        pytest.skip('no built output (set XML1_BUILT_OUT)')
+        raise unittest.SkipTest('no built output (set XML1_BUILT_OUT)')
     for role in ('host', 'join'):
         tree = C.decode_xmlb((pathlib.Path(out) / ('UI/menus/%s.XMLB' % role)).read_bytes())
         items = {e.get('name'): e for e in tree.findall('item')}
@@ -186,7 +186,7 @@ def test_optional_lobby_scene_children_are_owned_by_the_hidden_variant():
     screen=O.lobby_layout('host')
     items={e['name']:e for e in screen['items']}
     for n in range(1,5):
-        for suffix in ('card','ready','not_ready','host','you','ms','measuring','same_build','checking_build','empty'):
+        for suffix in ('card','empty'):
             e=items[f'lc_p{n}_{suffix}']
             assert e.get('hidden') and e.get('parts')
             assert not e['text']
@@ -203,7 +203,11 @@ def test_build_option_roundtrip_and_on_to_off_invalidates_frontend():
     import build_xml1
     from xml1build import common as C
     from xml1builder.cli import make_parser
-    assert make_parser().parse_args(['build']).online_menus=='off'
+    assert make_parser().parse_args(['build']).online_menus=='on'            # default since 0.6.0-beta.1
+    assert make_parser().parse_args(['build','--online-menus','off']).online_menus=='off'
+    assert build_xml1.parse_args(['--out','synthetic']).online_menus=='on'
+    assert build_xml1.parse_args(['--out','synthetic','--frontend','xml2']).online_menus=='off'
+    assert build_xml1.CONTENT_OPTS['online_menus']==('frontend','off')     # a record without the key
     assert make_parser().parse_args(['build','--online-menus','on']).online_menus=='on'
     with tempfile.TemporaryDirectory() as folder:
         out=Path(folder);(out/'_build').mkdir()
@@ -290,7 +294,7 @@ def test_code_background_does_not_freeze_edit_cursor_or_disabled_done():
     cells=[s for s in screen['shapes'] if s['rect'][1]==130 and s['rect'][3]==54]
     assert len(cells)==8 and all(s.get('outline')==3 for s in cells)
     assert not any(s['color']==5 and s['rect'][1] in (130,172) for s in screen['shapes'])
-    done=next(s for s in screen['shapes'] if s['rect']==(483,307,76,46))
+    done=next(s for s in screen['shapes'] if s['rect']==(483,307,104,46))
     assert not done.get('dim')
 
 
@@ -346,4 +350,45 @@ def test_lobby_render_states_do_not_claim_pending_admission():
                 assert O.render(screen, size=(640,480), text=False).size == (640,480)
     screen = O.lobby_layout('host')
     assert 'Measuring' in str(screen) and 'Hero assigned at start' in str(screen)
-    assert 'next area' in str(screen)
+    for role, expected in (('host', 'Campaign chosen in Game options.'), ('join', 'Campaign set by the host.')):
+        items = {e['name']: e for e in O.lobby_layout(role)['items']}
+        assert items['lc_campaign_summary']['text'] == expected
+        assert items['lc_ready_all']['text'] == 'All ready.'
+
+
+def test_060s_lobby_words_use_native_text_in_front_of_card_models():
+    # Live 060s: the facts said HOST READY YOU while only a panel opening revealed HOST.
+    # Software previews composite alpha without the retail depth test, so they missed overlapping model glyph surfaces.
+    for role in ('host','join'):
+        screen=O.lobby_layout(role)
+        tree=O.lobby_tree(native(role),screen)
+        by={e['name']:e for e in screen['items']}
+        for n in range(1,5):
+            for suffix in ('host','ready','not_ready','same_build','checking_build','other_build','you'):
+                key=f'lc_p{n}_{suffix}'
+                e=tree.find(f"item[@name='{key}']")
+                assert e.get('type')=='MENU_ITEM_TEXT' and e.get('text')
+                assert e.get('enabled')=='false' and e.get('neverfocus')=='true'
+                assert e.get('text').startswith('~')  # explicit authored colour survives the engine's disabled style
+                assert by[key]['plane'] < by[f'lc_p{n}_card'].get('plane',-150)
+
+
+def test_060s_browse_refresh_has_own_bar_and_rows_are_the_main_navigation_target():
+    screen=O.runtime_layout('lc_browse')
+    assert screen['focus']=='prompt_refresh'
+    by={e['name']:e for e in screen['items']}
+    target,owner,rect,_,relative=O.focus_placement(screen,by['prompt_refresh'])
+    assert target==O.SHARED_FOCUS and owner is by['prompt_refresh']
+    sx,sy,sz=O.scene_layout(screen)[target][0]
+    assert (sx,sy,sz)==O.SHARED_FOCUS_ORIGIN
+    ax,ay,az=O._anchor(owner);assert ay==sy
+    assert all(abs(got-(local+offset))<1e-3 for got,local,offset in zip(rect,relative,(ax-sx,az-sz,ax-sx,az-sz)))
+    assert by['prompt_join']['down']=='room_0_0'
+
+
+def test_060s_party_invite_hint_has_a_navy_focus_twin():
+    from xml1build import online_party as P
+    screen=P.party_layout('host')
+    by={e['name']:e for e in screen['items']}
+    assert by['lc_party_invite_hint']['rect']==by['lc_party_invite_hint_on']['rect']
+    assert by['lc_party_invite_hint_on']['color']==0 and by['lc_party_invite_hint_on']['hidden']

@@ -450,7 +450,7 @@ def test_browse_focus_bars_share_one_model_item_at_the_same_screen_position():
         ax,ay,az=O._anchor(owner);assert ay==sy
         assert all(abs(m-(r+o))<1e-3 for m,r,o in zip(rect,relative,(ax-sx,az-sz,ax-sx,az-sz)))
         item=next(i for i in root.findall('item') if i.get('name')==e['name'])
-        assert [(f.get('item'),f.get('type'),f.get('model')) for f in item.findall('onfocus')]==[(O.SHARED_FOCUS,'focus',O.focus_resource(rect,outline,O.focus_variant(screen,owner))),(O.SHARED_FOCUS,'nofocus','ui/models/model_hide')]
+        assert [(f.get('item'),f.get('type'),f.get('model')) for f in item.findall('onfocus')]==[(O.SHARED_FOCUS,'focus',O.focus_resource(rect,outline,O.focus_variant(screen,owner)))]
         checked+=1
     assert checked>=11
     # the lobbies share one focus item per plane (-150 actions, -300 player list / Leave confirm)
@@ -483,9 +483,9 @@ def test_mouse_hit_table_lists_every_drawn_focus_bar():
     both ends were dead. The builder lists each drawn bar (absolute view units) for the DLL's scoped hit test."""
     screens=_built_screens()
     data=O.hit_table(screens)
-    assert data.startswith(b'lc-online-hits/1\n') and data.endswith(b'\n') and b'\r' not in data
+    assert data.startswith(b'lc-online-hits/2\n') and data.endswith(b'\n') and b'\r' not in data
     lines=data.decode('ascii').splitlines()[1:]
-    rows={(l.split()[0],l.split()[1]):tuple(map(float,l.split()[2:])) for l in lines}
+    rows={(l.split()[0],l.split()[1]):tuple(map(float,l.split()[2:6])) for l in lines}
     assert len(rows)==len(lines)  # one bar per item and screen
     for name,screen in screens.items():
         drawn=[e for e in screen['items'] if e['intent'] and (e['enabled'] or screen.get('runtime'))]
@@ -600,10 +600,10 @@ def test_hit_table_refuses_a_bar_that_reaches_the_kick_picker():
 def _dll_parser():
     import os
     import pathlib
-    import pytest
+    import unittest
     exe = os.environ.get('XML2_FIX_HITS_PARSE_TEST')
     if not exe or not pathlib.Path(exe).exists():
-        pytest.skip('set XML2_FIX_HITS_PARSE_TEST to xml2_online_hits_parse_test.exe (xml2-fix)')
+        raise unittest.SkipTest('set XML2_FIX_HITS_PARSE_TEST to xml2_online_hits_parse_test.exe (xml2-fix)')
     return exe
 
 
@@ -649,14 +649,14 @@ def test_builder_output_passes_the_dll_parser_and_verdicts_agree(tmp_path):
 def _built_output():
     import os
     import pathlib
-    import pytest
+    import unittest
     for candidate in (os.environ.get('XML1_BUILT_OUT'), r'D:\Projects\xml1-port\build\_candidate_060q'):
         if candidate and (pathlib.Path(candidate) / 'UI/menus/lc_online.XMLB').exists():
             dll=pathlib.Path(candidate)/'dinput.dll'
             if O.BROWSE_ROWS>5 and (not dll.is_file() or O.engine_scene_anchors(dll.read_bytes())==175):
                 continue  # This owned-output gate requires a build made with the expanded capability.
             return pathlib.Path(candidate)
-    pytest.skip('no compatible built online-menus output (set XML1_BUILT_OUT; seven rows require menu-anchors/512)')
+    raise unittest.SkipTest('no compatible built online-menus output (set XML1_BUILT_OUT; seven rows require menu-anchors/512)')
 
 
 def test_hit_table_matches_the_focus_bars_as_built():
@@ -681,12 +681,45 @@ def test_hit_table_matches_the_focus_bars_as_built():
     moved = [l.replace('lc_online code 34.4 222 247.2 246.6', 'lc_online code 34.4 223 247.2 246.6') for l in lines]
     assert moved != lines
     assert any('lc_online: code' in p for p in O.hit_scene_problems('\n'.join(moved).encode('ascii'), list(screens), *read))
-    assert any('no focus model' in p for p in O.hit_scene_problems(data + b'lc_online ghost 1 2 3 4\n', list(screens), *read))
+    assert any('no focus model' in p for p in O.hit_scene_problems(data + b'lc_online ghost 1 2 3 4 0\n', list(screens), *read))
     dropped = [l for l in lines if not l.startswith('lc_online browse ')]
     assert any('draws a focus bar but the table has no row' in p for p in O.hit_scene_problems('\n'.join(dropped).encode('ascii'), list(screens), *read))
     wide = [l.replace('lc_online code 34.4 222 247.2 246.6', 'lc_online code 34.4 222 255 246.6') for l in lines]
     assert any('lc_online: code' in p for p in O.hit_scene_problems('\n'.join(wide).encode('ascii'), list(screens), *read))
     assert O.hit_table_rows(data)['lc_online']['code'] == (34.4, 222.0, 247.2, 246.6) and O.FOCUS_LEAN == 4
+
+
+def test_060s_slanted_right_edge_is_described_and_legacy_table_exposes_the_gap():
+    """060s g5 log: pixel 624,222 -> view 247.73,265.33, outside v1 right=247.2 but on the drawn amber bar."""
+    screens=_hit_screens()
+    data=O.hit_table(screens)
+    fields=next(line.split() for line in data.decode('ascii').splitlines()[1:] if line.startswith('lc_online host '))
+    l,b,r,t,lean=map(float,fields[2:])
+    assert lean==4
+    def inside(x,y):
+        shift=lean*(y-b)/(t-b)
+        return b<y<=t and l+shift<=x<r+shift
+    assert not l<=247.73<r and inside(247.73,265.33)
+    assert inside(249.87,276.53)  # actual top-right of the row, near pixel 628,201
+    assert not inside(277.60,276.53)  # live probe 680,201 picked the separate YOU-card triangle
+    assert not inside(l, t) and inside(l+lean,t)  # the shear is applied to both ends
+    # The builder's built-model check must reject the old rectangle even though its bounds used to pass.
+    from xml1build import common as C
+    out=_built_output()
+    read=(lambda n:C.decode_xmlb((out/('UI/menus/'+n+'.XMLB')).read_bytes()),lambda n:(out/('UI/menus/'+n+'.IGB')).read_bytes(),lambda n:(out/(n+'.IGB')).read_bytes())
+    legacy=b'lc-online-hits/1\n'+b'\n'.join(b' '.join(line.split()[:6]) for line in data.splitlines()[1:])+b'\n'
+    assert any('lc_online: host' in problem for problem in O.hit_scene_problems(legacy,list(screens),*read))
+    for extra in (b'65',b'-65',b'NaN',b'1e2'):
+        assert O.hit_table_problems(b'lc-online-hits/2\nx y 1 2 3 4 '+extra+b'\n')
+
+
+def test_060s_hostleft_actions_form_a_closed_native_navigation_ring():
+    screen=O.runtime_layout('lc_online')
+    tree=O.menu_tree(screen)
+    for name,other in [('lc_hostleft_again','lc_hostleft_back'),('lc_hostleft_back','lc_hostleft_again')]:
+        item=tree.find("item[@name='%s']"%name)
+        assert item.get('enabled')=='false' and item.get('neverfocus')=='false'
+        assert all(item.get(direction)==other for direction in ('left','right','up','down'))
 
 def test_host_visibility_pair_draws_in_front_of_its_focus_bar():
     screen=O.runtime_layout('lc_host')
@@ -699,11 +732,11 @@ def test_focus_models_draw_exactly_one_alpha_blended_layer():
     """060q live: dialog.igb's three layers - an opaque 144-vertex frame (no blend state) and an additive 12-vertex inset
     beside the alpha quad - drew the picture's transparent texels black (the black box behind "1 of N ready.", the outline
     bar to the YOUR ROOM badge, the light frame round the 4:3 field) and a lighter inner rectangle on every amber bar."""
-    import pytest
+    import unittest
     from pathlib import Path
     from PIL import Image
     src=Path('D:/Projects/xml1-port/xml1_loose/ui/hud/dialog.igb')
-    if not src.is_file(): pytest.skip('owned dialog.igb not available on this machine')
+    if not src.is_file(): raise unittest.SkipTest('owned dialog.igb not available on this machine')
     source=src.read_bytes()
     picture=Image.new('RGBA',(64,32));picture.paste((255,255,255,255),(0,0,8,8))
     for rect,outline,pic in (((0,-13.6,56,0),True,picture),((0,-20,177,0),False,None),(O.BACKDROP_RECT,True,picture),
@@ -811,3 +844,70 @@ def test_validator_scene_capacity_follows_the_companion_dll():
     calls = [n for n in ast.walk(ast.parse(inspect.getsource(VF))) if isinstance(n, ast.Call)
              and getattr(n.func, 'attr', None) == 'scene_problems']
     assert calls and all(any(k.arg == 'anchor_capacity' for k in c.keywords) for c in calls)
+
+
+def test_060t_hostleft_has_only_the_focused_action_amber():
+    screen=O.runtime_layout('lc_online')
+    by={e['name']:e for e in screen['items']}
+    actions=[by[k]['hit_rect'] for k in ('lc_hostleft_again','lc_hostleft_back')]
+    panel=by['lc_hub_host_left']
+    x,y,_,_=panel['rect']
+    for part in panel['parts']:
+        if part.get('color')!=5 or part.get('kind') not in ('bar','rect'): continue
+        a,b,c,d=part['rect']; box=(x+a,y+b,c,d)
+        assert not any(box[0]<q[0]+q[2] and q[0]<box[0]+box[2] and box[1]<q[1]+q[3] and q[1]<box[1]+box[3] for q in actions)
+    assert by['lc_hostleft_again']['color']==4
+
+
+def test_060t_footer_polygons_never_steal_the_select_edge():
+    for name,screen in _built_screens().items():
+        entries={e['name']:e for e in screen['items']}
+        bars=[]
+        for key,l,b,r,t in O.hit_rows(screen):
+            if entries[key]['rect'][1]>=O.FOOTER_TOP:
+                bars.append((key,l,b,r,t,O.hit_lean(screen,key)))
+        for a in bars:
+            for z in bars:
+                if a[0]>=z[0]:continue
+                low,high=max(a[2],z[2]),min(a[4],z[4])
+                for step in range(1,101):
+                    y=low+(high-low)*step/101
+                    al,ar=a[1]+a[5]*(y-a[2])/(a[4]-a[2]),a[3]+a[5]*(y-a[2])/(a[4]-a[2])
+                    zl,zr=z[1]+z[5]*(y-z[2])/(z[4]-z[2]),z[3]+z[5]*(y-z[2])/(z[4]-z[2])
+                    assert ar<=zl or zr<=al,(name,a[0],z[0],y)
+
+
+def test_060t_browse_diagnostic_has_room_for_the_redacted_error():
+    screen=O.runtime_layout('lc_browse');by={e['name']:e for e in screen['items']}
+    diag=by['broker_error']['rect'];prev=by['scroll_up']['rect']
+    assert diag[2]>=150  # the longest allowlisted list error at the label font, in its own line
+    assert diag[1]+diag[3]<=prev[1] or prev[1]+prev[3]<=diag[1]
+
+
+def test_060t_every_control_including_retry_fits_retail_focus_events():
+    # 5af147 refuses the 76th global focus record (52 bytes at 8a72b0).
+    for name,screen in _built_screens().items():
+        tree=O.menu_tree(screen)
+        events=tree.findall('.//onfocus')
+        assert len(events)<=75,(name,len(events))
+        for item in tree.findall('item'):
+            if item.get('usecmd'):
+                assert any(e.get('type')=='focus' for e in item.findall('onfocus')), (name,item.get('name'))
+
+
+def test_060u_browse_header_has_space_for_the_visible_fresh_and_stale_count():
+    screen=O.runtime_layout('lc_browse');by={e['name']:e for e in screen['items']}
+    # One DATA field owns the whole count, including singular wording. The old
+    # PUBLIC GAMES - N arrangement only allowed 60 units and never showed it.
+    assert not by['list_header']['text']
+    count=by['list_count'];assert count['data'] and count['rect'][2]>=132
+    stale=by['lc_broker_stale']['rect']
+    assert count['rect'][0]+count['rect'][2]<=stale[0]
+    tree=O.menu_tree(screen)
+    assert tree.find("item[@name='list_count']").get('clamp')=='true'
+
+
+def test_relay_refusal_has_specific_authored_notice():
+    assert 'TURN' in O.NOTICE_TEXT['lc_notice_relay']
+    for name in ('lc_code', 'lc_browse'):
+        assert O.menu_tree(O.runtime_layout(name)).find("item[@name='lc_notice_relay']") is not None

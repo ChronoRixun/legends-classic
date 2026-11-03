@@ -123,14 +123,26 @@ def test_refusal_matrix():
     assert L.selected(SimpleNamespace(args=ns(loot='xml1')))
 
 
-def test_builder_options_default_off_and_the_cli_refuses_without_w2():
+def test_builder_options_default_on_and_the_cli_refuses_without_w2():
     import build_xml1
+    # 0.5.0-beta.1: the economy is on by default (with its default W2 layout and the D8 resist scale); a retail
+    # layout or an explicit --loot off builds without it
     a = build_xml1.parse_args(['--out', 'invented_output'])
-    assert a.loot == 'off' and a.loot_construction == 'zero-draw' and a.loot_def_damage_scale == 'noop'
+    assert a.save_layout == 'w2' and a.loot == 'xml1' and a.loot_def_damage_scale == 'resist' and L.refusal(a) is None
+    for argv in (['--save-layout', 'retail'], ['--loot', 'off'], ['--frontend', 'xml2', '--loot', 'off']):
+        a = build_xml1.parse_args(['--out', 'invented_output', *argv])
+        assert a.loot == 'off' and a.loot_construction == 'zero-draw' and a.loot_def_damage_scale == 'noop', argv
+    try:
+        build_xml1.parse_args(['--out', 'invented_output', '--save-layout', 'retail', '--loot', 'xml1'])
+    except SystemExit:
+        pass
+    else:
+        raise AssertionError('--loot xml1 without W2 was accepted')
     a = build_xml1.parse_args(['--out', 'invented_output', '--save-layout', 'w2', '--loot', 'xml1',
                                '--loot-def-damage-scale', 'resist'])
     assert a.loot_def_damage_scale == 'resist' and L.def_damage_resist(a) and not L.def_damage_resist(SimpleNamespace())
-    assert build_xml1.CONTENT_OPTS['loot_def_damage_scale'] == ('zones', 'noop')
+    # CONTENT_OPTS keeps the value an absent record key means (recorded only when not off / noop)
+    assert build_xml1.CONTENT_OPTS['loot_def_damage_scale'] == ('zones', 'noop') and build_xml1.CONTENT_OPTS['loot'][1] == 'off'
     a = build_xml1.parse_args(['--out', 'invented_output', '--save-layout', 'w2', '--loot', 'xml1'])
     assert a.loot == 'xml1'
     # D8 (Owen 10-26): resist is the default of a --loot xml1 build; noop stays available explicitly
@@ -139,7 +151,7 @@ def test_builder_options_default_off_and_the_cli_refuses_without_w2():
                                '--loot-def-damage-scale', 'noop'])
     assert a.loot_def_damage_scale == 'noop' and not L.def_damage_resist(a)
     try:
-        build_xml1.parse_args(['--out', 'invented_output', '--loot', 'xml1'])
+        build_xml1.parse_args(['--out', 'invented_output', '--save-layout', 'retail', '--loot', 'xml1'])
         raise AssertionError('--loot xml1 without W2 was accepted')
     except SystemExit as e:
         assert e.code == 2
@@ -619,7 +631,7 @@ def test_the_cli_refuses_the_economy_without_w2_and_over_an_older_fix():
         with tempfile.TemporaryDirectory() as td:
             xml2, iso, out, cache = setup(td)
             out.mkdir()
-            code, evs, err = run(build_argv(xml2, iso, out, cache, '--loot', 'xml1'))             # no W2: a usage error
+            code, evs, err = run(build_argv(xml2, iso, out, cache, '--save-layout', 'retail', '--loot', 'xml1'))  # no W2: usage error
             errors = [e for e in evs if e['ev'] == 'error']
             assert code == 2 and errors and errors[-1]['code'] == 'E_USAGE' and 'save-layout w2' in errors[-1]['msg'], (code, errors)
             (out / 'dinput.dll').write_bytes(W2_DLL)                                              # knows W2, not the economy

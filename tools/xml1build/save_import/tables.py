@@ -6,13 +6,15 @@ The table constructor is read-only; integration can write its result later.
 from __future__ import annotations
 
 import configparser
+import copy
 import hashlib
 import json
 import math
 from pathlib import Path, PurePosixPath
 import re
+import struct
 
-from lcsave import catalogue, convert, keys, lcfiles, typed_registry
+from lcsave import catalogue, container, convert, keys, layout as L, lcfiles, typed_registry
 
 from .errors import ImportRefusal
 from .source import bounded_read, digest, safe_path, TITLE_ID
@@ -42,7 +44,7 @@ def relative_file(build, name):
     return result
 
 
-def build_files(build):
+def build_files(build, *, metadata=True):
     """Hash all Data and Scripts inputs read by Binds and checkpoint mappings.
 
     Assets outside these trees are not read by the converter. Native/package
@@ -58,7 +60,8 @@ def build_files(build):
                 paths.append(path)
             if len(paths) > 16384:
                 raise ImportRefusal('BUILD', 'Too many build data files.')
-    paths += [build / 'xml2-fix.ini', build / '_build/report.json']
+    if metadata:
+        paths += [build / 'xml2-fix.ini', build / '_build/report.json']
     result, folded = {}, set()
     for p in sorted(paths):
         rel = p.relative_to(build).as_posix()
@@ -102,6 +105,92 @@ def installed_catalogue(raw):
     return catalogue.Catalogue(data)
 
 
+def validate_source_profile(source):
+    """Shared reader/producer validation; never infer native definition order."""
+    def require(ok, reason):
+        if not ok:
+            raise ImportRefusal('VERSION', reason)
+    require(isinstance(source, dict), 'Invalid source profile.')
+    require(isinstance(source.get('title_id'), str) and source['title_id'].lower() == TITLE_ID,
+            'Unrecognized source title.')
+    require(source.get('kind', 'retail') in ('retail', 'xemu', 'recomp'), 'Unsupported source profile kind.')
+    recomp = source.get('kind') == 'recomp'
+    definitions = {}
+    if recomp:
+        rows = source.get('definitions')
+        require(isinstance(rows, dict) and 1 <= len(rows) <= 254 and all(
+            isinstance(i, str) and re.fullmatch(r'[1-9][0-9]{0,2}', i) and 1 <= int(i) <= 254 and
+            isinstance(n, str) and re.fullmatch(r'[A-Za-z0-9_]+', n) for i, n in rows.items()),
+            'Recomp needs a canonical native definition ID ledger.')
+        definitions = {int(i): n for i, n in rows.items()}
+        names = list(rows.values())
+        require(isinstance(source.get('herostat_sha256'), str)
+                and re.fullmatch('[0-9a-f]{64}', source['herostat_sha256']),
+                'Recomp needs the exact effective source herostat hash.')
+        require('hero_names' not in source or (isinstance(source['hero_names'], list)
+                and all(isinstance(n, str) for n in source['hero_names'])
+                and len(source['hero_names']) == len(names) and set(source['hero_names']) == set(names)),
+                'Source hero names disagree with the definition ID ledger.')
+    else:
+        names = source.get('hero_names')
+        require(isinstance(names, list) and len(names) == 16, 'The retail source roster needs sixteen definitions.')
+    require(all(isinstance(n, str) and re.fullmatch(r'[A-Za-z0-9_]+', n) for n in names)
+            and len({n.lower() for n in names}) == len(names), 'Invalid or ambiguous source hero names.')
+    require(isinstance(source.get('id'), str) and bool(source['id'])
+            and isinstance(source.get('xbe_sha256'), str) and re.fullmatch('[0-9a-f]{64}', source['xbe_sha256']),
+            'The source profile must identify its original executable.')
+    return recomp, names, definitions
+
+
+def validate_target_defaults(data, env):
+    """Validate required target-only HREC rows with the actual codec/native rules.
+
+    Temporary records for mapped heroes form a validation scaffold only; they
+    are never published or substituted for the source hero's progression.
+    """
+    target_names = env.binds.stat[1:env.binds.hero_count + 1]
+    mapped = {r['target'].lower() for r in data['heroes'].values()}
+    required = {n.lower() for n in target_names} - mapped
+    rows = data.get('target_defaults', {})
+    if not isinstance(rows, dict) or not required <= rows.keys() or any(n not in required for n in rows):
+        raise ImportRefusal('BUILD', 'Every target-only hero needs one explicit validated default record.')
+    if not required:
+        return
+    from .mapper import defaults, empty_campaign, encode_and_validate
+    try:
+        sections = empty_campaign()
+        sections['MISS']['snapshots'] = [dict(zone=0, flags=3, seats=[], objectives=[],
+                                             anchor_pos=[0.] * 3, anchor_orient=[0.] * 3)]
+        for name in target_names:
+            ident = env.id_of('STAT', keys.key_hash(name))
+            if name.lower() in required:
+                row = copy.deepcopy(rows[name.lower()])
+                row['hero'] = ident
+                if row['player_seat'] != -1 or not 1 <= row['ack_level'] <= row['level']:
+                    raise ValueError('Target-only defaults must be unseated with coherent progression.')
+                powers = row['powers']
+                if (len(powers) > 4 or len({p['button'] for p in powers}) != len(powers)
+                        or any(type(p['button']) is not int or not 0 <= p['button'] < 4
+                               or p['name'] not in ('', 'power1', 'power2', 'power3', 'power9') for p in powers)):
+                    raise ValueError('Invalid target-only default power slots.')
+            else:
+                row = defaults(container.RECORDS['HREC'])
+                costume = env.id_of('COST', keys.key_hash(name, 'skin'))
+                row.update(hero=ident, level=1, ack_level=1, player_seat=-1, talents=[], equipped=[], powers=[],
+                           costume=costume, costumes_unlocked=[costume])
+            container.encode_record('HREC', row)
+            sections['HERO']['heroes'].append(row)
+        # Exercise reconstruction and native serialization too: the semantic
+        # preflight alone does not enforce per-hero heaps/equipment or PWR slots.
+        header = dict(writer_version=0x01000000, content_version=env.catalogue.data['content_version'],
+                      catalogue_revision=env.catalogue.revision, campaign_serial=1, save_sequence=1,
+                      required_features=L.FEATURE_ENTITY_LAYOUT_CONTIGUOUS10, optional_features=0)
+        encode_and_validate(sections, header, env)
+    except (ValueError, KeyError, TypeError, IndexError, OverflowError, struct.error) as exc:
+        raise ImportRefusal('BUILD', 'A target-only hero default is not valid for the installed native tables.',
+                            reason_type=type(exc).__name__) from exc
+
+
 class ImportTable:
     def __init__(self, build, path=None):
         self.build = safe_path(build, directory=True)
@@ -120,38 +209,22 @@ class ImportTable:
 
     def _load(self):
         d = self.data
-        if d['schema'] != 1 or d['source']['title_id'].lower() != TITLE_ID:
+        if d['schema'] not in (1, 2):
             raise ImportRefusal('VERSION', 'Unrecognized source profile or import table schema.')
         self.source = d['source']
-        self.recomp = self.source.get('kind') == 'recomp'
-        if self.source.get('kind', 'retail') not in ('retail', 'xemu', 'recomp'):
-            raise ImportRefusal('VERSION', 'Unsupported source profile kind.')
-        if self.recomp:
-            definitions = self.source.get('definitions')
-            if (not isinstance(definitions, dict) or not 1 <= len(definitions) <= 254 or
-                any(not re.fullmatch(r'[1-9][0-9]{0,2}', i) or not 1 <= int(i) <= 254 or
-                    not isinstance(n, str) or not re.fullmatch(r'[A-Za-z0-9_]+', n) for i, n in definitions.items()) or
-                len({n.lower() for n in definitions.values()}) != len(definitions) or
-                not re.fullmatch('[0-9a-f]{64}', self.source.get('herostat_sha256', ''))):
-                raise ImportRefusal('VERSION', 'Recomp needs the exact effective source herostat hash and definition ID ledger.')
-            self.definitions = {int(i): n for i, n in definitions.items()}
-            names = list(definitions.values())
-            if 'hero_names' in self.source and set(self.source['hero_names']) != set(names):
-                raise ImportRefusal('VERSION', 'Source hero names disagree with the definition ID ledger.')
-        else:
-            names = self.source['hero_names']
-            if len(names) != 16 or len(set(n.lower() for n in names)) != 16:
-                raise ImportRefusal('VERSION', 'The retail source roster must have sixteen unique definitions.')
-        self.source_names = names
-        if not self.source.get('id') or not re.fullmatch('[0-9a-f]{64}', self.source.get('xbe_sha256', '')):
-            raise ImportRefusal('VERSION', 'The source profile must identify its original executable.')
+        self.recomp, self.source_names, self.definitions = validate_source_profile(self.source)
         expected = d['target_files']
         if not isinstance(expected, dict) or not expected:
             raise ImportRefusal('BUILD', 'The import table has no target hashes.')
         for name in expected:
             relative_file(self.build, name)
         self.files = build_files(self.build)
-        if expected != self.files:
+        # Schema 2 is produced by savefiles before the final report/INI exist.
+        # Pin finished Data/Scripts on disk; validate settings below and include
+        # their exact bytes in this invocation's fingerprint and all rechecks.
+        bound = self.files if d['schema'] == 1 else {
+            k: v for k, v in self.files.items() if k not in ('xml2-fix.ini', '_build/report.json')}
+        if expected != bound:
             raise ImportRefusal('BUILD', 'The import table does not match this installation.')
         report = read_json(bounded_read(self.build / '_build/report.json', 16 << 20))['build']
         if any(str(report.get(k, '')).lower() != v for k, v in (('save_layout', 'w2'), ('loot', 'xml1'), ('xp_curve', 'xml1'))):
@@ -202,12 +275,13 @@ class ImportTable:
         ok, reason = typed_registry.verify_registry(self.registry, str(self.build / 'Scripts'))
         if not ok:
             raise ImportRefusal('BUILD', reason)
-        self._validate_mapping()
+        self.validate_mapping(d, self.source_names, recomp=self.recomp, economy=self.economy, registry=self.registry)
+        validate_target_defaults(d, self.env)
         self.fingerprint = digest(json.dumps(self.files, sort_keys=True, separators=(',', ':')).encode('utf-8'))
 
-    def _validate_mapping(self):
+    @staticmethod
+    def validate_mapping(d, names, *, recomp, economy, registry):
         """Reject malformed local tables as input errors, before indexing records."""
-        d = self.data
         def require(value, reason):
             if not value:
                 raise ImportRefusal('BUILD', reason)
@@ -219,13 +293,12 @@ class ImportTable:
             return isinstance(value, str) and re.fullmatch(r'[A-Za-z0-9_/-]+', value) is not None and '..' not in value.split('/')
         def pose(value):
             return isinstance(value, list) and len(value) == 6 and all(type(v) in (float, int) and math.isfinite(v) for v in value)
-        names = self.source_names
         require(all(ident(n) for n in names), 'Invalid source hero names.')
         thresholds = d['xp_thresholds']
         require(isinstance(thresholds, list) and 1 <= len(thresholds) <= 255 and thresholds[0] == 0 and
                 all(integer(v, 0, 0xffffffff) for v in thresholds) and
                 all(a < b for a, b in zip(thresholds, thresholds[1:])), 'XP thresholds must start at zero and strictly increase.')
-        require(isinstance(d['heroes'], dict) and (set(d['heroes']) <= set(names) if self.recomp else
+        require(isinstance(d['heroes'], dict) and (set(d['heroes']) <= set(names) if recomp else
                 set(d['heroes']) == set(names)), 'The source hero table is incomplete or names unknown definitions.')
         targets = []
         for row in d['heroes'].values():
@@ -279,8 +352,8 @@ class ImportTable:
                 require(row['route'] not in health_routes and integer(row['target_maximum'], 0, 255), 'Duplicate or invalid pack counter route.')
                 health_routes.add(row['route'])
             if row['route'] == 'equipment':
-                economy = self.economy.get(row['target'].lower())
-                require(economy is not None and economy['flags'] & 0x40 and economy['source'] == index,
+                equipment = economy.get(row['target'].lower())
+                require(equipment is not None and equipment['flags'] & 0x40 and equipment['source'] == index,
                         'Source equipment mapping disagrees with the installed XML1 economy.')
         for row in d.get('variables', []):
             require(row['family'] in ('mission', 'game') and ident(row['name']) and isinstance(row['scope'], str) and
@@ -290,7 +363,7 @@ class ImportTable:
             require(ident(row['target']) and len(row['target']) < 12 and
                     integer(row['width'], 1, 32) and integer(row.get('first_bit', 1), 1, 33 - row['width']),
                     'Invalid final variable storage width or name.')
-            require(('game', row['target']) not in self.registry['keys'],
+            require(('game', row['target']) not in registry['keys'],
                     'A persistent source integer cannot be copied into a target entity-handle variable.')
         for recipe in d.get('checkpoints', []):
             require(integer(recipe['mission_id'], 0, 254) and zone(recipe['source_zone']) and zone(recipe['target_zone']) and

@@ -421,7 +421,7 @@ def test_port_keys_from_a_synthetic_build():
         assert g['ClassicMainBackdrop'] == '1' and g['DangerRoomGate'] == 'button3'
         assert g['PostgameScript'] == FI.POSTGAME_SCRIPT and g['WindowTitle'] == 'X-Men Legends'
         assert g['NewGamePlus'] == '0' and g['ReviewStats'] == '0' and g['XPCurve'] == 'xml1' and g['Xtract'] == '0' and g['RevivalCost'] == 'xml1'
-        assert keys['Online'] == {'GameVersion': FI.PORT_GAME_VERSION, 'FastTransfer': '1', 'ReceiveValidation': '1', 'JoinInProgress': '1', 'TickRate': '60', **FI.broker_keys()} and set(g) <= set(FI.PORT_OWNED['Game'])
+        assert keys['Online'] == {'GameVersion': FI.PORT_GAME_VERSION, 'FastTransfer': '1', 'ReceiveValidation': '1', 'JoinInProgress': '1', 'LateJoin': '1', 'TickRate': '60', **FI.broker_keys()} and set(g) <= set(FI.PORT_OWNED['Game'])
         assert keys['Save'] == {'Format': 'lc'} and 'Format' in FI.PORT_OWNED['Save']
         # the harness builds its test ini from the same keys
         sys.path.insert(0, str(Path(C.__file__).resolve().parents[1]))
@@ -436,7 +436,7 @@ def test_port_keys_from_a_synthetic_build():
 
 def test_beta2_keys_refuse_a_beta1_dll_and_require_the_beta2_fix():
     # 0.3.0-beta.2 writes [Engine] ModelPools and [Game] ComboPopupGuard, which XML2 Fix 1.8.0-beta.1 does not read
-    # (same numeric VERSIONINFO 1.8.0.0): the DLL check names both; beta/rc builders require '>=1.9.0-beta.1' (beta 8).
+    # (same numeric VERSIONINFO 1.8.0.0): the DLL check names both; beta/rc builders require '>=1.11.0-beta.1' (0.6.0).
     keys = {'Game': {'ComboPopupGuard': '1'}, 'Engine': {'ModelPools': 'x4'}}
     with tempfile.TemporaryDirectory() as td:
         dll = Path(td) / 'dinput.dll'
@@ -444,8 +444,8 @@ def test_beta2_keys_refuse_a_beta1_dll_and_require_the_beta2_fix():
         assert FI.old_fix_keys(dll, keys) == ['[Game] ComboPopupGuard', '[Engine] ModelPools']
         dll.write_bytes(b'MZ' + 'ComboPopupGuard'.encode('utf-16le') + 'ModelPools'.encode('utf-16le'))
         assert FI.old_fix_keys(dll, keys) == []
-    assert FI.required_xml2fix('0.3.0-beta.3') == FI.required_xml2fix('0.4.0-rc.1') == '>=1.9.0-beta.1'
-    assert FI.required_xml2fix('0.4.0') == '>=1.9'
+    assert FI.required_xml2fix('0.3.0-beta.3') == FI.required_xml2fix('0.4.0-rc.1') == '>=1.11.0-beta.1'
+    assert FI.required_xml2fix('0.4.0') == '>=1.11'
 
 
 def test_beta3_tick_rate_is_written_port_owned_and_refuses_a_beta2_dll():
@@ -475,7 +475,7 @@ def test_beta5_classic_keys_refuse_a_beta4_dll_and_require_the_beta5_fix():
         assert FI.old_fix_keys(dll, keys) == ['[Game] ClassicHud', '[Game] ClassicCodex']
         dll.write_bytes(b'MZ' + ''.join(('ClassicHud\0', 'ClassicCodex\0')).encode('utf-16le'))
         assert FI.old_fix_keys(dll, keys) == []
-    assert FI.required_xml2fix('0.4.0') == '>=1.9'
+    assert FI.required_xml2fix('0.4.0') == '>=1.11'
 
 
 def test_beta6_weapon_brain_keys_refuse_a_beta5_dll_and_require_the_beta6_fix():
@@ -492,7 +492,7 @@ def test_beta6_weapon_brain_keys_refuse_a_beta5_dll_and_require_the_beta6_fix():
         assert FI.old_fix_keys(dll, keys) == ['[Game] NpcSemiAuto', '[NpcSemiAuto] schema 4 rows', '[Game] NpcPowerRule revision 14']
         dll.write_bytes(b'MZ' + ''.join(('ClassicHud\0', 'NpcPowerRule', 'NpcSemiAuto', 'Count')).encode('utf-16le') + b'NSA4' + b'NPR14')
         assert FI.old_fix_keys(dll, keys) == []
-    assert FI.required_xml2fix('0.4.0') == '>=1.9'
+    assert FI.required_xml2fix('0.4.0') == '>=1.11'
 
 
 def test_beta7_keys_refuse_a_beta6_dll_and_require_the_beta7_fix():
@@ -513,8 +513,8 @@ def test_beta7_keys_refuse_a_beta6_dll_and_require_the_beta7_fix():
         assert FI.old_fix_keys(dll, keys) == ['[Game] NpcPowerRule revision 14']   # beta 7 (rule 16 revision 11)
         dll.write_bytes(dll.read_bytes() + b'NPR14')
         assert FI.old_fix_keys(dll, keys) == []
-    assert FI.REQUIRED_XML2FIX_PRERELEASE == 'beta.1'   # 0.4.1-beta.1 (beta 8) requires XML2 Fix 1.9.0-beta.1
-    assert FI.required_xml2fix('0.4.1-beta.1') == '>=1.9.0-beta.1' and FI.required_xml2fix('0.4.1') == '>=1.9'
+    assert FI.REQUIRED_XML2FIX_PRERELEASE == 'beta.1'   # 0.6.0-beta.1 requires XML2 Fix 1.11.0-beta.1
+    assert FI.required_xml2fix('0.6.0-beta.1') == '>=1.11.0-beta.1' and FI.required_xml2fix('0.6.0') == '>=1.11'
 
 
 def test_harness_installs_write_the_shipped_limits_by_default():
@@ -677,7 +677,7 @@ def test_identify_synthetic_discs():
         assert disc['disc_id'] == ident['disc_id'] and len(disc['digest']) == 40
         other = Path(td) / 'other.iso'
         other.write_bytes(synth.xdvdfs(synth.xml1_disc_files(title_id=0x41560017)))
-        for path, code, key in ((other, 'E_ISO_WRONG_GAME', 'title_id'), (Path(td), 'E_ISO_NOT_XBOX', 'detected'),
+        for path, code, key in ((other, 'E_ISO_WRONG_GAME', 'title_id'), (Path(td), 'E_ISO_FOLDER_MISSING', 'file'),
                                 (Path(td) / 'gone.iso', 'E_ISO_NOT_FOUND', 'path')):
             try:
                 I.identify(path)
@@ -861,7 +861,7 @@ def test_port_builds_ask_for_the_lc_save_format():
     assert FI.save_keys(port_identity=True) == {'Format': 'lc'}
     assert FI.save_keys(port_identity=False) == {}
     assert FI.PORT_OWNED['Save'] == ('Format',) and 'ContentFingerprint' in FI.PORT_OWNED['Online']
-    assert FI.REQUIRED_XML2FIX == '1.9'
+    assert FI.REQUIRED_XML2FIX == '1.11'
 
 
 def test_receive_validation_defaults_on_and_requires_supported_companion():
@@ -1041,20 +1041,20 @@ def test_beta_fix_numeric_version_keeps_runtime_capability_checks():
         for numeric in ('1.8.0', '1.8.0.0', '1.8.0.2'):
             resource = ('FileVersion\0' + numeric + '\0ProductVersion\0' + numeric + '\0').encode('utf-16le')
             markers = b''.join((key + '\0').encode('utf-16le') for names in FI.RELEASE_18_KEYS.values() for key in names)
-            dll.write_bytes(b'MZ synthetic beta fix\0' + resource + markers + b'NSA4' + b'NPR14' + FI.GRAB_CARRY_R3_MARKER + FI.CARRY_CHAIN_MARKER + FI.TK_AUDIO_MARKER + FI.TK_STILL_MARKER + FI.GUARD_TAP_MARKER + FI.TK_ARMING_MARKER + FI.GUARD_ENTRY_MARKER + FI.COLOSSUS_CASTER_MARKER + FI.THROWN_IMPACT_MARKER + FI.FLYING_CARRY_OFF_MARKER + FI.CHAR_SOUNDS_MARKER + FI.MOTION_POOL_MARKER + FI.RESIDENT_STATS_MARKER + b''.join(FI.WAVE3_MARKERS.values()) + b''.join(FI.MARKERS_082D) + b''.join(FI.MARKERS_082E) + FI.ACTORS_MARKER)
+            dll.write_bytes(b'MZ synthetic beta fix\0' + resource + markers + b'NSA4' + b'NPR14' + FI.GRAB_CARRY_R3_MARKER + FI.CARRY_CHAIN_MARKER + FI.TK_AUDIO_MARKER + FI.TK_STILL_MARKER + FI.GUARD_TAP_MARKER + FI.GUARD_XML1_NATIVE_MARKER + FI.TK_ARMING_MARKER + FI.GUARD_ENTRY_MARKER + FI.COLOSSUS_CASTER_MARKER + FI.THROWN_IMPACT_MARKER + FI.FLYING_CARRY_OFF_MARKER + FI.CHAR_SOUNDS_MARKER + FI.MOTION_POOL_MARKER + FI.RESIDENT_STATS_MARKER + b''.join(FI.WAVE3_MARKERS.values()) + b''.join(FI.MARKERS_082D) + b''.join(FI.MARKERS_082E) + FI.ACTORS_MARKER)
             FI.check_release_dll(dll, keys)
         # 1.7.1 lacks the companion's 1.8 drop-in capability, even though it has older required keys.
         older = ('ProductVersion\0' + '1.7.1' + '\0').encode('utf-16le')
         markers = b''.join((key + '\0').encode('utf-16le') for names in FI.RELEASE_18_KEYS.values()
                            for key in names if key != 'JoinInProgress')
-        dll.write_bytes(b'MZ synthetic old fix\0' + older + markers + b'NSA4' + b'NPR14' + FI.GRAB_CARRY_R3_MARKER + FI.CARRY_CHAIN_MARKER + FI.TK_AUDIO_MARKER + FI.TK_STILL_MARKER + FI.GUARD_TAP_MARKER + FI.TK_ARMING_MARKER + FI.GUARD_ENTRY_MARKER + FI.COLOSSUS_CASTER_MARKER + FI.THROWN_IMPACT_MARKER + FI.FLYING_CARRY_OFF_MARKER + FI.CHAR_SOUNDS_MARKER + FI.MOTION_POOL_MARKER + FI.RESIDENT_STATS_MARKER + b''.join(FI.WAVE3_MARKERS.values()) + b''.join(FI.MARKERS_082D) + b''.join(FI.MARKERS_082E) + FI.ACTORS_MARKER)
+        dll.write_bytes(b'MZ synthetic old fix\0' + older + markers + b'NSA4' + b'NPR14' + FI.GRAB_CARRY_R3_MARKER + FI.CARRY_CHAIN_MARKER + FI.TK_AUDIO_MARKER + FI.TK_STILL_MARKER + FI.GUARD_TAP_MARKER + FI.GUARD_XML1_NATIVE_MARKER + FI.TK_ARMING_MARKER + FI.GUARD_ENTRY_MARKER + FI.COLOSSUS_CASTER_MARKER + FI.THROWN_IMPACT_MARKER + FI.FLYING_CARRY_OFF_MARKER + FI.CHAR_SOUNDS_MARKER + FI.MOTION_POOL_MARKER + FI.RESIDENT_STATS_MARKER + b''.join(FI.WAVE3_MARKERS.values()) + b''.join(FI.MARKERS_082D) + b''.join(FI.MARKERS_082E) + FI.ACTORS_MARKER)
         try:
             FI.check_release_dll(dll, keys)
         except FI.FixTooOld as exc:
             assert exc.missing == ['[Online] JoinInProgress']
         else:
             raise AssertionError('1.7.1 without the 1.8 drop-in capability was accepted')
-    assert FI.REQUIRED_XML2FIX == '1.9'  # stable constant and runtime diagnostics stay unchanged
+    assert FI.REQUIRED_XML2FIX == '1.11'  # stable constant and runtime diagnostics stay unchanged
 
 
 def test_a_dll_without_the_15_keys_is_refused(tmp_path=None):
@@ -1195,6 +1195,8 @@ def test_online_broker_defaults_for_deployed_project_broker():
     with tempfile.TemporaryDirectory() as tmp:
         ini = Path(tmp) / 'xml2-fix.ini'
         ini.write_text('[Online]\nBroker=old.example.org\nBrokerPin=old\nServer=keep\n')
+        from test_w2_builder import dll_knowing
+        (Path(tmp) / 'dinput.dll').write_bytes(dll_knowing({'Online': keys}))
         FI.write_port_keys(tmp, {'Online': keys})
         written = FI.read_ini(ini)['Online']
         assert written['Broker'] == FI.PROJECT_BROKER and written['BrokerPin'] == FI.PROJECT_BROKER_PIN
@@ -1228,7 +1230,7 @@ def test_join_in_progress_is_on_for_port_builds_and_needs_fix_18():
     assert FI.online_keys(port_identity=True)['JoinInProgress'] == '1' and FI.JOIN_IN_PROGRESS == '1'
     assert FI.online_keys(port_identity=False) == {}
     assert 'JoinInProgress' in FI.PORT_OWNED['Online'] and 'JoinInProgress' in FI.RELEASE_18_KEYS['Online']
-    assert FI.REQUIRED_XML2FIX == '1.9'
+    assert FI.REQUIRED_XML2FIX == '1.11'
     with tempfile.TemporaryDirectory() as d:
         dll = Path(d) / 'dinput.dll'
         dll.write_bytes(b'MZ' + 'ReceiveValidation'.encode('utf-16le'))
@@ -1241,45 +1243,42 @@ def test_join_in_progress_is_on_for_port_builds_and_needs_fix_18():
         FI.check_release_dll(dll, {'Online': {'ReceiveValidation': '1', 'JoinInProgress': '1'}})
 
 
-def test_release_identity_041_beta1_is_lc37_and_never_an_older_token():
-    """0.4.1-beta.1 (the port's beta 8: the first game's bosses, moves and grabs, raised engine limits, the
-    large-address-aware exe, the save-compatibility ledger and the GRSO style names) changes the generated output, so it
-    is content 28 / catalogue 7 / LC37: a token no earlier build carries (0.2.5 LC32, 0.3.0 and the 0.4.0 betas 1-4
-    LC33, beta 5 LC34, beta 6 LC35, beta 7 and stable 0.4.0 LC36), so neither the stock lobby nor the rooms pair a beta 8
-    PC with an older build. Content 27 stays LC36 (beta 7's row, which stable 0.4.0 resolves to: a stable alias or a
-    second token for that content is refused), 26 LC35, 25 LC34 and 24 LC33 (append-only). The requirement paths: the
-    0.4.1 betas declare '>=1.9.0-beta.1', a stable 0.4.1 '>=1.9'."""
+def test_release_identity_060_beta1_is_lc40_and_preserves_shipped_history():
     from xml1build import release_identity as RI
     from xml1builder import CONTENT_VERSION, VERSION
     import release_metadata as RM
-    assert (VERSION, CONTENT_VERSION) == ('0.4.1', 28) and RI.game_version() == 'LC37'
-    assert RI.game_version(content_version=27, catalogue_revision=7) == 'LC36'
-    assert RI.game_version(content_version=26, catalogue_revision=7) == 'LC35'
-    assert RI.game_version(content_version=25, catalogue_revision=7) == 'LC34'
-    assert RI.game_version(content_version=24, catalogue_revision=7) == 'LC33'
-    assert [r.token for r in RI.HISTORY].count('LC37') == 1 and RI.HISTORY[-1].token == 'LC37'
-    assert all(r.token != 'LC37' for r in RI.HISTORY[:-1])
-    row = RI.HISTORY[-1]
-    assert (row.release, row.content_version, row.catalogue_revision) == ('0.4.1-beta.1', 28, 7)
-    assert len(row.bind_manifest) == 64 and row.bind_manifest != RI.HISTORY[-2].bind_manifest
-    rows = [r for r in RI.HISTORY if (r.content_version, r.catalogue_revision) == (27, 7)]
-    assert [(r.release, r.token) for r in rows] == [('0.4.0-beta.7', 'LC36')]
-    for extra in (RI.Identity('0.4.0-stable', 27, 7, 'LC38', rows[0].bind_manifest),
-                  RI.Identity('0.4.0-stable', 27, 7, 'LC36', rows[0].bind_manifest),
-                  RI.Identity('0.4.1-stable', 28, 7, 'LC38', row.bind_manifest)):
+    assert (VERSION, CONTENT_VERSION, RI.CURRENT_CATALOGUE_REVISION) == ('0.6.0', 30, 8)
+    assert RI.game_version() == 'LC40'
+    assert RI.game_version(content_version=29, catalogue_revision=8) == 'LC38'
+    assert RI.game_version(content_version=28, catalogue_revision=7) == 'LC37'
+    assert RI.HISTORY[-2].bind_manifest == '3db3423eedfcc46344219b7766b30f39bde8687be8fe51a180050c79733a170d'
+    assert RI.HISTORY[-1].release == '0.6.0-beta.1'
+    # Preparation leaves this empty; integration must measure it from real output.
+    fingerprint = RI.HISTORY[-1].bind_manifest
+    assert fingerprint == '' or (len(fingerprint) == 64 and all(c in '0123456789abcdef' for c in fingerprint))
+    assert not any(r.token == 'LC39' for r in RI.HISTORY)
+    RI.validate_history(RI.HISTORY)
+    for extra in (RI.Identity('duplicate-token', 31, 8, 'LC40'),
+                  RI.Identity('duplicate-content', 30, 8, 'LC41')):
         try:
             RI.validate_history(RI.HISTORY + (extra,), previous=RI.HISTORY)
         except ValueError:
             continue
-        raise AssertionError(f'{extra} was accepted')
-    assert RM.release_version('v0.4.1-beta.1', VERSION) == '0.4.1-beta.1'
-    assert RM.metadata('v0.4.1-beta.1')['prerelease'] is True
-    assert FI.required_xml2fix('0.4.1-beta.1') == '>=1.9.0-beta.1' and FI.required_xml2fix('0.4.1') == '>=1.9'
+        raise AssertionError('duplicate identity accepted')
+    for content, revision in ((30, 7), (29, 7), (28, 8)):
+        try:
+            RI.game_version(content_version=content, catalogue_revision=revision)
+        except ValueError:
+            continue
+        raise AssertionError('unassigned identity accepted')
+    assert RM.release_version('v0.6.0-beta.1', VERSION) == '0.6.0-beta.1'
+    assert FI.required_xml2fix('0.6.0-beta.1') == '>=1.11.0-beta.1'
+    assert FI.required_xml2fix('0.6.0') == '>=1.11'
 
 
 
 def test_private_candidate_requires_the_release_companion():
-    assert FI.required_xml2fix(FI.RI.PRIVATE_CANDIDATE.release) == '>=1.9.0-beta.1'
+    assert FI.required_xml2fix(FI.RI.PRIVATE_CANDIDATE.release) == '>=1.11.0-beta.1'
 
 
 def test_world_backfaces_is_written_for_the_converted_xml1_zones_only():

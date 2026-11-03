@@ -103,7 +103,7 @@ def test_detection_errors():
         assert e.detail['detected'] == kind, (kind, e.detail)
     assert _expect('E_ISO_NOT_XBOX', image.XdvdfsImage, img(b'\x13' * 0x30000)).detail['detected'] == 'unknown'
     with tempfile.TemporaryDirectory() as td:
-        _expect('E_ISO_FOLDER', image.open_image, td)
+        _expect('E_ISO_FOLDER_MISSING', image.open_image, td)
         _expect('E_ISO_NOT_FOUND', image.open_image, Path(td) / 'missing.iso')
 
 

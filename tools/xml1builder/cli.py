@@ -18,7 +18,7 @@ import os
 import sys
 import traceback
 
-from . import CONTENT_VERSION, DISCLAIMER, ISSUES_URL, PROJECT, REPO, SCHEMA, VERSION
+from . import DEFAULT_GUARD_DECIDE, CONTENT_VERSION, DISCLAIMER, ISSUES_URL, PROJECT, REPO, SCHEMA, VERSION
 from . import resources as R
 from .errors import BuilderError, REPORT_HINT
 from .events import Output, mask
@@ -33,7 +33,7 @@ class _Parser(argparse.ArgumentParser):
 
 def make_parser():
     p = _Parser(prog='xml1-builder', add_help=True,
-                description=f'{PROJECT}: builds X-Men Legends (from your Xbox disc image) on the X-Men Legends II PC '
+                description=f'{PROJECT}: builds X-Men Legends (from your Xbox disc image or extracted install) on the X-Men Legends II PC '
                             f'engine (your install). https://github.com/{REPO}',
                 epilog='Nothing is downloaded and nothing from the games is shared: the builder reads your disc image '
                        'and your X-Men Legends II install and writes the game into --out (and its cache). '
@@ -52,6 +52,7 @@ def make_parser():
     p.add_argument('--build', help='import-xml1-save: installed Legends Classic build (read only)')
     p.add_argument('--save-dir', help='import-xml1-save: actual SaveLC folder')
     p.add_argument('--import-table', help='import-xml1-save: explicit build-bound import table (developer testing)')
+    p.add_argument('--import-ledger', help='build: private source-receipted native identity/checkpoint ledger; needs --experimental-save-import')
     p.add_argument('--merge-unlocks', action='store_true', help='import-xml1-save: reserved; global-profile merging is disabled')
     p.add_argument('--experimental-save-import', action='store_true',
                    help='import-xml1-save: enable experimental Install and Undo for this invocation (default off; requires cooperating DLL)')
@@ -60,7 +61,8 @@ def make_parser():
     p.add_argument('--list-slots', action='store_true', help='import-xml1-save: read-only slot occupancy and import history')
     p.add_argument('--undo-import', help='import-xml1-save: transaction ID to undo (release gated)')
     p.add_argument('--preview-token', help='import-xml1-save: bind apply to a matching dry-run preview')
-    p.add_argument('--iso', help='your X-Men Legends Xbox disc image (Redump .iso or XISO; read only)')
+    p.add_argument('--iso', help='your X-Men Legends Xbox disc image (Redump .iso or XISO), or an extracted '
+                                'install folder (auto-detected; original files verified; read only)')
     p.add_argument('--xml2', help='your X-Men Legends II PC install (read only)')
     p.add_argument('--out', help='the folder the game is built into (empty, or one the builder made)')
     p.add_argument('--cache', help='the build cache (default %%LOCALAPPDATA%%\\xml1-builder\\cache)')
@@ -73,8 +75,9 @@ def make_parser():
                       help='delete this disc\'s cache after a successful build')
     p.add_argument('--link-base', dest='link_base', action='store_true', help='(not supported yet: files are copied)')
     p.add_argument('--jobs', type=int, help='worker processes for the sound stages (default: every CPU)')
-    p.add_argument('--online-menus', choices=('off','on'), default='off',
-                   help='build: opt in to online menus and scoped fonts with a matching companion DLL')
+    p.add_argument('--online-menus', choices=('off','on'), default='on',
+                   help='build: the in-game online menus and scoped fonts (on by default since 0.6.0-beta.1; needs a '
+                        'matching companion DLL); off builds the menus as 0.4.1 did')
     p.add_argument('--main-menu-layout', choices=('classic', 'widescreen'), default='classic',
                    help='build: the classic main menu, centred by the game at every aspect '
                         '(widescreen: a retired name for classic)')
@@ -85,36 +88,39 @@ def make_parser():
                    help="build: XML1's 23 animation enums - the flying carry's and Juggernaut's grab clips from your "
                         "disc, their mappings and XML1's carry nodes - and [Limits] AnimEnums=512 (needs an XML2 Fix "
                         "with the AnimEnums table). On by default since 0.4.1-beta.1 (the grab lifecycle needs it)")
-    p.add_argument('--limits-wave3', dest='limits_wave3', choices=('off', 'on', 'all'), default='off',
+    p.add_argument('--limits-wave3', dest='limits_wave3', choices=('off', 'on', 'all'), default='all',
                    help="build: limits wave 3 - [Limits] FightStyles=64, StyleEvents, FightMoves, EffectTemplates, "
                         "PrimitiveDefs, EffectVectors and PrimitivesPerEffect at their raised values (needs an XML2 Fix "
-                        "with rules 35 revision 2 and 53-58; 'all' adds ScriptPools and ParticleScratch). Off by default "
-                        "until the XML2 Fix rows land; a build without it is unchanged")
-    p.add_argument('--save-layout', dest='save_layout', choices=('retail', 'w2'), default='retail',
-                   help='build: the save layout the build is validated and configured for. retail (default) writes '
-                        'no [Limits] SaveLayout key (the baseline); w2 is the wave 2 layout (Legends Classic 0.4.2, '
-                        'XML2 Fix 1.9 or newer: [Limits] SaveLayout=w2 with ItemEnhancements=4096, EntityCapacity=1 '
-                        'and [Save] Format=lc) and refuses data over its limits')
-    p.add_argument('--loot', choices=('off', 'xml1'), default='off',
-                   help='build: the first-game item economy (Legends Classic 0.4.2). off (default) builds exactly as '
-                        'before; xml1 converts all 116 XML1 equipment with their bonuses, writes the economy sidecar and '
-                        'the approximations files, and needs --save-layout w2 and XML2 Fix with the Xml1Economy key')
-    # beta 9 moves (candidate 082b): the three ini-only options build_xml1.py has had since beta 8, so a builder build
-    # can turn them on for a live round. Defaults stay off until a live round and the owner's hand test pass.
-    p.add_argument('--telekinesis', choices=('off', 'xml1'), default='off',
+                        "with rules 35 revision 2 and 53-58; 'all' adds ScriptPools and ParticleScratch). 'all' by "
+                        "default since 0.5.0-beta.1; off builds as 0.4.1 did")
+    p.add_argument('--save-layout', dest='save_layout', choices=('retail', 'w2'), default='w2',
+                   help='build: the save layout the build is validated and configured for. w2 (default since '
+                        '0.5.0-beta.1) is the wave 2 layout (XML2 Fix 1.10 or newer: [Limits] SaveLayout=w2 with '
+                        'ItemEnhancements=4096, EntityCapacity=1 and [Save] Format=lc) and refuses data over its '
+                        'limits; retail writes no [Limits] SaveLayout key (the 0.4.1 baseline; needs --loot off)')
+    p.add_argument('--loot', choices=('off', 'xml1'), default=None,
+                   help='build: the first-game item economy. xml1 (default since 0.5.0-beta.1; off by default with '
+                        '--save-layout retail) converts all 116 XML1 '
+                        'equipment with their bonuses, writes the economy sidecar and the approximations files, and '
+                        'needs --save-layout w2 and XML2 Fix with the Xml1Economy key; off builds the items as 0.4.1 did')
+    # beta 9 moves: the three ini-only options build_xml1.py has had since beta 8. Telekinesis and the flying carry are
+    # on by default since 0.5.0-beta.1 (live-tested on 082e / 082f); the guard decide stays off (Owen's real-pad check of
+    # 082f, 10-28: Guard grabbed nothing and showed no block), so Guard is XML2's Block / Grab, as in 0.4.1.
+    p.add_argument('--telekinesis', choices=('off', 'xml1'), default='xml1',
                    help="build: Phoenix's XML1 telekinesis ([Game] TelekinesisRule=xml1, XML2 Fix rule 46 bit 512; "
-                        "needs the grab lifecycle). Off by default (in progress); the ini only")
-    p.add_argument('--guard-decide', dest='guard_decide', choices=('off', 'xml1'), default='off',
-                   help="build: XML1's guard decide ([Game] GuardDecideRule=xml1, XML2 Fix rule 46 bit 1024). Off by "
-                        "default (in progress); the ini only")
-    p.add_argument('--flying-carry', dest='flying_carry', choices=('off', 'xml1'), default='off',
+                        "needs the grab lifecycle). On by default since 0.5.0-beta.1; the ini only")
+    p.add_argument('--guard-decide', dest='guard_decide', choices=('off', 'xml1'), default=DEFAULT_GUARD_DECIDE,
+                   help=f"build: XML1 Guard; default {DEFAULT_GUARD_DECIDE}. Corrected XML1 rules await "
+                        "real-controller acceptance; needs the grab lifecycle")
+    p.add_argument('--flying-carry', dest='flying_carry', choices=('off', 'xml1'), default='xml1',
                    help="build: XML1's flying carry within rule 45: off writes [Game] Xml1FlyingCarry=0, xml1 leaves "
-                        "the key out (the DLL's default). Off by default (in progress); the ini only")
+                        "the key out (the DLL's default). On by default since 0.5.0-beta.1; the ini only")
     p.add_argument('--no-ini', dest='no_ini', action='store_true', help='do not merge the port\'s keys into '
                                                                          'xml2-fix.ini (they are in the stamp)')
     p.add_argument('--allow-unknown-exe', dest='allow_unknown_exe', action='store_true',
                    help='testers: build for an XMen2.exe that is not a known retail build')
-    p.add_argument('--deep', action='store_true', help='verify: also check every file inside the disc image')
+    p.add_argument('--deep', action='store_true', help='verify: also CRC-check every member of the original assets '
+                                                    'archive (folder originals are always SHA-256 checked)')
     p.add_argument('--mods', action='store_true', help='clean: also delete <out>\\mods')
     p.add_argument('--dry-run', dest='dry_run', action='store_true', help='clean: only count; import-xml1-save: preview without writes')
     return p
@@ -147,9 +153,11 @@ def main(argv=None, *, pipeline_factory=None, stdin=None, fd_redirect=True, exit
         a = make_parser().parse_args(argv)
         if a.source is not None and a.command != 'import-xml1-save':
             raise BuilderError('E_USAGE', 'A source folder is accepted only by import-xml1-save.', exit_code=2)
+        CMD.check_source_writes(a)
     except SystemExit as e:                                   # --help
         return 0 if not e.code else 2
-    except BuilderError as e:
+    except (BuilderError, OSError) as exc:
+        e = exc if isinstance(exc, BuilderError) else CMD.failure(exc, 'probe')
         output = Output(jsonl)
         _hello(output, v)
         output.event('error', stage='probe', code=e.code, msg=e.msg, hint=e.hint, detail=e.detail)
@@ -157,7 +165,17 @@ def main(argv=None, *, pipeline_factory=None, stdin=None, fd_redirect=True, exit
         if not jsonl:
             sys.stderr.write(make_parser().format_usage())
         return e.exit_code
-    output = Output(a.events == 'jsonl', a.quiet, a.log)
+    output = Output(a.events == 'jsonl', a.quiet)
+    if a.log:
+        try:
+            output.open_log(a.log, rotate=False)
+        except OSError as e:
+            err = CMD.failure(e, 'probe')
+            _hello(output, v)
+            output.event('error', stage='probe', code=err.code, msg=err.msg, hint=err.hint, detail=err.detail)
+            output.event('result', ok=False, exit=err.exit_code)
+            output.close()
+            return err.exit_code
     if a.version:
         if output.jsonl:
             _hello(output, v)
@@ -191,7 +209,7 @@ def main(argv=None, *, pipeline_factory=None, stdin=None, fd_redirect=True, exit
             from xml1build.save_import.command import run as import_save
             return import_save(a, output, cancel)
         if a.command == 'info':
-            return CMD.cmd_info(a, output, pipeline_factory)
+            return CMD.cmd_info(a, output, pipeline_factory, cancel=cancel)
         if a.command == 'build':
             return CMD.cmd_build(a, output, cancel, pipeline_factory)
         if a.command == 'verify':

@@ -16,6 +16,7 @@ from . import menu_theme as T, menu_conversion as M, online_fonts as OF
 MENUS = ('lc_online', 'lc_host', 'lc_code', 'lc_browse')
 NATIVE_ENTRY = 'openmenu online'
 ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'
+CODE_TOOL_WIDTH = 104  # Space/Enter key label plus DONE, with inner padding
 PALETTE = ('0A1830','11284A','2A4A78','7FA6D9','EEF3FA','FFCB3D','54D68A','FF6F55')
 STYLES = {'title': ('big',37), 'row': ('medium',15), 'body': ('medium',12.5), 'label': ('medium',11)}
 COLUMNS = ((59,128),(188,67),(255,93),(348,58),(406,76),(482,78),(560,37))
@@ -35,10 +36,13 @@ def engine_scene_anchors(dll=b''):
 # 060q (round 15 + fix A/B: Browse 184 + 2 backdrop anchors, Host lobby 178 + 2): on a screen listed here every focus
 # bar of one plane is carried by ONE model item at that plane's scene origin, its geometry authored at the owner's
 # absolute position (the same bar, pixel for pixel). Each focusable item sets the shared item's model on focus and
-# hides it on nofocus, as before. XMen2.exe's menu setFocus (base CMenu vt+4 = 0x5aaf80) runs the old item's loss
+# normally hides it on nofocus. Code/Browse use gain-only replacement below. XMen2.exe's menu setFocus (base CMenu vt+4 = 0x5aaf80) runs the old item's loss
 # (item vt+0x4c(0)) to completion before the new item's gain (vt+0x4c(1)), so a shared target always ends with the new
 # item's bar. Saves (focus anchors - planes) per screen. Browse has one plane (-150); the lobbies two (-150, -300).
-SHARED_FOCUS_SCREENS = ('lc_browse', 'host', 'join')
+SHARED_FOCUS_SCREENS = ('lc_code', 'lc_browse', 'host', 'join')
+# Retail onfocus storage is 75 records (5af147, 52 bytes each). These pages used 80/82.
+# One plane and gain-only replacement needs one record per action, including Retry.
+COMPACT_FOCUS_SCREENS = ('lc_code', 'lc_browse')
 SHARED_FOCUS = 'lc_focus'
 SHARED_FOCUS_ORIGIN = (0, -150, 384)
 
@@ -342,7 +346,7 @@ def layout(name, state=None):
             button('key_'+str(i),'' if c=='<' else c,(81+col*49.8,205+row*38.2,44.5,33), 'delete' if c=='<' else 'code:'+c)
             if c=='<': shape('backspace',(445.5,329.5,12,9),4)
         for i,(key,label,intent) in enumerate((('paste','$MENU_NEXT PASTE','paste'),('clear','$MENU_OTHER CLEAR','clear'),('done','$MENU_OK DONE','done'))):
-            button(key,label,(483,205+i*51,76,46),intent, key!='done' or len(s.code)==8)
+            button(key,label,(483,205+i*51,CODE_TOOL_WIDTH,46),intent, key!='done' or len(s.code)==8)
         text('alphabet_hint','Codes never contain zero, one, or the letters O, I and L. Keyboard: just type it, or paste with Ctrl+V.',119,366,440,16,'body',3)
         panel('code_status_header','',(81,387,478,34))
         if s.error: shape('rect',(81,387,478,2),7)
@@ -493,12 +497,14 @@ def menu_tree(screen, palette_ids=None):
             if root.find(f"item[@name='{target}']") is None:
                 ET.SubElement(root,'item',name=target,type='MENU_ITEM_MODEL',model='ui/models/model_hide',neverfocus='true',animate='true')
             ET.SubElement(item,'onfocus',item=target,type='focus',model=focus_resource(rect,outline,focus_variant(screen,owner)),loop='1')
-            ET.SubElement(item,'onfocus',item=target,type='nofocus',model='ui/models/model_hide')
+            if screen['name'] not in COMPACT_FOCUS_SCREENS:
+                ET.SubElement(item,'onfocus',item=target,type='nofocus',model='ui/models/model_hide')
     return root
 
 
 def tree_problems(root, screen, palette_ids=None):
     errors=layout_problems(screen); items={e.get('name'):e for e in root.findall('item')}
+    if len(root.findall('.//onfocus'))>75: errors.append('retail onfocus record budget exceeded (75)')
     if root.get('igb')!=screen['name'] or root.get('type'): errors.append('base menu contract')
     expected_root=menu_tree(screen,palette_ids)
     if any(root.get('desctext'+str(i))!=expected_root.get('desctext'+str(i)) for i in range(1,6)):
@@ -520,7 +526,10 @@ def tree_problems(root, screen, palette_ids=None):
 def package(root):
     pkg=M.package_for(root)
     ET.SubElement(pkg,'xml',filename='ui/menus/'+(root.get('name') if root.get('type') in ('HOST_MENU','JOIN_MENU') else root.get('igb')))
-    ET.SubElement(pkg,'texture',filename='textures/menus/'+root.get('igb'))
+    # Model backdrops embed their pixels. A retired image= sprite must not
+    # preload another 5 MiB copy of the page at every open.
+    if root.get('image'):
+        ET.SubElement(pkg,'texture',filename=root.get('image'))
     return pkg
 
 
@@ -765,13 +774,15 @@ def write(ctx, *, preview=False):
         for e in screen['items']:
             if e.get('variant') and e.get('parts'):
                 rect=(0,-e['rect'][3]*.8,e['rect'][2]*.8,0)
-                focus_models[variant_resource(screen,e)]=focus_model(focus_source.read_bytes(),rect,True,variant_picture(e))
+                resource=variant_resource(screen,e)
+                if resource not in focus_models:
+                    focus_models[resource]=focus_model(focus_source.read_bytes(),rect,True,variant_picture(e))
             if e['intent'] and (e['enabled'] or screen.get('runtime')):
                 _,owner,rect,outline,relative=focus_placement(screen,e)
                 resource=focus_resource(rect,outline,focus_variant(screen,owner))
                 if resource not in focus_models:
                     picture=focus_picture(screen,owner,relative) if outline else None
-                    focus_models[resource]=focus_model(focus_source.read_bytes(),rect,outline,picture)
+                    focus_models[resource]=focus_model(focus_source.read_bytes(),rect,outline,picture,slant=hit_lean(screen,owner['name']))
         extra={e.get('name'):(((-1000,-150,-1000)),(0,-1,1,0)) for e in tree.findall('item')
                if e.get('name') not in layouts}
         if name in LOBBIES:
@@ -890,6 +901,31 @@ def focus_resource(rect, outline=False, variant=''):
     return 'ui/models/lc_o_focus_'+('outline_' if outline else '')+'_'.join(str(round(v*10)) for v in rect)+variant
 
 
+def _focus_images(graph, blocks, picture, solid):
+    """One shared image for the panel's texture attributes; retire duplicate pixels.
+
+    The owned flat topology has two images. All layers receive the same original
+    artwork, so keeping two full RGBA images doubles disk and upload cost for no
+    visual benefit. Keep object references valid with a 1x1 retired image.
+    """
+    import struct
+    images = graph.objects_of('igImage')
+    if not images:
+        raise ValueError('focus model has no image')
+    for attr in graph.objects_of('igTextureAttr'):
+        if 12 not in attr.fields or attr.get(12) not in {o.ref for o in images}:
+            raise ValueError('unsupported focus texture image binding')
+        struct.pack_into('<i', graph.buf, attr.fields[12].offset, images[0].ref)
+    for index, image in enumerate(images):
+        art = picture.convert('RGBA') if picture is not None and index == 0 else None
+        blob = art.tobytes() if art is not None else solid
+        width, height = art.size if art is not None else (1, 1)
+        for slot, value in {2:width,3:height,6:100,7:8,8:8,9:8,10:8,11:7,12:len(blob),19:width*4,20:0}.items():
+            if slot in image.fields:
+                struct.pack_into('<i', graph.buf, image.fields[slot].offset, value)
+        blocks[image.get(13)] = blob
+
+
 def focus_model(source, rect, outline=False, picture=None, depth=40, slant=None):
     """Fit owned flat topology to an original solid amber slanted focus bar.
 
@@ -902,13 +938,7 @@ def focus_model(source, rect, outline=False, picture=None, depth=40, slant=None)
     g=G.IgbFile(data); blocks={}
     keep=blended_layer(g)
     solid=bytes.fromhex(PALETTE[5])+b'\xff'
-    for o in g.objects_of('igImage'):
-        image=picture.convert('RGBA') if picture is not None else None
-        blob=image.tobytes() if image is not None else solid
-        width,height=image.size if image is not None else (1,1)
-        for slot,value in {2:width,3:height,6:100,7:8,8:8,9:8,10:8,11:7,12:len(blob),19:width*4,20:0}.items():
-            if slot in o.fields: struct.pack_into('<i',g.buf,o.fields[slot].offset,value)
-        blocks[o.get(13)]=blob
+    _focus_images(g, blocks, picture, solid)
     for o in g.objects_of('igMaterialAttr'):
         for slot in (5,6,7):
             if slot in o.fields: g.set_floats(o,slot,(1,1,1,1))
@@ -1029,8 +1059,8 @@ def focus_spec(screen,item):
         # Rail rows, action bars and kick buttons: the focus fill is exactly the drawn control.
         hx,hy,hw,hh=item['hit_rect']
         return ((hx-x)*.8,-(hy+hh-y)*.8,(hx+hw-x)*.8,(y-hy)*.8),False
-    if item['name']=='retry' and item.get('hit_rect'):
-        # The Retry bar is part of the error scene: focus replaces exactly that bar, never the message beside it.
+    if item['name'] in ('retry','lc_hostleft_again','lc_hostleft_back') and item.get('hit_rect'):
+        # Retry and modal actions fill their authored control rectangle, leaving adjacent copy clear.
         hx,hy,hw,hh=item['hit_rect']
         return ((hx-x)*.8,-(hy+hh-y)*.8,(hx+hw-x)*.8,(y-hy)*.8),False
     if screen['name']=='lc_code' and item['name'].startswith('key_'):
@@ -1182,7 +1212,7 @@ def namespace_images(data,prefix):
 
 
 def focus_variant(screen,item):
-    return '_row'+item['name'].split('_')[1] if screen['name']=='lc_browse' and item['name'].startswith('room_') else ''
+    return '_row'+item['name'].split('_')[1] if screen['name']=='lc_browse' and item['name'].startswith('room_') else '_footer' if item['rect'][1]>=FOOTER_TOP else ''
 
 
 def focus_picture(screen,item,rect):
@@ -1196,7 +1226,8 @@ def focus_picture(screen,item,rect):
 
 # These probes describe additive APIs, not release or gameplay identities. Each
 # must be present in ONE supplied DLL; separate menu/font DLLs cannot be stacked.
-DLL_PROBES = (b'lc-online-menus/1\n', b'lc-online-input/1', b'lc-online-lobby/1', b'lc-online-broker/2', b'lc-online-native/1', b'lc-online-party/1', b'lc-online-errors/1',
+DLL_PROBES = (b'lc-online-menus/1\n', b'lc-online-input/1', b'lc-online-lobby/1', b'lc-online-broker/2', b'lc-online-native/1', b'lc-online-party/1', b'lc-online-errors/1', b'lc-online-hits/2',
+              b'lc_notice_started', b'lc-online-drop-in/1',
               b'lcOnlineIntent\0', 'Online\0'.encode('utf-16le'),
               'Menus\0'.encode('utf-16le'), 'LegendsClassicFonts\0'.encode('utf-16le'),
               b'ui/fonts/lc_fonts_pc.xmlb\0', b'ui/fonts/lc_fonts_hd.xmlb\0',
@@ -1212,6 +1243,7 @@ CAPABILITY = b'lc-online-menus/1\n'
 # 2 below), so the bar's top and both ends were dead (live 060p item 7). The builder lists each focusable item's drawn bar
 # (absolute view units, x right, y up: left bottom right top) and the DLL hit-tests our screens against it.
 HITS_CONTRACT = 'lc-online-hits/1'
+HITS_SHAPE_CONTRACT = 'lc-online-hits/2'
 HITS_FILE = 'Data/lc_online_hits.txt'
 # The DLL parser's limits (online_menus_hits_rules.hpp parse / name_ok / number): ONE bad line makes it refuse the WHOLE table
 # and the mouse hit boxes of every co-op screen go off. The builder holds itself to the same rules (hit_table_problems) and
@@ -1223,8 +1255,15 @@ HITS_VIEW_LIMIT = 4096.0
 HITS_NAME = re.compile(r'[A-Za-z0-9_]{1,63}')
 HITS_NUMBER = re.compile(r'-?(?:[0-9]+\.?[0-9]*|\.[0-9]+)')
 # focus_model: a wide solid bar leans right as it rises (the top edge is FOCUS_LEAN view units to the right of the bottom
-# edge); the table lists the bottom-edge rectangle (see hit_scene_problems).
+# edge); table v2 also records this shear (v1 omitted the drawn right strip).
 FOCUS_LEAN = 4
+
+
+def hit_lean(screen, name):
+    item=next((e for e in screen['items'] if e['name']==name),None)
+    if item is None: return 0  # the table validator still diagnoses synthetic bad rows
+    _,_,(l,b,r,t),outline,_=focus_placement(screen,item)
+    return FOCUS_LEAN if not outline and (item['rect'][1]>=FOOTER_TOP or r-l>=50) else 0
 
 
 def hit_rows(screen):
@@ -1269,7 +1308,8 @@ def hit_table_problems(data):
     if not data.endswith(b'\n'): return ['last line not terminated']
     lines=data[:-1].split(b'\n')
     problems=[]
-    if lines[0]!=HITS_CONTRACT.encode('ascii'): problems.append('line 1: bad header')
+    shaped=lines[0]==HITS_SHAPE_CONTRACT.encode('ascii')
+    if lines[0] not in (HITS_CONTRACT.encode('ascii'),HITS_SHAPE_CONTRACT.encode('ascii')): problems.append('line 1: bad header')
     seen=set()
     for number,raw in enumerate(lines[1:],2):
         if len(raw)>HITS_MAX_LINE: problems.append('line %d: line too long'%number); continue
@@ -1277,16 +1317,19 @@ def hit_table_problems(data):
         try: line=raw.decode('ascii')
         except UnicodeDecodeError: problems.append('line %d: not ASCII'%number); continue
         fields=line.split(' ')
-        if len(fields)!=6 or '' in fields: problems.append('line %d: bad fields'%number); continue
+        if len(fields)!=(7 if shaped else 6) or '' in fields: problems.append('line %d: bad fields'%number); continue
         menu,item,*numbers=fields
         if not (HITS_NAME.fullmatch(menu) and HITS_NAME.fullmatch(item)): problems.append('line %d: bad name'%number); continue
         try:
             for token in numbers:
                 if len(token)>24 or not HITS_NUMBER.fullmatch(token): raise ValueError(token)
-            left,bottom,right,top=map(float,numbers)
+            left,bottom,right,top=map(float,numbers[:4])
+            lean=float(numbers[4]) if shaped else 0
         except ValueError: problems.append('line %d: bad number'%number); continue
         if any(abs(v)>HITS_VIEW_LIMIT for v in (left,bottom,right,top)): problems.append('line %d: number out of range'%number); continue
         if not (left<right and bottom<top): problems.append('line %d: empty or inverted rectangle'%number); continue
+        if abs(lean)>64 or abs(left+lean)>HITS_VIEW_LIMIT or abs(right+lean)>HITS_VIEW_LIMIT:
+            problems.append('line %d: bad lean'%number); continue
         if (menu,item) in seen: problems.append('line %d: duplicate entry'%number)
         seen.add((menu,item))
     if len(lines)-1>HITS_MAX_ENTRIES: problems.append('too many entries')
@@ -1298,15 +1341,16 @@ def hit_table(screens):
     """The Data/lc_online_hits.txt bytes for {engine menu name: bound screen}. Raises ValueError for anything the DLL's
     parser would refuse (that would switch the mouse hit boxes of every co-op screen off), and for a bar that reaches an
     unlisted focusable item (the Kick picker): the engine could hand it the click."""
-    lines=[HITS_CONTRACT]
+    lines=[HITS_SHAPE_CONTRACT]
     problems=[]
     for name,screen in screens.items():
         rows=hit_rows(screen)
         for item,*rect in rows:
-            lines.append(' '.join([name,item,*map(_hit_number,rect)]))
+            lines.append(' '.join([name,item,*map(_hit_number,rect),_hit_number(hit_lean(screen,item))]))
         for item,pl,pb,pr,pt in hit_unlisted_boxes(screen):
             for bar,l,b,r,t in rows:
-                if l<pr and pl<r and b<pt and pb<t:
+                lean=hit_lean(screen,bar)
+                if l+min(0,lean)<pr and pl<r+max(0,lean) and b<pt and pb<t:
                     problems.append('%s: bar %s [%g %g %g %g] reaches the unlisted focusable item %s [%g %g %g %g]'%(name,bar,l,b,r,t,item,pl,pb,pr,pt))
     data=('\n'.join(lines)+'\n').encode('ascii')
     problems+=hit_table_problems(data)
@@ -1321,7 +1365,7 @@ def hit_table_rows(data):
     rows={}
     for line in data.decode('ascii').split('\n')[1:-1]:
         menu,item,*numbers=line.split(' ')
-        rows.setdefault(menu,{})[item]=tuple(map(float,numbers))
+        rows.setdefault(menu,{})[item]=tuple(map(float,numbers[:4]))
     return rows
 
 
@@ -1335,15 +1379,30 @@ def _model_bar(model):
     return min(xs),min(zs),max(xs),max(zs)
 
 
+def _model_edges(model):
+    """Bottom and top x endpoints of the one nondegenerate focus quad, read from actual model vertices."""
+    from . import igb_file as G
+    g=G.IgbFile(model)
+    for o in g.objects_of('igVertexArray1_1'):
+        v=g.block_floats(g.ref_list(o.get(2))[0]);points=list(zip(v[0::3],v[2::3]))
+        bottom=min(z for x,z in points);top=max(z for x,z in points)
+        if top-bottom<.01 or max(x for x,z in points)-min(x for x,z in points)<.01: continue
+        low=[x for x,z in points if abs(z-bottom)<.001];high=[x for x,z in points if abs(z-top)<.001]
+        if len(low)!=2 or len(high)!=2: raise ValueError('focus model is not a four-corner quad')
+        return min(low),max(low),min(high),max(high)
+    raise ValueError('focus model has no drawn quad')
+
+
 def hit_scene_problems(data, names, read_tree, read_scene, read_model):
     """Compare the table with the focus bars as BUILT: for every item of each built menu tree that has a focus model
     (<onfocus type="focus" item=ANCHOR model=MODEL>), the bar is the model's own vertices placed at ANCHOR's transform in
     the built scene IGB - nothing from focus_placement. The table row must have the bar's left, bottom and top and a right
-    edge between the bar's bottom-right corner and its leaning top-right corner (FOCUS_LEAN), and the table must list
+    edge and shear matching all four drawn corners, and the table must list
     exactly the items that have such a model (the Kick picker has none). Callables: read_tree(menu) -> XMLB root,
     read_scene(igb name) -> bytes, read_model(resource) -> bytes or None."""
     from . import igb_file as G
     rows=hit_table_rows(data)
+    leans={(f[0],f[1]):float(f[6]) if len(f)==7 else 0 for f in (line.split() for line in data.decode('ascii').splitlines()[1:])}
     problems=[]
     tol=0.06
     for name in names:
@@ -1364,8 +1423,10 @@ def hit_scene_problems(data, names, read_tree, read_scene, read_model):
                 row=table.get(key)
                 if row is None: problems.append('%s: %s draws a focus bar but the table has no row'%(name,key)); continue
                 l,b,r,t=row
-                if abs(l-bar[0])>tol or abs(b-bar[1])>tol or abs(t-bar[3])>tol or not (bar[2]-FOCUS_LEAN-tol<=r<=bar[2]+tol):
-                    problems.append('%s: %s: table [%g %g %g %g] vs built bar [%g %g %g %g] (right edge may lean by %g)'%(name,key,l,b,r,t,*bar,FOCUS_LEAN))
+                lean=leans[(name,key)]
+                edges=tuple(anchor[0]+x for x in _model_edges(model))
+                if abs(b-bar[1])>tol or abs(t-bar[3])>tol or any(abs(a-z)>tol for a,z in zip((l,r,l+lean,r+lean),edges)):
+                    problems.append('%s: %s: table [%g %g %g %g] shear %g vs built bar [%g %g %g %g]'%(name,key,l,b,r,t,lean,*bar))
         for key in sorted(set(table)-seen): problems.append('%s: table row %s has no focus model in the built menu'%(name,key))
     for name in sorted(set(rows)-set(names)): problems.append('table lists an unknown menu: '+name)
     return problems
@@ -1395,6 +1456,7 @@ BROWSE_UNREACHABLE_NOTICES = ('lc_notice_paste_invalid', 'lc_notice_code_invalid
                               # 0.6 preview fix L: the Host screen's native setup found the service not answering (before any room existed).
                               'lc_notice_service_silent')
 NOTICE_TEXT = {
+    'lc_notice_started': 'This session has started; ask the host to return to the lobby',
     'lc_inline_error': 'This action could not be completed. No room was joined.',
     'lc_notice_unavailable': 'Unavailable in this preview. Use Other ways to play.',
     'lc_notice_resolving': 'Looking up room code...',
@@ -1413,6 +1475,7 @@ NOTICE_TEXT = {
     'lc_notice_refusal_rules': 'Refused. Settings possibly differ:',
     'lc_notice_service_lost': 'Lost the online service during setup. Try again.',
     'lc_notice_timeout': 'Took too long to connect. Go Back and try again.',
+    'lc_notice_relay': 'A TURN relay is required. No relay route is available.',
     'lc_notice_clipboard': 'Could not open the clipboard. Type the code instead.',
     # 0.6 preview fix E: a guest the host removed (its native Kick: removal notice 0x2b, reason 0x10ce, flag 1) sees this on the
     # Hub instead of the host-left panel (xml2-fix online_menus_rules kicked_by_host).
@@ -1434,16 +1497,17 @@ DATA_NAMES = {'local_name', 'self_name', 'last_name', 'last_code', 'last_time',
 # Round 15 completes the table (INGAME-DESIGN 3.3): the first eight keep their broker/2 meaning; the DLL's
 # online_menus_rules::error_cause_key / cause_table are the other half of this contract (tests pin both).
 ERROR_CAUSES = ('code_not_found', 'room_full', 'version_mismatch', 'rate_limited', 'timeout', 'offline', 'refused', 'generic',
-                'pin_mismatch', 'code_expired', 'room_closed', 'test_mode', 'unsupported', 'busy', 'invalid_name')
+                'pin_mismatch', 'code_expired', 'room_closed', 'test_mode', 'unsupported', 'busy', 'invalid_name', 'too_many_public_rooms', 'too_many_joins', 'session_started')
 RETRYABLE_CAUSES = ('rate_limited', 'timeout', 'offline', 'generic', 'room_closed')
 # What each cause tells the player to do next (the DLL's next_action; Retry is the only one that is a control).
 NEXT_ACTION = {'code_not_found': 'edit_code', 'room_full': 'browse', 'version_mismatch': 'back', 'rate_limited': 'retry',
                'timeout': 'retry', 'offline': 'retry', 'refused': 'back', 'generic': 'retry', 'pin_mismatch': 'back',
                'code_expired': 'edit_code', 'room_closed': 'retry', 'test_mode': 'back', 'unsupported': 'other_ways',
-               'busy': 'wait', 'invalid_name': 'back'}
+               'busy': 'wait', 'invalid_name': 'back', 'too_many_public_rooms': 'close_room', 'too_many_joins': 'leave_game', 'session_started': 'lobby'}
 # One word each action's copy must contain, so a cause can never name the wrong next step.
 NEXT_WORD = {'retry': ('retry', 'try again'), 'edit_code': ('code',), 'browse': ('another game', 'browse'),
-             'back': ('back', 'update', 'check', 'turn it off', 'turn off'), 'other_ways': ('other ways',), 'wait': ('wait',)}
+             'back': ('back', 'update', 'check', 'turn it off', 'turn off'), 'other_ways': ('other ways',), 'wait': ('wait',),
+             'close_room': ('close one',), 'leave_game': ('leave another game',), 'lobby': ('lobby',)}
 # Localized copy per cause (09-errors wording, in the inline style round 5 chose: one line, names cause + next step).
 ERROR_COPY = {
     'code_not_found': 'Code not found. Ask the host for the current code.',
@@ -1457,15 +1521,18 @@ ERROR_COPY = {
     'pin_mismatch': 'Online service not verified. Check its setting or update.',
     'code_expired': 'That room closed. Ask the host for a new code.',
     'room_closed': 'Not taking players right now. Try again soon.',
+    'session_started': 'This session has started. Ask the host to return to the lobby.',
     'test_mode': 'TestMode is on, so online play is off. Turn it off.',
     'unsupported': 'Online needs a complete install. Use Other ways to play.',
     'busy': 'The network link is busy. Wait a moment, then repeat.',
     'invalid_name': 'Room name must be 1-32 plain characters. Go Back.',
+    'too_many_public_rooms': 'You already host 2 public rooms from this network. Close one.',
+    'too_many_joins': 'This network has no free player seats. Leave another game.',
 }
 # Failures that are transient limits or waits read amber; the rest are red (09-errors: Full is amber, the rest red).
-AMBER_CAUSES = ('room_full', 'room_closed', 'rate_limited', 'busy')
+AMBER_CAUSES = ('room_full', 'room_closed', 'rate_limited', 'busy', 'too_many_public_rooms', 'too_many_joins')
 # Causes each screen's own operations can reach (Hub/Host never resolve a code or list rooms).
-_HUB_CAUSES = ('rate_limited', 'timeout', 'offline', 'refused', 'generic', 'pin_mismatch', 'test_mode', 'unsupported', 'busy')
+_HUB_CAUSES = ('rate_limited', 'timeout', 'offline', 'refused', 'generic', 'pin_mismatch', 'test_mode', 'unsupported', 'busy', 'too_many_public_rooms', 'too_many_joins')
 BROKER_CAUSES = {'lc_online': _HUB_CAUSES,
                  'lc_host': _HUB_CAUSES + ('invalid_name',),
                  'lc_code': tuple(c for c in ERROR_CAUSES if c != 'invalid_name'),
@@ -1540,10 +1607,10 @@ INTENTS = {'open:lc_host':2, 'open:lc_code':3, 'open:lc_browse':4, 'other':5,
            'back':6, 'unavailable':7, 'dismiss':8, 'name':9, 'paste':10, 'delete':11,
            'clear':12, 'done':13, 'rejoin':14, 'copy':16, 'leave-yes':17,
            # Round 5 broker lifecycle (lc-online-broker/2). Rows 0..6 are 24..30, see intent_number.
-           'refresh':18, 'open-room':19, 'retry':20, 'visibility':21, 'page:-1':22, 'page:1':23, 'join':31}
+           'refresh':18, 'open-room':19, 'retry':20, 'visibility':21, 'page:-1':22, 'page:1':23, 'join':31, 'drop-in':75}
 BROKER_ROW_FIRST, BROKER_ROW_LAST = 24, 30
 # Exact allowed screens of the round-5 intents (docs/online-menus.md table); anything else is a contract error.
-BROKER_SCOPE = {18:('lc_browse',), 19:('lc_host',), 20:MENUS, 21:('lc_host',), 22:('lc_browse',), 23:('lc_browse',),
+BROKER_SCOPE = {75:('lc_host',), 18:('lc_browse',), 19:('lc_host',), 20:MENUS, 21:('lc_host',), 22:('lc_browse',), 23:('lc_browse',),
                 **{n:('lc_browse',) for n in range(24,31)}, 31:('lc_browse',)}
 
 
@@ -1561,7 +1628,7 @@ PARTY_MENU = 'lc_party'
 PARTY_INTENTS = {'party-resume':63,'party-invite':64,'party-propose':65,'party-leave':66,'party-leave-yes':67,'party-kick-yes':69,
                  **{f'party-kick:{n}':70+n for n in range(1,5)}}
 PARTY_INTENT_NUMBERS = tuple(sorted(PARTY_INTENTS.values()))
-PUBLIC_INTENTS = (*range(2,15),16,17,*range(18,32),*range(32,63),*PARTY_INTENT_NUMBERS)
+PUBLIC_INTENTS = (*range(2,15),16,17,*range(18,32),*range(32,63),*PARTY_INTENT_NUMBERS,75)
 
 
 def command(number):
@@ -1620,6 +1687,9 @@ def _error_node(name, cause):
     retry_ok = cause in RETRYABLE_CAUSES
     if name == 'lc_code':
         rect = (111, 396, 268, 18)
+        if cause in ('too_many_public_rooms', 'too_many_joins'):
+            # Fit the cap copy while keeping the diagnostic's separate cell clear.
+            rect = (111, 396, 280, 18)
     elif name == 'lc_browse':
         rect = (121, 425, 247, 15) if retry_ok else (59, 425, 309, 15)
     else:
@@ -1662,6 +1732,10 @@ def broker_layout(name, screen):
     # The connected-service scene: green diamond + localized word, selected by the DLL (it empties the plain text then).
     if name=='lc_online':
         _host_left_nodes(items)
+        # Inline description colors override focused styles. The DLL copies the
+        # matching localized source into Select after native description refresh.
+        for suffix,color in (('normal',4),('hover',0)):
+            items.append(_entry('lc_hub_select_'+suffix,'$MENU_ACCEPT Select',(43,454,59,17),'body',color,hidden=True))
         items.append(_variant('lc_service_ok',(355,229,120,18),[dict(kind='diamond',rect=(0,3,7,6),color=6),
                               dict(text='Connected',rect=(12,0,100,18),style='row',color=6)],model_name='service_ok'))
     else:
@@ -1694,7 +1768,7 @@ def broker_layout(name, screen):
     # Default text colour: the item is drawn on the plain page (no baked bar behind it) and takes the native highlight on focus.
     e=_entry('retry','RETRY',(retry[0]+13,retry[1]+(retry[3]-12)/2,retry[2]-14,12),'label',4,intent='retry')
     e['enabled']=False;e['hidden']=True;e['hit_rect']=retry;items.append(e)
-    diag={'lc_code':(382,399,104,14),'lc_browse':(370,426,85,14)}.get(name,(393,425,128,14))
+    diag={'lc_code':(382,399,104,14),'lc_browse':(370,425,227,14)}.get(name,(393,425,128,14))
     items.append(_entry('broker_error','',diag,'label',7,data=True,align='right'))
     if name=='lc_host':
         # Mutually exclusive localized visibility scenes: segment control + the preview badge. Private is the
@@ -1746,11 +1820,11 @@ def broker_layout(name, screen):
         items.append(_entry('desctext1','',(43,455,1,17)))
         items.append(_entry('desctext2','',(98,455,1,17)))
         items[:]=[e for e in items if not re.fullmatch(r'room_[0-6]_[45]',e['name'])]
-        # List header: "PUBLIC GAMES" + DATA count ("- N") after it, DLL-ticked "Updated N s ago" at the right with the
+        # List header: DATA fresh/stale count, DLL-ticked "Updated N s ago" at the right with the
         # five-segment refresh bar (the 10 s idle refresh interval); the track is static, the fills are scenes.
         items.remove(by['age'])
-        by['list_header']['rect']=(59,137,60,13)
-        items.append(_entry('list_count','',(121,137,60,14),'label',4,data=True))
+        by['list_header'].update(text='',rect=(59,137,132,13))
+        items.append(_entry('list_count','',(59,137,132,14),'label',4,data=True))
         items.append(_entry('list_age','',(456,137,84,14),'label',3,data=True,align='right'))
         shapes[:]=[q for q in shapes if q['rect']!=(546,139,16,4)]
         for k in range(5):
@@ -1782,17 +1856,18 @@ def _host_left_nodes(items):
            dict(kind='rect',rect=(20,106,3,52),color=5),
            dict(text=c['capsule'],rect=(34,112,380,13),style='label',color=3),
            dict(text=c['capsule_line'],rect=(34,130,380,18),style='row',color=4),
-           _bar((20,172,168,31)),_bar((200,172,168,31),2)]
+           _bar((20,172,168,31),2),_bar((200,172,168,31),2)]
     items.append(_variant('lc_hub_host_left',(x,y,w,h),parts,model_name='host_left',plane=-280))
-    for key,label,rect,intent,color in (('lc_hostleft_again',c['again'],(x+20,y+172,168,31),'open:lc_host',0),
+    for key,label,rect,intent,color in (('lc_hostleft_again',c['again'],(x+20,y+172,168,31),'open:lc_host',4),
                                          ('lc_hostleft_back',c['back'],(x+200,y+172,168,31),'dismiss',4)):
         e=_entry(key,label,(rect[0]+15,rect[1]+6,rect[2]-25,rect[3]-9),'row',color,intent=intent)
         e['enabled']=False;e['hidden']=True;e['hit_rect']=rect;e['plane']=-300;items.append(e)
 
 
+
 # The focusable settings rows' side-marker positions (top y, layout units): visibility, room name, campaign (the fixture's baked slash).
-# DROP-IN is read-only (no intent): it is never focused and has no marker.
-HOST_MARKER_ROWS = {'visibility': 155, 'room_name': 202, 'campaign': 248}
+# DROP-IN changes the current host admission policy before posting.
+HOST_MARKER_ROWS = {'visibility': 155, 'room_name': 202, 'campaign': 248, 'drop':295}
 
 
 def _native_host_nodes(screen,by):
@@ -1800,9 +1875,9 @@ def _native_host_nodes(screen,by):
     shown through hidden localized nodes at the approved anchors. The fixture prose the DLL clears is not authored."""
     items=screen['items']
     items[:]=[e for e in items if e['name'] not in HOST_FIXTURE_PROSE]
-    # The CAMPAIGN row is the second way into the native options (the Open button is the first); DROP-IN is read-only.
+    # CAMPAIGN opens native options; DROP-IN is an editable host-only admission choice.
     by['campaign'].update(text='',intent='open-room')
-    by['drop_in'].update(text='',intent='')
+    by['drop_in'].update(text='',intent='drop-in')
     by['open_hint'].update(text='Game options next')
     def node(key,text,rect,style,color,**kw): items.append(_entry(key,text,rect,style,color,hidden=True,**kw))
     items.append(_variant('lc_host_settings_unknown',(164,258,204,36),
@@ -1842,7 +1917,7 @@ def runtime_layout(name,state=None):
         'save':'No campaign selected','campaign':'SELECT CAMPAIGN',
         'preview_visibility':'PENDING','open_hint':'Creates your room',
         'code_pending':'Share this code with friends','age':'',
-        'list_header':'PUBLIC GAMES',
+        'list_header':'',
         'details':''}
     for e in screen['items']:
         if e['name'] in replacements: e['text']=replacements[e['name']]
@@ -1862,7 +1937,15 @@ def runtime_layout(name,state=None):
         if shape['kind']=='diamond' and shape['color']==6:shape['color']=3
         if name=='lc_code' and shape['rect'][1]==130 and shape['rect'][3]==54:
             shape.update(kind='cell',outline=3)
-        if name=='lc_code' and shape['rect']==(483,307,76,46):shape['dim']=False
+        if name=='lc_code' and shape['rect']==(483,307,CODE_TOOL_WIDTH,46):shape['dim']=False
+    if name in ('lc_code','lc_browse'):
+        # Native descriptions expand MENU_BACK and add an explicit light
+        # palette prefix. Keep localized sources for both visual states so
+        # the DLL can restore navy on amber after description refresh.
+        back=next(e for e in screen['items'] if e['name']==('desctext2' if name=='lc_code' else 'desctext3'))
+        label=back['text']
+        for suffix,color in (('normal',4),('hover',0)):
+            screen['items'].append(_entry('lc_footer_back_'+suffix,label,back['rect'],back['style'],color,hidden=True))
     if name=='lc_code':
         # Only cell text/remaining count is published by input API /1. Neutral
         # cells avoid freezing the round-1 cursor at its initial edit position.
@@ -1888,7 +1971,18 @@ def runtime_layout(name,state=None):
     # The old optional generic error anchor was not an input target. All
     # authored Back usecmds are routed by the scoped DLL handler, once.
     _graph(screen)
+    if name=='lc_online':
+        for e in screen['items']:
+            if e['name'] in ('lc_hostleft_again','lc_hostleft_back'):
+                other='lc_hostleft_back' if e['name']=='lc_hostleft_again' else 'lc_hostleft_again'
+                e.update(left=other,right=other,up=other,down=other)
     if name=='lc_browse':
+        # The diagnostic owns the full right cell of the error row; paging has its
+        # own footer cells instead of clipping the error against Previous page.
+        for e in screen['items']:
+            if e['name']=='scroll_up': e['rect']=(382,455,100,18)
+            if e['name']=='scroll': e['rect']=(497,455,100,18)
+            if e['name']=='breadcrumb': e['text']=''
         # Row cells keep the closed grid (left/right in a row, up/down in a column) while disabled or rebound.
         for e in screen['items']:
             m=re.fullmatch(r'room_([0-6])_([0-6])',e['name'])
@@ -1897,6 +1991,8 @@ def runtime_layout(name,state=None):
             i=ROW_COLUMNS.index(c)
             e.update(left=f'room_{r}_{ROW_COLUMNS[max(0,i-1)]}',right=f'room_{r}_{ROW_COLUMNS[min(len(ROW_COLUMNS)-1,i+1)]}',
                      up=f'room_{r-1}_{c}' if r else 'prompt_refresh',down=f'room_{r+1}_{c}' if r<BROWSE_ROWS-1 else 'scroll')
+    if name=='lc_browse':
+        next(e for e in screen['items'] if e['name']=='prompt_join')['down']='room_0_0'
     if name=='lc_code':
         keys={e['name']:e for e in screen['items'] if e['name'].startswith('key_')}
         for i in range(32):
@@ -1989,8 +2085,8 @@ def broker_problems(root, screen):
         if 'open_room' in items: errors.append('Open item must be named open')
         e=need('campaign',usecmd=command(19),type='MENU_ITEM_TEXT')
         if e is not None and e.get('text') not in ('',None): errors.append('campaign text belongs to the native setting nodes')
-        e=need('drop_in',type='MENU_ITEM_TEXT')
-        if e is not None and (e.get('usecmd') or e.get('text')): errors.append('drop-in row is read-only and its prose comes from the policy scenes')
+        e=need('drop_in',usecmd=command(75),type='MENU_ITEM_TEXT')
+        if e is not None and e.get('text'): errors.append('drop-in prose comes from the policy scenes')
         for key in HOST_FIXTURE_PROSE:
             if key in items: errors.append('fixture prose left in the Host asset: '+key)
         for key in HOST_SETTING_COPY:
@@ -2059,7 +2155,9 @@ def lobby_layout(role, *, members=1, ready=False, fixture=False, pending=False, 
     shape('outline',(315,128,75,16),3)
     text('lc_room_visibility','PENDING',(320,130,65,14),'label',3)
     # 060r live: no "pending" copy for a guest or a LAN host - the campaign is the host's choice; the host's own DLL line names it.
-    text('lc_campaign_summary','Campaign chosen in Game options. Friends join at the next area.' if role=='host' else 'Campaign set by the host. Friends join at the next area.',(61,153,375,18),color=3)
+    # p060fix/AE: the authored line claims no admission policy; the host's DLL line adds "Friends join at the next area" or
+    # "No joining once the game starts" from the host's actual DROP-IN choice, and a guest never claims the remote policy.
+    text('lc_campaign_summary','Campaign chosen in Game options.' if role=='host' else 'Campaign set by the host.',(61,153,375,18),color=3)
     text('lc_code_label','ROOM CODE',(487,118,95,14),'label',3,align='right')
     text('lc_room_code','K7QN-2X9M' if fixture else '---- ----',(452,132,130,23),'title',5,data=True,align='right')
     text('lc_copy_code','Copy code',(486,159,96,16),'label',intent='copy')
@@ -2113,7 +2211,7 @@ def lobby_layout(role, *, members=1, ready=False, fixture=False, pending=False, 
         parts=[dict(text='to get ready.',rect=(177,0,100,17),style='body',color=3)])
     waiting_row=ready_flags.index(False) if waiting else 0
     text('lc_waiting_name',('Logan','Kitty','Alex','Sam')[waiting_row] if fixture and waiting else '',(193,365,106,17),'body',3,data=True)
-    variant('lc_ready_all','All ready. Friends join at the next area.',(125,365,420,17),'body',3,visible=fixture and not waiting and members>1)
+    variant('lc_ready_all','All ready.',(125,365,420,17),'body',3,visible=fixture and not waiting and members>1)
     variant('lc_ready_solo','Solo start follows the native minimum-player rule.',(125,365,420,17),'body',3,visible=fixture and members==1 and not waiting)
     for key,label,rect,intent in (
         ('text_startgame','START GAME',(43,391,177,31),'native-start'),
@@ -2200,6 +2298,19 @@ def lobby_layout(role, *, members=1, ready=False, fixture=False, pending=False, 
         if key in ('lc_code_copied','lc_leave_confirm','lc_lobby_error','lc_lobby_error_copy','lc_lobby_error_target'):
             value=e['text'];e.update(text='',plane=-280,parts=[dict(kind='panel',rect=(0,0,554,29),color=1),
                 child_text(value,(10,6,340 if key in ('lc_code_copied','lc_leave_confirm','lc_lobby_error') else 470,20),'row',e['color'])])
+    # 060s bound HOST/READY/SAME BUILD correctly, but their overlapping raster models shared the card's depth.
+    # Native text supplies independent glyph draws in front of the card; the visible words do not depend on model ordering.
+    card_labels={'host':'HOST','ready':'READY','not_ready':'NOT READY','you':'You','ms':'ms','measuring':'Measuring',
+                 'same_build':'SAME BUILD','checking_build':'CHECKING BUILD...','other_build':'OTHER BUILD'}
+    for e in items:
+        match=re.fullmatch(r'lc_p([1-4])_(.+)',e['name'])
+        if not match or match[2] not in card_labels: continue
+        n=int(match[1]);suffix=match[2];x=43+(n-1)*141
+        rects={'host':(x+90,195,33,14),'ready':(x+23,275,100,18),'not_ready':(x+23,275,100,18),
+               'you':(x+26,293,96,16),'ms':(x+73,293,39,16),'measuring':(x+26,293,96,16)}
+        e.update(text=card_labels[suffix],parts=[],plane=-190,rect=rects.get(suffix,e['rect']),enabled=False)
+        # Never let a display label answer CMenu's mouse walk and raise Accept on the action focused elsewhere.
+        # Inline palette prefixes retain the authored glyph colour even though this native item is disabled.
     _graph(screen)
     # Only offline previews reflect a gate. Authored Start must be available for
     # the native activator/tick to own enabling, and must keep its original flags.
@@ -2207,8 +2318,15 @@ def lobby_layout(role, *, members=1, ready=False, fixture=False, pending=False, 
 
 
 def variant_resource(screen,item):
-    # Identical relative art (the seven Browse rows' status/pip/build/dim scenes) shares one model across anchors.
-    return 'ui/models/lc_o_'+screen['name']+'_'+item.get('model_name',item['name'])
+    # Relative artwork is independent of its card/row anchor and screen. Share
+    # identical pictures across all four Party cards and the native lobby skins.
+    # Include every variant_picture input that can affect pixels or geometry.
+    import hashlib, json
+    visual = {key:item.get(key) for key in ('text','parts','picture_scale','dim','font_alias','align')}
+    visual.update(size=item['rect'][2:], font=font_binding(item),
+                  enabled=item.get('enabled',True), color=item['color'])
+    digest=hashlib.sha256(json.dumps(visual,sort_keys=True,separators=(',',':')).encode()).hexdigest()[:24]
+    return 'ui/models/lc_o_variant_'+digest
 
 
 def lobby_tree(original,screen,palette_ids=None):
@@ -2370,9 +2488,12 @@ def model_output_problems(out, index=None):
     drew black boxes, outline bars and lighter inner rectangles)."""
     from pathlib import Path
     out=Path(out);errors=[]
+    from . import menu_scene as S
     for path in sorted(p for p in (out/'UI'/'models').glob('*') if p.name.lower().startswith('lc_o_') and p.suffix.lower()=='.igb'):
         try:
-            layers=panel_layers(path.read_bytes())
+            data=path.read_bytes()
+            errors.extend(path.name+': '+problem for problem in S.static_model_problems(data))
+            layers=panel_layers(data)
             drawn=[l for l in layers if not l[3]]
             if len(drawn)!=1 or not drawn[0][1] or drawn[0][2]!=(4,5):
                 errors.append(path.name+': model must draw one alpha-blended layer, draws '+repr([(l[0],l[1],l[2]) for l in drawn]))

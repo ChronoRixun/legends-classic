@@ -133,3 +133,26 @@ def test_panel_attachment_keeps_both_texture_registrations_when_requested():
     refs=out.list_items(textures.ref)
     assert len(refs)==2 and refs[0]==7 and refs[1]!=7
     assert all(out.obj(ref).get(2)=='synth_panel' for ref in refs)
+
+
+def test_static_model_serialized_info_buffer_owns_only_the_live_scene():
+    # Live 060s: every co-op reopen retained its raster images. The real Alchemy
+    # loader refs the complete buffer, but clearAll only unrefs logical count.
+    # The fixture starts [pump, scene], so count=1 alone leaves [scene, scene].
+    graph = IgbFile(S.static_model(instance_scene(True)))
+    root = graph.obj(struct.unpack_from('<i', graph.data, graph._obj_start - 4)[0])
+    assert root.get(2) == root.get(3) == 1
+    assert graph.ref_list(root.get(4)) == graph.list_items(root.ref)
+    assert len(graph.ref_list(root.get(4))) == 1
+    assert graph.block(root.get(4))[1] == 4
+
+
+def test_static_model_output_guard_refuses_the_old_count_only_edit():
+    graph = IgbFile(instance_scene(True))
+    root = graph.obj(0)
+    # Old generator overwrites the pump with the scene and shortens only count.
+    struct.pack_into('<i', graph.buf, graph.block(root.get(4))[0], 1)
+    struct.pack_into('<i', graph.buf, root.fields[2].offset, 1)
+    assert S.static_model_problems(graph.edited()) == [
+        'static model information buffer retains discarded references']
+    assert not S.static_model_problems(S.static_model(instance_scene(True)))

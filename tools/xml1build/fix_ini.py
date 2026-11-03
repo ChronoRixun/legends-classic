@@ -321,7 +321,9 @@ SHARED_HANDLERS_C = {'JumpAttackDamageRule': 'xml1', 'FlyChargeDamageRule': 'xml
 # Beta 8 (080h, owner decision): the telekinesis is in progress (beta 9), so TelekinesisRule is written only with
 # --telekinesis xml1 (default off). Beta 8 (080i, Owen's hand test 10-26): with GuardDecideRule=xml1 a real Guard press
 # (pad X / keyboard E) did nothing at all, so it is written only with --guard-decide xml1 (default off) and Guard is
-# XML2's ch_guard_decide again (grabs and pickups through the grab talent characters adds).
+# XML2's ch_guard_decide again (grabs and pickups through the grab talent characters adds). 0.5.0-beta.1 keeps it off
+# (Owen's real-pad check of 082f, 10-28: GuardTrace showed native_grab=1 stunned=0 on every press - the 082d
+# stunned-only rule refused the grab XML2's Guard makes and the refused press showed no block).
 TELEKINESIS = {'TelekinesisRule': 'xml1'}
 GUARD_DECIDE = {'GuardDecideRule': 'xml1'}
 TK_GUARD = {**TELEKINESIS, **GUARD_DECIDE}
@@ -434,7 +436,7 @@ FORCED_TEAMS_VALUES = ('1', '0', 'off')
 # v1.5: the 0.2.2 wave's [Game] keys - PlacementCrush, DoubleHeal, RankCosts, LevelSkillPoints, LevelStatPoints,
 # Xml1Multipart, X1Leader, SoloMode, DeathRule, DangerRoomGate, RevivalCost, Xml1Turrets, PackAmount, DeathSwitchClear - and
 # [Limits] ScriptFunctions; a 1.4 DLL silently ignores every one of them, so check_release_dll refuses it)
-REQUIRED_XML2FIX = '1.9'
+REQUIRED_XML2FIX = '1.11'
 # The companion fix's prerelease a beta/rc builder needs (launcher-facing requires.xml2fix only): 0.3.0-beta.2 writes
 # [Engine] ModelPools and [Game] ComboPopupGuard, first read by XML2 Fix 1.8.0-beta.2; 0.3.0-beta.3 writes [Online]
 # TickRate, first read by 1.8.0-beta.3; 0.4.0-beta.5 writes [Game] ClassicHud / ClassicCodex (the classic look), first
@@ -442,7 +444,10 @@ REQUIRED_XML2FIX = '1.9'
 # revision 10), first read by 1.8.0-beta.6, so its requirement is '>=1.8.0-beta.6' (SemVer: beta.6, beta.N > 6, every
 # rc and the final 1.8.0 meet it; 1.8.0-beta.5 and older do not). 0.4.0-beta.7 writes schema 3 [NpcSemiAuto] rows (every
 # gun family) and [Game] ClassicSpeakers, first read by 1.8.0-beta.7 (a beta.6 DLL refuses the schema 3 rows: weapon
-# brain off, host/join closed), so its requirement is '>=1.8.0-beta.7'.
+# brain off, host/join closed), so its requirement is '>=1.8.0-beta.7'. 0.4.1 (beta 8) required 1.9 / beta.1. 0.6.0 writes
+# the 0.5 profile ([Limits] SaveLayout=w2, [Game] Xml1Economy, wave 3, TelekinesisRule and flying carry), plus
+# the co-op screens and fonts. GuardDecideRule stays opt-in. The matching companion for this release is
+# XML2 Fix 1.11.0-beta.1: '>=1.11.0-beta.1' / '>=1.11'.
 REQUIRED_XML2FIX_PRERELEASE = 'beta.1'
 
 
@@ -495,8 +500,25 @@ RECEIVE_VALIDATION = '1'
 # [Online] JoinInProgress=1 (XML2 Fix 1.8, gameplay agreement rule 26): drop-in co-op - the host may start alone, a
 # player joins a running game and is brought in at the next level change, solo story segments keep the other players
 # watching, and the host keeps hosting when the last player leaves. Every co-op PC must have it (a peer without it is
-# refused by name). Written for every port build (0.4.0: drop-in on by default).
+# refused by name). Written for every port build. LateJoin below separately
+# gates the admission of a player who joins AFTER the host pressed START.
 JOIN_IN_PROGRESS = '1'
+# [Online] LateJoin=1 (0.6.0, XML2 Fix p060fix/AE): a friend who joins a running game waits on the Joined Game screen
+# and, at the host's next area load, everyone (host included) reloads the host's campaign image together through the
+# saved-campaign START path, with a canonical camera and RNG epoch on every PC. It is the host's choice (rule 26
+# revision 7; guests need no matching policy) and the host's DROP-IN row toggles it for one room. 0.6.0-preview
+# shipped 0 while the restart desynchronised at its first checksum (live-060y); a tester's explicit value in the
+# existing xml2-fix.ini survives a rebuild or repair (keep_player_late_join).
+LATE_JOIN = '1'
+
+# [Online] Transport=gns (XML2 Fix gameplay-agreement rule 25 GnsTransport; xml2-fix docs/gns-transport.md): the game's
+# messages over GameNetworkingSockets. The new online screens ([Online] Menus=1) need it: without it the DLL keeps the
+# menu broker client off ("menu broker client unavailable - select Transport=gns") and refuses JoinInProgress, so Play
+# Online says "Online service: Unavailable". Written exactly when Menus=1 is written (online_menus_keys), never
+# otherwise: a build with --online-menus off keeps the stock transport (the launcher's Host / JoinCode imply gns by
+# themselves). Port-owned like Menus, so a rebuild sets it to gns over any other value and a rebuild with the online
+# menus off drops it; only [Online] LateJoin keeps a player's explicit value (keep_player_late_join).
+ONLINE_TRANSPORT = 'gns'
 
 # [Online] TickRate=60 (XML2 Fix 1.8.0-beta.3, gameplay agreement rule 29): online sessions run at 60 frames a second
 # like single-player instead of the game's own 30 (CClient::frame's online 1/30 s frame). Lockstep runs every PC's
@@ -545,7 +567,7 @@ PORT_OWNED = {'Game': ('NewGameTeam', 'ResetUnlocks', 'SaveFolder', 'ForcedTeams
               'Limits': ('ActorSlots', 'ResourceNames', 'ItemEnhancements', 'FightStyles', 'EffectCurves', 'MoveTriggers', 'EntityCapacity',
                          'ScriptFunctions', 'IGBCache', 'ActorPools', 'AnimEnums', 'CharSounds', 'MotionPool', 'ResidentStats',
                          *(k for k in LIMITS_WAVE3 if k != 'FightStyles'), *LIMITS_WAVE3_LATE, SAVE_LAYOUT_KEY),
-              'Online': ('GameVersion', 'ContentFingerprint', 'FastTransfer', 'ReceiveValidation', 'JoinInProgress', 'TickRate', 'Menus'),
+              'Online': ('GameVersion', 'ContentFingerprint', 'FastTransfer', 'ReceiveValidation', 'JoinInProgress', 'LateJoin', 'TickRate', 'Menus', 'Transport'),
               'Save': ('Format',),
               'Engine': ('ModelPools', 'ModelHandles'),
               'Xml1Turrets': ('Count',) + tuple(f'T{i}' for i in range(1, 33)),
@@ -979,11 +1001,17 @@ def online_keys(*, port_identity=False, balance=False, fingerprint=None) -> dict
     if not port_identity:
         return {}
     keys = {'GameVersion': RI.game_version(), 'FastTransfer': FAST_TRANSFER, 'ReceiveValidation': RECEIVE_VALIDATION,
-            'JoinInProgress': JOIN_IN_PROGRESS, 'TickRate': TICK_RATE}
+            'JoinInProgress': JOIN_IN_PROGRESS, 'LateJoin': LATE_JOIN, 'TickRate': TICK_RATE}
     if fingerprint:
         keys['ContentFingerprint'] = fingerprint
     keys.update(broker_keys())
     return keys
+
+
+def online_menus_keys() -> dict:
+    """the [Online] keys a build with the new online screens adds: Menus=1 and the transport they need (Transport=gns,
+    rule 25; see ONLINE_TRANSPORT). A build without the online menus writes neither."""
+    return {'Menus': '1', 'Transport': ONLINE_TRANSPORT}
 
 
 def save_keys(*, port_identity=False) -> dict:
@@ -1093,7 +1121,7 @@ def port_keys(out, *, save_folder=PLAY_SAVE_FOLDER, eighth=True) -> dict:
             raise ValueError('Online menus are incomplete: '+'; '.join(problems))
         if game.get('LegendsClassicFonts')!='1':
             raise ValueError('Online menus require the complete private font family')
-        online['Menus']='1'
+        online.update(online_menus_keys())
     if postgame and (Path(out) / 'Data/lcsave/catalogue.lcc').is_file():
         online['GameVersion'] = RI.manifest(out)['game_version']
     if online:
@@ -1440,6 +1468,8 @@ EXTRA_MARKERS = [(('Game', 'Xml1GrabCarry'), CARRY_CHAIN_MARKER, '[Game] Xml1Gra
 # are the byte markers.
 TK_STILL_MARKER = b"a still telekinesis throw keeps the victim's facing (no zero divide)"
 GUARD_TAP_MARKER = b'guard decide runs at input and exits after a tap'
+GUARD_XML1_NATIVE_MARKER = b'XML1 ordinary grab and guardblocking rank1 native energy lifecycle'
+GUARD_XML1_NATIVE_NAME = '[Game] GuardDecideRule (XML1 admission and native held block)'
 COLOSSUS_CASTER_MARKER = b'Colossus charge evaluates its talents on the caster'
 THROWN_IMPACT_MARKER = b'thrown bodies forward world impacts (42C09E); carry pose on animated bones'
 # xml2-fix 1.9.0-beta.1 (beta 8 candidate 080h): [Game] Xml1FlyingCarry=0. A DLL before it (080g and older) ignores the key
@@ -1447,7 +1477,8 @@ THROWN_IMPACT_MARKER = b'thrown bodies forward world impacts (42C09E); carry pos
 FLYING_CARRY_OFF_MARKER = b'flying carry off (Xml1FlyingCarry=0): no carry handlers, PC flight descent'
 RELEASE_18_KEYS = {**RELEASE_18_KEYS, 'Game': RELEASE_18_KEYS['Game'] + tuple(FLYING_CARRY_OFF)}
 RELEASE_MARKERS[('Game', 'Xml1FlyingCarry')] = (FLYING_CARRY_OFF_MARKER, '[Game] Xml1FlyingCarry (flying carry off)')
-EXTRA_MARKERS += [(('Game', 'TelekinesisRule'), TK_STILL_MARKER, '[Game] TelekinesisRule (still throw)'),
+EXTRA_MARKERS += [(('Game', 'GuardDecideRule'), GUARD_XML1_NATIVE_MARKER, GUARD_XML1_NATIVE_NAME),
+                  (('Game', 'TelekinesisRule'), TK_STILL_MARKER, '[Game] TelekinesisRule (still throw)'),
                   (('Game', 'GuardDecideRule'), GUARD_TAP_MARKER, '[Game] GuardDecideRule (tap exit)'),
                   (('Game', 'ColossusChargeRule'), COLOSSUS_CASTER_MARKER, '[Game] ColossusChargeRule (caster talents)'),
                   (('Game', 'Xml1GrabCarry'), THROWN_IMPACT_MARKER, '[Game] Xml1GrabCarry (thrown impact, animated bones)')]
@@ -1653,9 +1684,13 @@ def check_online_dll(dll, keys: dict) -> None:
     Unlike old source-only options, missing DLLs cannot certify an online API.
     A bytes argument supports synthetic capability-negative unit tests.
     """
-    if keys.get('Online',{}).get('Menus')!='1':return
+    online=keys.get('Online',{})
+    if online.get('Menus')!='1' and 'LateJoin' not in online:return
+    data=dll if isinstance(dll,bytes) else Path(dll).read_bytes() if dll is not None and Path(dll).is_file() else b''
+    if 'LateJoin' in online and b'LateJoinPolicyV1' not in data:
+        raise FixTooOld('LateJoin policy requires the matching companion DLL', ['[Online] LateJoin'])
+    if online.get('Menus')!='1':return
     from . import online_menus as OM
-    data=dll if isinstance(dll,bytes) else Path(dll).read_bytes() if Path(dll).is_file() else b''
     problems=OM.capability_problems(data)
     if keys.get('Game',{}).get('LegendsClassicFonts')!='1':problems.append('LegendsClassicFonts must be enabled together')
     try:capacity=int(keys.get('Limits',{}).get('ScriptFunctions','1024'))
@@ -1678,6 +1713,25 @@ def old_fix_keys(dll, keys: dict) -> list:
     return missing
 
 
+def keep_player_late_join(existing_text: str, keys: dict) -> dict:
+    """`keys` with [Online] LateJoin taken from the existing ini when a player set it explicitly to 0 or 1 (any
+    case). The port owns the key (it is written for every build, default LATE_JOIN), but a tester who turned late
+    joining off, or on while the default was 0, keeps that choice across a rebuild or a repair. Anything but 0/1
+    is replaced by the default; no [Online] LateJoin in `keys` (not a port build) leaves `keys` as it is."""
+    online = keys.get('Online') or {}
+    if 'LateJoin' not in online:
+        return keys
+    for section, values in parse_ini(existing_text).items():
+        if section.lower() != 'online':
+            continue
+        for k, v in values.items():
+            if k.lower() == 'latejoin' and v.strip() in ('0', '1') and v.strip() != online['LateJoin']:
+                kept = {s: dict(vals) for s, vals in keys.items()}
+                kept['Online']['LateJoin'] = v.strip()
+                return kept
+    return keys
+
+
 def write_port_keys(out, keys: dict | None = None, *, old_fix_ok: bool = False) -> dict:
     """merge the port's keys (default: port_keys(out)) into <out>/xml2-fix.ini, dropping the PORT_OWNED keys it does
     not need; the launcher's keys stay. Returns the keys written. An existing DLL that doesn't know every key raises
@@ -1690,6 +1744,7 @@ def write_port_keys(out, keys: dict | None = None, *, old_fix_ok: bool = False) 
         text = _decode(ini.read_bytes())[0]
     except FileNotFoundError:
         text = ''
+    keys = keep_player_late_join(text, keys)
     drop = dropped_keys(keys)
     actors = any(section.lower() == 'limits' and any(k.lower() == ACTORS_KEY.lower() for k in values)
                  for section, values in parse_ini(text).items())

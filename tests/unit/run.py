@@ -4,6 +4,8 @@ module here. No game data is read. `python tests/unit/run.py [-k substring]`; py
 needs a capability this machine lacks: it is reported as SKIP with its reason and does not fail the run.
 Exit code 0 = all passed (or skipped)."""
 import importlib
+import tempfile
+import inspect
 import sys
 import time
 import traceback
@@ -28,7 +30,10 @@ def main(argv=None):
                 continue
             t = time.time()
             try:
-                fn()
+                kwargs = {}
+                if 'tmp_path' in inspect.signature(fn).parameters:   # pytest's tmp_path fixture, for tests that use it
+                    kwargs['tmp_path'] = Path(tempfile.mkdtemp(prefix=f'{name}-'))
+                fn(**kwargs)
                 passed += 1
                 print(f'PASS {path.stem}.{name} ({time.time() - t:.2f}s)')
             except unittest.SkipTest as e:

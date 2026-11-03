@@ -3049,7 +3049,22 @@ listings, never the cache path: two caches of the same disc and install get the 
   first: a Redump Xbox image also has an ISO 9660 PVD at 0x8000 (its video partition). Rejected: CCI (`CCIM`),
   CSO/ZSO (`CISO`/`ZISO`), zip/7z/rar -> `E_ISO_COMPRESSED` with how to decompress; GameCube (0xC2339F3D at 0x1C),
   Wii (0x5D1C9EA3 at 0x18), PS2 / PS1 (ISO 9660 + `SYSTEM.CNF` with `BOOT2` / `BOOT`), other ISO 9660, anything else
-  -> `E_ISO_NOT_XBOX` + `detected`; a folder `E_ISO_FOLDER`; a file or directory past the image end `E_ISO_READ`.
+  -> `E_ISO_NOT_XBOX` + `detected`; a file or directory past the image end `E_ISO_READ`.
+- **Extracted folders** (`prepare/folder.py`): `open_image` and the builder's existing `--iso` auto-detect a folder.
+  Only paths in packaged `known_dump_files.json` enter the reader (original XBE, archive, sounds/zsds and
+  movies/ntsc). Every original must match size/SHA-256 before use, including movies with `--no-movies`.
+  Loose recomp assets, settings and saves are ignored. Missing/modified originals produce
+  `E_ISO_FOLDER_MISSING` / `E_ISO_FOLDER_MODIFIED` naming the file; unsafe paths, links/reparse points, hard links
+  and case collisions in traversed directories produce `E_ISO_FOLDER_UNSAFE`. Directory enumeration is bounded;
+  only the directories needed to find reference paths are scanned. File identity/time checks and verified open
+  handles detect source changes (`E_ISO_SOURCE_CHANGED`); Windows handles deny writes/deletes while open.
+  The builder reverifies originals before stamping a build. Folder cache IDs have a `folder-` prefix and include
+  the reference digest; P1/stamp keys include the source kind and reference digest, without changing ISO keys.
+  The existing archive/bundle extraction is reused. Output/cache/log overlap with the source is refused.
+  `info.iso` keeps its existing location and adds `format: folder`, `verified`, `verified_files`, `source_kind`
+  and `recomp_layout` (presence of the recomp layout marker; no claim that recomp overlays are verified).
+  The launcher can keep passing `--iso`; its image-only picker needs separate folder-selection support.
+  Reference generation requires a trusted whole-image SHA-256 as well as the existing dump fingerprints.
 - **Reading**: the directory trees are walked (left/right links in 4-byte units, 0xFFFF = sector padding); every file
   is one extent read through a `SubFile` window; `zipfile` opens `z/assetsfb.zip` on its window. Nothing is copied
   that the build does not read.
@@ -7895,6 +7910,35 @@ Beta 8 candidates 080h / 080i: both are off by default and written only on reque
 nothing in Owen's 10-26 hand test while the test pipe's presses worked). Without `GuardDecideRule` Guard runs XML2's
 `ch_guard_decide`, which grabs and picks up through the `grab` talent characters adds (rule 46 installs without bit
 1024). Both options are ini only (CONTENT_OPTS with no module), so toggling one re-runs nothing.
+
+Guard correction (2026-10-28): ordinary XML1 enemy admission is not stun-only.
+The native target predicate admits raw stun or simulation time at/after the
+physical descriptor deadline; an ordinary hit impulse can set that deadline to
+time + 1.5 seconds. Large, ownership, death/status and def_grab exclusions still
+apply. Might limits object lifting separately. Both ordinary action3 and the
+raw-stun action25 resolve through the authored grabstart mapping.
+
+The requested refused-held-Guard block is an explicit PC port policy. `zones`
+always appends a private `guardblocking` node to both shared-node variants,
+preserving retail `blocking` and the ch_pain `block` reaction. It uses
+ea_blocking, ch_guard_block, no saved skill requirement, powerusage=1 upkeep,
+and a time0/remove-on-node-end damage_to_energy scale affecter at literal1
+(PC rank1 policy). Its Special chain releases to Idle. Rule46 registers the
+private handler only with Guard enabled; native entry/exit/cancel and owned
+native effect cleanup pair with the normalized held mask0x100. Successful
+interactions take precedence; AI/script admissions retain source behavior.
+
+V18 requires the complete node as a direct FightMove child of the shared NodeList
+root in both output variants when Guard is selected (including XMLB multi-root
+wrappers). A same-name node with another tag or inside an ignored container
+is rejected.
+An older cached build missing it must rebuild zones; an INI-only toggle cannot
+silently certify missing content. The DLL compatibility gate requires
+GUARD_XML1_NATIVE_MARKER. Guard policy value1=1 in rule46's agreement rejects
+older-policy peers without altering unrelated rule46 selections. Content/release
+identity remains assigned by integration. Synthetic coverage is in
+tests/unit/test_guard_block.py and the companion native Guard block fixture.
+
 ## 108. Limits wave 3 (`--limits-wave3`, XML2 Fix rules 35 revision 2 and 53-60; validators V-MOVES .. V-SCRIPTS)
 
 Full text: `docs/LIMITS_WAVE3.md`. `--limits-wave3 {off,on,all}` (default off, `build_xml1.py` and `xml1-builder build`) writes
@@ -8081,3 +8125,12 @@ rebuilt (`ITEM_OWN_REBUILT`) definition, so an old instance whose list shrank (G
 records, the three Shiar items 1 to 0 under `noop`) named ids the new table no longer has and the save was refused ("parked /
 unknown"). The own list of a rebuilt definition is now skipped and set from the definition. Test (red before the fix):
 `test_lcsave_loot.test_a_rebuilt_reward_whose_list_shrank_still_loads_with_the_current_list`, with a negative control.
+# Experimental XML1 save-import sidecar integration
+
+The default-off importer and its source-receipted build producer are specified
+in `docs/XML1-SAVE-IMPORT.md`. `savefiles` may register
+`Data/lcsave/xml1-import.json` only when `--experimental-save-import` and a
+private `--import-ledger` are supplied. Schema 2 binds finished Data/Scripts;
+runtime admission separately validates and pins the final INI/report and paired
+DLL. Normal build defaults and release identities are unchanged. The coordinator
+must assign the content identity before shipping any new generated output.

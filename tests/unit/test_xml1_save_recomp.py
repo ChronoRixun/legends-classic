@@ -22,7 +22,11 @@ def recomp_fixture(folder, *, extra=0):
         ET.SubElement(herostat, 'stats', name=f'target_pad_{i}', skin='0101')
     _xmlb(str(build / 'Data/herostat.engb'), herostat)
     refresh_bindings(build, mapping)
-    original_table = tables.ImportTable(build)
+    # Resolve identities while constructing defaults; this intermediate build
+    # is intentionally not yet a valid import table for its added target pads.
+    from lcsave import convert, keys
+    environment = convert.Environment(str(build), catalogue=tables.installed_catalogue(
+        (build / 'Data/lcsave/catalogue.lcc').read_bytes()))
     # Deliberately move both supported records past the first 21 positions.
     definitions = {i + 1: f'extra_{i}' for i in range(extra)}
     definitions.update({99: 'hero_b', 103: 'hero_a'})
@@ -38,8 +42,8 @@ def recomp_fixture(folder, *, extra=0):
     for name in [*NAMES[2:], *(f'target_pad_{i}' for i in range(5))]:
         default = mapper.defaults(container.RECORDS['HREC'])
         default.update(level=1, ack_level=1, player_seat=-1, talents=[], equipped=[], powers=[],
-                       costume=original_table.resolve('COST', name, 'skin'),
-                       costumes_unlocked=[original_table.resolve('COST', name, 'skin')],
+                       costume=environment.id_of('COST', keys.key_hash(name, 'skin')),
+                       costumes_unlocked=[environment.id_of('COST', keys.key_hash(name, 'skin'))],
                        traits=[12, 0, 0, 0, 14, 0, 0, 0, 16, 0, 0, 0, 20, 0, 0, 0])
         mapping['target_defaults'][name] = default
     (build / tables.TABLE_REL).write_text(json.dumps(mapping), encoding='ascii', newline='\n')
@@ -47,6 +51,23 @@ def recomp_fixture(folder, *, extra=0):
         records={103: dict(vitality=(7, 8), auto_equip=1)})
     (src / 'save.dat').write_bytes(raw)
     return build, src, dest, mapping, pos
+
+
+def test_recomp_exact_definition_casing_can_match_checkpoint_party():
+    from xml1build.save_import.command import decode_source
+    with tempfile.TemporaryDirectory() as folder:
+        build, src, _, mapping, _ = recomp_fixture(folder)
+        case = {'hero_a': 'Hero_A', 'hero_b': 'Hero_B'}
+        mapping['source']['definitions'] = {i: case[n] for i, n in mapping['source']['definitions'].items()}
+        mapping['source']['hero_names'] = list(mapping['source']['definitions'].values())
+        for field in ('heroes', 'talents'):
+            mapping[field] = {case[n]: row for n, row in mapping[field].items()}
+        mapping['checkpoints'][0]['allowed_party'] = list(case.values())
+        (build / tables.TABLE_REL).write_text(json.dumps(mapping), encoding='ascii')
+        table = tables.ImportTable(build)
+        original = source.read_source(src, source_kind='recomp')
+        encoded, report, _ = mapper.map_campaign(decode_source(original, table), original, table, slot=0, allow_inferred=True)
+        assert encoded and report['checkpoint'] == mapping['checkpoints'][0]['name']
 
 
 def test_recomp_mapping_48_records_uses_exact_ids_and_keeps_difficulty():

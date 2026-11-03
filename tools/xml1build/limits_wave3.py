@@ -1000,6 +1000,32 @@ EXPECTED_WITNESSES = (
 PROVISIONAL_EFFECTS = (('files', 207), ('prims', 627), ('vectors', 647))      # at mastermold/mastermold2 (provisional)
 
 
+def expected_witnesses(shared):
+    """Historical replay plus only the reviewed private Guard node's allocations.
+
+    This changes self-test expectations, never counting rules or capacities.
+    Other content growth must still disagree with the historical witnesses.
+    """
+    if shared is None:
+        return EXPECTED_WITNESSES
+    nodes = [node for node in shared.iter() if (node.get('name') or '').lower() == 'guardblocking']
+    if not nodes:
+        return EXPECTED_WITNESSES
+    from . import guard_block
+    if guard_block.problems(shared):
+        raise ValueError('cannot account for a malformed private Guard node')
+
+    def shape(node):
+        return node.tag, sorted(node.attrib.items()), tuple(shape(child) for child in node)
+
+    if shape(nodes[0]) != shape(guard_block.make_node()):
+        raise ValueError('private Guard node differs from its reviewed census contribution')
+    # One direct FightMove in shared_nodes; two instantiated trigger events.
+    delta = {'moves': 1, 'largest style': 1, 'events': 2}
+    return tuple((name, count + delta.get(name, 0), zone, what)
+                 for name, count, zone, what in EXPECTED_WITNESSES)
+
+
 def converted_zones_of(out):
     """the zones the build converted: _build/zones_detail.json 'converted'."""
     p = Path(out) / '_build' / 'zones_detail.json'
@@ -1062,7 +1088,10 @@ def main(argv=None):
     bad = 0
     print(f'{"row":<16}{"value":>7}  {"expected":>8}  witness')
     extra = rows.get('retained nodes (largest zone)')
-    for name, want, zone, what in EXPECTED_WITNESSES:
+    expected = expected_witnesses(c.tree('data/shared_nodes'))
+    if expected != EXPECTED_WITNESSES:
+        print('private Guard node: +1 shared FightMove, +2 resident trigger events; historical witnesses retained')
+    for name, want, zone, what in expected:
         got, z, party = rows.get(name, (None, None, ()))
         ok = got == want and z == zone
         bad += not ok

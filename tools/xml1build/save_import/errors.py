@@ -12,6 +12,7 @@ MESSAGES = {
     'CONTEXT': 'This campaign needs a supported mission checkpoint before it can be imported.',
     'SIDE_MISSION': 'Finish the flashback or side mission, save again, then import that save.',
     'BUILD': 'This installation needs W2 saves, the XML1 item economy and the XML1 XP curve.',
+    'DLL': 'Install the companion XML2 Fix with the SaveLC writer lease before importing or undoing.',
     'CAPACITY': 'This installation cannot preserve all of the saved items or progression.',
     'CHANGED': 'The save or installation changed after the preview. Analyze it again.',
     'SLOT': 'That slot already contains a save. Choose an empty slot.',

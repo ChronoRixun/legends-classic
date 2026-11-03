@@ -7,6 +7,7 @@ from lcsave import container
 from xml1builder.events import MachinePath
 
 from .errors import ImportRefusal
+from .companion import Companion
 from .mapper import map_campaign
 from . import recomp, retail
 from .source import bounded_read, discover_source, digest, is_recomp, read_source, safe_path
@@ -14,10 +15,16 @@ from .tables import ImportTable
 from .transaction import check_destination, install_campaign, slot_status, undo_campaign
 from .writer_lock import PROTOCOL as WRITER_LOCK_PROTOCOL
 
+# Coordinator's only public admission switch. Leave False until the real-save,
+# native-loader and live writer-lease checklist in docs/XML1-SAVE-IMPORT.md passes.
+# Tables, INI settings and launcher capability claims cannot override this.
+PLAYER_INSTALL_ENABLED = False
+
 
 def capabilities(experimental=False):
+    admitted = PLAYER_INSTALL_ENABLED or experimental
     return dict(schema=1, extracted_folders=True, hdd_images=True, recomp_extensions=True,
-                player_install=experimental, merge_unlocks=False, undo=experimental,
+                player_install=admitted, merge_unlocks=False, undo=admitted,
                 writer_lock=WRITER_LOCK_PROTOCOL,
                 backup_policy='empty-slot-only; retained campaign copy and report')
 
@@ -60,7 +67,7 @@ def run(args, output, cancel):
         cancel.check()
         # One invocation-local admission switch controls both producers. Neither
         # table metadata nor the launcher's separate admission can enable it.
-        admitted = args.experimental_save_import
+        admitted = PLAYER_INSTALL_ENABLED or args.experimental_save_import
         if sum(bool(x) for x in (args.inspect_source, args.list_slots, args.undo_import)) > 1:
             raise BuilderError('E_USAGE', 'Choose one import operation.', exit_code=2)
         if args.merge_unlocks:
@@ -79,7 +86,11 @@ def run(args, output, cancel):
                 raise BuilderError('E_USAGE', 'Undo needs --save-dir and cannot be combined with --dry-run.', exit_code=2)
             if not admitted:
                 raise ImportRefusal('UNVALIDATED', 'Experimental Undo requires --experimental-save-import.')
-            result = undo_campaign(args.save_dir, args.undo_import, cancel=cancel.check)
+            if not args.build:
+                raise BuilderError('E_USAGE', 'Undo needs --build to verify the installed companion DLL.', exit_code=2)
+            companion = Companion(args.build)
+            companion.require()
+            result = undo_campaign(args.save_dir, args.undo_import, cancel=cancel.check, recheck=companion.recheck)
             output.event('result', ok=True, exit=0, imported=False, **_machine_paths(result, 'retained', 'backup'),
                          capabilities=capabilities(admitted), msg='Removed the unchanged imported slot. Copies were retained.')
             return 0
@@ -115,6 +126,7 @@ def run(args, output, cancel):
             raise ImportRefusal('SIDE_MISSION')
         dest = check_destination(args.save_dir, args.slot, source.root)
         table = ImportTable(args.build, args.import_table)
+        companion = Companion(args.build)
         ir = decode_source(source, table)
         profile_path = safe_path(dest / 'profile.lcsave')
         profile = bounded_read(profile_path, container.MAX_FILE) if profile_path.exists() else None
@@ -129,16 +141,20 @@ def run(args, output, cancel):
                        table_sha256=table.sha256, slot=args.slot, merge_unlocks=args.merge_unlocks,
                        allow_inferred=args.allow_inferred, profile_sha256=digest(profile) if profile is not None else None,
                        checkpoint=report['checkpoint'], mapping_version=report['mapping_version'],
-                       experimental_save_import=admitted)
+                       experimental_save_import=args.experimental_save_import,
+                       player_install_enabled=PLAYER_INSTALL_ENABLED, companion=companion.report)
         preview_token = digest(json.dumps(binding, sort_keys=True, separators=(',', ':')).encode('utf-8'))
         report['preview_token'] = preview_token
         report['source_container'] = getattr(source, 'binding', dict(kind='extracted-folder'))
         report['profile_sha256'] = binding['profile_sha256']
-        report['experimental_save_import'] = admitted
+        report['experimental_save_import'] = args.experimental_save_import
+        report['player_install_enabled'] = PLAYER_INSTALL_ENABLED
+        report['companion'] = companion.report
         for row in report['approximated']:
             output.event('warning', stage='import', code='W_XML1_APPROXIMATED', msg=row['reason'], detail=row)
         source.recheck()
         table.recheck()
+        companion.recheck()
         cancel.check()
         if args.dry_run:
             output.event('result', ok=True, exit=0, imported=False, dry_run=True, import_report=report, capabilities=capabilities(admitted),
@@ -148,8 +164,10 @@ def run(args, output, cancel):
             raise ImportRefusal('CHANGED', 'Apply needs the token from a matching dry-run preview.')
         if not admitted:
             raise ImportRefusal('UNVALIDATED', 'Experimental Install requires --experimental-save-import.', import_report=report)
+        companion.require()
 
         def recheck_profile():
+            companion.recheck()
             current = bounded_read(profile_path, container.MAX_FILE) if profile_path.exists() else None
             if current != profile:
                 raise ImportRefusal('CHANGED', 'The global profile changed after analysis. Preview again.')
@@ -161,7 +179,7 @@ def run(args, output, cancel):
                      backup=MachinePath(installed['backup']), report=MachinePath(installed['report']),
                      path=MachinePath(installed['path']),
                      import_report=report, capabilities=capabilities(admitted),
-                     msg='Installed the experimental imported campaign into the empty slot.')
+                     msg='Installed the imported campaign into the empty slot.')
         return 0
     except ImportRefusal as e:
         msg = e.msg

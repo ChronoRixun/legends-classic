@@ -48,8 +48,9 @@ def port_keys_with(record):
         return FI.port_keys(out), FI.dropped_keys(FI.port_keys(out))
 
 
-def test_the_option_defaults_off_and_is_recorded_only_when_on():
-    assert build_xml1.parse_args(['--out', '.']).limits_wave3 == 'off'
+def test_the_option_defaults_all_and_is_recorded_only_when_on():
+    assert build_xml1.parse_args(['--out', '.']).limits_wave3 == 'all'          # default since 0.5.0-beta.1
+    assert build_xml1.parse_args(['--out', '.', '--limits-wave3', 'off']).limits_wave3 == 'off'
     assert build_xml1.parse_args(['--out', '.', '--limits-wave3', 'on']).limits_wave3 == 'on'
     assert build_xml1.parse_args(['--out', '.', '--limits-wave3', 'all']).limits_wave3 == 'all'
     # not a content option: the stamp's profile (and so every existing build's state) stays what it was
@@ -632,6 +633,42 @@ def test_the_validator_hooks_run_every_check_through_a_validator_object():
     ck = Check('V-MOVES', 'x')
     functools.partial(L3.VALIDATORS[0][2], off)(ck)
     assert ck.status == 'skipped' and not ck.counts
+
+
+def test_static_witnesses_adjust_only_for_the_exact_authored_guard_node():
+    from xml1build import guard_block as GB
+    historical = L3.EXPECTED_WITNESSES
+    assert L3.expected_witnesses(None) == historical
+    root = ET.Element('NodeList')
+    assert L3.expected_witnesses(root) == historical
+    GB.install(root)
+    expected = L3.expected_witnesses(root)
+    delta = {'moves': 1, 'largest style': 1, 'events': 2}
+    assert expected == tuple((name, count + delta.get(name, 0), zone, what)
+                             for name, count, zone, what in historical)
+    # Unreviewed growth must not change the expected census automatically.
+    ET.SubElement(root, 'FightMove', name='unreviewed_move')
+    assert L3.expected_witnesses(root) == expected
+    assert L3.EXPECTED_WITNESSES == historical
+
+
+def test_static_witnesses_reject_malformed_or_repeated_guard_nodes():
+    import copy
+    from xml1build import guard_block as GB
+    roots = []
+    root = ET.Element('NodeList'); GB.install(root)
+    duplicate = copy.deepcopy(root); duplicate.append(GB.make_node()); roots.append(duplicate)
+    wrong_tag = copy.deepcopy(root); wrong_tag[0].tag = 'container'; roots.append(wrong_tag)
+    nested = ET.Element('NodeList'); ET.SubElement(nested, 'container').append(GB.make_node()); roots.append(nested)
+    inherited = copy.deepcopy(root); inherited[0].set('inherit', 'unreviewed'); roots.append(inherited)
+    event = copy.deepcopy(root); event[0][0].set('powerusage', '2'); roots.append(event)
+    for bad in roots:
+        try:
+            L3.expected_witnesses(bad)
+        except ValueError:
+            pass
+        else:
+            raise AssertionError('malformed guard changed the expected census')
 
 
 def test_the_static_reports_witnesses_reproduce_on_a_finished_build():

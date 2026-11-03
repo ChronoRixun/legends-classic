@@ -170,13 +170,13 @@ def slot_status(save_dir):
     return dict(slots=slots, imports=imports)
 
 
-def undo_campaign(save_dir, transaction_id, *, cancel=lambda: None):
+def undo_campaign(save_dir, transaction_id, *, cancel=lambda: None, recheck=lambda: None):
     """Hold the cooperating writer lease across undo validation and mutation."""
     with WriterLock(save_dir):
-        return _undo_campaign_locked(save_dir, transaction_id, cancel=cancel)
+        return _undo_campaign_locked(save_dir, transaction_id, cancel=cancel, recheck=recheck)
 
 
-def _undo_campaign_locked(save_dir, transaction_id, *, cancel):
+def _undo_campaign_locked(save_dir, transaction_id, *, cancel, recheck):
     """Only an unchanged imported slot moves.
 
     The public wrapper holds the writer lease. Preserve both the independent
@@ -186,6 +186,7 @@ def _undo_campaign_locked(save_dir, transaction_id, *, cancel):
         raise ImportRefusal('INPUT', 'Invalid import transaction.')
     dest = safe_path(save_dir, directory=True)
     cancel()
+    recheck()
     status = slot_status(dest)
     row = next((r for r in status['imports'] if r['transaction_id'] == transaction_id), None)
     if not row or not row['undo_available']:
@@ -197,6 +198,7 @@ def _undo_campaign_locked(save_dir, transaction_id, *, cancel):
     if any(p != target and p.name.lower().startswith(f"saveslot{row['slot']}") for p in dest.iterdir()):
         raise ImportRefusal('SLOT', 'The game has written additional files for this slot.')
     cancel()
+    recheck()
     report = json.loads(bounded_read(ledger / 'report.json', 16 << 20))
     if digest(bounded_read(target, container.MAX_FILE)) != report['output_sha256']:
         raise ImportRefusal('CHANGED')
@@ -207,5 +209,6 @@ def _undo_campaign_locked(save_dir, transaction_id, *, cancel):
     os.link(target, parked)
     if digest(bounded_read(parked, container.MAX_FILE)) != report['output_sha256'] or digest(bounded_read(target, container.MAX_FILE)) != report['output_sha256']:
         raise ImportRefusal('CHANGED')
+    recheck()
     os.remove(str(target.absolute()))
     return dict(slot=row['slot'], transaction_id=transaction_id, retained=str(parked), backup=row['backup'], undone=True)

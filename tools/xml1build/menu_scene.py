@@ -55,9 +55,26 @@ def static_model(data, *, allow_transforms=False):
     block = g.block(root.get(4))
     if block is None:
         raise G.IgbError('static menu model has no info list data')
-    struct.pack_into('<i',g.buf,block[0],scenes[0])
-    struct.pack_into('<i',g.buf,root.fields[2].offset,1)
-    return g.edited()
+    # The loader resolves and retains EVERY reference in the serialized buffer,
+    # while igObjectList::clearAll releases only count entries. Shrinking count
+    # alone leaves the discarded pumps (and a duplicate scene) retained forever.
+    # Keep the count, capacity and typed reference buffer in agreement.
+    for slot in (2, 3):
+        struct.pack_into('<i',g.buf,root.fields[slot].offset,1)
+    return g.rebuilt({root.get(4): _u32(scenes[0])})
+
+
+def static_model_problems(data):
+    """The root ownership serialized by static_model, including unused slots."""
+    g = G.IgbFile(data)
+    root = g.obj(struct.unpack_from('<i', g.data, g._obj_start - 4)[0])
+    if root is None or root.name != 'igInfoList':
+        return ['static model needs an information list']
+    refs = g.ref_list(root.get(4))
+    if (root.get(2) != 1 or root.get(3) != 1 or len(refs) != 1
+            or g.obj(refs[0]) is None or g.obj(refs[0]).name != 'igSceneInfo'):
+        return ['static model information buffer retains discarded references']
+    return []
 
 
 def _metadata(g):

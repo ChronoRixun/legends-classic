@@ -18,6 +18,8 @@ from xml1builder.errors import Cancelled
 
 def setup(folder, kind='xemu'):
     build, src, dest, _, _ = (recomp_fixture if kind == 'recomp' else fixture)(folder)
+    # Invented marker bytes; this fixture never loads or executes a DLL.
+    (build / 'dinput.dll').write_bytes(b'MZ invented companion\0lc-save-writer/1\0.lc-save-writer.lock\0')
     if kind == 'xemu':
         guest, _ = xbox((src / 'save.dat').read_bytes(), fat32=True)
         src = guest.qcow(Path(folder) / 'invented-hdd.qcow2', compressed=True)
@@ -49,7 +51,7 @@ def error(events, code):
 
 def undo(dest, transaction_id, *extra):
     code, events, _ = run(['import-xml1-save', '--save-dir', str(dest), '--undo-import', transaction_id,
-                           '--events', 'jsonl', *extra])
+                           '--build', str(Path(dest).parent / 'build'), '--events', 'jsonl', *extra])
     check_stream(events)
     return code, events
 

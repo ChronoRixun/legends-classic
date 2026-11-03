@@ -67,7 +67,7 @@ def test_host_setting_nodes_are_the_documented_names_hidden_and_the_fixture_pros
     for key in ('save', 'drop_hint', 'preview_save', 'preview_drop', 'preview_slots'):
         assert key not in items, key  # the DLL clears them; LC does not author them
     assert items['campaign'].get('usecmd') == O.command(19) and items['campaign'].get('text') in ('', None)
-    assert not items['drop_in'].get('usecmd') and items['drop_in'].get('text') in ('', None)  # read-only policy row
+    assert items['drop_in'].get('usecmd')==O.command(75) and items['drop_in'].get('text') in ('', None)  # editable host policy
     assert items['lc_host_max_players'].get('clamp') == 'true' and items['lc_host_max_players'].get('text') in ('', None)
     assert O._plain(items['lc_host_players_label'].get('text')) == 'MAX PLAYERS'
     assert 'lc_host_max_players' in O.DATA_NAMES

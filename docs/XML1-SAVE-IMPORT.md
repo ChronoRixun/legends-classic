@@ -52,9 +52,27 @@ losses; it does not enable installation. No opt-in enables global-profile mergin
 The launcher's separate admission remains false; this CLI work does not enable
 its Import or Undo buttons or modify the launcher repository.
 
+The **single public CLI ungate switch** is
+`xml1build.save_import.command.PLAYER_INSTALL_ENABLED = False`. Leave it false
+until every applicable real-save and live-companion check below has evidence.
+Changing that one constant to true admits both Install and Undo without the
+experimental flag. It never enables profile merging, bypasses table/DLL/slot
+checks, supplies missing mapping evidence, or changes a launcher in another
+repository. Preview tokens bind both the public gate and the explicit
+experimental flag, so changing either requires another preview.
+
 Testers must use a companion XML2 Fix implementing `lc-save-writer/1` and close
-the game before apply or undo. The lease cannot detect a running older DLL that
-does not participate. Real-save/checkpoint/native-loader acceptance is still
+the game before apply or undo. Both operations check the selected build's
+`dinput.dll` for the terminated protocol and lock-name capability strings;
+missing or older DLLs refuse `E_XML1_DLL`. Version numbers alone do not suffice.
+The preview and retained report bind the DLL's SHA-256; replacement invalidates
+the token, and it is rechecked while holding the transaction lease. Undo also
+requires `--build` and rechecks the companion before removing anything.
+These static markers follow the builder's capability-check convention. They
+are not authentication or proof that the running DLL holds the lease. The lease
+cannot detect a running older DLL that does not participate. The inspected
+`v1.11.0-beta.1` companion source does not contain the lease; a compatible
+companion integration is required. Real-save/checkpoint/native-loader acceptance is still
 pending, even when experimental capabilities report Install and Undo available.
 
 ```text
@@ -63,7 +81,7 @@ xml1-builder import-xml1-save <source> --build <build> --save-dir <SaveLC>
 xml1-builder import-xml1-save <same source> --build <same build> --save-dir <SaveLC>
     --slot 0 --allow-inferred --experimental-save-import --preview-token <preview token>
     --events jsonl
-xml1-builder import-xml1-save --save-dir <SaveLC> --undo-import <transaction ID>
+xml1-builder import-xml1-save --build <same build> --save-dir <SaveLC> --undo-import <transaction ID>
     --experimental-save-import --events jsonl
 ```
 
@@ -152,8 +170,10 @@ their contract and implements the builder side; it does not modify their UI.
 
 ## Import table and identities
 
-`Data/lcsave/xml1-import.json` is a proposed local JSON sidecar, schema 1.
-`--import-table` selects an explicit test table. No real table is shipped.
+`Data/lcsave/xml1-import.json` is a local JSON sidecar, schema 1 or 2.
+`--import-table` selects an explicit test table. No proven retail checkpoint
+ledger is shipped in this change. A private evidence ledger can now be compiled
+against owned inputs during a build, as described below.
 `xml1build.save_import.tables.bind_table()` is a read-only constructor: it pins
 the final build's Data/Scripts files, active INI and recorded build settings.
 It returns data for integration to write through the builder's owned writers;
@@ -175,6 +195,67 @@ The table has these fields:
 | `target_defaults` | Complete validated HREC defaults for any target-only heroes; those heroes remain locked. |
 | `profile_unlock_bits` | Optional confirmed source profile offset/mask -> named character/review identity or target completion flag. No codex-position guess. |
 | `release_ready`, `acceptance` | Reserved admission metadata. Neither can enable experimental writes. |
+
+### Build producer and private evidence ledger
+
+```text
+xml1-builder build --iso <disc image or verified extracted install> --xml2 <XML2>
+    --out <build> --experimental-save-import --import-ledger <private ledger.json>
+```
+
+The source builder `build_xml1.py` accepts the same two experimental options.
+Without `--import-ledger`, the producer writes nothing and the normal 0.6 build
+behavior is unchanged. The ledger must be outside output/cache/log destinations.
+Do not commit private ledgers or generated tables carrying decoded source data.
+
+`savefiles.run()` invokes `save_import.shipping.run()` after writing the final
+save bindings and typed-entity registry. It writes through the existing atomic,
+registered `ctx.write_bytes` writer, so cancellation, sweep, final read-back,
+manifest verification and cleanup use the builder's existing ownership rules.
+Schema 2 pins every final Data/Scripts file except itself. The final report and
+INI do not yet exist at this stage: the importer validates their required
+settings at load time and binds their exact bytes into each preview/fingerprint
+and every transaction recheck. Schema 1 retains its original all-file binding.
+Because content runs before sweep, only registered files and retained base files
+enter the generated binding. An unrelated stale file scheduled for removal
+cannot invalidate the completed table; a held stale file still makes import
+refuse until the installation is cleaned up.
+
+The private ledger is JSON schema 1 with:
+
+| Field | Producer input |
+| --- | --- |
+| `evidence` | Nonempty list identifying the source of the verified interoperability ledger. These references do not constitute runtime acceptance. |
+| `source_files` | Logical source filename -> SHA-256, including `default.xbe`, `data/herostat.eng`, `data/items.eng` and every consulted talent/mission/script file. XBE comes from the prepared Xbox tree; other files use the build's existing loose/assets resolver. Paths must be lowercase, relative, link-free and free of parent traversals. Every receipt is rechecked before output. |
+| `source_profile` | Explicit decoder `id` and source family. Retail needs an evidence-backed, ordered `hero_names` ledger of sixteen definitions. Recomp needs the exact effective `definitions` ID ledger; positions are never inferred. The producer supplies title ID and actual XBE/herostat hashes from owned files. |
+| `native_talents` | Proven native byte ID (decimal JSON key) -> declaration name; required for retail. Never a guessed XML-order registration ledger. |
+| `talent_files` | Source hero -> consulted declaration filenames, each also pinned in `source_files`. Herostat references are included automatically. Each native talent is resolved to the installed named TALN, including per-hero passive aliases. |
+| `source_maxima`, `pack_limits` | Explicit per-source-index quantity ceilings and target health/energy ceilings. Source item order comes from owned `items.eng`; equipment target names come from the build's verified economy sidecar. |
+| `mappings` | The table's explicit `heroes`, `xp_thresholds`, `quantity_policy`, `checkpoints`, `target_defaults`, optional named talent/power bindings and scoped `variables`. Checkpoint and XP evidence must be present. The ledger cannot override schema, binding, admission or provenance fields. |
+
+Persistent variable rows identify source `family`, `name` and verified mission
+`scope`; the producer supplies target name, kind, bit range and signedness from
+the actual script-storage metadata, including final narrowing. Zone-lifetime
+storage refuses; explicit transient rows retain their reset policy. All finished
+scripts are hash-bound. Target-only hero defaults, source progression formulas,
+skin-byte meanings, named power selections, checkpoint predicates/objectives and
+return routes still require explicit proven rows, never fabricated defaults.
+The producer and reader share source-profile validation and validate all required
+target-only HREC defaults against the actual codec and native installed tables.
+Numeric ledger keys must be canonical decimal strings; aliases such as `017`
+cannot shadow `17` during conversion.
+
+Prepared/folder builds deliberately ignore recomp loose overlays. This producer
+therefore supports only an effective source herostat matching the owned original
+resolved by the build. A modded recomp herostat or registration configuration
+needs separate exact-source evidence and an explicit effective-input integration;
+it must not be represented by a stock positional definition ledger.
+
+Generated tables retain `release_ready=false`, empty `acceptance`, the evidence
+ledger SHA-256 and source receipt hashes. The compiler has synthetic acceptance
+only. There is no bundled retail ledger to make a normal player build importable
+yet: obtaining/proving that ledger from real source saves remains a release
+prerequisite. Flipping the public switch cannot fill it in.
 
 The reader verifies installed catalogue/bind identities, bind data SHA-1,
 economy-sidecar framing/digest and active W2/economy/XP/point-award settings.
@@ -248,11 +329,12 @@ Before enabling player installation:
   party, objectives and flags through two cycles. A slot listing is insufficient.
 - Run at least one late-game host/client campaign transfer, join/leave/rejoin,
   both sides save/reload, plus a mismatched-build refusal control.
-- Accept the cooperating game-writer lease live and add recoverable optional global-profile
-  merge. Exercise cancel/disk-full/report failure, occupied final slot, changed
+- Accept the cooperating game-writer lease live. Keep global-profile merging
+  disabled; its recoverable multi-file transaction is separate future work.
+  Exercise cancel/disk-full/report failure, occupied final slot, changed
   source/build/profile, concurrent import and crash-recovery cases. Verify all
   original, unrelated slot and existing profile hashes; profile changes only
-  in explicitly opted-in monotonic merge tests.
+  in future separately admitted monotonic merge tests.
 
 No game/emulator, desktop, network, full owned-input build or actual co-op test
 is part of this round's automated validation.

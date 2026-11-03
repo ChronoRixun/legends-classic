@@ -21,6 +21,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
+from . import DEFAULT_GUARD_DECIDE
 from . import manifest as M
 from . import plan as PL
 from .errors import BuilderError, io_cause, io_in_chain
@@ -38,10 +39,10 @@ class RealPipeline:
         self.C = C
 
     # ------------------------------------------------------------------ probe
-    def identify(self, iso):
+    def identify(self, iso, *, cancel=None):
         """(P1 identity, info.iso) of a disc image (the builder's error mapping)."""
         from .inputs import identify
-        return identify(iso)
+        return identify(iso, cancel=cancel)
 
     def cached_disc(self, cache, disc_id=None):
         """(P1 identity, info.iso) of a disc prepared in the cache (--iso left out), or None. disc_id picks one;
@@ -142,7 +143,8 @@ class RealPipeline:
         prog = ctl.progress_fn(sid)
         if sid == 'extract':
             if job.iso is not None:
-                r = P1.run(job.iso, job.cache, log=log, cancel=ctl.cancel, progress=prog, movies=job.movies)
+                r = P1.run(job.iso, job.cache, log=log, cancel=ctl.cancel, progress=prog, movies=job.movies,
+                           source_snapshot=(job.ident or {}).get('source_snapshot'))
             else:
                 d = Path(job.cache) / job.disc['disc_id'] / P1.STAGE
                 st = prepare.read_stage(d)
@@ -198,19 +200,23 @@ class RealPipeline:
         import build_xml1
         argv = ['--out', str(job.out), '--base', str(job.xml2), '--jobs', str(job.jobs)]
         argv += ['--main-menu-layout', getattr(job, 'main_menu_layout', 'classic')]
-        argv += ['--online-menus', getattr(job, 'online_menus', 'off')]
+        argv += ['--online-menus', getattr(job, 'online_menus', None) or 'on']
         argv += ['--anim-enums', getattr(job, 'anim_enums', None) or 'xml1']
         argv += ['--laa', getattr(job, 'laa', None) or 'on']
-        if (getattr(job, 'limits_wave3', None) or 'off') != 'off':
-            argv += ['--limits-wave3', job.limits_wave3]
-        argv += ['--save-layout', getattr(job, 'save_layout', 'retail')]
-        if getattr(job, 'loot', 'off') != 'off':
-            argv += ['--loot', job.loot]
-        for opt, flag in (('telekinesis', '--telekinesis'), ('guard_decide', '--guard-decide'), ('flying_carry', '--flying-carry')):
-            if (getattr(job, opt, None) or 'off') != 'off':        # beta 9 moves (ini only); off = build_xml1's default
-                argv += [flag, getattr(job, opt)]
+        # Pass defaults and explicit off values through to the source builder.
+        argv += ['--limits-wave3', getattr(job, 'limits_wave3', None) or 'all']
+        argv += ['--save-layout', getattr(job, 'save_layout', None) or 'w2']
+        argv += ['--loot', getattr(job, 'loot', None) or 'xml1']
+        # INI-only moves: telekinesis/carry on; Guard follows the shared release default
+        for opt, flag, default in (('telekinesis', '--telekinesis', 'xml1'), ('guard_decide', '--guard-decide', DEFAULT_GUARD_DECIDE),
+                                   ('flying_carry', '--flying-carry', 'xml1')):
+            argv += [flag, getattr(job, opt, None) or default]
         if not job.movies:
             argv.append('--no-movies')
+        if getattr(job, 'experimental_save_import', False):
+            argv.append('--experimental-save-import')
+        if getattr(job, 'import_ledger', None):
+            argv += ['--import-ledger', str(job.import_ledger)]
         args = build_xml1.parse_args(argv)
         args.builder_mode = True
         args.sources, args.cache, args.iso = 'prepared', str(job.cache), str(job.iso) if job.iso else None

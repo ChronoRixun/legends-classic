@@ -71,6 +71,7 @@ def checkpoint(ir, recipes):
     if any(x != 0 for x in struct.unpack_from('<4f', ir['game'])):
         raise ImportRefusal('CONTEXT', 'This checkpoint requires idle source timers.')
     party = [n.lower() for n in mission['party'] if n]
-    if not party or len(party) != len(set(party)) or any(n not in recipe['allowed_party'] for n in party):
+    allowed = {n.lower() for n in recipe['allowed_party']}
+    if not party or len(party) != len(set(party)) or any(n not in allowed for n in party):
         raise ImportRefusal('CONTEXT', 'The saved party is not allowed by this checkpoint.')
     return recipe

@@ -37,7 +37,8 @@ def test_no_lobby_text_says_pending_where_the_dll_names_the_room_and_the_badge_w
     for role in O.LOBBIES:
         items = {e['name']: e for e in O.lobby_layout(role)['items']}
         assert 'pending' not in items['lc_room_name']['text'].lower() and 'pending' not in items['lc_campaign_summary']['text'].lower(), role
-        assert 'next area' in items['lc_campaign_summary']['text']
+        expected = 'Campaign chosen in Game options.' if role == 'host' else 'Campaign set by the host.'
+        assert items['lc_campaign_summary']['text'] == expected
     guest = {e['name']: e for e in O.lobby_layout('join')['items']}['lc_campaign_summary']['text']
     assert 'host' in guest  # the guest does not choose the campaign
     # 060r live: "Room connected" did not fit the 67-unit badge field ("Room connecte"). The DLL binds ROOM_BADGE_TEXT (pinned there).
@@ -87,7 +88,7 @@ def test_the_host_setup_side_marker_follows_the_focused_row_instead_of_being_bak
     screen = O.runtime_layout('lc_host')
     assert not [q for q in screen['shapes'] if q['kind'] == 'slash' and q['rect'][0] == 31]
     markers = {e['name']: e for e in screen['items'] if e['name'].startswith('lc_host_marker_')}
-    assert set(markers) == {'lc_host_marker_visibility', 'lc_host_marker_room_name', 'lc_host_marker_campaign'}
+    assert set(markers) == {'lc_host_marker_visibility', 'lc_host_marker_room_name', 'lc_host_marker_campaign', 'lc_host_marker_drop'}
     raw = {e['name']: e for e in screen['items']}
     for key, e in markers.items():
         assert e['hidden'] and e['variant'] and e['parts'] and not e['intent'], key
@@ -98,9 +99,9 @@ def test_the_host_setup_side_marker_follows_the_focused_row_instead_of_being_bak
     for key in markers:
         assert items[key].get('type') == 'MENU_ITEM_MODEL' and items[key].get('hide') == 'true' and items[key].get('neverfocus') == 'true'
     # the DLL's focus -> marker table names the rows the Host screen can focus
-    for focusable in ('visibility', 'room_name', 'edit_room', 'campaign'):
+    for focusable in ('visibility', 'room_name', 'edit_room', 'campaign', 'drop_in'):
         assert raw[focusable]['intent'], focusable
-    assert not raw['drop_in']['intent']  # read-only: never focused, so no marker
+    assert raw['drop_in']['intent']=='drop-in' and markers['lc_host_marker_drop']['rect'][1]==295
 
 
 def test_the_unselected_visibility_chip_is_a_navy_chip_not_pale_text_on_the_amber_bar():

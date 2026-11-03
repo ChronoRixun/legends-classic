@@ -38,7 +38,7 @@ def dll_knowing(keys, *, save_layout=True):
         data += b''.join(marker for marker, _name in FI.W2_LAYOUT_MARKERS)          # 082c: W2's boot / save fixes
     data += b''.join(FI.MARKERS_082D)                                               # 082d: digest / moves fixes
     data += b''.join(FI.MARKERS_082E)                                               # 082e: moves round 3
-    return data + b'NPR14 NSA4'
+    return data + b'NPR14 NSA4 LateJoinPolicyV1'
 
 
 def raises(exc, fn, *needles):
@@ -245,15 +245,16 @@ def test_the_cli_refuses_a_w2_build_over_an_older_fix_instead_of_warning():
 
 
 # ------------------------------------------------------------------------------------------------ the option
-def test_the_option_defaults_off_and_reaches_every_parser_and_record():
+def test_the_option_defaults_w2_and_reaches_every_parser_and_record():
     import build_xml1
     from xml1build import common as C
     from xml1builder.cli import make_parser
-    assert build_xml1.parse_args(['--out', 'x']).save_layout == 'retail'
-    assert build_xml1.parse_args(['--out', 'x', '--save-layout', 'w2']).save_layout == 'w2'
+    assert build_xml1.parse_args(['--out', 'x']).save_layout == 'w2'                # default since 0.5.0-beta.1
+    assert build_xml1.parse_args(['--out', 'x', '--save-layout', 'retail']).save_layout == 'retail'
     raises(SystemExit, lambda: build_xml1.parse_args(['--out', 'x', '--save-layout', 'e10a2']))
-    assert make_parser().parse_args(['build']).save_layout == 'retail'
-    assert make_parser().parse_args(['build', '--save-layout', 'w2']).save_layout == 'w2'
+    assert make_parser().parse_args(['build']).save_layout == 'w2'
+    assert make_parser().parse_args(['build', '--save-layout', 'retail']).save_layout == 'retail'
+    assert build_xml1.CONTENT_OPTS['save_layout'] == ('zones', 'retail')            # a 0.4.1 record has no key
     # standalone checks over a finished build see the option it was made with
     with tempfile.TemporaryDirectory() as td:
         out = w2_build(td)
@@ -262,15 +263,19 @@ def test_the_option_defaults_off_and_reaches_every_parser_and_record():
         out2 = w2_build(Path(td) / 'old', option='retail')
         assert C.args_for_out(out2).save_layout == 'retail'
         # changing it re-runs the module whose output depends on it (the talent precache budget)
-        carried = {opt: default for opt, (_mods, default) in build_xml1.CONTENT_OPTS.items() if opt != 'save_layout'}
+        # a build from before the option (no save_layout key) and without the economy (no loot keys: off / noop)
+        carried = {opt: default for opt, (_mods, default) in build_xml1.CONTENT_OPTS.items()
+                   if opt not in ('save_layout', 'loot', 'loot_def_damage_scale')}
         plain = Path(td) / 'carried'
         (plain / '_build').mkdir(parents=True)
-        (plain / '_build' / 'report.json').write_text(json.dumps({'build': carried}))      # a build from before the option
-        assert build_xml1.plan_content_opts(plain, build_xml1.parse_args(['--out', 'x']), []) == []
-        assert build_xml1.plan_content_opts(plain, build_xml1.parse_args(['--out', 'x', '--save-layout', 'w2']), []) == ['zones']
+        (plain / '_build' / 'report.json').write_text(json.dumps({'build': carried}))
+        assert build_xml1.plan_content_opts(plain, build_xml1.parse_args(['--out', 'x', '--online-menus', 'off', '--save-layout', 'retail']), []) == []
+        assert build_xml1.plan_content_opts(plain, build_xml1.parse_args(['--out', 'x', '--online-menus', 'off', '--loot', 'off']), []) == ['zones']
+        # the 0.5.0 default build (w2 + the economy) over a 0.4.1 build re-runs zones and the front end
+        assert build_xml1.plan_content_opts(plain, build_xml1.parse_args(['--out', 'x', '--online-menus', 'off']), []) == ['zones', 'frontend']
         (plain / '_build' / 'report.json').write_text(json.dumps({'build': {**carried, 'save_layout': 'w2'}}))
-        assert build_xml1.plan_content_opts(plain, build_xml1.parse_args(['--out', 'x']), []) == ['zones']
-        assert build_xml1.plan_content_opts(plain, build_xml1.parse_args(['--out', 'x', '--save-layout', 'w2']), []) == []
+        assert build_xml1.plan_content_opts(plain, build_xml1.parse_args(['--out', 'x', '--online-menus', 'off', '--save-layout', 'retail']), []) == ['zones']
+        assert build_xml1.plan_content_opts(plain, build_xml1.parse_args(['--out', 'x', '--online-menus', 'off', '--loot', 'off']), []) == []
 
 
 def test_the_harness_ini_follows_the_build_record():

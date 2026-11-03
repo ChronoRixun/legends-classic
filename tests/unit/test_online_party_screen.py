@@ -49,7 +49,7 @@ def test_party_commands_are_the_exact_manifest_and_the_rail_uses_the_native_rout
     scripted = {k for k, e in items.items() if (e.get('usecmd') or '').startswith('runscript lcOnlineIntent(')}
     assert scripted == set(expected)
     # reserved numbers are not public commands, and party numbers exist on lc_party only
-    for number in (68, 70, 75):
+    for number in (68, 70, 76):
         raises(ValueError, lambda n=number: O.command(n))
     for name in O.MENUS:
         hub = O.runtime_layout(name)
@@ -322,3 +322,9 @@ def test_every_confirmation_is_completable_by_pad_and_keyboard_and_quit_goes_thr
     f.dispatch('party-kick:2'); assert f.confirm == 'lc_party_confirm_kick'
     f.dispatch('party-leave-yes')                                       # the shared Yes completes a Kick
     assert [d[0] for d in f.departures] == [2] and not f.confirm
+
+
+def test_party_header_contains_host_campaign_summary():
+    _, root = party()
+    item = root.find("item[@name='lc_campaign_summary']")
+    assert item is not None and item.get('clamp') == 'true'
