@@ -447,8 +447,9 @@ REQUIRED_XML2FIX = '1.11'
 # brain off, host/join closed), so its requirement is '>=1.8.0-beta.7'. 0.4.1 (beta 8) required 1.9 / beta.1. 0.6.0 writes
 # the 0.5 profile ([Limits] SaveLayout=w2, [Game] Xml1Economy, wave 3, TelekinesisRule and flying carry), plus
 # the co-op screens and fonts. GuardDecideRule stays opt-in. The matching companion for this release is
-# XML2 Fix 1.11.0-beta.1: '>=1.11.0-beta.1' / '>=1.11'.
-REQUIRED_XML2FIX_PRERELEASE = 'beta.1'
+# XML2 Fix 1.11.0-beta.2: linked session pacing needs TickRate rule 29 revision 2
+# and its versioned roster/native settings trailer; beta.1 peers must refuse.
+REQUIRED_XML2FIX_PRERELEASE = 'beta.2'
 
 
 def required_xml2fix(builder_version: str) -> str:
@@ -520,10 +521,10 @@ LATE_JOIN = '1'
 # menus off drops it; only [Online] LateJoin keeps a player's explicit value (keep_player_late_join).
 ONLINE_TRANSPORT = 'gns'
 
-# [Online] TickRate=60 (XML2 Fix 1.8.0-beta.3, gameplay agreement rule 29): online sessions run at 60 frames a second
-# like single-player instead of the game's own 30 (CClient::frame's online 1/30 s frame). Lockstep runs every PC's
-# frames together, so every co-op PC must have the same rate: a 60 and a 30 PC refuse each other at join by name.
-# '30' is the fallback for slow PCs (then everyone in that session sets 30). Written for every port build.
+# [Online] TickRate=60 is this PC's hosting ceiling (XML2 Fix 1.11.0-beta.2, rule 29 revision 2).
+# The host freezes its effective numeric display rate, limited by this ceiling; every guest adopts it in RAM before
+# admission, preserving local preferences. Unlike revision 1, different local ceilings do not refuse each other.
+# Written for every port build; the linked-rate DLL capability below is required even with custom menus disabled.
 TICK_RATE = '60'
 
 # [Game] OnlineConversations=lockstep (XML2 Fix 1.7, gameplay agreement rule 27 revision 1): online, a conversation line
@@ -1414,6 +1415,9 @@ RELEASE_18_KEYS = {**RELEASE_18_KEYS, 'Game': RELEASE_18_KEYS['Game'] + ('Classi
 # by a DLL whose rule 16 detail digest says "NSA4"; an earlier beta 7 DLL knows [Game] NpcSemiAuto but refuses the wider
 # rows and withdraws rule 16, so the builder refuses it, naming the rows.
 RELEASE_MARKERS = {('Game', 'NpcSemiAuto'): (b'NSA4', '[NpcSemiAuto] schema 4 rows')}
+# beta.2 uses host-owned pacing even when the custom menus are disabled. The
+# old TickRate key alone cannot certify rule 29 revision 2 (same numeric DLL version).
+RELEASE_MARKERS[('Online', 'TickRate')] = (b'lc-online-linked-rate/1', '[Online] TickRate (rule 29 revision 2)')
 # XML2 Fix 1.9.0-beta.1 (Legends Classic 0.4.1-beta.1, the port's beta 8): limits wave 1 ([Limits] IGBCache, [Engine]
 # ModelHandles; rules 31-32), XML1's wall cling (39), lift rule (38), Rogue's decide (43), the shared handlers (42),
 # the receive-side rounding and damage cap ([Balance] ReceiveRounding / DamageCap, 41) and the boss brains (40). A

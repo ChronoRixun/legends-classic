@@ -436,7 +436,7 @@ def test_port_keys_from_a_synthetic_build():
 
 def test_beta2_keys_refuse_a_beta1_dll_and_require_the_beta2_fix():
     # 0.3.0-beta.2 writes [Engine] ModelPools and [Game] ComboPopupGuard, which XML2 Fix 1.8.0-beta.1 does not read
-    # (same numeric VERSIONINFO 1.8.0.0): the DLL check names both; beta/rc builders require '>=1.11.0-beta.1' (0.6.0).
+    # (same numeric VERSIONINFO 1.8.0.0): the DLL check names both; beta/rc builders require '>=1.11.0-beta.2' (0.6.0).
     keys = {'Game': {'ComboPopupGuard': '1'}, 'Engine': {'ModelPools': 'x4'}}
     with tempfile.TemporaryDirectory() as td:
         dll = Path(td) / 'dinput.dll'
@@ -444,7 +444,7 @@ def test_beta2_keys_refuse_a_beta1_dll_and_require_the_beta2_fix():
         assert FI.old_fix_keys(dll, keys) == ['[Game] ComboPopupGuard', '[Engine] ModelPools']
         dll.write_bytes(b'MZ' + 'ComboPopupGuard'.encode('utf-16le') + 'ModelPools'.encode('utf-16le'))
         assert FI.old_fix_keys(dll, keys) == []
-    assert FI.required_xml2fix('0.3.0-beta.3') == FI.required_xml2fix('0.4.0-rc.1') == '>=1.11.0-beta.1'
+    assert FI.required_xml2fix('0.3.0-beta.3') == FI.required_xml2fix('0.4.0-rc.1') == '>=1.11.0-beta.2'
     assert FI.required_xml2fix('0.4.0') == '>=1.11'
 
 
@@ -458,8 +458,10 @@ def test_beta3_tick_rate_is_written_port_owned_and_refuses_a_beta2_dll():
     with tempfile.TemporaryDirectory() as td:
         dll = Path(td) / 'dinput.dll'
         dll.write_bytes(b'MZ' + ''.join(('JoinInProgress', 'ModelPools', 'ComboPopupGuard')).encode('utf-16le'))
-        assert FI.old_fix_keys(dll, keys) == ['[Online] TickRate']
+        assert FI.old_fix_keys(dll, keys) == ['[Online] TickRate', '[Online] TickRate (rule 29 revision 2)']
         dll.write_bytes(b'MZ' + ''.join(('JoinInProgress', 'ModelPools', 'TickRate')).encode('utf-16le'))
+        assert FI.old_fix_keys(dll, keys) == ['[Online] TickRate (rule 29 revision 2)']
+        dll.write_bytes(dll.read_bytes() + b'lc-online-linked-rate/1')
         assert FI.old_fix_keys(dll, keys) == []
 
 
@@ -513,8 +515,8 @@ def test_beta7_keys_refuse_a_beta6_dll_and_require_the_beta7_fix():
         assert FI.old_fix_keys(dll, keys) == ['[Game] NpcPowerRule revision 14']   # beta 7 (rule 16 revision 11)
         dll.write_bytes(dll.read_bytes() + b'NPR14')
         assert FI.old_fix_keys(dll, keys) == []
-    assert FI.REQUIRED_XML2FIX_PRERELEASE == 'beta.1'   # 0.6.0-beta.1 requires XML2 Fix 1.11.0-beta.1
-    assert FI.required_xml2fix('0.6.0-beta.1') == '>=1.11.0-beta.1' and FI.required_xml2fix('0.6.0') == '>=1.11'
+    assert FI.REQUIRED_XML2FIX_PRERELEASE == 'beta.2'   # linked rate needs rule 29 revision 2
+    assert FI.required_xml2fix('0.6.0-beta.1') == '>=1.11.0-beta.2' and FI.required_xml2fix('0.6.0') == '>=1.11'
 
 
 def test_harness_installs_write_the_shipped_limits_by_default():
@@ -1041,13 +1043,13 @@ def test_beta_fix_numeric_version_keeps_runtime_capability_checks():
         for numeric in ('1.8.0', '1.8.0.0', '1.8.0.2'):
             resource = ('FileVersion\0' + numeric + '\0ProductVersion\0' + numeric + '\0').encode('utf-16le')
             markers = b''.join((key + '\0').encode('utf-16le') for names in FI.RELEASE_18_KEYS.values() for key in names)
-            dll.write_bytes(b'MZ synthetic beta fix\0' + resource + markers + b'NSA4' + b'NPR14' + FI.GRAB_CARRY_R3_MARKER + FI.CARRY_CHAIN_MARKER + FI.TK_AUDIO_MARKER + FI.TK_STILL_MARKER + FI.GUARD_TAP_MARKER + FI.GUARD_XML1_NATIVE_MARKER + FI.TK_ARMING_MARKER + FI.GUARD_ENTRY_MARKER + FI.COLOSSUS_CASTER_MARKER + FI.THROWN_IMPACT_MARKER + FI.FLYING_CARRY_OFF_MARKER + FI.CHAR_SOUNDS_MARKER + FI.MOTION_POOL_MARKER + FI.RESIDENT_STATS_MARKER + b''.join(FI.WAVE3_MARKERS.values()) + b''.join(FI.MARKERS_082D) + b''.join(FI.MARKERS_082E) + FI.ACTORS_MARKER)
+            dll.write_bytes(b'MZ synthetic beta fix\0' + resource + markers + b'NSA4' + b'NPR14' + FI.GRAB_CARRY_R3_MARKER + FI.CARRY_CHAIN_MARKER + FI.TK_AUDIO_MARKER + FI.TK_STILL_MARKER + FI.GUARD_TAP_MARKER + FI.GUARD_XML1_NATIVE_MARKER + FI.TK_ARMING_MARKER + FI.GUARD_ENTRY_MARKER + FI.COLOSSUS_CASTER_MARKER + FI.THROWN_IMPACT_MARKER + FI.FLYING_CARRY_OFF_MARKER + FI.CHAR_SOUNDS_MARKER + FI.MOTION_POOL_MARKER + FI.RESIDENT_STATS_MARKER + b''.join(FI.WAVE3_MARKERS.values()) + b''.join(FI.MARKERS_082D) + b''.join(FI.MARKERS_082E) + FI.ACTORS_MARKER + b'lc-online-linked-rate/1')
             FI.check_release_dll(dll, keys)
         # 1.7.1 lacks the companion's 1.8 drop-in capability, even though it has older required keys.
         older = ('ProductVersion\0' + '1.7.1' + '\0').encode('utf-16le')
         markers = b''.join((key + '\0').encode('utf-16le') for names in FI.RELEASE_18_KEYS.values()
                            for key in names if key != 'JoinInProgress')
-        dll.write_bytes(b'MZ synthetic old fix\0' + older + markers + b'NSA4' + b'NPR14' + FI.GRAB_CARRY_R3_MARKER + FI.CARRY_CHAIN_MARKER + FI.TK_AUDIO_MARKER + FI.TK_STILL_MARKER + FI.GUARD_TAP_MARKER + FI.GUARD_XML1_NATIVE_MARKER + FI.TK_ARMING_MARKER + FI.GUARD_ENTRY_MARKER + FI.COLOSSUS_CASTER_MARKER + FI.THROWN_IMPACT_MARKER + FI.FLYING_CARRY_OFF_MARKER + FI.CHAR_SOUNDS_MARKER + FI.MOTION_POOL_MARKER + FI.RESIDENT_STATS_MARKER + b''.join(FI.WAVE3_MARKERS.values()) + b''.join(FI.MARKERS_082D) + b''.join(FI.MARKERS_082E) + FI.ACTORS_MARKER)
+        dll.write_bytes(b'MZ synthetic old fix\0' + older + markers + b'NSA4' + b'NPR14' + FI.GRAB_CARRY_R3_MARKER + FI.CARRY_CHAIN_MARKER + FI.TK_AUDIO_MARKER + FI.TK_STILL_MARKER + FI.GUARD_TAP_MARKER + FI.GUARD_XML1_NATIVE_MARKER + FI.TK_ARMING_MARKER + FI.GUARD_ENTRY_MARKER + FI.COLOSSUS_CASTER_MARKER + FI.THROWN_IMPACT_MARKER + FI.FLYING_CARRY_OFF_MARKER + FI.CHAR_SOUNDS_MARKER + FI.MOTION_POOL_MARKER + FI.RESIDENT_STATS_MARKER + b''.join(FI.WAVE3_MARKERS.values()) + b''.join(FI.MARKERS_082D) + b''.join(FI.MARKERS_082E) + FI.ACTORS_MARKER + b'lc-online-linked-rate/1')
         try:
             FI.check_release_dll(dll, keys)
         except FI.FixTooOld as exc:
@@ -1272,13 +1274,13 @@ def test_release_identity_060_beta1_is_lc40_and_preserves_shipped_history():
             continue
         raise AssertionError('unassigned identity accepted')
     assert RM.release_version('v0.6.0-beta.1', VERSION) == '0.6.0-beta.1'
-    assert FI.required_xml2fix('0.6.0-beta.1') == '>=1.11.0-beta.1'
+    assert FI.required_xml2fix('0.6.0-beta.1') == '>=1.11.0-beta.2'
     assert FI.required_xml2fix('0.6.0') == '>=1.11'
 
 
 
 def test_private_candidate_requires_the_release_companion():
-    assert FI.required_xml2fix(FI.RI.PRIVATE_CANDIDATE.release) == '>=1.11.0-beta.1'
+    assert FI.required_xml2fix(FI.RI.PRIVATE_CANDIDATE.release) == '>=1.11.0-beta.2'
 
 
 def test_world_backfaces_is_written_for_the_converted_xml1_zones_only():
@@ -1333,3 +1335,32 @@ def test_beta8_classic_objectives_key_refuses_a_beta7_dll():
         assert FI.old_fix_keys(dll, keys) == ['[Game] ClassicObjectives']
         dll.write_bytes(b'MZ' + ''.join(('ClassicHud\0', 'ClassicObjectives')).encode('utf-16le'))
         assert FI.old_fix_keys(dll, keys) == []
+
+
+def test_linked_rate_beta2_requires_the_matching_companion():
+    # The beta.1 DLL has rule 29 revision 1 and no host rate trailer. Both
+    # generated build stamps and release manifests share this requirement.
+    for version in ('0.6.0-beta.2', '0.6.0-rc.1', FI.RI.PRIVATE_CANDIDATE.release):
+        assert FI.required_xml2fix(version) == '>=1.11.0-beta.2'
+    assert FI.required_xml2fix('0.6.0') == '>=1.11'
+
+
+def test_linked_rate_requires_revision2_dll_without_custom_menus(tmp_path):
+    keys = {'Online': {'TickRate': '60'}}
+    dll = tmp_path / 'dinput.dll'
+    # beta.1 reads TickRate, but cannot honor the host-owned rule-29 contract.
+    old = b'MZ' + 'TickRate'.encode('utf-16le')
+    dll.write_bytes(old)
+    missing = FI.old_fix_keys(dll, keys)
+    assert len(missing) == 1 and 'rule 29 revision 2' in missing[0]
+    try:
+        FI.write_port_keys(tmp_path, keys)
+    except FI.FixTooOld:
+        pass
+    else:
+        raise AssertionError('beta.1 DLL accepted without the custom menus')
+    assert not (tmp_path / 'xml2-fix.ini').exists()
+    dll.write_bytes(old + b'lc-online-linked-rate/1')
+    assert FI.old_fix_keys(dll, keys) == []
+    FI.write_port_keys(tmp_path, keys)
+    assert FI.read_ini(tmp_path / 'xml2-fix.ini')['Online']['TickRate'] == '60'
