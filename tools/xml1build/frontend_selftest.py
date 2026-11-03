@@ -251,7 +251,7 @@ def u2_menu(ctx):
     cmds = [items[n].get('usecmd') for n in order]
     if cmds != ['resetgame;runscript setDifficultyLevel(1)', 'runscript saveloadProcess(3)',
                 'set drmode 1;openmenu danger_room', 'options_main', 'set reviewmode -1;openmenu review',
-                'openmenu credits', 'openmenu online', None] or F.PLAY_ONLINE_CMD != 'openmenu online':
+                'openmenu credits', 'openmenu lc_online_entry', None] or F.PLAY_ONLINE_CMD != 'openmenu lc_online_entry':
         fail('U2', f'usecmds {cmds}')
     # XMen2.exe's retail bytes the proposed clamp change relies on (cmp edi, 6 / mov ebx, 6 / jge +2)
     exe = ctx.base_index.path('XMen2.exe')
@@ -939,8 +939,9 @@ def u_online():
         screen = O.runtime_layout(name)
         for problem in O.runtime_problems(O.menu_tree(screen), screen):
             fail('U-online', name + ': ' + problem)
-    if F.PLAY_ONLINE_CMD != O.NATIVE_ENTRY:
-        fail('U-online', 'production route must remain native')
+    from . import online_fallback as OFB
+    if F.PLAY_ONLINE_CMD != 'openmenu '+OFB.ENTRY:
+        fail('U-online', 'production route must be the LC online entry (no GameSpy screens)')
     ctx=ctx_for('xml1')
     for role in O.LOBBIES:
         native=ctx.read_base_xmlb('UI/menus/'+role+'.engb')
