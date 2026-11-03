@@ -249,3 +249,14 @@ shared focus model when Retry loses focus, hides or becomes disabled. Native
 and synthetic authoring tests cover these contracts; integration still needs
 owned-output regeneration and live rendering/input checks.
 Release maintainers: [Guard default and acceptance switch](RELEASE_GUARD.md).
+
+Optional native online presentation is authored by `online_native_skins.py`:
+the online text editor, Other ways settings and all four policy/info modes,
+Host/Join chooser, native LAN/IP browser and the PC Join-options intermediate
+page. Original menu classes, actions, modes, policy content and list services
+come from the player's definitions. Unsupported or additional unknown widgets
+leave the native resource available, with an empty optional capability marker.
+Each variant requires its matching adapter marker in the companion DLL before
+the builder advertises it. The installer/output validator checks the same
+complete resource closure. This changes generated content; integration owns
+the content/cache identity and must regenerate the front end before live checks.
