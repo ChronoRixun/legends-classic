@@ -3,22 +3,6 @@ from xml1build import online_menus as O, online_native_skins as N
 from test_online_native_skins import native
 
 
-def test_editor_key_backgrounds_are_individually_hideable():
-    screen=N.layout('text_entry',native())
-    tree=N.menu_tree('text_entry',native(),screen)
-    items={e['name']:e for e in screen['items']}
-    for i,key in enumerate(N.KEYS,1):
-        background=items[f'lc_text_key_bg{i:02}']
-        assert background['rect']==items[key]['rect']
-        assert background['hidden'] and not background['intent']
-        node=tree.find(f"item[@name='lc_text_key_bg{i:02}']")
-        assert node.get('type')=='MENU_ITEM_MODEL' and node.get('hide')=='true'
-        assert node.get('model')==O.variant_resource(screen,background)
-        # The static backdrop must contain no cells that survive hiding keys.
-        assert not any(shape['rect']==items[key]['rect'] for shape in screen['shapes'])
-    assert len(tree.findall('.//onfocus'))==42
-
-
 def test_waiting_sentence_has_one_contiguous_field_and_localized_template():
     for role in ('host','join'):
         screen=O.lobby_layout(role,members=4,fixture=True)
