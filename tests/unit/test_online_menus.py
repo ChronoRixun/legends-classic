@@ -20,7 +20,7 @@ def test_code_grid_graph_and_fixture_editing():
     state.dispatch('paste', 'K7QN-2X9M'); assert state.code == 'K7QN2X9M'
     state.dispatch('paste', 'bad;command'); assert state.code == 'K7QN2X9M' and state.error
     state.menu='lc_code'
-    state.dispatch('back'); assert state.code == 'K7QN2X9'
+    state.dispatch('back'); assert state.menu == 'lc_online' and state.code == 'K7QN2X9M'
     state.dispatch('clear'); state.dispatch('back'); assert state.menu == 'lc_online'
 
 
@@ -92,9 +92,9 @@ def test_fixture_errors_back_reentry_and_command_manifest():
     raises(ValueError,lambda:O.layout('unowned'))
 
 
-def test_back_deletes_last_cell_without_leaving_and_caps_browser_cache():
+def test_delete_stays_in_code_back_leaves_and_caps_browser_cache():
     state=O.Fixture(menu='lc_code',code='K')
-    state.dispatch('back')
+    state.dispatch('delete')
     assert state.menu=='lc_code' and state.code==''
     state.dispatch('back'); assert state.menu=='lc_online'
     state.dispatch('open:lc_host'); state.dispatch('back'); assert state.menu=='lc_online'
@@ -294,6 +294,9 @@ def test_native_description_refresh_preserves_tokens_and_has_all_five_bindings()
             assert key in items and key in anchors and key in tree.attrib
             value=items[key].get('text','')
             if value:
+                if name=='lc_code' and i==5:
+                    assert value.endswith('Del Delete') and tree.get(key).startswith('~04Del Delete')
+                    continue
                 assert '$MENU_' in value and '[' not in value
                 assert tree.get(key).startswith('~04$MENU_')
         mutated=copy.deepcopy(tree); mutated.attrib.pop('desctext3')

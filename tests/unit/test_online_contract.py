@@ -332,13 +332,13 @@ def test_guest_fixture_readiness_agrees_with_self_card_actions_and_summary():
         assert items['lc_guest_unready']['hidden'] is not ready
         assert items['lc_guest_leave']['hidden'] is ready
         assert items['lc_ready_count']['text']==('4' if ready else '1')
-        assert items['lc_waiting_name']['text']==('' if ready else 'Kitty')
+        assert items['lc_waiting_name']['text']==('' if ready else 'Waiting for Kitty to get ready.')
     items={e['name']:e for e in O.lobby_layout('host',members=3,fixture=True)['items']}
-    assert items['lc_ready_count']['text']=='2' and items['lc_waiting_name']['text']=='Alex'
+    assert items['lc_ready_count']['text']=='2' and items['lc_waiting_name']['text']=='Waiting for Alex to get ready.'
     for ready in (False,True):
         items={e['name']:e for e in O.lobby_layout('join',members=1,ready=ready,fixture=True)['items']}
         assert items['lc_ready_solo']['hidden'] is not ready
-        assert items['lc_ready_waiting']['hidden'] is ready
+        assert items['lc_ready_waiting']['hidden']
 
 
 def test_lobby_render_states_do_not_claim_pending_admission():

@@ -60,7 +60,7 @@ def shared_focus(plane):
     return (SHARED_FOCUS if plane == -150 else f'{SHARED_FOCUS}_{abs(int(plane))}'), (0, plane, 384)
 # Approved seven rows require the companion's menu-anchors/512 capability.
 BROWSE_ROWS = 7
-PROMPT_TOKENS = {'back':'$MENU_BACK','delete':'$MENU_BACK','paste':'$MENU_NEXT',
+PROMPT_TOKENS = {'back':'$MENU_BACK','delete':'Del','paste':'$MENU_NEXT',
                  'refresh':'$MENU_NEXT','rejoin':'$MENU_NEXT','clear':'$MENU_OTHER',
                  'name':'$MENU_OTHER','change':'$MENU_OTHER','open':'$MENU_OK'}
 # What a pad player sees and presses on the four co-op screens (the designs: X Change name / Clear, Y Rejoin / Paste / Refresh).
@@ -134,7 +134,7 @@ class Fixture:
             if len(self.code)<8: self.code+=intent[5:]
             self.phase='resolved fixture' if len(self.code)==8 else 'editing fixture'
         elif intent in ('delete','back'):
-            if intent=='delete' or (self.menu=='lc_code' and self.code): self.code=self.code[:-1]
+            if intent=='delete': self.code=self.code[:-1]
             elif intent=='back': self.menu='lc_online'
         elif intent=='clear': self.code=''; self.phase='editing fixture'
         elif intent=='paste':
@@ -403,11 +403,11 @@ def layout(name, state=None):
     shape('rect',(0,441,640,39),0)
     prompts={'lc_online':[('select','Select','open:lc_host'),('back','Back','back'),('name','Change name','name'),('rejoin','Rejoin','rejoin')],
              'lc_host':[('select','Select','open-room'),('change','Change','campaign'),('open','Open the room','open-room'),('back','Back','back')],
-             'lc_code':[('pick','Pick','done'),('delete','Delete','back'),('paste','Paste','paste'),('clear','Clear','clear')],
+             'lc_code':[('pick','Pick','done'),('back','Back','back'),('paste','Paste','paste'),('clear','Clear','clear'),('delete','Delete','delete')],
              'lc_browse':[('join','Join','join'),('refresh','Refresh','refresh'),('back','Back','back')]}[name]
     positions={'lc_online':((43,59),(106,56),(164,92),(259,64)),
                'lc_host':((43,59),(106,66),(175,97),(274,65)),
-               'lc_code':((43,50),(98,60),(162,58),(223,59)),
+               'lc_code':((43,50),(98,60),(162,58),(223,75),(312,75)),
                'lc_browse':((43,50),(98,68),(168,58))}[name]
     for i,(key,label,intent) in enumerate(prompts):
         px,pw=positions[i]
@@ -2015,6 +2015,8 @@ def runtime_layout(name,state=None):
         for e in screen['items']:
             if e['name']=='desctext3':e['rect']=(162,455,85,18)
             if e['name']=='desctext4':e['rect']=(252,455,116,18)
+            if e['name']=='desctext5':e['rect']=(382,455,78,18)
+            if e['name']=='breadcrumb':e['text']=''
         screen['items'].append(_entry('lc_code_complete','Complete code. Done looks it up again.',(59,219,510,18),hidden=True))
         screen['items'].append(_entry('code_value','',(59,196,250,18),data=True,hidden=True))
         screen['items'].append(_entry('code_remaining','8',(570,219,20,18),data=True,hidden=True))
@@ -2279,10 +2281,9 @@ def lobby_layout(role, *, members=1, ready=False, fixture=False, pending=False, 
             parts=[dict(text='of',rect=(0,0,15,17),style='body',color=6),
                    dict(text='ready.',rect=(24,0,46,17),style='body',color=6)])
     waiting=members>count
-    variant('lc_ready_waiting','Waiting for',(125,365,400,17),'body',3,visible=fixture and waiting,
-        parts=[dict(text='to get ready.',rect=(177,0,100,17),style='body',color=3)])
+    text('lc_ready_waiting','Waiting for %s to get ready.',(125,365,400,17),'body',3,hidden=True)
     waiting_row=ready_flags.index(False) if waiting else 0
-    text('lc_waiting_name',('Logan','Kitty','Alex','Sam')[waiting_row] if fixture and waiting else '',(193,365,106,17),'body',3,data=True)
+    text('lc_waiting_name',('Waiting for '+('Logan','Kitty','Alex','Sam')[waiting_row]+' to get ready.') if fixture and waiting else '',(125,365,400,17),'body',3,data=True)
     variant('lc_ready_all','All ready.',(125,365,420,17),'body',3,visible=fixture and not waiting and members>1)
     variant('lc_ready_solo','Solo start follows the native minimum-player rule.',(125,365,420,17),'body',3,visible=fixture and members==1 and not waiting)
     for key,label,rect,intent in (
