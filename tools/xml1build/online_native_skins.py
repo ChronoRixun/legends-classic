@@ -99,11 +99,13 @@ def layout(name, native):
     for i, key in enumerate(KEYS[:36]):
         rect = (70 + (i % 9)*56, 180 + (i // 9)*36, 50, 26)
         text(key, rect, 'row', active=True)['align'] = 'center'
-        screen['shapes'].append(dict(kind='rect', rect=rect, color=2))
+        screen['items'].append(O._variant(f'lc_text_key_bg{i+1:02}',rect,
+            [dict(kind='rect',rect=(0,0,rect[2],rect[3]),color=2)]))
     for i, key in enumerate(KEYS[36:]):
         rect = (61+i*132,338,122,28)
         text(key, rect, 'body', active=True)['align'] = 'center'
-        screen['shapes'].append(dict(kind='rect', rect=rect, color=2))
+        screen['items'].append(O._variant(f'lc_text_key_bg{i+37:02}',rect,
+            [dict(kind='rect',rect=(0,0,rect[2],rect[3]),color=2)]))
     # Native PC supplied no clickable Cancel. Mouse activation enters the same
     # Escape character path as the keyboard; original key links remain intact.
     screen['items'].append(O._entry('lc_text_cancel','Cancel',(43,402,132,28),'body',4,
@@ -207,6 +209,11 @@ def prepare(ctx, name, source, atlas, focus_source, palette_ids, metrics, anchor
         selected=O._entry('lan_focus','',(0,0,530,20),parts=[dict(kind='panel',rect=(0,0,530,20),color=5,outline=5)])
         models['ui/models/lc_o_lan_focus']=O.focus_model(focus_source,(0,-8,424,8),True,O.variant_picture(selected))
     for item in screen['items']:
+        if item.get('variant') and item.get('parts'):
+            rect=(0,-item['rect'][3]*.8,item['rect'][2]*.8,0)
+            resource=O.variant_resource(screen,item)
+            if resource not in models:
+                models[resource]=O.focus_model(focus_source,rect,True,O.variant_picture(item))
         if not item['intent']: continue
         _,_,rect,outline,_ = O.focus_placement(screen,item)
         resource = O.focus_resource(rect,outline,O.focus_variant(screen,item))
