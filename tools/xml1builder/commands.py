@@ -363,6 +363,10 @@ def cmd_build(a, output, cancel, pipeline_factory):
     for name in ('xml2', 'out'):
         if not getattr(a, name):
             raise BuilderError('E_USAGE', f'build needs --{name}.', '', {})
+    if getattr(a, 'classic_conversation', 'off') == 'xml1':
+        # Launchers 0.5.0-beta.4+ always send this option; off is a no-op here (no output, report or fingerprint change).
+        raise BuilderError('E_USAGE', 'The Classic conversation box needs Legends Classic 0.6.0-beta.3 or later.',
+                           'Turn Classic conversation box off, or update the builder.', {}, exit_code=2)
     out_dir = Path(a.out).resolve()
     xml2 = Path(a.xml2).resolve()
     cache = Path(a.cache).resolve() if a.cache else default_cache()
