@@ -86,7 +86,13 @@ lock ([#63](https://github.com/ChronoRixun/legends-classic/issues/63)) and the t
   against the original).
 - **The 96-live-actor limit** (`[Limits] Actors=96`, with `[Limits] ActorPools=124`) is off by default; a save written
   with it on needs it on to load ([SAVES.md](SAVES.md)).
-- **Blob** fights with the first game's brain since beta 8, but in rare runs he can still stand still.
+- **Blob** fights with the first game's brain since beta 8. In 0.6.0-beta.1 he could spin on the spot and stop
+  attacking (offline and online) when he couldn't reach the object he wanted to pick up; since 0.6.0-beta.2 he gives
+  up on it after five seconds and attacks again. He can still circle for several seconds at a time.
+- **The first game's bosses** (dopples, Avalanche, Shadow King, Magneto, Master Mold, Blob) give up on a move that
+  can't happen after 5 to 10 seconds instead of waiting forever. Pyro, Mystique and Marrow are unchanged. Whether a
+  boss can reach you or see you still depends on the area; if a boss stands idle for longer than about 15 seconds,
+  please report the area and position.
 
 ## The classic look (new in 0.4.0)
 
@@ -96,16 +102,27 @@ try. If a screen's text or labels are cut off, or something looks off, please re
 
 ## Online
 
-- **Session frame rate follows the host** with the matching linked-rate DLL and co-op menus. Your local frame-rate
-  setting is restored when you leave. The host's online rate also respects its TickRate ceiling (normally 60).
-  The player cards explain an overridden setting and warn when measured local frame work cannot hold the rate.
-  A slow PC or connection can still slow lockstep for everyone; the host can leave and create a lower-rate session.
-  Linked-rate and older DLLs refuse each other before admission. This change still needs the live checks in the integration plan.
-- **0.6.0-beta.1 is a co-op beta.** Co-op was tested on one PC and on two PCs at home, with two, three and four
-  players, including fights. Not verified yet: playing through the relay (networks where a direct connection fails),
-  four players on four separate PCs, long sessions, and joins over slow connections (if a join takes longer than the
-  wait, play continues and the friend comes in moments later). Relay-only mode refuses an unavailable relay instead
-  of falling back to a direct connection, and relay connection failures are still being investigated.
+- **Fixed in 0.6.0-beta.2: a friend who drops out while joining.** In 0.6.0-beta.1, if the only friend joining
+  dropped out partway through, a player already in the game could be left on the pause screen with everyone shown
+  as "Not Ready". In beta.2 the players already in the game carry on together (tested with two and with three
+  players already in the game); everyone may wait a few seconds at that area load. If two friends are joining and
+  one drops out, the other still gets in. If the host drops out, the others see the host-left message; there is
+  still no host migration. Tested on one PC with up to four copies of the game and on two PCs at home.
+- **Fixed in 0.6.0-beta.2: a rare host crash with four players.** In 0.6.0-beta.1, if a friend who was joining a
+  4-player game dropped out at the moment the host reloaded the area, the host's game could crash. In beta.2 the
+  host stays up and the other three players carry on.
+- **Session frame rate follows the host.** Guests use the host's frame rate while they're in the session and get
+  their own setting back when they leave; `xml2-fix.ini` is not rewritten. The host's online limit
+  (`[Online] TickRate`, normally 60) still applies, so a 144 fps host opens a 60 fps session. To change the session's
+  rate, leave and host a new room. Player cards show "local / online" rates and warn ("Cannot hold N fps") when a
+  PC can't keep up; nothing lowers the rate automatically. A slow PC, a slow connection or fullscreen VSync can still
+  slow the session for everyone. Checked live on one PC so far.
+- **0.6.0-beta.2 is a co-op beta.** Co-op was tested on one PC (up to four copies) and on two PCs at home, with two,
+  three and four players, including fights and joins by code, LAN and IP. Not verified yet: playing through the
+  relay (networks where a direct connection fails), players on different home networks (over the internet), three
+  or four separate PCs, long sessions, and joins over slow connections (if a join takes longer than the wait, play
+  continues and the friend comes in moments later). Relay-only mode refuses an unavailable relay instead of falling
+  back to a direct connection.
 - **Host loss ends the session** until co-op recovery (0.8): no host migration or automatic reconnection yet. A guest
   can join again by code. If a healthy host still drops out unexpectedly, please keep `xml2-fix.log` from every PC:
   the cause is not known yet.
@@ -113,14 +130,27 @@ try. If a screen's text or labels are cut off, or something looks off, please re
   then everyone, the host included, reloads that area together, so that load takes a little longer. While the
   friend gets the host's game, the host and the other players wait up to 10 seconds on "A player is joining..."
   (`[Online] JoinHoldSeconds`, default 10, 0..15, `0` = off). The host's DROP-IN row turns joining off for a room; a friend
-  who enters the code of a started game then is told the session has started.
-- **A friend who drops out while joining.** If the only friend who is joining drops out partway through, one of the
-  players already in the game can be left on the pause screen with every player shown as "Not Ready". That player has
-  to leave and join again by code; the others play on. This is being fixed for the next beta. If two friends are
-  joining and one drops out, the other still gets in; if the host drops out, the others see the host-left message.
-- **The new screens** still need more checks with mouse, keyboard and controllers at different resolutions, over
-  long sessions (memory, graphics memory) and on the slowest screens' first opening. `--online-menus off` keeps the
-  original online menus.
+  who tries to join a started game is told: "This session has started. Ask the host to start a new session."
+- **"Lost online sync" message (cosmetic).** When a friend who is joining drops out during the admission, the host
+  can show the game's own "lost online sync" message a few times. The session carries on and nobody else is dropped
+  (in testing on two PCs the join wait ended about 2.4 seconds later).
+- **Pausing with four players** is verified with test input only: in a few of those runs one player's Ready press
+  didn't register and everyone stayed on the pause screen until it was pressed again. Press Ready again if that
+  happens. Two- and three-player pauses released every time (two-player pauses also with a real controller on two PCs).
+- **Hosting alone online:** after Ready the game resumes but the pause menu stays open - press B or Esc again.
+  (X-Men Legends II only closes that menu by itself with two or more players; 0.6.0-beta.1 behaves the same.)
+- **The online screens** were checked with a real controller and keyboard on two PCs; they still need checks with
+  more controllers, at more resolutions and over long sessions. If they can't start, or a build uses
+  `--online-menus off`, the game shows a plain "Online unavailable" page with Back to the main menu and advice to
+  rebuild or update XML2 Fix; it no longer opens the GameSpy-era screens. Swapping the DLL without rebuilding is not
+  enough.
+- **Enter IP** draws its unused keyboard cells and two empty bottom buttons as boxes. They do nothing.
+- **Service status.** With the online service working, the Play Online screen's status can read "Connecting..."
+  for a long time; joining by code still works.
+- **Typing** follows your keyboard layout; letters the game can't show (accented letters, IME text) are refused
+  with "Unsupported". IME input has not been tested.
+- **Save import** from xemu and XML1-recomp is not switched on for players. Building from an extracted Xbox or
+  XML1-recomp folder (`--iso <folder>`) does not bring its saves across.
 - A failed shared-campaign restore can require rehosting.
 - LAG warnings may remain, but the slow-player drop is disabled.
 - Solo story segments online are watched now, but #106 stays open until played through in more sessions.

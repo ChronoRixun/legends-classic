@@ -22,11 +22,13 @@
 
 Plans move with what testing finds. What each released version added is in the [CHANGELOG](../CHANGELOG.md).
 
-- **0.6 - in beta (0.6.0-beta.1):** online co-op in the game's own Play Online screens (Host, Join by code, Browse,
+- **0.6 - in beta (0.6.0-beta.2):** online co-op in the game's own Play Online screens (Host, Join by code, Browse,
   the lobby and Party), and friends can join a game in progress at the host's next area (the host's DROP-IN setting
-  turns it off per room). Still to verify: the relay, four players on four separate PCs, long sessions, joins over slow connections.
-  Later 0.6 betas: **save import** from xemu and from XML1-recomp, the session sharing one frame rate, the rest of the
-  online screens in the new style, and a fix for the one known join issue.
+  turns it off per room). Beta.2: the session follows the host's frame rate, the rest of the online screens (LAN,
+  Connect by IP, the keyboards, Game Options, the pause menu's player list) in the classic style with keyboard and
+  controller, and fixes for Blob and the other first-game bosses, the 4-player host crash and the lost-newcomer
+  pause. Still to verify: the relay, players on different home networks, three or four separate PCs, long sessions,
+  joins over slow connections. Later 0.6 betas: **save import** from xemu and from XML1-recomp.
 - **0.7** - an optional **"Remastered" graphics** toggle: DXVK, anti-aliasing, anisotropic filtering, resolution
   scaling and a centred HUD; off is the original look exactly.
 - **0.8** - **co-op recovery**: area checkpoints, and rehosting after the host is lost.
