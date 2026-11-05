@@ -39,6 +39,16 @@ The same commands, options, events (`--events jsonl`, what the launcher reads) a
 defaults to `%LOCALAPPDATA%\xml1-builder\cache` (`--cache DIR` elsewhere). The output folder must not overlap the
 XML2 install, the disc image, the cache or this repository's `tools/` and `research/` folders (the builder refuses).
 
+`--iso` also auto-detects an extracted Xbox install folder, including a recomp install. All consumed originals
+must match the packaged World dump hashes; loose overlays are ignored. Output, cache and log files must stay
+outside that source install. See [using an extracted install](DUMPING.md#already-play-the-recomp-point-the-builder-at-its-folder).
+
+Maintainers can regenerate `tools/xml1builder/data/known_dump_files.json` from an owned image with
+`python -m xml1builder.devdata folder-reference --iso <image>` (from `tools/`). The command first checks the
+whole-image SHA-256 against a trusted value already recorded in `known_dumps.json`, then checks the existing
+executable, archive-directory and disc-listing fingerprints. It writes only names, sizes and SHA-256 hashes.
+An extracted folder or an unknown image cannot supply a new trusted reference.
+
 ## Tests
 
 `--online-menus on` is the 0.6 release default with the XML1 front end. It enables the custom
@@ -67,7 +77,17 @@ because their focus bars share one model item per plane (`SHARED_FOCUS_SCREENS`:
 -300, at the scene origin): each focusable item sets it to its own bar on focus (authored at the owner's absolute
 position) and hides it on nofocus; XMen2.exe's setFocus (0x5aaf80) loses the old item before the new one gains. The
 clipboard / unavailable notices Browse can never raise are not authored there (the DLL falls back to `lc_inline_error`).
-Predicted scene anchors (backdrop included): Browse 214, Host lobby 174, Join lobby 170, Party 159, the rest <= 147.
+The independent native menu item map also holds at most **175 items**: insertion `0x5af490` checks the
+count at menu `+0x1608` against `0xaf` at `0x5af4af` (owned retail-image recheck,
+companion `docs/online-menus.md`, "Native item-map budget and LAN list fixes"). The
+`menu-anchors/512` capability does not raise it. Tree validation, final backdrop authoring
+and `output_problems` check this item limit separately from scene anchors. Current owned
+menus including backdrops use Browse **172**, host lobby **173**, join lobby **169** items.
+The lobbies reuse the hero fallback DATA field for linked rate plus slow-peer warning;
+Browse keeps seven rows with numeric occupancy and one build label per row.
+LAN rows additionally require the companion `lc-fonts-list/1` private LISTBOX scale;
+its centered focus art follows the native row-center positioning. Rebuild content with
+the matching DLL; no release/content identity is assigned by this fix.
 Every Browse row cell exists from the start with its row command and starts disabled;
 the DLL binds text and enables rows. Hidden localized variants (`lc_broker_*`, the
 `lc_host_private`/`lc_host_public` scenes, `lc_rowN_selected`) are selected by the
@@ -239,3 +259,24 @@ shared focus model when Retry loses focus, hides or becomes disabled. Native
 and synthetic authoring tests cover these contracts; integration still needs
 owned-output regeneration and live rendering/input checks.
 Release maintainers: [Guard default and acceptance switch](RELEASE_GUARD.md).
+
+Optional native online presentation is authored by `online_native_skins.py`:
+the online text editor, Other ways settings and all four policy/info modes,
+Host/Join chooser, native LAN/IP browser and the PC Join-options intermediate
+page. Original menu classes, actions, modes, policy content and list services
+come from the player's definitions. Unsupported or additional unknown widgets
+publish an empty optional capability marker and select the plain LC failure page.
+Each variant requires its matching adapter marker in the companion DLL before
+the builder advertises it. The installer/output validator checks the same
+complete resource closure. This changes generated content; integration owns
+the content/cache identity and must regenerate the front end before live checks.
+
+
+LC never falls back to the GameSpy-era online pages. `online_fallback.py` always
+writes a native-font LC message for `lc_online_entry` and failed/unsupported
+online resources, even when online menus are off. Back and Escape return to Main
+through a native cancel item. Only already-skinned host/join resources are kept;
+all retained online variants drop GameSpy/sequel logo model records and their
+references. The DLL must expose `lc-online-no-gamespy/1` for enabled online menus.
+Regenerate the matching content; the maintainer assigns its new content/cache
+identity. No release/content token is assigned by this behavior change.

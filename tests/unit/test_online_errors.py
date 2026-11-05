@@ -14,7 +14,7 @@ def tree(name):
 # (test/online_menus_errors.inl). Changing either side alone fails one of the two suites.
 DLL_CAUSES = ('code_not_found', 'room_full', 'version_mismatch', 'rate_limited', 'timeout', 'offline', 'refused', 'generic',
               'pin_mismatch', 'code_expired', 'room_closed', 'test_mode', 'unsupported', 'busy', 'invalid_name', 'too_many_public_rooms', 'too_many_joins', 'session_started')
-DLL_NEXT = ('edit_code', 'browse', 'back', 'retry', 'retry', 'retry', 'back', 'retry', 'back', 'edit_code', 'retry', 'back', 'other_ways', 'wait', 'back', 'close_room', 'leave_game', 'lobby')
+DLL_NEXT = ('edit_code', 'browse', 'back', 'retry', 'retry', 'retry', 'back', 'retry', 'back', 'edit_code', 'retry', 'back', 'other_ways', 'wait', 'back', 'close_room', 'leave_game', 'new_session')
 DLL_RETRY = ('rate_limited', 'timeout', 'offline', 'generic', 'room_closed')
 
 
@@ -206,7 +206,7 @@ def test_started_code_refusal_has_specific_scene_and_transient_keeps_retry():
     for name in ('lc_code', 'lc_browse'):
         screen, root, items = tree(name)
         text = O._plain(items['lc_broker_err_session_started'].get('text'))
-        assert 'session has started' in text.lower() and 'lobby' in text.lower()
+        assert 'session has started' in text.lower() and 'start a new session' in text.lower() and 'return to the lobby' not in text.lower()
         assert 'retry' not in text.lower() and 'try again' not in text.lower()
         assert O._plain(items['lc_broker_err_room_closed'].get('text')) == 'Not taking players right now. Try again soon.'
         assert 'session_started' not in O.RETRYABLE_CAUSES

@@ -17,8 +17,9 @@ Event kinds (schema 1; the launcher's fake builder is the reference):
   error     {stage, code, msg, hint, detail}
   result    {ok, exit, ...}                  info / verify / clean: result.info / result.verify / result.clean
 
-Every string of every event and every human line passes through mask() (the user profile folder shown as
-%USERPROFILE%): logs, events and the launcher's Copy details / Report end up in bug reports.
+Display strings and every human/log line pass through mask() (the user profile folder shown as
+%USERPROFILE%). Explicit MachinePath fields retain their absolute paths in the local JSONL transport;
+frontends must redact those fields before displaying or including them in shared reports.
 
 The log (<out>/_build/builder.log, rotated: builder.log, builder.1.log, builder.2.log; before <out> is known, --log
 or <cache>/logs/builder-<time>.log) gets the human text and every event but progress."""
@@ -28,6 +29,8 @@ import datetime
 import io
 import json
 import os
+import errno
+import stat
 import re
 import sys
 import threading
@@ -54,8 +57,11 @@ def _mask_rx():
 
 
 def mask(value):
-    """a path (or any text) with the user profile folder shown as %USERPROFILE% (logs and events are shared in bug
-    reports). The one helper: Output applies it to every event and every human line."""
+    """Show profile folders as %USERPROFILE% in diagnostics and human/log output.
+
+    Operational JSONL paths explicitly marked MachinePath bypass this helper
+    only in the local transport, never in the redacted display/log copy.
+    """
     text = str(value)
     rx = _mask_rx()
     return rx.sub('%USERPROFILE%', text) if rx is not None else text
@@ -72,6 +78,32 @@ def mask_all(obj):
     if isinstance(obj, os.PathLike):
         return mask(os.fspath(obj))
     return obj
+
+
+class MachinePath(str):
+    """An absolute local path a JSONL consumer must be able to open or pass back.
+
+    Mark only operational fields, never diagnostic text. Text output and logs
+    still redact this value; no environment-placeholder expansion is needed by
+    the consumer. Keep this transport marker out of on-disk report data.
+    """
+
+    def __new__(cls, value):
+        text = os.fspath(value)
+        if not Path(text).is_absolute():
+            raise ValueError('A machine path must be absolute.')
+        return super().__new__(cls, text)
+
+
+def _event_fields(obj):
+    """Redact diagnostics while preserving explicitly marked machine paths."""
+    if isinstance(obj, MachinePath):
+        return str(obj)
+    if isinstance(obj, dict):
+        return {k: _event_fields(v) for k, v in obj.items()}
+    if isinstance(obj, (list, tuple)):
+        return [_event_fields(v) for v in obj]
+    return mask_all(obj)
 
 
 def rotate_logs(path: Path, keep=LOG_KEEP):
@@ -180,7 +212,8 @@ class Output:
             detail = dict(fields.get('detail') or {})
             detail.setdefault('count', fields.get('count', 1))
             fields['detail'] = detail
-        record = {'ev': ev, 't': self.t(), **mask_all(fields)}
+        record = {'ev': ev, 't': self.t(), **_event_fields(fields)}
+        display = mask_all(record)
         line = json.dumps(record, ensure_ascii=False, default=str)
         with self._lock:
             if self.jsonl:
@@ -190,9 +223,9 @@ class Output:
                 except (OSError, ValueError):
                     pass
             else:
-                self._render_text(record)
+                self._render_text(display)
             if ev != 'progress':
-                self._write_log(line)
+                self._write_log(json.dumps(display, ensure_ascii=False, default=str))
         return record
 
     def _render_text(self, r):
@@ -260,7 +293,17 @@ class Output:
             path.parent.mkdir(parents=True, exist_ok=True)
             if rotate:
                 rotate_logs(path)
-            previous, self._log = self._log, open(path, 'a', encoding='utf-8')
+            candidate = open(path, 'a', encoding='utf-8')
+            try:
+                st, lst = os.fstat(candidate.fileno()), path.lstat()
+                if not stat.S_ISREG(st.st_mode) or st.st_nlink != 1 or stat.S_ISLNK(lst.st_mode) \
+                        or getattr(lst, 'st_file_attributes', 0) & stat.FILE_ATTRIBUTE_REPARSE_POINT \
+                        or (st.st_dev, st.st_ino) != (lst.st_dev, lst.st_ino):
+                    raise PermissionError(errno.EPERM, 'log target must be an ordinary file without links', str(path))
+            except BaseException:
+                candidate.close()
+                raise
+            previous, self._log = self._log, candidate
             self.log_path = path
             if previous is not None:
                 previous.close()

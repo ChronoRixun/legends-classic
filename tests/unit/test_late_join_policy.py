@@ -31,7 +31,7 @@ def test_legacy_dll_cannot_silently_ignore_the_policy_key():
 
 
 def test_started_notice_is_available_on_each_join_screen():
-    assert O.NOTICE_TEXT['lc_notice_started'] == 'This session has started; ask the host to return to the lobby'
+    assert O.NOTICE_TEXT['lc_notice_started'] == 'This session has started. Ask the host to start a new session.'
     for name in ('lc_code', 'lc_browse'):
         tree = O.menu_tree(O.runtime_layout(name))
         assert tree.find("item[@name='lc_notice_started']") is not None

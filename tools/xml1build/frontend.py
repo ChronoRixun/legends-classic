@@ -23,7 +23,7 @@ before SPEC 21). With --frontend xml1 (the default) it writes A-E:
        prompt's Normal option runs (SPEC 21.2.2).
      * The PC's save / load messages (igct*.bnx in the game folder, SPEC 21.2.3) and Data/strings' English texts with
        the port's name "X-Men Legends" instead of XML2's (igct_retext, strings_retext).
-     * Play Online (SPEC 21.2.4) on button7 (usecmd "openmenu online": XML2's online screens; the item's accept
+     * Play Online (SPEC 21.2.4) on button7 (usecmd "openmenu lc_online_entry": a fail-closed LC entry; the item's accept
        first also avoids the fresh-boot crash of a console openmenu online), Quit on button8; the 8 buttons are
        spread over XML1's button1..7 span (space_menu_buttons), which is all XML1's layout has on screen.
      * XMen2.exe's MAIN_MENU looks its mouse items and its Quit item up by XML2's names (0x5c933f..0x5c93bf,
@@ -127,8 +127,8 @@ MENU_PKG_REL = f'{MENU_PKG_DIR}/main'
 BEGIN_STORY_CMD = 'resetgame;runscript setDifficultyLevel(1)'
 # console commands that open the difficulty prompt: none of the XML1 main menu's items may run them
 NEW_GAME_PROMPT_CMDS = ('newgame', 'startgamedialog')
-# Play Online (SPEC 21.2.4): what XMen2.exe itself runs for XML2's item (menu manager vt+0x6c("online"), 0x5c9857)
-PLAY_ONLINE_CMD = 'openmenu online'
+# A distinct LC entry stays a plain message if the online adapter fails installation.
+PLAY_ONLINE_CMD = 'openmenu lc_online_entry'
 # XML1's buttons as XML1's main.eng binds them: text on the text node buttonN, buttonN_back the button mesh (a
 # disabled model), buttonN_highlight the focus model. (N, text (None: XML1 main.eng's buttonN text), usecmd)
 MENU_BUTTONS = (
@@ -1726,6 +1726,8 @@ def run(ctx):
     det['team_appearance'] = TEAM.write(ctx)
     from . import online_menus as OM
     det['online_menus'] = OM.write(ctx)
+    from . import online_fallback as OFB
+    det['online_fallback'] = OFB.write(ctx,skinned_lobbies=bool(det['online_menus'].get('enabled')))
     data, irep = menu_igb(ctx)
     for p in irep['problems']:
         ctx.error(f'{MENU_IGB_REL}: {p}')

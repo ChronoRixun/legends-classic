@@ -77,6 +77,8 @@ class Job:
     limits_wave3: str = 'all'
     save_layout: str = 'w2'
     loot: str = 'xml1'
+    experimental_save_import: bool = False
+    import_ledger: str | None = None
     telekinesis: str = 'xml1'          # beta 9 moves: ini-only options (build_xml1 --telekinesis / --guard-decide / --flying-carry)
     guard_decide: str = DEFAULT_GUARD_DECIDE          # shared release default; corrected XML1 rules await real-pad acceptance
     flying_carry: str = 'xml1'
@@ -210,6 +212,41 @@ def log_header(output, command, argv, extra=()):
 
 
 # ================================================================================================ checks
+def check_source_writes(a):
+    """Run before opening even an explicit --log: folder originals are never a write target."""
+    if a.command == 'import-xml1-save' and a.log:
+        log = Path(a.log)
+        protected = (a.source, a.build, a.save_dir, a.import_table)
+        if (any(p and _overlap(log, Path(p)) for p in protected)
+                or (log.exists() and log.stat().st_nlink != 1)):
+            raise BuilderError('E_OUT_UNSAFE', 'The import log must be separate from source files, build data and player saves.',
+                               exit_code=2)
+    if a.import_ledger:
+        if a.command != 'build' or not a.experimental_save_import:
+            raise BuilderError('E_USAGE', '--import-ledger requires build with --experimental-save-import.', exit_code=2)
+        ledger = Path(a.import_ledger)
+        if ((a.log and Path(a.log).resolve() == ledger.resolve())
+                or (a.out and _inside(ledger, Path(a.out)))
+                or _inside(ledger, Path(a.cache) if a.cache else default_cache())):
+            raise BuilderError('E_OUT_UNSAFE', 'The import ledger must be outside output, cache and log destinations.', exit_code=2)
+    if not a.iso or not Path(a.iso).is_dir():
+        return
+    source = Path(a.iso)
+    if a.log and _inside(Path(a.log), source):
+        raise BuilderError('E_OUT_UNSAFE', 'The log file is inside the extracted source install.',
+                           'Choose a log file outside the source folder.', {'conflict': mask(a.log)})
+    if a.log and Path(a.log).exists() and Path(a.log).stat().st_nlink != 1:
+        raise BuilderError('E_OUT_UNSAFE', 'The log file has hard links and could modify a source original.',
+                           'Choose a separate log file.', {'conflict': mask(a.log)})
+    if a.command in ('build', 'verify', 'clean') and a.out and _overlap(Path(a.out), source):
+        raise BuilderError('E_OUT_UNSAFE', 'The extracted source install overlaps the destination folder.', None,
+                           {'out': mask(a.out), 'conflict': mask(source)})
+    if a.command in ('build', 'clean'):
+        cache = Path(a.cache) if a.cache else (default_cache() if a.command == 'build' else None)
+        if cache:
+            check_cache(cache, iso=source)
+
+
 def check_destination(out: Path, *, xml2=None, cache=None, iso=None, pipeline=None):
     """E_OUT_UNSAFE / E_OUT_FOREIGN before anything is written."""
     out = Path(out)
@@ -220,8 +257,8 @@ def check_destination(out: Path, *, xml2=None, cache=None, iso=None, pipeline=No
         if other and _overlap(out, Path(other)):
             raise BuilderError('E_OUT_UNSAFE', f'The game can\'t be built inside {label} (or around it).', None,
                                {'out': mask(out), 'conflict': mask(other)})
-    if iso and _inside(Path(iso), out):
-        raise BuilderError('E_OUT_UNSAFE', 'The disc image is inside the destination folder.', None,
+    if iso and (_inside(Path(iso), out) or (Path(iso).is_dir() and _overlap(out, Path(iso)))):
+        raise BuilderError('E_OUT_UNSAFE', 'The source image or extracted install overlaps the destination folder.', None,
                            {'out': mask(out), 'conflict': mask(iso)})
     if pipeline is not None and xml2:
         pipeline.check_out_safe(out, xml2, (cache,) if cache else ())
@@ -233,14 +270,17 @@ def check_destination(out: Path, *, xml2=None, cache=None, iso=None, pipeline=No
                            {'out': mask(out)})
 
 
-def check_cache(cache: Path, *, xml2=None):
+def check_cache(cache: Path, *, xml2=None, iso=None):
+    if iso and Path(iso).is_dir() and _overlap(Path(cache), Path(iso)):
+        raise BuilderError('E_OUT_UNSAFE', 'The build cache overlaps the extracted source install.', None,
+                           {'cache': mask(cache), 'conflict': mask(iso)})
     if xml2 and _overlap(Path(cache), Path(xml2)):
         raise BuilderError('E_OUT_UNSAFE', 'The build cache can\'t be inside X-Men Legends II\'s folder.', None,
                            {'cache': mask(cache), 'conflict': mask(xml2)})
 
 
 # ================================================================================================ info
-def cmd_info(a, output, pipeline_factory):
+def cmd_info(a, output, pipeline_factory, *, cancel=None):
     info = {}
     fail = None
     pipeline = None
@@ -248,8 +288,11 @@ def cmd_info(a, output, pipeline_factory):
         disc = ident = None
         if a.iso:
             pipeline = pipeline_factory()
-            ident, disc = pipeline.identify(a.iso)
+            ident, disc = pipeline.identify(a.iso, cancel=cancel)
             info['iso'] = disc
+            if disc.get('format') == 'folder':
+                output.human(f'Verified extracted install: {disc["verified_files"]} original files match '
+                             f'{disc["dump"]} (SHA-256); loose assets, saves and settings are ignored.')
             if not disc['known']:
                 output.event('warning', stage='probe', code='W_ISO_UNKNOWN_DUMP',
                              msg='This disc image is not in the list of known dumps; the build checks it anyway.')
@@ -320,10 +363,19 @@ def cmd_build(a, output, cancel, pipeline_factory):
     for name in ('xml2', 'out'):
         if not getattr(a, name):
             raise BuilderError('E_USAGE', f'build needs --{name}.', '', {})
+    if getattr(a, 'classic_conversation', 'off') == 'xml1':
+        # Launchers 0.5.0-beta.4+ always send this option; off is a no-op here (no output, report or fingerprint change).
+        raise BuilderError('E_USAGE', 'The Classic conversation box needs Legends Classic 0.6.0-beta.3 or later.',
+                           'Turn Classic conversation box off, or update the builder.', {}, exit_code=2)
     out_dir = Path(a.out).resolve()
     xml2 = Path(a.xml2).resolve()
     cache = Path(a.cache).resolve() if a.cache else default_cache()
-    iso = Path(a.iso).resolve() if a.iso else None
+    iso = Path(os.path.abspath(a.iso)) if a.iso else None
+    # Before probing or opening logs: an extracted install is always read-only.
+    check_cache(cache, xml2=xml2, iso=iso)
+    if iso and iso.is_dir() and _overlap(out_dir, iso):
+        raise BuilderError('E_OUT_UNSAFE', 'The extracted source install overlaps the destination folder.', None,
+                           {'out': mask(out_dir), 'conflict': mask(iso)})
     movies = not a.no_movies
     prepare_jobs = max(1, a.jobs or PL.default_jobs())
     jobs = max(1, a.jobs or max(1, (os.cpu_count() or 2) // 2))
@@ -334,6 +386,7 @@ def cmd_build(a, output, cancel, pipeline_factory):
               limits_wave3=getattr(a, 'limits_wave3', None) or 'all',
               save_layout=getattr(a, 'save_layout', None) or 'w2',
               loot=getattr(a, 'loot', None) or ('xml1' if (getattr(a, 'save_layout', None) or 'w2') == 'w2' else 'off'),
+              experimental_save_import=a.experimental_save_import, import_ledger=a.import_ledger,
               telekinesis=getattr(a, 'telekinesis', None) or 'xml1', guard_decide=getattr(a, 'guard_decide', None) or DEFAULT_GUARD_DECIDE,
               flying_carry=getattr(a, 'flying_carry', None) or 'xml1')
     from xml1build import loot as LOOT
@@ -368,7 +421,7 @@ def cmd_build(a, output, cancel, pipeline_factory):
     try:
         # ---------------------------------------------------------------- probe
         if iso is not None:
-            job.ident, job.disc = pipeline.identify(iso)
+            job.ident, job.disc = pipeline.identify(iso, cancel=cancel)
         else:
             prefer = ((S.read_stamp(out_dir) or S.read_json(S.build_dir(out_dir) / S.BUILDING, {}) or {})
                       .get('inputs', {}).get('disc', {}).get('disc_id'))
@@ -380,7 +433,7 @@ def cmd_build(a, output, cancel, pipeline_factory):
         if not job.disc.get('known'):
             warn('W_ISO_UNKNOWN_DUMP', 'This disc image is not in the list of known dumps; the build checks it '
                                        'anyway.')
-        check_cache(cache, xml2=xml2)
+        check_cache(cache, xml2=xml2, iso=iso)
         job.listing = I.base_listing(xml2) if xml2.is_dir() else {}
         job.xml2_info = I.check_xml2(xml2, allow_unknown=a.allow_unknown_exe, listing=job.listing,
                                      warn=lambda code, msg, detail: warn(code, msg, detail))
@@ -643,6 +696,8 @@ def finish(a, output, job, ctl, pipeline, warn):
                       'extra': len(extra)}
     v = version_info()
     disc = job.disc
+    if job.iso is not None:
+        I.check_source_unchanged(job.iso, job.ident, cancel=ctl.cancel)
     stamp_doc = S.make_stamp(
         version=v, profile=pipeline.profile(), movies=job.movies,
         disc={'format': disc.get('format'), 'title_id': disc.get('title_id'), 'xbe_md5': disc.get('xbe_md5'),
@@ -687,14 +742,14 @@ def cmd_verify(a, output, cancel, pipeline_factory):
     pipeline = pipeline_factory()
     disc_digest = xml2_digest = None
     extra_groups = []
-    if a.iso and Path(a.iso).is_file():
-        ident, disc = pipeline.identify(a.iso)
+    if a.iso and (Path(a.iso).is_file() or Path(a.iso).is_dir()):
+        ident, disc = pipeline.identify(a.iso, cancel=cancel)
         disc_digest = disc['digest']
         if not disc['known']:
             extra_groups.append(M.group('disc_unknown', [{'path': Path(a.iso).name, 'xbe_md5': disc['xbe_md5'],
                                                           'zip_digest': disc['zip_digest']}]))
         if a.deep:
-            problems = I.deep_check_disc(a.iso)
+            problems = I.deep_check_disc(a.iso, cancel=cancel)
             if problems:
                 extra_groups.append(M.group('disc_damaged', [{'problem': p} for p in problems]))
     listing = None

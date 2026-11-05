@@ -20,11 +20,19 @@ CODE_TOOL_WIDTH = 104  # Space/Enter key label plus DONE, with inner padding
 PALETTE = ('0A1830','11284A','2A4A78','7FA6D9','EEF3FA','FFCB3D','54D68A','FF6F55')
 STYLES = {'title': ('big',37), 'row': ('medium',15), 'body': ('medium',12.5), 'label': ('medium',11)}
 COLUMNS = ((59,128),(188,67),(255,93),(348,58),(406,76),(482,78),(560,37))
-# Browse row cells kept as hit/focus targets. [4] status and [5] ping are drawn by the row scenes (no DATA cell).
+# Browse row cells kept as hit/focus targets. [4] status is a scene; [5] ping is passive DATA.
 # The five cells of a row share ONE focus anchor (room_<r>_focus): their focus bar is the whole row anyway.
 ROW_COLUMNS = (0, 1, 2, 3, 6)
 # Retail has 175 anchors; the atomic co-op installer advertises the expanded tables.
 ENGINE_SCENE_ANCHORS = 175
+# Separate from scene anchors: CMenu item insertion (0x5af490, check 0x5af4af)
+# refuses item 176 at count +0x1608 == 0xaf. menu-anchors/512 does not expand it.
+ENGINE_MENU_ITEMS = 175
+
+
+def menu_item_problems(root):
+    count = len(root.findall("item"))
+    return [f"{count} menu items, the native menu holds {ENGINE_MENU_ITEMS}"] if count > ENGINE_MENU_ITEMS else []
 ANCHOR_CAPABILITY = b'menu-anchors/512'
 
 
@@ -52,7 +60,7 @@ def shared_focus(plane):
     return (SHARED_FOCUS if plane == -150 else f'{SHARED_FOCUS}_{abs(int(plane))}'), (0, plane, 384)
 # Approved seven rows require the companion's menu-anchors/512 capability.
 BROWSE_ROWS = 7
-PROMPT_TOKENS = {'back':'$MENU_BACK','delete':'$MENU_BACK','paste':'$MENU_NEXT',
+PROMPT_TOKENS = {'back':'$MENU_BACK','delete':'Del','paste':'$MENU_NEXT',
                  'refresh':'$MENU_NEXT','rejoin':'$MENU_NEXT','clear':'$MENU_OTHER',
                  'name':'$MENU_OTHER','change':'$MENU_OTHER','open':'$MENU_OK'}
 # What a pad player sees and presses on the four co-op screens (the designs: X Change name / Clear, Y Rejoin / Paste / Refresh).
@@ -126,7 +134,7 @@ class Fixture:
             if len(self.code)<8: self.code+=intent[5:]
             self.phase='resolved fixture' if len(self.code)==8 else 'editing fixture'
         elif intent in ('delete','back'):
-            if intent=='delete' or (self.menu=='lc_code' and self.code): self.code=self.code[:-1]
+            if intent=='delete': self.code=self.code[:-1]
             elif intent=='back': self.menu='lc_online'
         elif intent=='clear': self.code=''; self.phase='editing fixture'
         elif intent=='paste':
@@ -395,11 +403,11 @@ def layout(name, state=None):
     shape('rect',(0,441,640,39),0)
     prompts={'lc_online':[('select','Select','open:lc_host'),('back','Back','back'),('name','Change name','name'),('rejoin','Rejoin','rejoin')],
              'lc_host':[('select','Select','open-room'),('change','Change','campaign'),('open','Open the room','open-room'),('back','Back','back')],
-             'lc_code':[('pick','Pick','done'),('delete','Delete','back'),('paste','Paste','paste'),('clear','Clear','clear')],
+             'lc_code':[('pick','Pick','done'),('back','Back','back'),('paste','Paste','paste'),('clear','Clear','clear'),('delete','Delete','delete')],
              'lc_browse':[('join','Join','join'),('refresh','Refresh','refresh'),('back','Back','back')]}[name]
     positions={'lc_online':((43,59),(106,56),(164,92),(259,64)),
                'lc_host':((43,59),(106,66),(175,97),(274,65)),
-               'lc_code':((43,50),(98,60),(162,58),(223,59)),
+               'lc_code':((43,50),(98,60),(162,58),(223,75),(312,75)),
                'lc_browse':((43,50),(98,68),(168,58))}[name]
     for i,(key,label,intent) in enumerate(prompts):
         px,pw=positions[i]
@@ -462,17 +470,27 @@ def menu_tree(screen, palette_ids=None):
     root=ET.Element('menu',igb=screen['name'],image='textures/menus/'+screen['name'],fullscreen='true',
                     updownonly='false',lighting='false')
     if screen.get('runtime') and not screen.get('party'): root.set('menu_cancel',command(6))
+    def input_tokens(key,value):
+        if screen.get('runtime') and screen['name']=='lc_online':
+            pairs={'desctext1':('Enter Select','$MENU_ACCEPT Select'),'desctext2':('Esc Back','$MENU_BACK Back'),
+                   'desctext3':('Del Change name','$MENU_OTHER Change name'),'desctext4':('F4 Rejoin','$MENU_NEXT Rejoin'),
+                   'lc_hub_select_normal':('Enter Select','$MENU_ACCEPT Select'),'lc_hub_select_hover':('Enter Select','$MENU_ACCEPT Select')}
+            if key in pairs:return value.replace(*pairs[key])
+        if screen.get('runtime') and screen['name']=='lc_host':
+            if key=='desctext1':return value.replace('Enter Select','$MENU_ACCEPT Select')
+            if key=='desctext2':return value.replace('Del Change','$MENU_OTHER Change')
+        return value
     descriptions={e['name']:e for e in screen['items'] if re.fullmatch(r'desctext[1-5]',e['name'])}
     for name,e in descriptions.items():
         # Refresh adds a native dim-colour prefix. A scoped prefix after it keeps
         # the approved foreground while the token still follows the active device.
-        root.set(name,'~'+str(palette_ids[4]).zfill(2)+e['text'] if e['text'] else '')
+        root.set(name,input_tokens(name,'~'+str(palette_ids[4]).zfill(2)+e['text']) if e['text'] else '')
     for e in screen['items']:
         value=e['text']
         # A focusable item's inline ~NN colour wins over the style's focus colour (060r live: Next page / Previous page were
         # pale blue on their own amber bar). The style's own resting colour needs no prefix: white for row / body, pale blue (3) for label.
         if value and (not e['intent'] or e['color'] not in FOCUS_REST_COLORS.get(e['style'],(4,))): value='~'+str(palette_ids[e['color']]).zfill(2)+value
-        attrs=dict(name=e['name'],type='MENU_ITEM_TEXT',text=value,style='lc_o_'+e['style'],
+        attrs=dict(name=e['name'],type='MENU_ITEM_TEXT',text=input_tokens(e['name'],value),style='lc_o_'+e['style'],
                    textalignx={'center':'TEXT_ALIGN_CENTER_X','right':'TEXT_ALIGN_RIGHT'}.get(e.get('align'),'TEXT_ALIGN_LEFT'),textaligny='TEXT_ALIGN_TOP',neverfocus=str(not bool(e['intent'])).lower())
         attrs['style']=font_binding(e)[2]
         if e.get('hidden'): attrs['hide']='true'
@@ -503,7 +521,7 @@ def menu_tree(screen, palette_ids=None):
 
 
 def tree_problems(root, screen, palette_ids=None):
-    errors=layout_problems(screen); items={e.get('name'):e for e in root.findall('item')}
+    errors=layout_problems(screen)+menu_item_problems(root); items={e.get('name'):e for e in root.findall('item')}
     if len(root.findall('.//onfocus'))>75: errors.append('retail onfocus record budget exceeded (75)')
     if root.get('igb')!=screen['name'] or root.get('type'): errors.append('base menu contract')
     expected_root=menu_tree(screen,palette_ids)
@@ -524,13 +542,14 @@ def tree_problems(root, screen, palette_ids=None):
 
 
 def package(root):
+    from .online_fallback import strip_branding
     pkg=M.package_for(root)
-    ET.SubElement(pkg,'xml',filename='ui/menus/'+(root.get('name') if root.get('type') in ('HOST_MENU','JOIN_MENU') else root.get('igb')))
+    ET.SubElement(pkg,'xml',filename='ui/menus/'+(root.get('name') if root.get('type') in ('HOST_MENU','JOIN_MENU','GAME_OPTIONS_MENU') else root.get('igb')))
     # Model backdrops embed their pixels. A retired image= sprite must not
     # preload another 5 MiB copy of the page at every open.
     if root.get('image'):
         ET.SubElement(pkg,'texture',filename=root.get('image'))
-    return pkg
+    return strip_branding(pkg)
 
 
 def preview_text(value, device='pad'):
@@ -734,7 +753,7 @@ def font_probe(ctx):
 def write(ctx, *, preview=False):
     """Preflight the entire family before writing any palette, scene or menu."""
     from . import frontend as F
-    if not enabled(ctx) and not preview:return {'enabled':False,'production_entry':NATIVE_ENTRY}
+    if not enabled(ctx) and not preview:return {'enabled':False,'production_entry':F.PLAY_ONLINE_CMD}
     colors,styles,ids=theme(ctx.read_out_xmlb('Data/colors.XMLB'),ctx.read_out_xmlb('Data/styles.XMLB'))
     if not preview:
         from . import fix_ini as FI
@@ -793,6 +812,31 @@ def write(ctx, *, preview=False):
         focus_models.update(backdrop_models(focus_source.read_bytes(),screen))
         add_backdrop(tree,screen['name'])
         pending.append((name,tree,data,texture(atlas.read_bytes(),render(screen,text=False,focus=False),name)))
+    # Optional native-class presentation. Publish it under a separate name so
+    # Menus=0, missing resources, or an unsupported native tree retain retail.
+    from . import online_options as GO
+    options_detail={'enabled':False,'fallback':'game_options'}
+    try:
+        option,models=GO.prepare(ctx,source,atlas.read_bytes(),focus_source.read_bytes(),ids,metrics,anchor_capacity)
+    except (ValueError,OSError,KeyError) as error:
+        options_detail['reason']=str(error)
+    else:
+        pending.append(option);focus_models.update(models)
+        options_detail.update(enabled=True,menu=GO.MENU)
+    from . import online_native_skins as NS
+    native_skins = {}
+    for name in NS.MENUS:
+        detail = {'enabled':False,'fallback':name}
+        try:
+            if not preview and NS.capability(name) not in dll:
+                raise ValueError('companion DLL lacks this native skin adapter')
+            skin,models=NS.prepare(ctx,name,source,atlas.read_bytes(),focus_source.read_bytes(),ids,metrics,anchor_capacity)
+        except (ValueError,OSError,KeyError) as error:
+            detail['reason']=str(error)
+        else:
+            pending.append(skin);focus_models.update(models)
+            detail.update(enabled=True,menu=NS.MENUS[name])
+        native_skins[name]=detail
     font_details=OF.write(ctx,atlas.read_bytes())
     probe=font_probe(ctx)
     probe['private_fonts']=font_details
@@ -813,18 +857,24 @@ def write(ctx, *, preview=False):
                 have={(e.tag,e.get('filename')) for e in pkg}
                 for e in native_pkg:
                     if (e.tag,e.get('filename')) not in have:pkg.append(copy.deepcopy(e))
-        ctx.write_xmlb(F.MENU_PKG_DIR+'/'+name,pkg,('.PKGB',),source='frontend:online resource closure')
+        from .online_fallback import strip_branding
+        ctx.write_xmlb(F.MENU_PKG_DIR+'/'+name,strip_branding(pkg),('.PKGB',),source='frontend:online resource closure')
     hits=hit_table(authored_layouts)
     built={name:(tree,data) for name,tree,data,_ in pending}
-    problems=hit_scene_problems(hits,list(built),lambda n:built[n][0],lambda igb:next((d for t,d in built.values() if t.get('igb')==igb),None),
+    problems=hit_scene_problems(hits,list(authored_layouts),lambda n:built[n][0],lambda igb:next((d for t,d in built.values() if t.get('igb')==igb),None),
                                 lambda resource:focus_models.get(resource))
     if problems: raise ValueError('mouse hit table vs the built focus bars: '+'; '.join(problems))
     ctx.write_bytes(HITS_FILE,hits,source='frontend:mouse hit boxes = drawn focus bars')
     if not preview:ctx.write_bytes('Data/lc_online_menus.cap',CAPABILITY,source='frontend:verified DLL menu capability')
+    ctx.write_bytes('Data/lc_online_options.cap',GO.CAPABILITY if options_detail['enabled'] else b'',
+                    source='frontend:optional native Game Options presentation')
+    for name,detail in native_skins.items():
+        ctx.write_bytes(NS.marker(name),NS.capability(name) if detail['enabled'] else b'',
+                        source='frontend:optional native online presentation')
     report={'menus':list(MENUS),'colors':len(colors),'styles':len(styles),'palette_ids':ids,'font_probe':probe,
             'fixture_only':True,'enabled':not preview,'production_entry':F.PLAY_ONLINE_CMD,'layouts':authored_layouts,
             'commands':{name:{e['name']:command(intent_number(e['intent'])) for e in runtime_layout(name)['items'] if e['intent']} for name in MENUS},
-            'intents':command_manifest()}
+            'intents':command_manifest(),'game_options':options_detail,'native_skins':native_skins}
     ctx.write_meta('online_menus_detail.json',report)
     return report
 
@@ -879,6 +929,8 @@ def add_backdrop(tree, name):
     tree.set('image','')
     for index,(item,model) in enumerate((('lc_o_field','ui/models/lc_o_field'),('lc_o_backdrop',backdrop_resource(name)))):
         tree.insert(index,ET.Element('item',name=item,type='MENU_ITEM_MODEL',model=model,neverfocus='true'))
+    problems=menu_item_problems(tree)
+    if problems: raise ValueError('; '.join(problems))
     return tree
 
 
@@ -1053,6 +1105,10 @@ FLAT_FOCUS = ('lc_leave_yes','lc_leave_cancel','lc_lobby_dismiss','lc_party_leav
 
 def focus_spec(screen,item):
     x,y,w,h=item['rect']
+    if screen.get('native_options'):
+        # Identical native text hit rectangle and focus fill, including the
+        # value column. The native Game Options mouse handler owns the click.
+        return (-w*.4,-h*.8,w*.4,0) if item.get('align')=='center' else (0,-h*.8,w*.8,0),False
     if item['name'] in FLAT_FOCUS:
         return (0,-h*.8,w*.8,0),False
     if screen.get('party') and item.get('hit_rect'):
@@ -1226,15 +1282,15 @@ def focus_picture(screen,item,rect):
 
 # These probes describe additive APIs, not release or gameplay identities. Each
 # must be present in ONE supplied DLL; separate menu/font DLLs cannot be stacked.
-DLL_PROBES = (b'lc-online-menus/1\n', b'lc-online-input/1', b'lc-online-lobby/1', b'lc-online-broker/2', b'lc-online-native/1', b'lc-online-party/1', b'lc-online-errors/1', b'lc-online-hits/2',
-              b'lc_notice_started', b'lc-online-drop-in/1',
+DLL_PROBES = (b'lc-online-menus/1\n', b'lc-online-input/1', b'lc-online-lobby/1', b'lc-online-broker/2', b'lc-online-native/1', b'lc-online-party/1', b'lc-online-errors/1', b'lc-online-hits/2', b'lc-online-no-gamespy/1',
+                b'lc-online-host-controls/1', b'lc_notice_started', b'lc-online-drop-in/1', b'lc-online-linked-rate/1',
               b'lcOnlineIntent\0', 'Online\0'.encode('utf-16le'),
               'Menus\0'.encode('utf-16le'), 'LegendsClassicFonts\0'.encode('utf-16le'),
               b'ui/fonts/lc_fonts_pc.xmlb\0', b'ui/fonts/lc_fonts_hd.xmlb\0',
               b'lc_title\0', b'lc_row\0', b'lc_body\0', b'lc_label\0',
               # Live 060p fixes: glyph scale per screen pixel (textscale is in 512 x 384 view units) and the
               # Menus=1 + LegendsClassicFonts=0 fallback to the native Play Online menus.
-              b'lc-fonts-screen/1', b'LegendsClassicFonts is not active',
+              b'lc-fonts-screen/1', b'lc-fonts-list/1', b'LegendsClassicFonts is not active',
               # 0.6 preview fix E: the mouse hit boxes are the drawn focus bars (Data/lc_online_hits.txt, hit_table).
               b'lc-online-hits/1', ANCHOR_CAPABILITY)
 CAPABILITY = b'lc-online-menus/1\n'
@@ -1456,7 +1512,7 @@ BROWSE_UNREACHABLE_NOTICES = ('lc_notice_paste_invalid', 'lc_notice_code_invalid
                               # 0.6 preview fix L: the Host screen's native setup found the service not answering (before any room existed).
                               'lc_notice_service_silent')
 NOTICE_TEXT = {
-    'lc_notice_started': 'This session has started; ask the host to return to the lobby',
+    'lc_notice_started': 'This session has started. Ask the host to start a new session.',
     'lc_inline_error': 'This action could not be completed. No room was joined.',
     'lc_notice_unavailable': 'Unavailable in this preview. Use Other ways to play.',
     'lc_notice_resolving': 'Looking up room code...',
@@ -1503,9 +1559,9 @@ RETRYABLE_CAUSES = ('rate_limited', 'timeout', 'offline', 'generic', 'room_close
 NEXT_ACTION = {'code_not_found': 'edit_code', 'room_full': 'browse', 'version_mismatch': 'back', 'rate_limited': 'retry',
                'timeout': 'retry', 'offline': 'retry', 'refused': 'back', 'generic': 'retry', 'pin_mismatch': 'back',
                'code_expired': 'edit_code', 'room_closed': 'retry', 'test_mode': 'back', 'unsupported': 'other_ways',
-               'busy': 'wait', 'invalid_name': 'back', 'too_many_public_rooms': 'close_room', 'too_many_joins': 'leave_game', 'session_started': 'lobby'}
+               'busy': 'wait', 'invalid_name': 'back', 'too_many_public_rooms': 'close_room', 'too_many_joins': 'leave_game', 'session_started': 'new_session'}
 # One word each action's copy must contain, so a cause can never name the wrong next step.
-NEXT_WORD = {'retry': ('retry', 'try again'), 'edit_code': ('code',), 'browse': ('another game', 'browse'),
+NEXT_WORD = {'new_session': ('new session',), 'retry': ('retry', 'try again'), 'edit_code': ('code',), 'browse': ('another game', 'browse'),
              'back': ('back', 'update', 'check', 'turn it off', 'turn off'), 'other_ways': ('other ways',), 'wait': ('wait',),
              'close_room': ('close one',), 'leave_game': ('leave another game',), 'lobby': ('lobby',)}
 # Localized copy per cause (09-errors wording, in the inline style round 5 chose: one line, names cause + next step).
@@ -1521,7 +1577,7 @@ ERROR_COPY = {
     'pin_mismatch': 'Online service not verified. Check its setting or update.',
     'code_expired': 'That room closed. Ask the host for a new code.',
     'room_closed': 'Not taking players right now. Try again soon.',
-    'session_started': 'This session has started. Ask the host to return to the lobby.',
+    'session_started': 'This session has started. Ask the host to start a new session.',
     'test_mode': 'TestMode is on, so online play is off. Turn it off.',
     'unsupported': 'Online needs a complete install. Use Other ways to play.',
     'busy': 'The network link is busy. Wait a moment, then repeat.',
@@ -1698,7 +1754,7 @@ def _error_node(name, cause):
 
 
 def _row_scenes(items):
-    """Per-row status diamond+word, player pips + neutral ping bars, build badge and the dim veil for unjoinable rows.
+    """Per-row status diamond+word, one build DATA label and the dim veil for unjoinable rows.
 
     Models are shared across the seven rows (identical relative art); each row only has its own anchor. They sit between
     the focus fill and the text (plane -170 -> depth -130); the veil sits in front of the text (-200 -> -160)."""
@@ -1709,16 +1765,11 @@ def _row_scenes(items):
                                   [dict(kind='diamond', rect=(1, 5, 7, 6), color=color),
                                    dict(text=word, rect=(13, 2, 59, 18), style='body', color=color)],
                                   model_name=f'row_st_{kind}', plane=-170))
-        for n in range(5):
-            parts = [_bar((bar * 5.5, 2, 3, 11), 4, .8) if bar < n else _bar((bar * 5.5, 2, 3, 11), 3, .8, .4) for bar in range(4)]
-            # No measured ping exists: four neutral bars, never a number or a colour that implies one.
-            parts += [dict(kind='rect', rect=(103 + bar * 3, 12 - bar * 3, 2, 3 + bar * 3), color=3, alpha=.35) for bar in range(4)]
-            parts.append(dict(text='--', rect=(121, 0, 24, 15), style='body', color=3))  # the ping value: none measured
-            items.append(_variant(f'lc_row{r}_pips_{n}', (374, y + 8, 150, 15), parts, model_name=f'row_pips_{n}', plane=-170))
-        for kind, (word, color) in BUILD_KINDS.items():
-            parts = [dict(kind='outline', rect=(0, 1, 35, 14), color=color)]
-            if word: parts.append(dict(text=word, rect=(8, 1, 27, 14), style='label', color=color))
-            items.append(_variant(f'lc_row{r}_build_{kind}', (552, y + 7, 35, 15), parts, model_name=f'row_build_{kind}', plane=-170))
+        # The numeric player cell already carries occupancy. Five pip variants
+        # plus three build variants per row overflowed the independent item map.
+        # Keep the seven-row page and bind one build label instead.
+        items.append(_entry(f'lc_row{r}_build','',(552,y+8,35,15),'label',3,
+                            data=True,hidden=True,plane=-170))
         items.append(_variant(f'lc_row{r}_dim', (44, y, 552, 29), [dict(kind='rect', rect=(0, 0, 552, 29), color=0, alpha=.55)],
                               model_name='row_dim', plane=-200, picture_scale=.05))
 
@@ -1890,7 +1941,7 @@ def _native_host_nodes(screen,by):
     for level in ('easy','normal','hard'): node('lc_host_'+level,HOST_SETTING_COPY['lc_host_'+level],(264,278,100,16),'body',3,align='right')
     for key,(word,why) in HOST_DROP_COPY.items():
         items.append(_variant(key,(164,305,210,34),
-            [dict(text=word,rect=(0,0,198,18),style='row',color=3 if key.endswith('unknown') else 4),dict(text=why,rect=(0,19,210,15),style='body',color=3)]))
+            [dict(text=word,rect=(0,0,198,18),style='row',color=3 if key.endswith('unknown') else 4),dict(text=why,rect=(0,19,210,15),style='body',color=3)],plane=-170))
     # 060r live (failure 7): the amber side marker was baked beside CAMPAIGN and stayed there while the focus bar sat on another row.
     # It is one hidden scene per settings row now (the same slash the fixture bakes: 4 wide, 45 tall, leaning right); the DLL shows the
     # focused row's (online_menus.cpp host_marker_follow) and none while focus is on the Open bar or a prompt.
@@ -1907,7 +1958,7 @@ def runtime_layout(name,state=None):
     screen.update(runtime=True,fixture_only=False)
     # Short truthful fallbacks only: the DLL binds the live service/count/room values over these.
     replacements={'local_name':'Player','self_name':'Player','self_initial':'P',
-        'self_state':'Not connected','service':'Not connected',
+        'self_state':'Connecting...','service':'Connecting...',
         'browse_hint':'Browse public games','browse_hint_on':'Browse public games','last_name':'','last_code':'',
         'identity':'Installed build: see launcher', 'code_state':'Not connected',
         'code_status':'Type or paste all eight symbols. The code is looked up automatically.',
@@ -1964,6 +2015,8 @@ def runtime_layout(name,state=None):
         for e in screen['items']:
             if e['name']=='desctext3':e['rect']=(162,455,85,18)
             if e['name']=='desctext4':e['rect']=(252,455,116,18)
+            if e['name']=='desctext5':e['rect']=(382,455,78,18)
+            if e['name']=='breadcrumb':e['text']=''
         screen['items'].append(_entry('lc_code_complete','Complete code. Done looks it up again.',(59,219,510,18),hidden=True))
         screen['items'].append(_entry('code_value','',(59,196,250,18),data=True,hidden=True))
         screen['items'].append(_entry('code_remaining','8',(570,219,20,18),data=True,hidden=True))
@@ -1976,6 +2029,24 @@ def runtime_layout(name,state=None):
             if e['name'] in ('lc_hostleft_again','lc_hostleft_back'):
                 other='lc_hostleft_back' if e['name']=='lc_hostleft_again' else 'lc_hostleft_again'
                 e.update(left=other,right=other,up=other,down=other)
+    if name=='lc_host':
+        rows=('visibility','room_name','campaign','drop_in','open')
+        by_name={e['name']:e for e in screen['items']}
+        screen['focus']='visibility'
+        extras=tuple(e['name'] for e in screen['items'] if e['intent'] and e['name'] not in rows)
+        order=rows+extras
+        for i,key in enumerate(order):
+            by_name[key].update(up=order[i-1],down=order[(i+1)%len(order)],left=key,right=key)
+        by_name['edit_room'].update(left='room_name',right='room_name')
+        by_name['room_name']['intent']=by_name['edit_room']['intent']='campaign'
+        for key in ('desctext1','desctext2'):by_name[key]['intent']='name' # Host-scoped focused activation/change
+        by_name['desctext1']['text']='Enter Select'
+        by_name['desctext2']['text']='Del Change'
+    if name=='lc_online':
+        labels={'desctext1':'Enter Select','desctext2':'Esc Back','desctext3':'Del Change name','desctext4':'F4 Rejoin',
+                'lc_hub_select_normal':'Enter Select','lc_hub_select_hover':'Enter Select'}
+        for e in screen['items']:
+            if e['name'] in labels:e['text']=labels[e['name']]
     if name=='lc_browse':
         # The diagnostic owns the full right cell of the error row; paging has its
         # own footer cells instead of clipping the error against Previous page.
@@ -2111,8 +2182,8 @@ def broker_problems(root, screen):
                     for d in ('left','right','up','down'):
                         if e.get(d) not in items: errors.append(f'open row graph: room_{r}_{c}')
             need(f'lc_row{r}_selected',hide='true',type='MENU_ITEM_MODEL')
-            scenes=[f'lc_row{r}_st_{k}' for k in STATUS_KINDS]+[f'lc_row{r}_pips_{n}' for n in range(5)]+\
-                [f'lc_row{r}_build_{k}' for k in BUILD_KINDS]+[f'lc_row{r}_dim']
+            scenes=[f'lc_row{r}_st_{k}' for k in STATUS_KINDS]+[f'lc_row{r}_dim']
+            need(f'lc_row{r}_build',hide='true',clamp='true',type='MENU_ITEM_TEXT',neverfocus='true')
             for key in scenes: need(key,hide='true',type='MENU_ITEM_MODEL',neverfocus='true')
         for k in range(1,6): need(f'lc_age_fill{k}',hide='true',type='MENU_ITEM_MODEL',neverfocus='true')
         for key in ('list_count','list_age'): need(key,clamp='true')
@@ -2178,7 +2249,10 @@ def lobby_layout(role, *, members=1, ready=False, fixture=False, pending=False, 
             ('ping',str((38,38,112,65)[n-1]) if fixture and n!=local and not pending else '',(x+26,y+104,40,15),'body',3)):
             e=text(prefix+key,value,rect,style,color,data=True,hidden=not(fixture and occupied))
             if key=='name':e['font_alias']='card_name'
-        variant(prefix+'hero_fallback','Hero assigned at start',(x+10,y+57,112,17),'body',3,visible=fixture and occupied)
+        # Reuse one DATA field: local/session rates, or the slow warning naming the
+        # session target. Eight separate fields overflowed beta.2's item map.
+        text(prefix+'hero_fallback','Hero assigned at start',(x+10,y+57,112,17),'label',3,
+             data=True,hidden=not(fixture and occupied))
         variant(prefix+'host','HOST',(x+90,y+6,33,14),color=5,visible=fixture and occupied and n==1 and (role=='host' or members>1))
         isready=ready_flags[n-1] if occupied else False
         variant(prefix+'ready','READY',(x+10,y+86,112,18),'row',6,visible=fixture and occupied and isready)
@@ -2207,10 +2281,9 @@ def lobby_layout(role, *, members=1, ready=False, fixture=False, pending=False, 
             parts=[dict(text='of',rect=(0,0,15,17),style='body',color=6),
                    dict(text='ready.',rect=(24,0,46,17),style='body',color=6)])
     waiting=members>count
-    variant('lc_ready_waiting','Waiting for',(125,365,400,17),'body',3,visible=fixture and waiting,
-        parts=[dict(text='to get ready.',rect=(177,0,100,17),style='body',color=3)])
+    text('lc_ready_waiting','Waiting for %s to get ready.',(125,365,400,17),'body',3,hidden=True)
     waiting_row=ready_flags.index(False) if waiting else 0
-    text('lc_waiting_name',('Logan','Kitty','Alex','Sam')[waiting_row] if fixture and waiting else '',(193,365,106,17),'body',3,data=True)
+    text('lc_waiting_name',('Waiting for '+('Logan','Kitty','Alex','Sam')[waiting_row]+' to get ready.') if fixture and waiting else '',(125,365,400,17),'body',3,data=True)
     variant('lc_ready_all','All ready.',(125,365,420,17),'body',3,visible=fixture and not waiting and members>1)
     variant('lc_ready_solo','Solo start follows the native minimum-player rule.',(125,365,420,17),'body',3,visible=fixture and members==1 and not waiting)
     for key,label,rect,intent in (
@@ -2331,7 +2404,8 @@ def variant_resource(screen,item):
 
 def lobby_tree(original,screen,palette_ids=None):
     """Copy native dependencies and callbacks, replacing only presentation."""
-    root=copy.deepcopy(original)
+    from .online_fallback import strip_branding
+    root=strip_branding(original)
     root.set('igb','lc_lobby_'+screen['name']);root.set('image','textures/menus/lc_lobby_'+screen['name'])
     root.set('updownonly','false');root.set('lighting','false')
     authored=menu_tree(screen,palette_ids)
@@ -2377,12 +2451,12 @@ def lobby_tree(original,screen,palette_ids=None):
             # Native data_name/title are still instantiated and updated. Their
             # anchors are retired outside the canvas, not their native items.
     for i in range(1,6):root.set('desctext'+str(i),authored.get('desctext'+str(i),''))
-    ET.SubElement(root,'item',name='lc_lobby_v1',type='MENU_ITEM_TEXT',text='',neverfocus='true',hide='true',enabled='false')
+    root.insert(0,ET.Element('item',name='lc_lobby_v1',type='MENU_ITEM_TEXT',text='',neverfocus='true',hide='true',enabled='false'))
     return root
 
 
 def lobby_problems(root,original,screen):
-    errors=layout_problems(screen)
+    errors=layout_problems(screen)+menu_item_problems(root)
     items={e.get('name'):e for e in root.findall('item')}
     if root.get('type')!=original.get('type'):errors.append('native lobby class')
     presentation={'igb','image','updownonly','lighting',*(f'desctext{i}' for i in range(1,6))}
@@ -2391,6 +2465,8 @@ def lobby_problems(root,original,screen):
     if len(items)!=len(root.findall('item')):errors.append('duplicate lobby item')
     if 'lc_lobby_v1' not in items:errors.append('missing parsed lobby marker')
     for src in original.findall('item'):
+        from .online_fallback import branding_item
+        if branding_item(src): continue
         key=src.get('name');actual=items.get(key)
         if actual is None:errors.append('native dependency missing: '+key);continue
         for attr,value in src.attrib.items():
@@ -2451,11 +2527,28 @@ def output_problems(out):
     anchor_capacity=engine_scene_anchors(dll.read_bytes() if dll else b'')
     marker=index.path('Data/lc_online_menus.cap')
     if marker is None or marker.read_bytes()!=CAPABILITY:errors.append('exact capability marker missing')
-    for name in (*MENUS,*LOBBIES,PARTY_MENU):
-        scene=name if name in (*MENUS,PARTY_MENU) else 'lc_lobby_'+name
+    from . import online_options as GO
+    options=index.path('Data/lc_online_options.cap')
+    optional=()
+    if options is not None and options.read_bytes():
+        if options.read_bytes()!=GO.CAPABILITY:errors.append('invalid Game Options capability marker')
+        else:optional=(GO.MENU,)
+    from . import online_native_skins as NS
+    for name,variant in NS.MENUS.items():
+        cap=index.path(NS.marker(name))
+        if cap is not None and cap.read_bytes():
+            if cap.read_bytes()!=NS.capability(name):errors.append('invalid native online skin marker: '+name)
+            else:optional+= (variant,)
+    for name in (*MENUS,*LOBBIES,PARTY_MENU,*optional):
+        scene=name if name in (*MENUS,PARTY_MENU,GO.MENU,*NS.MENUS.values()) else 'lc_lobby_'+name
         for rel in [f'UI/menus/{name}.XMLB',f'UI/menus/{name}.engb',f'UI/menus/{scene}.IGB',
                     f'Textures/menus/{scene}.IGB',f'Packages/generated/maps/package/menus/{name}.PKGB']:
             if index.path(rel) is None:errors.append('missing '+rel)
+        for extension in ('XMLB','engb'):
+            menu=index.path(f'UI/menus/{name}.{extension}')
+            if menu is not None:
+                try: errors.extend(f'{name}.{extension}: '+problem for problem in menu_item_problems(decode_xmlb(menu.read_bytes())))
+                except Exception as error: errors.append(f'{name}.{extension}: unreadable menu ('+type(error).__name__+')')
         igb=index.path(f'UI/menus/{scene}.IGB')
         if igb is not None:
             # The engine's per-scene anchor capacity (0x5882e0): over it the playfield build corrupts memory (060p).

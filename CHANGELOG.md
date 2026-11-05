@@ -3,7 +3,116 @@
 The builder's releases, newest first. The version is `xml1-builder --version`; the content version is what a
 build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebuild.
 
-## v0.6.0 - content version 30 (needs XML2 Fix 1.11.0)
+## Unreleased
+
+- Save import stays off by default. Experimental Install and Undo now require a
+  companion DLL advertising the SaveLC writer lease; previews pin its hash and
+  Undo requires `--build`. Experimental builds can compile a private, source-hash
+  pinned identity/checkpoint ledger into a registered import table. Real saves,
+  proven retail ledgers and live companion acceptance are still required before
+  public admission. Global-profile merging remains disabled.
+
+## v0.6.0 - content version 31 (needs XML2 Fix 1.11.0)
+
+### 0.6.0-beta.2
+
+Legends Classic 0.6.0-beta.2 (content 31 / catalogue 8 / LC41) goes with **XML2 Fix 1.11.0-beta.2**. It fixes the
+problems found after beta.1: Blob's fight, the rare 4-player host crash and the lost-newcomer pause. The session now
+follows the host's frame rate, and the rest of the online screens are in the classic style and work with keyboard,
+controller and mouse. Update both parts and **Rebuild** before you play together.
+
+**Fixed since 0.6.0-beta.1**
+
+- **Blob fights again.** In beta.1 he could spin on the spot and stop attacking, offline and online, most often when
+  nobody was hitting him. When he can't reach the object he wants to pick up or throw, he now gives up after a few
+  seconds and goes back to his attacks. He can still circle for several seconds at a time.
+- **The first game's other bosses can't get stuck waiting either.** The colosseum dopples, Avalanche, Shadow King,
+  Magneto and Master Mold could stop attacking for good if a move they were waiting for never became possible (for
+  example facing a target, or a power that wasn't ready). They now give up on that move after a few seconds and pick
+  another. Pyro, Mystique and Marrow are unchanged.
+- **No more host crash in 4-player games.** With four players, if a friend who was joining dropped out at the moment
+  the host reloaded the area, the host's game could crash. That's fixed, and the other three players carry on.
+- **A friend who drops out while joining no longer strands anyone.** If the only friend joining dropped out partway
+  through, a player already in the game could be left on the pause screen with everyone shown as "Not Ready". Now the
+  players already in the game carry on together without leaving and rejoining (tested with two and with three
+  players already in the game). Everyone may wait a few seconds at that area load. If two friends are joining and
+  one drops out, the other still gets in.
+- **Building from Ultimate Legends 0.5.0-beta.4 or later works with this builder.** The Classic conversation box
+  option arrives in beta.3.
+
+**What's new**
+
+- **The session follows the host's frame rate.** Guests use the host's frame rate while they are in the session and
+  get their own setting back when they leave; joining doesn't change your settings file. The host's online limit
+  still applies: a host set to 144 fps with the usual 60 fps online limit opens a 60 fps session. To change the
+  session's rate, leave and host a new room. A slow PC, a slow connection or fullscreen VSync can still slow
+  everyone down. You no longer need to set everyone to 60 by hand.
+- **The lobby shows each player's frame rate** (for example "30 local / 60 online") and names a player whose PC
+  can't keep up ("Cannot hold 60 fps"). It's a warning only; nothing lowers the rate by itself.
+- **The rest of the online screens now look like the first game's:** Game Options, the screen-name keyboard, Other
+  ways to play, LAN host or join, LAN search and its games list, and Enter IP. Other ways still uses X-Men Legends
+  II's own LAN and Connect by IP menus, now in the classic style. The old GameSpy-era screens are gone: if the online
+  screens can't start, a plain page says to rebuild or update XML2 Fix, with Back to the main menu.
+- **The player list in the online pause menu** shows each player's name, hero and Ready / Not Ready in the first
+  game's font and the player colours, at 4:3 and widescreen resolutions.
+- **The keyboards work with keyboard and controller.** Enter IP and Change name take typed letters, digits and dots,
+  Backspace, the arrow keys or D-pad and Enter / A on a key. Typing follows your keyboard layout (AZERTY and QWERTZ
+  included); letters the game can't show, such as accented letters, are refused with "Unsupported". Esc / B or
+  Cancel closes the keyboard without changing anything, also on Enter IP. Done only finishes when you choose Done.
+  The mouse still works too.
+- **Host a game works with keyboard and controller.** Up and Down move between the rows; Left and Right change the
+  value without leaving the row; Del / Y and Enter / A switch DROP-IN on and off. Holding Enter on Open the room no
+  longer posts the game by accident.
+- **Using the analog stick on the online keyboard and Host page now moves one key at a time, like the D-pad.**
+  Holding the stick keeps moving, also like the D-pad. On Host a game it moves one row per push and holding Up or
+  Down keeps moving; holding Left or Right changes Visibility or DROP-IN only once, with the stick or the D-pad.
+- **Clearer online messages.** After a failed connection the Play Online screen keeps saying "Unavailable" instead of
+  going back to "Connecting...", and Browse explains the problem in plain words (no error codes). Key names are right
+  from the first frame, and Rejoin reads F4 on the keyboard and Y on a controller. A friend who tries to join a
+  started game with DROP-IN off is now told: "This session has started. Ask the host to start a new session."
+- **LAN games:** each game on your network is listed once (a guest of a started game no longer shows up as a second
+  copy of it), rows read "Player's game (Normal)", and the selected row is easier to read. A guest who joined over LAN
+  sees the host's game name and "LAN" in the lobby instead of empty room-code boxes.
+- **Build from an extracted Xbox install.** The standalone builder's `--iso` option also accepts an extracted
+  X-Men Legends folder, including a compatible XML1-recomp install. It checks the original files and ignores loose
+  mods, saves and settings. It doesn't bring saves across.
+- **New Discord artwork** for X-Men Legends in your Discord status.
+
+**Known issues**
+
+- **Pausing with four players** is verified with test input only: in a few of those runs one player's Ready press
+  didn't register and everyone stayed paused until it was pressed again. If that happens, press Ready again. With
+  two or three players the pause released every time (two players also with a real controller on two PCs).
+- **Hosting alone online:** after Ready the game resumes but the pause menu stays open - press B or Esc again.
+- Co-op was tested on one PC with up to four copies of the game and on two PCs at home. Not verified yet: playing
+  through the relay (networks where a direct connection fails), players on different home networks, three or four
+  separate PCs, long sessions and joins over slow connections.
+- When a friend who is joining drops out during the admission, the host can show the game's own "lost online sync"
+  message a few times. It is cosmetic: the session carries on and nobody else is dropped.
+- If the host leaves, the session ends; host takeover is planned for 0.8. Friends joining a game in progress come in
+  at the host's next area, never mid-area.
+- Enter IP still draws a few empty boxes on its keyboard. They do nothing.
+- With the online service working, the Play Online screen can keep showing "Connecting..." for a while; joining by
+  code still works.
+- The new screens were checked with a real controller and keyboard on two PCs; they still need checks with more
+  controllers and at more resolutions. Save import from xemu and XML1-recomp is not switched on in this beta.
+- Everything else: [known issues](https://github.com/ChronoRixun/legends-classic/blob/HEAD/docs/KNOWN-ISSUES.md).
+
+**How to update**
+
+Back up `Documents\Activision\X-Men Legends\SaveLC` first. In Ultimate Legends' **Beta** channel, update **XML2 Fix to
+1.11.0-beta.2** and the **builder to 0.6.0-beta.2**, then **Rebuild**, then **Play**. Using the standalone builder? Copy
+the matching `dinput.dll` into the output folder **before** you build; the builder refuses an older DLL, and swapping
+the DLL alone doesn't update the screens.
+
+Everyone in a game needs this same pair and the same settings (content 31). A beta.1 game and a beta.2 game
+refuse each other when you join. Your 0.6.0-beta.1 saves load in beta.2 (same save format as 0.5 and 0.6); stable
+0.4.0 can't load them.
+
+Legends Classic is an unofficial, non-commercial fan project. No game files, game art or modified game executables
+are distributed; you need your own copies of both games.
+
+### 0.6.0-beta.1
 
 Legends Classic 0.6.0-beta.1 goes with XML2 Fix 1.11.0-beta.1 (content 30 / catalogue 8 / LC40). It is a beta: the
 co-op parts were tested on one PC with two copies of the game and on two PCs at home, and still need wider testing

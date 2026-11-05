@@ -1,14 +1,16 @@
 ﻿# Play online in 0.6
 
-Player guide for Legends Classic **0.6.0-beta.1** with XML2 Fix **1.11.0-beta.1**. Online co-op now runs from the
-game's own **Play Online** screen. This is a beta. Co-op was tested on one PC and on two PCs at home, with two, three
-and four players, including fights. Not verified yet: playing through the relay (networks where a direct connection
-fails), four players on four separate PCs, long sessions, and joins over slow connections
-([known issues](KNOWN-ISSUES.md#online)).
+Player guide for Legends Classic **0.6.0-beta.2** with XML2 Fix **1.11.0-beta.2**. Online co-op now runs from the
+game's own **Play Online** screen. This is a beta. Co-op was tested on one PC (up to four copies) and on two PCs at
+home, with two, three and four players, including fights. Not verified yet: playing through the relay (networks where
+a direct connection fails), players on different home networks, three or four separate PCs, long sessions, and joins
+over slow connections ([known issues](KNOWN-ISSUES.md#online)). The session runs at the host's frame rate; your own
+setting comes back when you leave.
 
-Up to four players can share a campaign. Everyone needs the same build - builder 0.6.0-beta.1 with XML2 Fix
-1.11.0-beta.1 - with the same gameplay settings and Test mode off; a different build or setting is refused with the
-reason on both PCs. A 0.5 game cannot join a 0.6 game. To update, use Ultimate Legends' **Beta** channel: update XML2
+Up to four players can share a campaign. Everyone needs the same build - builder 0.6.0-beta.2 with XML2 Fix
+1.11.0-beta.2 - with the same gameplay settings and Test mode off; a different build or setting is refused with the
+reason on both PCs. A 0.6.0-beta.1 game and a 0.6.0-beta.2 game refuse each other, and a 0.5 game cannot join a 0.6
+game. To update, use Ultimate Legends' **Beta** channel: update XML2
 Fix and the builder, then **Rebuild**, then **Play**.
 
 ## Open Play Online
@@ -51,7 +53,7 @@ temporary: ask for the current one after the host opens a new room.
 2. Join. You arrive in the host's lobby; mark yourself **Ready** and wait for the host to start.
 
 If the game has already started, you join it in progress (below) - or, when the host's DROP-IN is off, you are told
-that the session has started and to ask the host to return to the lobby.
+that the session has started and to ask the host to start a new session.
 
 ## Browse public games
 
@@ -117,7 +119,7 @@ service text, so it is safe to quote in a report.
 | Code not found. Ask the host for the current code. | The service has no open room for that code. | Edit the code or ask the host; Back leaves the screen. |
 | That room closed. Ask the host for a new code. | The room closed before you got in. | Ask the host to host again; Edit the code. |
 | That game is full. Try another game or ask for a new code. | All four places are taken. | Browse another game. |
-| This session has started. Ask the host to return to the lobby. | The host's DROP-IN is off and the game has started. | Ask the host to return to the lobby, or to turn DROP-IN on for the next room. There is no Retry. |
+| This session has started. Ask the host to start a new session. | The host's DROP-IN is off and the game has started. | Ask the host to start a new session, or to turn DROP-IN on for the next room. There is no Retry. |
 | Not taking players right now. Try again soon. | The room exists but is not taking players at the moment (it is loading, its places just changed, or the list could not confirm that the game has started). | Retry (spaced by the service limit) or Browse. |
 | Different game version. Update to the same build. | The host's build differs; the grey line names both builds (`LC36 vs your LC37`). | Update together, then try again. |
 | Too many requests. Wait a few seconds, then retry. | The service limit; the grey line counts down. | Wait; Retry and Refresh stay off until it ends. |

@@ -183,7 +183,9 @@ class XdvdfsImage:
         else:                               # an open binary file object (tests: virtual images)
             fh = path
             fh.seek(0, io.SEEK_END)
-            self.path, self.size, self.fh = Path(getattr(fh, 'name', None) or '<image>'), fh.tell(), fh
+            name = getattr(fh, 'name', None)
+            self.path = Path(name) if isinstance(name, (str, Path)) else Path('<image>')
+            self.size, self.fh = fh.tell(), fh
         try:
             d = detect(self.fh, self.size)
             self.format, self.partition = d['format'], d['partition']
@@ -280,5 +282,9 @@ class XdvdfsImage:
         return sorted((e.path, e.size, e.is_dir) for e in self.entries.values())
 
 
-def open_image(path) -> XdvdfsImage:
+def open_image(path, *, cancel=None):
+    """An image reader or a verified folder reader; both implement the read-only source interface."""
+    if isinstance(path, (str, Path)) and Path(path).is_dir():
+        from .folder import FolderImage
+        return FolderImage(path, cancel=cancel)
     return XdvdfsImage(path)

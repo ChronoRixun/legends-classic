@@ -1418,7 +1418,9 @@ def v_online_menus(v, ck):
             if not actual_entries.issuperset(expected_entries):ck.error(name+': native package closure differs')
             if name in O.LOBBIES:
                 inherited=v.ctx.read_base_xmlb(F.MENU_PKG_DIR+'/'+name+'.PKGB')
-                if inherited is not None and not actual_entries.issuperset({(e.tag,e.get('filename')) for e in inherited}):
+                # No GameSpy screens: the builder drops GameSpy/logo precaches from the inherited closure (strip_branding).
+                from .online_fallback import strip_branding
+                if inherited is not None and not actual_entries.issuperset({(e.tag,e.get('filename')) for e in strip_branding(inherited)}):
                     ck.error(name+': native dynamic precaches missing')
             for kind,filename in expected_entries:
                 suffix='.IGB' if kind in ('model','texture') else '.XMLB'
@@ -1439,8 +1441,9 @@ def v_online_menus(v, ck):
         for alias in O.STYLE_ALIASES:
             if len([e for e in styles if e.get('name')=='lc_o_'+alias])!=1:ck.error('online alias style missing: '+alias)
     main=v.tree(F.MENU_REL+'.XMLB')
-    if main is None or not any(e.get('usecmd')==O.NATIVE_ENTRY for e in main.findall('item')):
-        ck.error('must preserve native main-menu Online entry')
+    # No GameSpy screens: Main > Play Online opens the LC entry (lc_online_entry); the runtime intercepts it for the Hub.
+    if main is None or not any(e.get('usecmd')==F.PLAY_ONLINE_CMD for e in main.findall('item')):
+        ck.error('main menu must keep the LC online entry ('+F.PLAY_ONLINE_CMD+')')
     if main is not None:
         hint=next((e for e in main if e.get('name')=='lc_online_continue'),None)
         if hint is None or hint.get('hide')!='true' or '$MENU_ACCEPT' not in hint.get('text',''):

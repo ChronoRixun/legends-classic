@@ -16,7 +16,7 @@ def test_hub_select_description_allows_native_hover_color():
 
 
 def test_back_footer_palette_sources_cover_expanded_keyboard_and_pad_labels():
-    for name, label in [('lc_code', '$MENU_BACK Delete'), ('lc_browse', '$MENU_BACK Back')]:
+    for name, label in [('lc_code', '$MENU_BACK Back'), ('lc_browse', '$MENU_BACK Back')]:
         tree = O.menu_tree(O.runtime_layout(name), {i:str(80+i) for i in range(8)})
         for suffix, color in [('normal', 84), ('hover', 80)]:
             node = tree.find(f"item[@name='lc_footer_back_{suffix}']")

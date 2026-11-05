@@ -146,7 +146,7 @@ def test_host_open_item_and_exclusive_visibility_scenes():
     assert raw['lc_host_private']['rect'] == raw['lc_host_public']['rect']
     for key in ('room_name', 'preview_name', 'room_code'):
         assert items[key].get('clamp') == 'true'
-    assert items['desctext1'].get('usecmd') == O.command(7)  # the generic Select prompt never opens a room
+    assert items['desctext1'].get('usecmd') == O.command(9)  # Host-scoped activation of the selected row
     bad = copy.deepcopy(root)
     next(e for e in bad if e.get('name') == 'lc_host_public').attrib.pop('hide')
     assert O.runtime_problems(bad, screen)
@@ -263,8 +263,7 @@ def test_round_5b_browse_row_scenes_header_nodes_and_shared_models():
     models = set()
     for r in range(O.BROWSE_ROWS):
         y = 178 + 31 * r
-        want = [f'lc_row{r}_st_{k}' for k in O.STATUS_KINDS] + [f'lc_row{r}_pips_{n}' for n in range(5)] + \
-            [f'lc_row{r}_build_{k}' for k in O.BUILD_KINDS] + [f'lc_row{r}_dim']
+        want = [f'lc_row{r}_st_{k}' for k in O.STATUS_KINDS] + [f'lc_row{r}_dim']
         for key in want:
             e = items[key]
             assert e.get('hide') == 'true' and e.get('type') == 'MENU_ITEM_MODEL' and e.get('neverfocus') == 'true', key
@@ -273,8 +272,8 @@ def test_round_5b_browse_row_scenes_header_nodes_and_shared_models():
             assert 44 <= rect[0] and rect[0] + rect[2] <= 596 and y <= rect[1] and rect[1] + rect[3] <= y + 31, key
         # model vertices sit +40 behind their anchor: the veil (-160) is nearer than the text (-150), the scenes (-130) behind it
         assert raw[f'lc_row{r}_dim']['plane'] + 40 < -150 < raw[f'lc_row{r}_st_lobby']['plane'] + 40
-    # identical relative art shares one model per kind (13 row models, not 91)
-    assert len(models) == 4 + 5 + 3 + 1
+    # Status and dim art still share one model per kind.
+    assert len(models) == 4 + 1
     assert [k for k in O.STATUS_KINDS] == ['lobby', 'progress', 'closed', 'full']  # no "loading": the broker sends no such state
     assert list(O.BUILD_KINDS) == ['same', 'other', 'check']
     for k in range(1, 6):
@@ -317,7 +316,7 @@ def test_round_5b_every_cause_copy_fits_its_scene_text_box_without_ellipsis():
             assert sx + w / .8 <= diag[0] + (4 if name == 'lc_code' else 0), (name, cause)
 
 
-def test_round_5b_scene_anchor_budget_and_ping_text_live_in_the_pip_scenes():
+def test_browse_scene_and_item_budgets_with_compact_runtime_facts():
     from xml1build import menu_scene
     for name in O.MENUS:
         screen = O.bound_layout(O.runtime_layout(name), F.metrics())
@@ -325,7 +324,7 @@ def test_round_5b_scene_anchor_budget_and_ping_text_live_in_the_pip_scenes():
         assert len(O.scene_layout(screen)) <= O.engine_scene_anchors(O.ANCHOR_CAPABILITY), (name, len(O.scene_layout(screen)))
     raw = {e['name']: e for e in O.runtime_layout('lc_browse')['items']}
     for r in range(O.BROWSE_ROWS):
-        for n in range(5):
-            scene = raw[f'lc_row{r}_pips_{n}']
-            assert [p['text'] for p in scene['parts'] if 'text' in p] == ['--']  # never a number: no ping is measured
-            assert scene['rect'][0] + scene['rect'][2] <= raw[f'lc_row{r}_build_same']['rect'][0]
+        ping=raw[f'room_{r}_5'];build=raw[f'lc_row{r}_build']
+        assert ping['data'] and build['data']
+        assert ping['rect'][0]+ping['rect'][2]<=build['rect'][0]
+        assert not any(key.startswith(f'lc_row{r}_pips_') for key in raw)

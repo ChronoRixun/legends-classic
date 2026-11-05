@@ -15,7 +15,7 @@ def test_unbound_or_different_release_fingerprint_cannot_produce_a_manifest():
         catalogue.write_bytes(b'synthetic catalogue: decoder replaced below')
         synthetic_fingerprint = 'f' * 64
         assert RI.HISTORY[-1].bind_manifest != synthetic_fingerprint
-        with patch.object(lcfiles, 'read_catalogue_lcc', return_value={'content_version': 30, 'revision': 8}), \
+        with patch.object(lcfiles, 'read_catalogue_lcc', return_value={'content_version': RI.HISTORY[-1].content_version, 'revision': RI.HISTORY[-1].catalogue_revision}), \
              patch.object(lcfiles, 'content_fingerprint', return_value=synthetic_fingerprint):
             try:
                 RI.manifest(out)

@@ -1,9 +1,9 @@
 """xml1builder.inputs - the two inputs, identified and checked (BUILDER_DESIGN.md 1.1, 1.2).
 
 The disc image: read in place by xml1build.prepare (image.py: Redump XGD1/2/3 or XISO by content; xbe.py: the
-certificate; disc.identify: title ID 0x4156001E, the required files, the digests). Errors keep prepare's codes, with
-one exception that follows the launcher's fake builder: a folder is E_ISO_NOT_XBOX with detail.detected = "folder"
-(prepare says E_ISO_FOLDER). A dump that is not in data/known_dumps.json builds with W_ISO_UNKNOWN_DUMP.
+certificate; disc.identify: title ID 0x4156001E, the required files, the digests). Errors keep prepare's codes.
+An extracted folder uses the same reader interface, restricted to SHA-256-verified originals from the packaged
+reference; recomp loose assets never enter it. Unknown images build with W_ISO_UNKNOWN_DUMP; unknown folders refuse.
 
 The XML2 install: XMen2.exe present and a PE32 image at 0x400000 (E_XML2_NOT_FOUND), its md5 in data/known_xml2.json
 (E_XML2_UNKNOWN_EXE; a retail exe whose only differences are the large-address-aware flag and the PE checksum
@@ -93,17 +93,12 @@ def identify_iso(path) -> dict:
     return identify(path)[1]
 
 
-def identify(path):
-    """(P1's identity, info.iso) of a disc image, or BuilderError (exit 3). Reads default.xbe and the zip's central
-    directory, nothing else."""
+def identify(path, *, cancel=None):
+    """(P1 identity, info.iso), or BuilderError. Images read XBE/ZIP directory; folders hash all originals."""
     from xml1build.prepare import PrepareError, disc as P1, image
     p = Path(path)
-    if p.is_dir():
-        raise BuilderError('E_ISO_NOT_XBOX', 'This is a folder, not a disc image.',
-                           'Choose the disc image file (.iso) of your X-Men Legends Xbox disc.',
-                           {'detected': 'folder', 'path': mask(p)})
     try:
-        with image.open_image(p) as img:
+        with image.open_image(p, cancel=cancel) as img:
             ident = P1.identify(img)
     except PrepareError as e:
         code = 'E_ISO_NOT_XBOX' if e.code == 'E_ISO_FOLDER' else e.code
@@ -123,17 +118,37 @@ def describe_disc(ident: dict, path=None) -> dict:
     """info.iso / the stamp's disc from P1's identity."""
     known = next((d for d in known_dumps() if d.get('xbe_md5') == ident.get('xbe_md5')
                   and d.get('zip_digest') in (None, ident.get('zip_digest'))), None)
+    folder = ident.get('source_kind') == 'folder'
+    if folder:
+        known = {'id': ident['source_reference']}
     xbe = ident.get('xbe') or {}
-    return {'path': mask(path) if path else None, 'format': ident.get('format'), 'title': xbe.get('title'),
+    info = {'path': mask(path) if path else None, 'format': ident.get('format'), 'title': xbe.get('title'),
             'title_id': xbe.get('title_id_hex'), 'xbe_md5': ident.get('xbe_md5'), 'zip_digest': ident.get('zip_digest'),
             'known': bool(known), 'dump': (known or {}).get('id', ''), 'movies': True,
             'digest': disc_digest(ident), 'disc_id': ident.get('disc_id'), 'image_size': ident.get('image_size')}
+    if folder:
+        info.update(source_kind='folder', verified=True, verified_files=ident['verified_files'],
+                    recomp_layout=ident.get('recomp_layout', False))
+    return info
 
 
 def disc_digest(ident: dict) -> str:
     """the disc's content identity (not the image file's path or layout)."""
-    return _digest({'xbe_md5': ident.get('xbe_md5'), 'zip_digest': ident.get('zip_digest'),
-                    'listing_digest': ident.get('listing_digest')})
+    fields = {'xbe_md5': ident.get('xbe_md5'), 'zip_digest': ident.get('zip_digest'),
+              'listing_digest': ident.get('listing_digest')}
+    if ident.get('source_kind') == 'folder':
+        fields.update(source_kind='folder', source_digest=ident['source_digest'])
+    return _digest(fields)
+
+
+def check_source_unchanged(path, ident, *, cancel=None):
+    """Reverify folder originals before the build stamp; overlays may change independently."""
+    if ident.get('source_kind') != 'folder':
+        return
+    current, _info = identify(path, cancel=cancel)
+    if current.get('source_snapshot') != ident.get('source_snapshot') or disc_digest(current) != disc_digest(ident):
+        raise BuilderError('E_ISO_SOURCE_CHANGED', 'The extracted originals changed during the build.',
+                           'Stop programs changing the original files and build again.', {'file': 'originals'})
 
 
 def _sentence(text):
@@ -144,12 +159,12 @@ def _sentence(text):
     return text if text.endswith(('.', '!', '?')) else text + '.'
 
 
-def deep_check_disc(path) -> list:
+def deep_check_disc(path, *, cancel=None) -> list:
     """--deep: every member of z/assetsfb.zip read and CRC-checked in place (~10 s). -> [problem, ...]."""
     import zipfile
     from xml1build.prepare import disc as P1, image
     problems = []
-    with image.open_image(path) as img:
+    with image.open_image(path, cancel=cancel) as img:
         with zipfile.ZipFile(img.open_file(P1.ZIP_PATH)) as z:
             bad = z.testzip()
             if bad:

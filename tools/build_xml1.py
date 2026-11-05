@@ -126,6 +126,9 @@ def parse_args(argv=None):
                          "[Save] Format=lc; the validator and the budgets use the W2 limits and refuse data over them; "
                          "needs XML2 Fix 1.10 or newer) or retail (no [Limits] SaveLayout key, the 0.4.1 baseline; "
                          "needs --loot off)")
+    ap.add_argument('--experimental-save-import', action='store_true',
+                    help='allow generation of an experimental build-bound import table (default off)')
+    ap.add_argument('--import-ledger', help='private source-receipted identity/checkpoint ledger (experimental only)')
     ap.add_argument('--loot', choices=('off', 'xml1'), default=None,
                     help="the first game's item economy (default xml1 since 0.5.0-beta.1; off by default with --save-layout "
                          "retail or --frontend xml2): xml1 converts the 116 XML1 "
@@ -196,8 +199,16 @@ def parse_args(argv=None):
                          "or the prepare stages' cache (prepared: needs --cache, and --iso unless the cache already "
                          "holds a prepared disc)")
     ap.add_argument('--cache', help='prepared mode: the prepare cache directory (created; kept between builds)')
-    ap.add_argument('--iso', help='prepared mode: the XML1 Xbox disc image (Redump .iso or XISO; read-only)')
+    ap.add_argument('--iso', help='prepared mode: the XML1 Xbox disc image (Redump .iso or XISO) or verified '
+                                 'extracted install folder (read-only)')
     a = ap.parse_args(argv)
+    if a.import_ledger:
+        if not a.experimental_save_import:
+            ap.error('--import-ledger requires --experimental-save-import')
+        ledger = Path(a.import_ledger).resolve()
+        if (ledger.is_relative_to(Path(a.out).resolve())
+                or (a.cache and ledger.is_relative_to(Path(a.cache).resolve()))):
+            ap.error('--import-ledger must be outside output and cache destinations')
     # 0.5.0-beta.1 defaults: telekinesis, the flying carry and the economy are on unless a prerequisite is turned off
     # (an explicit xml1 with the prerequisite off is still refused below): the moves need --grab-carry xml1, the economy
     # needs the W2 save layout and the XML1 front end. The guard decide stays off (Owen 10-28: on a real pad candidate
@@ -443,6 +454,8 @@ def main(argv=None):
     protected = None
     if args.sources == 'prepared':
         protected = (C.X1_LOOSE, C.X1_ASSETS, C.X1_XBOX, C.RESEARCH, C.TOOLS, Path(args.cache).resolve())
+        if args.iso and Path(args.iso).is_dir():
+            protected += (Path(args.iso).resolve(),)
     try:
         C._check_out_safe(out, base, protected)
         check_out_dir(out, args.adopt)

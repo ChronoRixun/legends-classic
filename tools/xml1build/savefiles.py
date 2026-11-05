@@ -65,6 +65,11 @@ def run(ctx):
     else:
         ctx.write_bytes(REGISTRY_REL, TR.registry_text(scan).encode('ascii'),
                         source='lcsave: the typed entity-id registry of the shipped scripts (SPEC 85)')
+        # Opt-in only. The source ledger supplies proven native semantics; this
+        # stage binds them to the final registered Data/Scripts, never game data
+        # in the repository. Schema 2 tolerates the later report/INI finalization.
+        from .save_import import shipping
+        shipping.run(ctx)
 
 
 REGISTRY_REL = 'Data/lcsave/typed-entity-ids.txt'

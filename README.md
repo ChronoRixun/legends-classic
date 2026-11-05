@@ -18,11 +18,13 @@ the builder makes no network connections.
 Unlike [XML1-recomp](https://github.com/GTTeancum/XML1-recomp), which runs the original Xbox game natively, Legends
 Classic runs the first game on the sequel's PC engine - which is what makes online co-op and the sequel's mods possible.
 
-> **Current beta: 0.6.0-beta.1** (builder 0.6.0-beta.1 with XML2 Fix 1.11.0-beta.1, on Ultimate Legends' Beta
+> **Current beta: 0.6.0-beta.2** (builder 0.6.0-beta.2 with XML2 Fix 1.11.0-beta.2, on Ultimate Legends' Beta
 > channel): online co-op inside the game - Host, Join by code, Browse, a lobby and a Party screen - and friends can
 > join a game in progress at the host's next area, with two, three or four players (the host's DROP-IN setting
-> turns that off per room).
-> Previous beta: 0.5.0-beta.1 with XML2 Fix 1.10.0-beta.1. Stable: 0.4.0 (XML2 Fix 1.8.0 or later).
+> turns that off per room). Beta.2 makes the session follow the host's frame rate, brings the rest of the online
+> screens into the classic style with keyboard and controller support, and fixes Blob, the rare 4-player host crash
+> and the lost-newcomer pause from beta.1.
+> Previous beta: 0.6.0-beta.1 with XML2 Fix 1.11.0-beta.1. Stable: 0.4.0 (XML2 Fix 1.8.0 or later).
 > Updating? Update Ultimate Legends first, then **Rebuild**, then **Play**. Everyone in an online game needs the same
 > build. Help: the [community Discord](https://discord.gg/tFxwHtZv8k). Details: [CHANGELOG](CHANGELOG.md),
 > [known issues](docs/KNOWN-ISSUES.md).
@@ -56,6 +58,9 @@ The launcher tells you when a new builder needs a rebuild (never automatic), can
 
 Prefer the command line, or on a Steam Deck? See the [builder guide](docs/CLI.md). Without the launcher, copy the
 matching XML2 Fix `dinput.dll` into the output folder **before** you build: the default co-op screens need it.
+The standalone builder's `--iso` also accepts an extracted X-Men Legends install folder, including a compatible
+XML1-recomp install; the original files are checked, and saves and loose mods are not brought across
+([dumping guide](docs/DUMPING.md)).
 
 ## Playing
 
@@ -85,9 +90,10 @@ Still open (everything, with measurements: [docs/KNOWN-ISSUES.md](docs/KNOWN-ISS
 
 ## Roadmap
 
-0.6 (this beta): online co-op in the game's own screens, with joining a game in progress; a later 0.6 beta adds
-save import from xemu and XML1-recomp. 0.7: an optional "Remastered" graphics toggle. 0.8: co-op recovery. 0.9:
-moves and characters tuned against the original. 1.0 after a full hand-played run. [Full roadmap](docs/ROADMAP.md).
+0.6 (this beta): online co-op in the game's own screens, with joining a game in progress; beta.2 adds the shared
+frame rate and the rest of the online screens; a later 0.6 beta adds save import from xemu and XML1-recomp. 0.7: an
+optional "Remastered" graphics toggle. 0.8: co-op recovery. 0.9: moves and characters tuned against the original.
+1.0 after a full hand-played run. [Full roadmap](docs/ROADMAP.md).
 
 ## Community, contributing and bug reports
 
