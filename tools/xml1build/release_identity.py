@@ -68,7 +68,7 @@ HISTORY = (
     # Prepared for 0.6.0-beta.2 (XML2 Fix 1.11.0-beta.2): the classic online screens (Game Options, the name and IP keyboards,
     # Other ways, LAN, the pause roster), the boss stuck-step exits (rule 40 revisions), host-led session frame rate. Catalogue 8
     # and the W2 save layout unchanged (0.6.0-beta.1 saves load). Integration measures the final bind manifest.
-    Identity('0.6.0-beta.2', 31, 8, 'LC41', ''),
+    Identity('0.6.0-beta.2', 31, 8, 'LC41', 'b45c407cf97da3fafa09452d52d793931eccfd63047622d011b1540098d962e7'),
 )
 
 
