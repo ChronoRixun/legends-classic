@@ -1245,36 +1245,38 @@ def test_join_in_progress_is_on_for_port_builds_and_needs_fix_18():
         FI.check_release_dll(dll, {'Online': {'ReceiveValidation': '1', 'JoinInProgress': '1'}})
 
 
-def test_release_identity_060_beta1_is_lc40_and_preserves_shipped_history():
+def test_release_identity_060_beta2_is_lc41_and_preserves_shipped_history():
     from xml1build import release_identity as RI
     from xml1builder import CONTENT_VERSION, VERSION
     import release_metadata as RM
-    assert (VERSION, CONTENT_VERSION, RI.CURRENT_CATALOGUE_REVISION) == ('0.6.0', 30, 8)
-    assert RI.game_version() == 'LC40'
+    assert (VERSION, CONTENT_VERSION, RI.CURRENT_CATALOGUE_REVISION) == ('0.6.0', 31, 8)
+    assert RI.game_version() == 'LC41'
+    assert RI.game_version(content_version=30, catalogue_revision=8) == 'LC40'
     assert RI.game_version(content_version=29, catalogue_revision=8) == 'LC38'
     assert RI.game_version(content_version=28, catalogue_revision=7) == 'LC37'
-    assert RI.HISTORY[-2].bind_manifest == '3db3423eedfcc46344219b7766b30f39bde8687be8fe51a180050c79733a170d'
-    assert RI.HISTORY[-1].release == '0.6.0-beta.1'
+    assert RI.HISTORY[-3].bind_manifest == '3db3423eedfcc46344219b7766b30f39bde8687be8fe51a180050c79733a170d'
+    assert RI.HISTORY[-2] == RI.Identity('0.6.0-beta.1', 30, 8, 'LC40', 'a8ec20954386445ea93d1c3ecb23aecb1c9665c2af0fb8a64e98b352ed407c1d')
+    assert RI.HISTORY[-1].release == '0.6.0-beta.2' and RI.HISTORY[-1].token == 'LC41'
     # Preparation leaves this empty; integration must measure it from real output.
     fingerprint = RI.HISTORY[-1].bind_manifest
     assert fingerprint == '' or (len(fingerprint) == 64 and all(c in '0123456789abcdef' for c in fingerprint))
     assert not any(r.token == 'LC39' for r in RI.HISTORY)
     RI.validate_history(RI.HISTORY)
-    for extra in (RI.Identity('duplicate-token', 31, 8, 'LC40'),
-                  RI.Identity('duplicate-content', 30, 8, 'LC41')):
+    for extra in (RI.Identity('duplicate-token', 32, 8, 'LC41'),
+                  RI.Identity('duplicate-content', 31, 8, 'LC42')):
         try:
             RI.validate_history(RI.HISTORY + (extra,), previous=RI.HISTORY)
         except ValueError:
             continue
         raise AssertionError('duplicate identity accepted')
-    for content, revision in ((30, 7), (29, 7), (28, 8)):
+    for content, revision in ((31, 7), (30, 7), (29, 7), (28, 8)):
         try:
             RI.game_version(content_version=content, catalogue_revision=revision)
         except ValueError:
             continue
         raise AssertionError('unassigned identity accepted')
-    assert RM.release_version('v0.6.0-beta.1', VERSION) == '0.6.0-beta.1'
-    assert FI.required_xml2fix('0.6.0-beta.1') == '>=1.11.0-beta.2'
+    assert RM.release_version('v0.6.0-beta.2', VERSION) == '0.6.0-beta.2'
+    assert FI.required_xml2fix('0.6.0-beta.2') == '>=1.11.0-beta.2'
     assert FI.required_xml2fix('0.6.0') == '>=1.11'
 
 
