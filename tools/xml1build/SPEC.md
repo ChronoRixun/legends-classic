@@ -7661,6 +7661,42 @@ an absent final key makes no HUD memory writes. No gameplay, save, font or menu
   palette allocation changes. See docs/CLASSIC_HUD_PILOT.md for the nine-destination
 companion contract and remaining state acceptance.
 
+## Optional classic conversation background (V-TBD-conversation)
+
+The source and public builder CLIs accept `--classic-conversation off|xml1`,
+default off. `commands.Job` forwards it through `RealPipeline.build_args`; both
+entry points record `classic_conversation` in `_build/report.json`. The option
+is owned by `frontend` in `CONTENT_OPTS`, so a changed choice invalidates carried
+frontend output even in a partial build. Absent keys in old records mean off.
+`common.args_for_out` and standalone validation restore that choice.
+
+Before the frontend-mode early return, `conversation_appearance.write(ctx)` does
+nothing for off, or reads the player's XML1 `ui/hud/convo_background.igb` and PC
+base model through BuildContext. Prepared provenance is `z/assetsfb.zip` ->
+`packages/generated/maps/package/permanent.fb` -> `disc/loose/ui/hud/convo_background.igb`.
+The converter accepts the `0xf0000006` layout, validates decoded object and memory
+references, reference lists and loader root, finite affine transforms, supported
+position/normal/packed-colour/UV streams (formats 65537 and 65543), triangle indices,
+and embedded format-7 RGBA8 or format-15 DXT3 image lengths and bindings. Compatible
+shared blocks remain read-only. Unsupported input fails before writing and names
+`--classic-conversation off` as the native-background recovery choice.
+
+`convert(xbox, pc)` returns the original XML1 bytes and structural counts. It does
+not fit the scene to PC bounds: the authored transforms place its portrait frame.
+Only `UI/hud/convo_background.IGB` is written atomically and registered to frontend;
+the existing permanent-package entry and all other resources stay as before.
+ON to OFF stops carrying this output and base sync restores the PC file.
+`V-TBD-conversation` compares ON with fresh conversion, OFF with the base model.
+
+This is independent of frontend mode, Classic HUD, fonts and Remastered. Native
+conversation text, portraits, reply controls, input and timing are unchanged.
+No INI toggle, engine hook, catalogue, gameplay-agreement or release identity is
+added. The existing catalogue/binding content fingerprint stays equal. Tests are
+synthetic scenes built in Python (`test_conversation_appearance.py` and
+`test_classic_conversation_options.py`), including rebuild/carry, cancellation and
+CLI/report restoration. Direct-substitution rendering and mixed-look co-op still
+require owned-input/live acceptance; see `docs/CLASSIC_MENUS.md`.
+
 ## 105. Text coverage: where every XML1 string went (gap row C10, validator V66)
 
 The S8 byte-compare could only say "not byte-identical" for about 1,620 of XML1's 8,600 localized strings. This

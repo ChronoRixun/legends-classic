@@ -96,14 +96,30 @@ def layout(name, native):
         return screen
     text('data_playername', (61,130,518,27), 'row')
     screen['shapes'].append(dict(kind='rect', rect=(61,126,518,34), color=2))
+    backgrounds=[]
     for i, key in enumerate(KEYS[:36]):
         rect = (70 + (i % 9)*56, 180 + (i // 9)*36, 50, 26)
         text(key, rect, 'row', active=True)['align'] = 'center'
-        screen['shapes'].append(dict(kind='rect', rect=rect, color=2))
+        backgrounds.append(dict(kind='rect', rect=rect, color=2))
     for i, key in enumerate(KEYS[36:]):
         rect = (61+i*132,338,122,28)
         text(key, rect, 'body', active=True)['align'] = 'center'
-        screen['shapes'].append(dict(kind='rect', rect=rect, color=2))
+        backgrounds.append(dict(kind='rect', rect=rect, color=2))
+    # The five symbol keys, Backspace and Done are present on every page. The
+    # other boxes must travel with their keys instead of remaining in the baked
+    # backdrop. Three groups fit the native 175-item map (one model/key did not).
+    screen['shapes'] += [backgrounds[i] for i in (*range(5),36,39)]
+    for key,indices in (('lc_text_keys_6_11',range(5,11)),
+                        ('lc_text_keys_12_36',range(11,36)),
+                        ('lc_text_keys_name_tools',(37,38))):
+        parts=[backgrounds[i] for i in indices]
+        x=min(p['rect'][0] for p in parts); y=min(p['rect'][1] for p in parts)
+        right=max(p['rect'][0]+p['rect'][2] for p in parts)
+        bottom=max(p['rect'][1]+p['rect'][3] for p in parts)
+        parts=[{**p,'rect':(p['rect'][0]-x,p['rect'][1]-y,*p['rect'][2:])} for p in parts]
+        # Start loaded so native model hide/unhide retains its actual resource.
+        screen['items'].append(O._entry(key,'',(x,y,right-x,bottom-y),
+            variant=True,parts=parts,plane=-140))
     # Native PC supplied no clickable Cancel. Mouse activation enters the same
     # Escape character path as the keyboard; original key links remain intact.
     screen['items'].append(O._entry('lc_text_cancel','Cancel',(43,402,132,28),'body',4,
@@ -207,6 +223,9 @@ def prepare(ctx, name, source, atlas, focus_source, palette_ids, metrics, anchor
         selected=O._entry('lan_focus','',(0,0,530,20),parts=[dict(kind='panel',rect=(0,0,530,20),color=5,outline=5)])
         models['ui/models/lc_o_lan_focus']=O.focus_model(focus_source,(0,-8,424,8),True,O.variant_picture(selected))
     for item in screen['items']:
+        if item.get('variant') and item.get('parts'):
+            rect=(0,-item['rect'][3]*.8,item['rect'][2]*.8,0)
+            models[O.variant_resource(screen,item)]=O.focus_model(focus_source,rect,True,O.variant_picture(item))
         if not item['intent']: continue
         _,_,rect,outline,_ = O.focus_placement(screen,item)
         resource = O.focus_resource(rect,outline,O.focus_variant(screen,item))

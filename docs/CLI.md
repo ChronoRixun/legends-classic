@@ -60,6 +60,18 @@ Options that work with every command: `--events jsonl|text` (`jsonl` prints JSON
 `--log FILE`, `--quiet` and `--version`. `xml1-builder --help` lists them all, including the feature options added
 since 0.4.2 (see the [CHANGELOG](../CHANGELOG.md)).
 
+`build --classic-conversation off|xml1` selects the conversation background. The default is **off**,
+which keeps the native PC model. `xml1` uses the blue background from your own XML1 Xbox disc;
+the builder validates its scene and embedded images before replacing `UI/hud/convo_background.IGB`.
+Unsupported or missing inputs fail the build with recovery instructions and leave the base model in place.
+Rebuild with `--classic-conversation off` to restore the PC background.
+
+This is an appearance setting that requires rebuilding, independent of the main menu, Classic HUD,
+fonts and Remastered. Text, portraits, response selection, input and conversation timing keep their
+existing behavior. There is no runtime INI switch. Launcher controls are a separate integration;
+this builder option does not imply that a launcher setting has shipped. Direct-substitution visual
+acceptance, including widescreen and Remastered coverage, remains pending.
+
 ## What the build does
 
 1. **Checks your inputs.** The disc image must be X-Men Legends for Xbox (title id `4156001E`) and complete; XML2

@@ -10,6 +10,43 @@ medium/big English overrides already contain classic printable glyphs and PC
 control/extended fallback glyphs. HUD/digital indices retain their existing maps.
 Appearance work does not change stat values, save fields or gameplay rules.
 
+## Optional classic conversation background
+
+`--classic-conversation off|xml1` defaults to **off**. Neither the XML1 main menu,
+Classic HUD, classic fonts nor Remastered enables it implicitly. Applying a
+change requires a rebuild; an old build record without the option means off.
+The proposed launcher control is an unchecked **Classic conversation box**
+setting that persists the player's per-installation choice and forwards this
+option on rebuild. Launcher implementation is separate from this builder change.
+
+`conversation_appearance.convert(xbox, pc)` validates the supported IGB scene,
+reference lists, affine transforms, finite position/normal/UV streams, triangle
+indices, and embedded RGBA8/DXT3 images. It preserves the XML1 model's complete
+bytes, including transforms, materials, data pumps and packed vertex colours.
+Read-only shared blocks are accepted when their consumers' layouts agree.
+No whole-scene shrinking, camera reframing, texture conversion or font allocation
+is performed. Unsupported input is refused before the replacement is written;
+the diagnostic explains how to rebuild with the native background.
+
+Only `UI/hud/convo_background.IGB` is written, from the player's prepared disc
+model through BuildContext. Its existing permanent-package registration stays.
+This is separate from `UI/hud/dialog.IGB`, which supplies modal/list chrome.
+Native text, speaker portraits, replies, input, timing, AutoAdvance, ReplyVoices,
+ReplyCursor and OnlineConversations keep their existing behavior. No DLL hook or
+`ClassicConversation` INI key is introduced. The catalogue/binding content
+fingerprint is unchanged by this model replacement.
+
+`V-TBD-conversation` compares ON output with a fresh owned-input conversion and
+requires `frontend` ownership; OFF output must match the base model. The option
+belongs to `frontend` for stale-output invalidation, including partial builds;
+ON to OFF removes that model from the carry set and base sync restores it.
+The synthetic tests cover cancellation/resume and preserved non-model resources.
+
+Direct substitution remains subject to visual acceptance: matched XML1/xemu and
+LC OFF/ON captures, portrait alignment, opacity, animation, long text and replies,
+aspect-ratio boundaries, widescreen/ultrawide, Remastered, renderer/reset paths,
+and local/online mixed-look progression. No automated test establishes those results.
+
 ## Reusable layer
 
 `xml1build.menu_theme.allocate` translates requested legacy styles into modern

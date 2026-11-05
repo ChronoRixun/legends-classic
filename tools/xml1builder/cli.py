@@ -79,8 +79,7 @@ def make_parser():
                    help='build: the in-game online menus and scoped fonts (on by default since 0.6.0-beta.1; needs a '
                         'matching companion DLL); off builds the menus as 0.4.1 did')
     p.add_argument('--classic-conversation', choices=('off', 'xml1'), default='off',
-                   help='build: accepted for launchers from 0.5.0-beta.4; off (the default) changes nothing, '
-                        'xml1 (the XML1 conversation box) arrives in 0.6.0-beta.3')
+                   help='build: XML1 blue conversation background from your disc (default off; requires rebuilding)')
     p.add_argument('--main-menu-layout', choices=('classic', 'widescreen'), default='classic',
                    help='build: the classic main menu, centred by the game at every aspect '
                         '(widescreen: a retired name for classic)')
