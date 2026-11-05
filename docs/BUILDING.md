@@ -146,6 +146,26 @@ python tools/build_xml1.py --sources prepared --cache <cache> --base <your XML2 
 
 `--test-ini` also writes `.codegpt-game.json`, a small JSON launch manifest for game-automation tools.
 
+For the optional disc-authored blue conversation background, pass `--classic-conversation xml1`
+to either the developer entry point or `xml1-builder build`. It defaults to `off` with either
+main-menu selection. The source is the prepared disc's `loose/ui/hud/convo_background.igb`,
+extracted by the existing prepare stage from `z/assetsfb.zip` through
+`packages/generated/maps/package/permanent.fb`. No game artwork is distributed with the builder.
+
+The `frontend` stage validates the source model and writes it without changing bytes at
+`UI/hud/convo_background.IGB`, using the existing permanent-package entry. The build record stores
+`classic_conversation`; older records mean `off`. A selection change reruns `frontend` even with
+`--only`, so `--classic-conversation off` restores the base file. Standalone validation restores
+the recorded choice and accepts an explicit override of the same option. No INI key is generated.
+
+Synthetic coverage is in `test_conversation_appearance.py` and
+`test_classic_conversation_options.py`; run `python tests/unit/run.py -k conversation_` and the
+full suite. Owned-input regeneration and frontend/zones self-tests remain coordinator gates.
+Visual acceptance must compare XML1, LC OFF and LC ON in disposable copies at matched conversation
+states, with 4:3, the aspect-ratio boundary, widescreen/ultrawide, Remastered OFF/ON, native/DXVK,
+input devices and local/online co-op coverage. Structural acceptance alone proves no rendering or
+conversation playthrough. See [CLASSIC_MENUS.md](CLASSIC_MENUS.md) for the appearance contract.
+
 ## The in-game test harness
 
 The tools that drive a running game (`campaign_walk.py`, `power_sweep.py`, `tour_runner.py`, `fixinput.py`,

@@ -199,6 +199,7 @@ class RealPipeline:
     def build_args(self, job):
         import build_xml1
         argv = ['--out', str(job.out), '--base', str(job.xml2), '--jobs', str(job.jobs)]
+        argv += ['--classic-conversation', getattr(job, 'classic_conversation', 'off')]
         argv += ['--main-menu-layout', getattr(job, 'main_menu_layout', 'classic')]
         argv += ['--online-menus', getattr(job, 'online_menus', None) or 'on']
         argv += ['--anim-enums', getattr(job, 'anim_enums', None) or 'xml1']
