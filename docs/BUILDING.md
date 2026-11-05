@@ -83,6 +83,10 @@ companion `docs/online-menus.md`, "Native item-map budget and LAN list fixes"). 
 `menu-anchors/512` capability does not raise it. Tree validation, final backdrop authoring
 and `output_problems` check this item limit separately from scene anchors. Current owned
 menus including backdrops use Browse **172**, host lobby **173**, join lobby **169** items.
+Text entry uses **153** items including three grouped key backgrounds. The
+matching DLL hides unused boxes for Enter IP and Symbols; a separate model
+per key would exceed the native item map. Both the builder's optional-skin
+preflight and `output_problems` retain the 175-item rejection.
 The lobbies reuse the hero fallback DATA field for linked rate plus slow-peer warning;
 Browse keeps seven rows with numeric occupancy and one build label per row.
 LAN rows additionally require the companion `lc-fonts-list/1` private LISTBOX scale;
