@@ -18,16 +18,12 @@ the builder makes no network connections.
 Unlike [XML1-recomp](https://github.com/GTTeancum/XML1-recomp), which runs the original Xbox game natively, Legends
 Classic runs the first game on the sequel's PC engine - which is what makes online co-op and the sequel's mods possible.
 
-> **Current beta: 0.6.0-beta.2** (builder 0.6.0-beta.2 with XML2 Fix 1.11.0-beta.2, on Ultimate Legends' Beta
-> channel): online co-op inside the game - Host, Join by code, Browse, a lobby and a Party screen - and friends can
-> join a game in progress at the host's next area, with two, three or four players (the host's DROP-IN setting
-> turns that off per room). Beta.2 makes the session follow the host's frame rate, brings the rest of the online
-> screens into the classic style with keyboard and controller support, and fixes Blob, the rare 4-player host crash
-> and the lost-newcomer pause from beta.1.
-> Previous beta: 0.6.0-beta.1 with XML2 Fix 1.11.0-beta.1. Stable: 0.4.0 (XML2 Fix 1.8.0 or later).
-> Updating? Update Ultimate Legends first, then **Rebuild**, then **Play**. Everyone in an online game needs the same
-> build. Help: the [community Discord](https://discord.gg/tFxwHtZv8k). Details: [CHANGELOG](CHANGELOG.md),
-> [known issues](docs/KNOWN-ISSUES.md).
+> **Current beta: 0.6.0-beta.3**, paired with XML2 Fix 1.11.0-beta.3 on Ultimate Legends' Beta channel.
+> Beta.3 adds an optional Classic conversation box, removes the false lost-sync notice for a lost newcomer,
+> closes solo-host pause and Team Management in one press, and removes empty Enter IP keys.
+> Update both parts, **Rebuild**, then **Play**. beta.1 and beta.2 saves load; online players need matching builds.
+> The conversation option is off by default and has separate native checks; it has not been hand-tested by Owen.
+> Previous beta: 0.6.0-beta.2. Stable: 0.4.0. Details: [CHANGELOG](CHANGELOG.md), [known issues](docs/KNOWN-ISSUES.md).
 
 ## What you need
 

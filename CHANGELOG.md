@@ -12,7 +12,43 @@ build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebui
   proven retail ledgers and live companion acceptance are still required before
   public admission. Global-profile merging remains disabled.
 
-## v0.6.0 - content version 31 (needs XML2 Fix 1.11.0)
+## v0.6.0 - content version 32 (needs XML2 Fix 1.11.0)
+
+### 0.6.0-beta.3
+
+Legends Classic 0.6.0-beta.3 (content 32 / catalogue 8 / LC42) goes with **XML2 Fix 1.11.0-beta.3**.
+Update both parts in Ultimate Legends' **Beta** channel, then **Rebuild**, then **Play**. Everyone in a session
+needs the same build and settings; beta.1 and beta.2 saves still load, but their online games cannot join beta.3.
+
+**Changes since beta.2**
+
+- **Classic conversation box, optional.** Build with `--classic-conversation xml1`, or choose Classic conversation box
+  in Ultimate Legends 0.5.0. The launcher offers it with builders 0.6.0-beta.3 or later. The default is off and keeps
+  beta.2's conversation background. Turning it on changes only `UI/hud/convo_background.IGB`; rebuild with
+  `--classic-conversation off` to restore the PC background.
+- **No false lost-synchronization alarm when a joining friend drops out during admission.** The existing players
+  carry on together. During the join hold the host sees the friend's name and that they have left the game.
+  If the loss happens after the area restart begins, the game's standard dropped-players message can still appear
+  once (cosmetic; a wording fix is planned).
+- **Hosting alone online:** the pause and Team Management menus now close with one press of B or Esc.
+- **Enter IP** has eleven keys (0-9 and the dot), without empty cells or empty bottom buttons.
+- **Restart waits use occupied seats only**, so an empty participant slot does not arm a restart barrier.
+
+**Checks and limits**
+
+The online changes were checked with a real controller and keyboard on two PCs at home: solo-host pause and Team
+Management, saved-campaign hosting, code join at the next area, host and guest pauses, a lost newcomer, the Enter IP
+grid, analog stick and D-pad navigation. The lost-newcomer run suppressed 128 native notices and the session continued.
+The conversation option was checked separately on native Windows in two conversation families at three resolutions,
+off and on. It has not been hand-tested by Owen; no xemu, DXVK or multiplayer conversation comparison is claimed.
+
+Four-player pause release is verified with test input only. Relay play, players on different home networks, three or
+four separate PCs, long sessions and slow joins still need checks. Host loss ends the session; there is no host
+migration. Save import from xemu and XML1-recomp remains off. All other still-open beta.2 limitations remain in
+[known issues](docs/KNOWN-ISSUES.md).
+
+Back up your saves before updating. The standalone builder needs the matching `dinput.dll` in the output folder
+before Build. These tools distribute no game content; you need your own copies of both games.
 
 ### 0.6.0-beta.2
 
