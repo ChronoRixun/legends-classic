@@ -224,7 +224,7 @@ research/heroes/powers_debug.md) with one
 `talentvalue` per rank (gaps carried forward); `pierce="true"` from rank k -> `piercechance` 0/1; a trigger added by
 a rung -> added, `life` 0 below its first rank (an attack trigger without `life` is active from rank 1 and reported
 `UNGATED`); a `powerup` trigger whose kind changes with the rank (Frost / Jubilee `confused` -> `team_switch` at
-rank 6) -> one life-gated trigger per kind; a `victimeventtag` that changes (Iceman chill 10 -> frozen 20) ->
+rank 6) -> one application-gated trigger per kind (see control lifetimes below); a `victimeventtag` that changes (Iceman chill 10 -> frozen 20) ->
 `victimeventtag1..n`; any other non-numeric change (`apply_ally near/all`, `aitype`, projectile `entity`) -> the
 top rung's value (`enum_top_rung`). A `%` reference on an attribute outside XML2's vocabulary (`VALUE_REF_ATTRS`:
 every (tag, attribute) XML2 retail references through talentvalues - e.g. not `damagelevel`, `fxlevel`, `radius`,
@@ -234,7 +234,8 @@ root had none). `<damageMod>` children a rung adds are active from rank 1 (repor
 
 Fixups on every output move (`fixup_move`): value codes anywhere (L/M/H damage ranges as `"min max"`, K/P/BST/A/
 XTL numbers, `XLT` typos -> XTL) resolved from `xml1_loose/data/values.xml`; `<require cat="talent">` -> `skill`;
-`func_*`, `fallback`, `life_max`, `level_max` dropped; root attributes `iconcolumns/iconrows/exclusive` dropped;
+`func_*`, `fallback`, `level_max` dropped; a powerup's `life_max` merged into `life` before dropping the attribute;
+root attributes `iconcolumns/iconrows/exclusive` dropped;
 `icon` kept only on `power1/2/3/9`; `C.map_tree_refs` (skins 1805 -> 15805, `skin_swap` kept). Powerup triggers
 (`convert_powerup_trigger`): `<trigger name="powerup" ...><special_fx/><affecter/></trigger>` with XML2's retail
 forms where XML2 has one: elemental `special`/`damage+damageaddattack` -> `class="add_attack" damagepercent=0.5`,
@@ -245,6 +246,22 @@ chilled `move` -> `class="chill"` + `affecter move`, `might_mode` -> `might_heav
 `def_damage` with `damagetype` -> `scope_damage`, everything else -> `<affecter attribute=X [affect_type] level
 [scope_*]>` (unknown attributes warned). `effect` -> `special_fx primary`, `effect_cust1` -> `deactivate` (with
 `customeffect1deactivate`) / `custom`.
+
+**Control lifetimes (2026-11-07):** XML1 samples uniformly from `life` to `life_max` (default.xbe 0x2a7b0).
+Merge those explicit bounds into XML2's `life="min max"` before collapsing ranks, so each lifetime talentvalue
+retains both endpoints. This covers Frost Confuse and Fear and Jubilee Photo Flash. For the two confuse chains,
+ranks 1–5 use confused for 1–3/4/5/6/7 seconds, ranks 6–10 use team_switch for 2–10/11/12/13/14 seconds, and
+rank 11 uses team_switch for 5–20 seconds. Split kinds use `apply_chance` talentvalues: 1 at their source ranks,
+-1 elsewhere. XML2 rejects a negative chance even for a zero random draw (0x4e7b50). Never use `life=0` to
+disable these branches: the end-time getter 0x5383e0 and update 0x5376b1 treat zero as no expiry. V-H18 derives
+all affected talents and ranks from the XML1 source, then checks kind, gate, finite lifetime and both bounds
+against the generated styles/talents. Retail XML2 uses timed team_switch
+affecters in Phoenix, Professor X and Scarlet Witch's power9. To preserve the randomized range exactly, emit
+`xml1_life_range` with the same value as `life`. The companion's `[Game] MindControlLife=xml1` parser adapter
+keeps this range on the powerup template and clears the separate event override. Without it, XML2's inline
+event path (0x4e7d44) drops the lower bound and its attachment initializer samples again. The builder probes
+the companion for `xml1 template life range (parser revision 1)` and refuses an older DLL. The main permanence
+fix is the application gate; the companion adapter is required for faithful randomized timing.
 
 Results per hero (moves in -> out): Beast 41 -> 8, Colossus 45 -> 8, Cyclops 37 -> 4, Frost 37 -> 4, Gambit 51 -> 14,
 Iceman 45 -> 8, Jubilee 46 -> 9, Magma 44 -> 7, Nightcrawler 51 -> 18, Phoenix 39 -> 6, ProfXAstral 15 -> 15,
@@ -336,6 +353,7 @@ without ctx.shared):
 | V-H3 | per hero both talent files exist and agree, <= 8 talents, every `power=` names a FightMove of the style, every skill `<require>` resolves (file or shared), every `%name` in the file or style has a talentvalue with contiguous ranks from 1, talentvalue names <= 19 and defined by one file only (shared + hero files; <= 300 names in total), no talent name registered twice across shared + files | error |
 | V-H4 | shared_talents XMLB == engb, <= 99, == DESIGN 4.7 (delta = warning), special names defined where a hero references them, shared + worst 4 files <= 92 | error / warn |
 | V-H5 | per style: `power1/2/3/9` exist and require their talent, no XML1 top name / `fallback`, every `inherit` resolves, no chain to a dropped rung, no value code left, `%` only on `VALUE_REF_ATTRS`; every `<event>` / `<trigger>` resolves to a registered `ce_*` type, <= 19 triggers per move, names <= 31 (`combat_events.style_findings`, SPEC 22); every affecter in XMen2.exe's affecter table (error); handlers not in `FM_HANDLERS` and affecters no XML2 retail style uses are warnings | error / warn |
+| V-H18 | every XML1 talent with a team_switch rank: generated application gates select exactly the XML1 kind at every rank, with a positive finite life and both XML1 duration endpoints | error |
 | V-H6 | per costume: `<hero>_<skin>` and `_nc` exist with `actorskin`, `actoranimdb`, `xml_talents data/talents/<hero>`, the combat one with the mapped `fightstyle`; no `xml_talents` / `xml` entry after the first `fightstyle`; every entry resolves; `<hero>_xml` and the placeholder packages exist | error |
 | V-H7 | `characters_heads` lists every existing hero head + 9999 + `m_team_roster_screen`, every listed model exists; `_pc` lists exactly 9999 | error |
 | V-H8 | per costume a HUD head (costume / default / variant 01 fallback) exists (error); `UI/HUD/characters/<skin>` missing -> note when a fallback exists, warning otherwise; loading textures noted | error / warn / note |
@@ -376,7 +394,8 @@ accepts heroes-owned `<hero>_xml` packages.
    (`shared_tag="shared_stunned"`), the chill / freeze / time_bomb / charged classes and the bleed `shared_tag`: XML2
    ships exactly these forms for the same powers (ps_rogue power2, ps_iceman power1/2, ps_gambit power6_atk /
    charged_throw); an affecter named `drain_victim` is UNVERIFIED. `nullify` is an affecter as XML2 does it.
-4. **Rank-dependent powerup kinds are split into life-gated triggers** and **rank-dependent `victimeventtag`s
+4. **Rank-dependent powerup kinds are split into application-gated triggers** (corrected 2026-11-07: zero-life
+   gates in earlier builds made inactive kinds permanent) and **rank-dependent `victimeventtag`s
    become `victimeventtag1..n`** (both XML2 forms) instead of the top-rung enum; DESIGN's top-rung rule would have
    made Frost / Jubilee convert enemies at rank 1 and Iceman's beam freeze at rank 1.
 5. **Rogue's power2 gets the decide chain's `powerusage`** (transplanted per rank, tag 90): the drain move itself

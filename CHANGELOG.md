@@ -5,6 +5,10 @@ build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebui
 
 ## Unreleased
 
+- Jubilee's Photo Flash and Frost's Confuse no longer apply a permanent team switch from the inactive rank
+  branch. Their original XML1 randomized durations are preserved, along with Frost's Fear duration ranges.
+  Rebuilding content and the matching XML2 Fix control-lifetime adapter are required; ranks 1–5 confuse, and
+  ranks 6–11 temporarily switch the target's team. The builder refuses a companion without the adapter.
 - Save import stays off by default. Experimental Install and Undo now require a
   companion DLL advertising the SaveLC writer lease; previews pin its hash and
   Undo requires `--build`. Experimental builds can compile a private, source-hash
