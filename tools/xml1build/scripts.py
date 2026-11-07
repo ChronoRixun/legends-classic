@@ -149,9 +149,9 @@ def mission_start_unlocks(ctx) -> dict:
     """Pure (cached): {'missions': {mission: (hero, ...)}, 'cumulative': {mission: (hero, ...)}, 'dropped':
     {mission: (non-playable hero, ...)}, 'errors': [str]}, limited to the playable heroes of this build's herostat.
     cumulative = XML1's unlock set of every mission in missions.xml (all rows up to its milestone); missions = the
-    lines each begin body writes: the milestone's own group (the rows after the previous milestone). XMen2.exe keeps
-    unlocks in the profile and nothing clears them, so every story path, which starts each milestone's missions in
-    table order, ends each mission start with XML1's cumulative set; the full cumulative set in every copy pushed the
+    lines each begin body writes: the playable milestone group plus all cumulative campaign NPCs. The NPCs cannot
+    rely on earlier groups having run: the Healer's own group is a development entry absent from normal play.
+    The full cumulative playable set in every copy pushed the
     act-3 hubs (nyc3_2_1, muir_in3: four begin-body copies each) past the 620-statement pool (0x4d7e6e). Saves from
     earlier builds get the cumulative set from their zone script on load (catchup_unlock_plan). Any problem reading the table or the milestones is an error (the build fails
     in run(); the map is then empty - never a guess)."""
@@ -178,6 +178,10 @@ def mission_start_unlocks(ctx) -> dict:
         playable = set(_port_heroes(ctx)) | set(CAMPAIGN_NPCS)
         cum, drop = U.mission_unlocks(milestones, rows, playable)
         grp, _ = U.mission_unlocks(milestones, rows, playable, fn=U.group)
+        # Keep the budget-saving playable groups, but reapply XML1's complete NPC set at every begin.
+        # A skipped development milestone must not drop its NPC from the next real campaign start.
+        for m, heroes in grp.items():
+            grp[m] = heroes + tuple(h for h in cum[m] if h in CAMPAIGN_NPCS and h not in heroes)
         return {'missions': grp, 'cumulative': cum, 'dropped': drop, 'errors': errors, 'rows': len(rows)}
     return _cached(ctx, 'mission_start_unlocks', build)
 
@@ -240,30 +244,53 @@ def catchup_unlock_plan(ctx) -> dict:
     {zone: why}}. Every converted XML1 zone whose world entity names a mission gets that mission's cumulative unlock
     set in its zone script (scripts_transform.catchup_unlocks), so a save made inside the mission by an earlier build
     catches up on load; a zone script shared by zones of several missions gets the heroes common to all of them (it
-    never unlocks beyond any of its zones' milestones)."""
+    never unlocks beyond any of its zones' milestones). Campaign NPCs additionally use zone_acts ownership:
+    zones without a usable world.mission recover only NPCs permitted by every owner. Unknown owners and
+    shared scripts used before a milestone prevent an unconditional NPC unlock; they do not prove progress."""
     def build():
         cum = _mission_cumulative_map(ctx)
-        per_ref, zones, skipped = {}, {}, {}
+        ownership = _zone_acts(ctx)
+        per_ref, npc_per_ref, zones, skipped = {}, {}, {}, {}
         for z in ctx.x1_zones():
             if z in C.MENU_ZONES or not _x1_zone_convertible(ctx, z):
                 continue
             m = _x1_world_mission(ctx, z)
-            if not m or m not in cum:
-                continue
+            owners = list((ownership.get(z) or {}).get('missions') or ())
+            if m in cum and m not in owners:
+                owners.append(m)
+            npcs = [h for h in CAMPAIGN_NPCS if owners and all(h in cum.get(o, ()) for o in owners)]
             ref = zone_script_ref(ctx, z)
             if ref is None:
-                skipped[z] = f'mission {m}: no zone script'
+                if m in cum or npcs:
+                    skipped[z] = f'mission {m or ",".join(owners)}: no zone script'
                 continue
+            # Include every user, even one without mission evidence: an empty set must veto additions
+            # to a script another, later zone shares. Do not filter owners by graph reachability, which
+            # omits development entries on both sides of some NPC milestones.
+            npc_per_ref[ref] = npcs if ref not in npc_per_ref else [h for h in npc_per_ref[ref] if h in npcs]
             if z in CATCHUP_SKIP_ZONES:
                 skipped[z] = CATCHUP_SKIP_ZONES[z]
                 per_ref[ref] = None
                 continue
-            zones[z] = (m, ref)
+            if m in cum or npcs:
+                zones[z] = (m if m in cum else ','.join(owners), ref)
+            if m not in cum:
+                continue
             if ref in per_ref and per_ref[ref] is None:
                 continue
             hs = list(cum[m])
             per_ref[ref] = hs if ref not in per_ref else [h for h in per_ref[ref] if h in hs]
-        return {'scripts': {r: tuple(hs) for r, hs in per_ref.items() if hs}, 'zones': zones, 'skipped': skipped}
+        scripts = {}
+        for ref in dict.fromkeys((*per_ref, *npc_per_ref)):
+            old = per_ref.get(ref, [])
+            if old is None:
+                continue
+            npcs = npc_per_ref.get(ref, [])
+            hs = [h for h in old if h not in CAMPAIGN_NPCS or h in npcs]
+            hs += [h for h in npcs if h not in hs]
+            if hs:
+                scripts[ref] = tuple(hs)
+        return {'scripts': scripts, 'zones': zones, 'skipped': skipped}
     return _cached(ctx, 'catchup_unlocks', build)
 
 # Forced teams (SPEC 19, research/heroes/FORCED_TEAMS_DESIGN.md). XML1's team builder (xbe 0x18d6d0, run by

@@ -129,3 +129,88 @@ def test_analysis_of_xml1_unlock_sites_ignores_the_generated_unlocks():
            'unlockCharacter("alpha", "" )', 'loadMapKeepTeam("zone/a" )']
     body, _ = T.catchup_unlocks(src, ('bravo',))
     assert T.strip_generated_unlocks(body) == [src[0], src[1], src[4]]
+
+
+def _catchup_plan(zones):
+    """Synthetic ownership metadata; source discovery is the owned-input boundary."""
+    from unittest.mock import patch
+    from xml1build import scripts as S
+
+    class Context:
+        def x1_zones(self):
+            return list(zones)
+
+    ctx = Context()
+    cumulative = {'early': ('alpha',), 'late': ('alpha', 'bravo', 'healer', 'forge')}
+    with patch.object(S, '_mission_cumulative_map', return_value=cumulative), \
+            patch.object(S, '_zone_acts', return_value={z: {'missions': row[1]} for z, row in zones.items()}), \
+            patch.object(S, '_x1_world_mission', side_effect=lambda _, z: zones[z][0]), \
+            patch.object(S, 'zone_script_ref', side_effect=lambda _, z: zones[z][2]), \
+            patch.object(S, '_x1_zone_convertible', return_value=True):
+        return S.catchup_unlock_plan(ctx)
+
+
+def test_catchup_recovers_npcs_from_exclusive_owners_without_unlocking_extra_heroes():
+    plan = _catchup_plan({'sample/no_world': ('', ['late'], 'sample/no_world'),
+                          'sample/unknown_world': ('hub', ['late'], 'sample/unknown_world'),
+                          'sample/known_world': ('late', ['late'], 'sample/known_world')})
+    assert plan['scripts']['sample/no_world'] == ('healer', 'forge')
+    assert plan['scripts']['sample/unknown_world'] == ('healer', 'forge')
+    assert plan['scripts']['sample/known_world'] == ('alpha', 'bravo', 'healer', 'forge')
+
+
+def test_catchup_never_adds_npcs_to_mixed_or_unknown_owners_or_shared_early_scripts():
+    plan = _catchup_plan({'sample/mixed': ('', ['early', 'late'], 'sample/mixed'),
+                          'sample/unknown': ('', ['late', 'unknown'], 'sample/unknown'),
+                          'sample/post': ('', ['late'], 'sample/shared'),
+                          'sample/pre': ('', ['early'], 'sample/shared'),
+                          'sample/no_owners': ('', [], 'sample/no_owners')})
+    assert plan['scripts'] == {}
+
+
+def test_catchup_checks_all_owners_even_when_the_world_names_a_later_mission():
+    plan = _catchup_plan({'sample/mixed': ('late', ['early', 'late'], 'sample/mixed'),
+                          'sample/post': ('late', ['late'], 'sample/shared'),
+                          'sample/pre': ('', ['early'], 'sample/shared')})
+    assert plan['scripts']['sample/mixed'] == ('alpha', 'bravo')
+    assert plan['scripts']['sample/shared'] == ('alpha', 'bravo')
+
+
+def test_catchup_preserves_the_statement_pool_veto_for_a_shared_script():
+    from unittest.mock import patch
+    from xml1build import scripts as S
+    with patch.object(S, 'CATCHUP_SKIP_ZONES', {'sample/skip': 'statement pool'}):
+        plan = _catchup_plan({'sample/skip': ('late', ['late'], 'sample/shared'),
+                              'sample/post': ('', ['late'], 'sample/shared')})
+    assert plan['scripts'] == {}
+    assert plan['skipped']['sample/skip'] == 'statement pool'
+
+
+def test_catchup_reports_exclusive_zones_that_still_have_no_script():
+    plan = _catchup_plan({'sample/no_script': ('', ['late'], None)})
+    assert plan['scripts'] == {}
+    assert 'no zone script' in plan['skipped']['sample/no_script']
+
+
+
+def test_builder_uses_charunlock_labels_not_mission_names_or_graph_reachability():
+    from pathlib import Path
+    from unittest.mock import patch
+    from xml1build import scripts as S
+
+    class Context:
+        x1_xbox = Path('synthetic-xbox')
+        graph = {'reachable_missions': ['hub']}
+
+        def read_x1_xml(self, _):
+            return ET.fromstring('<missions><mission name="hub" charunlock="intro"/>'
+                                 '<mission name="rescue" charunlock="hub"/>'
+                                 '<mission name="later" charunlock="after"/></missions>')
+
+    with patch.object(U, 'read_xbe_table', return_value=[('intro', 'alpha'), ('hub', 'healer'), ('after', 'bravo')]), \
+            patch.object(S, '_port_heroes', return_value={'alpha', 'bravo'}):
+        plan = S.mission_start_unlocks(Context())
+    assert not plan['errors']
+    assert plan['missions'] == {'hub': ('alpha',), 'rescue': ('healer',), 'later': ('bravo', 'healer')}
+    assert 'healer' not in plan['cumulative']['hub']
+    assert 'healer' in plan['cumulative']['rescue']
