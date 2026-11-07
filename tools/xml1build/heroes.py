@@ -42,6 +42,7 @@ from pathlib import Path
 
 from . import common as C
 from . import autospend as ASP                 # SPEC 94: XML1's automatic stat growth in Data/autospend.XMLB
+from . import mind_control as MC
 from . import rank_costs as RC
 from . import combat_events as CE
 from . import hero_icons as HI        # issues #53/#73: the talent-icon atlases as 4x4 alpha-blended sheets
@@ -222,7 +223,7 @@ VALUE_REF_ATTRS = frozenset({
     ('trigger', 'damageamount'), ('trigger', 'damagepercent'), ('trigger', 'explodedamage'),
     ('trigger', 'explosion_damage'), ('trigger', 'explosion_knockback'), ('trigger', 'health'),
     ('trigger', 'healthpct'), ('trigger', 'heaviness'), ('trigger', 'impactdamage'), ('trigger', 'knockback'),
-    ('trigger', 'life'), ('trigger', 'maxhealthpercent'), ('trigger', 'maxinstances'), ('trigger', 'maxrange'),
+    ('trigger', 'life'), ('trigger', 'xml1_life_range'), ('trigger', 'maxhealthpercent'), ('trigger', 'maxinstances'), ('trigger', 'maxrange'),
     ('trigger', 'numblasts'), ('trigger', 'numbounces'), ('trigger', 'numtargets'), ('trigger', 'piercechance'),
     ('trigger', 'powerusage'), ('trigger', 'targethealthpct'), ('trigger', 'value')})
 # affecter attribute names XML2 retail data uses (inventory.json xml2_contract + every XML2 style / talent file)
@@ -260,7 +261,7 @@ UNREGISTERED_HANDLERS_DEFAULT = ('ch_weapon_semi_auto', 'ch_grenade', 'ch_throw'
 # 4.4 short names of overridden attributes in talentvalue names
 SHORT = {'damage': 'dmg', 'powerusage': 'pwr', 'knockback': 'kb', 'damagelevel': 'dlv', 'fxlevel': 'fxl',
          'radius': 'rad', 'life': 'lif', 'level': 'lvl', 'maxrange': 'rng', 'count': 'cnt', 'pierce': 'pierce',
-         'explosion_damage': 'xdmg', 'explosion_knockback': 'xkb', 'chance': 'chn'}
+         'explosion_damage': 'xdmg', 'explosion_knockback': 'xkb', 'chance': 'chn', 'apply_chance': 'app'}
 _CODE_RE = re.compile(r'^(L\d\+?-?|M\d\+?|H\d\+?|K\d+\+?|P\d+\+?|BST\d|A\d+|XTL\d|XLT\d)$')
 _REF_RE = re.compile(r'%([A-Za-z0-9_]+)')            # %talentvalue references (also inside level descriptions)
 _NUM_RE = re.compile(r'^-?\d+(\.\d+)?$')
@@ -541,6 +542,9 @@ def resolve_codes(el, values, where, problems):
             if k in _NAME_LIKE_ATTRS or not values.is_code(v):
                 continue
             try:
+                if e.get('life_max') is not None and k in ('life', 'life_max'):
+                    e.set(k, values.resolve(v).split()[0])
+                    continue
                 single = e.tag == 'affecter' or k in ('level', 'chance', 'radius', 'life')
                 e.set(k, values.resolve(v, single=single and k != 'level'))
             except KeyError:
@@ -606,6 +610,26 @@ def _powerup_fx(a, funcs):
     return kids
 
 
+def powerup_life_range(t, values=None):
+    """XML1's explicit life/life_max bounds as XML2's one life range.
+
+    default.xbe 0x2a7b0 samples uniformly between the positive lower bound (+0x24) and upper bound (+0x28).
+    XMen2.exe 0x537ba0 supports the same template range; xml1_life_range bypasses its event override sampler.
+    Read each explicit bound's first number, as XML1's setter 0x955c0 does; leave other lifetimes alone.
+    """
+    lo, hi = t.get('life'), t.get('life_max')
+    if lo is None or hi is None:
+        return lo
+    if values is not None:
+        lo, hi = values.resolve(lo), values.resolve(hi)
+    if _numeric(lo) and _numeric(hi):
+        lo, hi = lo.split()[0], hi.split()[0]
+        if 0 < float(lo) < float(hi):
+            return f'{lo} {hi}'
+        return lo
+    raise ValueError(f'powerup life bounds must be resolved before collapse: {lo!r}, {hi!r}')
+
+
 def convert_powerup_trigger(t, where, report):
     """XML1 <trigger name="powerup" powerup="X" level= affect_type= scope_* func_* effect= ...> -> XML2's
     <trigger name="powerup" ...><special_fx/><affecter/></trigger> (DESIGN 4.5; retail forms where XML2 has one:
@@ -614,6 +638,11 @@ def convert_powerup_trigger(t, where, report):
     if (t.get('name') or '').lower() != 'powerup':
         return
     a = dict(t.attrib)
+    if t.get('life_max') is not None and t.get('life') is not None:
+        a['life'] = powerup_life_range(t)
+        a['xml1_life_range'] = a['life']
+    elif t.get('xml1_life_range') is not None:
+        a['xml1_life_range'] = a['life']
     funcs = {k: v for k, v in a.items() if FUNC_ATTR.match(k)}
     for k in list(a):
         if FUNC_ATTR.match(k) or k in DROP_TRIGGER_ATTRS:
@@ -1196,7 +1225,16 @@ class StyleCollapse:
             self.report['errors'].append(f'{root_name}: ranks {missing} have no rung (talent {talent})')
             for r in missing:                                 # carry the previous rung forward
                 ranks[r] = ranks[r - 1]
-        eff = {r: self._effective(ranks[r], memo) for r in range(1, n + 1)}
+        eff = {r: copy.deepcopy(self._effective(ranks[r], memo)) for r in range(1, n + 1)}
+        # Merge the bounds BEFORE producing talentvalues: XML2 resolves one reference to both range endpoints.
+        for move in eff.values():
+            for t in move.iter('trigger'):
+                if (t.get('name') or '').lower() == 'powerup' and t.get('life_max') is not None:
+                    life = powerup_life_range(t, self.values)
+                    if life is not None:
+                        t.set('life', life)
+                        t.set('xml1_life_range', '1')    # convert_powerup_trigger copies the collapsed life reference
+                        t.attrib.pop('life_max', None)
         out = copy.deepcopy(eff[1])
         out.set('name', out_name)
         for k in ('fallback', 'inherit'):
@@ -1258,7 +1296,7 @@ class StyleCollapse:
                 vals = {r: (trig(eff[r], tag).get(k) if trig(eff[r], tag) is not None else None) for r in range(1, n + 1)}
                 distinct = {v for v in vals.values() if v is not None}
                 if k == 'powerup' and len(distinct) > 1 and talent:
-                    continue                                    # split into life-gated triggers below
+                    continue                                    # split into application-gated triggers below
                 gate_needed = (not present) and k == 'life'
                 if len(distinct) <= 1 and not gate_needed:
                     if k in tgt.attrib or vals[first] is not None:
@@ -1305,8 +1343,10 @@ class StyleCollapse:
                 for i, v in enumerate(vts, 1):
                     tgt.set(f'victimeventtag{i}', v)
                 self.report['losses'].append(f'{where}: trigger {tag} victimeventtag {vts} -> victimeventtag1..{len(vts)} (all applied; the later powerups are life-gated)')
-            # a powerup whose kind changes with the rank (Frost/Jubilee: confused -> team_switch at rank 6): one
-            # life-gated trigger per kind
+            # A powerup whose kind changes with rank (Frost/Jubilee: confused -> team_switch at rank 6).
+            # life=0 is PERMANENT in XML2 (0x5383e0, expiry check 0x5376b1), not an inactive branch.
+            # Gate application instead, keeping the real duration. A negative chance always rejects, even
+            # when the RNG returns exactly zero (0x4e7b50 compares chance < random, not <=).
             if (tgt.get('name') or '').lower() == 'powerup':
                 pus = {r: (trig(eff[r], tag).get('powerup') if trig(eff[r], tag) is not None else None) for r in range(1, n + 1)}
                 kinds = []
@@ -1316,7 +1356,11 @@ class StyleCollapse:
                 if len(kinds) > 1 and talent:
                     used_tags = {x.get('tag') for x in out if x.tag.lower() == 'trigger'}
                     for i, kind in enumerate(kinds):
-                        life = {r: (self._resolved(trig(eff[r], tag).get('life'), 'life') if trig(eff[r], tag) is not None and pus[r] == kind else '0') for r in range(1, n + 1)}
+                        chance = {}
+                        for r in range(1, n + 1):
+                            src = trig(eff[r], tag)
+                            chance[r] = (self._resolved(src.get('apply_chance', src.get('apply_enemy_chance', '1')),
+                                                       'chance') if src is not None and pus[r] == kind else '-1')
                         if i == 0:
                             t2 = tgt
                         else:
@@ -1326,8 +1370,9 @@ class StyleCollapse:
                             t2.set('tag', nt)
                             out.append(t2)
                         t2.set('powerup', kind)
-                        t2.set('life', self._tv(talent, 'life', f'{tag}{kind[:4]}', life, n))
-                    self.report['losses'].append(f'{where}: trigger {tag} powerup kinds {kinds} split into life-gated triggers')
+                        t2.attrib.pop('apply_enemy_chance', None)
+                        t2.set('apply_chance', self._tv(talent, 'apply_chance', f'{tag}{kind[:4]}', chance, n))
+                    self.report['losses'].append(f'{where}: trigger {tag} powerup kinds {kinds} split into application-gated triggers')
             # children added by rungs (damageMod) travel to the output trigger
             for r in range(1, n + 1):
                 x = trig(eff[r], tag)
@@ -3395,6 +3440,17 @@ def _validate(ctx, report=None):
             missing = sorted(set(ASP.LEGACY_AUTOSPEND) - set(legacy))
             if missing:
                 ck.error(f'V-H17: {ASP.LEGACY_REL} lacks {missing}')
+    # ---- V-H18: every team-switch power and every rank must retain XML1's kind and finite duration range.
+    ck = Check('V-H18')
+    checks.append(ck)
+    values = Values(ctx.read_x1_xml('data/values.xml'))
+    for h, (_ps, sroot) in styles.items():
+        if sroot is None:
+            continue                         # V-H5 reports the missing style
+        source_style = _lower_attrs(plan['x1'][h]).get('powerstyle')
+        source = ctx.read_x1_xml(f'data/powerstyles/{source_style}.eng')
+        for message in MC.problems(source, sroot, o.tree(f'Data/talents/{h}.engb'), values):
+            ck.error(f'{h}: {message}')
     return checks, budgets
 
 

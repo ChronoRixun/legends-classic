@@ -561,7 +561,7 @@ _ZONE_PATH = re.compile(r'^[a-z0-9_.\-]+(/[a-z0-9_.\-]+)*$')
 PORT_OWNED = {'Game': ('NewGameTeam', 'ResetUnlocks', 'SaveFolder', 'ForcedTeams', 'PostgameScript', 'WindowTitle',
                         'EndHeroUnlock', 'MainMenuItems', 'DangerRoomGate', 'ClassicMainBackdrop', 'ClassicMainPanelBounds', 'LegendsClassicFonts', 'NewGamePlus', 'ReviewStats', 'Xtract', 'XtractionShop', 'RevivalCost', 'XPCurve',
                        'GeometrySharingBlendIndices', 'CharacterLadderPaths', 'ObjectiveDescriptions',
-                       'BreakRule', 'LiftRule', 'Xml1GrabCarry', 'Xml1FlyingCarry', 'Xml1RogueDecide', 'Xml1Economy', 'Xml1WallCling', *SHARED_HANDLERS, *SHARED_HANDLERS_C, *TK_GUARD, 'PlacementCrush', 'ObjectWorldImpact', 'DoubleHeal', 'DeathRule', 'NpcPowerRule', 'StunRule', 'DangerRoomParty', 'DangerRoomHealthBars', 'ResistanceDisplay', 'BoxHarmOrigin', 'HarmSingleChain', 'HarmLoopStartup', 'ConfirmationRelease',
+                       'BreakRule', 'LiftRule', 'Xml1GrabCarry', 'Xml1FlyingCarry', 'Xml1RogueDecide', 'Xml1Economy', 'Xml1WallCling', *SHARED_HANDLERS, *SHARED_HANDLERS_C, *TK_GUARD, 'PlacementCrush', 'ObjectWorldImpact', 'DoubleHeal', 'DeathRule', 'NpcPowerRule', 'StunRule', 'MindControlLife', 'DangerRoomParty', 'DangerRoomHealthBars', 'ResistanceDisplay', 'BoxHarmOrigin', 'HarmSingleChain', 'HarmLoopStartup', 'ConfirmationRelease',
                        'OnlineConversations', 'PersonalItemPicture', 'ComboPopupGuard', 'ClassicHud', 'ClassicHudPilot', 'ClassicCodex', 'ClassicObjectives', 'NpcSemiAuto', 'ClassicSpeakers', 'WorldBackfaces',
                        'ExplosiveFirstHit', 'PackAmount', 'SoloMode', 'X1Leader', 'DeathSwitchClear', 'RankCosts', 'LevelSkillPoints', 'LevelStatPoints', 'Xml1Multipart',
                        'Xml1MasterMold', 'Xml1MoldStage', 'Xml1Turrets', 'Xml1LockOnEffects', 'Xml1LockOnAim', 'Xml1Bosses'),
@@ -946,6 +946,7 @@ def game_keys(*, xml1_opening=True, save_folder=None, forced_teams='1', add_hero
         game['DeathRule'] = DEATH_RULE
         game['NpcPowerRule'] = NPC_POWER_RULE
         game['StunRule'] = STUN_RULE
+        game['MindControlLife'] = 'xml1'
         game['PackAmount'] = PACK_AMOUNT
         # XML1's solo mode (issue #5): setSoloMode in the solo boxes / bridge scripts acts only with this key
         game['SoloMode'] = '1'
@@ -1463,7 +1464,9 @@ TK_AUDIO_MARKER = b'telekinesis sounds resolve through PC audio slot 38'
 CARRY_CHAIN_MARKER = b'flying carry keeps its established node (no self-chain)'
 RELEASE_MARKERS[('Game', 'TelekinesisRule')] = (TK_AUDIO_MARKER, '[Game] TelekinesisRule (PC audio slot 38)')
 # a second marker for a key that already has one (Xml1GrabCarry: revision 3 above)
-EXTRA_MARKERS = [(('Game', 'Xml1GrabCarry'), CARRY_CHAIN_MARKER, '[Game] Xml1GrabCarry (no carry self-chain)')]
+CONTROL_LIFE_MARKER = b'xml1 template life range (parser revision 1)'
+EXTRA_MARKERS = [(('Game', 'Xml1GrabCarry'), CARRY_CHAIN_MARKER, '[Game] Xml1GrabCarry (no carry self-chain)'),
+                 (('Game', 'MindControlLife'), CONTROL_LIFE_MARKER, '[Game] MindControlLife (XML1 duration ranges)')]
 # xml2-fix 1.9.0-beta.1 (beta 8 candidate 080g, beta8/fix3 6f7df24): a telekinesis throw released with no velocity
 # divided zero by zero (080e/080f); a tapped guard never left the guard decide (the policy ran in the entry slot); the
 # Colossus charge evaluated its damage / knockback / range on the struck soldier (no damage); a thrown body's world
