@@ -71,7 +71,7 @@ HISTORY = (
     Identity('0.6.0-beta.2', 31, 8, 'LC41', 'b45c407cf97da3fafa09452d52d793931eccfd63047622d011b1540098d962e7'),
     # 0.6.0-beta.3: optional classic conversation background and online admission/menu polish.
     # Catalogue 8 and W2 unchanged; beta.1 and beta.2 saves remain compatible. Bound after owned-input measure.
-    Identity('0.6.0-beta.3', 32, 8, 'LC42', ''),
+    Identity('0.6.0-beta.3', 32, 8, 'LC42', 'a3e81e8953d93f02619d0195bc8add7afa256ff625e4114a99eba9a1c244c5a5'),
 )
 
 
