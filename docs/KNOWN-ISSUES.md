@@ -106,6 +106,10 @@ try. If a screen's text or labels are cut off, or something looks off, please re
 
 ## Online
 
+- **Intermittent startup crash (under investigation).** Native testing saw one crash before the main menu in
+  Windows DirectInput. A later alternating check reached the menu on all ten beta.2 boots and all ten beta.3 boots.
+  The cause and whether this is a regression are unresolved; if it recurs, retain `xml2-fix.log` and try starting again.
+
 - **Fixed in 0.6.0-beta.2: a friend who drops out while joining.** In 0.6.0-beta.1, if the only friend joining
   dropped out partway through, a player already in the game could be left on the pause screen with everyone shown
   as "Not Ready". In beta.2 the players already in the game carry on together (tested with two and with three

@@ -42,6 +42,9 @@ grid, analog stick and D-pad navigation. The lost-newcomer run suppressed 128 na
 The conversation option was checked separately on native Windows in two conversation families at three resolutions,
 off and on. It has not been hand-tested by Owen; no xemu, DXVK or multiplayer conversation comparison is claimed.
 
+An intermittent pre-menu DirectInput crash was observed; later alternating beta.2 and beta.3 boot checks each
+passed ten times. Cause and regression attribution remain unresolved.
+
 Four-player pause release is verified with test input only. Relay play, players on different home networks, three or
 four separate PCs, long sessions and slow joins still need checks. Host loss ends the session; there is no host
 migration. Save import from xemu and XML1-recomp remains off. All other still-open beta.2 limitations remain in
