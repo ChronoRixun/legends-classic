@@ -6763,6 +6763,15 @@ uses the original's campaign test instead of the ftalk contact store.
 - Campaign entry: default.xbe's mission-start table (0x44e2e8) has non-playable rows; `scripts.CAMPAIGN_NPCS`
   keeps 'healer' (sewers_hub group, from sewers_gambit on) and 'forge' (mansion1 group) in the unlock lines of the
   begin bodies and the zone catch-up scripts (saves from earlier builds get them on load).
+  NPC catch-up also consults every owning mission in prepared `zone_acts.json`, including development entries.
+  A missing or unknown `world.mission` therefore no longer omits an NPC when every owner permits it; playable
+  hero catch-up keeps its existing world-mission rule. All zones sharing the script must permit an NPC, and an
+  unknown owner prevents the unconditional grant. The existing statement-pool skips and zones without a script
+  remain excluded. This restores Forge in the three mansion2 rooms without world missions and in shared sewer
+  rooms whose owners all permit Forge. It does not restore Healer in the shared sewer rooms: `sewers1` and
+  `sewers_hub` precede her table boundary, while the development entry `sewers_gambit` includes her. Existing
+  saved contact flags/objectives do not prove which of those missions began; granting on contact would change
+  the table rule. That migration needs a separately established progression rule.
 - Needs XML2 Fix >= the release with `xtractionservices` (1.5): with 1.4.0 the guard is 0 and the native menu runs
   (Change Team and Save only; no Forge, unlike 0.2.1 with 1.4.0's ftalk permission).
 - V32 also rejects an `extractionPointServices` call without the Load bit in its own `x1_svc` line.
