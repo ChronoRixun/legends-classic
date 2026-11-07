@@ -149,9 +149,9 @@ def mission_start_unlocks(ctx) -> dict:
     """Pure (cached): {'missions': {mission: (hero, ...)}, 'cumulative': {mission: (hero, ...)}, 'dropped':
     {mission: (non-playable hero, ...)}, 'errors': [str]}, limited to the playable heroes of this build's herostat.
     cumulative = XML1's unlock set of every mission in missions.xml (all rows up to its milestone); missions = the
-    lines each begin body writes: the milestone's own group (the rows after the previous milestone). XMen2.exe keeps
-    unlocks in the profile and nothing clears them, so every story path, which starts each milestone's missions in
-    table order, ends each mission start with XML1's cumulative set; the full cumulative set in every copy pushed the
+    lines each begin body writes: the playable milestone group plus all cumulative campaign NPCs. The NPCs cannot
+    rely on earlier groups having run: the Healer's own group is a development entry absent from normal play.
+    The full cumulative playable set in every copy pushed the
     act-3 hubs (nyc3_2_1, muir_in3: four begin-body copies each) past the 620-statement pool (0x4d7e6e). Saves from
     earlier builds get the cumulative set from their zone script on load (catchup_unlock_plan). Any problem reading the table or the milestones is an error (the build fails
     in run(); the map is then empty - never a guess)."""
@@ -178,6 +178,10 @@ def mission_start_unlocks(ctx) -> dict:
         playable = set(_port_heroes(ctx)) | set(CAMPAIGN_NPCS)
         cum, drop = U.mission_unlocks(milestones, rows, playable)
         grp, _ = U.mission_unlocks(milestones, rows, playable, fn=U.group)
+        # Keep the budget-saving playable groups, but reapply XML1's complete NPC set at every begin.
+        # A skipped development milestone must not drop its NPC from the next real campaign start.
+        for m, heroes in grp.items():
+            grp[m] = heroes + tuple(h for h in cum[m] if h in CAMPAIGN_NPCS and h not in heroes)
         return {'missions': grp, 'cumulative': cum, 'dropped': drop, 'errors': errors, 'rows': len(rows)}
     return _cached(ctx, 'mission_start_unlocks', build)
 

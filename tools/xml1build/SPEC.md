@@ -5498,12 +5498,12 @@ no unlock), so Magma, REQUIRED in the hubs and briefings, is unlocked only by th
 `missions.xml`, the table from the player's prepared `default.xbe`, after checking that the walking function
 (0x84fc0, 0xb3 bytes) has the known SHA-1 and that the mission loader calls it at 0x866fb; any other executable,
 an unreadable table or a mission without `charunlock` is a build error (no guessing; nothing from the table is in
-the repository). Rows naming no playable hero of the build (Forge, Healer) are dropped.
+the repository). Rows naming neither a playable hero nor a retained campaign NPC (section 79.1) are dropped.
 - Mission starts: every copy of every begin body (`x1/missions/begin_<m>` and the inlined copies, side missions
   included) unlocks, after its REQUIRED unlocks, the heroes of its milestone's own group (the rows after the
-  previous labelled row), identically in every copy. XMen2.exe keeps unlocks in the profile and nothing clears
-  them, so every story path, which starts each milestone's missions in table order, ends each mission start with
-  XML1's cumulative set. The full cumulative set in every copy (up to 14 lines) pushed `nyc/riots/nyc3_2_1` (four
+  previous labelled row), identically in every copy. Campaign NPCs reapply their full cumulative set: a group's
+  only mission can be an unvisited development entry, so retaining only that group loses the NPC on real paths.
+  Playable heroes retain earlier profile unlocks. The full playable set in every copy (up to 14 lines) pushed `nyc/riots/nyc3_2_1` (four
   act-3 begin bodies) to 671 and `muir_is/muir3/muir_in3` to 658 statements, past the 620-node pool (0x4d7e6e).
 - Seated-only heroes (`scripts.menu_only_unlock_map`, `scripts_transform.menu_only_unlocks`): in a forced-teams
   seat build, the REQUIRED heroes of a seated mission that are outside its cumulative set (Magma before `nuke`,
@@ -6761,17 +6761,28 @@ uses the original's campaign test instead of the ftalk contact store.
   XML2 Fix checks the campaign bits (registry vt+0x84), greys Load and missing campaign options online with other
   players, and skips Change Team for bit 32.
 - Campaign entry: default.xbe's mission-start table (0x44e2e8) has non-playable rows; `scripts.CAMPAIGN_NPCS`
-  keeps 'healer' (sewers_hub group, from sewers_gambit on) and 'forge' (mansion1 group) in the unlock lines of the
-  begin bodies and the zone catch-up scripts (saves from earlier builds get them on load).
+  keeps 'healer' (sewers_hub table group) and 'forge' (mansion1 group) in the unlock lines of the begin bodies
+  and the zone catch-up scripts (saves from earlier builds get them on load). Table labels are matched against
+  each mission's `charunlock`, not its name or its position in the mission list: `sewers_gambit` uses the
+  `sewers_hub` label, while `sewers_hub` and the normal rescue mission `sewers1` both use `mansion2`. The native
+  walk at 0x84fc0 matches that label and includes its row (0x85010-0x85064). The builder preserves that lookup;
+  moving the Healer grant to `begin_sewers_hub` would precede XML1's table milestone. The normal route starts `sewers1`
+  and enters the hub by a zone link; it never begins the development entry `sewers_gambit`.
+  After Gambit is freed, `sewers/quest/fadegambit` loads `mocap/mocap4/briefing_1_7_1`; both its normal
+  finish and cancel body begin `arbiter`. That mission uses `charunlock=sewers_gambit`, whose cumulative
+  table set already includes the earlier `sewers_hub` Healer row. The continuous campaign therefore
+  grants Healer in `begin_arbiter`, after getting Gambit, before its first Xtraction point. Talking to
+  Healer and loading a pre-Gambit shared sewer room do not grant her.
+  Begin bodies therefore reapply the full cumulative NPC set, while playable heroes keep the budget-saving
+  milestone groups. The former group-only NPC emission incorrectly assumed the development milestone had run:
+  later real starts such as Muir and mansion3 also omitted Healer despite their `sewers_gambit` charunlock
+  including her in XML1's cumulative table. Cumulative NPC emission fixes that gap without moving any milestone.
   NPC catch-up also consults every owning mission in prepared `zone_acts.json`, including development entries.
   A missing or unknown `world.mission` therefore no longer omits an NPC when every owner permits it; playable
   hero catch-up keeps its existing world-mission rule. All zones sharing the script must permit an NPC, and an
   unknown owner prevents the unconditional grant. The existing statement-pool skips and zones without a script
   remain excluded. This restores Forge in the three mansion2 rooms without world missions and in shared sewer
-  rooms whose owners all permit Forge. It does not restore Healer in the shared sewer rooms: `sewers1` and
-  `sewers_hub` precede her table boundary, while the development entry `sewers_gambit` includes her. Existing
-  saved contact flags/objectives do not prove which of those missions began; granting on contact would change
-  the table rule. That migration needs a separately established progression rule.
+  rooms whose owners all permit Forge. Shared sewer rooms do not grant Healer unconditionally.
 - Needs XML2 Fix >= the release with `xtractionservices` (1.5): with 1.4.0 the guard is 0 and the native menu runs
   (Change Team and Save only; no Forge, unlike 0.2.1 with 1.4.0's ftalk permission).
 - V32 also rejects an `extractionPointServices` call without the Load bit in its own `x1_svc` line.

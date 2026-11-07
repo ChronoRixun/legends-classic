@@ -190,3 +190,27 @@ def test_catchup_reports_exclusive_zones_that_still_have_no_script():
     plan = _catchup_plan({'sample/no_script': ('', ['late'], None)})
     assert plan['scripts'] == {}
     assert 'no zone script' in plan['skipped']['sample/no_script']
+
+
+
+def test_builder_uses_charunlock_labels_not_mission_names_or_graph_reachability():
+    from pathlib import Path
+    from unittest.mock import patch
+    from xml1build import scripts as S
+
+    class Context:
+        x1_xbox = Path('synthetic-xbox')
+        graph = {'reachable_missions': ['hub']}
+
+        def read_x1_xml(self, _):
+            return ET.fromstring('<missions><mission name="hub" charunlock="intro"/>'
+                                 '<mission name="rescue" charunlock="hub"/>'
+                                 '<mission name="later" charunlock="after"/></missions>')
+
+    with patch.object(U, 'read_xbe_table', return_value=[('intro', 'alpha'), ('hub', 'healer'), ('after', 'bravo')]), \
+            patch.object(S, '_port_heroes', return_value={'alpha', 'bravo'}):
+        plan = S.mission_start_unlocks(Context())
+    assert not plan['errors']
+    assert plan['missions'] == {'hub': ('alpha',), 'rescue': ('healer',), 'later': ('bravo', 'healer')}
+    assert 'healer' not in plan['cumulative']['hub']
+    assert 'healer' in plan['cumulative']['rescue']
