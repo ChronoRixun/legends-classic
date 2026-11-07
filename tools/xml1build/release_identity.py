@@ -69,6 +69,9 @@ HISTORY = (
     # Other ways, LAN, the pause roster), the boss stuck-step exits (rule 40 revisions), host-led session frame rate. Catalogue 8
     # and the W2 save layout unchanged (0.6.0-beta.1 saves load). Integration measures the final bind manifest.
     Identity('0.6.0-beta.2', 31, 8, 'LC41', 'b45c407cf97da3fafa09452d52d793931eccfd63047622d011b1540098d962e7'),
+    # 0.6.0-beta.3: optional classic conversation background and online admission/menu polish.
+    # Catalogue 8 and W2 unchanged; beta.1 and beta.2 saves remain compatible. Bound after owned-input measure.
+    Identity('0.6.0-beta.3', 32, 8, 'LC42', ''),
 )
 
 
