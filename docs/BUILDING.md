@@ -83,6 +83,10 @@ companion `docs/online-menus.md`, "Native item-map budget and LAN list fixes"). 
 `menu-anchors/512` capability does not raise it. Tree validation, final backdrop authoring
 and `output_problems` check this item limit separately from scene anchors. Current owned
 menus including backdrops use Browse **172**, host lobby **173**, join lobby **169** items.
+Text entry uses **153** items including three grouped key backgrounds. The
+matching DLL hides unused boxes for Enter IP and Symbols; a separate model
+per key would exceed the native item map. Both the builder's optional-skin
+preflight and `output_problems` retain the 175-item rejection.
 The lobbies reuse the hero fallback DATA field for linked rate plus slow-peer warning;
 Browse keeps seven rows with numeric occupancy and one build label per row.
 LAN rows additionally require the companion `lc-fonts-list/1` private LISTBOX scale;
@@ -145,6 +149,26 @@ python tools/build_xml1.py --sources prepared --cache <cache> --base <your XML2 
 ```
 
 `--test-ini` also writes `.codegpt-game.json`, a small JSON launch manifest for game-automation tools.
+
+For the optional disc-authored blue conversation background, pass `--classic-conversation xml1`
+to either the developer entry point or `xml1-builder build`. It defaults to `off` with either
+main-menu selection. The source is the prepared disc's `loose/ui/hud/convo_background.igb`,
+extracted by the existing prepare stage from `z/assetsfb.zip` through
+`packages/generated/maps/package/permanent.fb`. No game artwork is distributed with the builder.
+
+The `frontend` stage validates the source model and writes it without changing bytes at
+`UI/hud/convo_background.IGB`, using the existing permanent-package entry. The build record stores
+`classic_conversation`; older records mean `off`. A selection change reruns `frontend` even with
+`--only`, so `--classic-conversation off` restores the base file. Standalone validation restores
+the recorded choice and accepts an explicit override of the same option. No INI key is generated.
+
+Synthetic coverage is in `test_conversation_appearance.py` and
+`test_classic_conversation_options.py`; run `python tests/unit/run.py -k conversation_` and the
+full suite. Owned-input regeneration and frontend/zones self-tests remain coordinator gates.
+Visual acceptance must compare XML1, LC OFF and LC ON in disposable copies at matched conversation
+states, with 4:3, the aspect-ratio boundary, widescreen/ultrawide, Remastered OFF/ON, native/DXVK,
+input devices and local/online co-op coverage. Structural acceptance alone proves no rendering or
+conversation playthrough. See [CLASSIC_MENUS.md](CLASSIC_MENUS.md) for the appearance contract.
 
 ## The in-game test harness
 

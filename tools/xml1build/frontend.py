@@ -1682,6 +1682,8 @@ def _import_texture(ctx, x1_rel, out_noext):
 
 
 def run(ctx):
+    from . import conversation_appearance as CA
+    CA.write(ctx)  # independent of the main-menu selection; OFF writes nothing
     from . import classic_hud as CH
     CH.write(ctx)
     mode = C.frontend_mode(ctx)

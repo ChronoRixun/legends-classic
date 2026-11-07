@@ -70,6 +70,7 @@ class Job:
     movies: bool
     jobs: int
     prepare_jobs: int
+    classic_conversation: str = 'off'
     main_menu_layout: str = 'classic'
     online_menus: str = 'on'          # 0.6.0-beta.1: on by default (cli.py)
     anim_enums: str = 'xml1'
@@ -363,10 +364,6 @@ def cmd_build(a, output, cancel, pipeline_factory):
     for name in ('xml2', 'out'):
         if not getattr(a, name):
             raise BuilderError('E_USAGE', f'build needs --{name}.', '', {})
-    if getattr(a, 'classic_conversation', 'off') == 'xml1':
-        # Launchers 0.5.0-beta.4+ always send this option; off is a no-op here (no output, report or fingerprint change).
-        raise BuilderError('E_USAGE', 'The Classic conversation box needs Legends Classic 0.6.0-beta.3 or later.',
-                           'Turn Classic conversation box off, or update the builder.', {}, exit_code=2)
     out_dir = Path(a.out).resolve()
     xml2 = Path(a.xml2).resolve()
     cache = Path(a.cache).resolve() if a.cache else default_cache()
@@ -380,6 +377,7 @@ def cmd_build(a, output, cancel, pipeline_factory):
     prepare_jobs = max(1, a.jobs or PL.default_jobs())
     jobs = max(1, a.jobs or max(1, (os.cpu_count() or 2) // 2))
     job = Job(out=out_dir, xml2=xml2, cache=cache, iso=iso, movies=movies, jobs=jobs, prepare_jobs=prepare_jobs,
+              classic_conversation=getattr(a, 'classic_conversation', 'off'),
               main_menu_layout=getattr(a, 'main_menu_layout', 'classic'),
               online_menus=getattr(a, 'online_menus', None) or 'on',
               anim_enums=getattr(a, 'anim_enums', None) or 'xml1', laa=getattr(a, 'laa', None) or 'on',

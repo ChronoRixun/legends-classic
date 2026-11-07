@@ -96,11 +96,19 @@ lock ([#63](https://github.com/ChronoRixun/legends-classic/issues/63)) and the t
 
 ## The classic look (new in 0.4.0)
 
+The optional beta.3 conversation box (`--classic-conversation xml1`, default off) has separate native Windows checks
+in two families at three resolutions, off and on. It has not been hand-tested by Owen. xemu, DXVK and multiplayer
+conversation comparisons are not verified.
+
 It was checked on one PC at 4:3 and 16:9 with keyboard and a virtual pad, not yet on physical controllers or many
 screens. Once, at 4:3, the first frame of Gear clipped the bottom help labels; it did not happen again in any later
 try. If a screen's text or labels are cut off, or something looks off, please report it with a screenshot.
 
 ## Online
+
+- **Intermittent startup crash (under investigation).** Native testing saw one crash before the main menu in
+  Windows DirectInput. A later alternating check reached the menu on all ten beta.2 boots and all ten beta.3 boots.
+  The cause and whether this is a regression are unresolved; if it recurs, retain `xml2-fix.log` and try starting again.
 
 - **Fixed in 0.6.0-beta.2: a friend who drops out while joining.** In 0.6.0-beta.1, if the only friend joining
   dropped out partway through, a player already in the game could be left on the pause screen with everyone shown
@@ -117,7 +125,7 @@ try. If a screen's text or labels are cut off, or something looks off, please re
   rate, leave and host a new room. Player cards show "local / online" rates and warn ("Cannot hold N fps") when a
   PC can't keep up; nothing lowers the rate automatically. A slow PC, a slow connection or fullscreen VSync can still
   slow the session for everyone. Checked live on one PC so far.
-- **0.6.0-beta.2 is a co-op beta.** Co-op was tested on one PC (up to four copies) and on two PCs at home, with two,
+- **0.6.0-beta.3 is a co-op beta.** Co-op was tested on one PC (up to four copies) and on two PCs at home, with two,
   three and four players, including fights and joins by code, LAN and IP. Not verified yet: playing through the
   relay (networks where a direct connection fails), players on different home networks (over the internet), three
   or four separate PCs, long sessions, and joins over slow connections (if a join takes longer than the wait, play
@@ -131,20 +139,18 @@ try. If a screen's text or labels are cut off, or something looks off, please re
   friend gets the host's game, the host and the other players wait up to 10 seconds on "A player is joining..."
   (`[Online] JoinHoldSeconds`, default 10, 0..15, `0` = off). The host's DROP-IN row turns joining off for a room; a friend
   who tries to join a started game is told: "This session has started. Ask the host to start a new session."
-- **"Lost online sync" message (cosmetic).** When a friend who is joining drops out during the admission, the host
-  can show the game's own "lost online sync" message a few times. The session carries on and nobody else is dropped
-  (in testing on two PCs the join wait ended about 2.4 seconds later).
+- **Dropped-players wording (cosmetic).** beta.3 suppresses the false lost-synchronization notice for a lost
+  newcomer. During the admission hold the host sees the newcomer's name and that they have left. If the newcomer
+  disappears after the restart has begun, the game's standard dropped-players message can appear once instead.
+  The session continues; a wording fix is planned.
 - **Pausing with four players** is verified with test input only: in a few of those runs one player's Ready press
   didn't register and everyone stayed on the pause screen until it was pressed again. Press Ready again if that
   happens. Two- and three-player pauses released every time (two-player pauses also with a real controller on two PCs).
-- **Hosting alone online:** after Ready the game resumes but the pause menu stays open - press B or Esc again.
-  (X-Men Legends II only closes that menu by itself with two or more players; 0.6.0-beta.1 behaves the same.)
 - **The online screens** were checked with a real controller and keyboard on two PCs; they still need checks with
   more controllers, at more resolutions and over long sessions. If they can't start, or a build uses
   `--online-menus off`, the game shows a plain "Online unavailable" page with Back to the main menu and advice to
   rebuild or update XML2 Fix; it no longer opens the GameSpy-era screens. Swapping the DLL without rebuilding is not
   enough.
-- **Enter IP** draws its unused keyboard cells and two empty bottom buttons as boxes. They do nothing.
 - **Service status.** With the online service working, the Play Online screen's status can read "Connecting..."
   for a long time; joining by code still works.
 - **Typing** follows your keyboard layout; letters the game can't show (accented letters, IME text) are refused

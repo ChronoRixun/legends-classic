@@ -14,7 +14,7 @@ and rc releases](RELEASING.md).
 - **[xml2-fix](https://github.com/ChronoRixun/xml2-fix)**: the in-memory engine fixes the port relies on (new-game
   party, forced parties, the first game's level curve and combat numbers, bigger zones, its own save format and
   folder, display options). The Ultimate Legends launcher installs it for you. Each builder needs a minimum version
-  (0.6.0-beta.2 needs 1.11.0-beta.2, 0.6.0-beta.1 needs 1.11.0-beta.1, 0.5.0-beta.1 needs 1.10.0-beta.1, the stable 0.4.0 needs 1.8.0): see
+  (0.6.0-beta.3 needs 1.11.0-beta.3, 0.6.0-beta.1 needs 1.11.0-beta.1, 0.5.0-beta.1 needs 1.10.0-beta.1, the stable 0.4.0 needs 1.8.0): see
   [versions that go together](COMPATIBILITY.md).
 - **Windows 10 or 11, 64-bit.** The released builder is a Windows program. From source it is plain Python + numpy +
   Pillow, written to run on Linux too (its tests run there in CI; a full Linux build is untested so far).
@@ -29,8 +29,8 @@ Download `xml1-builder-<version>-win64.zip` from [Releases](https://github.com/C
 (check it against `SHA256SUMS.txt`) and unzip it into a folder of its own (the zip has no top-level folder).
 
 **Before Build or Rebuild**, create the output folder and copy `dinput.dll` from the matching
-[xml2-fix release](https://github.com/ChronoRixun/xml2-fix/releases) into it - for 0.6.0-beta.2 that is
-**XML2 Fix 1.11.0-beta.2** (a beta builder needs the matching beta fix, not the latest stable one). The default
+[xml2-fix release](https://github.com/ChronoRixun/xml2-fix/releases) into it - for 0.6.0-beta.3 that is
+**XML2 Fix 1.11.0-beta.3** (a beta builder needs the matching beta fix, not the latest stable one). The default
 co-op screens check this DLL while the build runs; updating the fix only in your X-Men Legends II folder is not
 enough. Then run the builder from a command prompt:
 
@@ -59,6 +59,18 @@ SHA-256 with the release page, or build it yourself from source ([BUILDING.md](B
 Options that work with every command: `--events jsonl|text` (`jsonl` prints JSON-lines events for the launcher),
 `--log FILE`, `--quiet` and `--version`. `xml1-builder --help` lists them all, including the feature options added
 since 0.4.2 (see the [CHANGELOG](../CHANGELOG.md)).
+
+`build --classic-conversation off|xml1` selects the conversation background. The default is **off**,
+which keeps the native PC model. `xml1` uses the blue background from your own XML1 Xbox disc;
+the builder validates its scene and embedded images before replacing `UI/hud/convo_background.IGB`.
+Unsupported or missing inputs fail the build with recovery instructions and leave the base model in place.
+Rebuild with `--classic-conversation off` to restore the PC background.
+
+This is an appearance setting that requires rebuilding, independent of the main menu, Classic HUD,
+fonts and Remastered. Text, portraits, response selection, input and conversation timing keep their
+existing behavior. There is no runtime INI switch. Launcher controls are a separate integration;
+this builder option does not imply that a launcher setting has shipped. Direct-substitution visual
+acceptance, including widescreen and Remastered coverage, remains pending.
 
 ## What the build does
 

@@ -7,7 +7,7 @@ usage: python tools/build_xml1.py --out <dir> [--base "<XML2 folder>"] [--start-
                                   [--hero-roster 21|17|21xml2] [--hero-icons xml1|generic] [--hero-bleed on|off]
                                   [--newgame chooseteam|keepteam] [--forced-teams seat|menu]
                                   [--start-party h1,h2 [--start-skinset costume:heroes]] [--frontend xml1|xml2]
-                                  [--xp-curve xml1|xml2]
+                                  [--xp-curve xml1|xml2] [--classic-conversation off|xml1]
                                   [--sources developer|prepared [--cache DIR] [--iso IMAGE]]
 
 Steps (tools/xml1build/SPEC.md section 2):
@@ -166,6 +166,8 @@ def parse_args(argv=None):
                          'ForcedTeams=1)')
     ap.add_argument('--start-skinset', dest='start_skinset',
                     help='with --start-party: setSkinset costume:heroes for that start (e.g. civilian:magma)')
+    ap.add_argument('--classic-conversation', choices=('off', 'xml1'), default='off',
+                    help='opt in to the XML1 blue conversation background from your disc (default off; rebuild to change)')
     ap.add_argument('--frontend', choices=C.FRONTEND_MODES,
                     default=(os.environ.get(C.FRONTEND_ENV) or C.FRONTEND_DEFAULT).lower()
                     if (os.environ.get(C.FRONTEND_ENV) or C.FRONTEND_DEFAULT).lower() in C.FRONTEND_MODES
@@ -287,6 +289,7 @@ HOOK_OWNER = 'testhooks'
 CONTENT_OPTS = {'harm_loop_startup': (tuple(C.MODULE_ORDER), 'workaround'),
                 'blackbird': ('scripts', 'menu'), 'npc_scaling': ('characters', 'off'), 'tiles': ('zones', 'used'),
                 'online_menus': ('frontend', 'off'),
+                'classic_conversation': ('frontend', 'off'),
                 'main_menu_layout': ('frontend', 'classic'), 'laa': ('exe_flags', 'on'),
                 # ini only (fix_ini.port_keys): no module output depends on them
                 'telekinesis': ((), 'off'), 'guard_decide': ((), 'off'), 'flying_carry': ((), 'off'),
@@ -564,6 +567,7 @@ def main(argv=None):
                     'xp_curve': args.xp_curve, 'buoys': args.buoys, 'main_menu_layout': args.main_menu_layout, 'laa': args.laa,
                     'harm_loop_startup': getattr(args, 'harm_loop_startup', 'workaround'),
                     'online_menus': args.online_menus,
+                    'classic_conversation': args.classic_conversation,
                     BAL.REPORT_KEY: BAL.REPORT_ON if BAL.enabled() else 'xml2',
                     'content_fingerprint': ctx.shared.get('content_fingerprint'),
                     'start_party': args.start_party, 'start_skinset': args.start_skinset,

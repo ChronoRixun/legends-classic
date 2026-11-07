@@ -86,6 +86,29 @@ def test_native_text_editor_mouse_rectangles_equal_drawn_focus_and_do_not_overla
             assert x+w<=bx or bx+bw<=x or y+h<=by or by+bh<=y
 
 
+def test_native_editor_groups_only_variable_key_backgrounds_within_item_budget():
+    src=native(); screen=N.layout('text_entry',src)
+    tree=N.menu_tree('text_entry',src,screen); O.add_backdrop(tree,N.MENUS['text_entry'])
+    by={e['name']:e for e in screen['items']}
+    groups={'lc_text_keys_6_11':range(5,11), 'lc_text_keys_12_36':range(11,36),
+            'lc_text_keys_name_tools':(37,38)}
+    covered=[]
+    for name,indices in groups.items():
+        group=by[name]; x,y,_,_=group['rect']
+        drawn=[(x+p['rect'][0],y+p['rect'][1],*p['rect'][2:]) for p in group['parts']]
+        expected=[by[N.KEYS[i]]['rect'] for i in indices]
+        assert drawn==expected and all(p['kind']=='rect' and p['color']==2 for p in group['parts'])
+        covered+=expected
+        model=tree.find(f"item[@name='{name}']")
+        assert model.get('type')=='MENU_ITEM_MODEL' and model.get('model')==O.variant_resource(screen,group)
+        # Start loaded: the native renderer must retain the real model when the DLL unhides it later.
+        assert model.get('hide') is None
+    static=[p['rect'] for p in screen['shapes'] if p['kind']=='rect']
+    assert all(rect not in static for rect in covered), 'hidden cells must not survive in the baked backdrop'
+    assert all(by[N.KEYS[i]]['rect'] in static for i in (*range(5),36,39))
+    assert len(groups)==3 and not O.menu_item_problems(tree)
+
+
 def test_optional_native_text_editor_marker_requires_resource_closure(tmp_path):
     baseline=O.output_problems(tmp_path)
     path=tmp_path/N.marker('text_entry');path.parent.mkdir(parents=True)
