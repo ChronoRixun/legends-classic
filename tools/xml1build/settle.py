@@ -311,6 +311,10 @@ def move_embedded_floor_tail(root):
 def numbered_tail_problems(root, later=()):
     """New residents must follow every pre-existing placement (save ordinals). `later`: entinst types numbered
     after the settled props (x1schema.FALL_KILL_ENABLED_LATE), allowed behind them."""
+    from . import death_targets as DT
+    destruction = DT.names(root)
+    after_embedded = destruction | {e.get('name') for e in root.iter('entity')
+                                   if e.get('xml1hazardbounds') == 'true'}
     marked = {e.get('name') for e in root.iter('entity') if e.get(MARKER) == 'true'}
     embedded = {e.get('name') for e in root.iter('entity') if e.get(EMBEDDED_MARKER) == 'true'}
     out, in_tail = [], False
@@ -323,7 +327,7 @@ def numbered_tail_problems(root, later=()):
     for group in root.findall('entinst'):
         if group.get('type') in embedded:
             in_tail = True
-        elif in_tail and group.get('type') not in {e.get('name') for e in root.iter('entity') if e.get('xml1hazardbounds') == 'true'}:
+        elif in_tail and group.get('type') not in after_embedded:
             out.append('embedded-floor prop precedes an old entinst (saved ordinals shift)')
     return out
 

@@ -62,6 +62,7 @@ from . import settle as SE                # issue #81: native floor sweeps for r
 from . import talent_sets as TS           # SPEC <number assigned at merge>: NPC-only talents in per-set files
 from . import npc_values as NV            # SPEC 29.2: inline entities use the same values as entity files
 from . import loot as LOOT               # SPEC 108: --loot xml1, the first game's item economy as data
+from . import death_targets as DT        # data-driven destruction targets need residency too
 
 # ---------------------------------------------------------------------------------------------- constants
 PATCH_ZONE = 'zones.zone'            # import_x1_asset patch keys (deterministic patches -> cacheable imports)
@@ -1400,6 +1401,7 @@ class Zones:
         # volumes. Existing script-pinned hazards retain their original position.
         from . import x1schema as XS
         self.counts['hazard_bounds'] += XS.convert_hazard_bounds(root, f'maps/{zone}.eng')
+        self.counts['death_target_doors'] += DT.convert(root)
         for el in root.iter():
             if el.tag.lower() == 'precache':
                 t = (el.get('type') or '').lower()

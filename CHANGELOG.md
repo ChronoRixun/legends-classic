@@ -5,6 +5,9 @@ build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebui
 
 ## Unreleased
 
+- Keep doors reached by console or enemy destruction present for activation, including the Arbiter
+  launch-bay progression hatches. Rebuild content to apply the correction. Existing numbered entities keep
+  their save order; a hatch whose one-shot activation was already missed needs a separate recovery check.
 - Jubilee's Photo Flash and Frost's Confuse no longer apply a permanent team switch from the inactive rank
   branch. Their original XML1 randomized durations are preserved, along with Frost's Fear duration ranges.
   Rebuilding content and the matching XML2 Fix control-lifetime adapter are required; ranks 1–5 confuse, and

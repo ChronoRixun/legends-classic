@@ -217,6 +217,9 @@ def main(argv=None):
             fail('B_nav_from_empty', z)
         # zone XML vs source (+1 element where zones added the missing world entity)
         o = decode(out / owned[f'maps/{z}.xmlb']['rel'])
+        from xml1build import death_targets as DT
+        for problem in DT.problems(o):
+            fail('B_death_target_door', f'{z}: {problem}')
         s = ctx.read_x1_xml(src)
         synth = bool(d.get('world_synthesized'))
         if synth:

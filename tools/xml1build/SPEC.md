@@ -4135,6 +4135,47 @@ class; XML2's firing "turrets" (tutorial1 `turret1`) are a physent whose actscri
 NPC and `setParent`s it to the model - the route if the port ever wants a firing turret (an XML1 gun soldier
 character, invisible / noclip, parented by the turret's spawnscript), not done here.
 
+### Destruction-driven door targets
+
+The physent parser in XMen2.exe already supports `actondeath`: the base activation reader stores it in
+entity byte `+0xc4` bit 4 (`0x41bc7d`), and the physical parser (`0x498de7` through `0x498e18`) transfers
+`acttargets` (`+0x98`) to `deathtargets` (`+0x2a4`) when activation content exists. This replaces the explicit
+death list; it is not a union. The physical damage/death path (`0x498592`) calls target dispatcher
+`0x41b230`, which also handles ordinary activation targets (`0x41b823`). Its world name query only resolves
+live entities. Door activation `0x45da50`, through `0x497b10` and `0x4753c0` / `0x41b5b0`, does not require
+`actonuse`. A Use-disabled door with `toggleonact=true` can therefore open from another entity. XML2's own
+madri7 monster-death links use this arrangement with explicit `smartent=false` on their door definitions.
+
+Script-reference pinning alone misses destruction links expressed entirely as entity fields. In Arbiter
+arb2_2 / arb2_3 / arb2_4, five launcher-console links reach Use-disabled progression hatches whose source
+residency is absent. A streamed-out hatch cannot receive the one-shot death event. The native support above
+rules out a blanket acttargets-to-deathtargets rewrite as the correction.
+
+`death_targets.convert`, after the existing residency passes in `Zones.mutate_zone`, resolves effective
+`deathtargets` / `actondeath` activation lists, including the spawned actor's `monster_` fields, and follows
+ordinary `acttargets` through relays and spawners. It pins only placed door definitions with no explicit
+residency choice. Instance aliases resolve to their type, so every placement of that definition becomes
+resident, while only the original target receives activation. Authored smartent values, console health,
+deathspawn, scripts, target lists, hatch Use settings and toggle/count settings are preserved.
+
+New definitions receive ignored metadata `xml1deathtarget=true`; their existing entinst groups move after
+all earlier placements, preserving every earlier numbered entity's ordinal. Existing residents retain
+position in the sequence. The old fall-volume, settled-prop and hazard-tail guards allow this final tail;
+the destruction validator rejects an old placement after it. The builder does not replay a death event
+already missed in a player's saved zone. Integration must generate the usual append-only zone-prefix
+attestations against previous supported builds; no content identity is assigned by this correction.
+
+Offline RC1 comparison: 198 converted maps checked, 15 door definitions / 37 placements promoted across
+seven maps: the three launch-bay maps above, plus arbiter/arb_fd1, arbiter/deck/arb_fd1,
+astroid_m/visit1/arb_fd1 and demo/deck/arb_fd1. The latter four contain Sentinel launch-tube door relays.
+All seven preserve their old numbered prefix and admit the existing `lcsave.zonecompat.attest` proof.
+Runtime console states and successful hatch delivery still require the controlled live test.
+
+`tests/unit/test_death_target_doors.py` covers native field precedence, instance aliases, relay cycles,
+spawned actors, residency exclusions, idempotence, the unchanged puzzle fields, old ordinal prefixes,
+append attestations, localized variants and malformed residency/tail rejection. `V-DEATH-TARGETS` and
+`zones_selftest` check every converted map's selected doors; existing V31/V41/V61 tail checks remain active.
+
 ### 35.4 Tests and checks
 
 `tests/unit/test_zone_entity_pins.py` (made-up zone and scripts): names by zone script / entity script / inline

@@ -1019,6 +1019,7 @@ class Validator:
                                ('V39', 'save files', lambda ck: SF.validate(self, ck)),
                                ('V41', 'spawn-floor residency', self.spawn_floor_residency),
                                ('V61', 'model-less hazard bounds', self.hazard_bounds),
+                               ('V-DEATH-TARGETS', 'destruction target doors', self.death_target_doors),
                                ('V62', 'lock-on effects', lambda ck: LE.validate(self.ctx, ck)),
                                ('V45', 'weapon damage and reaction priority', lambda ck: W.validate(self, ck)),
                                ('V47', 'scripted boss approach', lambda ck: SA.validate(self, ck)),
@@ -1087,6 +1088,20 @@ class Validator:
                 ck.count('map_variants')
                 for problem in BP.reinforcement_map_problems(root, rel):
                     ck.error(f'{rel}: {problem}')
+
+    def death_target_doors(self, ck):
+        """Destruction-driven doors stay present and preserve old save ordinals."""
+        from . import death_targets as DT
+        for zone in sorted(self.converted_zones()):
+            for suffix in ('engb', 'xmlb'):
+                rel = f'maps/{zone}.{suffix}'
+                root = self.tree(rel)
+                if root is None:
+                    continue
+                for problem in DT.problems(root):
+                    ck.error(f'{rel}: {problem}')
+                ck.count('door_definitions_checked', len(DT.door_targets(root)))
+                ck.count('new_resident_doors', len(DT.names(root)))
 
     def hazard_bounds(self, ck):
         """Placed model-less hazards retain bounds and append new saved ordinals."""
