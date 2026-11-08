@@ -40,7 +40,7 @@ saves still load. Everyone in an online session needs the same build and setting
 - **Healer and Forge are offered at Xtraction points after loading a save**, using XML1's service timing.
 - **A newcomer lost during the restart gets the named leave notice.** The cosmetic beta.3 restart-path wording
   issue is closed. Same-PC testing saw one named notice on both surviving peers after canonical restart began,
-  matching shared frames and working movement; ordinary in-play host loss wording remains unchanged.
+  matching shared frames and working movement; the host's ordinary in-play dropped-player wording remains unchanged.
 
 **Checks and remaining limits**
 

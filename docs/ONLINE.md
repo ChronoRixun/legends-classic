@@ -208,6 +208,6 @@ A newcomer lost during admission no longer produces a false lost-sync alarm. Bet
 leave notice when the newcomer is lost after restart begins; ordinary in-play drop wording is unchanged.
 
 Beta.4 closes the cosmetic named-leave wording issue for a newcomer lost after restart begins. Same-PC RC1
-checks observed named notices, matching frames and movement; ordinary in-play host drop wording is unchanged.
+checks observed named notices, matching frames and movement; the host's ordinary in-play dropped-player wording is unchanged.
 The newer RC2/RC3 agent probes did not re-accept native online-host Load Saved Campaign (online unavailable).
 Normal main-menu campaign loading passed separately. beta.1/2/3 saves remain compatible; online peers need beta.4.
