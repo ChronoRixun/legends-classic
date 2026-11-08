@@ -1,15 +1,15 @@
 ﻿# Play online in 0.6
 
-Player guide for Legends Classic **0.6.0-beta.3** with XML2 Fix **1.11.0-beta.3**. Online co-op now runs from the
+Player guide for Legends Classic **0.6.0-beta.4** with XML2 Fix **1.11.0-beta.4**. Online co-op now runs from the
 game's own **Play Online** screen. This is a beta. Co-op was tested on one PC (up to four copies) and on two PCs at
 home, with two, three and four players, including fights. Not verified yet: playing through the relay (networks where
 a direct connection fails), players on different home networks, three or four separate PCs, long sessions, and joins
 over slow connections ([known issues](KNOWN-ISSUES.md#online)). The session runs at the host's frame rate; your own
 setting comes back when you leave.
 
-Up to four players can share a campaign. Everyone needs the same build - builder 0.6.0-beta.3 with XML2 Fix
-1.11.0-beta.3 - with the same gameplay settings and Test mode off; a different build or setting is refused with the
-reason on both PCs. beta.1 and beta.2 games cannot join beta.3, and a 0.5 game cannot join a 0.6
+Up to four players can share a campaign. Everyone needs the same build - builder 0.6.0-beta.4 with XML2 Fix
+1.11.0-beta.4 - with the same gameplay settings and Test mode off; a different build or setting is refused with the
+reason on both PCs. beta.1, beta.2 and beta.3 games cannot join beta.4, and a 0.5 game cannot join a 0.6
 game. To update, use Ultimate Legends' **Beta** channel: update XML2
 Fix and the builder, then **Rebuild**, then **Play**.
 
@@ -204,8 +204,8 @@ Up to 0.5, online play started from the launcher's Online panel. These are its E
 When reporting a problem, include the exact message, the step that failed, everyone's game/fix versions, whether anyone used a hotspot, and each affected PC's `xml2-fix.log` and `online-status.json`. Copy them before the next launch. Review copies for private details before sharing; do not attach game files, saves, disc images or online identity keys.
 
 Beta.3: solo-host pause and Team Management close with one B or Esc press; Enter IP has eleven keys (0-9 and dot).
-A newcomer lost during the hold no longer produces a false lost-sync alarm. If lost after the restart begins,
-the standard dropped-players message can still appear once (cosmetic; wording fix planned).
+A newcomer lost during admission no longer produces a false lost-sync alarm. Beta.4 also gives the named
+leave notice when the newcomer is lost after restart begins; ordinary in-play drop wording is unchanged.
 
 Beta.4 closes the cosmetic named-leave wording issue for a newcomer lost after restart begins. Same-PC RC1
 checks observed named notices, matching frames and movement; ordinary in-play host drop wording is unchanged.
