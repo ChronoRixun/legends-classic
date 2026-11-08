@@ -50,6 +50,7 @@ from . import common as C
 from . import conversations as CV
 from . import scripts_lint as L
 from . import boss_phases as BP
+from . import escort_triggers as ETG
 from . import scripted_approaches as SA
 from . import start_fixes as SF
 from . import scripts_transform as T
@@ -1577,6 +1578,7 @@ def rewrite_data_tree(ctx, root, rel) -> int:
         n = BP.rewrite_data(root, r, controller_bosses=FI.source_bosses(ctx))
     else:
         n = BP.rewrite_data(root, r)
+    n += ETG.convert(root, r)
     n += SF.fix_player_starts(root, r)   # SPEC 41: starts that land outside the walkable area
     if conversation:
         n += CV.resolve_cross_file_tagjumps(ctx, root, rel)   # SPEC 39: first, so the copy is marked/rewritten too

@@ -8245,3 +8245,34 @@ private `--import-ledger` are supplied. Schema 2 binds finished Data/Scripts;
 runtime admission separately validates and pins the final INI/report and paired
 DLL. Normal build defaults and release identities are unchanged. The coordinator
 must assign the content identity before shipping any new generated output.
+
+## NPC rescue activation compatibility (V-ESCORT)
+
+XML1 activation at `0x28420` implements `actteamplayer` with actor flag
+`+0x335` bit `0x20`. XML2 activation at `0x41b5b0` instead rejects an actor
+whose player-controller owner at `+0x3d4` is `-1`. `setFollowingHero`
+(`0x4a48f0`) leaves an escort NPC without a controller. The inherited filter
+therefore prevents neutral escorts from reaching scripts that explicitly
+check their `_ACTIVATOR_` names.
+
+`escort_triggers.RESCUES` selects the four Arbiter lifeboat maps, their two
+demo copies, three NYC riot rescue maps and the Hive rescue arrival. The
+Hive script uses the activator's name as a rescue-state key; the others
+compare literal NPC names. The first NYC rescue already sets the filter
+false. Conversion clears only `actteamplayer` on these ten
+volumes, after checking the unique definition/placement, script, neutral
+team, team match, touch, nonleader and box filters. Changed source contracts
+fail before mutation. Scripts, actor names, objective/conversation flow,
+collision bounds, placement order and every other attribute remain intact.
+V-ESCORT checks both output map variants.
+
+Save compatibility uses exact zone/definition/attribute/value attestations
+for the `true` to `false` change. The existing equivalence checker still
+compares the full map framing, placements, numbered entities and other
+definition attributes. Hash-bound rows in `zone_prefixes.json` preserve
+existing records and historical accepted records; no new save schema or
+release identity is assigned here. The action save/load pair (`0x41a600`,
+`0x41a690`) persists action counters and enabled state, not the controller
+filter at entity `+0xc5` bit `0x20`; an older record cannot restore that
+filter over the corrected definition. Runtime escort completion and loading an
+existing save require separate acceptance on a disposable game copy.
