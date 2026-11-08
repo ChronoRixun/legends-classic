@@ -4137,44 +4137,58 @@ character, invisible / noclip, parented by the turret's spawnscript), not done h
 
 ### Destruction-driven door targets
 
-The physent parser in XMen2.exe already supports `actondeath`: the base activation reader stores it in
-entity byte `+0xc4` bit 4 (`0x41bc7d`), and the physical parser (`0x498de7` through `0x498e18`) transfers
-`acttargets` (`+0x98`) to `deathtargets` (`+0x2a4`) when activation content exists. This replaces the explicit
-death list; it is not a union. The physical damage/death path (`0x498592`) calls target dispatcher
-`0x41b230`, which also handles ordinary activation targets (`0x41b823`). Its world name query only resolves
-live entities. Door activation `0x45da50`, through `0x497b10` and `0x4753c0` / `0x41b5b0`, does not require
-`actonuse`. A Use-disabled door with `toggleonact=true` can therefore open from another entity. XML2's own
-madri7 monster-death links use this arrangement with explicit `smartent=false` on their door definitions.
+XML2 already supports `actondeath`: the action reader stores it in entity `+0xc4` bit 4 (`0x41bc7d`),
+and the physical parser (`0x498de7` through `0x498e18`) transfers `acttargets` (`+0x98`) to `deathtargets`
+(`+0x2a4`) when activation content exists. This replaces the explicit death list. Physical death dispatch
+at `0x49859b` and ordinary action dispatch at `0x41b823` call `0x41b230`. Actor damage also reaches the
+physical path (`0x438b98`). Incoming activation bypasses the Use-only flag check at `0x41a7a0`; Use-disabled
+doors can open through `0x45da50`. The problem is that the target name query only resolves live entities.
 
-Script-reference pinning alone misses destruction links expressed entirely as entity fields. In Arbiter
-arb2_2 / arb2_3 / arb2_4, five launcher-console links reach Use-disabled progression hatches whose source
-residency is absent. A streamed-out hatch cannot receive the one-shot death event. The native support above
-rules out a blanket acttargets-to-deathtargets rewrite as the correction.
+Controlled RC1 copies (2026-11-07) reproduce the arb2_3 failure: the matching console has 100 health,
+but flap is absent from the live World table. Native killEntity sends direct damage through physical
+virtual +0xb0 (`0x49979a`), produces the stump, and approaching flap recreates it closed. The latest saved
+zone has both consoles destroyed, exit02 open and flap closed. XML2's native madri7 data uses explicit
+residency for similar monster-death door links, but simply pinning these existing doors would discard
+their old smart-list state under the append-only save policy. That approach is not used.
 
-`death_targets.convert`, after the existing residency passes in `Zones.mutate_zone`, resolves effective
-`deathtargets` / `actondeath` activation lists, including the spawned actor's `monster_` fields, and follows
-ordinary `acttargets` through relays and spawners. It pins only placed door definitions with no explicit
-residency choice. Instance aliases resolve to their type, so every placement of that definition becomes
-resident, while only the original target receives activation. Authored smartent values, console health,
-deathspawn, scripts, target lists, hatch Use settings and toggle/count settings are preserved.
+`death_targets.convert` handles fixed-console, one-shot, non-autoclosing, unrestricted Use-disabled gates.
+It retains every original door/console definition and placement. A resident action listener shares the
+original hatch instance name, so the unchanged native console target list reaches it even while the door
+is absent. It latches a private game flag. A separate action uses native `firstact` and
+`actrescheduledelay` (0.25 s) to retry the original activation while latched. The original door's
+`actcountdisable=1` prevents repeated activation from closing it again. There is no new Use prompt.
 
-New definitions receive ignored metadata `xml1deathtarget=true`; their existing entinst groups move after
-all earlier placements, preserving every earlier numbered entity's ordinal. Existing residents retain
-position in the sequence. The old fall-volume, settled-prop and hazard-tail guards allow this final tail;
-the destruction validator rejects an old placement after it. The builder does not replay a death event
-already missed in a player's saved zone. Integration must generate the usual append-only zone-prefix
-attestations against previous supported builds; no content identity is assigned by this correction.
+Generated poll scripts use Raven assignments and `if`/`endif`, not Python condition syntax. Game-flag
+bit arguments are one-based: the generated eight-character, hash-derived namespace uses bit 1. The flags
+retain a pending event through save/load; a controlled native save before the door existed, fresh-process
+menu reload and later approach to the hatch successfully deliver the activation.
 
-Offline RC1 comparison: 198 converted maps checked, 15 door definitions / 37 placements promoted across
-seven maps: the three launch-bay maps above, plus arbiter/arb_fd1, arbiter/deck/arb_fd1,
-astroid_m/visit1/arb_fd1 and demo/deck/arb_fd1. The latter four contain Sentinel launch-tube door relays.
-All seven preserve their old numbered prefix and admit the existing `lcsave.zonecompat.attest` proof.
-Runtime console states and successful hatch delivery still require the controlled live test.
+The existing unplaced, fixed, indestructible console stump gains a guarded recovery spawnscript and
+resident default. It recognizes its original console origin in all three coordinates before latching
+that console's gate. Existing saved smart stumps can remain dormant until approached: for a previously
+stuck save, revisit the destroyed console once, then return to its hatch. The controlled old-save check
+preserves the already-open exit02 and recovers only flap after that visit. Ordinary door states retain
+their original smart identities; no former smart-door alias is discarded.
 
-`tests/unit/test_death_target_doors.py` covers native field precedence, instance aliases, relay cycles,
-spawned actors, residency exclusions, idempotence, the unchanged puzzle fields, old ordinal prefixes,
-append attestations, localized variants and malformed residency/tail rejection. `V-DEATH-TARGETS` and
-`zones_selftest` check every converted map's selected doors; existing V31/V41/V61 tail checks remain active.
+The map-dependent scripts under `Scripts/x1/death_targets/` are generated and owned by zones, written
+through the context and included in the zone package. Other scripts retain their existing module owner.
+Only new listener/poller groups are appended behind every old placement. Existing fall-volume, settled-
+prop and hazard-tail guards allow this final marked action tail and reject old placements after it.
+`lcsave.zonecompat.attest` permits the unplaced stump augmentation only when the complete new map equals
+this deterministic conversion of the old map; it does not add a broad ignored-attribute exemption.
+
+Owned-input audit: 198 converted maps, five latches / ten resident actions / eight generated scripts in
+arbiter/a_int/arb2_2, arb2_3 and arb2_4. Three verified hash-bound prefix attestations retain all old
+ordinals and smart states. Matching-only console-death checks pass for all five progression hatches;
+the other bay's hatch stays unchanged. The broader death-field census also contains launcher tube-door
+relays and inherited unresolved targets; those are not changed by this one-shot gate conversion.
+
+Synthetic regressions execute the generated conditions in the existing Raven subset interpreter, cover
+native field precedence and one-based flags, match stump origins, preserve original entities/placements,
+authenticate the save prefix, reject unrelated edits and malformed relays, and check both localized map
+variants. V-DEATH-TARGETS and zones_selftest cover every converted map. These are controlled local
+native-damage checks, not a full campaign playthrough or online co-op acceptance. No content identity or
+XML2 Fix bridge is assigned by this correction.
 
 ### 35.4 Tests and checks
 

@@ -62,7 +62,7 @@ from . import settle as SE                # issue #81: native floor sweeps for r
 from . import talent_sets as TS           # SPEC <number assigned at merge>: NPC-only talents in per-set files
 from . import npc_values as NV            # SPEC 29.2: inline entities use the same values as entity files
 from . import loot as LOOT               # SPEC 108: --loot xml1, the first game's item economy as data
-from . import death_targets as DT        # data-driven destruction targets need residency too
+from . import death_targets as DT        # durable delivery for data-driven console gates
 
 # ---------------------------------------------------------------------------------------------- constants
 PATCH_ZONE = 'zones.zone'            # import_x1_asset patch keys (deterministic patches -> cacheable imports)
@@ -842,6 +842,8 @@ class Zones:
         r = C.script_ref(ref or '')
         if not r or r in BOOL_VALUES:
             return False
+        if r.startswith(DT.PREFIX) and self.ctx.out_exists(C.script_rel(r)):
+            return True
         if r not in self._script_ok:
             self._script_ok[r] = bool(self.prov.script_exists(self.ctx, r)) or self.ctx.base_exists(C.script_rel(r))
         return self._script_ok[r]
@@ -1247,7 +1249,7 @@ class Zones:
         out_rel = ctx.out_index.get(C.script_rel(r))
         reg = ctx.registry.get(C.script_rel(r)) if out_rel else None
         cands = []
-        if out_rel and (reg is None or reg['owner'] == 'scripts'):
+        if out_rel and (reg is None or reg['owner'] == 'scripts' or r.startswith(DT.PREFIX)):
             cands.append(ctx.out / out_rel)
         cands.append(ctx.research_path('scripts/out/scripts') / (r + '.py'))
         p = ctx.x1_path(f'scripts/{r}.py')
@@ -1401,7 +1403,10 @@ class Zones:
         # volumes. Existing script-pinned hazards retain their original position.
         from . import x1schema as XS
         self.counts['hazard_bounds'] += XS.convert_hazard_bounds(root, f'maps/{zone}.eng')
-        self.counts['death_target_doors'] += DT.convert(root)
+        death_scripts = {}
+        self.counts['death_target_doors'] += DT.convert(root, zone, death_scripts)
+        for ref, text in death_scripts.items():
+            ctx.write_script(C.script_rel(ref), text, source='generated destruction target delivery')
         for el in root.iter():
             if el.tag.lower() == 'precache':
                 t = (el.get('type') or '').lower()

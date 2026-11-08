@@ -1098,10 +1098,11 @@ class Validator:
                 root = self.tree(rel)
                 if root is None:
                     continue
-                for problem in DT.problems(root):
+                for problem in DT.problems(root, zone):
                     ck.error(f'{rel}: {problem}')
                 ck.count('door_definitions_checked', len(DT.door_targets(root)))
-                ck.count('new_resident_doors', len(DT.names(root)))
+                ck.count('hatch_links_checked', len(DT.links(root)))
+                ck.count('resident_delivery_actions', len(DT.names(root)))
 
     def hazard_bounds(self, ck):
         """Placed model-less hazards retain bounds and append new saved ordinals."""

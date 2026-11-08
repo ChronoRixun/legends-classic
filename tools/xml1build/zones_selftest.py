@@ -218,7 +218,7 @@ def main(argv=None):
         # zone XML vs source (+1 element where zones added the missing world entity)
         o = decode(out / owned[f'maps/{z}.xmlb']['rel'])
         from xml1build import death_targets as DT
-        for problem in DT.problems(o):
+        for problem in DT.problems(o, z):
             fail('B_death_target_door', f'{z}: {problem}')
         s = ctx.read_x1_xml(src)
         synth = bool(d.get('world_synthesized'))
@@ -246,7 +246,8 @@ def main(argv=None):
             removed_groups += count == len(groups[0].findall('inst'))
         added_groups = len({(r['group'], r.get('reason') == 'embedded_floor') for r in selected})
         settle_delta = added_defs + added_groups - removed_groups
-        if sum(1 for _ in o.iter()) != sum(1 for _ in s.iter()) + (1 if synth else 0) + settle_delta:
+        relay_delta = 6 * len(DT.links(s))
+        if sum(1 for _ in o.iter()) != sum(1 for _ in s.iter()) + (1 if synth else 0) + settle_delta + relay_delta:
             fail('B_element_count', z)
         if o.tag != 'world':
             fail('B_root_tag', f'{z}: <{o.tag}>')

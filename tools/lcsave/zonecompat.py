@@ -109,7 +109,19 @@ def attest(zone, previous, current):
         if name in new_all and new_all[name] != old_all[name]: return None
     old_defs = {n:e for n,e in old_all.items() if n not in old_tail_types}
     new_defs = {n:e for n,e in new_all.items() if n not in tail_types | old_tail_types}
-    if old_defs != new_defs: return None
+    if old_defs != new_defs:
+        # A destruction-delivery relay keeps every original placement/door and
+        # only augments an unplaced fixed stump. Authenticate the complete,
+        # deterministic conversion, never a broad ignored-attribute exception.
+        import copy
+        from xml1build import death_targets
+        expected = copy.deepcopy(old_root)
+        try:
+            changed = death_targets.convert(expected, zone)
+        except ValueError:
+            return None
+        if not changed or _canonical(expected) != _canonical(new_root):
+            return None
     return dict(zone=zone_hash(zone), old=hashlib.sha1(previous).digest(),
                 current=hashlib.sha1(current).digest(), digest=digest, placements=placements,
                 fresh_aliases=sorted(fresh-ambiguous), ambiguous_aliases=sorted(ambiguous))
