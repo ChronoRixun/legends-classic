@@ -134,8 +134,9 @@ try. If a screen's text or labels are cut off, or something looks off, please re
   rate, leave and host a new room. Player cards show "local / online" rates and warn ("Cannot hold N fps") when a
   PC can't keep up; nothing lowers the rate automatically. A slow PC, a slow connection or fullscreen VSync can still
   slow the session for everyone. Checked live on one PC so far.
-- **0.6.0-beta.4 is a co-op beta.** Co-op was tested on one PC (up to four copies) and on two PCs at home, with two,
-  three and four players, including fights and joins by code, LAN and IP. Not verified yet: playing through the
+- **0.6.0-beta.4 is a co-op beta.** Across earlier 0.6 builds, co-op was tested on one PC (up to four copies) and on two PCs at home, with two,
+  three and four players, including fights and joins by code, LAN and IP. Those separate-PC setups have not been
+  re-verified on beta.4. Not verified yet: playing through the
   relay (networks where a direct connection fails), players on different home networks (over the internet), three
   or four separate PCs, long sessions, and joins over slow connections (if a join takes longer than the wait, play
   continues and the friend comes in moments later). Relay-only mode refuses an unavailable relay instead of falling
