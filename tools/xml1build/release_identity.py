@@ -72,6 +72,9 @@ HISTORY = (
     # 0.6.0-beta.3: optional classic conversation background and online admission/menu polish.
     # Catalogue 8 and W2 unchanged; beta.1 and beta.2 saves remain compatible. Bound after owned-input measure.
     Identity('0.6.0-beta.3', 32, 8, 'LC42', 'a3e81e8953d93f02619d0195bc8add7afa256ff625e4114a99eba9a1c244c5a5'),
+    # 0.6.0-beta.4: Arbiter progression, escort arrivals, emitter lifetime and control/service fixes.
+    # Catalogue 8 and W2 unchanged; beta.1, beta.2 and beta.3 saves remain compatible.
+    Identity('0.6.0-beta.4', 33, 8, 'LC43', ''),
 )
 
 
