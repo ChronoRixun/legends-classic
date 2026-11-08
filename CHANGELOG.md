@@ -5,19 +5,6 @@ build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebui
 
 ## Unreleased
 
-- Neutral escort NPCs can activate the Arbiter lifeboat, remaining NYC rescue volumes and Hive rescue arrival.
-  Rebuild content to remove the incompatible player-controller filter; the original scripts,
-  team checks, placements and saved zone identities are preserved.
-- Candidate emitter cleanup checks the harmful helper's exact parent handle and removes helpers whose
-  body is dead or absent. Authored damage/timing and existing body save identities are preserved;
-  live lifetime, sibling and copied-save acceptance remain pending.
-- Console destruction now reaches the Arbiter launch-bay progression hatches even when their doors are
-  streamed out. Rebuild content to apply the correction. Original door save identities and console target
-  lists are preserved. For an already-stuck save, revisit the destroyed console once and return to its hatch.
-- Jubilee's Photo Flash and Frost's Confuse no longer apply a permanent team switch from the inactive rank
-  branch. Their original XML1 randomized durations are preserved, along with Frost's Fear duration ranges.
-  Rebuilding content and the matching XML2 Fix control-lifetime adapter are required; ranks 1Ã¢â‚¬â€œ5 confuse, and
-  ranks 6Ã¢â‚¬â€œ11 temporarily switch the target's team. The builder refuses a companion without the adapter.
 - Save import stays off by default. Experimental Install and Undo now require a
   companion DLL advertising the SaveLC writer lease; previews pin its hash and
   Undo requires `--build`. Experimental builds can compile a private, source-hash
@@ -25,7 +12,54 @@ build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebui
   proven retail ledgers and live companion acceptance are still required before
   public admission. Global-profile merging remains disabled.
 
-## v0.6.0 - content version 32 (needs XML2 Fix 1.11.0)
+## v0.6.0 - content version 33 (needs XML2 Fix 1.11.0)
+
+### 0.6.0-beta.4
+
+Legends Classic 0.6.0-beta.4 (content 33 / catalogue 8 / LC43) goes with **XML2 Fix 1.11.0-beta.4**.
+Update both parts in Ultimate Legends' **Beta** channel, then **Rebuild**, then **Play**. beta.1, beta.2 and beta.3
+saves still load. Everyone in an online session needs the same build and settings.
+
+**Changes since beta.3**
+
+- **USS Arbiter hatches open after their Sentinel launcher consoles are destroyed.** Five progression hatches in
+  the launch bays are fixed. In an already-stuck save, revisit the destroyed console once, then return to its hatch.
+  Owen confirmed the hatch recovery by hand on November 7.
+- **Escorted sailors count at the lifeboat.** The timed Arbiter crew rescue can progress when the following sailor
+  reaches safety. Ten rescue-arrival triggers are corrected, including a later Hive rescue. Owen escorted a crewman
+  and confirmed the lifeboat rescue registered on November 8. A full eight-sailor escape and every placement were
+  not independently replayed by the agents.
+- **Destroyed shock pylons stop pulsing.** Their harmful helpers are removed when the exact parent body dies or
+  disappears; streaming out and back also cleans up correctly. Health damage keeps XML1's authored rules, and live
+  nullifiers still drain energy. Live cleanup uses the native 0.05-second watcher tick; zero-frame timing was not measured.
+- **Jubilee's Photo Flash and Frost's Confuse wear off.** Inactive rank branches no longer leave permanent allies;
+  the builder and companion adapter preserve XML1's randomized duration ranges. Native casts cleared and targets
+  became attackable, including after an area reload. One Jubilee rank-1 sample lasted 3.0671 seconds against a
+  3-second authored maximum; exact live expiry timing remains under investigation. Already-affected old saves were
+  not available for a recovery check.
+- **Healer and Forge are offered at Xtraction points after loading a save**, using XML1's service timing.
+- **A newcomer lost during the restart gets the named leave notice.** The cosmetic beta.3 restart-path wording
+  issue is closed. Same-PC testing saw one named notice on both surviving peers after canonical restart began,
+  matching shared frames and working movement; ordinary in-play host loss wording remains unchanged.
+
+**Checks and remaining limits**
+
+The final candidate includes Owen's two Arbiter hand checks and short agent checks for rescue, hatch recovery,
+pylon lifetime and nullifier energy drain. Earlier checks on this DLL's RC1 build covered loaded Healer/Forge,
+control-effect expiry, a newcomer lost after restart, same-PC joins and pauses, and saved-campaign loads. The DLL
+includes both the named-leave and control-duration changes; it is not beta.3's unchanged tested online DLL.
+Native online-host Load Saved Campaign was not re-verified successfully on the newer RC2/RC3 builds: the probe
+reached an online-unavailable screen. Normal main-menu campaign loading passed separately. The one release boot
+smoke is only a startup/transport-install check, not online-host acceptance.
+
+All still-open beta.3 limitations remain in [known issues](docs/KNOWN-ISSUES.md): intermittent pre-menu DirectInput
+startup reliability is unresolved; four-player pause release has test-input coverage only; relay/different home
+networks, three or four separate PCs, long sessions and slow joins need checks. Host loss ends the session.
+The optional classic conversation background remains off by default, with native Windows checks but no owner,
+xemu, DXVK or multiplayer comparison. Save import from xemu and XML1-recomp remains off.
+
+Back up saves before updating. Standalone builders need the matching DLL in the output folder before Build.
+These tools distribute no game content; both owned games are required.
 
 ### 0.6.0-beta.3
 

@@ -206,3 +206,8 @@ When reporting a problem, include the exact message, the step that failed, every
 Beta.3: solo-host pause and Team Management close with one B or Esc press; Enter IP has eleven keys (0-9 and dot).
 A newcomer lost during the hold no longer produces a false lost-sync alarm. If lost after the restart begins,
 the standard dropped-players message can still appear once (cosmetic; wording fix planned).
+
+Beta.4 closes the cosmetic named-leave wording issue for a newcomer lost after restart begins. Same-PC RC1
+checks observed named notices, matching frames and movement; ordinary in-play host drop wording is unchanged.
+The newer RC2/RC3 agent probes did not re-accept native online-host Load Saved Campaign (online unavailable).
+Normal main-menu campaign loading passed separately. beta.1/2/3 saves remain compatible; online peers need beta.4.
