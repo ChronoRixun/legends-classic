@@ -8313,7 +8313,7 @@ existing save require separate acceptance on a disposable game copy.
 
 ## Durable sewer and optional Nuke unlocks (V-PROGRESSION)
 
-`progression_relays` runs after script pinning, settlement, hazards and existing hatch relays. It appends
+`progression_relays` runs after script pinning, settlement, hazards, existing hatch relays and emitter lifetime conversion. It appends
 resident native scheduled actions (firstact/actrescheduledelay 0.25 s); no existing definition, placement,
 ordinal or smart alias changes. Generated scripts are registered and included in the zone package.
 
@@ -8342,3 +8342,17 @@ locations are reported separately without inventing a distance. Explicit residen
 validated delivery relays are excluded. Scripted movement/cameras, dynamic names and attack range need manual
 review: this is a generic warning audit, not a campaign-playthrough proof. Both map variants are checked by
 V-PROGRESSION; the generic audit uses English with XMLB fallback to avoid duplicate warnings.
+
+### Full/focused conversion order
+
+Emitter lifetime conversion must precede progression-tail insertion in `Zones.mutate_zone`. Released beta.4
+maps already contain the unplaced emitter watcher factory; appending progression before creating that factory
+on a fresh build changes serialized child order and map hashes despite identical entity multisets. Keeping
+emitter conversion first makes the full pipeline byte-identical to appending progression to the released map,
+preserving the exact save-prefix ledger bindings and package-reference order. The combined synthetic regression
+runs the complete mutate_zone method on a map receiving both additions and checks bytes, scripts, validators,
+original ordinal prefix and prefix attestation against the focused released-map path.
+
+The two sewers1_2_4 sparring-gate closure warnings remain known optional risks. These authored gates toggle
+between closure and release and have actcountdisable=2. The monotonic unlock retry cannot safely repair both
+states without a separate state-aware delivery design; live O4 must still verify closure and release.

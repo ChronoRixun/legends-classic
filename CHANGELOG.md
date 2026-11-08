@@ -5,6 +5,9 @@ build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebui
 
 ## Unreleased
 
+- Full builds insert emitter helpers before the new progression tail, matching the focused map proof and
+  preserving the exact GRSO save-prefix bindings. A combined full-conversion regression checks both fixes.
+
 - The builder retains distant sewer door unlocks across streaming: the Healer guard latch and both GRSO
   objective exits gain resident retry actions. Old stuck saves recover by revisiting the dead guards for the
   Healer door, or approaching a GRSO exit with both objectives complete. Two optional Nuke panel doors use

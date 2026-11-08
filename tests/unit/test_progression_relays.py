@@ -104,3 +104,37 @@ def test_nuke_missing_panel_fails_closed_even_if_optional_door_is_loaded():
     for text in scripts.values():
         trace,_=run(text,enabled=0,panel_loaded=-1)
         assert not any(x[0]=='act' for x in trace),trace
+
+
+def test_full_mutate_zone_emitter_and_progression_order_matches_focused_existing_map():
+    from collections import Counter
+    from types import SimpleNamespace
+    from xml1build import zones as Z, emitter_lifetime as E
+    from test_emitter_lifetime import zone as emitter_zone
+    D=module();zone='sewers/grso/sewers3_1_1';original=world()
+    original.insert(0,ET.Element('entity',name='world'))
+    emitter=emitter_zone()
+    original.extend(copy.deepcopy(e) for e in emitter if e.get('name')!='gate' and e.get('type')!='gate')
+    # beta.4 already contains emitter conversion; a focused progression append must agree with a fresh build.
+    focused=copy.deepcopy(original);emitter_scripts={};E.convert(focused,emitter_scripts)
+    old_residents,errors=numbered_entities(focused);assert not errors
+    previous=C.encode_xmlb(focused);progression_scripts={};D.convert(focused,zone,progression_scripts)
+    files={}
+    class Context:
+        base_index=SimpleNamespace(find=lambda *args:None)
+        def opt(self,key):return {'loot':'off','xp_curve':'xml2','frontend':'xml1'}.get(key)
+        def read_x1_xml(self,rel):return ET.Element('values')
+        def x1_path(self,rel):return None
+        def zone_bundle(self,zone):return []
+        def write_script(self,rel,text,**kwargs):files[rel]=text
+        def error(self,message):raise AssertionError(message)
+    builder=Z.Zones.__new__(Z.Zones);builder.ctx=Context()
+    builder.prov=SimpleNamespace(rewrite_data_tree=lambda *args:{},zone_script_ref=lambda *args:None)
+    builder.counts=Counter();builder.pinned={};builder.music={};builder._x1_xp_items={}
+    actual=copy.deepcopy(original)
+    Z.Zones.mutate_zone(builder,zone,'maps/'+zone+'.eng',actual,dict(base_world_attrs={},links=[],nextzones=[]))
+    assert C.encode_xmlb(actual)==C.encode_xmlb(focused), 'full conversion must append emitter factory before progression tail'
+    assert not D.problems(actual,zone) and not E.problems(actual)
+    new_residents,errors=numbered_entities(actual);assert not errors and new_residents[:len(old_residents)]==old_residents
+    assert attest(zone,previous,C.encode_xmlb(actual)) is not None
+    assert files=={C.script_rel(ref):text for ref,text in {**emitter_scripts,**progression_scripts}.items()}

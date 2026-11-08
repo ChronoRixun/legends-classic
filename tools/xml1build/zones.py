@@ -1409,14 +1409,16 @@ class Zones:
         self.counts['death_target_doors'] += DT.convert(root, zone, death_scripts)
         for ref, text in death_scripts.items():
             ctx.write_script(C.script_rel(ref), text, source='generated destruction target delivery')
-        progression_scripts = {}
-        self.counts['progression_relays'] += PR.convert(root, zone, progression_scripts)
-        for ref, text in progression_scripts.items():
-            ctx.write_script(C.script_rel(ref), text, source='generated progression delivery')
+        # Match the released-map focused path: existing emitter definitions precede every new
+        # progression tail. Child order also binds XMLB hashes, packages and save-prefix rows.
         emitter_scripts = {}
         self.counts['emitter_lifetimes'] += EL.convert(root, emitter_scripts)
         for ref, text in emitter_scripts.items():
             ctx.write_script(C.script_rel(ref), text, source='generated emitter lifetime cleanup')
+        progression_scripts = {}
+        self.counts['progression_relays'] += PR.convert(root, zone, progression_scripts)
+        for ref, text in progression_scripts.items():
+            ctx.write_script(C.script_rel(ref), text, source='generated progression delivery')
         for el in root.iter():
             if el.tag.lower() == 'precache':
                 t = (el.get('type') or '').lower()
