@@ -210,13 +210,28 @@ def attest_equivalent(zone, previous, current, ignored=EQUIVALENT_ATTRIBUTES, re
             out[e.get('name')] = e
         return out
     old_defs, new_defs = elements(old_root), elements(new_root)
-    if set(old_defs) != set(new_defs):
-        return None
-    for name, old in old_defs.items():
-        new = new_defs[name]
-        top = frozenset(_reviewed(zone, name, old, new, reviewed))
-        if _canonical_without(old, ignored, top) != _canonical_without(new, ignored, top):
+    # The emitter conversion adds only a transient, unplaced watcher factory
+    # and startup on unsaved helpers. Authenticate its complete deterministic
+    # output; original smart body states and every numbered ordinal stay put.
+    from xml1build import emitter_lifetime
+    if not emitter_lifetime.equivalent(old_root, new_root):
+        # Compose the exact emitter transformation with the directional reviewed
+        # attribute edits (e.g. a rescue volume in the same map). No additional
+        # factory or arbitrary helper change is admitted by this normalization.
+        import copy
+        normalized = copy.deepcopy(old_root)
+        try:
+            emitter_lifetime.convert(normalized)
+        except ValueError:
             return None
+        old_defs = elements(normalized)
+        if set(old_defs) != set(new_defs):
+            return None
+        for name, old in old_defs.items():
+            new = new_defs[name]
+            top = frozenset(_reviewed(zone, name, old, new, reviewed))
+            if _canonical_without(old, ignored, top) != _canonical_without(new, ignored, top):
+                return None
     entries, placements = resident_prefix(new_root)
     # The runtime recomputes the digest from the current opened map, so bind the row to the current prefix.
     return dict(zone=zone_hash(zone), old=hashlib.sha1(previous).digest(), current=hashlib.sha1(current).digest(),

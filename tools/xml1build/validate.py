@@ -1021,6 +1021,7 @@ class Validator:
                                ('V41', 'spawn-floor residency', self.spawn_floor_residency),
                                ('V61', 'model-less hazard bounds', self.hazard_bounds),
                                ('V-DEATH-TARGETS', 'destruction target doors', self.death_target_doors),
+                               ('V-EMITTER-LIFETIME', 'transient emitter lifetime', self.emitter_lifetimes),
                                ('V62', 'lock-on effects', lambda ck: LE.validate(self.ctx, ck)),
                                ('V45', 'weapon damage and reaction priority', lambda ck: W.validate(self, ck)),
                                ('V47', 'scripted boss approach', lambda ck: SA.validate(self, ck)),
@@ -1102,6 +1103,27 @@ class Validator:
                 ck.count('map_variants')
                 for problem in BP.reinforcement_map_problems(root, rel):
                     ck.error(f'{rel}: {problem}')
+
+    def emitter_lifetimes(self, ck):
+        """Transient emitters keep exact ownership without changing saved bodies."""
+        from . import emitter_lifetime as EL
+        used = False
+        for zone in sorted(self.converted_zones()):
+            for suffix in ('engb', 'xmlb'):
+                rel = f'maps/{zone}.{suffix}'
+                root = self.tree(rel)
+                if root is None:
+                    continue
+                for problem in EL.problems(root):
+                    ck.error(f'{rel}: {problem}')
+                helpers = {child for _, child in EL.links(root)}
+                used |= bool(helpers)
+                ck.count('helper_factories', len(helpers))
+        if used:
+            for ref, text in EL.generated_scripts().items():
+                rel = C.script_rel(ref)
+                if self.read(rel) != C.to_crlf(text).encode('latin-1'):
+                    ck.error(f'{rel}: emitter lifetime script differs or is missing')
 
     def death_target_doors(self, ck):
         """Destruction-driven doors stay present and preserve old save ordinals."""

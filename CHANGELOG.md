@@ -8,13 +8,16 @@ build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebui
 - Neutral escort NPCs can activate the Arbiter lifeboat, remaining NYC rescue volumes and Hive rescue arrival.
   Rebuild content to remove the incompatible player-controller filter; the original scripts,
   team checks, placements and saved zone identities are preserved.
+- Candidate emitter cleanup checks the harmful helper's exact parent handle and removes helpers whose
+  body is dead or absent. Authored damage/timing and existing body save identities are preserved;
+  live lifetime, sibling and copied-save acceptance remain pending.
 - Console destruction now reaches the Arbiter launch-bay progression hatches even when their doors are
   streamed out. Rebuild content to apply the correction. Original door save identities and console target
   lists are preserved. For an already-stuck save, revisit the destroyed console once and return to its hatch.
 - Jubilee's Photo Flash and Frost's Confuse no longer apply a permanent team switch from the inactive rank
   branch. Their original XML1 randomized durations are preserved, along with Frost's Fear duration ranges.
-  Rebuilding content and the matching XML2 Fix control-lifetime adapter are required; ranks 1–5 confuse, and
-  ranks 6–11 temporarily switch the target's team. The builder refuses a companion without the adapter.
+  Rebuilding content and the matching XML2 Fix control-lifetime adapter are required; ranks 1Ã¢â‚¬â€œ5 confuse, and
+  ranks 6Ã¢â‚¬â€œ11 temporarily switch the target's team. The builder refuses a companion without the adapter.
 - Save import stays off by default. Experimental Install and Undo now require a
   companion DLL advertising the SaveLC writer lease; previews pin its hash and
   Undo requires `--build`. Experimental builds can compile a private, source-hash

@@ -29,6 +29,7 @@ GAME_TEXT_ATTR  tests/unit/test_sources_tables.py                 # made-up miss
 # --- nothing else is expected. In particular: no MEDIA entries (no screenshots in git), no SIZE entries.
 DECODED_XML   tests/unit/test_zone_entity_pins.py                    # invented zone XML (made/up/* names, no game data) for SPEC 35 entity pins
 DECODED_XML   tests/unit/test_death_target_doors.py                  # authored synthetic console, relay and hatch XML; no source-map data or assets
+DECODED_XML   tests/unit/test_emitter_lifetime.py                    # invented paired emitters and gates for ownership and save-identity checks; no game data
 BINARY tools/xml1build/fonts/barlowcondensed/BarlowCondensed-ExtraBoldItalic.ttf # Official Google Fonts OFL source, hashes and license adjacent; no game content.
 BINARY tools/xml1build/fonts/barlowcondensed/BarlowCondensed-Bold.ttf # Official Google Fonts OFL source, hashes and license adjacent; no game content.
 BINARY tools/xml1build/fonts/barlowcondensed/BarlowCondensed-Medium.ttf # Official Google Fonts OFL source, hashes and license adjacent; no game content.
