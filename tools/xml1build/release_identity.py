@@ -26,7 +26,8 @@ CURRENT_CATALOGUE_REVISION = 8   # 0.6.0-beta.1: --loot xml1 (the default) exten
 # peer receipt. Release integration must assign an immutable official identity.
 # It applies only while VERSION is the candidate's (0.4.0e); a release builder never takes it. Its catalogue revision
 # follows CURRENT_CATALOGUE_REVISION (8 since 0.6.0-beta.1).
-PRIVATE_CANDIDATE = Identity('0.4.0e', 33, 8, 'C04E')
+# Keep the inert private envelope outside the issued content33 / LC43 identity.
+PRIVATE_CANDIDATE = Identity('0.4.0e', 75, 8, 'C04E')
 
 HISTORY = (
     Identity('port-before-LC', 0, 0, 'X1.0'),
@@ -72,6 +73,9 @@ HISTORY = (
     # 0.6.0-beta.3: optional classic conversation background and online admission/menu polish.
     # Catalogue 8 and W2 unchanged; beta.1 and beta.2 saves remain compatible. Bound after owned-input measure.
     Identity('0.6.0-beta.3', 32, 8, 'LC42', 'a3e81e8953d93f02619d0195bc8add7afa256ff625e4114a99eba9a1c244c5a5'),
+    # 0.6.0-beta.4: Arbiter progression, escort arrivals, emitter lifetime and control/service fixes.
+    # Catalogue 8 and W2 unchanged; beta.1, beta.2 and beta.3 saves remain compatible.
+    Identity('0.6.0-beta.4', 33, 8, 'LC43', 'bf5964d1f5b5012d02b06fef686bfc2ac6eced84897636e990c2ac87b553b5c0'),
 )
 
 

@@ -45,6 +45,10 @@ lock ([#63](https://github.com/ChronoRixun/legends-classic/issues/63)) and the t
 
 ## Gameplay
 
+- **Control-effect timing.** beta.4 fixes permanent Jubilee/Frost control effects and retains XML1's authored
+  ranges. All observed casts expired, but one Jubilee rank-1 aggregate sample was 3.0671 seconds against a
+  3-second maximum; exact live expiry timing and recovery of pre-existing affected saves remain unverified.
+
 - **Settings are shared** with X-Men Legends II: key bindings and display settings read the same Windows registry
   key. Saves are separate.
 - **Enemy attack rate** ([#101](https://github.com/ChronoRixun/legends-classic/issues/101)): unarmed enemies (the
@@ -106,6 +110,11 @@ try. If a screen's text or labels are cut off, or something looks off, please re
 
 ## Online
 
+- **Current-build host-load coverage.** RC1 same-PC saved-campaign hosting was exercised with the new DLL.
+  Native online-host Load Saved Campaign was not accepted again on RC2/RC3: the latest probe reached an
+  online-unavailable screen. Ordinary main-menu campaign loading passed; beta.3's two-PC hand test remains
+  historical coverage, not a new-build guarantee.
+
 - **Intermittent startup crash (under investigation).** Native testing saw one crash before the main menu in
   Windows DirectInput. A later alternating check reached the menu on all ten beta.2 boots and all ten beta.3 boots.
   The cause and whether this is a regression are unresolved; if it recurs, retain `xml2-fix.log` and try starting again.
@@ -125,8 +134,9 @@ try. If a screen's text or labels are cut off, or something looks off, please re
   rate, leave and host a new room. Player cards show "local / online" rates and warn ("Cannot hold N fps") when a
   PC can't keep up; nothing lowers the rate automatically. A slow PC, a slow connection or fullscreen VSync can still
   slow the session for everyone. Checked live on one PC so far.
-- **0.6.0-beta.3 is a co-op beta.** Co-op was tested on one PC (up to four copies) and on two PCs at home, with two,
-  three and four players, including fights and joins by code, LAN and IP. Not verified yet: playing through the
+- **0.6.0-beta.4 is a co-op beta.** Across earlier 0.6 builds, co-op was tested on one PC (up to four copies) and on two PCs at home, with two,
+  three and four players, including fights and joins by code, LAN and IP. Those separate-PC setups have not been
+  re-verified on beta.4. Not verified yet: playing through the
   relay (networks where a direct connection fails), players on different home networks (over the internet), three
   or four separate PCs, long sessions, and joins over slow connections (if a join takes longer than the wait, play
   continues and the friend comes in moments later). Relay-only mode refuses an unavailable relay instead of falling
@@ -139,10 +149,6 @@ try. If a screen's text or labels are cut off, or something looks off, please re
   friend gets the host's game, the host and the other players wait up to 10 seconds on "A player is joining..."
   (`[Online] JoinHoldSeconds`, default 10, 0..15, `0` = off). The host's DROP-IN row turns joining off for a room; a friend
   who tries to join a started game is told: "This session has started. Ask the host to start a new session."
-- **Dropped-players wording (cosmetic).** beta.3 suppresses the false lost-synchronization notice for a lost
-  newcomer. During the admission hold the host sees the newcomer's name and that they have left. If the newcomer
-  disappears after the restart has begun, the game's standard dropped-players message can appear once instead.
-  The session continues; a wording fix is planned.
 - **Pausing with four players** is verified with test input only: in a few of those runs one player's Ready press
   didn't register and everyone stayed on the pause screen until it was pressed again. Press Ready again if that
   happens. Two- and three-player pauses released every time (two-player pauses also with a real controller on two PCs).

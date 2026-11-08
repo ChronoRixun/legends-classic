@@ -441,7 +441,7 @@ def test_reviewed_actscript_edit_is_scoped_to_its_zone_definition_and_values():
         row = Z.attest_equivalent('zone/x/y', old, new, reviewed={GATE_EDIT})
         assert row and len(row['placements']) == len(env.binds.zone_numbering('zone/x/y')['numbered'])
         assert Z.attest_equivalent('ZoNe/X/Y', old, new, reviewed={GATE_EDIT}) == row  # zone keys are case-normalised
-        # The shipped table (asteroid2_1 shieldup only) rejects the same edit in any other zone.
+        # The shipped script exception still rejects the same edit in any other zone.
         assert Z.attest_equivalent('zone/x/y', old, new) is None
         for other in ({('zone/x/z', 'gate', 'actscript', OLD_SCRIPT, NEW_SCRIPT)},            # another zone
                       {('zone/x/y', 'crate', 'actscript', OLD_SCRIPT, NEW_SCRIPT)},           # another definition
@@ -492,12 +492,27 @@ def test_reviewed_edit_keeps_the_saved_record_and_other_zones_reject():
         Z.REVIEWED_CHANGES = shipped
 
 
-def test_shipped_reviewed_changes_are_the_one_owner_reviewed_edit():
-    assert len(Z.REVIEWED_CHANGES) == 1
-    (zone, definition, attribute, old, new), = Z.REVIEWED_CHANGES
+def test_shipped_reviewed_changes_are_only_scoped_script_and_rescue_filter_edits():
+    script_edits = {row for row in Z.REVIEWED_CHANGES if row[2] == 'actscript'}
+    (zone, definition, attribute, old, new), = script_edits
     assert (zone, definition, attribute) == ('astroid_m/visit1/asteroid2_1', 'shieldup', 'actscript')
     assert len(old) == len(new) == 64 and old != new and int(old, 16) and int(new, 16)
-    assert 'actscript' not in Z.EQUIVALENT_ATTRIBUTES
+    expected_rescues = {
+        ('arbiter/a_int/arb3_1', 'rescue_trigger'),
+        ('arbiter/a_int/arb3_2', 'trigger_touch01'),
+        ('arbiter/a_int/arb3_3', 'trigger_touch01'),
+        ('arbiter/a_int/arb3_4', 'trigger_touch01'),
+        ('demo/a_int/arb3_1', 'rescue_trigger'),
+        ('demo/a_int/arb3_2', 'trigger_touch01'),
+        ('nyc/riots/nyc3_1_2', 'trigger_amb'),
+        ('nyc/riots/nyc3_1_3', 'trigger_touch01'),
+        ('nyc/riots/nyc3_2_1', 'trigger_touch01'),
+        ('hive/h_int/hive2_2_4', 'trigger_prisoner3'),
+    }
+    rescue_edits = {(z, definition, 'actteamplayer', Z.value_sha256('true'), Z.value_sha256('false'))
+                    for z, definition in expected_rescues}
+    assert Z.REVIEWED_CHANGES == script_edits | rescue_edits
+    assert not {'actscript', 'actteamplayer'} & Z.EQUIVALENT_ATTRIBUTES
 
 
 def test_owned_asteroid2_1_magneto_edit_is_equivalent():

@@ -4135,6 +4135,88 @@ class; XML2's firing "turrets" (tutorial1 `turret1`) are a physent whose actscri
 NPC and `setParent`s it to the model - the route if the port ever wants a firing turret (an XML1 gun soldier
 character, invisible / noclip, parented by the turret's spawnscript), not done here.
 
+### Transient emitter helper lifetime (candidate)
+
+Fixed physical bodies can spawn a model-less, nonpersistent radius-harm helper and parent its returned
+handle to `_OWNER_`. Smart stream-out bypasses the ordinary parent-removal notification. Such a helper
+must not continue attacking after its body is absent or dead. `emitter_lifetime` recognizes the literal
+two-statement spawn/setParent form, excludes placed helpers, authored startup code and unrelated spawn
+uses, and preserves every original body attribute, placement and attack field.
+
+The helper gains a generated startup script and `xml1emitterlifetime=true`. Startup creates an unplaced,
+nonpersistent `actionent` watcher parented to that exact helper handle. Its native positive first-act and
+repeat timers run at 0.05 seconds, without random delay, waiting script contexts or recursion. Each short
+check obtains the helper and body through two `getParentID` calls. A zero/nonexistent or nonpositive-health
+body disables/removes only that helper, then removes the watcher. Ordinary helper removal also notifies
+its watcher through native parentage. Names shared by sibling helpers are never cleanup targets.
+
+One watcher factory is added per affected map; no instance groups are added or reordered. Original smart
+bodies retain their identities and saved dead state. `attest_equivalent` accepts this change only when
+the complete new map equals the deterministic conversion of the previous map, with the same numbered
+list and placements. Hash-bound direct/historical prefix rows retain all old aliases; there are no fresh
+aliases. V-EMITTER-LIFETIME checks both map variants, helper markers, watcher shape and exact CRLF script
+bytes. The zones self-test accounts for exactly one added unplaced definition.
+
+This is a candidate until live acceptance. Cleanup occurs on the next watcher timer tick, so an already
+dispatched hit can precede it. Fresh/streamed destruction, siblings, watcher allocation/removal and copied
+existing-save behavior require live checks. Source damage, effects, repeat delays and nonpersistence are
+unchanged; this is not an alteration of the original health-versus-energy attacks.
+
+### Destruction-driven door targets
+
+XML2 already supports `actondeath`: the action reader stores it in entity `+0xc4` bit 4 (`0x41bc7d`),
+and the physical parser (`0x498de7` through `0x498e18`) transfers `acttargets` (`+0x98`) to `deathtargets`
+(`+0x2a4`) when activation content exists. This replaces the explicit death list. Physical death dispatch
+at `0x49859b` and ordinary action dispatch at `0x41b823` call `0x41b230`. Actor damage also reaches the
+physical path (`0x438b98`). Incoming activation bypasses the Use-only flag check at `0x41a7a0`; Use-disabled
+doors can open through `0x45da50`. The problem is that the target name query only resolves live entities.
+
+Controlled RC1 copies (2026-11-07) reproduce the arb2_3 failure: the matching console has 100 health,
+but flap is absent from the live World table. Native killEntity sends direct damage through physical
+virtual +0xb0 (`0x49979a`), produces the stump, and approaching flap recreates it closed. The latest saved
+zone has both consoles destroyed, exit02 open and flap closed. XML2's native madri7 data uses explicit
+residency for similar monster-death door links, but simply pinning these existing doors would discard
+their old smart-list state under the append-only save policy. That approach is not used.
+
+`death_targets.convert` handles fixed-console, one-shot, non-autoclosing, unrestricted Use-disabled gates.
+It retains every original door/console definition and placement. A resident action listener shares the
+original hatch instance name, so the unchanged native console target list reaches it even while the door
+is absent. It latches a private game flag. A separate action uses native `firstact` and
+`actrescheduledelay` (0.25 s) to retry the original activation while latched. The original door's
+`actcountdisable=1` prevents repeated activation from closing it again. There is no new Use prompt.
+
+Generated poll scripts use Raven assignments and `if`/`endif`, not Python condition syntax. Game-flag
+bit arguments are one-based: the generated eight-character, hash-derived namespace uses bit 1. The flags
+retain a pending event through save/load; a controlled native save before the door existed, fresh-process
+menu reload and later approach to the hatch successfully deliver the activation.
+
+The existing unplaced, fixed, indestructible console stump gains a guarded recovery spawnscript and
+resident default. It recognizes its original console origin in all three coordinates before latching
+that console's gate. Existing saved smart stumps can remain dormant until approached: for a previously
+stuck save, revisit the destroyed console once, then return to its hatch. The controlled old-save check
+preserves the already-open exit02 and recovers only flap after that visit. Ordinary door states retain
+their original smart identities; no former smart-door alias is discarded.
+
+The map-dependent scripts under `Scripts/x1/death_targets/` are generated and owned by zones, written
+through the context and included in the zone package. Other scripts retain their existing module owner.
+Only new listener/poller groups are appended behind every old placement. Existing fall-volume, settled-
+prop and hazard-tail guards allow this final marked action tail and reject old placements after it.
+`lcsave.zonecompat.attest` permits the unplaced stump augmentation only when the complete new map equals
+this deterministic conversion of the old map; it does not add a broad ignored-attribute exemption.
+
+Owned-input audit: 198 converted maps, five latches / ten resident actions / eight generated scripts in
+arbiter/a_int/arb2_2, arb2_3 and arb2_4. Three verified hash-bound prefix attestations retain all old
+ordinals and smart states. Matching-only console-death checks pass for all five progression hatches;
+the other bay's hatch stays unchanged. The broader death-field census also contains launcher tube-door
+relays and inherited unresolved targets; those are not changed by this one-shot gate conversion.
+
+Synthetic regressions execute the generated conditions in the existing Raven subset interpreter, cover
+native field precedence and one-based flags, match stump origins, preserve original entities/placements,
+authenticate the save prefix, reject unrelated edits and malformed relays, and check both localized map
+variants. V-DEATH-TARGETS and zones_selftest cover every converted map. These are controlled local
+native-damage checks, not a full campaign playthrough or online co-op acceptance. No content identity or
+XML2 Fix bridge is assigned by this correction.
+
 ### 35.4 Tests and checks
 
 `tests/unit/test_zone_entity_pins.py` (made-up zone and scripts): names by zone script / entity script / inline
@@ -5498,12 +5580,12 @@ no unlock), so Magma, REQUIRED in the hubs and briefings, is unlocked only by th
 `missions.xml`, the table from the player's prepared `default.xbe`, after checking that the walking function
 (0x84fc0, 0xb3 bytes) has the known SHA-1 and that the mission loader calls it at 0x866fb; any other executable,
 an unreadable table or a mission without `charunlock` is a build error (no guessing; nothing from the table is in
-the repository). Rows naming no playable hero of the build (Forge, Healer) are dropped.
+the repository). Rows naming neither a playable hero nor a retained campaign NPC (section 79.1) are dropped.
 - Mission starts: every copy of every begin body (`x1/missions/begin_<m>` and the inlined copies, side missions
   included) unlocks, after its REQUIRED unlocks, the heroes of its milestone's own group (the rows after the
-  previous labelled row), identically in every copy. XMen2.exe keeps unlocks in the profile and nothing clears
-  them, so every story path, which starts each milestone's missions in table order, ends each mission start with
-  XML1's cumulative set. The full cumulative set in every copy (up to 14 lines) pushed `nyc/riots/nyc3_2_1` (four
+  previous labelled row), identically in every copy. Campaign NPCs reapply their full cumulative set: a group's
+  only mission can be an unvisited development entry, so retaining only that group loses the NPC on real paths.
+  Playable heroes retain earlier profile unlocks. The full playable set in every copy (up to 14 lines) pushed `nyc/riots/nyc3_2_1` (four
   act-3 begin bodies) to 671 and `muir_is/muir3/muir_in3` to 658 statements, past the 620-node pool (0x4d7e6e).
 - Seated-only heroes (`scripts.menu_only_unlock_map`, `scripts_transform.menu_only_unlocks`): in a forced-teams
   seat build, the REQUIRED heroes of a seated mission that are outside its cumulative set (Magma before `nuke`,
@@ -6761,8 +6843,28 @@ uses the original's campaign test instead of the ftalk contact store.
   XML2 Fix checks the campaign bits (registry vt+0x84), greys Load and missing campaign options online with other
   players, and skips Change Team for bit 32.
 - Campaign entry: default.xbe's mission-start table (0x44e2e8) has non-playable rows; `scripts.CAMPAIGN_NPCS`
-  keeps 'healer' (sewers_hub group, from sewers_gambit on) and 'forge' (mansion1 group) in the unlock lines of the
-  begin bodies and the zone catch-up scripts (saves from earlier builds get them on load).
+  keeps 'healer' (sewers_hub table group) and 'forge' (mansion1 group) in the unlock lines of the begin bodies
+  and the zone catch-up scripts (saves from earlier builds get them on load). Table labels are matched against
+  each mission's `charunlock`, not its name or its position in the mission list: `sewers_gambit` uses the
+  `sewers_hub` label, while `sewers_hub` and the normal rescue mission `sewers1` both use `mansion2`. The native
+  walk at 0x84fc0 matches that label and includes its row (0x85010-0x85064). The builder preserves that lookup;
+  moving the Healer grant to `begin_sewers_hub` would precede XML1's table milestone. The normal route starts `sewers1`
+  and enters the hub by a zone link; it never begins the development entry `sewers_gambit`.
+  After Gambit is freed, `sewers/quest/fadegambit` loads `mocap/mocap4/briefing_1_7_1`; both its normal
+  finish and cancel body begin `arbiter`. That mission uses `charunlock=sewers_gambit`, whose cumulative
+  table set already includes the earlier `sewers_hub` Healer row. The continuous campaign therefore
+  grants Healer in `begin_arbiter`, after getting Gambit, before its first Xtraction point. Talking to
+  Healer and loading a pre-Gambit shared sewer room do not grant her.
+  Begin bodies therefore reapply the full cumulative NPC set, while playable heroes keep the budget-saving
+  milestone groups. The former group-only NPC emission incorrectly assumed the development milestone had run:
+  later real starts such as Muir and mansion3 also omitted Healer despite their `sewers_gambit` charunlock
+  including her in XML1's cumulative table. Cumulative NPC emission fixes that gap without moving any milestone.
+  NPC catch-up also consults every owning mission in prepared `zone_acts.json`, including development entries.
+  A missing or unknown `world.mission` therefore no longer omits an NPC when every owner permits it; playable
+  hero catch-up keeps its existing world-mission rule. All zones sharing the script must permit an NPC, and an
+  unknown owner prevents the unconditional grant. The existing statement-pool skips and zones without a script
+  remain excluded. This restores Forge in the three mansion2 rooms without world missions and in shared sewer
+  rooms whose owners all permit Forge. Shared sewer rooms do not grant Healer unconditionally.
 - Needs XML2 Fix >= the release with `xtractionservices` (1.5): with 1.4.0 the guard is 0 and the native menu runs
   (Change Team and Save only; no Forge, unlike 0.2.1 with 1.4.0's ftalk permission).
 - V32 also rejects an `extractionPointServices` call without the Load bit in its own `x1_svc` line.
@@ -8170,3 +8272,34 @@ private `--import-ledger` are supplied. Schema 2 binds finished Data/Scripts;
 runtime admission separately validates and pins the final INI/report and paired
 DLL. Normal build defaults and release identities are unchanged. The coordinator
 must assign the content identity before shipping any new generated output.
+
+## NPC rescue activation compatibility (V-ESCORT)
+
+XML1 activation at `0x28420` implements `actteamplayer` with actor flag
+`+0x335` bit `0x20`. XML2 activation at `0x41b5b0` instead rejects an actor
+whose player-controller owner at `+0x3d4` is `-1`. `setFollowingHero`
+(`0x4a48f0`) leaves an escort NPC without a controller. The inherited filter
+therefore prevents neutral escorts from reaching scripts that explicitly
+check their `_ACTIVATOR_` names.
+
+`escort_triggers.RESCUES` selects the four Arbiter lifeboat maps, their two
+demo copies, three NYC riot rescue maps and the Hive rescue arrival. The
+Hive script uses the activator's name as a rescue-state key; the others
+compare literal NPC names. The first NYC rescue already sets the filter
+false. Conversion clears only `actteamplayer` on these ten
+volumes, after checking the unique definition/placement, script, neutral
+team, team match, touch, nonleader and box filters. Changed source contracts
+fail before mutation. Scripts, actor names, objective/conversation flow,
+collision bounds, placement order and every other attribute remain intact.
+V-ESCORT checks both output map variants.
+
+Save compatibility uses exact zone/definition/attribute/value attestations
+for the `true` to `false` change. The existing equivalence checker still
+compares the full map framing, placements, numbered entities and other
+definition attributes. Hash-bound rows in `zone_prefixes.json` preserve
+existing records and historical accepted records; no new save schema or
+release identity is assigned here. The action save/load pair (`0x41a600`,
+`0x41a690`) persists action counters and enabled state, not the controller
+filter at entity `+0xc5` bit `0x20`; an older record cannot restore that
+filter over the corrected definition. Runtime escort completion and loading an
+existing save require separate acceptance on a disposable game copy.

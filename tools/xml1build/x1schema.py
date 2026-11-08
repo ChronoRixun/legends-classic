@@ -530,7 +530,8 @@ def hazard_bounds_names(root):
 
 def post_settle_names(root, rel):
     """The successive additions after the original settled-prop tail."""
-    return late_fall_volume_names(root, rel) | hazard_bounds_names(root)
+    from . import death_targets as DT
+    return late_fall_volume_names(root, rel) | hazard_bounds_names(root) | DT.names(root)
 
 
 def bounded_hazards(root, rel):
@@ -576,13 +577,15 @@ def hazard_bounds_problems(root, rel):
 
 
 def hazard_bounds_tail_problems(root):
+    from . import death_targets as DT
     names = hazard_bounds_names(root)
+    later = DT.names(root)
     out = []
     in_tail = False
     for group in root.findall('entinst'):
         if group.get('type') in names:
             in_tail = True
-        elif in_tail:
+        elif in_tail and group.get('type') not in later:
             out.append('newly resident hazard precedes an old entinst (saved ordinals shift)')
     return out
 
@@ -635,6 +638,8 @@ def numbered_entinst_tail_problems(root, rel):
     # They do not shift the volumes' old ordinals, or any other existing ordinal.
     names.update(el.get('name') for el in root.iter('entity') if el.get('xml1settle') == 'true')
     names.update(hazard_bounds_names(root))
+    from . import death_targets as DT
+    names.update(DT.names(root))
     order = [ei.get('type') or '' for ei in root if ei.tag.lower() == 'entinst']
     first = min((i for i, t in enumerate(order) if t in names), default=len(order))
     late = sorted({t for t in order[first:] if t not in names})

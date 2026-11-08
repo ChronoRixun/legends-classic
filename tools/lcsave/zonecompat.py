@@ -109,7 +109,19 @@ def attest(zone, previous, current):
         if name in new_all and new_all[name] != old_all[name]: return None
     old_defs = {n:e for n,e in old_all.items() if n not in old_tail_types}
     new_defs = {n:e for n,e in new_all.items() if n not in tail_types | old_tail_types}
-    if old_defs != new_defs: return None
+    if old_defs != new_defs:
+        # A destruction-delivery relay keeps every original placement/door and
+        # only augments an unplaced fixed stump. Authenticate the complete,
+        # deterministic conversion, never a broad ignored-attribute exception.
+        import copy
+        from xml1build import death_targets
+        expected = copy.deepcopy(old_root)
+        try:
+            changed = death_targets.convert(expected, zone)
+        except ValueError:
+            return None
+        if not changed or _canonical(expected) != _canonical(new_root):
+            return None
     return dict(zone=zone_hash(zone), old=hashlib.sha1(previous).digest(),
                 current=hashlib.sha1(current).digest(), digest=digest, placements=placements,
                 fresh_aliases=sorted(fresh-ambiguous), ambiguous_aliases=sorted(ambiguous))
@@ -135,6 +147,16 @@ REVIEWED_CHANGES = frozenset({
      '4aa338bd54cc744977583faddc92883121c2909fd8b88b7d974b80baa97fe36d',
      '0eb3e283e0714b83d87c6ec8fca5b1836b3c4a1347d4407e7d55a2f8189bb3f4'),
 })
+
+# Rescue-volume owner filters do not belong to the restored state payload.
+# Bind each reviewed true -> false edit to its exact zone and definition;
+# placement, enabled state, scripts, teams and every other attribute still compare.
+from xml1build.escort_triggers import RESCUES as _ESCORT_RESCUES
+REVIEWED_CHANGES |= frozenset(
+    (zone, definition, 'actteamplayer', hashlib.sha256(b'true').hexdigest(),
+     hashlib.sha256(b'false').hexdigest())
+    for zone, (definition, _) in _ESCORT_RESCUES.items()
+)
 
 
 def value_sha256(value):
@@ -188,13 +210,28 @@ def attest_equivalent(zone, previous, current, ignored=EQUIVALENT_ATTRIBUTES, re
             out[e.get('name')] = e
         return out
     old_defs, new_defs = elements(old_root), elements(new_root)
-    if set(old_defs) != set(new_defs):
-        return None
-    for name, old in old_defs.items():
-        new = new_defs[name]
-        top = frozenset(_reviewed(zone, name, old, new, reviewed))
-        if _canonical_without(old, ignored, top) != _canonical_without(new, ignored, top):
+    # The emitter conversion adds only a transient, unplaced watcher factory
+    # and startup on unsaved helpers. Authenticate its complete deterministic
+    # output; original smart body states and every numbered ordinal stay put.
+    from xml1build import emitter_lifetime
+    if not emitter_lifetime.equivalent(old_root, new_root):
+        # Compose the exact emitter transformation with the directional reviewed
+        # attribute edits (e.g. a rescue volume in the same map). No additional
+        # factory or arbitrary helper change is admitted by this normalization.
+        import copy
+        normalized = copy.deepcopy(old_root)
+        try:
+            emitter_lifetime.convert(normalized)
+        except ValueError:
             return None
+        old_defs = elements(normalized)
+        if set(old_defs) != set(new_defs):
+            return None
+        for name, old in old_defs.items():
+            new = new_defs[name]
+            top = frozenset(_reviewed(zone, name, old, new, reviewed))
+            if _canonical_without(old, ignored, top) != _canonical_without(new, ignored, top):
+                return None
     entries, placements = resident_prefix(new_root)
     # The runtime recomputes the digest from the current opened map, so bind the row to the current prefix.
     return dict(zone=zone_hash(zone), old=hashlib.sha1(previous).digest(), current=hashlib.sha1(current).digest(),

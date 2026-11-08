@@ -1000,6 +1000,7 @@ class Validator:
                                ('V25', 'harm loop startup', self.harm_loop_startup),
                                ('V26', 'fall kill volumes', self.fall_kill_volumes),
                                ('V64', 'boss landing triggers', self.boss_landing_triggers),
+                               ('V-ESCORT', 'NPC rescue triggers', self.escort_triggers),
                                ('V65', 'boss reinforcement approaches', self.boss_reinforcements),
                                ('V66', 'text coverage', lambda ck: TT.validate(self, ck)),
                                ('V27', 'voice lines', self.voice_lines),
@@ -1019,6 +1020,8 @@ class Validator:
                                ('V39', 'save files', lambda ck: SF.validate(self, ck)),
                                ('V41', 'spawn-floor residency', self.spawn_floor_residency),
                                ('V61', 'model-less hazard bounds', self.hazard_bounds),
+                               ('V-DEATH-TARGETS', 'destruction target doors', self.death_target_doors),
+                               ('V-EMITTER-LIFETIME', 'transient emitter lifetime', self.emitter_lifetimes),
                                ('V62', 'lock-on effects', lambda ck: LE.validate(self.ctx, ck)),
                                ('V45', 'weapon damage and reaction priority', lambda ck: W.validate(self, ck)),
                                ('V47', 'scripted boss approach', lambda ck: SA.validate(self, ck)),
@@ -1051,6 +1054,19 @@ class Validator:
                 self._banks.save()
             except OSError as ex:
                 self.ctx.note(f'sound cache not saved: {ex}')
+
+    def escort_triggers(self, ck):
+        """Rescue NPCs must reach the original named-activator scripts."""
+        from . import escort_triggers as ETG
+        for zone in ETG.RESCUES:
+            for suffix in ('engb', 'xmlb'):
+                rel = f'maps/{zone}.{suffix}'
+                root = self.tree(rel)
+                if root is None:
+                    continue
+                ck.count('map_variants')
+                for problem in ETG.problems(root, rel):
+                    ck.error(f'{rel}: {problem}')
 
     def boss_landing_triggers(self, ck):
         """The HAARP boss must be able to activate each jet landing volume."""
@@ -1087,6 +1103,42 @@ class Validator:
                 ck.count('map_variants')
                 for problem in BP.reinforcement_map_problems(root, rel):
                     ck.error(f'{rel}: {problem}')
+
+    def emitter_lifetimes(self, ck):
+        """Transient emitters keep exact ownership without changing saved bodies."""
+        from . import emitter_lifetime as EL
+        used = False
+        for zone in sorted(self.converted_zones()):
+            for suffix in ('engb', 'xmlb'):
+                rel = f'maps/{zone}.{suffix}'
+                root = self.tree(rel)
+                if root is None:
+                    continue
+                for problem in EL.problems(root):
+                    ck.error(f'{rel}: {problem}')
+                helpers = {child for _, child in EL.links(root)}
+                used |= bool(helpers)
+                ck.count('helper_factories', len(helpers))
+        if used:
+            for ref, text in EL.generated_scripts().items():
+                rel = C.script_rel(ref)
+                if self.read(rel) != C.to_crlf(text).encode('latin-1'):
+                    ck.error(f'{rel}: emitter lifetime script differs or is missing')
+
+    def death_target_doors(self, ck):
+        """Destruction-driven doors stay present and preserve old save ordinals."""
+        from . import death_targets as DT
+        for zone in sorted(self.converted_zones()):
+            for suffix in ('engb', 'xmlb'):
+                rel = f'maps/{zone}.{suffix}'
+                root = self.tree(rel)
+                if root is None:
+                    continue
+                for problem in DT.problems(root, zone):
+                    ck.error(f'{rel}: {problem}')
+                ck.count('door_definitions_checked', len(DT.door_targets(root)))
+                ck.count('hatch_links_checked', len(DT.links(root)))
+                ck.count('resident_delivery_actions', len(DT.names(root)))
 
     def hazard_bounds(self, ck):
         """Placed model-less hazards retain bounds and append new saved ordinals."""

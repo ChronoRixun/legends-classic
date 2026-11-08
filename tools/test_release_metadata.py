@@ -59,7 +59,7 @@ class ReleaseTests(unittest.TestCase):
     def test_builder_tag_check_and_manifest(self):
         import freeze_builder as F
         from xml1builder import VERSION
-        tag = 'v' + VERSION + '-beta.3'
+        tag = 'v' + VERSION + '-beta.4'
         with contextlib.redirect_stdout(io.StringIO()):
             self.assertEqual(F.main(['--check-tag', tag]), 0)
             self.assertEqual(F.main(['--check-tag', 'malformed']), 1)
@@ -73,7 +73,7 @@ class ReleaseTests(unittest.TestCase):
             self.assertEqual(set(manifest), {'version', 'content_version', 'zip', 'size', 'sha256',
                                              'min_launcher', 'requires_xml2fix'})
             self.assertEqual(manifest['version'], version)
-            self.assertEqual(manifest['requires_xml2fix'], '>=1.11.0-beta.3')
+            self.assertEqual(manifest['requires_xml2fix'], '>=1.11.0-beta.4')
             self.assertEqual(manifest['zip'], f'xml1-builder-{version}-win64.zip')
             self.assertEqual(json.loads((dist / 'xml1-builder.json').read_text())['version'], version)
 
@@ -114,7 +114,7 @@ class ReleaseTests(unittest.TestCase):
         v4 = next(node for node in spec.body if isinstance(node, ast.FunctionDef) and node.name == '_v4')
         scope = {}
         exec(compile(ast.Module(body=[v4], type_ignores=[]), '<numeric VERSIONINFO>', 'exec'), scope)
-        for suffix in ['', '-beta.3', '-rc.1']:
+        for suffix in ['', '-beta.4', '-rc.1']:
             version = VERSION + suffix
             with self.subTest(version=version), tempfile.TemporaryDirectory() as td, \
                  patch.dict(os.environ, XML1_RELEASE_TAG='v' + version), \
@@ -128,7 +128,7 @@ class ReleaseTests(unittest.TestCase):
                 manifest = json.loads((dist / 'xml1-builder.json').read_text())
                 self.assertEqual(info['version'], version)
                 self.assertEqual(manifest['version'], version)
-                self.assertEqual(manifest['requires_xml2fix'], '>=1.11.0-beta.3' if suffix else '>=1.11')
+                self.assertEqual(manifest['requires_xml2fix'], '>=1.11.0-beta.4' if suffix else '>=1.11')
                 self.assertEqual(manifest['zip'], f'xml1-builder-{version}-win64.zip')
                 self.assertTrue((dist / manifest['zip']).is_file())
                 self.assertIn(manifest['zip'], (dist / 'SHA256SUMS.txt').read_text())
