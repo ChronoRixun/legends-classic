@@ -4135,6 +4135,33 @@ class; XML2's firing "turrets" (tutorial1 `turret1`) are a physent whose actscri
 NPC and `setParent`s it to the model - the route if the port ever wants a firing turret (an XML1 gun soldier
 character, invisible / noclip, parented by the turret's spawnscript), not done here.
 
+### Transient emitter helper lifetime (candidate)
+
+Fixed physical bodies can spawn a model-less, nonpersistent radius-harm helper and parent its returned
+handle to `_OWNER_`. Smart stream-out bypasses the ordinary parent-removal notification. Such a helper
+must not continue attacking after its body is absent or dead. `emitter_lifetime` recognizes the literal
+two-statement spawn/setParent form, excludes placed helpers, authored startup code and unrelated spawn
+uses, and preserves every original body attribute, placement and attack field.
+
+The helper gains a generated startup script and `xml1emitterlifetime=true`. Startup creates an unplaced,
+nonpersistent `actionent` watcher parented to that exact helper handle. Its native positive first-act and
+repeat timers run at 0.05 seconds, without random delay, waiting script contexts or recursion. Each short
+check obtains the helper and body through two `getParentID` calls. A zero/nonexistent or nonpositive-health
+body disables/removes only that helper, then removes the watcher. Ordinary helper removal also notifies
+its watcher through native parentage. Names shared by sibling helpers are never cleanup targets.
+
+One watcher factory is added per affected map; no instance groups are added or reordered. Original smart
+bodies retain their identities and saved dead state. `attest_equivalent` accepts this change only when
+the complete new map equals the deterministic conversion of the previous map, with the same numbered
+list and placements. Hash-bound direct/historical prefix rows retain all old aliases; there are no fresh
+aliases. V-EMITTER-LIFETIME checks both map variants, helper markers, watcher shape and exact CRLF script
+bytes. The zones self-test accounts for exactly one added unplaced definition.
+
+This is a candidate until live acceptance. Cleanup occurs on the next watcher timer tick, so an already
+dispatched hit can precede it. Fresh/streamed destruction, siblings, watcher allocation/removal and copied
+existing-save behavior require live checks. Source damage, effects, repeat delays and nonpersistence are
+unchanged; this is not an alteration of the original health-versus-energy attacks.
+
 ### Destruction-driven door targets
 
 XML2 already supports `actondeath`: the action reader stores it in entity `+0xc4` bit 4 (`0x41bc7d`),

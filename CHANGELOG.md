@@ -5,6 +5,9 @@ build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebui
 
 ## Unreleased
 
+- Candidate emitter cleanup checks the harmful helper's exact parent handle and removes helpers whose
+  body is dead or absent. Authored damage/timing and existing body save identities are preserved;
+  live lifetime, sibling and copied-save acceptance remain pending.
 - Console destruction now reaches the Arbiter launch-bay progression hatches even when their doors are
   streamed out. Rebuild content to apply the correction. Original door save identities and console target
   lists are preserved. For an already-stuck save, revisit the destroyed console once and return to its hatch.
