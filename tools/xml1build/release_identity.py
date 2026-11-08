@@ -26,7 +26,8 @@ CURRENT_CATALOGUE_REVISION = 8   # 0.6.0-beta.1: --loot xml1 (the default) exten
 # peer receipt. Release integration must assign an immutable official identity.
 # It applies only while VERSION is the candidate's (0.4.0e); a release builder never takes it. Its catalogue revision
 # follows CURRENT_CATALOGUE_REVISION (8 since 0.6.0-beta.1).
-PRIVATE_CANDIDATE = Identity('0.4.0e', 33, 8, 'C04E')
+# Keep the inert private envelope outside the issued content33 / LC43 identity.
+PRIVATE_CANDIDATE = Identity('0.4.0e', 75, 8, 'C04E')
 
 HISTORY = (
     Identity('port-before-LC', 0, 0, 'X1.0'),
