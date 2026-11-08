@@ -1000,6 +1000,7 @@ class Validator:
                                ('V25', 'harm loop startup', self.harm_loop_startup),
                                ('V26', 'fall kill volumes', self.fall_kill_volumes),
                                ('V64', 'boss landing triggers', self.boss_landing_triggers),
+                               ('V-ESCORT', 'NPC rescue triggers', self.escort_triggers),
                                ('V65', 'boss reinforcement approaches', self.boss_reinforcements),
                                ('V66', 'text coverage', lambda ck: TT.validate(self, ck)),
                                ('V27', 'voice lines', self.voice_lines),
@@ -1052,6 +1053,19 @@ class Validator:
                 self._banks.save()
             except OSError as ex:
                 self.ctx.note(f'sound cache not saved: {ex}')
+
+    def escort_triggers(self, ck):
+        """Rescue NPCs must reach the original named-activator scripts."""
+        from . import escort_triggers as ETG
+        for zone in ETG.RESCUES:
+            for suffix in ('engb', 'xmlb'):
+                rel = f'maps/{zone}.{suffix}'
+                root = self.tree(rel)
+                if root is None:
+                    continue
+                ck.count('map_variants')
+                for problem in ETG.problems(root, rel):
+                    ck.error(f'{rel}: {problem}')
 
     def boss_landing_triggers(self, ck):
         """The HAARP boss must be able to activate each jet landing volume."""

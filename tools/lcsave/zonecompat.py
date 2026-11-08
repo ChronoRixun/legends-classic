@@ -148,6 +148,16 @@ REVIEWED_CHANGES = frozenset({
      '0eb3e283e0714b83d87c6ec8fca5b1836b3c4a1347d4407e7d55a2f8189bb3f4'),
 })
 
+# Rescue-volume owner filters do not belong to the restored state payload.
+# Bind each reviewed true -> false edit to its exact zone and definition;
+# placement, enabled state, scripts, teams and every other attribute still compare.
+from xml1build.escort_triggers import RESCUES as _ESCORT_RESCUES
+REVIEWED_CHANGES |= frozenset(
+    (zone, definition, 'actteamplayer', hashlib.sha256(b'true').hexdigest(),
+     hashlib.sha256(b'false').hexdigest())
+    for zone, (definition, _) in _ESCORT_RESCUES.items()
+)
+
 
 def value_sha256(value):
     """The reviewed-change hash of one attribute value (latin-1, as XMLB stores it)."""
