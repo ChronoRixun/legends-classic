@@ -7,6 +7,7 @@ build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebui
 
 - Full builds insert emitter helpers before the new progression tail, matching the focused map proof and
   preserving the exact GRSO save-prefix bindings. A combined full-conversion regression checks both fixes.
+  The owned zone self-test counts progression additions from the source recipe and validates the generated tail.
 
 - The builder retains distant sewer door unlocks across streaming: the Healer guard latch and both GRSO
   objective exits gain resident retry actions. Old stuck saves recover by revisiting the dead guards for the

@@ -104,3 +104,17 @@ def test_retained_package_requires_nonempty_talents_and_unpatched_base():
     assert not T.retained_package_matches(base, base, [])
     base.insert(0, ET.Element('xml_talents', {'filename': talents[0]}))
     assert not T.retained_package_matches(base, output, talents)
+
+
+def test_zone_element_count_includes_only_source_derived_progression_additions():
+    from test_progression_relays import world
+    from xml1build import progression_relays as PR
+    source=world();zone='sewers/grso/sewers3_1_1';original=T.C.encode_xmlb(source)
+    output=copy.deepcopy(source);PR.convert(output,zone,{})
+    assert T.zone_element_count_matches(source,output,zone)
+    assert not T.zone_element_count_matches(source,source,zone)  # missing generated tail
+    assert T.zone_element_count_matches(source,source,'invented/other')
+    output.append(ET.Element('unrelated'))
+    assert not T.zone_element_count_matches(source,output,zone)  # arbitrary growth still rejects
+    assert T.zone_element_count_matches(source,output,zone,extra_elements=1)
+    assert T.C.encode_xmlb(source)==original

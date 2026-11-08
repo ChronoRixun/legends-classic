@@ -72,6 +72,14 @@ def decode(path):
     return C.decode_xmlb(Path(path).read_bytes())
 
 
+def zone_element_count_matches(source, output, zone, *, extra_elements=0):
+    """Count progression additions from the source recipe, never trust output markers as a growth waiver."""
+    from xml1build import progression_relays as PR
+    expected = copy.deepcopy(source)
+    PR.convert(expected, zone)
+    return sum(1 for _ in output.iter()) == sum(1 for _ in expected.iter()) + extra_elements
+
+
 def world_table_prefix_matches(base, output, source_items=None):
     """Preserve every inherited entry; d52fe3b permits only a missing pickup model from XML1.
 
@@ -219,10 +227,13 @@ def main(argv=None):
         o = decode(out / owned[f'maps/{z}.xmlb']['rel'])
         from xml1build import death_targets as DT
         from xml1build import emitter_lifetime as EL
+        from xml1build import progression_relays as PR
         for problem in DT.problems(o, z):
             fail('B_death_target_door', f'{z}: {problem}')
         for problem in EL.problems(o):
             fail('B_emitter_lifetime', f'{z}: {problem}')
+        for problem in PR.problems(o, z):
+            fail('B_progression_relay', f'{z}: {problem}')
         s = ctx.read_x1_xml(src)
         synth = bool(d.get('world_synthesized'))
         if synth:
@@ -251,7 +262,8 @@ def main(argv=None):
         settle_delta = added_defs + added_groups - removed_groups
         relay_delta = 6 * len(DT.links(s))
         emitter_delta = int(bool(EL.links(s)))
-        if sum(1 for _ in o.iter()) != sum(1 for _ in s.iter()) + (1 if synth else 0) + settle_delta + relay_delta + emitter_delta:
+        extra_elements = (1 if synth else 0) + settle_delta + relay_delta + emitter_delta
+        if not zone_element_count_matches(s, o, z, extra_elements=extra_elements):
             fail('B_element_count', z)
         if o.tag != 'world':
             fail('B_root_tag', f'{z}: <{o.tag}>')
