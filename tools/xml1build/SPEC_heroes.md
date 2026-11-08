@@ -511,3 +511,17 @@ count (`vt+4()` of the talent object, the parsed sum of `<level count>`), so an 
 the new maximum, inert above it. Traced in the decompile, not play-verified. Skill points spent on the clamped
 ranks are not refunded (FUN_004bbae0 reconciles against the character level, not the rank count). NPC `might
 level="4"` (MagnetoBoss, SentinelSpider x2) clamps the same way to the new 3 ranks.
+
+## Rank-dependent lifetime safety (V-H18)
+
+A trigger introduced above rank 1 is absent at earlier XML1 ranks. XML2 life=0 instead creates an
+attachment without expiry (`0x5383e0`, `0x5376b1`). The collapse therefore emits apply_chance=-1 at missing
+ranks for triggers carrying life, retaining the existing lifetime table and the authored application chance
+at active ranks. A zero gate is insufficient because `0x4e7b50` uses a strict comparison against the RNG.
+The prior confused/team_switch kind split retains its separate application gates and duration-range adapter.
+
+V-H18 also walks every emitted trigger with life and every owning/referenced talent rank. A lifetime resolving
+to zero, including a range endpoint, must resolve to an exact -1 application gate. Active durations and all
+existing talentvalues remain unchanged; the fix prevents future low-rank applications. It does not rewrite
+attachments already persisted in an older save. Offline source regeneration covers 17 events in nine styles;
+expiry, new casts and old-save behavior still require the coordinator's live round.

@@ -1021,6 +1021,8 @@ class Validator:
                                ('V41', 'spawn-floor residency', self.spawn_floor_residency),
                                ('V61', 'model-less hazard bounds', self.hazard_bounds),
                                ('V-DEATH-TARGETS', 'destruction target doors', self.death_target_doors),
+                               ('V-PROGRESSION', 'durable progression unlocks', self.progression_relays),
+                               ('V-STREAMED-UNLOCKS', 'distant streamed activation targets', self.streamed_unlocks),
                                ('V-EMITTER-LIFETIME', 'transient emitter lifetime', self.emitter_lifetimes),
                                ('V62', 'lock-on effects', lambda ck: LE.validate(self.ctx, ck)),
                                ('V45', 'weapon damage and reaction priority', lambda ck: W.validate(self, ck)),
@@ -1124,6 +1126,54 @@ class Validator:
                 rel = C.script_rel(ref)
                 if self.read(rel) != C.to_crlf(text).encode('latin-1'):
                     ck.error(f'{rel}: emitter lifetime script differs or is missing')
+
+    def streamed_unlocks(self, ck):
+        from . import streamed_unlocks as SU
+        for zone in sorted(self.converted_zones()):
+            root = self.tree(f'maps/{zone}.engb')
+            if root is None:
+                root = self.tree(f'maps/{zone}.xmlb')
+            if root is None:
+                continue
+            def read_script(ref):
+                raw = self.read(C.script_rel(ref))
+                return raw.decode('latin-1') if raw is not None else None
+            world = C.find_world(root)
+            def read_conversation(ref):
+                tree = self.tree(f'conversations/{ref}.engb')
+                return tree if tree is not None else self.tree(f'conversations/{ref}.xmlb')
+            extra = [fn for kind, fn in (self.zone_pkg(zone) or ()) if kind.lower() == 'script']
+            rows = SU.audit(root, read_script, covered=SU.relay_coverage(root, zone),
+                            extra_scripts=extra, read_conversation=read_conversation,
+                            zone_script=world.get('zonescript') if world is not None else None)
+            ck.count('maps_checked', 1)
+            ck.count('remaining_hits', len(rows))
+            for row in rows:
+                distance = row['distance']
+                where = f'{distance:.1f} u' if distance is not None else 'unlocated origin'
+                ck.warn(f'{zone}: {row["source"]} -> {row["target"]} ({where}; '
+                        f'sources={row["sources"]})')
+
+    def progression_relays(self, ck):
+        from . import progression_relays as PR
+        for zone in sorted(self.converted_zones()):
+            for suffix in ('engb', 'xmlb'):
+                rel = f'maps/{zone}.{suffix}'
+                root = self.tree(rel)
+                if root is None:
+                    continue
+                for problem in PR.problems(root, zone):
+                    ck.error(f'{rel}: {problem}')
+                scripts = {}
+                try:
+                    import copy
+                    PR.convert(copy.deepcopy(root), zone, scripts)
+                except ValueError:
+                    continue  # reported above
+                for ref, text in scripts.items():
+                    if self.read(C.script_rel(ref)) != C.to_crlf(text).encode('latin-1'):
+                        ck.error(f'{ref}: progression delivery script differs or is missing')
+                ck.count('resident_delivery_actions', len(PR.names(root)))
 
     def death_target_doors(self, ck):
         """Destruction-driven doors stay present and preserve old save ordinals."""
