@@ -676,11 +676,12 @@ def finish(a, output, job, ctl, pipeline, warn):
                                    'Use one companion DLL with the menu, input, lobby and scoped-font capabilities, '
                                    'or build with --online-menus off.',
                                    {'missing':missing,'count':len(missing)},stage='finish') from exc
-            if '[Limits] SaveLayout' in missing or '[Game] Xml1Economy' in missing:
+            if ('[Limits] SaveLayout' in missing or '[Game] Xml1Economy' in missing or
+                    '[Game] NpcSemiAuto (beam/flame trace gate)' in missing):
                 # not a warning: an older DLL ignores the key, so the build would run on the baseline save layout (or
                 # XML2's economy) while it was built (and validated) for W2 / the first game's; nothing is written
                 raise BuilderError('E_XML2FIX_OLD', f'{exc}.', f'Put XML2 Fix {pipeline.required_xml2fix()[2:]} or later '
-                                   'into the folder, or build without --save-layout w2 / --loot xml1.',
+                                   'with the required capabilities into the folder.',
                                    {'missing': missing, 'count': len(missing), 'required': pipeline.required_xml2fix()},
                                    stage='finish') from exc
             warn('W_XML2FIX_OLD', f'{exc}. The build is complete: put XML2 Fix {pipeline.required_xml2fix()[2:]} or '
