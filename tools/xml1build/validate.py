@@ -190,6 +190,7 @@ from . import scripts_transform as ST      # section 18: the join zones' NPC dou
 from . import scripts_lint as L            # V14e: branch-aware console queue walk
 from . import validate_frontend as VF      # V15-V17 (SPEC 21): front end, Danger Room, Review / codex / trivia / credits
 from . import combat_events as CE        # V18 (SPEC 22): style triggers / events / FightMove handlers
+from . import puzzle_reactions as PZR   # Necessary attack producers for placed power-trigger puzzles
 from . import npc_values as NV           # V19 (SPEC 24): value codes XMen2.exe reads as 0, the NPC energy talent
 from . import buoys as BY
 from . import automaps as AM             # V20 (SPEC 26): XML1 automaps as .zam
@@ -985,6 +986,7 @@ class Validator:
                                ('V16', 'danger room', lambda ck: VF.v16_danger_room(self, ck)),
                                ('V17', 'review', lambda ck: VF.v17_review(self, ck)),
                                ('V18', 'combat events', lambda ck: CE.v18(self, ck)),
+                               ('V-PUZZLE', 'puzzle reaction producers', lambda ck: PZR.validate(self, ck)),
                                ('V19', 'npc values', lambda ck: NV.v19(self, ck)),
                                ('V60', 'resistance talents', lambda ck: NV.v_resist_talents(self, ck)),
                                ('V63', 'resistance HUD', lambda ck: RH.validate(self, ck)),
