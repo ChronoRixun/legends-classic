@@ -100,3 +100,51 @@ def problems(source, style, talents, values):
     if not groups and any(a.get('attribute') == 'team_switch' for a in style.iter('affecter')):
         errors.append('converted team_switch has no matching XML1 power')
     return errors
+
+
+def zero_life_problems(style, talents):
+    """V-H18: any rank resolving to life zero requires an exact -1 application gate.
+
+    Check every rank in the owning talent as well as referenced tables. Explicit positive/negative
+    source durations are retained; zero is legal only on a branch the engine cannot apply.
+    """
+    tables, levels = {}, {}
+    if talents is not None:
+        for talent in talents.findall('talent'):
+            ranks = {int(v.get('level')) for v in talent.iter('talentvalue') if (v.get('level') or '').isdigit()}
+            maximum = int(talent.get('maxlevel', '1'))
+            levels[talent.get('name')] = max(ranks | {maximum})
+        for value in talents.iter('talentvalue'):
+            if (value.get('level') or '').isdigit():
+                tables.setdefault(value.get('name'), {})[int(value.get('level'))] = value.get('value')
+
+    def resolve(value, rank):
+        if value is None:
+            return None
+        if value.startswith('%'):
+            value = tables.get(value[1:], {}).get(rank)
+        if value is None:
+            return None
+        try:
+            parts = tuple(float(v) for v in value.split())
+            return parts if parts and all(math.isfinite(v) for v in parts) else None
+        except ValueError:
+            return None
+
+    errors = []
+    for move in style.findall('FightMove'):
+        count = max((levels.get(r.get('item'), 1) for r in move.findall('require')), default=1)
+        for t in move.iter('trigger'):
+            life = t.get('life')
+            if life is None:
+                continue
+            refs = [v[1:] for v in t.attrib.values() if v.startswith('%')]
+            maximum = max([count] + [max(tables.get(ref, {1: None})) for ref in refs])
+            for rank in range(1, maximum + 1):
+                duration = resolve(life, rank)
+                if duration is not None and 0 in duration:
+                    gate = resolve(t.get('apply_chance', t.get('apply_enemy_chance')), rank)
+                    if gate != (-1.0,):
+                        errors.append(f'{move.get("name")} trigger {t.get("tag")} rank {rank}: '
+                                      'life resolves to 0 without apply_chance=-1')
+    return errors

@@ -33,3 +33,5 @@ DECODED_XML   tests/unit/test_emitter_lifetime.py                    # invented 
 BINARY tools/xml1build/fonts/barlowcondensed/BarlowCondensed-ExtraBoldItalic.ttf # Official Google Fonts OFL source, hashes and license adjacent; no game content.
 BINARY tools/xml1build/fonts/barlowcondensed/BarlowCondensed-Bold.ttf # Official Google Fonts OFL source, hashes and license adjacent; no game content.
 BINARY tools/xml1build/fonts/barlowcondensed/BarlowCondensed-Medium.ttf # Official Google Fonts OFL source, hashes and license adjacent; no game content.
+
+DECODED_XML tests/unit/test_streamed_unlocks.py # authored synthetic switch/relay/door and conversation graph fixtures; no source map data

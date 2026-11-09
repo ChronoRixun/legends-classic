@@ -312,7 +312,8 @@ def numbered_tail_problems(root, later=()):
     """New residents must follow every pre-existing placement (save ordinals). `later`: entinst types numbered
     after the settled props (x1schema.FALL_KILL_ENABLED_LATE), allowed behind them."""
     from . import death_targets as DT
-    destruction = DT.names(root)
+    from . import progression_relays as PR
+    destruction = DT.names(root) | PR.names(root)
     after_embedded = destruction | {e.get('name') for e in root.iter('entity')
                                    if e.get('xml1hazardbounds') == 'true'}
     marked = {e.get('name') for e in root.iter('entity') if e.get(MARKER) == 'true'}

@@ -5,6 +5,20 @@ build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebui
 
 ## Unreleased
 
+- Full builds insert emitter helpers before the new progression tail, matching the focused map proof and
+  preserving the exact GRSO save-prefix bindings. A combined full-conversion regression checks both fixes.
+  The owned zone self-test counts progression additions from the source recipe and validates the generated tail.
+
+- The builder retains distant sewer door unlocks across streaming: the Healer guard latch and both GRSO
+  objective exits gain resident retry actions. Old stuck saves recover by revisiting the dead guards for the
+  Healer door, or approaching a GRSO exit with both objectives complete. Two optional Nuke panel doors use
+  the same protection. Existing door save identities and original placement ordinals are preserved; live
+  acceptance is pending.
+- Later-rank hero effects reject application below their first rank instead of applying a permanent zero-life
+  attachment. Authored active-rank lifetimes and values are retained. V-H18 checks every zero-life rank.
+- A new streaming validator reports distant data/script activation chains, including conversation callbacks,
+  and identifies script origins whose distance needs manual review.
+
 - Save import stays off by default. Experimental Install and Undo now require a
   companion DLL advertising the SaveLC writer lease; previews pin its hash and
   Undo requires `--build`. Experimental builds can compile a private, source-hash

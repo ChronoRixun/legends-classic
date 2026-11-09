@@ -531,7 +531,8 @@ def hazard_bounds_names(root):
 def post_settle_names(root, rel):
     """The successive additions after the original settled-prop tail."""
     from . import death_targets as DT
-    return late_fall_volume_names(root, rel) | hazard_bounds_names(root) | DT.names(root)
+    from . import progression_relays as PR
+    return late_fall_volume_names(root, rel) | hazard_bounds_names(root) | DT.names(root) | PR.names(root)
 
 
 def bounded_hazards(root, rel):
@@ -578,8 +579,9 @@ def hazard_bounds_problems(root, rel):
 
 def hazard_bounds_tail_problems(root):
     from . import death_targets as DT
+    from . import progression_relays as PR
     names = hazard_bounds_names(root)
-    later = DT.names(root)
+    later = DT.names(root) | PR.names(root)
     out = []
     in_tail = False
     for group in root.findall('entinst'):
@@ -639,7 +641,8 @@ def numbered_entinst_tail_problems(root, rel):
     names.update(el.get('name') for el in root.iter('entity') if el.get('xml1settle') == 'true')
     names.update(hazard_bounds_names(root))
     from . import death_targets as DT
-    names.update(DT.names(root))
+    from . import progression_relays as PR
+    names.update(DT.names(root) | PR.names(root))
     order = [ei.get('type') or '' for ei in root if ei.tag.lower() == 'entinst']
     first = min((i for i, t in enumerate(order) if t in names), default=len(order))
     late = sorted({t for t in order[first:] if t not in names})

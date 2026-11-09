@@ -153,11 +153,13 @@ def problems(root, zone='synthetic/zone'):
     stump_names = {link['stump'] for link in links(root)}
     out += ['invalid destruction stump marker: ' + e.get('name', '') for e in root.iter('entity')
             if e.get(STUMP_MARKER) == 'true' and e.get('name') not in stump_names]
+    from . import progression_relays as PR
+    later = PR.names(root)
     in_tail = False
     for group in root.findall('entinst'):
         if group.get('type') in marked:
             in_tail = True
-        elif in_tail:
+        elif in_tail and group.get('type') not in later:
             out.append('new destruction relay precedes an old entinst (saved ordinals shift)')
     for link in links(root):
         actual = next(e for e in root.iter('entity') if e.get('name') == link['stump'])
