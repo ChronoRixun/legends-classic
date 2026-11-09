@@ -76,6 +76,8 @@ HISTORY = (
     # 0.6.0-beta.4: Arbiter progression, escort arrivals, emitter lifetime and control/service fixes.
     # Catalogue 8 and W2 unchanged; beta.1, beta.2 and beta.3 saves remain compatible.
     Identity('0.6.0-beta.4', 33, 8, 'LC43', 'bf5964d1f5b5012d02b06fef686bfc2ac6eced84897636e990c2ac87b553b5c0'),
+    # Beta.5 progression and rank gates; catalogue 8 and W2 unchanged.
+    Identity('0.6.0-beta.5', 34, 8, 'LC44', '32b20a13dc31690e8997f91d6de0649fccbc973da64e37ce9328bfe093306305'),
 )
 
 

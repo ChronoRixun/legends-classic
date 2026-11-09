@@ -1329,10 +1329,20 @@ class StyleCollapse:
                     top = next(vals[r] for r in range(n, 0, -1) if vals[r] is not None)
                     tgt.set(k, top)
                     self.report['enum_top_rung'].append(f'{where} trigger {tag} @{k}: {vals} -> {top}')
+            # A later-rank event is absent in XML1, not an infinite attachment. Keep the authored
+            # life table and reject application below its first rung (including an exact-zero RNG draw).
+            if not present and talent and 'life' in attrs:
+                chance = {}
+                for r in range(1, n + 1):
+                    event = trig(eff[r], tag)
+                    chance[r] = (self._resolved(event.get('apply_chance', event.get('apply_enemy_chance', '1')),
+                                                'chance') if event is not None else '-1')
+                tgt.attrib.pop('apply_enemy_chance', None)
+                tgt.set('apply_chance', self._tv(talent, 'apply_chance', tag, chance, n))
             if not present and 'life' not in attrs:
                 self.report['added_triggers'].append(f'{where}: trigger tag {tag} has no life to gate it (active from rank 1, UNGATED)')
             # a victim event tag that changes with the rank (Iceman's beam: chill tag 10, frozen tag 20 from rank
-            # 6): XML2's victimeventtag1/2 apply both powerups; the later one is life-gated to 0 below its rank
+            # 6): XML2's victimeventtag1/2 apply both powerups; the later one is application-gated below its rank
             vals = {r: (trig(eff[r], tag).get('victimeventtag') if trig(eff[r], tag) is not None else None) for r in range(1, n + 1)}
             vts = []
             for r in range(1, n + 1):
@@ -1342,7 +1352,7 @@ class StyleCollapse:
                 tgt.attrib.pop('victimeventtag', None)
                 for i, v in enumerate(vts, 1):
                     tgt.set(f'victimeventtag{i}', v)
-                self.report['losses'].append(f'{where}: trigger {tag} victimeventtag {vts} -> victimeventtag1..{len(vts)} (all applied; the later powerups are life-gated)')
+                self.report['losses'].append(f'{where}: trigger {tag} victimeventtag {vts} -> victimeventtag1..{len(vts)} (later powerups are application-gated)')
             # A powerup whose kind changes with rank (Frost/Jubilee: confused -> team_switch at rank 6).
             # life=0 is PERMANENT in XML2 (0x5383e0, expiry check 0x5376b1), not an inactive branch.
             # Gate application instead, keeping the real duration. A negative chance always rejects, even
@@ -3450,6 +3460,8 @@ def _validate(ctx, report=None):
         source_style = _lower_attrs(plan['x1'][h]).get('powerstyle')
         source = ctx.read_x1_xml(f'data/powerstyles/{source_style}.eng')
         for message in MC.problems(source, sroot, o.tree(f'Data/talents/{h}.engb'), values):
+            ck.error(f'{h}: {message}')
+        for message in MC.zero_life_problems(sroot, o.tree(f'Data/talents/{h}.engb')):
             ck.error(f'{h}: {message}')
     return checks, budgets
 

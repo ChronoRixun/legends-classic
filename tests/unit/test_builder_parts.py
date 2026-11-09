@@ -1245,41 +1245,43 @@ def test_join_in_progress_is_on_for_port_builds_and_needs_fix_18():
         FI.check_release_dll(dll, {'Online': {'ReceiveValidation': '1', 'JoinInProgress': '1'}})
 
 
-def test_release_identity_060_beta4_is_lc43_and_preserves_shipped_history():
+def test_release_identity_060_beta5_is_lc44_and_preserves_shipped_history():
     from xml1build import release_identity as RI
     from xml1builder import CONTENT_VERSION, VERSION
     import release_metadata as RM
-    assert (VERSION, CONTENT_VERSION, RI.CURRENT_CATALOGUE_REVISION) == ('0.6.0', 33, 8)
-    assert RI.game_version() == 'LC43'
+    assert (VERSION, CONTENT_VERSION, RI.CURRENT_CATALOGUE_REVISION) == ('0.6.0', 34, 8)
+    assert RI.game_version() == 'LC44'
+    assert RI.game_version(content_version=33, catalogue_revision=8) == 'LC43'
     assert RI.game_version(content_version=32, catalogue_revision=8) == 'LC42'
     assert RI.game_version(content_version=31, catalogue_revision=8) == 'LC41'
     assert RI.game_version(content_version=30, catalogue_revision=8) == 'LC40'
     assert RI.game_version(content_version=29, catalogue_revision=8) == 'LC38'
     assert RI.game_version(content_version=28, catalogue_revision=7) == 'LC37'
-    assert RI.HISTORY[-5].bind_manifest == '3db3423eedfcc46344219b7766b30f39bde8687be8fe51a180050c79733a170d'
-    assert RI.HISTORY[-4] == RI.Identity('0.6.0-beta.1', 30, 8, 'LC40', 'a8ec20954386445ea93d1c3ecb23aecb1c9665c2af0fb8a64e98b352ed407c1d')
-    assert RI.HISTORY[-3] == RI.Identity('0.6.0-beta.2', 31, 8, 'LC41', 'b45c407cf97da3fafa09452d52d793931eccfd63047622d011b1540098d962e7')
-    assert RI.HISTORY[-2] == RI.Identity('0.6.0-beta.3', 32, 8, 'LC42', 'a3e81e8953d93f02619d0195bc8add7afa256ff625e4114a99eba9a1c244c5a5')
-    assert RI.HISTORY[-1].release == '0.6.0-beta.4' and RI.HISTORY[-1].token == 'LC43'
-    # Preparation leaves this empty; integration must measure it from real output.
+    assert RI.HISTORY[-6].bind_manifest == '3db3423eedfcc46344219b7766b30f39bde8687be8fe51a180050c79733a170d'
+    assert RI.HISTORY[-5] == RI.Identity('0.6.0-beta.1', 30, 8, 'LC40', 'a8ec20954386445ea93d1c3ecb23aecb1c9665c2af0fb8a64e98b352ed407c1d')
+    assert RI.HISTORY[-4] == RI.Identity('0.6.0-beta.2', 31, 8, 'LC41', 'b45c407cf97da3fafa09452d52d793931eccfd63047622d011b1540098d962e7')
+    assert RI.HISTORY[-3] == RI.Identity('0.6.0-beta.3', 32, 8, 'LC42', 'a3e81e8953d93f02619d0195bc8add7afa256ff625e4114a99eba9a1c244c5a5')
+    assert RI.HISTORY[-2].release == '0.6.0-beta.4' and RI.HISTORY[-2].token == 'LC43'
+    assert RI.HISTORY[-1] == RI.Identity('0.6.0-beta.5', 34, 8, 'LC44', '32b20a13dc31690e8997f91d6de0649fccbc973da64e37ce9328bfe093306305')
+    # The full release build must reproduce the bound candidate bytes.
     fingerprint = RI.HISTORY[-1].bind_manifest
     assert fingerprint == '' or (len(fingerprint) == 64 and all(c in '0123456789abcdef' for c in fingerprint))
     assert not any(r.token == 'LC39' for r in RI.HISTORY)
     RI.validate_history(RI.HISTORY)
-    for extra in (RI.Identity('duplicate-token', 34, 8, 'LC43'),
-                  RI.Identity('duplicate-content', 33, 8, 'LC44')):
+    for extra in (RI.Identity('duplicate-token', 35, 8, 'LC44'),
+                  RI.Identity('duplicate-content', 34, 8, 'LC45')):
         try:
             RI.validate_history(RI.HISTORY + (extra,), previous=RI.HISTORY)
         except ValueError:
             continue
         raise AssertionError('duplicate identity accepted')
-    for content, revision in ((33, 7), (32, 7), (31, 7), (30, 7), (29, 7), (28, 8)):
+    for content, revision in ((34, 7), (33, 7), (32, 7), (31, 7), (30, 7), (29, 7), (28, 8)):
         try:
             RI.game_version(content_version=content, catalogue_revision=revision)
         except ValueError:
             continue
         raise AssertionError('unassigned identity accepted')
-    assert RM.release_version('v0.6.0-beta.4', VERSION) == '0.6.0-beta.4'
+    assert RM.release_version('v0.6.0-beta.5', VERSION) == '0.6.0-beta.5'
     assert FI.required_xml2fix('0.6.0-beta.2') == '>=1.11.0-beta.4'
     assert FI.required_xml2fix('0.6.0') == '>=1.11'
 

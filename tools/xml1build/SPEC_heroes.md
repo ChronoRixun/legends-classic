@@ -354,6 +354,7 @@ without ctx.shared):
 | V-H4 | shared_talents XMLB == engb, <= 99, == DESIGN 4.7 (delta = warning), special names defined where a hero references them, shared + worst 4 files <= 92 | error / warn |
 | V-H5 | per style: `power1/2/3/9` exist and require their talent, no XML1 top name / `fallback`, every `inherit` resolves, no chain to a dropped rung, no value code left, `%` only on `VALUE_REF_ATTRS`; every `<event>` / `<trigger>` resolves to a registered `ce_*` type, <= 19 triggers per move, names <= 31 (`combat_events.style_findings`, SPEC 22); every affecter in XMen2.exe's affecter table (error); handlers not in `FM_HANDLERS` and affecters no XML2 retail style uses are warnings | error / warn |
 | V-H18 | every XML1 talent with a team_switch rank: generated application gates select exactly the XML1 kind at every rank, with a positive finite life and both XML1 duration endpoints | error |
+| V-PUZZLE | placed converted powertrigger reactions have a matching attack producer among the available heroes; shared/local events, move inheritance, tagged updates, modifiers, power chains and literal damage-level bytes are resolved. Mission directories whose entries agree on one forced party use that party. The two inherited Wolverine-flashback charge constraints remain explicit warnings. This is a structural check; it does not establish aim, collision, access prerequisites or a playthrough. | error / warn |
 | V-H6 | per costume: `<hero>_<skin>` and `_nc` exist with `actorskin`, `actoranimdb`, `xml_talents data/talents/<hero>`, the combat one with the mapped `fightstyle`; no `xml_talents` / `xml` entry after the first `fightstyle`; every entry resolves; `<hero>_xml` and the placeholder packages exist | error |
 | V-H7 | `characters_heads` lists every existing hero head + 9999 + `m_team_roster_screen`, every listed model exists; `_pc` lists exactly 9999 | error |
 | V-H8 | per costume a HUD head (costume / default / variant 01 fallback) exists (error); `UI/HUD/characters/<skin>` missing -> note when a fallback exists, warning otherwise; loading textures noted | error / warn / note |
@@ -511,3 +512,17 @@ count (`vt+4()` of the talent object, the parsed sum of `<level count>`), so an 
 the new maximum, inert above it. Traced in the decompile, not play-verified. Skill points spent on the clamped
 ranks are not refunded (FUN_004bbae0 reconciles against the character level, not the rank count). NPC `might
 level="4"` (MagnetoBoss, SentinelSpider x2) clamps the same way to the new 3 ranks.
+
+## Rank-dependent lifetime safety (V-H18)
+
+A trigger introduced above rank 1 is absent at earlier XML1 ranks. XML2 life=0 instead creates an
+attachment without expiry (`0x5383e0`, `0x5376b1`). The collapse therefore emits apply_chance=-1 at missing
+ranks for triggers carrying life, retaining the existing lifetime table and the authored application chance
+at active ranks. A zero gate is insufficient because `0x4e7b50` uses a strict comparison against the RNG.
+The prior confused/team_switch kind split retains its separate application gates and duration-range adapter.
+
+V-H18 also walks every emitted trigger with life and every owning/referenced talent rank. A lifetime resolving
+to zero, including a range endpoint, must resolve to an exact -1 application gate. Active durations and all
+existing talentvalues remain unchanged; the fix prevents future low-rank applications. It does not rewrite
+attachments already persisted in an older save. Offline source regeneration covers 17 events in nine styles;
+expiry, new casts and old-save behavior still require the coordinator's live round.

@@ -18,11 +18,9 @@ the builder makes no network connections.
 Unlike [XML1-recomp](https://github.com/GTTeancum/XML1-recomp), which runs the original Xbox game natively, Legends
 Classic runs the first game on the sequel's PC engine - which is what makes online co-op and the sequel's mods possible.
 
-> **Current beta: 0.6.0-beta.4**, paired with XML2 Fix 1.11.0-beta.4 on Ultimate Legends' Beta channel.
-> Beta.4 fixes Arbiter progression hatches and crew rescue, destroyed pylon cleanup, temporary control effects,
-> loaded-save Healer/Forge availability and the lost-newcomer restart notice.
-> Update both parts, **Rebuild**, then **Play**. beta.1, beta.2 and beta.3 saves load; online builds must match.
-> Previous beta: 0.6.0-beta.3. Stable: 0.4.0. See [CHANGELOG](CHANGELOG.md) and [known issues](docs/KNOWN-ISSUES.md).
+> **Current beta: 0.6.0-beta.5**, paired with XML2 Fix 1.11.0-beta.4 on Ultimate Legends' Beta channel.
+> Sewer progression unlocks, optional Nuke doors and later-rank effects are corrected. Update the builder,
+> **Rebuild**, then **Play**. Beta.1–4 saves load; online builds must match. See [CHANGELOG](CHANGELOG.md).
 
 ## What you need
 

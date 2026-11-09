@@ -4080,6 +4080,13 @@ symptoms without the softlock: tank motionless, its henchmen stuck behind the ne
 
 ### 35.2 The engine (breakpoint traces of build/_t16 under scratch tankdbg.py, a gamedbg.py with int3 breakpoints)
 
+**Streaming clarification (2026-11-08).** The stream box at `0x466bf0` follows the camera, not the hero.
+It combines camera +/-300 with camera-forward 350 +/-650, releasing outside the box grown by 400.
+Physical-derived entities default to smart (`0x498a05`); actionents, gameents, enabletargetents and ordinary
+spawners default resident. The historical traces below do not imply all actionents/spawners stream.
+Activation `0x41b230` searches live targets only; a missed delivery is not queued for later.
+
+
 - The motion path itself is fine: the package entry `motionpath filename="haarp/ext/tank/mp_tank_base"` reaches
   the motion-path precacher (vtable 0x69c50c; `0x57ae00` strips the entry at its last `/`, prefixes
   `motionpaths/`, precaches the IGB, walks its scene graph in `0x57a6f0` - igTransform nodes by name, igGroup
@@ -8303,3 +8310,49 @@ release identity is assigned here. The action save/load pair (`0x41a600`,
 filter at entity `+0xc5` bit `0x20`; an older record cannot restore that
 filter over the corrected definition. Runtime escort completion and loading an
 existing save require separate acceptance on a disposable game copy.
+
+## Durable sewer and optional Nuke unlocks (V-PROGRESSION)
+
+`progression_relays` runs after script pinning, settlement, hazards, existing hatch relays and emitter lifetime conversion. It appends
+resident native scheduled actions (firstact/actrescheduledelay 0.25 s); no existing definition, placement,
+ordinal or smart alias changes. Generated scripts are registered and included in the zone package.
+
+- `sewers/healer/sewers2_1_4`: an action listener shares `trigger_enabler`'s instance name and saves a
+  deterministic private game-flag latch on the guard-death activation. Two touch volumes at the original
+  guard positions wait 0.25 s before checking `alive("scripted_grunt")`; only no survivors sets the latch.
+  An old stuck save must revisit the dead guards once, then return to `healer_door`.
+- `sewers/grso/sewers3_1_1` / `sewers3_1_2`: `exitdoor1` / `exitdoor2` retries require both saved
+  objectives COMPLETE (`ladders`/`porters` or `ladders2`/`porters2`). No new flag is needed on old saves.
+- `nuke_plant/nuke/nuke2_2`: the disabled saved state of one-shot panel `trigger_use02` retries
+  `blastdoor_nuke_n04` / `blastdoor_nuke_n05`. The other four doors retain their existing source behavior.
+
+Pollers resolve a live ID and require `getOpened` false before delivering. Sewer gates receive setEnable;
+Nuke gates receive their original activation. An open door is never re-enabled or toggled. The Healer latch
+uses native one-based bit 1. Map-prefix attestations authenticate each append against the exact beta.4 bytes;
+old historical rows are retained/retargeted where their resident prefix survives. No identity is assigned.
+
+Hive `hive2_2_4`'s Gateway door is 487 units from Gateway and ~616 from the authored camera position (~603 from its look point).
+`hive1_2_2`'s machine relays are within the 650-unit guaranteed range of their firing sources. They receive
+no speculative pin/relay change; both remain in the later live acceptance matrix.
+
+`V-STREAMED-UNLOCKS` traces act/death target fields and literal act/actSilent/setEnable/unlock calls back
+through resident relays, scripts and conversation callbacks. It includes packaged scripts, uses every known
+firing placement, and warns when the closest source is beyond 650 units (max-axis distance). Missing source
+locations are reported separately without inventing a distance. Explicit resident targets and structurally
+validated delivery relays are excluded. Scripted movement/cameras, dynamic names and attack range need manual
+review: this is a generic warning audit, not a campaign-playthrough proof. Both map variants are checked by
+V-PROGRESSION; the generic audit uses English with XMLB fallback to avoid duplicate warnings.
+
+### Full/focused conversion order
+
+Emitter lifetime conversion must precede progression-tail insertion in `Zones.mutate_zone`. Released beta.4
+maps already contain the unplaced emitter watcher factory; appending progression before creating that factory
+on a fresh build changes serialized child order and map hashes despite identical entity multisets. Keeping
+emitter conversion first makes the full pipeline byte-identical to appending progression to the released map,
+preserving the exact save-prefix ledger bindings and package-reference order. The combined synthetic regression
+runs the complete mutate_zone method on a map receiving both additions and checks bytes, scripts, validators,
+original ordinal prefix and prefix attestation against the focused released-map path.
+
+The two sewers1_2_4 sparring-gate closure warnings remain known optional risks. These authored gates toggle
+between closure and release and have actcountdisable=2. The monotonic unlock retry cannot safely repair both
+states without a separate state-aware delivery design; live O4 must still verify closure and release.
