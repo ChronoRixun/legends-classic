@@ -26,7 +26,30 @@ build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebui
   proven retail ledgers and live companion acceptance are still required before
   public admission. Global-profile merging remains disabled.
 
-## v0.6.0 - content version 33 (needs XML2 Fix 1.11.0)
+## v0.6.0 - content version 34 (needs XML2 Fix 1.11.0)
+
+### 0.6.0-beta.5
+
+Legends Classic 0.6.0-beta.5 (content 34 / catalogue 8 / LC44) uses **XML2 Fix 1.11.0-beta.4**.
+The companion DLL is unchanged. Update the builder on Ultimate Legends' Beta channel, then **Rebuild** and **Play**.
+Beta.1 through beta.4 and RC1 through RC3 saves remain compatible. Everyone online needs the same build and settings.
+
+- **Act 7 sewer doors recover their unlocks.** The Healer rescue door after the two guards and both GRSO exits after
+  all ladders and beacons could remain locked when their unlock happened out of range. Already-stuck saves recover
+  by revisiting the guards' spot or walking to the exit door.
+- **Optional Nuke-plant blast doors behind the control panel open.** The authored panel action reaches the distant doors.
+- **Later-rank power upgrades stay at their intended ranks.** Seventeen effects across Beast, Frost, Gambit, Iceman,
+  Jubilee, Magma, Psylocke, Storm and Wolverine no longer become permanent at lower ranks. Existing permanent saved
+  attachments are not repaired by this application gate. Focused native cast/expiry/reload checks cover all 17 effects;
+  they do not establish exact same-frame expiry.
+- The builder now checks whether the available heroes have a qualifying power for converted puzzle reactions.
+  This checks necessary power availability; aim, collision and environmental routes still require live testing.
+
+The still-open [known issues](docs/KNOWN-ISSUES.md) remain, including startup reliability, four-player pause scope,
+relay/different networks, three/four separate PCs, long sessions, slow joins and host loss. Optional classic conversation
+remains off by default and lacks owner, xemu, DXVK and multiplayer comparison. Save import stays disabled.
+Release acceptance and its exact limits are recorded in the release checklist; no new remote-PC hand test is claimed.
+Back up saves before updating. Both owned games are required; the distributed tools contain no game data.
 
 ### 0.6.0-beta.4
 

@@ -12,6 +12,7 @@ both PCs.
 
 | Builder | Content | Needs xml2-fix | Launcher | Adds |
 |---|---|---|---|---|
+| 0.6.0-beta.5 | 34 | 1.11.0-beta.4 | 0.5.0, Beta channel | Sewer progression, optional Nuke doors and rank gates; catalogue 8 / LC44; beta.1–4 and RC1–3 saves load; matching peers required |
 | 0.6.0-beta.4 | 33 | 1.11.0-beta.4 | 0.5.0, Beta channel | Arbiter hatches/rescue, emitter lifetime, temporary control, loaded services and restart leave notice; catalogue 8 / LC43; beta.1/2/3 saves load; matching beta.4 peers required |
 | 0.6.0-beta.3 | 32 | 1.11.0-beta.3 | 0.5.0, Beta channel (Classic conversation box offered for builder >=0.6.0-beta.3) | optional conversation background (default off); lost-newcomer notice, solo-host pause and Enter IP polish; occupied-seat restart barrier; catalogue 8 / LC42; beta.1 and beta.2 saves load; matching beta.3 online peers required |
 | 0.6.0-beta.2 | 31 | 1.11.0-beta.2 | 0.4.0 or later, Beta channel (0.5.0-beta.4+ sends `--classic-conversation off`, accepted) | the classic online screens (Game Options, the name and IP keyboards with keyboard, controller and analog stick, Other ways, LAN host / join / list, Connect by IP, the pause player list); the host's frame rate for the whole session (rule 29 revision 2, `[Online] TickRate=60` the hosting ceiling); the first game's bosses leave impossible steps (rule 40 revisions; Blob attacks again); the 4-player host crash and the lost-newcomer pause fixed; catalogue 8 / LC41, 0.6.0-beta.1 saves load; a beta.1 game cannot join |
