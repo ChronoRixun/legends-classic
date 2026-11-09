@@ -234,7 +234,7 @@ root had none). `<damageMod>` children a rung adds are active from rank 1 (repor
 
 Fixups on every output move (`fixup_move`): value codes anywhere (L/M/H damage ranges as `"min max"`, K/P/BST/A/
 XTL numbers, `XLT` typos -> XTL) resolved from `xml1_loose/data/values.xml`; `<require cat="talent">` -> `skill`;
-`func_*`, `fallback`, `level_max` dropped; a powerup's `life_max` merged into `life` before dropping the attribute;
+`func_*`, `level_max` dropped; a powerup's `life_max` merged into `life` before dropping the attribute;
 root attributes `iconcolumns/iconrows/exclusive` dropped;
 `icon` kept only on `power1/2/3/9`; `C.map_tree_refs` (skins 1805 -> 15805, `skin_swap` kept). Powerup triggers
 (`convert_powerup_trigger`): `<trigger name="powerup" ...><special_fx/><affecter/></trigger>` with XML2's retail
@@ -246,6 +246,22 @@ chilled `move` -> `class="chill"` + `affecter move`, `might_mode` -> `might_heav
 `def_damage` with `damagetype` -> `scope_damage`, everything else -> `<affecter attribute=X [affect_type] level
 [scope_*]>` (unknown attributes warned). `effect` -> `special_fx primary`, `effect_cust1` -> `deactivate` (with
 `customeffect1deactivate`) / `custom`.
+
+**Failure exits (2026-11-09):** `fallback` is supported by XML2: its case-insensitive FightMove setter
+`0x4f6b80` recognizes `Fallback` at `0x4f6c0d` and stores the name at move `+0x90`. Do not discard it with
+XML1's rank machinery. Follow source fallback links through moves mapping to the same collapsed output, then
+retain and remap the first exit outside that group. Remove a rank-only chain ending without an exit; never emit
+a self fallback. Conflicting exits or cyclic rank links are conversion errors. Deliberately dropped roots do
+not donate fallbacks. `move_fallbacks` implements this rule; V-H19 checks every hero's emitted edges against its
+source and recorded active move map, and rejects missing, wrong and cyclic exits.
+
+This restores Wolverine Savage Rampage (`power9`, `wolv_xtreme`): its counter-gated `xtreme_frenzy_dash` must
+fall back to `xtreme_frenzy_end`, which returns home and ends the Xtreme. The converter previously removed that
+only exhausted-counter exit. Native XML2 Nightcrawler and Rogue use the same counter/fallback pattern; XML2's
+own Wolverine Xtreme uses a different single-move attack with an explicit end trigger. The all-hero audit also
+restores Nightcrawler's two teleport exits, Rogue's relocation exit, Iceman/Magma skating exits, and other
+authored failure alternatives. No talent, rank value, animation, event timing, saved entity ordinal or save
+catalogue changes are needed. The beta.5 `power3` tier fix affects Berserker Rage and is unrelated.
 
 **Control lifetimes (2026-11-07):** XML1 samples uniformly from `life` to `life_max` (default.xbe 0x2a7b0).
 Merge those explicit bounds into XML2's `life="min max"` before collapsing ranks, so each lifetime talentvalue
@@ -352,8 +368,9 @@ without ctx.shared):
 | V-H2 | no herostat name in npcstat; herostat + npcstat unique names <= 296 | error |
 | V-H3 | per hero both talent files exist and agree, <= 8 talents, every `power=` names a FightMove of the style, every skill `<require>` resolves (file or shared), every `%name` in the file or style has a talentvalue with contiguous ranks from 1, talentvalue names <= 19 and defined by one file only (shared + hero files; <= 300 names in total), no talent name registered twice across shared + files | error |
 | V-H4 | shared_talents XMLB == engb, <= 99, == DESIGN 4.7 (delta = warning), special names defined where a hero references them, shared + worst 4 files <= 92 | error / warn |
-| V-H5 | per style: `power1/2/3/9` exist and require their talent, no XML1 top name / `fallback`, every `inherit` resolves, no chain to a dropped rung, no value code left, `%` only on `VALUE_REF_ATTRS`; every `<event>` / `<trigger>` resolves to a registered `ce_*` type, <= 19 triggers per move, names <= 31 (`combat_events.style_findings`, SPEC 22); every affecter in XMen2.exe's affecter table (error); handlers not in `FM_HANDLERS` and affecters no XML2 retail style uses are warnings | error / warn |
+| V-H5 | per style: `power1/2/3/9` exist and require their talent, no XML1 top name, every `inherit` resolves, no chain to a dropped rung, no value code left, `%` only on `VALUE_REF_ATTRS`; every `<event>` / `<trigger>` resolves to a registered `ce_*` type, <= 19 triggers per move, names <= 31 (`combat_events.style_findings`, SPEC 22); every affecter in XMen2.exe's affecter table (error); handlers not in `FM_HANDLERS` and affecters no XML2 retail style uses are warnings | error / warn |
 | V-H18 | every XML1 talent with a team_switch rank: generated application gates select exactly the XML1 kind at every rank, with a positive finite life and both XML1 duration endpoints | error |
+| V-H19 | every active XML1 move group's semantic fallback survives and names the remapped destination; rank-only links disappear, no self/cyclic output fallback, missing source mapping is an error | error |
 | V-PUZZLE | placed converted powertrigger reactions have a matching attack producer among the available heroes; shared/local events, move inheritance, tagged updates, modifiers, power chains and literal damage-level bytes are resolved. Mission directories whose entries agree on one forced party use that party. The two inherited Wolverine-flashback charge constraints remain explicit warnings. This is a structural check; it does not establish aim, collision, access prerequisites or a playthrough. | error / warn |
 | V-H6 | per costume: `<hero>_<skin>` and `_nc` exist with `actorskin`, `actoranimdb`, `xml_talents data/talents/<hero>`, the combat one with the mapped `fightstyle`; no `xml_talents` / `xml` entry after the first `fightstyle`; every entry resolves; `<hero>_xml` and the placeholder packages exist | error |
 | V-H7 | `characters_heads` lists every existing hero head + 9999 + `m_team_roster_screen`, every listed model exists; `_pc` lists exactly 9999 | error |
