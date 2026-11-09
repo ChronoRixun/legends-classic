@@ -112,10 +112,10 @@ try. If a screen's text or labels are cut off, or something looks off, please re
 
 ## Online
 
-- **Current-build host-load coverage.** RC1 same-PC saved-campaign hosting was exercised with the new DLL.
+- **Historical host-load coverage.** RC1 same-PC saved-campaign hosting was exercised with the new DLL.
   Native online-host Load Saved Campaign was not accepted again on RC2/RC3: the latest probe reached an
   online-unavailable screen. Ordinary main-menu campaign loading passed; beta.3's two-PC hand test remains
-  historical coverage, not a new-build guarantee.
+  historical coverage, not a new-build guarantee. Read beta.5's release acceptance notes for its current checks.
 
 - **Intermittent startup crash (under investigation).** Native testing saw one crash before the main menu in
   Windows DirectInput. A later alternating check reached the menu on all ten beta.2 boots and all ten beta.3 boots.
@@ -138,7 +138,7 @@ try. If a screen's text or labels are cut off, or something looks off, please re
   slow the session for everyone. Checked live on one PC so far.
 - **0.6.0-beta.5 is a co-op beta.** Across earlier 0.6 builds, co-op was tested on one PC (up to four copies) and on two PCs at home, with two,
   three and four players, including fights and joins by code, LAN and IP. Those separate-PC setups have not been
-  re-verified on beta.4. Not verified yet: playing through the
+  re-verified on beta.5. Not verified yet: playing through the
   relay (networks where a direct connection fails), players on different home networks (over the internet), three
   or four separate PCs, long sessions, and joins over slow connections (if a join takes longer than the wait, play
   continues and the friend comes in moments later). Relay-only mode refuses an unavailable relay instead of falling

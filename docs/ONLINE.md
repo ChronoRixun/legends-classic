@@ -1,15 +1,15 @@
 ﻿# Play online in 0.6
 
-Player guide for Legends Classic **0.6.0-beta.4** with XML2 Fix **1.11.0-beta.4**. Online co-op now runs from the
+Player guide for Legends Classic **0.6.0-beta.5** with XML2 Fix **1.11.0-beta.4**. Online co-op now runs from the
 game's own **Play Online** screen. This is a beta. Co-op was tested on one PC (up to four copies) and on two PCs at
 home, with two, three and four players, including fights. Not verified yet: playing through the relay (networks where
 a direct connection fails), players on different home networks, three or four separate PCs, long sessions, and joins
 over slow connections ([known issues](KNOWN-ISSUES.md#online)). The session runs at the host's frame rate; your own
 setting comes back when you leave.
 
-Up to four players can share a campaign. Everyone needs the same build - builder 0.6.0-beta.4 with XML2 Fix
+Up to four players can share a campaign. Everyone needs the same build - builder 0.6.0-beta.5 with XML2 Fix
 1.11.0-beta.4 - with the same gameplay settings and Test mode off; a different build or setting is refused with the
-reason on both PCs. beta.1, beta.2 and beta.3 games cannot join beta.4, and a 0.5 game cannot join a 0.6
+reason on both PCs. beta.1, beta.2, beta.3 and beta.4 games cannot join beta.5, and a 0.5 game cannot join a 0.6
 game. To update, use Ultimate Legends' **Beta** channel: update XML2
 Fix and the builder, then **Rebuild**, then **Play**.
 
@@ -207,7 +207,10 @@ Beta.3: solo-host pause and Team Management close with one B or Esc press; Enter
 A newcomer lost during admission no longer produces a false lost-sync alarm. Beta.4 also gives the named
 leave notice when the newcomer is lost after restart begins; ordinary in-play drop wording is unchanged.
 
-Beta.4 closes the cosmetic named-leave wording issue for a newcomer lost after restart begins. Same-PC RC1
+Historical beta.4 coverage: beta.4 closes the cosmetic named-leave wording issue for a newcomer lost after restart begins. Same-PC RC1
 checks observed named notices, matching frames and movement; the host's ordinary in-play dropped-player wording is unchanged.
 The newer RC2/RC3 agent probes did not re-accept native online-host Load Saved Campaign (online unavailable).
-Normal main-menu campaign loading passed separately. beta.1/2/3 saves remain compatible; online peers need beta.4.
+Normal main-menu campaign loading passed separately. beta.1/2/3/4 and RC1–3 saves remain compatible; online peers need beta.5.
+
+Beta.5 uses the unchanged XML2 Fix 1.11.0-beta.4. See the beta.5 release acceptance notes for its current checks;
+the RC1/RC2/RC3 observations above describe those earlier builds and are not a substitute for current acceptance.
