@@ -8,8 +8,8 @@ from pathlib import Path
 from . import semi_auto as S
 
 MARKER = '32765 32765'             # inert retail split damage: split_count=0
-CAPABILITY = b'lc-npc-beam-trace/1\0'
-REQUIREMENT = '[Game] NpcSemiAuto (beam/flame trace gate)'
+CAPABILITY = b'lc-npc-beam-trace/2\0'
+REQUIREMENT = '[Game] NpcSemiAuto (weapon trace contacts)'
 
 
 def keys_require_trace(keys):
@@ -19,8 +19,10 @@ def keys_require_trace(keys):
         if not key.startswith('W'):
             continue
         parts = row.split('|')
-        if len(parts) == 9 and int(parts[6], 16) & 3 in (1, 3) and int(parts[7], 16):
-            return True
+        if len(parts) == 9:
+            kind = int(parts[6], 16) & 3
+            if kind == 0 or (kind in (1, 3) and int(parts[7], 16)):
+                return True
     return False
 
 
@@ -181,4 +183,4 @@ def validate(v, ck):
     except OSError:
         supported = False
     if not supported:
-        ck.error('nonbullet trace contract requires a companion with lc-npc-beam-trace/1 capability')
+        ck.error('weapon trace contract requires a companion with lc-npc-beam-trace/2 capability')

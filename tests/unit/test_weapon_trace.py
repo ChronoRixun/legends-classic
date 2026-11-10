@@ -34,7 +34,7 @@ def fixture(tmp_path, kind='beam', named=False, grenade=False, interval='0.75'):
     contract = S.contract(stats, definitions, {'ps_toy': source})
     (tmp_path / '_build').mkdir(exist_ok=True)
     (tmp_path / '_build/semi_auto.json').write_text(json.dumps(contract), encoding='utf-8')
-    (tmp_path / 'dinput.dll').write_bytes(b'lc-npc-beam-trace/1\0')
+    (tmp_path / 'dinput.dll').write_bytes(b'lc-npc-beam-trace/2\0')
     source_trees = {'data/values.xml': values, 'data/weapons/weapons.eng': definitions,
                     'data/npcstat.eng': stats, 'data/powerstyles/ps_toy.eng': source}
     built_trees = {f'data/powerstyles/{variant}.xmlb': built, 'data/npcstat.xmlb': built_stats}
@@ -131,11 +131,11 @@ def test_weapon_trace_companion_gate_refuses_schema4_only(tmp_path):
         assert 'trace' in str(e).lower()
     else:
         assert False, 'old companion silently accepts beam/flame output'
-    dll.write_bytes(data + b'lc-npc-beam-trace/1\0')
+    dll.write_bytes(data + b'lc-npc-beam-trace/2\0')
     F.check_release_dll(dll, keys)
 
 
-def test_weapon_trace_does_not_raise_companion_requirement_for_bullet_only_table(tmp_path):
+def test_weapon_trace_requires_id_zero_companion_for_bullet_only_table(tmp_path):
     _, _, contract = fixture(tmp_path)
     parts = contract['records'][0].split('|')
     parts[6] = '00000000'  # original bullet type, same positive trace interval
@@ -143,13 +143,23 @@ def test_weapon_trace_does_not_raise_companion_requirement_for_bullet_only_table
     keys = S.ini_sections(contract)
     dll = tmp_path / 'bullet-only.dll'
     dll.write_bytes('NpcSemiAuto NpcPowerRule'.encode('utf-16le') + b'NSA4 NPR14')
+    for data in (dll.read_bytes(), dll.read_bytes() + b'lc-npc-beam-trace/1\0',
+                 dll.read_bytes() + b'lc-npc-beam-trace/20\0'):
+        dll.write_bytes(data)
+        try:
+            F.check_release_dll(dll, keys)
+        except F.FixTooOld:
+            pass
+        else:
+            assert False, 'bullet-only output accepted old or prefix-only capability'
+    dll.write_bytes(data + b'lc-npc-beam-trace/2\0')
     F.check_release_dll(dll, keys)
 
 
 def test_weapon_trace_old_fix_warning_cannot_write_unsafe_ini(tmp_path):
     _, _, contract = fixture(tmp_path)
     keys = S.ini_sections(contract)
-    (tmp_path / 'dinput.dll').write_bytes(b'NSA4')
+    (tmp_path / 'dinput.dll').write_bytes(b'NSA4lc-npc-beam-trace/1\0')
     for present in (True, False):
         if not present:
             (tmp_path / 'dinput.dll').unlink()

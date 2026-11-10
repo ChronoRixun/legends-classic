@@ -7892,15 +7892,20 @@ V45 checks every primary, crouched, burst, tagged-timer and inherited weapon cal
 against source, preserving full damage draws and every authored trigger. Each
 holder needs its complete source-derived schema-4 row with the correct type and
 positive binary32 interval and the exact terminated companion capability
-`lc-npc-beam-trace/1`. Missing/old DLLs fail closed, including the old-fix warning
+`lc-npc-beam-trace/2`. Missing/old DLLs fail closed, including the old-fix warning
 path. Grenade-suffixed variants follow their holder bindings. No positive trace
 means no new marker (the discrete nullifier stays native); unrelated beams and
 projectiles are unchanged. Native runtime recognition also requires the exact
 marker, installed source contract and matching actor type.
 
 The schema stays 4. The companion adds the terminated capability to canonical
-agreement input after the rows only when a positive beam/flame row is present;
-this rejects legacy peers with otherwise identical tables. Versions, numbered
+agreement input after the rows when a bullet or positive-trace beam/flame row
+is present. Marked calls use a private native attack copy with duplicate ID zero,
+matching XML1's shared weapon dispatcher. This permits repeated admitted contacts
+on one victim in one move, including repeated invocations of one tagged event.
+Bullet-only tables also require `/2`, even with zero trace time. Older companions
+(including `/1`) fail closed, and their agreement digest differs in both directions.
+Projectile-only and zero-trace nonbullet-only tables retain their old digest. Versions, numbered
 rule revisions and content identities remain coordinator-owned. Tests in
 `test_weapon_trace.py` and `test_trace_contract.py` cover emission, full draws,
 source completeness, missing/type/interval/holder errors and old companion

@@ -1751,7 +1751,7 @@ def write_port_keys(out, keys: dict | None = None, *, old_fix_ok: bool = False) 
     if WT.keys_require_trace(keys):
         dll = Path(out) / 'dinput.dll'
         if not dll.is_file() or WT.CAPABILITY not in dll.read_bytes():
-            raise FixTooOld('The beam/flame trace contract requires its matching companion DLL; '
+            raise FixTooOld('The weapon trace contact contract requires its matching companion DLL; '
                             'the old-fix warning path cannot enable this output', [WT.REQUIREMENT])
     # Validate the optional player preference as it will survive this merge, including mixed-case INIs.
     # It is not port-owned: neither emit a default nor drop a player's explicit 0 on a rebuild.
