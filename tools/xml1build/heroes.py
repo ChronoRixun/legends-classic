@@ -43,6 +43,7 @@ from pathlib import Path
 from . import common as C
 from . import autospend as ASP                 # SPEC 94: XML1's automatic stat growth in Data/autospend.XMLB
 from . import mind_control as MC
+from . import move_fallbacks as MF
 from . import rank_costs as RC
 from . import combat_events as CE
 from . import hero_icons as HI        # issues #53/#73: the talent-icon atlases as 4x4 alpha-blended sheets
@@ -743,7 +744,7 @@ def convert_powerup_trigger(t, where, report):
 
 def fixup_move(m, values, where, report):
     """DESIGN 4.5 on one output FightMove (collapsed or kept): value codes resolved, powerup triggers rewritten,
-    require cat talent -> skill, func_* / fallback / life_max / level_max dropped."""
+    require cat talent -> skill, func_* / life_max / level_max dropped. Move fallbacks are remapped by the collapse."""
     problems = []
     resolve_codes(m, values, where, problems)
     for p in problems:
@@ -762,8 +763,6 @@ def fixup_move(m, values, where, report):
         for k in list(e.attrib):
             if FUNC_ATTR.match(k):
                 del e.attrib[k]
-    for k in ('fallback',):
-        m.attrib.pop(k, None)
 
 
 # ------------------------------------------------------------------------------------------------ NPC powerups
@@ -1554,6 +1553,16 @@ class StyleCollapse:
                         dangling.append(f'{mv.get("name")} chain {c.get("action")} -> {res}')
         for d in dangling:
             self.report['errors'].append(f'{self.hero}: dangling move reference {d}')
+        # Rank selection and failure exits both use fallback in XML1. Only links within a collapsed rank group
+        # disappear; counter exhaustion and other semantic exits are supported by XML2 (0x4f6c0d).
+        try:
+            fallbacks = MF.targets(src, MF.name_map(self.report, src))
+            for mv in out_moves:
+                mv.attrib.pop('fallback', None)
+                if mv.get('name') in fallbacks:
+                    mv.set('fallback', fallbacks[mv.get('name')])
+        except ValueError as exc:
+            self.report['errors'].append(f'{self.hero}: {exc}')
         # fixups + vocabulary check
         out = ET.Element(src.tag, {k: v for k, v in src.attrib.items() if k not in ('iconcolumns', 'iconrows', 'exclusive')})
         if self.icons == 'generic' and 'iconfile' in out.attrib:
@@ -3088,8 +3097,8 @@ def _validate(ctx, report=None):
             if want and f'skill:{want}' not in reqs:
                 ck.error(f'{h}: {pn} requires {reqs}, talent {want} expected')
         for nm, m in moves.items():
-            if nm.lower() in TOP_NAMES or m.get('fallback') is not None:
-                ck.error(f'{h}: move {nm} is an XML1 top name / carries fallback')
+            if nm.lower() in TOP_NAMES:
+                ck.error(f'{h}: move {nm} is an XML1 top name')
             inh = m.get('inherit')
             if inh and inh not in moves:
                 ck.error(f'{h}: {nm} inherits unknown move {inh}')
@@ -3463,6 +3472,22 @@ def _validate(ctx, report=None):
             ck.error(f'{h}: {message}')
         for message in MC.zero_life_problems(sroot, o.tree(f'Data/talents/{h}.engb')):
             ck.error(f'{h}: {message}')
+    # ---- V-H19: preserve every authored failure exit, including counter-gated loop termination.
+    ck = Check('V-H19')
+    checks.append(ck)
+    try:
+        details = json.loads((ctx.build_dir / 'heroes_detail.json').read_text(encoding='utf-8'))['heroes']
+        for h, (_ps, sroot) in styles.items():
+            if sroot is None:
+                continue
+            source_style = _lower_attrs(plan['x1'][h])['powerstyle']
+            source = ctx.read_x1_xml(f'data/powerstyles/{source_style}.eng')
+            mapping = MF.name_map(details[h], source)
+            for message in MF.problems(source, sroot, mapping):
+                ck.error(f'{h}: {message}')
+            ck.counts[f'exits_{h}'] = len(MF.targets(source, mapping))
+    except (OSError, KeyError, ValueError) as exc:
+        ck.error(f'fallback source/mapping unavailable: {exc}')
     return checks, budgets
 
 
