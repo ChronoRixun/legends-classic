@@ -7878,6 +7878,40 @@ the native fixture and game-agent re-measurement matrix. Release integration mus
 advance CONTENT_VERSION and assign its immutable lobby identity/fingerprint after
 the final build (docs/RELEASE_CHECKLIST.md); this release branch retains the
 previous issued identity until that coordinated step.
+
+### 95.6 Beam/flame trace gate contract
+
+Positive-source-tracetime beam/flame weapon calls carry the inert pair
+`split_damage="32765 32765"`, `split_count="0"`; bullets retain 32766/32766.
+The companion gates collision after native damage draws using an actor/incarnation
+timestamp, shared across all moves and targets. Flame preserves native piercing
+and negative-last bypass; beam directly compares and updates even negative last
+timestamps and preserves cached presentation extent on suppressed calls.
+
+V45 checks every primary, crouched, burst, tagged-timer and inherited weapon call
+against source, preserving full damage draws and every authored trigger. Each
+holder needs its complete source-derived schema-4 row with the correct type and
+positive binary32 interval and the exact terminated companion capability
+`lc-npc-beam-trace/2`. Missing/old DLLs fail closed, including the old-fix warning
+path. Grenade-suffixed variants follow their holder bindings. No positive trace
+means no new marker (the discrete nullifier stays native); unrelated beams and
+projectiles are unchanged. Native runtime recognition also requires the exact
+marker, installed source contract and matching actor type.
+
+The schema stays 4. The companion adds the terminated capability to canonical
+agreement input after the rows when a bullet or positive-trace beam/flame row
+is present. Marked calls use a private native attack copy with duplicate ID zero,
+matching XML1's shared weapon dispatcher. This permits repeated admitted contacts
+on one victim in one move, including repeated invocations of one tagged event.
+Bullet-only tables also require `/2`, even with zero trace time. Older companions
+(including `/1`) fail closed, and their agreement digest differs in both directions.
+Projectile-only and zero-trace nonbullet-only tables retain their old digest. Versions, numbered
+rule revisions and content identities remain coordinator-owned. Tests in
+`test_weapon_trace.py` and `test_trace_contract.py` cover emission, full draws,
+source completeness, missing/type/interval/holder errors and old companion
+refusal. Live cadence, old saves and host/guest behavior require later acceptance.
+
+
 ## 106. XML1 boss brains (XML2 Fix `[Game] Xml1Bosses`, gameplay rule 40)
 
 XML2 Fix's shared boss dispatcher (its `docs/xml1-controllers.md`, "Shared boss dispatcher") runs the first game's

@@ -1618,12 +1618,15 @@ def check_release_dll(dll, keys: dict) -> None:
     if not dll.is_file():
         return
     data = dll.read_bytes()
+    from . import weapon_trace as WT
     missing = [f'[{section}] {key}' for section, names in RELEASE_18_KEYS.items() for key in names
                if key in keys.get(section, {}) and (key + ('\0' if key in EXACT_KEYS.get(section, ()) else '')).encode('utf-16le') not in data]
     missing += [name for (section, key), (marker, name) in RELEASE_MARKERS.items()
                 if key in keys.get(section, {}) and marker not in data]
     missing += [name for (section, key), marker, name in EXTRA_MARKERS
                 if key in keys.get(section, {}) and marker not in data]
+    if WT.keys_require_trace(keys) and WT.CAPABILITY not in data:
+        missing.append(WT.REQUIREMENT)
     game = keys.get('Game', {})
     if 'Xml1GrabCarry' in game and 'Xml1FlyingCarry' not in game and CARRY_THROW_MARKER not in data:
         missing.append(FLYING_CARRY_ON_NAME)         # --flying-carry xml1 (the key left out = the DLL's flying carry on)
@@ -1744,6 +1747,12 @@ def write_port_keys(out, keys: dict | None = None, *, old_fix_ok: bool = False) 
     not need; the launcher's keys stay. Returns the keys written. An existing DLL that doesn't know every key raises
     FixTooOld (naming them all) unless `old_fix_ok` (the CLI's warning path: FixTooOld)."""
     keys = port_keys(out) if keys is None else keys
+    from . import weapon_trace as WT
+    if WT.keys_require_trace(keys):
+        dll = Path(out) / 'dinput.dll'
+        if not dll.is_file() or WT.CAPABILITY not in dll.read_bytes():
+            raise FixTooOld('The weapon trace contact contract requires its matching companion DLL; '
+                            'the old-fix warning path cannot enable this output', [WT.REQUIREMENT])
     # Validate the optional player preference as it will survive this merge, including mixed-case INIs.
     # It is not port-owned: neither emit a default nor drop a player's explicit 0 on a rebuild.
     ini = Path(out) / 'xml2-fix.ini'
