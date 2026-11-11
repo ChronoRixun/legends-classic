@@ -5,6 +5,15 @@ build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebui
 
 ## Unreleased
 
+- Finishing Forge's reboot on Muir Island no longer leaves a black screen. A side mission played in its caller's
+  map folder (muir2_reboot, astral_sk, nyc_rooftops) no longer clears the caller's mission flags at its start, as
+  in X-Men Legends; muir_in2 now fades back in and plays the 2_4_8 conversation. Saves made before the reboot
+  carry on unchanged.
+
+- Mission starts inside one map folder no longer clear that folder's mission flags either, as in X-Men Legends:
+  after the GRSO raid (Act 5), the uniform (Act 3) and in the Morlock hub (Act 1), questions already asked are no
+  longer offered again. No progression change; saves carry on unchanged.
+
 - Full builds insert emitter helpers before the new progression tail, matching the focused map proof and
   preserving the exact GRSO save-prefix bindings. A combined full-conversion regression checks both fixes.
   The owned zone self-test counts progression additions from the source recipe and validates the generated tail.

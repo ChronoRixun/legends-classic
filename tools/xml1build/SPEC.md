@@ -3132,6 +3132,36 @@ two reports next to it (`rewrite_report.txt/.json`). Sources override: `scripts/
 - `bescript.py` (the BehavEd parser) moved to `tools/xml1build/lib/`; `research/scripts/bescript.py` is a shim.
 - Key: version + P1 key + sha1 of P2's `mission_plan.json` and mission texts + sha1 of the two API tables.
 
+#### 27.5.1 A side mission's start keeps its caller's folder vars (P3 version 9, 2026-11-11)
+
+`mission_begin_lines` clears the packed mission vars and mission-flag game vars of the started mission's map folders
+(the stand-in for XML1's clear on a zone load in another map folder, xbe `0x99b90`). For a side mission it now leaves
+out every var that is also used in a folder of its caller zones (`SIDE_CALLS`). XML1 `beginsidemission` (`0x18dd70`)
+is pushsidemission + beginmission (`0x18da90`); neither clears a mission var or flag, so a side mission played in its
+caller's folder keeps the caller's state. Before, `begin_muir2_reboot` cleared `muir2` flags 1-6 and `x1v05` bits
+19-31; back in `muir_in2` the zone script read flag 6 = 0, took its first-visit branch (`cameraFade(1, 0)` with no
+fade-in, the `rebooted` game var cleared) and the screen stayed black (Owen, 11-11). The three same-folder side
+missions change (`muir2_reboot`, `astral_sk`, `nyc_rooftops`); the four flashbacks in other folders (`jug_fb`,
+`sent_fb`, `wx_fb_start`, `dr_mag1`) clear what they cleared before. Test: `tests/unit/test_side_mission_vars.py`.
+
+**Plain mission starts from their own folder (P3 version 10, 2026-11-11).** XML1 `beginmission` itself clears
+nothing either, so the same holds for a plain `beginMission` whose callers all sit in the map folder of the zone the
+mission loads (`mission_target_dir`: the `mapload`, else the scriptstart's first `loadMap` / `loadZone`).
+`same_folder_keep` gives those caller folders; their vars are left out of the clear exactly as for a side mission.
+A script call site is decided per site (the begin body is inlined there); the shared `x1/missions/begin_<m>.py`
+(conversation, entity and dialog sites, `INLINE_BEGINS`) keeps only when every inline site that runs it is such a
+start - a menu, a popup with no zone, or one caller in another folder keeps the clearing start, which matches XML1's
+clear on the folder change. Of the 16 plain starts the review found clearing caller-folder vars, 10 change:
+`asteroid_int` (enter_asteroidm), `asteroid_mm2`, `hive2`, `mansion3_uniform`, `mansion4_grso` (conversation 2_5_5;
+the mocap6 briefing site still clears), `mansion4_grso_done`, `mansion5`, `muir3brig`, `sentinels_mansion`,
+`sewers_hub`. Unchanged: `asteroid_int2` and `astral1b` (callers in two folders), `muir3` (its one same-folder script
+has no zone), `asteroid_mm`, `riots`, `sewers_grso` (other folders). None was a hang; the visible effect was a
+question already asked being offered again (mansion4 flags 2-5 after the GRSO raid, mansion3 flags after the
+uniform, Marrow's swrhub1 option in the Morlock hub). Because an inlined copy's header can now differ from the shared begin file in these
+clears only, the forced-teams passes (`choose_team_in_bodies`, `forced_party_in_bodies`) match a body with
+`scripts_transform.body_span`, which ignores the header's `setGameFlag(.., 0)` lines and compares everything else
+exactly (without it V36 found no recommended-party seed in `mocap6/briefing_2_5_5`). Test: `tests/unit/test_same_folder_mission_vars.py`.
+
 ### 27.6 P4 `sound`, P5 `music` (`prepare/sound.py`, `prepare/music.py`)
 
 | Stage | Does | Output (Sources override) |
