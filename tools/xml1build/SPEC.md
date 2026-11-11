@@ -3144,6 +3144,21 @@ fade-in, the `rebooted` game var cleared) and the screen stayed black (Owen, 11-
 missions change (`muir2_reboot`, `astral_sk`, `nyc_rooftops`); the four flashbacks in other folders (`jug_fb`,
 `sent_fb`, `wx_fb_start`, `dr_mag1`) clear what they cleared before. Test: `tests/unit/test_side_mission_vars.py`.
 
+**Plain mission starts from their own folder (P3 version 10, 2026-11-11).** XML1 `beginmission` itself clears
+nothing either, so the same holds for a plain `beginMission` whose callers all sit in the map folder of the zone the
+mission loads (`mission_target_dir`: the `mapload`, else the scriptstart's first `loadMap` / `loadZone`).
+`same_folder_keep` gives those caller folders; their vars are left out of the clear exactly as for a side mission.
+A script call site is decided per site (the begin body is inlined there); the shared `x1/missions/begin_<m>.py`
+(conversation, entity and dialog sites, `INLINE_BEGINS`) keeps only when every inline site that runs it is such a
+start - a menu, a popup with no zone, or one caller in another folder keeps the clearing start, which matches XML1's
+clear on the folder change. Of the 16 plain starts the review found clearing caller-folder vars, 10 change:
+`asteroid_int` (enter_asteroidm), `asteroid_mm2`, `hive2`, `mansion3_uniform`, `mansion4_grso` (conversation 2_5_5;
+the mocap6 briefing site still clears), `mansion4_grso_done`, `mansion5`, `muir3brig`, `sentinels_mansion`,
+`sewers_hub`. Unchanged: `asteroid_int2` and `astral1b` (callers in two folders), `muir3` (its one same-folder script
+has no zone), `asteroid_mm`, `riots`, `sewers_grso` (other folders). None was a hang; the visible effect was a
+question already asked being offered again (mansion4 flags 2-5 after the GRSO raid, mansion3 flags after the
+uniform, Marrow's swrhub1 option in the Morlock hub). Test: `tests/unit/test_same_folder_mission_vars.py`.
+
 ### 27.6 P4 `sound`, P5 `music` (`prepare/sound.py`, `prepare/music.py`)
 
 | Stage | Does | Output (Sources override) |

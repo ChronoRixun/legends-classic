@@ -63,10 +63,11 @@ from ..sources import REPO_ROOT
 import xmlb  # noqa: E402  tools/xmlb.py
 
 STAGE = 'scripts'
-VERSION = 9                                          # 5: issue #95 (point-local permission, safe feature fallback)
+VERSION = 10                                         # 5: issue #95 (point-local permission, safe feature fallback)
 #                                                      6/7: issue #63 (the first game's service bits); 6 also issue #5
 #                                                      (solo mode: setSoloMode) on its own branch; 8: both (0.2.2)
 #                                                      9: a side mission's start keeps its caller's folder vars
+#                                                      10: so does a plain mission start from its own folder
 OUT = 'out'                                          # the research layout: Sources overrides scripts/out with this
 REPORT_TXT, REPORT_JSON = 'rewrite_report.txt', 'rewrite_report.json'
 API_RELS = ('scripts/xml1_api.json', 'scripts/xml2_api.json')   # research-relative, packaged data
@@ -334,6 +335,7 @@ class Rewriter:
         self.SIDE_CALLS = collections.defaultdict(set)     # side mission -> zones of the beginSideMission call sites
         self.SIDE_PARENT = {}
         self.collect_side_calls()
+        self.INLINE_BEGINS = collections.defaultdict(list)   # mission -> caller zone sets of inline begin sites
         self.DIALOGS = {}      # key -> (name, element)
         self.HELPERS = {}      # tuple(lines) -> name
 
@@ -542,11 +544,46 @@ class Rewriter:
                 dirs.add(zdir(m2.group(1).lower()))
         return dirs
 
-    def mission_begin_lines(self, m, depth=0):
-        """statement list equivalent to XML1 beginMission(m) (console 'beginmission', xbe 0x18da90)"""
+    def mission_target_dir(self, m):
+        """map folder of the first zone the start of mission m loads (mapload, else the scriptstart's first
+        loadMap / loadZone), or None"""
+        attrs = (self.MISSIONS.get(m) or {}).get('attrs') or {}
+        ml = attrs.get('mapload', '').strip()
+        if ml:
+            return zdir(ml.lower())
+        ss = attrs.get('scriptstart', '').strip().lower()
+        if ss and ss in self.SCRIPT_BY_REL:
+            with open(self.SCRIPT_BY_REL[ss], encoding='latin-1') as fh:
+                g = re.search(r"load(?:Map|Zone)\s*\(\s*['\"]([^'\"]+/[^'\"]+)", fh.read())
+            if g:
+                return zdir(g.group(1).lower())
+        return None
+
+    def same_folder_keep(self, m, zones):
+        """caller map folders whose vars the start of m keeps: XML1 beginmission (0x18da90) clears nothing, and the
+        store is only cleared when a zone of another map folder loads (0x99b90). So a start whose callers all sit in
+        the folder of the zone it loads keeps every var of that folder; any other start (another folder, unknown or
+        mixed callers) clears as before, as XML1 does on the folder change."""
+        dirs = {zdir(z.lower()) for z in zones or ()}
+        t = self.mission_target_dir(m.lower())
+        return frozenset(dirs) if t is not None and dirs == {t} else frozenset()
+
+    def begin_file_keep(self, m):
+        """keep set of the shared x1/missions/begin_<m>.py: only when every inline site that runs it (conversation,
+        entity, dialog) is a same-folder start; menus and unknown callers get the clearing start"""
+        sites = self.INLINE_BEGINS.get(m, [])
+        keeps = [self.same_folder_keep(m, z) for z in sites]
+        if not keeps or not all(keeps):
+            return frozenset()
+        return frozenset().union(*keeps)
+
+    def mission_begin_lines(self, m, depth=0, keep_dirs=frozenset()):
+        """statement list equivalent to XML1 beginMission(m) (console 'beginmission', xbe 0x18da90).
+        keep_dirs: caller map folders whose vars this start keeps (same_folder_keep)"""
         m = m.lower()
-        if m in self._BEGIN_CACHE:
-            return list(self._BEGIN_CACHE[m])
+        key = (m, frozenset(keep_dirs))
+        if key in self._BEGIN_CACHE:
+            return list(self._BEGIN_CACHE[key])
         info = self.MISSIONS.get(m)
         lines = [f'# ( "XML1 beginMission({m})" )']
         if info is None:
@@ -559,7 +596,9 @@ class Rewriter:
         # mission played in its caller's folder (muir2_reboot from muir_is/muir2/muir_in2) must therefore leave the
         # caller's flags alone - clearing them sent muir_in2's return script down its first-visit branch, which fades
         # to black and never fades back in (SPEC 27.5.1).
-        keep = {zdir(z) for z in self.SIDE_CALLS.get(m, ())}
+        # The same holds for a plain beginMission whose callers sit in the folder of the zone it loads
+        # (mansion4_grso from subbasement4, sewers_hub from sewers1_1_2): keep_dirs (SPEC 27.5.1).
+        keep = {zdir(z) for z in self.SIDE_CALLS.get(m, ())} | set(keep_dirs)
         lines += self.gen_clear([n for n in self.VARS if self.STORAGE[n].kind != 'zone' and
                                  set(self.VAR_DIRS[n]) & dirs and not set(self.VAR_DIRS[n]) & keep])
         lines.append(call('setCurrentAct', info['act']))
@@ -579,7 +618,7 @@ class Rewriter:
         elif ml:
             fn = 'loadMapChooseTeam' if attrs.get('teamselect', '').lower() == 'true' else 'loadMapKeepTeam'
             lines.append(call(fn, q(ml)))
-        self._BEGIN_CACHE[m] = lines
+        self._BEGIN_CACHE[key] = lines
         return list(lines)
 
     # side missions: XML1 'beginsidemission' = pushsidemission + beginmission (xbe 0x18dd70);
@@ -730,7 +769,7 @@ class Rewriter:
             return None
         if name in ('beginMission', 'beginMissionHack') and c.args and c.args[0].kind == 'str':
             STATS[f'rule {name}'] += 1
-            return self.mission_begin_lines(c.args[0].value, depth)
+            return self.mission_begin_lines(c.args[0].value, depth, self.same_folder_keep(c.args[0].value, zones))
         if name == 'beginSideMission' and c.args and c.args[0].kind == 'str':
             STATS['rule beginSideMission'] += 1
             s = c.args[0].value.lower()
@@ -895,6 +934,8 @@ class Rewriter:
             self.STATS[f'rule {stmts[0].call.name} (inline -> x1/missions script)'] += 1
             path = f'x1/missions/begin_{stmts[0].call.args[0].value.lower()}'
             self.HELPER_REFS[path].add(where)
+            if stmts[0].call.name != 'beginSideMission':
+                self.INLINE_BEGINS[stmts[0].call.args[0].value.lower()].append(frozenset(zones))
             return path
         out = []
         changed = False
@@ -1084,7 +1125,7 @@ class Rewriter:
             report['validation'] += self.validate_lines(list(lines), f'scripts/{name}.py')
         # mission start helpers for every planned mission (for data/menus that start missions)
         for m in self.MISSIONS:
-            ls = self.mission_begin_lines(m)
+            ls = self.mission_begin_lines(m, keep_dirs=self.begin_file_keep(m))
             write_crlf(os.path.join(OUT, 'scripts', 'x1', 'missions', f'begin_{m}.py'),
                        ['# Generated by rewrite_scripts.py'] + ls)
             report['validation'] += self.validate_lines(ls, f'scripts/x1/missions/begin_{m}.py')
