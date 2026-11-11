@@ -3,7 +3,10 @@
 Run `tools/check_saved_zone_corpus.py` against the native `lcsave_real_saves`
 host and a finished W2, XML1-economy build. This wrapper keeps the host's raw
 verdicts and exit code, checks every input, and reports loads separately from
-expected refusals. Use a new output directory for each run:
+expected refusals. Use a new output directory for each run. If `--out` already
+exists the gate refuses before the host starts, naming the flag; pass
+`--replace-existing` to move the old directory aside to
+`<out>.superseded-<UTC stamp>` (never deleted) and run into a fresh, empty one:
 
 ```
 python -B tools/check_saved_zone_corpus.py --host <lcsave_real_saves.exe> --list <unique-list.txt> --data <finished-build> --out <new-results-directory>
