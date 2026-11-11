@@ -5,145 +5,56 @@ build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebui
 
 ## Unreleased
 
-## v0.6.0 - content version 35 (needs XML2 Fix 1.11.0)
+- Finishing Forge's reboot on Muir Island no longer leaves a black screen. A side mission played in its caller's
+  map folder (muir2_reboot, astral_sk, nyc_rooftops) no longer clears the caller's mission flags at its start, as
+  in X-Men Legends; muir_in2 now fades back in and plays the 2_4_8 conversation. Saves made before the reboot
+  carry on unchanged.
 
-Legends Classic 0.6.0 is the first stable release since 0.4.0. It gathers the eight betas since then - 0.4.1-beta.1
-(the port's beta 8), 0.5.0-beta.1 and 0.6.0-beta.1 to beta.6 - and needs XML2 Fix 1.11.0 and Ultimate Legends 0.5.0 or
-later. It makes the same game as 0.6.0-beta.6 (content 35 / catalogue 8 / `LC45`).
+- Mission starts inside one map folder no longer clear that folder's mission flags either, as in X-Men Legends:
+  after the GRSO raid (Act 5), the uniform (Act 3) and in the Morlock hub (Act 1), questions already asked are no
+  longer offered again. No progression change; saves carry on unchanged.
 
-**What's new since 0.4.0**
+- Full builds insert emitter helpers before the new progression tail, matching the focused map proof and
+  preserving the exact GRSO save-prefix bindings. A combined full-conversion regression checks both fixes.
+  The owned zone self-test counts progression additions from the source recipe and validates the generated tail.
 
-- **Online co-op from the game's own screens.** Play Online opens the first game's co-op screens: host a public or
-  private room for a new or saved campaign, share the room code (**Copy code**), join by code or browse public rooms,
-  mark Ready in the lobby, and see who is doing what on the pause menu's Party screen. LAN games and Connect by IP have
-  the classic look too, and every screen works with keyboard and controller. Friends can join a game that has already
-  started: they come in at the host's next area.
-- **Steadier sessions.** The session follows the host's frame rate, and the lobby shows each player's rate. A friend
-  who drops out while joining no longer strands the others, a four-player host no longer crashes when that happens, and
-  a joining friend's drop no longer raises a false lost-synchronization alarm.
-- **The first game's items, shops and drops.** All 116 X-Men Legends equipment pieces with their bonuses, the first
-  game's drop tables, the Forge's gear tier by tier, the Healer's prices, the Grab Bag, selling and the Danger Room
-  rewards. Where a bonus has no exact PC form it is converted as closely as the PC game allows (the build's
-  `Docs\APPROXIMATIONS.md` lists every one).
-- **The first game's bosses fight like the first game.** The colosseum dopples throw the fastball special and set off
-  the arena's traps; Avalanche, Pyro, Mystique, Shadow King, Magneto and Blob use their X-Men Legends brains, and no
-  boss waits forever on a move that can't happen (Blob no longer spins on the spot).
-- **More of the first game's moves.** Juggernaut grabs you and hits, Colossus's charge knocks enemies back, the
-  acrobats wall-cling and back-flip, Rogue drains, guns aim like the first game's, and damage rounds as in the
-  original. Phoenix's telekinesis lifts, moves and throws an enemy, and with Flight rank 3 Phoenix, Rogue and Storm
-  can carry an ally or an enemy in flight. Wolverine's Savage Rampage hands control straight back, and 42 power exits
-  across 12 heroes (Nightcrawler's teleports, Rogue's relocation, the skating exits) are back.
-- **Gun and weapon enemies.** The GRSO Officer and Captain have their guns and grenades again (broken in 0.4.0).
-  Weapon X lightning officers and flamethrower troops hit on the first game's timer (about 0.6 s and 0.75 s), and each
-  hit of a burst counts once, as in X-Men Legends: they hit hard, but it's survivable.
-- **Story and progression fixes.** Muir Island no longer goes black after Forge's reboot puzzle; the Shadow King
-  flashback keeps the Astral Plane's progress; the USS Arbiter hatches open after their launcher consoles are
-  destroyed; escorted sailors count at the lifeboat; destroyed shock pylons stop pulsing; Jubilee's Photo Flash and
-  Frost's Confuse wear off; the Act 7 sewer doors and the Nuke plant's blast doors open; later-rank power upgrades stay
-  at their ranks; the Healer and Forge are offered at Xtraction points after loading a save; mansion questions you
-  already asked are no longer offered again; saved rooms stay cleared after updating.
-- **Fixed: a rare crash before the main menu on PCs with exactly 16 or 32 HID devices** (a Windows DirectInput bug;
-  XML2 Fix 1.11.0 gives DirectInput's memory a zeroed margin, and `xml2-fix.log` shows `dinput heap slack: on`).
-- **Saving no longer fails with "Overwrite failed!" after going back from a newer or preview build** (XML2 Fix
-  1.11.0): when both a save and its backup came from a newer build, the fix now keeps both protected copies
-  (`.newer` and `.newer.2`) and saves normally.
-- **Bigger engine limits** for the first game's content and for graphics mods, and the build's own copy of `XMen2.exe`
-  can use 4 GB of memory (your X-Men Legends II install is never changed). Controllers connected after the game
-  started now work.
-- **Optional:** the first game's conversation box (`--classic-conversation xml1`, or the launcher's option; off by
-  default). The builder also accepts an extracted Xbox install folder for `--iso`, and a 4 GB-patched retail
-  `XMen2.exe`.
+- The builder retains distant sewer door unlocks across streaming: the Healer guard latch and both GRSO
+  objective exits gain resident retry actions. Old stuck saves recover by revisiting the dead guards for the
+  Healer door, or approaching a GRSO exit with both objectives complete. Two optional Nuke panel doors use
+  the same protection. Existing door save identities and original placement ordinals are preserved; live
+  acceptance is pending.
+- Later-rank hero effects reject application below their first rank instead of applying a permanent zero-life
+  attachment. Authored active-rank lifetimes and values are retained. V-H18 checks every zero-life rank.
+- A new streaming validator reports distant data/script activation chains, including conversation callbacks,
+  and identifies script origins whose distance needs manual review.
 
-**Back up your saves before updating.** The first time 0.6 saves your campaign it writes a bigger save format (room
-for the new items and for heavier mods). 0.4.0 and XML2 Fix 1.8.x cannot load a save written by 0.6; they refuse it
-and leave it unchanged. Copy `Documents\Activision\X-Men Legends\SaveLC` somewhere safe first. 0.4.0 saves and every
-0.6 beta's saves load in 0.6.0.
+- Save import stays off by default. Experimental Install and Undo now require a
+  companion DLL advertising the SaveLC writer lease; previews pin its hash and
+  Undo requires `--build`. Experimental builds can compile a private, source-hash
+  pinned identity/checkpoint ledger into a registered import table. Real saves,
+  proven retail ledgers and live companion acceptance are still required before
+  public admission. Global-profile merging remains disabled.
 
-**How to update.** In Ultimate Legends (0.5.0 or later, **Stable** channel), update both parts - **XML2 Fix to
-1.11.0** and the **builder to 0.6.0** - then **Rebuild**, then **Play**. A 0.6.0-beta.6 build is already the same
-game (content 35, `LC45`), and XML2 Fix 1.11.0 changes no gameplay rule from 1.11.0-beta.5; beta.6 testers should
-still update both parts. To leave the betas, set the launcher's update channel back to Stable.
+## v0.6.0 - content version 37 (needs XML2 Fix 1.11.0)
 
-**Co-op:** Use XML2 Fix 1.11.0 with Legends Classic 0.6.0 and matching settings. Earlier gameplay contracts are
-refused. Stable keeps beta.6's LC45 and beta.5's gameplay agreement; mixed beta.5/stable play has not been verified.
-Test mode must be off for online play.
+### 0.6.0-beta.7
 
-**Tested:** across the 0.6 betas co-op was played on one PC (up to four copies of the game) and on two PCs at home,
-with two, three and four players, fights and joins by code, LAN and IP. Owen hand-tested the Savage Rampage fix and
-the lightning officer on November 10. Not verified yet: play through the relay (networks where a direct connection
-fails), players on different home networks (over the internet), three or four separate PCs, long sessions and joins
-over slow connections.
+- Mastermold2 keeps older zone progress through the resident-prop change: one fully identical duplicate definition is emitted once, without changing any placements or old ordinals. Conflicting duplicates still refuse compatibility.
 
-**Known issues**
+- **Sentinel flashback saves can continue.** Loading a save made in the first street restores the open exit if the Sentinel was defeated, or replays its spawn if the fight is unfinished. The original Yes/No flashback offers are unchanged.
+- **Danger Room challenges use their specified hero.** The converter no longer forces the current party leader into the 26 hero-specific courses.
+- **Brig forcefields and Muir Island lab walls/railings are solid again.** Props modelled far from their origin stay resident, as in the first game. The change covers 81 placements in 14 zones; existing resident ordinals are retained and older zone records use verified compatibility entries.
 
-- **Host loss ends the session:** no host migration or automatic reconnection yet. A guest can join again by code.
-  Friends who join a started game come in at the host's next area, not mid-level.
-- **Pausing with four players** has only been checked with test input: if everyone stays paused after Ready, press
-  Ready again.
-- **Enemies attack more often** than in the first game ([#101](https://github.com/ChronoRixun/legends-classic/issues/101)):
-  unarmed enemies still attack about 1.5 times as often per minute; the cause is not found yet.
-- **Falls** ([#22](https://github.com/ChronoRixun/legends-classic/issues/22)): 15 of the first game's fall kill zones
-  stay switched off until each is proven safe for the AI teammates.
-- **Loot** ([#6](https://github.com/ChronoRixun/legends-classic/issues/6)) stays open until players have checked the
-  first game's items and shops.
-- **Telekinesis and the flying carry:** facing away or in a crowd, telekinesis can pick a crate or nobody; the carry
-  ends when the carried one bumps a prop or a wall.
-- **Sewers sparring ring (Gambit / Marrow):** the ring's gates stay shut after you win (the first game's data); talk
-  to Gambit to carry on.
-- **Not seen live yet:** Iceman's skating fallback when its counter runs out, and an uninterrupted flamethrower sweep.
-  An officer standing next to a breakable object may keep firing at it; the first game does the same.
-- **Optional features stay off by default:** the classic conversation box, the first game's Guard rules
-  (`--guard-decide xml1`) and the 96-live-actor limit. Save import from xemu and XML1-recomp is not switched on.
-- **Public games connect players directly,** so players can see each other's internet address. Use a private code to
-  play only with friends.
-- **Button prompts** can show the wrong button after rebinding the controls or with Steam Input (XML2 Fix issue #8).
 
-The rest are in [Known issues](docs/KNOWN-ISSUES.md). See [Play online](docs/ONLINE.md) for steps, privacy and
-troubleshooting.
+Legends Classic 0.6.0-beta.7 needs XML2 Fix 1.11.0-beta.6. Update BOTH parts on Ultimate Legends' Beta channel, Rebuild, then Play. Back up SaveLC first. Beta.1-6 saves remain compatible; online peers need the same build and settings (content 37 / catalogue 8 / LC47).
 
-<details><summary>Technical details</summary>
+- Fixed a rare crash before the main menu on PCs with exactly 16 or 32 HID devices.
+- Iceman and Magma skating now continues while jump is held, up to the first game's rank limit, and releasing jump ends the slide. A completed slide no longer breaks later jumps or jump attacks. Both the builder and companion fix are required.
+- Save safety: carried-over preview saves can keep distinct protected copies without refusing every later save. Saves and automatic legacy-import writers coordinate their transactions; failed/contended writes refuse rather than report another writer's progress as saved.
 
-- Builder 0.6.0, content 35, catalogue 8, game version `LC45` (the identity issued at 0.6.0-beta.6: the stable build
-  is the same output, no new row); requires XML2 Fix `>=1.11` (stable; each beta required its own fix beta,
-  `>=1.11.0-beta.5` for beta.6). The builder refuses a DLL without the companion capability `lc-npc-beam-trace/2`,
-  whatever its version.
-- The 0.6 betas were content 30 / `LC40` (beta.1) to content 35 / `LC45` (beta.6); 0.5.0-beta.1 content 29 / `LC38`;
-  0.4.1-beta.1 content 28 / `LC37`. Catalogue revision 8 and the W2 save layout since 0.5.0-beta.1.
-- Builder internals carried from the beta line (formerly listed under Unreleased):
+This is a beta, not a full campaign or Internet co-op certification. Local acceptance is tracked by the release round. Relay/different networks, three/four separate PCs, long sessions, slow joins and host loss still need player testing. Optional Classic conversation remains off; xemu/XML1-recomp save import remains disabled. Both owned games are required; distributed tools contain no game data.
 
-  - Finishing Forge's reboot on Muir Island no longer leaves a black screen. A side mission played in its caller's
-    map folder (muir2_reboot, astral_sk, nyc_rooftops) no longer clears the caller's mission flags at its start, as
-    in X-Men Legends; muir_in2 now fades back in and plays the 2_4_8 conversation. Saves made before the reboot
-    carry on unchanged.
-  - Mission starts inside one map folder no longer clear that folder's mission flags either, as in X-Men Legends:
-    after the GRSO raid (Act 5), the uniform (Act 3) and in the Morlock hub (Act 1), questions already asked are no
-    longer offered again. No progression change; saves carry on unchanged.
-  - Full builds insert emitter helpers before the new progression tail, matching the focused map proof and
-    preserving the exact GRSO save-prefix bindings. A combined full-conversion regression checks both fixes.
-    The owned zone self-test counts progression additions from the source recipe and validates the generated tail.
-  - The builder retains distant sewer door unlocks across streaming: the Healer guard latch and both GRSO
-    objective exits gain resident retry actions. Old stuck saves recover by revisiting the dead guards for the
-    Healer door, or approaching a GRSO exit with both objectives complete. Two optional Nuke panel doors use
-    the same protection. Existing door save identities and original placement ordinals are preserved; live
-    acceptance is pending.
-  - Later-rank hero effects reject application below their first rank instead of applying a permanent zero-life
-    attachment. Authored active-rank lifetimes and values are retained. V-H18 checks every zero-life rank.
-  - A new streaming validator reports distant data/script activation chains, including conversation callbacks,
-    and identifies script origins whose distance needs manual review.
-  - Save import stays off by default. Experimental Install and Undo now require a
-    companion DLL advertising the SaveLC writer lease; previews pin its hash and
-    Undo requires `--build`. Experimental builds can compile a private, source-hash
-    pinned identity/checkpoint ledger into a registered import table. Real saves,
-    proven retail ledgers and live companion acceptance are still required before
-    public admission. Global-profile merging remains disabled.
-
-</details>
-
-### Beta by beta
-
-The 0.6.0 betas follow; 0.5.0-beta.1 and 0.4.1-beta.1 are under v0.5.0 and v0.4.1 below.
-
-#### 0.6.0-beta.6
+### 0.6.0-beta.6
 
 Legends Classic 0.6.0-beta.6 (content 35 / catalogue 8 / LC45) needs **XML2 Fix 1.11.0-beta.5**.
 Update both parts on Ultimate Legends' Beta channel, then **Rebuild**, then **Play**. Beta.1 through beta.5 and RC1
@@ -182,7 +93,7 @@ conversation remains off by default and lacks owner, xemu, DXVK and multiplayer 
 No new remote-PC hand test is claimed. Back up saves before updating. Both owned games are required; the distributed
 tools contain no game data.
 
-#### 0.6.0-beta.5
+### 0.6.0-beta.5
 
 Legends Classic 0.6.0-beta.5 (content 34 / catalogue 8 / LC44) uses **XML2 Fix 1.11.0-beta.4**.
 The companion DLL is unchanged. Update the builder on Ultimate Legends' Beta channel, then **Rebuild** and **Play**.
@@ -205,7 +116,7 @@ remains off by default and lacks owner, xemu, DXVK and multiplayer comparison. S
 Release acceptance and its exact limits are recorded in the release checklist; no new remote-PC hand test is claimed.
 Back up saves before updating. Both owned games are required; the distributed tools contain no game data.
 
-#### 0.6.0-beta.4
+### 0.6.0-beta.4
 
 Legends Classic 0.6.0-beta.4 (content 33 / catalogue 8 / LC43) goes with **XML2 Fix 1.11.0-beta.4**.
 Update both parts in Ultimate Legends' **Beta** channel, then **Rebuild**, then **Play**. beta.1, beta.2 and beta.3
@@ -252,7 +163,7 @@ xemu, DXVK or multiplayer comparison. Save import from xemu and XML1-recomp rema
 Back up saves before updating. Standalone builders need the matching DLL in the output folder before Build.
 These tools distribute no game content; both owned games are required.
 
-#### 0.6.0-beta.3
+### 0.6.0-beta.3
 
 Legends Classic 0.6.0-beta.3 (content 32 / catalogue 8 / LC42) goes with **XML2 Fix 1.11.0-beta.3**.
 Update both parts in Ultimate Legends' **Beta** channel, then **Rebuild**, then **Play**. Everyone in a session
@@ -291,7 +202,7 @@ migration. Save import from xemu and XML1-recomp remains off. All other still-op
 Back up your saves before updating. The standalone builder needs the matching `dinput.dll` in the output folder
 before Build. These tools distribute no game content; you need your own copies of both games.
 
-#### 0.6.0-beta.2
+### 0.6.0-beta.2
 
 Legends Classic 0.6.0-beta.2 (content 31 / catalogue 8 / LC41) goes with **XML2 Fix 1.11.0-beta.2**. It fixes the
 problems found after beta.1: Blob's fight, the rare 4-player host crash and the lost-newcomer pause. The session now
@@ -389,7 +300,7 @@ refuse each other when you join. Your 0.6.0-beta.1 saves load in beta.2 (same sa
 Legends Classic is an unofficial, non-commercial fan project. No game files, game art or modified game executables
 are distributed; you need your own copies of both games.
 
-#### 0.6.0-beta.1
+### 0.6.0-beta.1
 
 Legends Classic 0.6.0-beta.1 goes with XML2 Fix 1.11.0-beta.1 (content 30 / catalogue 8 / LC40). It is a beta: the
 co-op parts were tested on one PC with two copies of the game and on two PCs at home, and still need wider testing

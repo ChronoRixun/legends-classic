@@ -1,16 +1,18 @@
+> Current pair: beta.7 / Fix beta.6; LC47 and skating agreement revision 2. Older beta peers are refused.
+
 ﻿# Play online in 0.6
 
-Player guide for Legends Classic **0.6.0** with XML2 Fix **1.11.0**. Online co-op now runs from the
-game's own **Play Online** screen. Co-op was tested on one PC (up to four copies) and on two PCs at
+Player guide for Legends Classic **0.6.0-beta.7** with XML2 Fix **1.11.0-beta.6**. Online co-op now runs from the
+game's own **Play Online** screen. This is a beta. Co-op was tested on one PC (up to four copies) and on two PCs at
 home, with two, three and four players, including fights. Not verified yet: playing through the relay (networks where
 a direct connection fails), players on different home networks, three or four separate PCs, long sessions, and joins
 over slow connections ([known issues](KNOWN-ISSUES.md#online)). The session runs at the host's frame rate; your own
 setting comes back when you leave.
 
-Up to four players can share a campaign. Use XML2 Fix 1.11.0 with Legends Classic 0.6.0 and matching settings.
-Earlier gameplay contracts are refused. Stable keeps beta.6's LC45 and beta.5's gameplay agreement; mixed
-beta.5/stable play has not been verified. Test mode must be off; a different gameplay contract or setting is
-refused with the reason on both PCs. To update, use Ultimate Legends' **Stable** channel (0.5.0 or later): update XML2
+Up to four players can share a campaign. Everyone needs the same build - builder 0.6.0-beta.7 with XML2 Fix
+1.11.0-beta.6 - with the same gameplay settings and Test mode off; a different build or setting is refused with the
+reason on both PCs. games from beta.1 to beta.5 cannot join beta.6, and a 0.5 game cannot join a 0.6
+game. To update, use Ultimate Legends' **Beta** channel: update XML2
 Fix and the builder, then **Rebuild**, then **Play**.
 
 ## Open Play Online
@@ -166,7 +168,7 @@ Up to 0.5, online play started from the launcher's Online panel. These are its E
 | Code expired | Ask the host to open a new room and share its new code. |
 | The game is full | All four places are taken (`room_full`); wait for a place. |
 | That game can't take new players right now. Try again in a moment. | The room exists but is temporarily not accepting players (`room_closed`, contract v1.5). Wait and retry; it need not be full. |
-| Different game version | Everyone should Rebuild to 0.6.0 and use matching game content/settings. 0.4.0 and 0.5 cannot join 0.6.0. Browse games compares the room token with your build's GameVersion (`LC45`); matching builds should have Join enabled when a place is available. |
+| Different game version | Everyone should Rebuild to 0.4.0 and use matching game content/settings. 0.2.x cannot join 0.4.0. Browse games compares the room token with your build's GameVersion (`LC33`); matching builds should have Join enabled when a place is available. |
 | Test mode is on | Turn Test mode off, close the game and host/join again. |
 | The online service could not be verified | Update the game and launcher, check for connection interception on the network, and report persistent failures. Do not bypass the check. |
 | Something went wrong | Close the game and retry. If repeated, collect `xml2-fix.log`. |
@@ -185,7 +187,7 @@ Up to 0.5, online play started from the launcher's Online panel. These are its E
 | Another game is updating: host or join when it has finished. | Wait for the launcher's update work to finish. |
 | Test mode is on, and the XML2 Fix turns online play off while it is. Turn it off to play online. / Test mode is on: turn it off, then host or join again. | Use Turn test mode off, then restart through Host or Join. |
 | X-Men Legends is running. Close it to host or join a game. / X-Men Legends is already running. Close it, then host or join again. | Close the running game first. |
-| This game has no online play here. | Use the X-Men Legends page and Ultimate Legends 0.5.0 or later. |
+| This game has no online play here. | Use the X-Men Legends page and a launcher with the 0.4.0 online panel. |
 | The game has not finished building. | Finish or resume the build before trying again. |
 | The launcher sent the game a request it does not know: {error} | Update the launcher; report the full error if it repeats. |
 | The online settings could not be saved: {error} | Close the game, check that its folder can be written to and retry. Keep the full error if it repeats. |
@@ -213,6 +215,5 @@ The newer RC2/RC3 agent probes did not re-accept native online-host Load Saved C
 Normal main-menu campaign loading passed separately. beta.1/2/3/4 and RC1–3 saves remain compatible; online peers need beta.5.
 
 Beta.5 used the unchanged XML2 Fix 1.11.0-beta.4. Beta.6 needs XML2 Fix 1.11.0-beta.5: older companions are refused at join
-(their weapon contact rule differs). Stable 0.6.0 makes the same game as beta.6 with XML2 Fix 1.11.0; its stable
-fixes leave beta.5's gameplay agreement unchanged. See the 0.6.0 release notes for its checks;
+(their weapon contact rule differs). See the beta.6 release acceptance notes for its current checks;
 the RC1/RC2/RC3 observations above describe those earlier builds and are not a substitute for current acceptance.

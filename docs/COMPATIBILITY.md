@@ -12,6 +12,7 @@ both PCs.
 
 | Builder | Content | Needs xml2-fix | Launcher | Adds |
 |---|---|---|---|---|
+| 0.6.0-beta.7 | 37 | 1.11.0-beta.6 | 0.5.0, Beta channel | Skating chains + exit cleanup, boot and save safety; catalogue 8 / LC47; older saves load, matching peers required |
 | 0.6.0-beta.6 | 35 | 1.11.0-beta.5 | 0.5.0, Beta channel | Hero move exits (Savage Rampage) and first-game lightning/flame hit spacing; catalogue 8 / LC45; beta.1–5 and RC1–3 saves load; matching peers required |
 | 0.6.0-beta.5 | 34 | 1.11.0-beta.4 | 0.5.0, Beta channel | Sewer progression, optional Nuke doors and rank gates; catalogue 8 / LC44; beta.1–4 and RC1–3 saves load; matching peers required |
 | 0.6.0-beta.4 | 33 | 1.11.0-beta.4 | 0.5.0, Beta channel | Arbiter hatches/rescue, emitter lifetime, temporary control, loaded services and restart leave notice; catalogue 8 / LC43; beta.1/2/3 saves load; matching beta.4 peers required |
