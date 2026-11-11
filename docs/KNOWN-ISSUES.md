@@ -45,6 +45,14 @@ lock ([#63](https://github.com/ChronoRixun/legends-classic/issues/63)) and the t
 
 ## Gameplay
 
+- **Fixed in 0.6.0-beta.6: Muir Island black screen.** Returning from Forge's reboot puzzle to his workshop no longer
+  hangs on a black screen; the Shadow King flashback also keeps the Astral Plane's flags, as in the first game.
+  Mission starts inside the same area also keep that area's flags now (no repeated mansion questions after the
+  Act 3 uniform or the Act 5 GRSO raid, no extra Marrow line in the Morlock hub). Report any replayed intro or
+  stuck fade with the area name.
+- **Weapon and move checks not yet seen live (beta.6).** Not exercised live: the Iceman skating fallback when its counter runs out, and an uninterrupted full flamethrower sweep. Natural officer bursts were measured for their hit spacing and damage over 14-second windows; a burst ending on its own was not observed in those windows.
+  An officer near a breakable object can keep firing at it; the first game does the same.
+
 - **Existing permanent rank effects.** Beta.5 prevents new lower-rank permanent attachments; it does not repair attachments already recorded in a save.
 
 - **Control-effect timing.** beta.4 fixes permanent Jubilee/Frost control effects and retains XML1's authored
@@ -115,7 +123,7 @@ try. If a screen's text or labels are cut off, or something looks off, please re
 - **Historical host-load coverage.** RC1 same-PC saved-campaign hosting was exercised with the new DLL.
   Native online-host Load Saved Campaign was not accepted again on RC2/RC3: the latest probe reached an
   online-unavailable screen. Ordinary main-menu campaign loading passed; beta.3's two-PC hand test remains
-  historical coverage, not a new-build guarantee. Read beta.5's release acceptance notes for its current checks.
+  historical coverage, not a new-build guarantee. Read beta.6's release acceptance notes for its current checks.
 
 - **Intermittent startup crash (under investigation).** Native testing saw one crash before the main menu in
   Windows DirectInput. A later alternating check reached the menu on all ten beta.2 boots and all ten beta.3 boots.
@@ -136,9 +144,9 @@ try. If a screen's text or labels are cut off, or something looks off, please re
   rate, leave and host a new room. Player cards show "local / online" rates and warn ("Cannot hold N fps") when a
   PC can't keep up; nothing lowers the rate automatically. A slow PC, a slow connection or fullscreen VSync can still
   slow the session for everyone. Checked live on one PC so far.
-- **0.6.0-beta.5 is a co-op beta.** Across earlier 0.6 builds, co-op was tested on one PC (up to four copies) and on two PCs at home, with two,
+- **0.6.0-beta.6 is a co-op beta.** Across earlier 0.6 builds, co-op was tested on one PC (up to four copies) and on two PCs at home, with two,
   three and four players, including fights and joins by code, LAN and IP. Those separate-PC setups have not been
-  re-verified on beta.5. Not verified yet: playing through the
+  re-verified on beta.6. Not verified yet: playing through the
   relay (networks where a direct connection fails), players on different home networks (over the internet), three
   or four separate PCs, long sessions, and joins over slow connections (if a join takes longer than the wait, play
   continues and the friend comes in moments later). Relay-only mode refuses an unavailable relay instead of falling

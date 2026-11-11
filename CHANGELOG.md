@@ -35,7 +35,46 @@ build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebui
   proven retail ledgers and live companion acceptance are still required before
   public admission. Global-profile merging remains disabled.
 
-## v0.6.0 - content version 34 (needs XML2 Fix 1.11.0)
+## v0.6.0 - content version 35 (needs XML2 Fix 1.11.0)
+
+### 0.6.0-beta.6
+
+Legends Classic 0.6.0-beta.6 (content 35 / catalogue 8 / LC45) needs **XML2 Fix 1.11.0-beta.5**.
+Update both parts on Ultimate Legends' Beta channel, then **Rebuild**, then **Play**. Beta.1 through beta.5 and RC1
+through RC3 saves remain compatible. Everyone online needs the same build and settings. The builder refuses an older
+XML2 Fix, and online sessions refuse players whose companion is older than 1.11.0-beta.5.
+
+- **Wolverine's Savage Rampage no longer freezes him.** After the Xtreme's dashes run out, Wolverine returns and
+  control comes back at once. The converter had dropped the first game's "failure exits" (the move a power falls
+  back to when its counter or target runs out). All 42 authored exits across 12 heroes are restored, among them
+  Nightcrawler's two teleport exits, Rogue's relocation exit and the Iceman and Magma skating exits. A new builder
+  check (V-H19) compares every hero's exits with the first game's data. Owen confirmed the Rampage fix by hand on
+  November 10; agent checks covered rank-1 casts with no target and one target.
+- **Weapon X lightning officers and flamethrower troops hit like in the first game.** Their hits are now spaced by
+  the original weapon trace timer (about 0.6 seconds for lightning, 0.75 seconds for flame), and each contact of a
+  burst counts once, as in the first game. A full officer burst lands about two hits. Owen's hand check on November 10:
+  the officer "hit hard, but definitely survivable". Gun soldiers use the same contact rule, so the second shot of an
+  MP5 burst can now land as it did in the first game (2-5 damage per hit, unchanged).
+- An officer standing near a breakable object can keep firing at it without pausing. The first game does the same,
+  so this is kept.
+- **Muir Island no longer goes black after Forge's reboot puzzle.** Starting Forge's reboot side mission wiped Muir
+  Island's own mission flags, so the return to Forge's workshop faded out and never faded back in. Side missions
+  played in their caller's area now keep the caller's flags, as in the first game: the workshop fades in, Forge and
+  Moira talk, and the story moves on to the mansion. Saves made before the reboot (Owen's included) carry on unchanged;
+  if you are stuck on the black screen, load the save from before the puzzle and replay it.
+- **The Shadow King flashback keeps the Astral Plane's progress**, as in the first game (the lever and mission flags
+  set before the flashback are no longer cleared by it).
+- Mansion questions you already asked are no longer offered again after the uniform (Act 3) and the GRSO raid (Act 5);
+  Marrow no longer has an extra line in the Morlock hub. Mission starts inside the same area now keep that area's
+  flags, as in the first game.
+
+Not exercised live: the Iceman skating fallback when its counter runs out, and an uninterrupted full flamethrower
+sweep. Natural officer bursts were measured for their hit spacing and damage over 14-second windows; a burst ending
+on its own was not observed in those windows. The still-open [known issues](docs/KNOWN-ISSUES.md) remain, including startup reliability, four-player pause
+scope, relay/different networks, three/four separate PCs, long sessions, slow joins and host loss. Optional classic
+conversation remains off by default and lacks owner, xemu, DXVK and multiplayer comparison. Save import stays disabled.
+No new remote-PC hand test is claimed. Back up saves before updating. Both owned games are required; the distributed
+tools contain no game data.
 
 ### 0.6.0-beta.5
 
