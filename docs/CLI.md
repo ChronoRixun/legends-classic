@@ -14,7 +14,7 @@ and rc releases](RELEASING.md).
 - **[xml2-fix](https://github.com/ChronoRixun/xml2-fix)**: the in-memory engine fixes the port relies on (new-game
   party, forced parties, the first game's level curve and combat numbers, bigger zones, its own save format and
   folder, display options). The Ultimate Legends launcher installs it for you. Each builder needs a minimum version
-  (0.6.0-beta.5 needs 1.11.0-beta.4, 0.6.0-beta.1 needs 1.11.0-beta.1, 0.5.0-beta.1 needs 1.10.0-beta.1, the stable 0.4.0 needs 1.8.0): see
+  (0.6.0-beta.6 needs 1.11.0-beta.5, 0.6.0-beta.5 needs 1.11.0-beta.4, 0.6.0-beta.1 needs 1.11.0-beta.1, 0.5.0-beta.1 needs 1.10.0-beta.1, the stable 0.4.0 needs 1.8.0): see
   [versions that go together](COMPATIBILITY.md).
 - **Windows 10 or 11, 64-bit.** The released builder is a Windows program. From source it is plain Python + numpy +
   Pillow, written to run on Linux too (its tests run there in CI; a full Linux build is untested so far).
@@ -29,8 +29,8 @@ Download `xml1-builder-<version>-win64.zip` from [Releases](https://github.com/C
 (check it against `SHA256SUMS.txt`) and unzip it into a folder of its own (the zip has no top-level folder).
 
 **Before Build or Rebuild**, create the output folder and copy `dinput.dll` from the matching
-[xml2-fix release](https://github.com/ChronoRixun/xml2-fix/releases) into it - for 0.6.0-beta.5 that is
-**XML2 Fix 1.11.0-beta.4** (this builder uses the beta.4 fix; the two beta numbers need not match). The default
+[xml2-fix release](https://github.com/ChronoRixun/xml2-fix/releases) into it - for 0.6.0-beta.6 that is
+**XML2 Fix 1.11.0-beta.5** (the two beta numbers need not match; an older fix is refused). The default
 co-op screens check this DLL while the build runs; updating the fix only in your X-Men Legends II folder is not
 enough. Then run the builder from a command prompt:
 

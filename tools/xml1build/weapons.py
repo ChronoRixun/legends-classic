@@ -328,6 +328,7 @@ def _fx_sound(w: dict, t: str, fx_key: str, sound_key: str, bolt: str) -> list:
 
 
 def _beam(w: dict, t: str, bolt: str, flame: bool = False) -> ET.Element:
+    from . import weapon_trace as WT
     a = {'name': 'beam', 'time': t, 'attacktype': 'beam', 'arc': '0', 'beambolt': bolt,
          'pierce': 'true' if flame else 'false'}
     if flame:
@@ -336,6 +337,8 @@ def _beam(w: dict, t: str, bolt: str, flame: bool = False) -> ET.Element:
         # Inert on stock PC: zero split rays, so split damage is never applied. The DLL
         # recognises this exact pair at ce_atk_beam; ordinary beams carry no marker.
         a.update({'split_count': '0', 'split_damage': '32766 32766'})
+    if WT.required(w):
+        a.update({'split_count': '0', 'split_damage': WT.MARKER})
     if w.get('muzzleaccfx'):
         a['beameffect'] = w['muzzleaccfx']                        # the tracer / the flame along the ray
     if w.get('impactfx'):
@@ -753,6 +756,8 @@ def validate(v, ck) -> None:
     XML1's entity parser reads explodedamage as ONE number - the code's minimum (0x97940-0x97953) - so
     (3) a built entity file's single-value attributes must hold one number, never a 'min max' range;
     (4) original gun moves retain their source priority and priority_override."""
+    from . import weapon_trace as WT
+    WT.validate(v, ck)
     ctx = v.ctx
     from . import heroes as H                  # noqa: WPS433 - heroes imports this package's modules lazily too
     from . import npc_values as NV             # noqa: WPS433 - the single-value entity attribute names
