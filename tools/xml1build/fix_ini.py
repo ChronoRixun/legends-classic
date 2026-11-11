@@ -448,8 +448,9 @@ REQUIRED_XML2FIX = '1.11'
 # the 0.5 profile ([Limits] SaveLayout=w2, [Game] Xml1Economy, wave 3, TelekinesisRule and flying carry), plus
 # the co-op screens and fonts. GuardDecideRule stays opt-in. The matching companion for this release is
 # XML2 Fix 1.11.0-beta.2: linked session pacing needs TickRate rule 29 revision 2
-# and its versioned roster/native settings trailer; beta.1 peers must refuse.
-REQUIRED_XML2FIX_PRERELEASE = 'beta.4'
+# and its versioned roster/native settings trailer; beta.1 peers must refuse. 0.6.0-beta.6 converted weapon contacts need
+# companion capability lc-npc-beam-trace/2, first in XML2 Fix 1.11.0-beta.5.
+REQUIRED_XML2FIX_PRERELEASE = 'beta.5'
 
 
 def required_xml2fix(builder_version: str) -> str:

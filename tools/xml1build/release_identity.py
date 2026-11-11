@@ -78,6 +78,9 @@ HISTORY = (
     Identity('0.6.0-beta.4', 33, 8, 'LC43', 'bf5964d1f5b5012d02b06fef686bfc2ac6eced84897636e990c2ac87b553b5c0'),
     # Beta.5 progression and rank gates; catalogue 8 and W2 unchanged.
     Identity('0.6.0-beta.5', 34, 8, 'LC44', '32b20a13dc31690e8997f91d6de0649fccbc973da64e37ce9328bfe093306305'),
+    # 0.6.0-beta.6: hero move fallbacks (Savage Rampage) and converted NPC beam/flame trace + ID-zero contacts.
+    # Catalogue 8 and W2 unchanged; beta.1-5 saves remain compatible. Needs XML2 Fix 1.11.0-beta.5 (lc-npc-beam-trace/2).
+    Identity('0.6.0-beta.6', 35, 8, 'LC45', '4ec30981b54c8b6dff3750a6206ece28b8393255c8448c632de0d78e4f27e10e'),
 )
 
 
