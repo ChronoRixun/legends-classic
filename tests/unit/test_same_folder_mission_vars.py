@@ -72,3 +72,15 @@ def test_the_shared_begin_file_keeps_only_when_every_inline_site_is_in_the_folde
 
 def test_the_cached_prepare_output_is_rebuilt():
     assert P3.VERSION >= 10
+
+
+def test_later_passes_match_an_inlined_copy_that_keeps_its_flags():
+    from xml1build import scripts_transform as T
+    body = ['# ( "XML1 beginMission(twice)" )', 'setGameFlag("h4", 2, 0 )', 'setGameFlag("h4", 5, 0 )',
+            'setCurrentAct(5 )', 'loadMapKeepTeam("house/h4/raid" )']
+    kept = ['x = 1', '# ( "XML1 beginMission(twice)" )', 'setCurrentAct(5 )', 'loadMapKeepTeam("house/h4/raid" )', 'y = 2']
+    got, ch = T.choose_team_in_bodies(kept, {'twice': body})
+    assert got[3] == 'loadMapChooseTeam("house/h4/raid" )' and got[4] == 'y = 2' and len(ch) == 1
+    other = kept[:2] + ['objective("z", "EOBJCMD_SHOW" )'] + kept[2:]
+    assert T.choose_team_in_bodies(other, {'twice': body})[1] == []     # any other header difference still mismatches
+    assert T.choose_team_in_bodies(body, {'twice': body})[0][-1] == 'loadMapChooseTeam("house/h4/raid" )'

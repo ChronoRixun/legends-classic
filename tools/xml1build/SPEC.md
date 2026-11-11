@@ -3157,7 +3157,10 @@ the mocap6 briefing site still clears), `mansion4_grso_done`, `mansion5`, `muir3
 `sewers_hub`. Unchanged: `asteroid_int2` and `astral1b` (callers in two folders), `muir3` (its one same-folder script
 has no zone), `asteroid_mm`, `riots`, `sewers_grso` (other folders). None was a hang; the visible effect was a
 question already asked being offered again (mansion4 flags 2-5 after the GRSO raid, mansion3 flags after the
-uniform, Marrow's swrhub1 option in the Morlock hub). Test: `tests/unit/test_same_folder_mission_vars.py`.
+uniform, Marrow's swrhub1 option in the Morlock hub). Because an inlined copy's header can now differ from the shared begin file in these
+clears only, the forced-teams passes (`choose_team_in_bodies`, `forced_party_in_bodies`) match a body with
+`scripts_transform.body_span`, which ignores the header's `setGameFlag(.., 0)` lines and compares everything else
+exactly (without it V36 found no recommended-party seed in `mocap6/briefing_2_5_5`). Test: `tests/unit/test_same_folder_mission_vars.py`.
 
 ### 27.6 P4 `sound`, P5 `music` (`prepare/sound.py`, `prepare/music.py`)
 

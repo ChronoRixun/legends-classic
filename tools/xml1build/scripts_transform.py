@@ -408,6 +408,35 @@ BEGIN_MARKER = re.compile(r'''^\s*#\s*\(\s*"XML1 beginMission\((?P<m>[^)"]+)\)"\
 _KEEP_TEAM = re.compile(r'''^(?P<ind>\s*)loadMapKeepTeam(?P<rest>\s*\(.*)$''')
 
 
+_FLAG_CLEAR = re.compile(r'^setGameFlag\(\s*"[^"]+"\s*,\s*\d+\s*,\s*0\s*\)$')
+_ACT_STMT = re.compile(r'^setCurrentAct\s*\(')
+
+
+def body_span(strip, i, body):
+    """length of the occurrence of `body` (stripped lines, marker first) at strip[i], or None. The mission-flag clears
+    of the header (setGameFlag(.., 0) lines before setCurrentAct) may differ between copies: a start from its own map
+    folder keeps that folder's flags (prepare/scripts same_folder_keep, SPEC 27.5.1), while the shared begin file or
+    another call site clears them. Everything else must be identical."""
+    if not body:
+        return None
+    a = next((k for k, s in enumerate(body) if _ACT_STMT.match(s)), None)
+    if a is None:
+        return len(body) if strip[i:i + len(body)] == body else None
+    head, rest = [s for s in body[:a] if not _FLAG_CLEAR.match(s)], body[a:]
+    k, got = i + 1, [strip[i]] if i < len(strip) else []
+    while k < len(strip) and not _ACT_STMT.match(strip[k]):
+        if BEGIN_MARKER.match(strip[k]):
+            return None
+        if not _FLAG_CLEAR.match(strip[k]):
+            got.append(strip[k])
+            if len(got) > len(head):
+                return None
+        k += 1
+    if got != head or strip[k:k + len(rest)] != rest:
+        return None
+    return k - i + len(rest)
+
+
 def choose_team_in_bodies(lines, bodies):
     """-> (lines, [(mission, line text)]). bodies: {mission: [stripped body lines, marker first]} of the missions
     that force heroes. Every occurrence of such a body (the marker line followed by the body's statements, compared
@@ -422,10 +451,10 @@ def choose_team_in_bodies(lines, bodies):
         m = BEGIN_MARKER.match(s)
         if not m:
             continue
-        body = bodies.get(m.group('m').strip().lower())
-        if not body or strip[i:i + len(body)] != body:
+        n = body_span(strip, i, bodies.get(m.group('m').strip().lower()))
+        if n is None:
             continue
-        for j in range(i, i + len(body)):
+        for j in range(i, i + n):
             k = _KEEP_TEAM.match(out[j])
             if k:
                 out[j] = f'{k.group("ind")}loadMapChooseTeam{k.group("rest")}'
@@ -609,9 +638,10 @@ def forced_party_in_bodies(lines, bodies, plan):
             continue
         mis = m.group('m').strip().lower()
         body, p = bodies.get(mis), plan.get(mis)
-        if not body or p is None or strip[i:i + len(body)] != body:
+        n = body_span(strip, i, body) if p is not None else None
+        if n is None:
             continue
-        k = body_load_index(lines[i:i + len(body)])
+        k = body_load_index(lines[i:i + n])
         if k is None:
             continue
         j = i + k
