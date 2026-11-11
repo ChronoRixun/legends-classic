@@ -3132,6 +3132,18 @@ two reports next to it (`rewrite_report.txt/.json`). Sources override: `scripts/
 - `bescript.py` (the BehavEd parser) moved to `tools/xml1build/lib/`; `research/scripts/bescript.py` is a shim.
 - Key: version + P1 key + sha1 of P2's `mission_plan.json` and mission texts + sha1 of the two API tables.
 
+#### 27.5.1 A side mission's start keeps its caller's folder vars (P3 version 9, 2026-11-11)
+
+`mission_begin_lines` clears the packed mission vars and mission-flag game vars of the started mission's map folders
+(the stand-in for XML1's clear on a zone load in another map folder, xbe `0x99b90`). For a side mission it now leaves
+out every var that is also used in a folder of its caller zones (`SIDE_CALLS`). XML1 `beginsidemission` (`0x18dd70`)
+is pushsidemission + beginmission (`0x18da90`); neither clears a mission var or flag, so a side mission played in its
+caller's folder keeps the caller's state. Before, `begin_muir2_reboot` cleared `muir2` flags 1-6 and `x1v05` bits
+19-31; back in `muir_in2` the zone script read flag 6 = 0, took its first-visit branch (`cameraFade(1, 0)` with no
+fade-in, the `rebooted` game var cleared) and the screen stayed black (Owen, 11-11). The three same-folder side
+missions change (`muir2_reboot`, `astral_sk`, `nyc_rooftops`); the four flashbacks in other folders (`jug_fb`,
+`sent_fb`, `wx_fb_start`, `dr_mag1`) clear what they cleared before. Test: `tests/unit/test_side_mission_vars.py`.
+
 ### 27.6 P4 `sound`, P5 `music` (`prepare/sound.py`, `prepare/music.py`)
 
 | Stage | Does | Output (Sources override) |

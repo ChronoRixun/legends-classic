@@ -63,9 +63,10 @@ from ..sources import REPO_ROOT
 import xmlb  # noqa: E402  tools/xmlb.py
 
 STAGE = 'scripts'
-VERSION = 8                                          # 5: issue #95 (point-local permission, safe feature fallback)
+VERSION = 9                                          # 5: issue #95 (point-local permission, safe feature fallback)
 #                                                      6/7: issue #63 (the first game's service bits); 6 also issue #5
 #                                                      (solo mode: setSoloMode) on its own branch; 8: both (0.2.2)
+#                                                      9: a side mission's start keeps its caller's folder vars
 OUT = 'out'                                          # the research layout: Sources overrides scripts/out with this
 REPORT_TXT, REPORT_JSON = 'rewrite_report.txt', 'rewrite_report.json'
 API_RELS = ('scripts/xml1_api.json', 'scripts/xml2_api.json')   # research-relative, packaged data
@@ -552,8 +553,15 @@ class Rewriter:
             self.problem(f'mission {m}', 'beginMission target has no XML1 mission file - only the call is dropped')
             return lines
         dirs = self.MISSION_DIRS[m]
+        # A side mission keeps the vars of its caller's map folders. XML1 beginsidemission (xbe 0x18dd70) is
+        # pushsidemission + beginmission (0x18da90), and neither clears a mission var or flag: XML1 clears that store
+        # only in restartMission (0x9a734) and when a zone of another map folder loads (0x99b90). The start of a side
+        # mission played in its caller's folder (muir2_reboot from muir_is/muir2/muir_in2) must therefore leave the
+        # caller's flags alone - clearing them sent muir_in2's return script down its first-visit branch, which fades
+        # to black and never fades back in (SPEC 27.5.1).
+        keep = {zdir(z) for z in self.SIDE_CALLS.get(m, ())}
         lines += self.gen_clear([n for n in self.VARS if self.STORAGE[n].kind != 'zone' and
-                                 set(self.VAR_DIRS[n]) & dirs])
+                                 set(self.VAR_DIRS[n]) & dirs and not set(self.VAR_DIRS[n]) & keep])
         lines.append(call('setCurrentAct', info['act']))
         for o in info.get('objectives', []):
             on = q(o['name'])
