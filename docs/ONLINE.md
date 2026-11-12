@@ -1,14 +1,16 @@
+> Current pair: beta.7 / Fix beta.6; LC47 and skating agreement revision 2. Older beta peers are refused.
+
 ﻿# Play online in 0.6
 
-Player guide for Legends Classic **0.6.0-beta.6** with XML2 Fix **1.11.0-beta.5**. Online co-op now runs from the
+Player guide for Legends Classic **0.6.0-beta.7** with XML2 Fix **1.11.0-beta.6**. Online co-op now runs from the
 game's own **Play Online** screen. This is a beta. Co-op was tested on one PC (up to four copies) and on two PCs at
 home, with two, three and four players, including fights. Not verified yet: playing through the relay (networks where
 a direct connection fails), players on different home networks, three or four separate PCs, long sessions, and joins
 over slow connections ([known issues](KNOWN-ISSUES.md#online)). The session runs at the host's frame rate; your own
 setting comes back when you leave.
 
-Up to four players can share a campaign. Everyone needs the same build - builder 0.6.0-beta.6 with XML2 Fix
-1.11.0-beta.5 - with the same gameplay settings and Test mode off; a different build or setting is refused with the
+Up to four players can share a campaign. Everyone needs the same build - builder 0.6.0-beta.7 with XML2 Fix
+1.11.0-beta.6 - with the same gameplay settings and Test mode off; a different build or setting is refused with the
 reason on both PCs. games from beta.1 to beta.5 cannot join beta.6, and a 0.5 game cannot join a 0.6
 game. To update, use Ultimate Legends' **Beta** channel: update XML2
 Fix and the builder, then **Rebuild**, then **Play**.

@@ -2297,7 +2297,7 @@ crash (the console path crashed there); back out with Esc to the menu; Quit (but
 ids normalised), 6 grades (Freshman `unlocked="true"`), 62 courses. Per course: `requirement` / `reward` (XML1
 points) and `duration` dropped (never read; counts `dr_points_dropped`); `QE200` gets `rewardexam="true"`
 (`DR_EXAM_FIXES`: XMen2.exe opens a grade with the previous grade's exam, XML1 gated Junior by points); `hero`
-lowercased + `singleplayer="true"`; one `<REWARD type="Titanium">`: the XML1 `rewarditem` (19 courses), else
+lowercased, never `singleplayer` (XMen2.exe: with it the course seats the party leader and ignores `hero`, 0x4d1f7a; hero alone seats the hero, 0x4d207b); one `<REWARD type="Titanium">`: the XML1 `rewarditem` (19 courses), else
 `rewardxp` by the build's XP curve (`frontend.course_reward_xp`, section 23.1): `0` with `--xp-curve xml1` (XML1 gave
 no completion XP), with `xml2` XML2's own curve (`frontend.xp_curve`: per reclevel the smallest Titanium `rewardxp` of
 XML2's non-exam courses, piecewise-linear, clamped, rounded to 50: rl1 200, rl8 2500, rl15 4500, rl21 6250, rl27
@@ -3161,6 +3161,36 @@ uniform, Marrow's swrhub1 option in the Morlock hub). Because an inlined copy's 
 clears only, the forced-teams passes (`choose_team_in_bodies`, `forced_party_in_bodies`) match a body with
 `scripts_transform.body_span`, which ignores the header's `setGameFlag(.., 0)` lines and compares everything else
 exactly (without it V36 found no recommended-party seed in `mocap6/briefing_2_5_5`). Test: `tests/unit/test_same_folder_mission_vars.py`.
+
+#### 27.5.2 Reload fixes: zone scripts a loaded save must not strand (P3 version 11, 2026-11-11)
+
+`reload_fixes.apply(rel, data)` patches an XML1 zone script at the source before every P3 pass reads it
+(`parse_script`: the store census, the side-mission census, the scriptstart inline and `write`). Each fix is anchored
+by the sha1 of the source lines and fails closed on a different source; an already fixed source is left alone.
+
+- `nyc/fb/nyc_fb1` (Sentinel flashback, first street; tester report 11-11, reproduced on 0.6.0-beta.6): the zone
+  script plays the intro conversation `1_4_5` only while the mission var `s_fb_intro` is 0 and sets it to 1. The
+  intro acts the first Sentinel's spawner (`1_4_5` -> `sentinel_intro` -> `ss_sentinelflashback01`); only that
+  Sentinel's death script enables `zone_link01` and disables `trigger_touch02` ("You must finish your objectives").
+  The zone has a save Xtraction Point and a `nosave` world: a save made there keeps the var and the objectives but
+  not the zone's entity states, so loading it gave a street with no Sentinel and a closed exit, before or after the
+  first Sentinel's death. The fix adds the reload case as the gate's else branch: objective `sentinel1` complete ->
+  redo the death script's two `setEnable`s; not complete -> play `1_4_5` again, which spawns the Sentinel. The
+  first visit is unchanged; nothing else enters nyc_fb1 with `s_fb_intro` set (the flashback start clears it, no
+  zone links back). Output change: `scripts/nyc/fb/nyc_fb1.py` only. Test: `tests/unit/test_reload_fixes.py`.
+
+The other XML1 `nosave` zones with a save Xtraction Point were checked for the same pattern (2026-11-11, static: zone
+script gates, what acts each spawner and exit, fresh-zone entity defaults) and need no fix, because a load rebuilds
+what their exit needs:
+- `nyc/fb/nyc_fb4`: no zone-script gate. The finish is the saved `sentinel4` count (goal 8). A fresh zone again offers
+  8 Sentinels: `ss_sentinelflashback08` instant, 12 and 13 on touch, the climax 09 on touch, and its death acts
+  `get_jumped`, which spawns 01, 03, 04 and 06.
+- `mansion/dr_mag2/mag_nyc4`: no gate. Blob and the Brotherhood spawn instantly, and the touch triggers replay
+  Blob's scene. The port's `x1join` branch already handles a Cyclops who has joined.
+- `weapon_x/wfb/wx1_1`: no gate. `shoot_me01` (`firstact`) replays the opening on every load, and `zone_link01`
+  starts enabled.
+- `weapon_x/wfb/wx1_3`: its gate (`wpnxfb` 1) is XML1's own reload handling, which restarts the fire jets. The way out
+  is the touch trigger `final_confrontation`, which a fresh zone has again.
 
 ### 27.6 P4 `sound`, P5 `music` (`prepare/sound.py`, `prepare/music.py`)
 
@@ -8420,3 +8450,56 @@ original ordinal prefix and prefix attestation against the focused released-map 
 The two sewers1_2_4 sparring-gate closure warnings remain known optional risks. These authored gates toggle
 between closure and release and have actcountdisable=2. The monotonic unlock retry cannot safely repair both
 states without a separate state-aware delivery design; live O4 must still verify closure and release.
+
+## Props modelled away from their origin (`offset_residents.py`, checked with V41)
+
+**Symptom.** In the Brig (mansion/man2/subbasement2, also subbasement3b and subbasement4) a hero walks through
+the forcefield into Toad's cell. The original blocks: in the first game, a hero walking at the cell stops at the
+forcefield's collision hull (y 921.6 for the hull at y 938.6), and with the forcefield entity moved away (staged
+emulator memory write) he walks to the back wall at (2252, 1080), which is the port's behavior.
+
+**Cause.** The definition `sb_brig_forcefield_x01` (physent, model `mansion/sb_brig_forcefield`) has no
+`smartent`. The first game keeps an absent `smartent` false, so every placed prop is resident. XMen2.exe makes it
+true for physical entities (0x498a05). At zone load it releases the entity (0x486212-0x486242), and its smart-entity
+manager (CSmartEntMgr, vtable 0x68e440, update 0x4b7100) re-creates a record only when the record's position lies
+in a box around the camera: the camera's own +-250 box joined with a +-750 box centred 350 units along its view.
+The forcefield is modelled in world coordinates: its geometry and collision hull lie at the cell (x 2212-2390,
+y 938-944) while the placement is at 0 0 0. With the heroes at the cell the entity is therefore never created:
+no collision, no forcefield sound and no forcefield at all. The model itself (collision hull present, the node
+names do not matter: XML2's own models carry empty names) and the entity attributes are fine.
+
+**XML2's envelope.** Over XML2's own 15,233 smart placements with a model, the horizontal distance from the
+placement's origin to its own model bounds (render scene bounds joined with the collision hull, moved by scale,
+orient and pos) is at most 64 units. The props XML2 places farther from their geometry carry `smartent="false"`.
+
+**What the builder does.** After every other zone pass (the last numbered tail), each placed instance of a
+smart-by-default class (lcsave `SMART_DEFAULT_TRUE` less actors and tiles) whose definition has no `smartent`
+and whose origin lies more than 64 units outside its model bounds moves to a generated resident copy of its
+definition (`x1_offset_<sha256(type)[:16]>`, `smartent="false"`, ignored marker `xml1offsetresident="true"`).
+The copy's entinst group is appended after every existing group, including the settle, late fall-volume,
+hazard, destruction and progression tails, so every old numbered ordinal is unchanged and older saves keep
+their zone records (the zone-compat `attest` append rule). Instance names, positions, models, unselected
+instances and the original definition stay as they are; the pass is idempotent. An explicit `smartent` (either
+value) is kept. A zone is deferred whole if the selection would add more than 64 residents or bring explicit
+residents above 128. Rows go to `zones_detail.json` (`offset_residents`).
+
+**Census (0.6.0-beta.7 output; the candidate build selects the same).** 81 placements in 14 converted zones,
+all physents with collision hulls. How often XMen2.exe brings one in depends on the camera: its box reaches about
+750 units from a point between the camera and the hero, so an origin farther than about 1,100 units from the prop
+is never re-created while the heroes stand at it. Beyond that: the three brig forcefields (2,403; Toad's cell)
+and muir_in3's control-room and med-lab walls (crwall2, mlwall1/2), monitors, forge tables, console1 and the
+forge-lab railing (1,250-1,684). Camera-dependent (250-1,100): the rest of muir_in3's 44 placements (railings,
+glass walls, consoles, planters; 542-1,106), muir_in2's forge-lab glass wall (1,086; present in the unfixed build
+with the hero beside it), the subway rim faders of nyc1_1_1 / nyc1_1_2 and their danger-room copies (525) and
+Master Mold parts mm_d/e/f (257-402). Usually present (under 250): Master Mold mm_a/mm_c and the hanging sub of
+arb_fd2, visit1/arb_fd2 and arena_arb2 (223). Sequence-relevant: the brig forcefields and muir_in3's walls and
+upper railings.
+
+**Validation.** `offset_residents.problems` (run in V41 for every zone): generated copies are smart-by-default
+classes with `smartent="false"`, nothing old follows their tail, at most 64 per zone. The settle, hazard,
+fall-volume, destruction and progression tail checks accept the offset tail after their own.
+
+
+### Final beta.7 compatibility integration
+
+The release retains the unpublished RC-A 36/LC46 identity as a reservation and uses content 37 / catalogue 8 / LC47. Hash-only zone-prefix entries are generated directly from the stable build, published beta.6 and RC-A to the final maps. All 14 offset-resident zones retain their beta.6/RC-A prefixes. In mastermold2 only, the canonically identical duplicate mm_damagestraight_mm definition is emitted once; placement order and all 103 candidate numbered entries stay unchanged. The old-map attester collapses only complete canonical-identical duplicates and rejects conflicts. This makes the current map unique for the existing native prefix-digest reader; no engine change is needed. Synthetic regressions cover identical/conflicting definitions and exact placement/ordinal preservation. Historical/native and live acceptance are required by the release round.

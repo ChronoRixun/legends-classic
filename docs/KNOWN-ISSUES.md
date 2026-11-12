@@ -1,3 +1,7 @@
+> Final beta.7 fixes Sentinel first-street save reloads, forced-hero Danger Room courses and offset Brig/Muir props. The original flashback offers and original Juggernaut behavior are retained. Normal muir_in3 traversal including the crwall1 approach is a required release smoke row.
+
+> Beta.7 fixes the pre-menu HID crash and skating continuation/exit. Full current-build acceptance is recorded by the release round; unverified network/long-session limits below remain.
+
 # Known issues and limitations
 
 Open bugs and play-test notes: [issues](https://github.com/ChronoRixun/legends-classic/issues) and
@@ -125,9 +129,13 @@ try. If a screen's text or labels are cut off, or something looks off, please re
   online-unavailable screen. Ordinary main-menu campaign loading passed; beta.3's two-PC hand test remains
   historical coverage, not a new-build guarantee. Read beta.6's release acceptance notes for its current checks.
 
-- **Intermittent startup crash (under investigation).** Native testing saw one crash before the main menu in
-  Windows DirectInput. A later alternating check reached the menu on all ten beta.2 boots and all ten beta.3 boots.
-  The cause and whether this is a regression are unresolved; if it recurs, retain `xml2-fix.log` and try starting again.
+- **Fixed with the next XML2 Fix: the rare crash before the main menu.** Since beta.3 a small share of starts
+  ended about a quarter second in, before the movies, with an error in Windows' own DirectInput (`dinput.dll`).
+  The cause is a Windows bug: DirectInput 7 reads just past the end of its list of HID devices when a PC has
+  exactly 16 or 32 of them (mice, keyboards, RGB gear and controllers all add to the count, so connecting or
+  disconnecting a pad changes it), and that read only crashes when the list happens to sit at the end of the
+  memory Windows has handed out. XML2 Fix now gives DirectInput's memory a zeroed margin, so the read is harmless.
+  `xml2-fix.log` shows `dinput heap slack: on` and `HID list N of M`; "full" there marks a PC that was affected.
 
 - **Fixed in 0.6.0-beta.2: a friend who drops out while joining.** In 0.6.0-beta.1, if the only friend joining
   dropped out partway through, a player already in the game could be left on the pause screen with everyone shown
@@ -144,7 +152,7 @@ try. If a screen's text or labels are cut off, or something looks off, please re
   rate, leave and host a new room. Player cards show "local / online" rates and warn ("Cannot hold N fps") when a
   PC can't keep up; nothing lowers the rate automatically. A slow PC, a slow connection or fullscreen VSync can still
   slow the session for everyone. Checked live on one PC so far.
-- **0.6.0-beta.6 is a co-op beta.** Across earlier 0.6 builds, co-op was tested on one PC (up to four copies) and on two PCs at home, with two,
+- **0.6.0-beta.7 is a co-op beta.** Across earlier 0.6 builds, co-op was tested on one PC (up to four copies) and on two PCs at home, with two,
   three and four players, including fights and joins by code, LAN and IP. Those separate-PC setups have not been
   re-verified on beta.6. Not verified yet: playing through the
   relay (networks where a direct connection fails), players on different home networks (over the internet), three

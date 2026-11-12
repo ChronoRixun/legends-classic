@@ -59,6 +59,7 @@ from . import scripts_transform as ST     # section 18: the join zones' NPC doub
 from . import buoys as BY                # section 42: generated long-range walk networks
 from . import automaps as AM              # section 26: XML1 automap textures -> Automaps/<zone>.zam
 from . import settle as SE                # issue #81: native floor sweeps for raised ordinary props
+from . import offset_residents as RO      # props modelled away from their origin stay resident
 from . import talent_sets as TS           # SPEC <number assigned at merge>: NPC-only talents in per-set files
 from . import npc_values as NV            # SPEC 29.2: inline entities use the same values as entity files
 from . import loot as LOOT               # SPEC 108: --loot xml1, the first game's item economy as data
@@ -1337,6 +1338,35 @@ class Zones:
         return refs
 
     # ------------------------------------------------------------------ zone XML
+    def convert_offset_residents(self, zone, root, st):
+        duplicates = RO.dedupe_identical_mastermold2(root, zone)
+        if duplicates:
+            st['offset_resident_identical_definition_dedup'] = duplicates
+        ctx = self.ctx
+        boxes = {}
+
+        def read_box(model):
+            rel = 'models/' + model.replace('\\', '/').lower().removesuffix('.igb') + '.igb'
+            if rel not in boxes:
+                path = ctx.x1_path(rel)
+                index = getattr(ctx, 'base_index', None)
+                if path is None and hasattr(index, 'path'):
+                    path = index.path(rel)
+                boxes[rel] = None if path is None else RO.model_box(path.read_bytes())
+            if boxes[rel] is None:
+                raise ValueError('model is absent')
+            return boxes[rel]
+        rows = RO.survey(root, read_box)
+        if rows:
+            st['offset_residents'] = rows
+        moved = RO.convert(root, rows)
+        self.counts['offset_residents'] += moved
+        for row in rows:
+            self.counts['offset_residents_' + row['status']] += 1
+        if any(r['status'] == 'residency_budget' for r in rows):
+            ctx.warn(f'{zone}: offset residents deferred (residency budget)')
+        return moved
+
     def mutate_zone(self, zone, zx, root, st):
         ctx = self.ctx
         st['patched'] = True
@@ -1419,6 +1449,9 @@ class Zones:
         self.counts['progression_relays'] += PR.convert(root, zone, progression_scripts)
         for ref, text in progression_scripts.items():
             ctx.write_script(C.script_rel(ref), text, source='generated progression delivery')
+        # Props modelled away from their origin stay resident as in XML1 (offset_residents.py): appended last,
+        # after every older numbered tail, so saved zone records keep their ordinals.
+        self.convert_offset_residents(zone, root, st)
         for el in root.iter():
             if el.tag.lower() == 'precache':
                 t = (el.get('type') or '').lower()
@@ -1967,7 +2000,8 @@ class Zones:
                              'base_world_attrs': st['base_world_attrs'], 'mapped_refs': st.get('mapped_refs'),
                              'rewritten': st.get('rewritten'),
                              'spawn_settle': st.get('spawn_settle', []),
-                             'spawn_settle_deferred': st.get('spawn_settle_deferred')}
+                             'spawn_settle_deferred': st.get('spawn_settle_deferred'),
+                             'offset_residents': st.get('offset_residents', [])}
 
     # ---- SPEC 21 (--frontend xml1): XML1's menu backdrop replaces XML2's menu/main_back
     MENU_ZONE_XML2_KINDS = ('bigconvmap',)                  # flag entries of the replaced XML2 package that are kept

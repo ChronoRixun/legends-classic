@@ -1238,6 +1238,11 @@ class Validator:
             if added and residents > SE.MAX_RESIDENTS:
                 ck.error(f'{zone}: spawn-floor residency exceeds {SE.MAX_RESIDENTS} explicit residents')
             ck.count('settled_instances', added)
+            from . import offset_residents as RO
+            for problem in RO.problems(root):
+                ck.error(f'{zone}: {problem}')
+            ck.count('offset_resident_instances', sum(len(g.findall('inst')) for g in root.findall('entinst')
+                                                       if g.get('type') in RO.names(root)))
 
     _ENGINE_ITEMS = {'money'}        # XMen2.exe resolves MONEY natively; neither game lists it in Data/items
     _ITEMS_PKG = 'packages/generated/items.pkgb'

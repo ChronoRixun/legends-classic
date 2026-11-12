@@ -263,6 +263,19 @@ restores Nightcrawler's two teleport exits, Rogue's relocation exit, Iceman/Magm
 authored failure alternatives. No talent, rank value, animation, event timing, saved entity ordinal or save
 catalogue changes are needed. The beta.5 `power3` tier fix affects Berserker Rage and is unrelated.
 
+**Handler-requested loops (2026-11-11):** some combat handlers ask their move for the next chain themselves. XML1's
+`ch_skating` (default.xbe 0xda570) requests action 4 `move` while jump (input bit 6) stays held at the end of a
+cycle; XMen2.exe's `ch_skating` (0x4ec9e0) is the same routine but requests 0x1e `samepowerhold` (XML2's Iceman
+power5 chains `samepowerhold -> power5`). A converted slide naming only `move` therefore ended after one cycle
+whatever the player held. `loop_triggers` adds `samepowerhold` with the same result beside every `move` chain of a
+`ch_skating` move (Iceman and Magma `skating`; XML1's `move` chain stays); V-H20 rejects a slide without it.
+`ch_charge_move` (Colossus `chargeforward`) is not mapped: XMen2.exe's generic transition already resolves its
+`move` chain while jump is held. Engine dependency: XMen2.exe's held-jump request skips the slide's exit
+(vt+0xc 0x4ecfb0, which clears physical flag 4) that XML1 runs before every request (0xda5f8). When the rank
+counter runs out with energy left the fallback exit leaves the flag set and every later jump lands at once
+(no slide, no jump attack) until the zone reloads. The data change needs the XML2 Fix change that runs that exit
+when the request leaves the slide (skate-loop report).
+
 **Control lifetimes (2026-11-07):** XML1 samples uniformly from `life` to `life_max` (default.xbe 0x2a7b0).
 Merge those explicit bounds into XML2's `life="min max"` before collapsing ranks, so each lifetime talentvalue
 retains both endpoints. This covers Frost Confuse and Fear and Jubilee Photo Flash. For the two confuse chains,

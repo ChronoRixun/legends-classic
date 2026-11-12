@@ -313,7 +313,8 @@ def numbered_tail_problems(root, later=()):
     after the settled props (x1schema.FALL_KILL_ENABLED_LATE), allowed behind them."""
     from . import death_targets as DT
     from . import progression_relays as PR
-    destruction = DT.names(root) | PR.names(root)
+    from . import offset_residents as RO
+    destruction = DT.names(root) | PR.names(root) | RO.names(root)
     after_embedded = destruction | {e.get('name') for e in root.iter('entity')
                                    if e.get('xml1hazardbounds') == 'true'}
     marked = {e.get('name') for e in root.iter('entity') if e.get(MARKER) == 'true'}

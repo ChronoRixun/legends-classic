@@ -352,7 +352,7 @@ V6's current `FRONTEND_ZONES` rule inverts under `--frontend xml1`.
 | COURSE `rewarditem` (19 challenges) | `<REWARD type="Titanium" rewarditem="X"/>` | XML2 challenge pattern (for example CHCYC `ACCELERATED_VISOR`) |
 | other courses | `<REWARD type="Titanium" rewardxp="N"/>`, N from XML2's reclevel -> XP curve (piecewise-linear over XML2's 34 Titanium `rewardxp` rows; for example rl1 200, rl8 2500, rl15 4500, rl21 6250, rl27 10000, rl38 25000) | XML1's XP came from kills (the FR101 outro says so); tuning question E.5 |
 | Adamantium / Vibranium | optional second phase: `requiredtime` = 1/2 and 1/3 of `timelimit` / `timeduration`, or `requiredkills` for kill courses; `rewardtrait` cycling Strike / Speed / Body / Focus | XML1's extra credits (Efficiency / Demolitionist / Tactician / Untouchable) are XML1-exe logic with no data. Start with Titanium only; add these if the menu misbehaves with 1 reward (UNVERIFIED). |
-| `hero=` | kept, plus `singleplayer="true"` | a forced solo hero; the semantics of `singleplayer` are UNVERIFIED |
+| `hero=` | kept, lowercased; no `singleplayer` | `hero` alone forces the solo hero (0x4d207b); `singleplayer` seats the party leader and ignores `hero` (0x4d1f84) |
 | SPAWNER `delayMax` | `delaymax` | `encode_xmlb` lowercases it anyway |
 | FR106 outro (XML1 extra-credit glyphs `{ | } ~` and `~11` colour codes) | trimmed to "Well Done!" | the extra credits do not exist in XML2; XML2 fonts may lack the glyphs (UNVERIFIED) |
 

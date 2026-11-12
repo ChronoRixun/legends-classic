@@ -44,6 +44,7 @@ from . import common as C
 from . import autospend as ASP                 # SPEC 94: XML1's automatic stat growth in Data/autospend.XMLB
 from . import mind_control as MC
 from . import move_fallbacks as MF
+from . import loop_triggers as LT   # handler-requested loop actions: XML1 `move` -> XMen2.exe `samepowerhold`
 from . import rank_costs as RC
 from . import combat_events as CE
 from . import hero_icons as HI        # issues #53/#73: the talent-icon atlases as 4x4 alpha-blended sheets
@@ -1561,6 +1562,12 @@ class StyleCollapse:
                 mv.attrib.pop('fallback', None)
                 if mv.get('name') in fallbacks:
                     mv.set('fallback', fallbacks[mv.get('name')])
+        except ValueError as exc:
+            self.report['errors'].append(f'{self.hero}: {exc}')
+        # A handler that requests its own continuation asks XMen2.exe for a different action id than XML1 did
+        # (ch_skating: XML1 `move`, XMen2.exe `samepowerhold`); the XML2 action joins XML1's chain (loop_triggers).
+        try:
+            LT.add_loop_actions(out_moves, self.report)
         except ValueError as exc:
             self.report['errors'].append(f'{self.hero}: {exc}')
         # fixups + vocabulary check
@@ -3488,6 +3495,15 @@ def _validate(ctx, report=None):
             ck.counts[f'exits_{h}'] = len(MF.targets(source, mapping))
     except (OSError, KeyError, ValueError) as exc:
         ck.error(f'fallback source/mapping unavailable: {exc}')
+    # ---- V-H20: handler-requested loops carry the action XMen2.exe's handler asks for (loop_triggers)
+    ck = Check('V-H20')
+    checks.append(ck)
+    for h, (_ps, sroot) in styles.items():
+        if sroot is None:
+            continue
+        for message in LT.problems(sroot):
+            ck.error(f'{h}: {message}')
+        ck.counts[f'loops_{h}'] = len(LT.expected(sroot.findall('FightMove')))
     return checks, budgets
 
 

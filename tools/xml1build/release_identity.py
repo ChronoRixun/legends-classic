@@ -81,6 +81,11 @@ HISTORY = (
     # 0.6.0-beta.6: hero move fallbacks (Savage Rampage) and converted NPC beam/flame trace + ID-zero contacts.
     # Catalogue 8 and W2 unchanged; beta.1-5 saves remain compatible. Needs XML2 Fix 1.11.0-beta.5 (lc-npc-beam-trace/2).
     Identity('0.6.0-beta.6', 35, 8, 'LC45', '4ec30981b54c8b6dff3750a6206ece28b8393255c8448c632de0d78e4f27e10e'),
+    # Beta.7: skating chain aliases and companion rule 42 revision 2; catalogue/W2 unchanged.
+    # Unpublished RC-A reservation: content 36 / LC46 never shipped or appeared in a published release.
+    Identity('0.6.0-beta.7', 36, 8, 'LC46', 'b09555ff77ceb6e92ff2c86e41a9909e2b232521bcce6141195f6ec58a792ba8'),
+    # Final beta.7: Sentinel reload, forced-hero courses and offset residents; catalogue/W2 unchanged.
+    Identity('0.6.0-beta.7', 37, 8, 'LC47', '9c83f0e944bc3f203b804bd8499850eff5c987a59bc605b8abd05fbd8a157a2f'),
 )
 
 

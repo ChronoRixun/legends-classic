@@ -246,12 +246,14 @@ def test_generate_rejects_one_unmodelled_zone_and_keeps_valid_history():
     with tempfile.TemporaryDirectory() as folder:
         env, _, _ = fixture(folder)
         previous = Path(folder) / 'previous'
-        # Copy a changed zone with duplicate definitions; numbering is unsafe there.
+        # Conflicting duplicates remain unmodelled; identical copies are now reviewed as equivalent.
         for build in (previous, Path(env.binds.build)):
             source = build / 'Maps/zone/x/y.engb'
             destination = build / 'Maps/zone/x/unmodelled.engb'
             root = xmlb.decode(source.read_bytes())
-            root.append(copy.deepcopy(next(e for e in root if e.tag == 'entity')))
+            conflict = copy.deepcopy(next(e for e in root if e.tag == 'entity'))
+            conflict.set('synthetic_conflicting_value', 'different')
+            root.append(conflict)
             _xmlb(str(destination), root)
         history = Z.load(env.binds.build)
         report = Z.generate(previous, env.binds.build)
