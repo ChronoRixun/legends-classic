@@ -131,6 +131,28 @@ def alias(type_name):
     return PREFIX + hashlib.sha256(type_name.encode('utf-8')).hexdigest()[:16]
 
 
+def dedupe_identical_mastermold2(root, zone):
+    """Reviewed map-only repair: no placement, ordinal or definition value edits.
+
+    The historical duplicate prevents native prefix-digest verification. Emit
+    one copy only when both complete definitions are canonically identical.
+    Other zones/names are untouched; conflicting values refuse conversion.
+    """
+    if zone != 'mastermold/mastermold2':
+        return 0
+    entries = [e for e in root.findall('entity') if e.get('name') == 'mm_damagestraight_mm']
+    if len(entries) < 2:
+        return 0
+    def canonical(e):
+        return [e.tag, sorted(e.attrib.items()), [canonical(c) for c in e]]
+    expected = canonical(entries[0])
+    if any(canonical(e) != expected for e in entries[1:]):
+        raise ValueError('mastermold2: conflicting mm_damagestraight_mm definitions')
+    for e in entries[1:]:
+        root.remove(e)
+    return len(entries) - 1
+
+
 def convert(root, rows):
     """Move the selected instances into appended resident copies of their definitions. Returns the count."""
     selected = {(r['group'], r['instance']) for r in rows if r.get('status') == 'resident'}
