@@ -3179,6 +3179,19 @@ by the sha1 of the source lines and fails closed on a different source; an alrea
   first visit is unchanged; nothing else enters nyc_fb1 with `s_fb_intro` set (the flashback start clears it, no
   zone links back). Output change: `scripts/nyc/fb/nyc_fb1.py` only. Test: `tests/unit/test_reload_fixes.py`.
 
+The other XML1 `nosave` zones with a save Xtraction Point were checked for the same pattern (2026-11-11, static: zone
+script gates, what acts each spawner and exit, fresh-zone entity defaults) and need no fix, because a load rebuilds
+what their exit needs:
+- `nyc/fb/nyc_fb4`: no zone-script gate. The finish is the saved `sentinel4` count (goal 8). A fresh zone again offers
+  8 Sentinels: `ss_sentinelflashback08` instant, 12 and 13 on touch, the climax 09 on touch, and its death acts
+  `get_jumped`, which spawns 01, 03, 04 and 06.
+- `mansion/dr_mag2/mag_nyc4`: no gate. Blob and the Brotherhood spawn instantly, and the touch triggers replay
+  Blob's scene. The port's `x1join` branch already handles a Cyclops who has joined.
+- `weapon_x/wfb/wx1_1`: no gate. `shoot_me01` (`firstact`) replays the opening on every load, and `zone_link01`
+  starts enabled.
+- `weapon_x/wfb/wx1_3`: its gate (`wpnxfb` 1) is XML1's own reload handling, which restarts the fire jets. The way out
+  is the touch trigger `final_confrontation`, which a fresh zone has again.
+
 ### 27.6 P4 `sound`, P5 `music` (`prepare/sound.py`, `prepare/music.py`)
 
 | Stage | Does | Output (Sources override) |
