@@ -8454,13 +8454,16 @@ value) is kept. A zone is deferred whole if the selection would add more than 64
 residents above 128. Rows go to `zones_detail.json` (`offset_residents`).
 
 **Census (0.6.0-beta.7 output; the candidate build selects the same).** 81 placements in 14 converted zones,
-all physents with collision hulls. By distance from origin to geometry: never present where the heroes meet them (over 750
-units): the three brig forcefields (2,403), muir_in3's lab and control-room walls, glass walls, railings,
-consoles, monitors, forge tables and planters (44 placements, 542-1,684), muir_in2's forge-lab glass wall
-(1,086); camera-dependent (250-750): the subway rim faders in nyc1_1_1 / nyc1_1_2 and their danger-room copies
-(525), Master Mold parts mm_d/e/f (257-402); usually present (under 250): Master Mold mm_a/mm_c, the hanging sub of
-arb_fd2, visit1/arb_fd2 and arena_arb2 (223). Sequence-relevant: the brig forcefields (Toad's cell) and
-muir_in3's walls and railings.
+all physents with collision hulls. How often XMen2.exe brings one in depends on the camera: its box reaches about
+750 units from a point between the camera and the hero, so an origin farther than about 1,100 units from the prop
+is never re-created while the heroes stand at it. Beyond that: the three brig forcefields (2,403; Toad's cell)
+and muir_in3's control-room and med-lab walls (crwall2, mlwall1/2), monitors, forge tables, console1 and the
+forge-lab railing (1,250-1,684). Camera-dependent (250-1,100): the rest of muir_in3's 44 placements (railings,
+glass walls, consoles, planters; 542-1,106), muir_in2's forge-lab glass wall (1,086; present in the unfixed build
+with the hero beside it), the subway rim faders of nyc1_1_1 / nyc1_1_2 and their danger-room copies (525) and
+Master Mold parts mm_d/e/f (257-402). Usually present (under 250): Master Mold mm_a/mm_c and the hanging sub of
+arb_fd2, visit1/arb_fd2 and arena_arb2 (223). Sequence-relevant: the brig forcefields and muir_in3's walls and
+upper railings.
 
 **Validation.** `offset_residents.problems` (run in V41 for every zone): generated copies are smart-by-default
 classes with `smartent="false"`, nothing old follows their tail, at most 64 per zone. The settle, hazard,
