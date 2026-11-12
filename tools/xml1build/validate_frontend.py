@@ -558,6 +558,9 @@ def v16_danger_room(v, ck):
                         ck.error(f'{rel}: {cn}: XML1 attribute {k!r} left (XMen2.exe never reads it)')
                 if c.get('hero') and c.get('hero').lower() not in heroes:
                     ck.error(f'{rel}: {cn}: hero {c.get("hero")!r} is not a herostat hero')
+                if c.get('hero') and c.get('singleplayer') is not None:
+                    ck.error(f'{rel}: {cn}: hero course carries singleplayer: XMen2.exe then seats the party leader '
+                             f'and ignores hero= (0x4d1f7a vs 0x4d207b)')
                 for s in c:
                     if s.tag in ('SPAWNER', 'MUSTDIE', 'MUSTSURVIVE'):
                         ch = (s.get('character') or '').lower()

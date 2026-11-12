@@ -2297,7 +2297,7 @@ crash (the console path crashed there); back out with Esc to the menu; Quit (but
 ids normalised), 6 grades (Freshman `unlocked="true"`), 62 courses. Per course: `requirement` / `reward` (XML1
 points) and `duration` dropped (never read; counts `dr_points_dropped`); `QE200` gets `rewardexam="true"`
 (`DR_EXAM_FIXES`: XMen2.exe opens a grade with the previous grade's exam, XML1 gated Junior by points); `hero`
-lowercased + `singleplayer="true"`; one `<REWARD type="Titanium">`: the XML1 `rewarditem` (19 courses), else
+lowercased, never `singleplayer` (XMen2.exe: with it the course seats the party leader and ignores `hero`, 0x4d1f7a; hero alone seats the hero, 0x4d207b); one `<REWARD type="Titanium">`: the XML1 `rewarditem` (19 courses), else
 `rewardxp` by the build's XP curve (`frontend.course_reward_xp`, section 23.1): `0` with `--xp-curve xml1` (XML1 gave
 no completion XP), with `xml2` XML2's own curve (`frontend.xp_curve`: per reclevel the smallest Titanium `rewardxp` of
 XML2's non-exam courses, piecewise-linear, clamped, rounded to 50: rl1 200, rl8 2500, rl15 4500, rl21 6250, rl27

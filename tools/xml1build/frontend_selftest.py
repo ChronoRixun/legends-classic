@@ -352,7 +352,7 @@ def u3_dangerroom(ctx):
         rw = c.findall('REWARD')
         if len(rw) != 1 or rw[0].get('type') != 'Titanium' or not (rw[0].get('rewardxp') or rw[0].get('rewarditem')):
             fail('U3', f'{c.get("name")}: rewards {[r.attrib for r in rw]}')
-        if c.get('hero') and (c.get('singleplayer') != 'true' or c.get('hero') != c.get('hero').lower()):
+        if c.get('hero') and (c.get('singleplayer') is not None or c.get('hero') != c.get('hero').lower()):
             fail('U3', f'{c.get("name")}: hero {c.get("hero")} singleplayer {c.get("singleplayer")}')
         for k in ('intro', 'outro', 'hint'):
             if F.DR_GLYPHS.search(c.get(k) or '') and '~' in (c.get(k) or ''):

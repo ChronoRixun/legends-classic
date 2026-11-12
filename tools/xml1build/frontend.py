@@ -38,8 +38,8 @@ before SPEC 21). With --frontend xml1 (the default) it writes A-E:
      music is installed by media: SPEC 21.)
   B. Data/dangerroom.{XMLB,engb}: XML1's 15 arenas / 6 grades / 62 courses in XMen2.exe's schema (loader
      0x4d4079..0x4d48cc): Freshman unlocked="true"; QE200 gets rewardexam (XMen2.exe opens grade n+1 by the exam
-     of grade n; XML1 gated Junior by points); requirement / reward / duration dropped (never read); hero= kept +
-     singleplayer; one Titanium REWARD per course: the XML1 rewarditem, else rewardxp by the build's XP curve
+     of grade n; XML1 gated Junior by points); requirement / reward / duration dropped (never read); hero= kept
+     (never singleplayer, which would make the exe ignore it); one Titanium REWARD per course: the XML1 rewarditem, else rewardxp by the build's XP curve
      (course_reward_xp, SPEC 23.1): 0 with --xp-curve xml1 (XML1 gave no completion XP: default.xbe 0xc53f2 adds
      the course's reward to the Danger Room points only), XML2's reclevel curve (xp_curve) with xml2; XML1's
      extra-credit outro glyphs trimmed. The 19 reward items are added to Data/items by zones as
@@ -844,8 +844,11 @@ def dangerroom_tree(ctx):
                 notes.append(f'{name}: canthrow="true" added (grabstart combat node; no port hero has the grab talent)')
                 rep['canthrow_added'] += 1
             if ca.get('hero'):
+                # A COURSE hero= alone seats that hero (XMen2.exe 0x4d207b). singleplayer="true" must NOT be added:
+                # its branch (0x4d1f84) keeps the party leader (or the xml2-fix fallback, Cyclops) and ignores hero=
+                # ("Challenge - Beast" played Cyclops). XML2's own CHCYC / CHGAM / CHTOA ... carry hero= only.
                 ca['hero'] = ca['hero'].lower()
-                ca.setdefault('singleplayer', 'true')
+                ca.pop('singleplayer', None)
                 rep['forced_hero_courses'] += 1
             for k in ('intro', 'outro', 'hint'):
                 if ca.get(k) and DR_EXTRA_CREDIT.search(ca[k]):
