@@ -58,16 +58,18 @@ from . import check_cancel, digest, ntfs_walk, publish, read_stage, rmtree, sha1
 from . import disc as P1, tables as P2
 from .. import common as C                           # noqa: F401 - puts tools/ (xmlb) on sys.path
 from ..lib.bescript import parse_file, parse_line
+from .. import reload_fixes
 from ..sources import REPO_ROOT
 
 import xmlb  # noqa: E402  tools/xmlb.py
 
 STAGE = 'scripts'
-VERSION = 10                                         # 5: issue #95 (point-local permission, safe feature fallback)
+VERSION = 11                                         # 5: issue #95 (point-local permission, safe feature fallback)
 #                                                      6/7: issue #63 (the first game's service bits); 6 also issue #5
 #                                                      (solo mode: setSoloMode) on its own branch; 8: both (0.2.2)
 #                                                      9: a side mission's start keeps its caller's folder vars
 #                                                      10: so does a plain mission start from its own folder
+#                                                      11: reload fixes (SPEC 27.5.2: nyc_fb1 save softlock)
 OUT = 'out'                                          # the research layout: Sources overrides scripts/out with this
 REPORT_TXT, REPORT_JSON = 'rewrite_report.txt', 'rewrite_report.json'
 API_RELS = ('scripts/xml1_api.json', 'scripts/xml2_api.json')   # research-relative, packaged data
@@ -248,6 +250,12 @@ def write_text(path, text, encoding='latin-1'):
         fh.write(text.replace('\n', NEWLINE).encode(encoding))
 
 
+def parse_script(rel, path):
+    """parse_file for scripts/<rel>.py with the SPEC 27.5.2 reload fixes applied to the XML1 source."""
+    with open(path, 'rb') as fh:
+        return parse_file(reload_fixes.apply(rel, fh.read()))
+
+
 def write_json(path, obj):
     """json.dump(obj, open(path, 'w'), indent=1) as it ran on Windows (ASCII, CRLF)."""
     write_text(path, json.dumps(obj, indent=1), 'ascii')
@@ -301,10 +309,10 @@ class Rewriter:
         for rel, p, origin in self.SCRIPTS:
             zones = set(self.SCRIPT_ZONES.get(rel, ()))
             last = {}
-            for ln in parse_file(p).lines:
+            for ln in parse_script(rel, p).lines:
                 if ln.kind == 'assign':
                     last[ln.target] = ln.value.value.name if ln.value.kind == 'call' else ln.value.kind
-            for ln, c, ctx in parse_file(p).calls():
+            for ln, c, ctx in parse_script(rel, p).calls():
                 if c.name in STORE_FUNCS and c.name != 'disallowResponseOnVar':
                     self.note_access(c, zones, f'scripts/{rel}.py:{ln.no}')
                     if c.name in ('setMissionVar', 'setGameVar') and len(c.args) == 2 and \
@@ -613,7 +621,7 @@ class Rewriter:
         ss = attrs.get('scriptstart', '').strip().lower()
         ml = attrs.get('mapload', '').strip()
         if ss and ss in self.SCRIPT_BY_REL and depth < 3:
-            body, _ = self.rewrite_script_lines(parse_file(self.SCRIPT_BY_REL[ss]), f'scripts/{ss}.py', depth + 1)
+            body, _ = self.rewrite_script_lines(parse_script(ss, self.SCRIPT_BY_REL[ss]), f'scripts/{ss}.py', depth + 1)
             lines += [x.strip() for x in body if x.strip() and not x.strip().startswith('#')]
         elif ml:
             fn = 'loadMapChooseTeam' if attrs.get('teamselect', '').lower() == 'true' else 'loadMapKeepTeam'
@@ -626,7 +634,7 @@ class Rewriter:
     # no script function that pushes the zone, so returns are resolved statically.
     def collect_side_calls(self):
         for rel, p, origin in self.SCRIPTS:
-            for ln, c, ctx in parse_file(p).calls():
+            for ln, c, ctx in parse_script(rel, p).calls():
                 if c.name == 'beginSideMission' and c.args and c.args[0].kind == 'str':
                     self.SIDE_CALLS[c.args[0].value.lower()] |= self.SCRIPT_ZONES.get(rel, set())
         for key, attr, code, zones in self.INLINE:
@@ -1059,7 +1067,7 @@ class Rewriter:
         for i, (rel, p, origin) in enumerate(SCRIPTS):
             if i % 100 == 0:
                 check_cancel(self.cancel)
-            sc = parse_file(p)
+            sc = parse_script(rel, p)
             # baseline: how many lines would XMen2.exe drop if the file were copied unchanged
             for x in self.validate_lines([x.raw for x in sc.lines], rel):
                 before_fail[origin] += 1
