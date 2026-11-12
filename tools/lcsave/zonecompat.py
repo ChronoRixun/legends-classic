@@ -46,7 +46,12 @@ def resident_prefix(root):
     definitions = {}
     for e in root.iter('entity'):
         if e.get('name') in definitions:
-            raise BindError('zone-prefix.lcm: duplicate entity definition')
+            # Historical maps can repeat a definition byte-for-byte. Either
+            # lookup resolves to the same complete authored value. Conflicting
+            # duplicates remain unmodelled and must never attest compatibility.
+            if _canonical(definitions[e.get('name')]) != _canonical(e):
+                raise BindError('zone-prefix.lcm: conflicting duplicate entity definition')
+            continue
         definitions[e.get('name')] = e
     if problems:
         raise BindError('zone-prefix.lcm: unmodelled numbering')

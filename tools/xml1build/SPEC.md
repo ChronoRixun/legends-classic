@@ -8498,3 +8498,8 @@ upper railings.
 **Validation.** `offset_residents.problems` (run in V41 for every zone): generated copies are smart-by-default
 classes with `smartent="false"`, nothing old follows their tail, at most 64 per zone. The settle, hazard,
 fall-volume, destruction and progression tail checks accept the offset tail after their own.
+
+
+### Final beta.7 compatibility integration
+
+The release retains the unpublished RC-A 36/LC46 identity as a reservation and uses content 37 / catalogue 8 / LC47. Hash-only zone-prefix entries are generated directly from the stable build, published beta.6 and RC-A to the final maps. All 14 offset-resident zones retain their beta.6/RC-A prefixes. In mastermold2 only, the canonically identical duplicate mm_damagestraight_mm definition is emitted once; placement order and all 103 candidate numbered entries stay unchanged. The old-map attester collapses only complete canonical-identical duplicates and rejects conflicts. This makes the current map unique for the existing native prefix-digest reader; no engine change is needed. Synthetic regressions cover identical/conflicting definitions and exact placement/ordinal preservation. Historical/native and live acceptance are required by the release round.

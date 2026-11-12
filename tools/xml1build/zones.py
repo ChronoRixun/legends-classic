@@ -1339,6 +1339,9 @@ class Zones:
 
     # ------------------------------------------------------------------ zone XML
     def convert_offset_residents(self, zone, root, st):
+        duplicates = RO.dedupe_identical_mastermold2(root, zone)
+        if duplicates:
+            st['offset_resident_identical_definition_dedup'] = duplicates
         ctx = self.ctx
         boxes = {}
 
