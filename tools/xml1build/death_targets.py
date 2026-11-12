@@ -153,8 +153,9 @@ def problems(root, zone='synthetic/zone'):
     stump_names = {link['stump'] for link in links(root)}
     out += ['invalid destruction stump marker: ' + e.get('name', '') for e in root.iter('entity')
             if e.get(STUMP_MARKER) == 'true' and e.get('name') not in stump_names]
+    from . import offset_residents as RO
     from . import progression_relays as PR
-    later = PR.names(root)
+    later = PR.names(root) | RO.names(root)
     in_tail = False
     for group in root.findall('entinst'):
         if group.get('type') in marked:

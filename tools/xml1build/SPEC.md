@@ -8420,3 +8420,47 @@ original ordinal prefix and prefix attestation against the focused released-map 
 The two sewers1_2_4 sparring-gate closure warnings remain known optional risks. These authored gates toggle
 between closure and release and have actcountdisable=2. The monotonic unlock retry cannot safely repair both
 states without a separate state-aware delivery design; live O4 must still verify closure and release.
+
+## Props modelled away from their origin (`offset_residents.py`, checked with V41)
+
+**Symptom.** In the Brig (mansion/man2/subbasement2, also subbasement3b and subbasement4) a hero walks through
+the forcefield into Toad's cell. The original blocks: in the first game, a hero walking at the cell stops at the
+forcefield's collision hull (y 921.6 for the hull at y 938.6), and with the forcefield entity moved away (staged
+emulator memory write) he walks to the back wall at (2252, 1080), which is the port's behavior.
+
+**Cause.** The definition `sb_brig_forcefield_x01` (physent, model `mansion/sb_brig_forcefield`) has no
+`smartent`. The first game keeps an absent `smartent` false, so every placed prop is resident. XMen2.exe makes it
+true for physical entities (0x498a05). At zone load it releases the entity (0x486212-0x486242), and its smart-entity
+manager (CSmartEntMgr, vtable 0x68e440, update 0x4b7100) re-creates a record only when the record's position lies
+in a box around the camera: the camera's own +-250 box joined with a +-750 box centred 350 units along its view.
+The forcefield is modelled in world coordinates: its geometry and collision hull lie at the cell (x 2212-2390,
+y 938-944) while the placement is at 0 0 0. With the heroes at the cell the entity is therefore never created:
+no collision, no forcefield sound and no forcefield at all. The model itself (collision hull present, the node
+names do not matter: XML2's own models carry empty names) and the entity attributes are fine.
+
+**XML2's envelope.** Over XML2's own 15,233 smart placements with a model, the horizontal distance from the
+placement's origin to its own model bounds (render scene bounds joined with the collision hull, moved by scale,
+orient and pos) is at most 64 units. The props XML2 places farther from their geometry carry `smartent="false"`.
+
+**What the builder does.** After every other zone pass (the last numbered tail), each placed instance of a
+smart-by-default class (lcsave `SMART_DEFAULT_TRUE` less actors and tiles) whose definition has no `smartent`
+and whose origin lies more than 64 units outside its model bounds moves to a generated resident copy of its
+definition (`x1_offset_<sha256(type)[:16]>`, `smartent="false"`, ignored marker `xml1offsetresident="true"`).
+The copy's entinst group is appended after every existing group, including the settle, late fall-volume,
+hazard, destruction and progression tails, so every old numbered ordinal is unchanged and older saves keep
+their zone records (the zone-compat `attest` append rule). Instance names, positions, models, unselected
+instances and the original definition stay as they are; the pass is idempotent. An explicit `smartent` (either
+value) is kept. A zone is deferred whole if the selection would add more than 64 residents or bring explicit
+residents above 128. Rows go to `zones_detail.json` (`offset_residents`).
+
+**Census (0.6.0-beta.7 output).** 80 placements in 13 converted zones, all physents with collision hulls, none
+in XML2's own zones. By distance from origin to geometry: never present where the heroes meet them (over 750
+units): the three brig forcefields (2,403), muir_in3's lab and control-room walls, glass walls, railings,
+consoles, monitors, forge tables and planters (44 placements, 542-1,684), muir_in2's forge-lab glass wall
+(1,086); camera-dependent (250-750): the subway rim faders in nyc1_1_1 / nyc1_1_2 and their danger-room copies
+(525), Master Mold parts mm_d/e/f (257-402); usually present (under 250): Master Mold mm_a/mm_c, arb_fd2's
+hanging sub (223). Sequence-relevant: the brig forcefields (Toad's cell) and muir_in3's walls and railings.
+
+**Validation.** `offset_residents.problems` (run in V41 for every zone): generated copies are smart-by-default
+classes with `smartent="false"`, nothing old follows their tail, at most 64 per zone. The settle, hazard,
+fall-volume, destruction and progression tail checks accept the offset tail after their own.
