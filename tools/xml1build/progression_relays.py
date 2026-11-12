@@ -113,6 +113,14 @@ def convert(root, zone, scripts=None):
 def problems(root, zone):
     # Reconstruct the complete generated tail from the immutable original map. Merely carrying a marker
     # cannot exempt an arbitrary action from numbering checks or claim streaming coverage.
+    from . import offset_residents as RO
+    # Offset residents (offset_residents.py) are appended after this tail; they are checked there.
+    offset = RO.names(root)
+    root = copy.deepcopy(root)
+    for child in list(root):
+        if ((child.tag == 'entity' and child.get('name') in offset) or
+                (child.tag == 'entinst' and child.get('type') in offset)):
+            root.remove(child)
     expected = copy.deepcopy(root)
     marked = names(root)
     for child in list(expected):
