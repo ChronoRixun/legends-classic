@@ -8453,13 +8453,14 @@ instances and the original definition stay as they are; the pass is idempotent. 
 value) is kept. A zone is deferred whole if the selection would add more than 64 residents or bring explicit
 residents above 128. Rows go to `zones_detail.json` (`offset_residents`).
 
-**Census (0.6.0-beta.7 output).** 80 placements in 13 converted zones, all physents with collision hulls, none
-in XML2's own zones. By distance from origin to geometry: never present where the heroes meet them (over 750
+**Census (0.6.0-beta.7 output; the candidate build selects the same).** 81 placements in 14 converted zones,
+all physents with collision hulls. By distance from origin to geometry: never present where the heroes meet them (over 750
 units): the three brig forcefields (2,403), muir_in3's lab and control-room walls, glass walls, railings,
 consoles, monitors, forge tables and planters (44 placements, 542-1,684), muir_in2's forge-lab glass wall
 (1,086); camera-dependent (250-750): the subway rim faders in nyc1_1_1 / nyc1_1_2 and their danger-room copies
-(525), Master Mold parts mm_d/e/f (257-402); usually present (under 250): Master Mold mm_a/mm_c, arb_fd2's
-hanging sub (223). Sequence-relevant: the brig forcefields (Toad's cell) and muir_in3's walls and railings.
+(525), Master Mold parts mm_d/e/f (257-402); usually present (under 250): Master Mold mm_a/mm_c, the hanging sub of
+arb_fd2, visit1/arb_fd2 and arena_arb2 (223). Sequence-relevant: the brig forcefields (Toad's cell) and
+muir_in3's walls and railings.
 
 **Validation.** `offset_residents.problems` (run in V41 for every zone): generated copies are smart-by-default
 classes with `smartent="false"`, nothing old follows their tail, at most 64 per zone. The settle, hazard,
