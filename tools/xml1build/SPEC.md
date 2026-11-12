@@ -3162,6 +3162,36 @@ clears only, the forced-teams passes (`choose_team_in_bodies`, `forced_party_in_
 `scripts_transform.body_span`, which ignores the header's `setGameFlag(.., 0)` lines and compares everything else
 exactly (without it V36 found no recommended-party seed in `mocap6/briefing_2_5_5`). Test: `tests/unit/test_same_folder_mission_vars.py`.
 
+#### 27.5.2 Reload fixes: zone scripts a loaded save must not strand (P3 version 11, 2026-11-11)
+
+`reload_fixes.apply(rel, data)` patches an XML1 zone script at the source before every P3 pass reads it
+(`parse_script`: the store census, the side-mission census, the scriptstart inline and `write`). Each fix is anchored
+by the sha1 of the source lines and fails closed on a different source; an already fixed source is left alone.
+
+- `nyc/fb/nyc_fb1` (Sentinel flashback, first street; tester report 11-11, reproduced on 0.6.0-beta.6): the zone
+  script plays the intro conversation `1_4_5` only while the mission var `s_fb_intro` is 0 and sets it to 1. The
+  intro acts the first Sentinel's spawner (`1_4_5` -> `sentinel_intro` -> `ss_sentinelflashback01`); only that
+  Sentinel's death script enables `zone_link01` and disables `trigger_touch02` ("You must finish your objectives").
+  The zone has a save Xtraction Point and a `nosave` world: a save made there keeps the var and the objectives but
+  not the zone's entity states, so loading it gave a street with no Sentinel and a closed exit, before or after the
+  first Sentinel's death. The fix adds the reload case as the gate's else branch: objective `sentinel1` complete ->
+  redo the death script's two `setEnable`s; not complete -> play `1_4_5` again, which spawns the Sentinel. The
+  first visit is unchanged; nothing else enters nyc_fb1 with `s_fb_intro` set (the flashback start clears it, no
+  zone links back). Output change: `scripts/nyc/fb/nyc_fb1.py` only. Test: `tests/unit/test_reload_fixes.py`.
+
+The other XML1 `nosave` zones with a save Xtraction Point were checked for the same pattern (2026-11-11, static: zone
+script gates, what acts each spawner and exit, fresh-zone entity defaults) and need no fix, because a load rebuilds
+what their exit needs:
+- `nyc/fb/nyc_fb4`: no zone-script gate. The finish is the saved `sentinel4` count (goal 8). A fresh zone again offers
+  8 Sentinels: `ss_sentinelflashback08` instant, 12 and 13 on touch, the climax 09 on touch, and its death acts
+  `get_jumped`, which spawns 01, 03, 04 and 06.
+- `mansion/dr_mag2/mag_nyc4`: no gate. Blob and the Brotherhood spawn instantly, and the touch triggers replay
+  Blob's scene. The port's `x1join` branch already handles a Cyclops who has joined.
+- `weapon_x/wfb/wx1_1`: no gate. `shoot_me01` (`firstact`) replays the opening on every load, and `zone_link01`
+  starts enabled.
+- `weapon_x/wfb/wx1_3`: its gate (`wpnxfb` 1) is XML1's own reload handling, which restarts the fire jets. The way out
+  is the touch trigger `final_confrontation`, which a fresh zone has again.
+
 ### 27.6 P4 `sound`, P5 `music` (`prepare/sound.py`, `prepare/music.py`)
 
 | Stage | Does | Output (Sources override) |
