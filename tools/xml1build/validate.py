@@ -1071,6 +1071,12 @@ class Validator:
                 ck.count('map_variants')
                 for problem in ETG.problems(root, rel):
                     ck.error(f'{rel}: {problem}')
+        rel = f'scripts/{ETG.HIVE_SCRIPT}.py'
+        data = self.read(rel)
+        if data is not None:
+            ck.count('rescue_scripts')
+            for problem in ETG.script_problems(data.decode('utf-8-sig')):
+                ck.error(f'{rel}: {problem}')
 
     def boss_landing_triggers(self, ck):
         """The HAARP boss must be able to activate each jet landing volume."""

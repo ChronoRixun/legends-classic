@@ -1452,6 +1452,9 @@ class Zones:
         # Props modelled away from their origin stay resident as in XML1 (offset_residents.py): appended last,
         # after every older numbered tail, so saved zone records keep their ordinals.
         self.convert_offset_residents(zone, root, st)
+        # The Hive rescue arrival volume follows even the offset residents (escort_triggers.append_arrivals).
+        from . import escort_triggers as ETG
+        self.counts['rescue_arrivals'] += ETG.append_arrivals(root, f'maps/{zone}.eng')
         for el in root.iter():
             if el.tag.lower() == 'precache':
                 t = (el.get('type') or '').lower()

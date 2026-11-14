@@ -539,6 +539,7 @@ def _base_text(ctx, ref):
         controllers = FI.source_bosses(ctx) if ref in BP.SHADOW_SCRIPTS or ref in BP.MAGNETO_STAGES else ()
         text = BP.rewrite_script(ref, text, controller_bosses=controllers)
         text = SA.rewrite_script(ref, text)
+        text = ETG.rewrite_script(ref, text)
         return text, info
     return _cached(ctx, ('base_text', ref), build)
 

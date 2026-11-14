@@ -200,11 +200,13 @@ def problems(root):
         if (e.get('smartent') != 'false' or (e.get('classname') or '').strip().lower() not in CLASSES
                 or not n.startswith(PREFIX)):
             out.append(f'{n}: offset resident must be a smart-by-default class copy with smartent=false')
+    from . import escort_triggers as ETG
+    later = ETG.names(root)   # the Hive rescue arrival is appended after the offset residents
     in_tail = False
     for group in root.findall('entinst'):
         if group.get('type') in marked:
             in_tail = True
-        elif in_tail:
+        elif in_tail and group.get('type') not in later:
             out.append('offset resident precedes an old entinst (saved ordinals shift)')
     added = sum(len(g.findall('inst')) for g in root.findall('entinst') if g.get('type') in marked)
     if added > MAX_NEW_RESIDENTS:

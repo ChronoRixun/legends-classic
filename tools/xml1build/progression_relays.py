@@ -115,7 +115,8 @@ def problems(root, zone):
     # cannot exempt an arbitrary action from numbering checks or claim streaming coverage.
     from . import offset_residents as RO
     # Offset residents (offset_residents.py) are appended after this tail; they are checked there.
-    offset = RO.names(root)
+    from . import escort_triggers as ETG
+    offset = RO.names(root) | ETG.names(root)   # the rescue arrival follows the offset residents
     root = copy.deepcopy(root)
     for child in list(root):
         if ((child.tag == 'entity' and child.get('name') in offset) or

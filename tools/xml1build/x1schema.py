@@ -533,8 +533,9 @@ def post_settle_names(root, rel):
     from . import death_targets as DT
     from . import offset_residents as RO
     from . import progression_relays as PR
+    from . import escort_triggers as ETG
     return (late_fall_volume_names(root, rel) | hazard_bounds_names(root) | DT.names(root) | PR.names(root)
-            | RO.names(root))
+            | RO.names(root) | ETG.names(root))
 
 
 def bounded_hazards(root, rel):
@@ -584,7 +585,8 @@ def hazard_bounds_tail_problems(root):
     from . import progression_relays as PR
     from . import offset_residents as RO
     names = hazard_bounds_names(root)
-    later = DT.names(root) | PR.names(root) | RO.names(root)
+    from . import escort_triggers as ETG
+    later = DT.names(root) | PR.names(root) | RO.names(root) | ETG.names(root)
     out = []
     in_tail = False
     for group in root.findall('entinst'):
@@ -646,7 +648,8 @@ def numbered_entinst_tail_problems(root, rel):
     from . import death_targets as DT
     from . import offset_residents as RO
     from . import progression_relays as PR
-    names.update(DT.names(root) | PR.names(root) | RO.names(root))
+    from . import escort_triggers as ETG
+    names.update(DT.names(root) | PR.names(root) | RO.names(root) | ETG.names(root))
     order = [ei.get('type') or '' for ei in root if ei.tag.lower() == 'entinst']
     first = min((i for i, t in enumerate(order) if t in names), default=len(order))
     late = sorted({t for t in order[first:] if t not in names})

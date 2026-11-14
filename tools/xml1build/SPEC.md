@@ -8405,6 +8405,35 @@ filter at entity `+0xc5` bit `0x20`; an older record cannot restore that
 filter over the corrected definition. Runtime escort completion and loading an
 existing save require separate acceptance on a disposable game copy.
 
+### Hive rescue arrival (2026-11-13)
+
+`hive/h_int/hive2_2_4` (Subject Retention Center): with the owner filter corrected, `trigger_prisoner3` fires
+for a following Morlock (team none = 0x1c on both sides of 0x41b5b0's team test, owner gate off), but its box covers
+only the south half of Gateway's room (world y 712..1192). Gateway stands at (1720.69, 1345.86) and the waitspot and
+portal at (1845, 1431) / (1850, 1456). Followers led from the cells come down the north-east stairs beside them;
+a player who stops at Gateway never brings the follower into the box and it follows forever (owner report 11-13,
+reproduced on a beta.7 copy: the volume fired only when the hero stood in the south half).
+
+`escort_triggers.append_arrivals` appends one resident volume `lc_rescue_arrival_trigger_prisoner3` (marker
+`xml1rescuearrival`): the authored definition's attributes (actteamplayer false) under the new name, one placement
+at world x 1790..2200, y 1192..1720, z -120..120 (the stair foot, the landing, the waitspot and the portal; 63
+units east of Gateway's origin; Kincaid's waypoints at y <= 614 stay outside). `mutate_zone` calls it after the
+offset residents, so it is the last entinst and every earlier ordinal keeps its meaning; the settle, hazard,
+destruction, progression and offset-resident tail checks accept it behind them. A save made on the previous map
+attests as an append (`zonecompat.attest`, one new ledger row; the new tail starts fresh).
+
+The arrival puts Gateway's room inside a neutral-team volume, so `rewrite_script` guards the shared script
+`hive/h_int/hive_trigger_rescue`: its authored body runs only when the activator's name is one of the five freed
+Morlocks (`rescuee1`..`rescuee5`, the monster names of the spawners running `hive/h_int/use_rescuee`). Gateway,
+prisonerx and Kincaid (also team none) are never sent to the portal by either volume. Both changes fail closed on a
+changed source. V-ESCORT checks both map variants and the shipped script.
+
+Live acceptance (beta.7 copy + this map/script + XML2 Fix 1.11.0-beta.9, owner save copy): the save loaded with
+"verified append-only resident prefix retained"; after Gateway's scene (prisonerx's authored walk ends at the
+waitspot inside the arrival volume; he reached the portal as before and Gateway stayed in place), five Morlocks led by the north-east stairs were caught at the stair foot or
+landing by the arrival volume (three inside it, one at its east edge on the stair top, one at its south edge; the authored box caught none), walked to the portal, Liberate 1..5, and the Kincaid
+scene (3_9_8) started.
+
 ## Durable sewer and optional Nuke unlocks (V-PROGRESSION)
 
 `progression_relays` runs after script pinning, settlement, hazards, existing hatch relays and emitter lifetime conversion. It appends
