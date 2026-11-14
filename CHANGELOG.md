@@ -5,6 +5,12 @@ build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebui
 
 ## Unreleased
 
+- Hive, Subject Retention Center: a freed Morlock led to Gateway now walks into the portal and counts for
+  Liberate. The first game's only rescue area covered the far half of Gateway's room; Morlocks brought down the
+  stairs beside Gateway never reached it and followed the hero forever. A second rescue area now covers the stairs,
+  Gateway's side of the room and the portal, and only the five freed Morlocks are rescued (never Gateway). Existing
+  saves load unchanged.
+
 - Finishing Forge's reboot on Muir Island no longer leaves a black screen. A side mission played in its caller's
   map folder (muir2_reboot, astral_sk, nyc_rooftops) no longer clears the caller's mission flags at its start, as
   in X-Men Legends; muir_in2 now fades back in and plays the 2_4_8 conversation. Saves made before the reboot

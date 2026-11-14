@@ -19,6 +19,12 @@ def fixture(zone=None):
     group = ET.SubElement(root, 'entinst', type=name)
     ET.SubElement(group, 'inst', name='invented_arrival', pos='12 34 56',
                   extents='-15 -25 0 15 25 90', orient='0 0 0')
+    if zone == E.HIVE_ZONE:
+        for n in E.HIVE_RESCUEES:
+            ET.SubElement(root, 'entity', name='invented_cell_' + n, classname='monsterspawnerent',
+                          monster_name=n, monster_actscript=E.RESCUEE_SCRIPT)
+            ET.SubElement(ET.SubElement(root, 'entinst', type='invented_cell_' + n), 'inst',
+                          name='invented_cell_' + n, pos='1 2 3')
     return root
 
 
@@ -30,6 +36,9 @@ def test_escort_triggers_allow_npc_without_changing_other_fields_or_placements()
         before.find('entity[@classname="gameent"]').set('actteamplayer', 'false')
         assert C.encode_xmlb(root) == C.encode_xmlb(before)
         assert E.convert(root, zone) == 0
+        if zone == E.HIVE_ZONE:
+            assert E.problems(root, zone)            # the arrival volume is still missing
+            assert E.append_arrivals(root, zone) == 1
         assert E.problems(root, zone) == []
 
 
