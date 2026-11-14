@@ -55,7 +55,7 @@ the same stable build and gameplay settings; beta.9 companions are refused.
 - Fresh mission starts that do not keep the party reset saved vitals for the whole roster, including
   fallen heroes left on the bench. Continuations retain their vitals, as in XML1.
 - Teammates wait while the leader rides a solo platform; returning from Change Team retains a safe
-  floor position at the Interior Quarters Xtraction Point.
+  floor position at the Interior Quarters and sewer Healer Xtraction Points.
 - Freed Hive Morlocks arriving beside Gateway count toward Liberate and allow the Kincaid scene.
 - The blue Classic conversation background is on by default. Turn it off and rebuild for the PC look.
 - Iceman and Magma skating works: holding jump extends the slide up to its rank limit; releasing ends it.
@@ -74,7 +74,6 @@ and the 96-live-actor option remain off by default. xemu/XML1-recomp save import
 Both owned games are required; the distributed tools contain no game data.
 
 
-Known issue: Team Management at the sewers2_1_3 Xtraction Point can make Iceman fall and die. This also occurs in published beta.9. Use the adjacent sewers2_1_2 point instead.
 
 ### 0.6.0-beta.7
 

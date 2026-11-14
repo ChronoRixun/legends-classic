@@ -461,7 +461,8 @@ Not a blocker; state it in release notes and bump nothing else.
   (= costume slot 0 "default"). `skin_<costume>="VV"` -> +0x255+idx for idx in table 0x6d8aa0 (1.4). Current costume
   index byte at CStats+0x120 (< 10), unlocked-costume bitmask at +0x11c (`FUN_004b7ce0(idx)` sets bit idx, 1..9;
   0x4b7ce0). Costume cycling `FUN_004b7fc0`/`FUN_004b7f50` (0x4b7fc0) walks slots 0..8 with a non-zero variant byte
-  that are unlocked (mask) or force-unlocked by unlock mgr vt+0xa8 (cheat).
+  that are unlocked (mask) or enabled by the profile won predicate at vt+0xa8 (0x48f700, bit 0 of profile+0x229).
+  This is the completion gate, not a separate cheat-only predicate; a completed profile permits every authored variant.
 - Skin string `FUN_004b8090(this, buf, size, variant, flag)` (0x4b8090): `"%02d"` (0x68e4ec) or `"%03d"` (0x68e4e4,
   prefix >= 100) + `"%02d"`; variant = explicit, or flag 0 -> current costume's byte (1 if +0x120 >= 10), flag 1 ->
   default (+0x255). Package names (3.3), heads (3.2) and the actor skin all derive from it.

@@ -193,7 +193,3 @@ try. If a screen's text or labels are cut off, or something looks off, please re
 - Local co-op on controllers should work (it is X-Men Legends II's) but has had little testing.
 
 Full online guide: [ONLINE.md](ONLINE.md).
-
-## Sewer Xtraction Point
-
-Changing the team at the sewers/healer/sewers2_1_3 Xtraction Point can make Iceman fall through a nearby gap and die. Use the adjacent sewers2_1_2 point for Team Management instead. Ordinary activation with the same native save and Cyclops-for-Emma swap reproduces this on published beta.9 and the stable DLL; it predates the new return filter.
