@@ -1266,7 +1266,7 @@ def test_release_identity_060_stable_is_lc48_and_preserves_shipped_history():
     assert history[-8] == RI.Identity('0.6.0-beta.1', 30, 8, 'LC40', 'a8ec20954386445ea93d1c3ecb23aecb1c9665c2af0fb8a64e98b352ed407c1d')
     assert history[-7] == RI.Identity('0.6.0-beta.2', 31, 8, 'LC41', 'b45c407cf97da3fafa09452d52d793931eccfd63047622d011b1540098d962e7')
     assert history[-6] == RI.Identity('0.6.0-beta.3', 32, 8, 'LC42', 'a3e81e8953d93f02619d0195bc8add7afa256ff625e4114a99eba9a1c244c5a5')
-    assert history[-5].release == '0.6.0-beta.4' and RI.HISTORY[-5].token == 'LC43'
+    assert history[-5].release == '0.6.0-beta.4' and history[-5].token == 'LC43'
     assert history[-3] == RI.Identity('0.6.0-beta.6', 35, 8, 'LC45', '4ec30981b54c8b6dff3750a6206ece28b8393255c8448c632de0d78e4f27e10e')
     assert history[-4] == RI.Identity('0.6.0-beta.5', 34, 8, 'LC44', '32b20a13dc31690e8997f91d6de0649fccbc973da64e37ce9328bfe093306305')
     assert history[-2] == RI.Identity('0.6.0-beta.7', 36, 8, 'LC46', 'b09555ff77ceb6e92ff2c86e41a9909e2b232521bcce6141195f6ec58a792ba8')
