@@ -1468,6 +1468,10 @@ RELEASE_MARKERS[('Game', 'TelekinesisRule')] = (TK_AUDIO_MARKER, '[Game] Telekin
 CONTROL_LIFE_MARKER = b'xml1 template life range (parser revision 1)'
 EXTRA_MARKERS = [(('Game', 'Xml1GrabCarry'), CARRY_CHAIN_MARKER, '[Game] Xml1GrabCarry (no carry self-chain)'),
                  (('Game', 'MindControlLife'), CONTROL_LIFE_MARKER, '[Game] MindControlLife (XML1 duration ranges)')]
+# Stable mission-start parity needs the registered whole-roster reset, absent from beta.9.
+EXTRA_MARKERS += [(('Game', 'ForcedTeams'), b'resetHeroVitals: whole-roster saved vitals reset',
+                   '[Game] ForcedTeams (whole-roster mission reset)')]
+
 # xml2-fix 1.9.0-beta.1 (beta 8 candidate 080g, beta8/fix3 6f7df24): a telekinesis throw released with no velocity
 # divided zero by zero (080e/080f); a tapped guard never left the guard decide (the policy ran in the entry slot); the
 # Colossus charge evaluated its damage / knockback / range on the struck soldier (no damage); a thrown body's world

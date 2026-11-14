@@ -86,6 +86,8 @@ HISTORY = (
     Identity('0.6.0-beta.7', 36, 8, 'LC46', 'b09555ff77ceb6e92ff2c86e41a9909e2b232521bcce6141195f6ec58a792ba8'),
     # Final beta.7: Sentinel reload, forced-hero courses and offset residents; catalogue/W2 unchanged.
     Identity('0.6.0-beta.7', 37, 8, 'LC47', '9c83f0e944bc3f203b804bd8499850eff5c987a59bc605b8abd05fbd8a157a2f'),
+    # Stable: fresh-mission roster reset, Hive arrival volume, classic conversation default.
+    Identity('0.6.0', 38, 8, 'LC48', '63052d977b9dfa8d8fe0254e3bfbb5e5260d658c06983d7027e13eb755ae9287'),
 )
 
 

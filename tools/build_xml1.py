@@ -166,8 +166,8 @@ def parse_args(argv=None):
                          'ForcedTeams=1)')
     ap.add_argument('--start-skinset', dest='start_skinset',
                     help='with --start-party: setSkinset costume:heroes for that start (e.g. civilian:magma)')
-    ap.add_argument('--classic-conversation', choices=('off', 'xml1'), default='off',
-                    help='opt in to the XML1 blue conversation background from your disc (default off; rebuild to change)')
+    ap.add_argument('--classic-conversation', choices=('off', 'xml1'), default='xml1',
+                    help='the XML1 blue conversation background (off restores the PC look) from your disc (default xml1; rebuild to change)')
     ap.add_argument('--frontend', choices=C.FRONTEND_MODES,
                     default=(os.environ.get(C.FRONTEND_ENV) or C.FRONTEND_DEFAULT).lower()
                     if (os.environ.get(C.FRONTEND_ENV) or C.FRONTEND_DEFAULT).lower() in C.FRONTEND_MODES

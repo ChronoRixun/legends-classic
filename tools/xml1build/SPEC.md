@@ -7833,7 +7833,7 @@ companion contract and remaining state acceptance.
 ## Optional classic conversation background (V-TBD-conversation)
 
 The source and public builder CLIs accept `--classic-conversation off|xml1`,
-default off. `commands.Job` forwards it through `RealPipeline.build_args`; both
+default xml1 since stable 0.6.0. `commands.Job` forwards it through `RealPipeline.build_args`; both
 entry points record `classic_conversation` in `_build/report.json`. The option
 is owned by `frontend` in `CONTENT_OPTS`, so a changed choice invalidates carried
 frontend output even in a partial build. Absent keys in old records mean off.
@@ -8532,3 +8532,12 @@ fall-volume, destruction and progression tail checks accept the offset tail afte
 ### Final beta.7 compatibility integration
 
 The release retains the unpublished RC-A 36/LC46 identity as a reservation and uses content 37 / catalogue 8 / LC47. Hash-only zone-prefix entries are generated directly from the stable build, published beta.6 and RC-A to the final maps. All 14 offset-resident zones retain their beta.6/RC-A prefixes. In mastermold2 only, the canonically identical duplicate mm_damagestraight_mm definition is emitted once; placement order and all 103 candidate numbered entries stay unchanged. The old-map attester collapses only complete canonical-identical duplicates and rejects conflicts. This makes the current map unique for the existing native prefix-digest reader; no engine change is needed. Synthetic regressions cover identical/conflicting definitions and exact placement/ordinal preservation. Historical/native and live acceptance are required by the release round.
+
+## Stable fresh-mission roster vitals
+
+At each beginMission/beginSideMission marker whose source keepheroes is false (including its false
+default), seat builds emit guarded resetHeroVitals() before seating or opening the editable party menu.
+The side-mission return snapshot is pushed first. Continuations with keepheroes=true retain their vitals.
+The companion executes the guarded retail registry vt+0x0c reset, including benched records, without
+changing party order, progression or currency. The API requires stable 1.11.0's marker; rule 63's second
+value identifies the whole-roster behavior. Old report appearance fields remain off for rebuild invalidation.

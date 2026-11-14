@@ -41,7 +41,38 @@ build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebui
   proven retail ledgers and live companion acceptance are still required before
   public admission. Global-profile merging remains disabled.
 
-## v0.6.0 - content version 37 (needs XML2 Fix 1.11.0)
+## v0.6.0 - content version 38 (needs XML2 Fix 1.11.0)
+
+Legends Classic 0.6.0 and XML2 Fix 1.11.0 are the stable pair. Update XML2 Fix first, update
+Legends Classic, then Rebuild and Play. Back up SaveLC first. Beta.1-7 saves remain compatible;
+older 0.4.x builds cannot read saves written in the larger 0.5/0.6 format. Everyone online needs
+the same stable build and gameplay settings; beta.9 companions are refused.
+
+- The first game's items, drop tables, Forge, Healer, selling, Grab Bag and Danger Room rewards.
+- Online rooms, codes, public games and drop-in at the next area, with controller navigation.
+- The first game's bosses, moves, weapons and damage rules, with larger engine and save limits.
+- Fixed busy-fight world freezes, keyed doors, pre-menu HID crashes and Juggernaut's animation timing.
+- Fresh mission starts that do not keep the party reset saved vitals for the whole roster, including
+  fallen heroes left on the bench. Continuations retain their vitals, as in XML1.
+- Teammates wait while the leader rides a solo platform; returning from Change Team retains a safe
+  floor position at the Interior Quarters Xtraction Point.
+- Freed Hive Morlocks arriving beside Gateway count toward Liberate and allow the Kincaid scene.
+- The blue Classic conversation background is on by default. Turn it off and rebuild for the PC look.
+- Iceman and Magma skating works: holding jump extends the slide up to its rank limit; releasing ends it.
+  Dark Avalanche's slow effect is faithful to the original, confirmed against XML1 in xemu.
+- Sentinel street saves, forced-hero Danger Room courses, Muir/Brig resident props and mission returns
+  retain the fixes from beta.7. Historical zone progress uses the append-only compatibility ledger.
+
+Owen completed the campaign on November 14 using LC beta.7 with Fix beta.9. That is a human
+campaign completion on those versions; it does not certify the additional stable changes or Internet co-op.
+The release checklist separately records the final stable smoke.
+
+Remaining limits: relay/different home networks, three or four separate PCs, long online sessions,
+slow joins and host loss need wider player testing. Host departure ends the session; there is no host
+migration. Some enemy-rate and control-timing differences remain; see the known-issues page. Guard
+and the 96-live-actor option remain off by default. xemu/XML1-recomp save import remains disabled.
+Both owned games are required; the distributed tools contain no game data.
+
 
 ### 0.6.0-beta.7
 
@@ -91,7 +122,7 @@ XML2 Fix, and online sessions refuse players whose companion is older than 1.11.
   Marrow no longer has an extra line in the Morlock hub. Mission starts inside the same area now keep that area's
   flags, as in the first game.
 
-Not exercised live: the Iceman skating fallback when its counter runs out, and an uninterrupted full flamethrower
+Not exercised live: an uninterrupted full flamethrower
 sweep. Natural officer bursts were measured for their hit spacing and damage over 14-second windows; a burst ending
 on its own was not observed in those windows. The still-open [known issues](docs/KNOWN-ISSUES.md) remain, including startup reliability, four-player pause
 scope, relay/different networks, three/four separate PCs, long sessions, slow joins and host loss. Optional classic

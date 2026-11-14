@@ -1,4 +1,4 @@
-"""Default-off appearance, CLI propagation and safe rebuilds on synthetic inputs."""
+"""Default-on appearance, CLI propagation and safe rebuilds on synthetic inputs."""
 import json
 import time
 from types import SimpleNamespace
@@ -13,17 +13,17 @@ from test_moves_builder_cli import job
 from test_conversation_appearance import appearance, context, MODEL
 
 
-def test_classic_conversation_defaults_off_and_explicit_modes_reach_pipeline():
+def test_classic_conversation_defaults_on_and_explicit_modes_reach_pipeline():
     parser = make_parser()
-    assert parser.parse_args(['build']).classic_conversation == 'off'
-    assert build_xml1.parse_args(['--out', 'x']).classic_conversation == 'off'
+    assert parser.parse_args(['build']).classic_conversation == 'xml1'
+    assert build_xml1.parse_args(['--out', 'x']).classic_conversation == 'xml1'
     for mode in ('off', 'xml1'):
         parsed = parser.parse_args(['build', '--classic-conversation', mode])
         assert RealPipeline().build_args(job(classic_conversation=parsed.classic_conversation)).classic_conversation == mode
         assert build_xml1.parse_args(['--out', 'x', '--classic-conversation', mode]).classic_conversation == mode
     fields = vars(job()).copy()
     fields.pop('classic_conversation')
-    assert RealPipeline().build_args(SimpleNamespace(**fields)).classic_conversation == 'off'
+    assert RealPipeline().build_args(SimpleNamespace(**fields)).classic_conversation == 'xml1'
 
 
 def test_classic_conversation_invalid_options_refused():
@@ -114,6 +114,9 @@ def test_classic_conversation_old_records_mean_off_and_selection_invalidates_fro
     args = build_xml1.parse_args(['--out', str(tmp_path)])
     record(tmp_path, args, legacy=True)
     assert getattr(C.args_for_out(tmp_path), 'classic_conversation', None) == 'off'
+    assert args.classic_conversation == 'xml1'
+    assert build_xml1.plan_content_opts(tmp_path, args, []) == ['frontend']
+    args.classic_conversation = 'off'
     assert build_xml1.plan_content_opts(tmp_path, args, []) == []
     args.classic_conversation = 'xml1'
     assert build_xml1.plan_content_opts(tmp_path, args, []) == ['frontend']
@@ -125,7 +128,7 @@ def test_classic_conversation_old_records_mean_off_and_selection_invalidates_fro
 
 def test_classic_conversation_partial_rebuild_carry_and_on_to_off_restore(tmp_path):
     ctx, source, base = context(tmp_path)
-    args = build_xml1.parse_args(['--out', str(ctx.out)])
+    args = build_xml1.parse_args(['--out', str(ctx.out), '--classic-conversation', 'off'])
     record(ctx.out, args, legacy=True)
     # Fresh OFF, then a partial build changing only this selection.
     appearance().write(ctx)
