@@ -8541,3 +8541,5 @@ The side-mission return snapshot is pushed first. Continuations with keepheroes=
 The companion executes the guarded retail registry vt+0x0c reset, including benched records, without
 changing party order, progression or currency. The API requires stable 1.11.0's marker; rule 63's second
 value identifies the whole-roster behavior. Old report appearance fields remain off for rebuild invalidation.
+
+Stable Hive compatibility also carries all three historical predecessors directly to the appended map. Prior rows stay unchanged; prefix digests, ordinal mappings and fresh/ambiguous aliases are retained and validated against the new map bytes. Native save compatibility is tested on the frozen output.
