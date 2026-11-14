@@ -51,7 +51,7 @@ the same stable build and gameplay settings; beta.9 companions are refused.
 - The first game's items, drop tables, Forge, Healer, selling, Grab Bag and Danger Room rewards.
 - Online rooms, codes, public games and drop-in at the next area, with controller navigation.
 - The first game's bosses, moves, weapons and damage rules, with larger engine and save limits.
-- Fixed busy-fight world freezes, keyed doors and Juggernaut's animation timing; startup reliability is improved.
+- Fixed busy-fight world freezes, keyed doors, pre-menu HID crashes and Juggernaut's animation timing.
 - Fresh mission starts that do not keep the party reset saved vitals for the whole roster, including
   fallen heroes left on the bench. Continuations retain their vitals, as in XML1.
 - Teammates wait while the leader rides a solo platform; returning from Change Team retains a safe
@@ -73,6 +73,8 @@ migration. Some enemy-rate and control-timing differences remain; see the known-
 and the 96-live-actor option remain off by default. xemu/XML1-recomp save import remains disabled.
 Both owned games are required; the distributed tools contain no game data.
 
+
+Known issue: Team Management at the sewers2_1_3 Xtraction Point can make Iceman fall and die. This also occurs in published beta.9. Use the adjacent sewers2_1_2 point instead.
 
 ### 0.6.0-beta.7
 

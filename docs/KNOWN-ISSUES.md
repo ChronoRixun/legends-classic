@@ -194,6 +194,6 @@ try. If a screen's text or labels are cut off, or something looks off, please re
 
 Full online guide: [ONLINE.md](ONLINE.md).
 
-## Intermittent startup stress result
+## Sewer Xtraction Point
 
-A stress check of the DirectInput startup fix can still fail intermittently on a PC with exactly 16 or 32 HID devices, then pass unchanged on retry. The stable round records this as a known intermittent fixture result, with a separate investigation pending. If the game fails before the main menu, try starting it again. This is not a claim that every ordinary boot reproduces the stress failure.
+Changing the team at the sewers/healer/sewers2_1_3 Xtraction Point can make Iceman fall through a nearby gap and die. Use the adjacent sewers2_1_2 point for Team Management instead. Ordinary activation with the same native save and Cyclops-for-Emma swap reproduces this on published beta.9 and the stable DLL; it predates the new return filter.
