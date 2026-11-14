@@ -56,6 +56,7 @@ the same stable build and gameplay settings; beta.9 companions are refused.
   fallen heroes left on the bench. Continuations retain their vitals, as in XML1.
 - Teammates wait while the leader rides a solo platform; returning from Change Team retains a safe
   floor position at the Interior Quarters and sewer Healer Xtraction Points.
+- Levitating the Forbidden Halls switch no longer carries it off into the void - it activates in place, like the original.
 - Freed Hive Morlocks arriving beside Gateway count toward Liberate and allow the Kincaid scene.
 - The blue Classic conversation background is on by default. Turn it off and rebuild for the PC look.
 - Iceman and Magma skating works: holding jump extends the slide up to its rank limit; releasing ends it.
