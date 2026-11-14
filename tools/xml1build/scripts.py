@@ -695,6 +695,9 @@ def _script_text(ctx, ref, mode=None):
                                                                if r['end'] != 'keep'})
             info['side_end'] = ends
             info['side_end_problems'] = probs
+        if C.forced_teams_mode(ctx) == 'seat':
+            # New Game deliberately uses the editable menu conversion within a seat
+            # build, but its fresh mission needs the same whole-roster reset.
             lines, reset_vitals = T.mission_vitals_at_markers(lines, forced_party_plan(ctx))
             info['mission_vitals_reset'] = reset_vitals
         act = act_on_entry_plan(ctx)['inject'].get(ref)

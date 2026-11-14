@@ -193,3 +193,7 @@ try. If a screen's text or labels are cut off, or something looks off, please re
 - Local co-op on controllers should work (it is X-Men Legends II's) but has had little testing.
 
 Full online guide: [ONLINE.md](ONLINE.md).
+
+## Intermittent startup stress result
+
+A stress check of the DirectInput startup fix can still fail intermittently on a PC with exactly 16 or 32 HID devices, then pass unchanged on retry. The stable round records this as a known intermittent fixture result, with a separate investigation pending. If the game fails before the main menu, try starting it again. This is not a claim that every ordinary boot reproduces the stress failure.

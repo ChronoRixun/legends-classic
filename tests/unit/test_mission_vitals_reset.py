@@ -30,3 +30,15 @@ def test_nested_start_and_side_snapshot_order_preserve_continuations():
     assert got.index('          resetHeroVitals()') > got.index(source[0])
     assert got[-3:] == source[-3:]
     assert T.XML2FIX_API['resetHeroVitals'] == ('n', '')
+
+
+def test_mission_header_unlocks_survive_reset_before_party_or_menu():
+    for tail in (['seatParty("alpha", "", "", "" )', 'loadMapKeepTeam("invented/start" )'],
+                 ['loadMapChooseTeam("invented/start" )']):
+        body = ['# ( "XML1 beginMission(fresh)" )', 'setCurrentAct(1 )',
+                'unlockCharacter("alpha", "" )'] + tail
+        got, changed = T.mission_vitals_at_markers(body, {'fresh': {'reset_vitals': True}})
+        assert changed == ['fresh']
+        assert T.unlock_problems(got, {'fresh': ('alpha',)}) == ([], 1)
+        assert got.index('unlockCharacter("alpha", "" )') < got.index('     resetHeroVitals()') < got.index(tail[0])
+        assert T.mission_vitals_at_markers(got, {'fresh': {'reset_vitals': True}}) == (got, [])

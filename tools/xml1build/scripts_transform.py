@@ -634,20 +634,26 @@ def mission_vitals_at_markers(lines, plan):
     A side mission's push has already run, preserving its return snapshot. Continuations
     and unrecognised mission markers remain untouched. Repeated conversion is idempotent.
     """
-    out, done = [], []
+    edits = []
     for i, line in enumerate(lines):
-        out.append(line)
         marker = BEGIN_MARKER.match(line)
         if not marker:
             continue
         mission = marker.group('m').strip().lower()
         if not (plan.get(mission) or {}).get('reset_vitals'):
             continue
-        if i + 1 < len(lines) and lines[i + 1].strip() == mission_vitals_block()[0]:
+        # Keep the complete native header contiguous: unlock validation and later
+        # team-lock/join passes intentionally stop at the first non-header statement.
+        # The reset still precedes the movie, party construction and final load/menu.
+        at = mission_header_end(lines, i)
+        block = mission_vitals_block(line[:len(line) - len(line.lstrip())])
+        if lines[at:at + len(block)] == block:
             continue
-        out += mission_vitals_block(line[:len(line) - len(line.lstrip())])
-        done.append(mission)
-    return out, done
+        edits.append((at, block, mission))
+    out = list(lines)
+    for at, block, _ in reversed(edits):
+        out[at:at] = block
+    return out, [mission for _, _, mission in edits]
 
 
 def forced_party_in_bodies(lines, bodies, plan):

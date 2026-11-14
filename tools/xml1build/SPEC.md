@@ -8543,3 +8543,5 @@ changing party order, progression or currency. The API requires stable 1.11.0's 
 value identifies the whole-roster behavior. Old report appearance fields remain off for rebuild invalidation.
 
 Stable Hive compatibility also carries all three historical predecessors directly to the appended map. Prior rows stay unchanged; prefix digests, ordinal mappings and fresh/ambiguous aliases are retained and validated against the new map bytes. Native save compatibility is tested on the frozen output.
+
+Stable reset placement follows the complete native mission header (setGameFlag/setCurrentAct/objective/unlockCharacter), before movies, party construction and the final menu/load. The owned census has138 distinct fresh begin bodies, including the two New Game variants. Its141 comment count also includes3 beginSideMission wrappers (jug_fb, sent_fb, astral_sk); each wrapper pushes its return snapshot before the single reset in its begin body. No wrapper resets twice.
