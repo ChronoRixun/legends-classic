@@ -79,7 +79,7 @@ def test_tk_guard_written_only_with_grab_carry():
                         assert 'GuardDecideRule' not in game and 'TelekinesisRule' not in game
         # an ini-only option re-runs no module when toggled
         _record(out, 'xml1', telekinesis='off', guard_decide='off', flying_carry='off')
-        args = build_xml1.parse_args(['--out', td, '--save-layout', 'retail', '--online-menus', 'off',  # the record's (CONTENT_OPTS) values
+        args = build_xml1.parse_args(['--out', td, '--save-layout', 'retail', '--online-menus', 'off', '--classic-conversation', 'off',  # the record's (CONTENT_OPTS) values
                                       '--telekinesis', 'xml1', '--guard-decide', 'xml1', '--flying-carry', 'xml1'])
         assert build_xml1.plan_content_opts(out, args, []) == []
 

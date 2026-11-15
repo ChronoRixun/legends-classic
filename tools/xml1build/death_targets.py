@@ -155,7 +155,8 @@ def problems(root, zone='synthetic/zone'):
             if e.get(STUMP_MARKER) == 'true' and e.get('name') not in stump_names]
     from . import offset_residents as RO
     from . import progression_relays as PR
-    later = PR.names(root) | RO.names(root)
+    from . import escort_triggers as ETG
+    later = PR.names(root) | RO.names(root) | ETG.names(root)
     in_tail = False
     for group in root.findall('entinst'):
         if group.get('type') in marked:

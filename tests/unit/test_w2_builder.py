@@ -269,13 +269,13 @@ def test_the_option_defaults_w2_and_reaches_every_parser_and_record():
         plain = Path(td) / 'carried'
         (plain / '_build').mkdir(parents=True)
         (plain / '_build' / 'report.json').write_text(json.dumps({'build': carried}))
-        assert build_xml1.plan_content_opts(plain, build_xml1.parse_args(['--out', 'x', '--online-menus', 'off', '--save-layout', 'retail']), []) == []
-        assert build_xml1.plan_content_opts(plain, build_xml1.parse_args(['--out', 'x', '--online-menus', 'off', '--loot', 'off']), []) == ['zones']
+        assert build_xml1.plan_content_opts(plain, build_xml1.parse_args(['--out', 'x', '--online-menus', 'off', '--classic-conversation', 'off', '--save-layout', 'retail']), []) == []
+        assert build_xml1.plan_content_opts(plain, build_xml1.parse_args(['--out', 'x', '--online-menus', 'off', '--classic-conversation', 'off', '--loot', 'off']), []) == ['zones']
         # the 0.5.0 default build (w2 + the economy) over a 0.4.1 build re-runs zones and the front end
-        assert build_xml1.plan_content_opts(plain, build_xml1.parse_args(['--out', 'x', '--online-menus', 'off']), []) == ['zones', 'frontend']
+        assert build_xml1.plan_content_opts(plain, build_xml1.parse_args(['--out', 'x', '--online-menus', 'off', '--classic-conversation', 'off']), []) == ['zones', 'frontend']
         (plain / '_build' / 'report.json').write_text(json.dumps({'build': {**carried, 'save_layout': 'w2'}}))
-        assert build_xml1.plan_content_opts(plain, build_xml1.parse_args(['--out', 'x', '--online-menus', 'off', '--save-layout', 'retail']), []) == ['zones']
-        assert build_xml1.plan_content_opts(plain, build_xml1.parse_args(['--out', 'x', '--online-menus', 'off', '--loot', 'off']), []) == []
+        assert build_xml1.plan_content_opts(plain, build_xml1.parse_args(['--out', 'x', '--online-menus', 'off', '--classic-conversation', 'off', '--save-layout', 'retail']), []) == ['zones']
+        assert build_xml1.plan_content_opts(plain, build_xml1.parse_args(['--out', 'x', '--online-menus', 'off', '--classic-conversation', 'off', '--loot', 'off']), []) == []
 
 
 def test_the_harness_ini_follows_the_build_record():

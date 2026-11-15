@@ -468,7 +468,7 @@ def choose_team_in_bodies(lines, bodies):
 XML2FIX_API = {'xml2fixFeature': ('i', 's'), 'seatParty': ('n', 'ssss'), 'setSkinset': ('n', 'ss'),
                'pushParty': ('n', 'a'), 'popParty': ('n', 's'), 'addHero': ('i', 's'), 'getPartyMember': ('s', 'i'),
                'joinHero': ('i', 's'), 'addSkillPoints': ('n', 'ai'), 'addStatPoints': ('n', 'ai'),
-               'extractionPointServices': ('n', 'ai'), 'setSoloMode': ('n', 'ai')}
+               'extractionPointServices': ('n', 'ai'), 'setSoloMode': ('n', 'ai'), 'resetHeroVitals': ('n', '')}
 # xml2-fix functions data may call directly (SPEC 32: the SKILL item's onactivate): not forced-teams features, registered
 # with the rest whatever [Game] ForcedTeams says, inert without the DLL (the engine drops a call it doesn't know)
 XML2FIX_DATA_FUNCS = frozenset(C.XML2FIX_ALWAYS_FUNCS)
@@ -498,7 +498,7 @@ FT_FEATURE, AH_FEATURE, JH_FEATURE = 'forcedteams', 'addhero', 'joinhero'
 XTRACTION_FEATURE = 'xtractionservices'           # xml2-fix >= 1.5: extractionPointServices takes a bitmask (#63)
 FEATURES = (FT_FEATURE, AH_FEATURE, JH_FEATURE, 'xtractionshop', XTRACTION_FEATURE)
 # the function each xml2-fix call needs switched on (the 'then' branch of 'if <v> == 1', <v> = xml2fixFeature(f))
-GUARD_OF = {'seatParty': FT_FEATURE, 'setSkinset': FT_FEATURE, 'pushParty': FT_FEATURE, 'popParty': FT_FEATURE,
+GUARD_OF = {'seatParty': FT_FEATURE, 'setSkinset': FT_FEATURE, 'pushParty': FT_FEATURE, 'popParty': FT_FEATURE, 'resetHeroVitals': FT_FEATURE,
             'addHero': AH_FEATURE, 'getPartyMember': None, 'joinHero': JH_FEATURE,
             'extractionPointServices': XTRACTION_FEATURE}
 IND = '     '                                  # BehavEd's block indentation
@@ -621,6 +621,39 @@ def body_load(line):
     if m:
         return 'blackbirdMenu', m.group('z')
     return None, None
+
+
+def mission_vitals_block(ind=''):
+    return [ind + '# ( "x1: reset all saved hero vitals at a fresh mission start" )'] + \
+        feature_detect('x1rv', FT_FEATURE, ind) + [f'{ind}if x1rv == 1',
+        ind + IND + 'resetHeroVitals()', ind + 'endif']
+
+
+def mission_vitals_at_markers(lines, plan):
+    """Restore XML1's roster reset before any seating/menu at keepheroes=false starts.
+    A side mission's push has already run, preserving its return snapshot. Continuations
+    and unrecognised mission markers remain untouched. Repeated conversion is idempotent.
+    """
+    edits = []
+    for i, line in enumerate(lines):
+        marker = BEGIN_MARKER.match(line)
+        if not marker:
+            continue
+        mission = marker.group('m').strip().lower()
+        if not (plan.get(mission) or {}).get('reset_vitals'):
+            continue
+        # Keep the complete native header contiguous: unlock validation and later
+        # team-lock/join passes intentionally stop at the first non-header statement.
+        # The reset still precedes the movie, party construction and final load/menu.
+        at = mission_header_end(lines, i)
+        block = mission_vitals_block(line[:len(line) - len(line.lstrip())])
+        if lines[at:at + len(block)] == block:
+            continue
+        edits.append((at, block, mission))
+    out = list(lines)
+    for at, block, _ in reversed(edits):
+        out[at:at] = block
+    return out, [mission for _, _, mission in edits]
 
 
 def forced_party_in_bodies(lines, bodies, plan):

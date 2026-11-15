@@ -314,7 +314,8 @@ def numbered_tail_problems(root, later=()):
     from . import death_targets as DT
     from . import progression_relays as PR
     from . import offset_residents as RO
-    destruction = DT.names(root) | PR.names(root) | RO.names(root)
+    from . import escort_triggers as ETG
+    destruction = DT.names(root) | PR.names(root) | RO.names(root) | ETG.names(root)
     after_embedded = destruction | {e.get('name') for e in root.iter('entity')
                                    if e.get('xml1hazardbounds') == 'true'}
     marked = {e.get('name') for e in root.iter('entity') if e.get(MARKER) == 'true'}

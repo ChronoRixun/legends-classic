@@ -7833,7 +7833,7 @@ companion contract and remaining state acceptance.
 ## Optional classic conversation background (V-TBD-conversation)
 
 The source and public builder CLIs accept `--classic-conversation off|xml1`,
-default off. `commands.Job` forwards it through `RealPipeline.build_args`; both
+default xml1 since stable 0.6.0. `commands.Job` forwards it through `RealPipeline.build_args`; both
 entry points record `classic_conversation` in `_build/report.json`. The option
 is owned by `frontend` in `CONTENT_OPTS`, so a changed choice invalidates carried
 frontend output even in a partial build. Absent keys in old records mean off.
@@ -8405,6 +8405,35 @@ filter at entity `+0xc5` bit `0x20`; an older record cannot restore that
 filter over the corrected definition. Runtime escort completion and loading an
 existing save require separate acceptance on a disposable game copy.
 
+### Hive rescue arrival (2026-11-13)
+
+`hive/h_int/hive2_2_4` (Subject Retention Center): with the owner filter corrected, `trigger_prisoner3` fires
+for a following Morlock (team none = 0x1c on both sides of 0x41b5b0's team test, owner gate off), but its box covers
+only the south half of Gateway's room (world y 712..1192). Gateway stands at (1720.69, 1345.86) and the waitspot and
+portal at (1845, 1431) / (1850, 1456). Followers led from the cells come down the north-east stairs beside them;
+a player who stops at Gateway never brings the follower into the box and it follows forever (owner report 11-13,
+reproduced on a beta.7 copy: the volume fired only when the hero stood in the south half).
+
+`escort_triggers.append_arrivals` appends one resident volume `lc_rescue_arrival_trigger_prisoner3` (marker
+`xml1rescuearrival`): the authored definition's attributes (actteamplayer false) under the new name, one placement
+at world x 1790..2200, y 1192..1720, z -120..120 (the stair foot, the landing, the waitspot and the portal; 63
+units east of Gateway's origin; Kincaid's waypoints at y <= 614 stay outside). `mutate_zone` calls it after the
+offset residents, so it is the last entinst and every earlier ordinal keeps its meaning; the settle, hazard,
+destruction, progression and offset-resident tail checks accept it behind them. A save made on the previous map
+attests as an append (`zonecompat.attest`, one new ledger row; the new tail starts fresh).
+
+The arrival puts Gateway's room inside a neutral-team volume, so `rewrite_script` guards the shared script
+`hive/h_int/hive_trigger_rescue`: its authored body runs only when the activator's name is one of the five freed
+Morlocks (`rescuee1`..`rescuee5`, the monster names of the spawners running `hive/h_int/use_rescuee`). Gateway,
+prisonerx and Kincaid (also team none) are never sent to the portal by either volume. Both changes fail closed on a
+changed source. V-ESCORT checks both map variants and the shipped script.
+
+Live acceptance (beta.7 copy + this map/script + XML2 Fix 1.11.0-beta.9, owner save copy): the save loaded with
+"verified append-only resident prefix retained"; after Gateway's scene (prisonerx's authored walk ends at the
+waitspot inside the arrival volume; he reached the portal as before and Gateway stayed in place), five Morlocks led by the north-east stairs were caught at the stair foot or
+landing by the arrival volume (three inside it, one at its east edge on the stair top, one at its south edge; the authored box caught none), walked to the portal, Liberate 1..5, and the Kincaid
+scene (3_9_8) started.
+
 ## Durable sewer and optional Nuke unlocks (V-PROGRESSION)
 
 `progression_relays` runs after script pinning, settlement, hazards, existing hatch relays and emitter lifetime conversion. It appends
@@ -8503,3 +8532,16 @@ fall-volume, destruction and progression tail checks accept the offset tail afte
 ### Final beta.7 compatibility integration
 
 The release retains the unpublished RC-A 36/LC46 identity as a reservation and uses content 37 / catalogue 8 / LC47. Hash-only zone-prefix entries are generated directly from the stable build, published beta.6 and RC-A to the final maps. All 14 offset-resident zones retain their beta.6/RC-A prefixes. In mastermold2 only, the canonically identical duplicate mm_damagestraight_mm definition is emitted once; placement order and all 103 candidate numbered entries stay unchanged. The old-map attester collapses only complete canonical-identical duplicates and rejects conflicts. This makes the current map unique for the existing native prefix-digest reader; no engine change is needed. Synthetic regressions cover identical/conflicting definitions and exact placement/ordinal preservation. Historical/native and live acceptance are required by the release round.
+
+## Stable fresh-mission roster vitals
+
+At each beginMission/beginSideMission marker whose source keepheroes is false (including its false
+default), seat builds emit guarded resetHeroVitals() before seating or opening the editable party menu.
+The side-mission return snapshot is pushed first. Continuations with keepheroes=true retain their vitals.
+The companion executes the guarded retail registry vt+0x0c reset, including benched records, without
+changing party order, progression or currency. The API requires stable 1.11.0's marker; rule 63's second
+value identifies the whole-roster behavior. Old report appearance fields remain off for rebuild invalidation.
+
+Stable Hive compatibility also carries all three historical predecessors directly to the appended map. Prior rows stay unchanged; prefix digests, ordinal mappings and fresh/ambiguous aliases are retained and validated against the new map bytes. Native save compatibility is tested on the frozen output.
+
+Stable reset placement follows the complete native mission header (setGameFlag/setCurrentAct/objective/unlockCharacter), before movies, party construction and the final menu/load. The owned census has138 distinct fresh begin bodies, including the two New Game variants. Its141 comment count also includes3 beginSideMission wrappers (jug_fb, sent_fb, astral_sk); each wrapper pushes its return snapshot before the single reset in its begin body. No wrapper resets twice.

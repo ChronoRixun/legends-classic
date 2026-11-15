@@ -539,6 +539,7 @@ def _base_text(ctx, ref):
         controllers = FI.source_bosses(ctx) if ref in BP.SHADOW_SCRIPTS or ref in BP.MAGNETO_STAGES else ()
         text = BP.rewrite_script(ref, text, controller_bosses=controllers)
         text = SA.rewrite_script(ref, text)
+        text = ETG.rewrite_script(ref, text)
         return text, info
     return _cached(ctx, ('base_text', ref), build)
 
@@ -694,6 +695,11 @@ def _script_text(ctx, ref, mode=None):
                                                                if r['end'] != 'keep'})
             info['side_end'] = ends
             info['side_end_problems'] = probs
+        if C.forced_teams_mode(ctx) == 'seat':
+            # New Game deliberately uses the editable menu conversion within a seat
+            # build, but its fresh mission needs the same whole-roster reset.
+            lines, reset_vitals = T.mission_vitals_at_markers(lines, forced_party_plan(ctx))
+            info['mission_vitals_reset'] = reset_vitals
         act = act_on_entry_plan(ctx)['inject'].get(ref)
         if act is not None:
             lines = T.inject_act(lines, act)
@@ -1152,7 +1158,8 @@ def forced_party_plan(ctx) -> dict:
             costume, hs = skinset_args(ctx, (info.get('attrs') or {}).get('skinset'))
             row = {'act': info.get('act'), 'forced': ml in forced, 'skinset': (info.get('attrs') or {}).get('skinset'),
                    'costume': costume, 'heroes': hs, 'load': fn, 'zone': zone, 'seat': [], 'menu_seed': [], 'unseatable': [],
-                   'cut': bool(zone) and (zone not in zones or not _x1_zone_convertible(ctx, zone))}
+                   'cut': bool(zone) and (zone not in zones or not _x1_zone_convertible(ctx, zone)),
+                   'reset_vitals': str((info.get('attrs') or {}).get('keepheroes', 'false')).lower() == 'false'}
             if ml in forced:
                 seat = [h for h in _xml1_seat_list(info) if h not in JOIN_LATER.get(ml, ())]
                 row['seat'] = seat

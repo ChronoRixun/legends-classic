@@ -60,8 +60,7 @@ Options that work with every command: `--events jsonl|text` (`jsonl` prints JSON
 `--log FILE`, `--quiet` and `--version`. `xml1-builder --help` lists them all, including the feature options added
 since 0.4.2 (see the [CHANGELOG](../CHANGELOG.md)).
 
-`build --classic-conversation off|xml1` selects the conversation background. The default is **off**,
-which keeps the native PC model. `xml1` uses the blue background from your own XML1 Xbox disc;
+`build --classic-conversation off|xml1` selects the conversation background. The default is **xml1**. `off` keeps the native PC model. `xml1` uses the blue background from your own XML1 Xbox disc;
 the builder validates its scene and embedded images before replacing `UI/hud/convo_background.IGB`.
 Unsupported or missing inputs fail the build with recovery instructions and leave the base model in place.
 Rebuild with `--classic-conversation off` to restore the PC background.

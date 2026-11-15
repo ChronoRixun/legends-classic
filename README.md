@@ -18,9 +18,9 @@ the builder makes no network connections.
 Unlike [XML1-recomp](https://github.com/GTTeancum/XML1-recomp), which runs the original Xbox game natively, Legends
 Classic runs the first game on the sequel's PC engine - which is what makes online co-op and the sequel's mods possible.
 
-> **Current beta: 0.6.0-beta.7**, paired with XML2 Fix 1.11.0-beta.6.
-> Sentinel reload, correct Danger Room heroes, solid Brig/Muir props, plus boot, skating and save safety fixes. Update both parts on the Beta channel, **Rebuild**, then **Play**.
-> Back up saves; online builds and settings must match. See [CHANGELOG](CHANGELOG.md).
+> **Stable: Legends Classic 0.6.0**, paired with XML2 Fix 1.11.0.
+> Update the Fix first, update the builder on the Stable channel, **Rebuild**, then **Play**.
+> Back up saves; beta.1-7 saves load. Online builds and settings must match. See [CHANGELOG](CHANGELOG.md).
 
 ## What you need
 

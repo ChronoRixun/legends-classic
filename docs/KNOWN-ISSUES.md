@@ -1,7 +1,3 @@
-> Final beta.7 fixes Sentinel first-street save reloads, forced-hero Danger Room courses and offset Brig/Muir props. The original flashback offers and original Juggernaut behavior are retained. Normal muir_in3 traversal including the crwall1 approach is a required release smoke row.
-
-> Beta.7 fixes the pre-menu HID crash and skating continuation/exit. Full current-build acceptance is recorded by the release round; unverified network/long-session limits below remain.
-
 # Known issues and limitations
 
 Open bugs and play-test notes: [issues](https://github.com/ChronoRixun/legends-classic/issues) and
@@ -30,10 +26,10 @@ matched to the original, and none of them counts as a fidelity claim.
 Some of the first game's features rely on engine code X-Men Legends II doesn't have. Until they are recreated (most
 need new engine hooks in xml2-fix), the port plays without them:
 
-- **The first game's loot and shops** ([#6](https://github.com/ChronoRixun/legends-classic/issues/6)). In the stable
+- **Equipment fidelity checks** ([#6](https://github.com/ChronoRixun/legends-classic/issues/6)). In the stable
   0.4.0, random drops are X-Men Legends II's, not the first game's equipment, and the shops (the Healer's, and the one
   at Xtraction points once you have met Forge) are X-Men Legends II's: generated stock, its prices and its training
-  services. The 0.5 beta brings the first game's items, drop tables, Forge, Healer prices, Grab Bag, selling and
+  services. Stable 0.6 brings the first game's items, drop tables, Forge, Healer prices, Grab Bag, selling and
   Danger Room rewards; where a bonus has no exact PC form it is converted as closely as the PC game allows (the build's
   `Docs\APPROXIMATIONS.md` lists every one). #6 stays open until players have checked it.
 - **15 of the first game's fall kill zones** ([#22](https://github.com/ChronoRixun/legends-classic/issues/22)): 20
@@ -47,14 +43,22 @@ enemy parts ([#3](https://github.com/ChronoRixun/legends-classic/issues/3)), sol
 lock ([#63](https://github.com/ChronoRixun/legends-classic/issues/63)) and the two-point ranks
 ([#35](https://github.com/ChronoRixun/legends-classic/issues/35)).
 
+## Stable 0.6 status
+
+Skating works for Iceman and Magma: slide length follows the learned rank and holding/releasing jump.
+Dark Avalanche's slow effect matches XML1 (xemu comparison); it is retained. Owen completed the beta.7
+campaign with Fix beta.9 on November 14. Stable adds the Hive arrival volume, solo-platform floor guard,
+safe team-change returns and whole-roster vitals reset at fresh mission starts. Stable smoke is recorded
+separately; human beta completion does not certify those new paths or Internet co-op.
+
 ## Gameplay
 
-- **Fixed in 0.6.0-beta.6: Muir Island black screen.** Returning from Forge's reboot puzzle to his workshop no longer
+- **Fixed: Muir Island black screen.** Returning from Forge's reboot puzzle to his workshop no longer
   hangs on a black screen; the Shadow King flashback also keeps the Astral Plane's flags, as in the first game.
   Mission starts inside the same area also keep that area's flags now (no repeated mansion questions after the
   Act 3 uniform or the Act 5 GRSO raid, no extra Marrow line in the Morlock hub). Report any replayed intro or
   stuck fade with the area name.
-- **Weapon and move checks not yet seen live (beta.6).** Not exercised live: the Iceman skating fallback when its counter runs out, and an uninterrupted full flamethrower sweep. Natural officer bursts were measured for their hit spacing and damage over 14-second windows; a burst ending on its own was not observed in those windows.
+- **Weapon checks not yet seen live.** Not exercised live: an uninterrupted full flamethrower sweep. Natural officer bursts were measured for their hit spacing and damage over 14-second windows; a burst ending on its own was not observed in those windows.
   An officer near a breakable object can keep firing at it; the first game does the same.
 
 - **Existing permanent rank effects.** Beta.5 prevents new lower-rank permanent attachments; it does not repair attachments already recorded in a save.
@@ -89,7 +93,7 @@ lock ([#63](https://github.com/ChronoRixun/legends-classic/issues/63)) and the t
 - **Button prompts** after rebinding or with Steam Input (XML2 Fix #8).
 - **Cosmetic reports** (#54): the HAARP officer's gun being louder than on the Xbox, and others.
 
-## In the 0.5 and 0.6 betas
+## Remaining 0.6 limitations
 
 - **Phoenix's telekinesis** lifts the enemy she faces; when she faces away or stands in a crowd the game can pick a
   crate next to him, or nobody.

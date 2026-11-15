@@ -73,6 +73,12 @@
    "ret": "n",
    "func": "xml2-fix",
    "table": "xml2-fix"
+  },
+  "resetHeroVitals": {
+   "args": "",
+   "ret": "n",
+   "func": "xml2-fix",
+   "table": "xml2-fix"
   }
  }
 }
