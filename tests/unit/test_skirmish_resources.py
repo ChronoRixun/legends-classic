@@ -36,6 +36,27 @@ def test_skirmish_strings_replace_only_matching_localized_keys():
     assert changed == ['9000', '9001', '9002', '9003', '9005']
 
 
+def test_skirmish_visible_game_tab_body_explains_each_campaign_unlock_level():
+    # Live native Game-tab rows keep this body visible even when a grey row
+    # cannot be selected; NOT_HIGH_ENOUGH is not their displayed help binding.
+    source_x = ET.fromstring('<strings><string id="9100" text="@DATA@COMPETE_AGAINST_OTHER"/>'
+                             '<string id="9101" text="@SYNTHETIC@KEEP"/></strings>')
+    source_e = ET.fromstring('<strings><string id="9100" text="Synthetic mode overview"/>'
+                             '<string id="9101" text="Synthetic unrelated text"/></strings>')
+    ctx = SimpleNamespace(read_base_xmlb=lambda rel: copy.deepcopy(source_x if rel.endswith('.XMLB') else source_e))
+    keys, english, changed = F.strings_retext(ctx)
+    emitted = {row.get('id'): row.get('text') for row in xmlb.decode(xmlb.encode(english))}
+    body = emitted['9100']
+    assert body.startswith('Play the campaign to unlock modes:')
+    for requirement in ('Brawl at level 16', 'King Of The Hill at 18',
+                        'Last Man Standing at 23', 'Last Man Ladder at 30'):
+        assert requirement in body
+    assert 'Campaign character unlocks are also required.' in body
+    assert len(body) <= 190
+    assert xmlb.encode(keys) == xmlb.encode(source_x)
+    assert emitted['9101'] == 'Synthetic unrelated text' and changed == ['9100']
+
+
 def test_skirmish_fixed_roster_notice_is_authored_for_all_join_screens():
     from xml1build import online_fonts as OF
     for name in ('lc_online', 'lc_code', 'lc_browse'):

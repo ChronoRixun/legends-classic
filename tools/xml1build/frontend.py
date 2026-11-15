@@ -689,7 +689,8 @@ SKIRMISH_TEXT = {
     '@DATA@SKIRMISH': 'Skirmish (Experimental)',
     '@DATA@SKIRMISH_MODE': 'SKIRMISH (EXPERIMENTAL)',
     '@DATA@COMPETE_AGAINST_OTHER':
-        'Experimental player combat. Campaign progress and character unlocks are required.',
+        ('Play the campaign to unlock modes: Brawl at level 16, King Of The Hill at 18, '
+         'Last Man Standing at 23, and Last Man Ladder at 30. Campaign character unlocks are also required.'),
     '@DROOM@NOT_HIGH_ENOUGH': SKIRMISH_UNLOCK_HELP,
     '@DROOM@NOT_HIGH_ENOUGH_SKIRMISH': SKIRMISH_UNLOCK_HELP,
     '@DROOM@NO_CHARACTERS': 'Play the campaign to unlock characters on this profile before choosing a roster.',
