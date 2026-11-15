@@ -287,6 +287,7 @@ info.append(f'HJ: shared {len(shared)} + worst party {worst} = {pool}/{H.TALENT_
 
 # ------------------------------------------------------------------ HK
 allowed = re.compile(r'^(data/(herostat|npcstat|shared_talents)\.(xmlb|engb)|'
+                     r'textures/ui/mini_convo_icons\.igb|'
                      r'packages/generated/maps/package/menus/characters_heads(_pc)?\.pkgb|'
                      r'data/talents/(colossus|cyclops|gambit|iceman|nightcrawler|phoenix|rogue|storm|wolverine)\.(xmlb|engb)|'
                      r'packages/generated/characters/(colossus|cyclops|gambit|iceman|nightcrawler|phoenix|rogue|storm|wolverine|beast|frost)_xml\.pkgb)$')

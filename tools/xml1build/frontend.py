@@ -679,16 +679,38 @@ def igct_files(ctx):
 STRINGS_REL = 'Data/strings'
 NAME_TEXT = re.compile(IGCT_NAME.pattern.decode())
 
+# Original help for the native profile gates. Match the localization keys, not
+# English text or row positions; the key half and every ID remain intact.
+SKIRMISH_UNLOCK_HELP = ('Play the campaign to unlock Skirmish modes on this profile.\\n\\n'
+                        'Brawl: level 16\\nKing Of The Hill: level 18\\n'
+                        'Last Man Standing: level 23\\nLast Man Ladder: level 30\\n\\n'
+                        'Campaign character unlocks are also required.')
+SKIRMISH_TEXT = {
+    '@DATA@SKIRMISH': 'Skirmish (Experimental)',
+    '@DATA@SKIRMISH_MODE': 'SKIRMISH (EXPERIMENTAL)',
+    '@DATA@COMPETE_AGAINST_OTHER':
+        'Experimental player combat. Campaign progress and character unlocks are required.',
+    '@DROOM@NOT_HIGH_ENOUGH': SKIRMISH_UNLOCK_HELP,
+    '@DROOM@NOT_HIGH_ENOUGH_SKIRMISH': SKIRMISH_UNLOCK_HELP,
+    '@DROOM@NO_CHARACTERS': 'Play the campaign to unlock characters on this profile before choosing a roster.',
+    '@DROOM@SKIRMISH': ('Experimental Skirmish uses your campaign profile and unlocked characters.\\n\\n'
+                        'Use a private room. Join everyone in the lobby before the host starts the round.\\n\\n'
+                        'Skirmish uses a fixed roster; players cannot join an active round.'),
+}
+
 
 def strings_retext(ctx):
-    """(xmlb root, engb root, [ids renamed]): XML2's Data/strings with the port's name in the English texts."""
+    """Return the intact key half and English port naming / experimental Skirmish help."""
     x = ctx.read_base_xmlb(STRINGS_REL + '.XMLB')
     e = ctx.read_base_xmlb(STRINGS_REL + '.engb')
+    replacements = {el.get('id'): SKIRMISH_TEXT[el.get('text')]
+                    for el in x.iter('string') if el.get('text') in SKIRMISH_TEXT}
     ids = []
     for el in e.iter('string'):
         t = el.get('text') or ''
-        if NAME_TEXT.search(t):
-            el.set('text', NAME_TEXT.sub(IGCT_PORT_NAME.decode(), t))
+        new = replacements.get(el.get('id'), NAME_TEXT.sub(IGCT_PORT_NAME.decode(), t))
+        if new != t:
+            el.set('text', new)
             ids.append(el.get('id'))
     return x, e, ids
 
@@ -1776,12 +1798,12 @@ def run(ctx):
     det['igct'] = retexted
     sx, se, sids = strings_retext(ctx)
     if sids:
-        ctx.write_xmlb_pair(STRINGS_REL, sx, se, source='frontend:Data/strings with the port\'s name (English texts)')
+        ctx.write_xmlb_pair(STRINGS_REL, sx, se, source='frontend:Data/strings port naming and original Skirmish help')
     ctx.set_count('strings_texts_renamed', len(sids))
     det['strings'] = sids
     ctx.note(f'save / load messages: "X-Men Legends 2" -> "{IGCT_PORT_NAME.decode()}" in {len(retexted)} igct*.bnx '
-             f'({sorted({k for ks in retexted.values() for k in ks})}) and {len(sids)} {STRINGS_REL} texts '
-             f'(the consoles\' memory-card texts and 3328, the PC\'s damaged-save message)')
+             f'({sorted({k for ks in retexted.values() for k in ks})}); port naming and experimental Skirmish help '
+             f'in {len(sids)} {STRINGS_REL} English texts (key IDs unchanged)')
     # ---- B. Danger Room
     dr, drep = dangerroom_tree(ctx)
     if dr is None:

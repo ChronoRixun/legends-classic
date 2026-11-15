@@ -87,7 +87,8 @@ Per XML1 hero (`HeroBuilder.hero_entry`): every attribute copied except `ratingm
 unknown `skin_*` suffixes would be dropped with a warning); `skin` -> `map_skin` (+14000), `characteranims` ->
 `map_animdb`, `powerstyle` -> `map_powerstyle` (must equal the name characters wrote), `moveset1` ->
 `map_fightstyle`; added `autospend` (D13 table), `power1="power1" power2="power2" power3="power3" power4="power9"`,
-`textureicon` (D14; 63 = the engine's "no portrait" cell for Beast, Frost, Jubilee, Magma, Psylocke, placeholders),
+`textureicon` (D14; existing matching PC cells, plus 48..52 for Beast, Frost, Jubilee, Magma and Psylocke;
+63 remains the engine's locked / missing-portrait cell),
 `playable="true"` (also ProfXAstral, D12), `scriptlevel="3"` where missing, `team="hero"`. Children: `Race Mutant`
 + `Race XMen`, `FlyEffect` copied (their effects imported), `BoltOn` copied with numeric `model` -> `map_skin`,
 `anim` -> `map_animdb`, slot checked against `characters.BOLTON_SLOTS`; a BoltOn with a `<require>` child
@@ -96,6 +97,13 @@ unknown `skin_*` suffixes would be dropped with a warning); `skin` -> `map_skin`
 `<talent level="N" name=.../>`, every plain reference as-is with the 5 hero-only passives renamed
 `x1_<hero>_<name>` (`accuracy`, `pointblank`, `grappling`, `healing_factor`, `knockback`). <= 19 children (E11;
 the maximum is ProfXAstral's 12).
+
+`roster_portraits.py` reads the five original `hud/hud_head_<skin>.igb` images from the owned disc and puts
+32-pixel versions in unused cells 48..52 of the native 8x8 `Textures/ui/mini_convo_icons.IGB` atlas. It keeps
+the image/texture references, grid size and mip dimensions, writes supported RGBA8 pixels, and leaves the
+other top-level cells (including locked cell 63) unchanged. The builder refuses a retained NPC using a
+reserved cell; V-H1 checks the hero cell mappings and V-H2 re-derives the emitted atlas from owned inputs.
+This changes display resources only; profile character unlocks and combat values stay intact.
 
 ### 3.1 Promoted npcstat hero: ProfXGladiator (FORCED_TEAMS_DESIGN 7.3)
 

@@ -1283,7 +1283,7 @@ def focus_picture(screen,item,rect):
 # These probes describe additive APIs, not release or gameplay identities. Each
 # must be present in ONE supplied DLL; separate menu/font DLLs cannot be stacked.
 DLL_PROBES = (b'lc-online-menus/1\n', b'lc-online-input/1', b'lc-online-lobby/1', b'lc-online-broker/2', b'lc-online-native/1', b'lc-online-party/1', b'lc-online-errors/1', b'lc-online-hits/2', b'lc-online-no-gamespy/1',
-                b'lc-online-host-controls/1', b'lc_notice_started', b'lc-online-drop-in/1', b'lc-online-linked-rate/1',
+                b'lc-online-host-controls/1', b'lc_notice_started', b'lc_notice_skirmish', b'lc-online-drop-in/1', b'lc-online-linked-rate/1',
               b'lcOnlineIntent\0', 'Online\0'.encode('utf-16le'),
               'Menus\0'.encode('utf-16le'), 'LegendsClassicFonts\0'.encode('utf-16le'),
               b'ui/fonts/lc_fonts_pc.xmlb\0', b'ui/fonts/lc_fonts_hd.xmlb\0',
@@ -1513,6 +1513,7 @@ BROWSE_UNREACHABLE_NOTICES = ('lc_notice_paste_invalid', 'lc_notice_code_invalid
                               'lc_notice_service_silent')
 NOTICE_TEXT = {
     'lc_notice_started': 'This session has started. Ask the host to start a new session.',
+    'lc_notice_skirmish': 'Skirmish uses a fixed roster. Join everyone in the lobby before the host starts the round.',
     'lc_inline_error': 'This action could not be completed. No room was joined.',
     'lc_notice_unavailable': 'Unavailable in this preview. Use Other ways to play.',
     'lc_notice_resolving': 'Looking up room code...',

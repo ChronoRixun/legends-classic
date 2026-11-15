@@ -172,9 +172,11 @@ AUTOSPEND = {'wolverine': 'x1_bruiser', 'rogue': 'x1_bruiser', 'colossus': 'x1_b
              'iceman': 'x1_support', 'jubilee': 'x1_support', 'magma': 'x1_support',
              'nightcrawler': 'x1_support', 'phoenix': 'x1_support', 'profxastral': 'x1_support',
              'profxgladiator': 'x1_support', 'psylocke': 'x1_support', 'storm': 'x1_support'}
-# D14: XML2's portrait cells for the same characters; 63 = the engine's own "locked / no portrait" cell (0x5b3bb0)
+# D14: matching XML2 portraits, plus five original HUD heads in unused cells
+# (roster_portraits.py); 63 is still the engine's locked / no portrait cell.
 TEXTUREICON = {'cyclops': '0', 'phoenix': '1', 'wolverine': '2', 'storm': '3', 'nightcrawler': '4', 'rogue': '5',
-               'iceman': '6', 'colossus': '7', 'profxastral': '9', 'gambit': '11', 'profxgladiator': '9'}
+               'iceman': '6', 'colossus': '7', 'profxastral': '9', 'gambit': '11', 'profxgladiator': '9',
+               'beast': '48', 'frost': '49', 'jubilee': '50', 'magma': '51', 'psylocke': '52'}
 TEXTUREICON_NONE = '63'
 HERO_ONLY_PASSIVES = ('accuracy', 'pointblank', 'grappling', 'healing_factor', 'knockback')   # -> per-hero files
 SHARED_REAL_DEFS = ('toughness', 'mutantmastery', 'acrobatics',
@@ -2604,6 +2606,8 @@ class HeroBuilder:
         self.detail['npcstat_removed'] = sorted(set(removed))
         # shared talents: prune to the rule-based keep list, real definitions for the three passives
         npc_root = ctx.read_out_xmlb('Data/npcstat.engb')
+        from . import roster_portraits as RP
+        self.detail['roster_portraits'] = RP.write(ctx, npc_root)
         keep, drop, stats_refs, style_reqs = self.shared_keep(hero_names, npc_root)
         # saved talent positions: a save names shared talents by position, so a talent of the save-stable order
         # that nothing references any more keeps its slot (fightstyle_gun_rifle since issue #52) instead of
@@ -2878,6 +2882,8 @@ def _validate(ctx, report=None):
                     ck.error(f'herostat.{ext} {n}: more than {STATS_TALENT_MAX} talents')
             if ln in ph_l and (s.get('team') or s.get('playable')):
                 ck.error(f'herostat.{ext} {n}: placeholder must have no team / playable (hidden from the roster, E4)')
+            if ln in TEXTUREICON and s.get('textureicon') != TEXTUREICON[ln]:
+                ck.error(f'herostat.{ext} {n}: roster mini-portrait cell differs from the converted atlas')
     ck.counts['herostat_entries'] = len(heros.get('engb', []))
 
     # ---- V-H2 npcstat
@@ -2900,6 +2906,13 @@ def _validate(ctx, report=None):
         budgets['stats_names'] = total
         if total > STATS_CAP:
             ck.error(f'{ext}: {total} stats names > {STATS_CAP}')
+
+    from . import roster_portraits as RP
+    if o.tree('Data/npcstat.engb') is not None:
+        try:
+            RP.validate(ctx, o.tree('Data/npcstat.engb'))
+        except (ValueError, OSError) as error:
+            ck.error(str(error))
 
     # ---- V-H3 talent files
     ck = Check('V-H3')
