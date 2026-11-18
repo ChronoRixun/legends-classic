@@ -2293,6 +2293,12 @@ crash (the console path crashed there); back out with Esc to the menu; Quit (but
 
 ### 21.3 Danger Room (B)
 
+The native Skirmish category is labelled experimental. `frontend.strings_retext` replaces English text for
+existing localization keys without changing IDs or the key half. Grey-mode help explains the profile's
+campaign high-water gates: Brawl 16, King Of The Hill 18, Last Man Standing 23 and Last Man Ladder 30, plus
+existing campaign character unlocks. The overview explains the private-room, fixed-roster flow; no mode or
+character gate changes here. Online menus carry `lc_notice_skirmish` for the companion's active-round refusal.
+
 `frontend.dangerroom_tree` writes `Data/dangerroom.{XMLB,engb}` from XML1's `data/dangerroom.eng`: 15 arenas (zone
 ids normalised), 6 grades (Freshman `unlocked="true"`), 62 courses. Per course: `requirement` / `reward` (XML1
 points) and `duration` dropped (never read; counts `dr_points_dropped`); `QE200` gets `rewardexam="true"`

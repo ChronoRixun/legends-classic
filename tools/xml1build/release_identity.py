@@ -88,6 +88,9 @@ HISTORY = (
     Identity('0.6.0-beta.7', 37, 8, 'LC47', '9c83f0e944bc3f203b804bd8499850eff5c987a59bc605b8abd05fbd8a157a2f'),
     # Stable: fresh-mission roster reset, Hive arrival volume, classic conversation default.
     Identity('0.6.0', 38, 8, 'LC48', '63052d977b9dfa8d8fe0254e3bfbb5e5260d658c06983d7027e13eb755ae9287'),
+    # Stable experimental Skirmish presentation and original roster portraits.
+    # Catalogue 8 and W2 unchanged; the full RC must reproduce this binding measure.
+    Identity('0.6.1', 39, 8, 'LC49', '3c29af7bb7b0f5f74373efc329a53101b7facbbf66d5b25a8216101c99ee5dc5'),
 )
 
 

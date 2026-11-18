@@ -436,7 +436,7 @@ FORCED_TEAMS_VALUES = ('1', '0', 'off')
 # v1.5: the 0.2.2 wave's [Game] keys - PlacementCrush, DoubleHeal, RankCosts, LevelSkillPoints, LevelStatPoints,
 # Xml1Multipart, X1Leader, SoloMode, DeathRule, DangerRoomGate, RevivalCost, Xml1Turrets, PackAmount, DeathSwitchClear - and
 # [Limits] ScriptFunctions; a 1.4 DLL silently ignores every one of them, so check_release_dll refuses it)
-REQUIRED_XML2FIX = '1.11'
+REQUIRED_XML2FIX = '1.11.1'
 # The companion fix's prerelease a beta/rc builder needs (launcher-facing requires.xml2fix only): 0.3.0-beta.2 writes
 # [Engine] ModelPools and [Game] ComboPopupGuard, first read by XML2 Fix 1.8.0-beta.2; 0.3.0-beta.3 writes [Online]
 # TickRate, first read by 1.8.0-beta.3; 0.4.0-beta.5 writes [Game] ClassicHud / ClassicCodex (the classic look), first
@@ -450,18 +450,20 @@ REQUIRED_XML2FIX = '1.11'
 # XML2 Fix 1.11.0-beta.2: linked session pacing needs TickRate rule 29 revision 2
 # and its versioned roster/native settings trailer; beta.1 peers must refuse. 0.6.0-beta.6 converted weapon contacts need
 # companion capability lc-npc-beam-trace/2, first in XML2 Fix 1.11.0-beta.5.
-REQUIRED_XML2FIX_PRERELEASE = 'beta.6'
+# Experimental Skirmish now requires the 1.11.1 local-profile and fixed-roster
+# admission guards. No earlier companion prerelease is accepted.
+REQUIRED_XML2FIX_PRERELEASE = ''
 
 
 def required_xml2fix(builder_version: str) -> str:
     """Launcher-facing requirement shared by the release manifest and generated build stamp.
 
-    Beta/rc builders accept the companion fix's prereleases from REQUIRED_XML2FIX_PRERELEASE on
-    as well as the final release. Keep the stable requirement's original spelling. DLL capability
+    When a prerelease floor is assigned, beta/rc builders accept it and later
+    prereleases. An empty floor requires the stable release for every builder. DLL capability
     checks below remain independent of this SemVer metadata: beta fixes have the same numeric
     VERSIONINFO (check_release_dll tells them apart by the keys they read).
     """
-    if builder_version == RI.PRIVATE_CANDIDATE.release or re.fullmatch(r'[0-9]+\.[0-9]+\.[0-9]+-(?:beta|rc)\.[0-9]+', builder_version):
+    if REQUIRED_XML2FIX_PRERELEASE and (builder_version == RI.PRIVATE_CANDIDATE.release or re.fullmatch(r'[0-9]+\.[0-9]+\.[0-9]+-(?:beta|rc)\.[0-9]+', builder_version)):
         parts = REQUIRED_XML2FIX.split('.')
         base = '.'.join(parts + ['0'] * (3 - len(parts)))
         return '>=' + base + '-' + (REQUIRED_XML2FIX_PRERELEASE or '0')

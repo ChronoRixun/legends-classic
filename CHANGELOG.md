@@ -5,6 +5,21 @@ build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebui
 
 ## Unreleased
 
+## v0.6.1
+
+- Label Skirmish Experimental and explain campaign/profile mode unlock levels
+  and character unlock requirements. All players join before a round starts;
+  mid-round requests explain the fixed roster.
+- Fill five missing roster mini-portraits from the player's original HUD heads.
+  Other native portraits and the locked character cell remain intact.
+- Requires XML2 Fix 1.11.1 for owned-campaign profile progress repair, Skirmish
+  presentation/admission guards and Danger Room empty-prize display filtering.
+  Update Fix first, then this builder, then Rebuild.
+- Content 39 / LC49; save catalogue 8 and the W2 layout are unchanged. Existing
+  campaigns remain compatible. No combat, powers, RNG or ownership changes.
+
+## Earlier unreleased notes
+
 - Hive, Subject Retention Center: a freed Morlock led to Gateway now walks into the portal and counts for
   Liberate. The first game's only rescue area covered the far half of Gateway's room; Morlocks brought down the
   stairs beside Gateway never reached it and followed the hero forever. A second rescue area now covers the stairs,

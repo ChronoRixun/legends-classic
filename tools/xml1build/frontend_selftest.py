@@ -25,7 +25,7 @@ escaped '|#', no text code left, the escape rules), codex names, the
 generated intro / postgame scripts, the sound plan (menu music kind per mode), the menu zone's kept XML2 package
 entries, the Danger Room completion XP per --xp-curve (U14: XML1's 0 / XML2's reclevel curve; with --out the build's
 table against its own curve), the save / load messages (U15: igct*.bnx with the port's name in exactly the keys that
-named XML2, idempotent, and Data/strings' 19 English texts, its .XMLB half unchanged; with --out the build's files:
+named XML2, idempotent, and Data/strings' 19 naming texts plus original Skirmish help, its .XMLB half unchanged; with --out the build's files:
 rewritten under xml1, XML2's under xml2), the credits menus (U16: XML2's CREDITS_MENUs over XML1's IGBs re-framed on
 XML2's menu camera, no image, endgame kept on credits_end, packages listing XML1's IGB), the review menu (U17: XML2's
 without the Stats tab's two items, both halves; harness.py's ReviewStats=0 for it, none for XML2's).
@@ -713,9 +713,12 @@ def u15_igct(ctx):
     was = {el.get('id'): el.get('text') for el in base_e.iter('string')}
     now = {el.get('id'): el.get('text') for el in se.iter('string')}
     diff = sorted((k for k in was if was[k] != now.get(k)), key=int)
-    if diff != ids or set(was) != set(now) or len(ids) != 19 or \
+    if diff != ids or set(was) != set(now) or len(ids) != 19 + len(F.SKIRMISH_TEXT) or \
             any(F.NAME_TEXT.search(t or '') for t in now.values()):
         fail('U15', f'Data/strings.engb: changed {diff} vs renamed {ids}')
+    for entry in sx.iter('string'):
+        if entry.get('text') in F.SKIRMISH_TEXT and now.get(entry.get('id')) != F.SKIRMISH_TEXT[entry.get('text')]:
+            fail('U15', 'experimental Skirmish help missing: ' + entry.get('text'))
     damaged = 'X-Men Legends save data appears to be damaged and cannot be used. Press $MENU_ACCEPT to continue.'
     if now.get('3328') != damaged:
         fail('U15', f'Data/strings 3328 (the PC\'s damaged-save message): {now.get("3328")!r}')
