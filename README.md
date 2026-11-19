@@ -18,9 +18,9 @@ the builder makes no network connections.
 Unlike [XML1-recomp](https://github.com/GTTeancum/XML1-recomp), which runs the original Xbox game natively, Legends
 Classic runs the first game on the sequel's PC engine - which is what makes online co-op and the sequel's mods possible.
 
-> **Stable: Legends Classic 0.6.0**, paired with XML2 Fix 1.11.0.
+> **Stable: Legends Classic 0.6.1**, paired with XML2 Fix 1.11.1 (content 39 / LC49).
 > Update the Fix first, update the builder on the Stable channel, **Rebuild**, then **Play**.
-> Back up saves; beta.1-7 saves load. Online builds and settings must match. See [CHANGELOG](CHANGELOG.md).
+> Back up saves; 0.6.0 and 0.6 beta saves load. Online builds and settings must match. See [CHANGELOG](CHANGELOG.md).
 
 ## What you need
 
@@ -62,6 +62,9 @@ XML1-recomp install; the original files are checked, and saves and loose mods ar
 - **Online co-op** for up to four players, from the game's own **Play Online** screen: **Host** a public or private
   room, **Join by code** or **Browse** public games, get ready in the lobby, and manage the group from **Party**.
   Friends can join a game in progress at the host's next area. Steps, privacy and limits: [docs/ONLINE.md](docs/ONLINE.md).
+- **Skirmish (experimental)**: X-Men Legends II's four competitive modes, unlocked by your campaign profile (Brawl at
+  level 16, King Of The Hill at 18, Last Man Standing at 23, Last Man Ladder at 30) and its unlocked characters.
+  Everyone joins in the lobby before the host starts a round ([details](docs/ONLINE.md#skirmish-experimental)).
 - **Settings and key bindings** are shared with X-Men Legends II (same registry key).
 
 ## What to expect
@@ -72,21 +75,23 @@ Online co-op and the display options are additions the first game never had ([wh
 
 Still open (everything, with measurements: [docs/KNOWN-ISSUES.md](docs/KNOWN-ISSUES.md) and [issues](https://github.com/ChronoRixun/legends-classic/issues)):
 
-- **The first game's items, shops and drops** shipped in 0.5.0-beta.1 and are on by default; they are still being
-  checked against the original ([#6](https://github.com/ChronoRixun/legends-classic/issues/6)). Stable 0.4.0 uses X-Men Legends II's.
+- **The first game's items, shops and drops** are on by default (stable since 0.6.0); they are still being
+  checked against the original ([#6](https://github.com/ChronoRixun/legends-classic/issues/6)).
 - **Some fall kill zones** stay off until proven safe ([#22](https://github.com/ChronoRixun/legends-classic/issues/22)).
 - **Enemies attack somewhat more often** than in the original ([#101](https://github.com/ChronoRixun/legends-classic/issues/101)).
-- **Online** co-op is a beta. Co-op was tested on one PC and on two PCs at home, with two, three and four players,
+- **Online** co-op is new in 0.6. Co-op was tested on one PC and on two PCs at home, with two, three and four players,
   including fights. Not verified yet: playing through the relay (networks where a direct connection fails), four
   players on four separate PCs, long sessions, and joins over slow connections. If the host leaves, the session
   ends (until co-op recovery in 0.8).
+- **Skirmish** is experimental: a fixed roster per round (no joining an active round), and all heroes, powers and
+  arenas, the original balance and internet parties still need wider testing.
 
 ## Roadmap
 
-0.6 (this beta): online co-op in the game's own screens, with joining a game in progress; beta.2 adds the shared
-frame rate and the rest of the online screens; a later 0.6 beta adds save import from xemu and XML1-recomp. 0.7: an
-optional "Remastered" graphics toggle. 0.8: co-op recovery. 0.9: moves and characters tuned against the original.
-1.0 after a full hand-played run. [Full roadmap](docs/ROADMAP.md).
+0.6 (stable): online co-op in the game's own screens, with joining a game in progress; 0.6.1 adds experimental
+Skirmish. Save import from xemu and XML1-recomp stays switched off for now. 0.7: an optional "Remastered" graphics
+toggle - a first preview is out as the XML2 Fix 1.12.0-beta.1 pre-release. 0.8: co-op recovery. 0.9: moves and
+characters tuned against the original. 1.0 after a full hand-played run. [Full roadmap](docs/ROADMAP.md).
 
 ## Community, contributing and bug reports
 

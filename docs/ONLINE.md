@@ -1,18 +1,19 @@
-> Current pair: beta.7 / Fix beta.6; LC47 and skating agreement revision 2. Older beta peers are refused.
+> Current pair: Legends Classic 0.6.1 / XML2 Fix 1.11.1 (LC49). Older builds are refused.
 
-﻿# Play online in 0.6
+# Play online in 0.6
 
-Player guide for Legends Classic **0.6.0-beta.7** with XML2 Fix **1.11.0-beta.6**. Online co-op now runs from the
-game's own **Play Online** screen. This is a beta. Co-op was tested on one PC (up to four copies) and on two PCs at
+Player guide for Legends Classic **0.6.1** with XML2 Fix **1.11.1**. Online co-op runs from the
+game's own **Play Online** screen. Co-op was tested on one PC (up to four copies) and on two PCs at
 home, with two, three and four players, including fights. Not verified yet: playing through the relay (networks where
 a direct connection fails), players on different home networks, three or four separate PCs, long sessions, and joins
 over slow connections ([known issues](KNOWN-ISSUES.md#online)). The session runs at the host's frame rate; your own
 setting comes back when you leave.
 
-Up to four players can share a campaign. Everyone needs the same build - builder 0.6.0-beta.7 with XML2 Fix
-1.11.0-beta.6 - with the same gameplay settings and Test mode off; a different build or setting is refused with the
-reason on both PCs. games from beta.1 to beta.5 cannot join beta.6, and a 0.5 game cannot join a 0.6
-game. To update, use Ultimate Legends' **Beta** channel: update XML2
+Up to four players can share a campaign. Everyone needs the same build - builder 0.6.1 with XML2 Fix
+1.11.1 - with the same gameplay settings and Test mode off; a different build or setting is refused with the
+reason on both PCs. A 0.6.0 or 0.6 beta game cannot join a 0.6.1 game. Players on the XML2 Fix 1.12.0-beta.1
+Remastered preview (with Legends Classic 0.6.1) can play with 1.11.1 players: Remastered only changes how each
+player's own screen is drawn. To update, use Ultimate Legends' **Stable** channel: update XML2
 Fix and the builder, then **Rebuild**, then **Play**.
 
 ## Open Play Online
@@ -80,9 +81,26 @@ While you get the host's game, the host and the other players wait up to 10 seco
 uses its own value, and it does not have to match between players. If a join takes longer than the wait (a slow
 connection), play continues and you come in moments later.
 
+**Host tip:** to bring a waiting friend in without walking to the next exit, go to an Xtraction point, open
+**Change Team** and leave it with **START** (Accept); that reloads the area. Everyone already in the game marks
+**Ready** on that screen before play resumes. The waiting friend's own Ready screen in the meantime is normal.
+
 During a solo story segment, players without a hero stay connected and watch. The game says **Solo story segment -
 you rejoin when it ends**; when the story restores a larger party you get a hero back (your previous one when the
 group has not changed). Wolverine's opening and Magma's mansion tour are examples. Keep the watching PC connected.
+
+## Skirmish (experimental)
+
+0.6.1 opens X-Men Legends II's four competitive modes, labelled **Skirmish (Experimental)** in the game's menus. They
+use your campaign profile: Brawl unlocks at level 16, King Of The Hill at 18, Last Man Standing at 23 and Last Man
+Ladder at 30, and you can choose only characters the campaign has unlocked.
+
+- Use a private room, and have everyone join the lobby before the host starts the round.
+- A round keeps a fixed roster. A friend who tries to join an active round is refused with the reason; public rooms
+  stop offering free places during the round. The host's campaign DROP-IN setting still applies to campaign play.
+- If the host leaves, the session ends, as in campaign co-op.
+- Not yet checked widely: every hero, power and arena, the exact original balance, the relay and larger internet
+  parties. Please report what you find.
 
 ## The Party screen
 
@@ -204,6 +222,8 @@ Up to 0.5, online play started from the launcher's Online panel. These are its E
 | The online game has ended. / The game was closed. | The run has finished. Start Host or Join again for another run. This message alone does not diagnose a crash. |
 
 When reporting a problem, include the exact message, the step that failed, everyone's game/fix versions, whether anyone used a hotspot, and each affected PC's `xml2-fix.log` and `online-status.json`. Copy them before the next launch. Review copies for private details before sharing; do not attach game files, saves, disc images or online identity keys.
+
+## Earlier 0.6 betas (history)
 
 Beta.3: solo-host pause and Team Management close with one B or Esc press; Enter IP has eleven keys (0-9 and dot).
 A newcomer lost during admission no longer produces a false lost-sync alarm. Beta.4 also gives the named

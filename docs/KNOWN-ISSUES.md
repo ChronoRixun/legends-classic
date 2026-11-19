@@ -12,6 +12,8 @@ matched to the original, and none of them counts as a fidelity claim.
 
 - **Online co-op** for up to four players (see [the online guide](ONLINE.md)): codes, public games, drop-in at the
   next level change, Connect by IP and LAN search. The first game was local-only. Joiners must run matching builds.
+- **Skirmish** (experimental, 0.6.1): X-Men Legends II's competitive modes, unlocked by campaign level. The first
+  game had no competitive modes.
 - **Solo-segment watchers**: players without a hero watch a solo story segment and regain control afterwards. This
   exists because of online play.
 - **A 60 frames-per-second online rate** (`[Online] TickRate`) and the larger engine limits the port needs (model
@@ -26,11 +28,11 @@ matched to the original, and none of them counts as a fidelity claim.
 Some of the first game's features rely on engine code X-Men Legends II doesn't have. Until they are recreated (most
 need new engine hooks in xml2-fix), the port plays without them:
 
-- **Equipment fidelity checks** ([#6](https://github.com/ChronoRixun/legends-classic/issues/6)). In the stable
-  0.4.0, random drops are X-Men Legends II's, not the first game's equipment, and the shops (the Healer's, and the one
-  at Xtraction points once you have met Forge) are X-Men Legends II's: generated stock, its prices and its training
-  services. Stable 0.6 brings the first game's items, drop tables, Forge, Healer prices, Grab Bag, selling and
-  Danger Room rewards; where a bonus has no exact PC form it is converted as closely as the PC game allows (the build's
+- **Equipment fidelity checks** ([#6](https://github.com/ChronoRixun/legends-classic/issues/6)). Up to the stable
+  0.4.0, random drops were X-Men Legends II's, not the first game's equipment, and the shops (the Healer's, and the one
+  at Xtraction points once you have met Forge) were X-Men Legends II's: generated stock, its prices and its training
+  services. Since stable 0.6.0 the game has the first game's items, drop tables, Forge, Healer prices, Grab Bag,
+  selling and Danger Room rewards; where a bonus has no exact PC form it is converted as closely as the PC game allows (the build's
   `Docs\APPROXIMATIONS.md` lists every one). #6 stays open until players have checked it.
 - **15 of the first game's fall kill zones** ([#22](https://github.com/ChronoRixun/legends-classic/issues/22)): 20
   placements in 14 maps (three of the zones in demo maps outside the campaign) stay off: several sit in water or in
@@ -50,6 +52,15 @@ Dark Avalanche's slow effect matches XML1 (xemu comparison); it is retained. Owe
 campaign with Fix beta.9 on November 14. Stable adds the Hive arrival volume, solo-platform floor guard,
 safe team-change returns and whole-roster vitals reset at fresh mission starts. Stable smoke is recorded
 separately; human beta completion does not certify those new paths or Internet co-op.
+
+## Skirmish (experimental, 0.6.1)
+
+- The four competitive modes unlock with your campaign profile (Brawl 16, King Of The Hill 18, Last Man Standing 23,
+  Last Man Ladder 30) and use the campaign's unlocked characters.
+- A round keeps a fixed roster: everyone joins in the lobby before the host starts; a friend who asks to join an
+  active round is refused with the reason. Host departure ends the session; there is no host migration.
+- Every hero, power and arena, the exact original balance, the relay and larger internet parties need wider
+  testing ([the online guide](ONLINE.md#skirmish-experimental)).
 
 ## Gameplay
 
@@ -118,7 +129,8 @@ separately; human beta completion does not certify those new paths or Internet c
 
 ## The classic look (new in 0.4.0)
 
-The optional beta.3 conversation box (`--classic-conversation xml1`, default off) has separate native Windows checks
+The Classic conversation box (`--classic-conversation xml1`, added in beta.3, on by default since 0.6.0;
+`--classic-conversation off` keeps the PC box) has separate native Windows checks
 in two families at three resolutions, off and on. It has not been hand-tested by Owen. xemu, DXVK and multiplayer
 conversation comparisons are not verified.
 
@@ -133,7 +145,7 @@ try. If a screen's text or labels are cut off, or something looks off, please re
   online-unavailable screen. Ordinary main-menu campaign loading passed; beta.3's two-PC hand test remains
   historical coverage, not a new-build guarantee. Read beta.6's release acceptance notes for its current checks.
 
-- **Fixed with the next XML2 Fix: the rare crash before the main menu.** Since beta.3 a small share of starts
+- **Fixed since XML2 Fix 1.11.0-beta.6 (0.6.0-beta.7): the rare crash before the main menu.** Since beta.3 a small share of starts
   ended about a quarter second in, before the movies, with an error in Windows' own DirectInput (`dinput.dll`).
   The cause is a Windows bug: DirectInput 7 reads just past the end of its list of HID devices when a PC has
   exactly 16 or 32 of them (mice, keyboards, RGB gear and controllers all add to the count, so connecting or
@@ -156,9 +168,8 @@ try. If a screen's text or labels are cut off, or something looks off, please re
   rate, leave and host a new room. Player cards show "local / online" rates and warn ("Cannot hold N fps") when a
   PC can't keep up; nothing lowers the rate automatically. A slow PC, a slow connection or fullscreen VSync can still
   slow the session for everyone. Checked live on one PC so far.
-- **0.6.0-beta.7 is a co-op beta.** Across earlier 0.6 builds, co-op was tested on one PC (up to four copies) and on two PCs at home, with two,
-  three and four players, including fights and joins by code, LAN and IP. Those separate-PC setups have not been
-  re-verified on beta.6. Not verified yet: playing through the
+- **Co-op is new in 0.6.** Across the 0.6 builds, co-op was tested on one PC (up to four copies) and on two PCs at home, with two,
+  three and four players, including fights and joins by code, LAN and IP. Not verified yet: playing through the
   relay (networks where a direct connection fails), players on different home networks (over the internet), three
   or four separate PCs, long sessions, and joins over slow connections (if a join takes longer than the wait, play
   continues and the friend comes in moments later). Relay-only mode refuses an unavailable relay instead of falling

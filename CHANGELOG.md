@@ -5,7 +5,7 @@ build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebui
 
 ## Unreleased
 
-## v0.6.1
+## v0.6.1 - content version 39 (needs XML2 Fix 1.11.1)
 
 - Label Skirmish Experimental and explain campaign/profile mode unlock levels
   and character unlock requirements. All players join before a round starts;
