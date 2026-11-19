@@ -18,7 +18,42 @@ build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebui
 - Content 39 / LC49; save catalogue 8 and the W2 layout are unchanged. Existing
   campaigns remain compatible. No combat, powers, RNG or ownership changes.
 
-## Earlier unreleased notes
+## v0.6.0 - content version 38 (needs XML2 Fix 1.11.0)
+
+Legends Classic 0.6.0 and XML2 Fix 1.11.0 are the stable pair. Update XML2 Fix first, update
+Legends Classic, then Rebuild and Play. Back up SaveLC first. Beta.1-7 saves remain compatible;
+older 0.4.x builds cannot read saves written in the larger 0.5/0.6 format. Everyone online needs
+the same stable build and gameplay settings; beta.9 companions are refused.
+
+- The first game's items, drop tables, Forge, Healer, selling, Grab Bag and Danger Room rewards.
+- Online rooms, codes, public games and drop-in at the next area, with controller navigation.
+- The first game's bosses, moves, weapons and damage rules, with larger engine and save limits.
+- Fixed busy-fight world freezes, keyed doors, pre-menu HID crashes and Juggernaut's animation timing.
+- Fresh mission starts that do not keep the party reset saved vitals for the whole roster, including
+  fallen heroes left on the bench. Continuations retain their vitals, as in XML1.
+- Teammates wait while the leader rides a solo platform; returning from Change Team retains a safe
+  floor position at the Interior Quarters and sewer Healer Xtraction Points.
+- Levitating the Forbidden Halls switch no longer carries it off into the void - it activates in place, like the original.
+- Freed Hive Morlocks arriving beside Gateway count toward Liberate and allow the Kincaid scene.
+- The blue Classic conversation background is on by default. Turn it off and rebuild for the PC look.
+- Iceman and Magma skating works: holding jump extends the slide up to its rank limit; releasing ends it.
+  Dark Avalanche's slow effect is faithful to the original, confirmed against XML1 in xemu.
+- Sentinel street saves, forced-hero Danger Room courses, Muir/Brig resident props and mission returns
+  retain the fixes from beta.7. Historical zone progress uses the append-only compatibility ledger.
+
+Owen completed the campaign on November 14 using LC beta.7 with Fix beta.9. That is a human
+campaign completion on those versions; it does not certify the additional stable changes or Internet co-op.
+The release checklist separately records the final stable smoke.
+
+Remaining limits: relay/different home networks, three or four separate PCs, long online sessions,
+slow joins and host loss need wider player testing. Host departure ends the session; there is no host
+migration. Some enemy-rate and control-timing differences remain; see the known-issues page. Guard
+and the 96-live-actor option remain off by default. xemu/XML1-recomp save import remains disabled.
+Both owned games are required; the distributed tools contain no game data.
+
+
+
+### Also in 0.6.0
 
 - Hive, Subject Retention Center: a freed Morlock led to Gateway now walks into the portal and counts for
   Liberate. The first game's only rescue area covered the far half of Gateway's room; Morlocks brought down the
@@ -55,41 +90,6 @@ build carries (`_build\stamp.json`) - when it rises, the launcher offers a rebui
   pinned identity/checkpoint ledger into a registered import table. Real saves,
   proven retail ledgers and live companion acceptance are still required before
   public admission. Global-profile merging remains disabled.
-
-## v0.6.0 - content version 38 (needs XML2 Fix 1.11.0)
-
-Legends Classic 0.6.0 and XML2 Fix 1.11.0 are the stable pair. Update XML2 Fix first, update
-Legends Classic, then Rebuild and Play. Back up SaveLC first. Beta.1-7 saves remain compatible;
-older 0.4.x builds cannot read saves written in the larger 0.5/0.6 format. Everyone online needs
-the same stable build and gameplay settings; beta.9 companions are refused.
-
-- The first game's items, drop tables, Forge, Healer, selling, Grab Bag and Danger Room rewards.
-- Online rooms, codes, public games and drop-in at the next area, with controller navigation.
-- The first game's bosses, moves, weapons and damage rules, with larger engine and save limits.
-- Fixed busy-fight world freezes, keyed doors, pre-menu HID crashes and Juggernaut's animation timing.
-- Fresh mission starts that do not keep the party reset saved vitals for the whole roster, including
-  fallen heroes left on the bench. Continuations retain their vitals, as in XML1.
-- Teammates wait while the leader rides a solo platform; returning from Change Team retains a safe
-  floor position at the Interior Quarters and sewer Healer Xtraction Points.
-- Levitating the Forbidden Halls switch no longer carries it off into the void - it activates in place, like the original.
-- Freed Hive Morlocks arriving beside Gateway count toward Liberate and allow the Kincaid scene.
-- The blue Classic conversation background is on by default. Turn it off and rebuild for the PC look.
-- Iceman and Magma skating works: holding jump extends the slide up to its rank limit; releasing ends it.
-  Dark Avalanche's slow effect is faithful to the original, confirmed against XML1 in xemu.
-- Sentinel street saves, forced-hero Danger Room courses, Muir/Brig resident props and mission returns
-  retain the fixes from beta.7. Historical zone progress uses the append-only compatibility ledger.
-
-Owen completed the campaign on November 14 using LC beta.7 with Fix beta.9. That is a human
-campaign completion on those versions; it does not certify the additional stable changes or Internet co-op.
-The release checklist separately records the final stable smoke.
-
-Remaining limits: relay/different home networks, three or four separate PCs, long online sessions,
-slow joins and host loss need wider player testing. Host departure ends the session; there is no host
-migration. Some enemy-rate and control-timing differences remain; see the known-issues page. Guard
-and the 96-live-actor option remain off by default. xemu/XML1-recomp save import remains disabled.
-Both owned games are required; the distributed tools contain no game data.
-
-
 
 ### 0.6.0-beta.7
 
@@ -488,7 +488,7 @@ with Test mode off. A 0.5 game (content version 29) cannot join a 0.6 game. The 
 - The original online menus with `--online-menus off`, and a mismatched build or setting being refused with a clear
   message.
 
-## v0.5.0 - content version 29 (needs XML2 Fix 1.10.0)
+## v0.5.0 - beta only, never a stable release - content version 29 (needs XML2 Fix 1.10.0)
 
 0.5.0-beta.1 is the 0.4.2 line released as 0.5, with XML2 Fix 1.10.0-beta.1 and Ultimate Legends 0.4.0 or later
 (Beta channel).
@@ -587,7 +587,7 @@ ini preference validated against the companion DLL) stay off. The requirement is
 (stable); identity content 29 / catalogue 8 / `LC38`. The entries below were written while the options were opt-in;
 "default off" there means the 0.4.2 candidates.
 
-## v0.4.2 - limits wave 2, the first game's economy, limits wave 3 (unreleased; the coordinator assigns the identity at integration)
+## v0.4.2 - beta only, released as 0.5.0-beta.1 - limits wave 2, the first game's economy, limits wave 3
 
 - **Opt-in W2 save layout.** `build_xml1.py --save-layout w2` (and `xml1-builder build --save-layout w2`; default
   `retail`, which writes nothing new and leaves every default build byte for byte as it was) configures and validates
