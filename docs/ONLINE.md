@@ -91,7 +91,7 @@ group has not changed). Wolverine's opening and Magma's mansion tour are example
 
 ## Skirmish (experimental)
 
-0.6.1 opens X-Men Legends II's four competitive modes, labelled **Skirmish (Experimental)** in the game's menus. They
+0.6.1 opens the first game's own four competitive modes, labelled **Skirmish (Experimental)** in the game's menus. They
 use your campaign profile: Brawl unlocks at level 16, King Of The Hill at 18, Last Man Standing at 23 and Last Man
 Ladder at 30, and you can choose only characters the campaign has unlocked.
 

@@ -62,7 +62,7 @@ XML1-recomp install; the original files are checked, and saves and loose mods ar
 - **Online co-op** for up to four players, from the game's own **Play Online** screen: **Host** a public or private
   room, **Join by code** or **Browse** public games, get ready in the lobby, and manage the group from **Party**.
   Friends can join a game in progress at the host's next area. Steps, privacy and limits: [docs/ONLINE.md](docs/ONLINE.md).
-- **Skirmish (experimental)**: X-Men Legends II's four competitive modes, unlocked by your campaign profile (Brawl at
+- **Skirmish (experimental)**: the first game's own four competitive modes, unlocked by your campaign profile (Brawl at
   level 16, King Of The Hill at 18, Last Man Standing at 23, Last Man Ladder at 30) and its unlocked characters.
   Everyone joins in the lobby before the host starts a round ([details](docs/ONLINE.md#skirmish-experimental)).
 - **Settings and key bindings** are shared with X-Men Legends II (same registry key).

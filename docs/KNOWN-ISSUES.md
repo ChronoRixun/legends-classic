@@ -12,7 +12,7 @@ matched to the original, and none of them counts as a fidelity claim.
 
 - **Online co-op** for up to four players (see [the online guide](ONLINE.md)): codes, public games, drop-in at the
   next level change, Connect by IP and LAN search. The first game was local-only. Joiners must run matching builds.
-- **Skirmish** (experimental, 0.6.1): X-Men Legends II's competitive modes, unlocked by campaign level. The first
+- **Skirmish** (experimental, 0.6.1): the first game's own competitive modes, unlocked by campaign level. The first
   game had no competitive modes.
 - **Solo-segment watchers**: players without a hero watch a solo story segment and regain control afterwards. This
   exists because of online play.
