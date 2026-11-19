@@ -198,7 +198,7 @@ try. If a screen's text or labels are cut off, or something looks off, please re
   XML1-recomp folder (`--iso <folder>`) does not bring its saves across.
 - A failed shared-campaign restore can require rehosting.
 - LAG warnings may remain, but the slow-player drop is disabled.
-- Solo story segments online are watched now, but #106 stays open until played through in more sessions.
+- Solo story segments online are watched now (#106 is closed); report any segment that leaves a watcher stuck.
 - Public games connect directly, so players can see each other's internet address. The broker caps each internet
   address at two public rooms and two seats in other people's rooms.
 - Local co-op on controllers should work (it is X-Men Legends II's) but has had little testing.
