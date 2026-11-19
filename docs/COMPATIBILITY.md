@@ -12,6 +12,8 @@ both PCs.
 
 | Builder | Content | Needs xml2-fix | Launcher | Adds |
 |---|---|---|---|---|
+| 0.6.1 | 39 | 1.11.1 | 0.6.0, Stable channel | experimental Skirmish: campaign unlock levels explained, a fixed roster per round (mid-round joins refused with the reason), five missing roster mini-portraits; catalogue 8 / LC49; 0.6.0 and beta saves load; matching peers required (XML2 Fix 1.12.0-beta.1 peers can join) |
+| 0.6.0 | 38 | 1.11.0 | 0.6.0, Stable channel | the stable 0.6 line: the betas' online co-op in the game's own screens with drop-in, the Classic conversation box on by default, the stable fixes (Hive arrival, solo platforms, team-change returns, mission-start vitals); catalogue 8 / LC48; beta.1-7 saves load; matching peers required |
 | 0.6.0-beta.7 | 37 | 1.11.0-beta.6 | 0.5.0, Beta channel | Skating chains + exit cleanup, boot and save safety; catalogue 8 / LC47; older saves load, matching peers required |
 | 0.6.0-beta.6 | 35 | 1.11.0-beta.5 | 0.5.0, Beta channel | Hero move exits (Savage Rampage) and first-game lightning/flame hit spacing; catalogue 8 / LC45; beta.1–5 and RC1–3 saves load; matching peers required |
 | 0.6.0-beta.5 | 34 | 1.11.0-beta.4 | 0.5.0, Beta channel | Sewer progression, optional Nuke doors and rank gates; catalogue 8 / LC44; beta.1–4 and RC1–3 saves load; matching peers required |
